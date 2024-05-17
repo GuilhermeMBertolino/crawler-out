@@ -1,0 +1,46 @@
+<html><head></head><body><div nw-field nw-label="wan_contype" nw-disabled="!conn.__New"><div class="custom-select"><select nw-not-dirty ng-model="common.contype" ng-options="option.value as option.name|translate for option in availableTypes" ng-change="contypeChange()"></select></div></div><div nw-field nw-label="iface" nw-disabled="(!conn.__New || customRules.DisableWANIface) && !isFirewallMode" ng-if="conn.__AvailableIfaces.length && common.isBase" ng-hide="customRules.HideWANIface"><div class="custom-select"><select nw-not-dirty ng-model="conn.MediaPath" ng-options="option.path as option.name group by option.groupName|translate for option in conn.__AvailableIfaces"></select></div></div><div nw-interface-selector="conn.__AvailableIfaces" nw-interface-selector-no-ifaces="true" ng-model="conn.MediaPath" ng-hide="customRules.HideMediaPath" ng-if="isFirewallMode &&
+		!common.isBase &&
+		common.contype != 'mobileinet' &&
+		conn.__AvailableIfaces.length"></div><div nw-field ng-hide="customRules.HideWANIface" ng-if="(
+			!conn.__AvailableIfaces ||
+			!conn.__AvailableIfaces.length
+		) && common.contype != 'mobileinet'"><div alert="info" ng-if="!isFirewallMode &&
+			!['IPIP6', 'PPTP', 'SIT'].includes(conn.__Type)">{{ 'wan_no_interfaces_available' | translate }}</div><div alert="info" ng-if="isFirewallMode">{{ 'wan_no_interfaces_available_firewall' | translate }}</div></div><div class="note" ng-bind-html="noEtherwanPortDesc" ng-if="showNoWanPortsNote()"></div><div nw-field nw-label="wan_name_connection" nw-required nw-disabled="customRules.DisableWANName || isTatTRConn || needDisableAll" ng-hide="customRules.HideWANName"><input ng-model="conn.Name" nw-name="{{isFirewallMode ? 52 : null}}" nw-custom-valid="validateName(value)"></div><div nw-labeled-switch nw-label="wan_enable_connection" nw-model="conn.Enable" nw-disabled="customRules.DisableWANEnable || isTatTRConn || needDisableAll" ng-hide="customRules.HideWANEnable"></div><div nw-labeled-switch nw-label="wan_usb_interface_only" nw-model="conn.InterfaceOnly" nw-disabled="conn.IsBridged || conn.UseAsRoute || conn.IsBased || conn.isUseInMirror || isBase()" nw-change="changeRealConnState()" ng-if="!autoconf.BR2_PACKAGE_ANWEB_WAN_USB_HIDE_IFACE_ONLY && common.contype === 'mobileinet'"></div><div class="note" ng-bind-html="getUSBIfaceNote()" ng-if="!autoconf.BR2_PACKAGE_ANWEB_WAN_USB_HIDE_IFACE_ONLY && common.contype === 'mobileinet'"></div><div ng-if="!isFirewallMode" ng-hide="common.contype == 'dynipv6' ||
+			 common.contype == 'statipv6' ||
+			 common.contype == 'pppoev6' ||
+			 common.contype == 'bridge' ||
+			 common.contype == '6to4' ||
+			 common.contype == '6rd' ||
+			 common.contype == '6in4' ||
+			 conn.Flags.NATHide ||
+			 customRules.HideWANNAT"><div nw-labeled-switch nw-label="NAT" nw-model="conn.Flags.NAT" nw-disabled="isTatTRConn || needDisableAll"></div><div class="note" ng-bind="'wan_nat_note' | translate"></div></div><div ng-if="autoconf.BR2_PACKAGE_ANWEB_SUPPORT_NATV6 &&
+		   !isFirewallMode" ng-hide="(
+				common.contype != 'mobileinet' &&
+				common.contype != 'dynipv6' &&
+				common.contype != 'statipv6' &&
+				common.contype != 'pppoev6' &&
+				common.contype != 'pppoedual' &&
+				common.contype != 'l2tpdual'
+			 ) || conn.Flags.NATv6Hide"><div nw-labeled-switch nw-label="NATv6" nw-model="conn.Flags.NATv6" nw-disabled="isTatTRConn || needDisableAll"></div><div nw-field ng-if="autoconf.BR2_PACKAGE_ANWEB_DSYSINIT && 
+						conn.RequestPrefixes != 'None' &&
+						common.contype != 'mobileinet' &&
+						common.contype != 'statipv6'"><div alert="info">{{ 'wan_natv6_pd_warning' | translate }}</div></div><div class="note" ng-bind="'wan_nat_note' | translate"></div></div><div ng-if="!isFirewallMode" ng-hide="common.contype == 'l2tpoveripsec' ||
+			 common.contype == 'bridge' ||
+			 autoconf.BR2_PACKAGE_ANWEB_BCM ||
+			 autoconf.BR2_PACKAGE_ANWEB_CUSTOM_PARTNER_23078 ||
+			 autoconf.BR2_PACKAGE_ANWEB_CUSTOM_PARTNER_39065 ||
+			 conn.Flags.PingHide || customRules.HideWANPing"><div nw-labeled-switch nw-label="Ping" nw-model="conn.Flags.Ping" nw-disabled="isTatTRConn || needDisableAll"></div><div class="note" ng-bind="'wan_ping_note' | translate"></div></div><div nw-labeled-switch nw-label="RIP" nw-model="conn.Flags.RIP" ng-if="autoconf.BR2_PACKAGE_ANWEB_SUPPORT_RIP &&
+		   (
+				autoconf.BR2_PACKAGE_ANWEB_RESIDENT &&
+				common.contype != 'lte'
+				||
+				autoconf.BR2_PACKAGE_ANWEB_DSYSINIT &&
+				!isFirewallMode &&
+				common.isIpv4 &&
+				common.contype != 'ipipv6'
+		   )" ng-hide="common.contype == 'bridge' || customRules.HideWANRIP" nw-disabled="isTatTRConn || needDisableAll"></div><div nw-labeled-switch nw-label="RIPng" nw-model="conn.Flags.RIPng" ng-if="autoconf.BR2_PACKAGE_ANWEB_DSYSINIT &&
+		   autoconf.BR2_PACKAGE_ANWEB_SUPPORT_RIPNG &&
+		   !isFirewallMode &&
+		   common.isIpv6 &&
+		   common.contype != '6to4' &&
+		   common.contype != '6rd'" nw-disabled="needDisableAll"></div></body></html>

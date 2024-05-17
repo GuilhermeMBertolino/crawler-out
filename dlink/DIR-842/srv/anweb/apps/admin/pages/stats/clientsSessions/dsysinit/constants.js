@@ -1,0 +1,1 @@
+"use strict";!function(){angular.module("app").constant("statsClientsConstants",{clients:"Device.Statistics.Neighbours.",interfaces:"Device.Network.Interface.",routes:"Device.Routing.IPv4.Routes.",switchPath:"Device.Switch."})}();

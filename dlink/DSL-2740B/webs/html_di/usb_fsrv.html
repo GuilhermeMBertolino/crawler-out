@@ -1,0 +1,575 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+function stDIS(um) {
+	//document.tF0.computerName.disabled=um;
+	//document.tF0.computerDescription.disabled=um;
+	//document.tF0.groupName.disabled=um;
+	//document.tF0.remoteEnable.disabled=um;
+}
+
+function changeEnb() {
+	if (document.forms[0].smbEnable.checked)
+		stDIS(false);
+	else
+		stDIS(true);
+}
+function btnCancel(){
+	var loc= 'usb_fsrv.html';
+    var code = 'location=\"' + loc + '\"';
+    eval(code);
+}
+
+function click_edit(userId){
+	alert(userId);
+	var loc= 'smb_cfg.cmd?action=edit';
+	loc += '&userId=' + userId;
+    var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function click_add(){
+	var loc= 'smb_cfg.cmd?action=add';
+    var code = 'location=\"' + loc + '\"';
+    eval(code);
+}
+
+function click_delete(usrId){
+	var loc= 'smb_cfg.cmd?action=remove';
+	loc += '&userId=' + usrId;
+    var code = 'location=\"' + loc + '\"';
+    eval(code);
+}
+
+function stZrk() {
+	top.frames[2].location.href = "usb_fsrv.html";
+}
+var profile_num=5;
+var enb_value=new Array(5);
+var partition_value=new Array(5);
+var disk_value=new Array(5);
+var user_value=new Array(5);
+var pathValue=new Array(5);
+//var preSmbEnb = 1;
+var preSmbEnb = '<%ejGet(smb_enable)%>';
+var servername = '<%ejGet(smb_servername)%>';
+var serverdesc = '<%ejGet(smb_serverdesc)%>';
+var servergroup = '<%ejGet(smb_servergroup)%>';
+
+var smb_user_info = '<%ej_get_smb_user()%>';
+var entrys = smb_user_info.split('|');
+
+var entryNum = entrys.length - 1;
+
+var rule = new Array(profile_num);
+
+for (i = 0; i < profile_num; i++)
+{
+	rule[i] = new rVe('','');
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('&');
+	rule[j] = new rVe(entry[0], entry[1], entry[2]);
+}
+
+function rVe(userId, path, enable)
+{
+   this.userId = userId;   this.path = path; 
+   this.enable = enable;
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	user_value[j] = rule[j].userId;
+	pathValue[j] = rule[j].path;
+	enb_value[j] = rule[j].enable;
+}
+
+
+
+function evaltF() {
+	var strTmp1, strTmp2, i, enbIdx;
+    
+	var loc= 'smb_cfg.cmd?action=save';
+
+	if (document.forms[0].smbEnable.checked == false){
+		loc += '&smb_enable=' + 0;
+	}
+	else {
+		loc += '&smb_enable=' + 1;
+	}
+	
+	if (isBlank(document.tF0.computerName.value)) {
+		alert('Please enter the Server Name');
+		document.tF0.computerName.focus();
+		return false;
+	}
+	if (isInvalidDomain(document.tF0.computerName.value, "Server Name")) {
+		document.tF0.computerName.focus();
+		return false;
+	}	
+	loc += '&servername=' + document.tF0.computerName.value;
+	
+	if (isSpecialChar2(document.tF0.computerDescription.value, "Server Description")) {
+		document.tF0.computerDescription.focus();
+		return false;
+	}
+	loc += '&serverDesc=' + document.tF0.computerDescription.value;
+	
+	if (isBlank(document.tF0.groupName.value)) {
+		alert('Please enter the Group Name');
+		document.tF0.groupName.focus();
+		return false;
+	}
+	if (isInvalidDomain(document.tF0.groupName.value, "Group Name")) {
+		document.tF0.groupName.focus();
+		return false;
+	}
+	strTmp1 = document.tF0.computerName.value;
+	strTmp2 = document.tF0.groupName.value;
+	document.tF0.computerName.value = strTmp1.toUpperCase();
+	document.tF0.groupName.value = strTmp2.toUpperCase();
+	if (document.tF0.computerName.value == document.tF0.groupName.value) {
+		alert('The Server Name and the Group Name may not be the same.\nPlease change your input for the Server Name or the Group Name.');
+		document.tF0.computerName.focus();
+		return false;
+	}
+     loc += '&groupName=' + document.tF0.groupName.value;
+	// check folder disable from enable state
+	if (diskNum > 0) {
+		strTmp1 = '';
+		for (i = 2 ; i < shareMaxNum ; i++) {
+			strTmp2 = 'enb'+i;
+			enbIdx = getElementsByFieldName(document.tF0, strTmp2);
+			if ((shEnable[i] == 1) && (document.tF0.elements[enbIdx].checked == false)) {
+				if (strTmp1 != '') strTmp1 += ', ';
+				strTmp1 += shName[i];
+			}
+		}
+		if (strTmp1 != '') {
+			if (confirm('You\'ve tried to disable these folders:\n'+strTmp1+'.\nPlease make sure no any user are connecting to these sharing folders. Unexpect disconnect could result client user file crash or system hang-up. Do you really want to continue ?') == false) {
+				return false;
+			}
+		}
+	}
+
+    //var code = 'location=\"' + loc + '\"';
+	var code = 'location="' + loc + '"';
+	eval(code);	
+
+}
+
+var shareMaxNum = 0;
+var volMaxNum = 0;
+var mountMaxNum = 0;
+var diskMaxNum = 0;
+var prMaxNum = 0;
+var ftpUerNum = '<%ej_get_ftp_number(usernum)%>';
+var diskNum = '<%ejGet(disknum)%>';
+var part_num = '<%ejGet(partitions)%>';
+var drive_Info = '<%ejGet(vendor)%>' + '(<%ejGet(model)%>)';
+var usb_ms_vendor = '<%ejGet(vendor)%>';
+var usb_ms_model = '<%ejGet(model)%>';
+var usb_ms_type = '<%ejGet(fstype)%>';
+if (usb_ms_type == 'vfat')
+	usb_ms_type = 'FAT32';
+var prNum = 0;
+var prUINum = 0;
+var cpName = '';
+var gpName = '';
+var preSmbEnb;
+var ftpMaxNum = 0;
+shareMaxNum = 18;
+volMaxNum = 7;
+mountMaxNum = 4;
+cpName = 'DLINK';
+gpName = 'DLINKGROUP';
+prMaxNum = 1;
+
+
+
+var mountNum;
+var shEnable = new Array(shareMaxNum);
+var shDisk = new Array(shareMaxNum);
+var shVol = new Array(shareMaxNum);
+var shName = new Array(shareMaxNum);
+var shPathStr = new Array(shareMaxNum);
+
+var	resStartIdx = new Array(volMaxNum+1);
+var	resEndIdx = new Array(volMaxNum+1);
+var	volLabelMix = new Array(volMaxNum+1);
+var	volLabel = new Array(volMaxNum+1);
+var	volSerial = new Array(volMaxNum+1);
+var	volType = new Array(volMaxNum+1);
+var	volTypeID = new Array(volMaxNum+1);
+var	volID = new Array(volMaxNum+1);
+var	volMount = new Array(volMaxNum+1);
+var	volValid = new Array(volMaxNum+1);
+var	volSize = new Array(volMaxNum+1);
+var	volFree = new Array(volMaxNum+1);
+var	partInfo = new Array(volMaxNum+1);
+
+shEnable[0] = 0;
+shDisk[0] = 0;
+shVol[0] = 0;
+shName[0] = 'Printer';
+shPathStr[0] = '';
+shEnable[1] = 0;
+shDisk[1] = 0;
+shVol[1] = 0;
+shName[1] = 'Disk_Array';
+shPathStr[1] = '\\';
+shEnable[2] = 1;
+shDisk[2] = 0;
+shVol[2] = 1;
+shName[2] = 'DISK_IMG';
+shPathStr[2] = '\\';
+shEnable[3] = 0;
+shDisk[3] = 0;
+shVol[3] = 0;
+shName[3] = '';
+shPathStr[3] = '\\';
+shEnable[4] = 0;
+shDisk[4] = 0;
+shVol[4] = 0;
+shName[4] = '';
+shPathStr[4] = '\\';
+shEnable[5] = 0;
+shDisk[5] = 0;
+shVol[5] = 0;
+shName[5] = '';
+shPathStr[5] = '\\';
+shEnable[6] = 0;
+shDisk[6] = 0;
+shVol[6] = 0;
+shName[6] = '';
+shPathStr[6] = '\\';
+shEnable[7] = 0;
+shDisk[7] = 0;
+shVol[7] = 0;
+shName[7] = '';
+shPathStr[7] = '\\';
+shEnable[8] = 0;
+shDisk[8] = 0;
+shVol[8] = 0;
+shName[8] = '';
+shPathStr[8] = '\\';
+shEnable[9] = 0;
+shDisk[9] = 0;
+shVol[9] = 0;
+shName[9] = '';
+shPathStr[9] = '\\';
+shEnable[10] = 0;
+shDisk[10] = 0;
+shVol[10] = 0;
+shName[10] = '';
+shPathStr[10] = '\\';
+shEnable[11] = 0;
+shDisk[11] = 0;
+shVol[11] = 0;
+shName[11] = '';
+shPathStr[11] = '\\';
+shEnable[12] = 0;
+shDisk[12] = 0;
+shVol[12] = 0;
+shName[12] = '';
+shPathStr[12] = '\\';
+shEnable[13] = 0;
+shDisk[13] = 0;
+shVol[13] = 0;
+shName[13] = '';
+shPathStr[13] = '\\';
+shEnable[14] = 0;
+shDisk[14] = 0;
+shVol[14] = 0;
+shName[14] = '';
+shPathStr[14] = '\\';
+shEnable[15] = 0;
+shDisk[15] = 0;
+shVol[15] = 0;
+shName[15] = '';
+shPathStr[15] = '\\';
+shEnable[16] = 0;
+shDisk[16] = 0;
+shVol[16] = 0;
+shName[16] = '';
+shPathStr[16] = '\\';
+shEnable[17] = 0;
+shDisk[17] = 0;
+shVol[17] = 0;
+shName[17] = '';
+shPathStr[17] = '\\';
+volLabelMix[0] = 'No Disk';
+volID[0] = 0;
+volValid[0] = true;
+volLabelMix[0] = 'DISK_IMG (FAT16)';
+volLabel[0] = 'DISK_IMG';
+volSerial[0] = '2DED-7A00';
+volType[0] = 'FAT16';
+volValid[0] = true;
+volSize[0] = '1.93 GB';
+volFree[0] = '1.84 GB';
+volID[0] = 1;
+volTypeID[0] = 6;
+volMount[0] = 1;
+partInfo[0] = 'DISK_IMG (1.93 GB, 1.84 GB free, FAT16)';
+
+
+
+mountNum = 1;
+
+
+
+
+function disFolderHandler(foldId) {
+	// check user want to disable some folder share, need warning user
+	if (shEnable[foldId] == 1) {
+		if (confirm('Before you disable this share folder. Please make sure no any user is connecting to this share folder. Unexpect disconnect could result client user file crash or system hang-up. Do you really want to continue ?') == false) {
+			return false;
+		}
+	}
+
+	// submit disable process
+	document.tF0.delFolder.value = foldId;
+	document.tF0.submit();
+	return true;
+}
+
+function setFirstLoad() {
+
+	document.tF0.groupName.value=servergroup;
+	document.tF0.computerName.value=servername;
+	document.tF0.computerDescription.value=serverdesc;
+	document.tF0.remoteEnable.checked=0;
+	if (preSmbEnb == 0)
+		stDIS(true);
+	else
+		stDIS(false)
+}
+
+ //done hiding -->
+</SCRIPT>
+<link rel="stylesheet" type="text/css" media="screen" href="wftp.css">
+</HEAD>
+<BODY onload="setFirstLoad()">
+<BLOCKQUOTE>
+
+<SCRIPT language=JavaScript>
+TabHeader="Setup";
+SideItem="USB Setup";
+HelpItem="usb";
+</SCRIPT>
+
+<SCRIPT type=text/javascript>
+mainTableStart();	
+logo();
+TopNav();
+ThirdRowStart();
+Write_Item_Images();
+mainBodyStart();
+</SCRIPT>
+
+  <FORM name="tF0">
+  <TABLE id=box_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>File Server</TD></TR>
+    <TR>
+      <TD class=content>
+        <P>
+This page allows for configuration of the File Server features so as to share files with desktops/laptops
+			using Windows? 95, 98, NT 4.0, 2000, XP or other OS supporting NetBIOS/SMB protocol. 
+			If you have a hard drive or flash disk connected to the modem's USB port, you may create a sharing folder 
+			by specifying which device and directory(path) you would like to share. 
+			Then set some other parameters: username, password and security level for each shared resource.
+			<br>
+			After you've configured the folders and enabled the File Server function, you could access the folders 
+			by typing the following URL in the IE browser or Windows Explorer:
+			<br><br>		</P>
+		</TD></TR></TBODY></TABLE>
+  <TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>USB Interface</TD></TR>
+    <TR>
+     <TD class=content>
+        <P>
+				
+			</p>
+
+			<table border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+					<p class=normalText>\\(IP-Adresse).</p>
+					<p class=normalText>\\(Server Name).</p>
+					<p class=normalText>\\(IP-Adresse)\(Folder name).</p>
+					<p class=normalText>\\(Server Name)\(Folder name).&nbsp;&nbsp;</p>
+				</td>
+				<td>
+					<p class=normalText>Ex.: \\10.1.1.1</p>
+					<p class=normalText>Ex.: \\DLINK</p>
+					<p class=normalText>Ex.: \\10.1.1.1\partition1</p>
+					<p class=normalText>Ex.: \\DLINK\partition1</p>
+				</td>
+			</tr>
+			</table>
+			<br>If you would like to access the USB storage from the WAN side, you need to enable the "Remote Access" parameter and can only use the WAN IP address to access the modems file server.
+			</p>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<p class="normalText"><input type="checkbox" name="smbEnable" value=1>&nbsp;&nbsp;Enable File Server function<p>
+			<script LANGUAGE="JavaScript">
+				if (preSmbEnb == 1)
+					document.forms[0].smbEnable.checked = true;
+				else
+					document.forms[0].smbEnable.checked = false;
+			</script>
+			<table border="0" cellspacing="1" cellpadding="5" width=80%>
+			<tr>
+				<td class=tdTitler>Server Name</td>
+				<td class=tdText>
+					<input type="text" class="textbox_180_nb" name="computerName" size="25" maxlength="13">
+				</td>
+			</tr>
+			<tr>
+				<td class=tdTitler>Server Description</td>
+				<td class=tdText>
+					<input type="text" class="textbox_180_nb" name="computerDescription" size="25" maxlength="39">
+				</td>
+			</tr>
+			<tr>
+				<td class=tdTitler>Group Name</td>
+				<td class=tdText>
+					<input type="text" class="textbox_180_nb" name="groupName" size="25" maxlength="13">
+				</td>
+			</tr>
+			<tr>
+				<td class=tdTitler>Remote Access</td>
+				<td class=tdText>
+					<input type="checkbox" name="remoteEnable" value=1>
+				</td>
+			</tr>
+			<!--
+			<script language="javascript">
+				document.tF0.groupName.value="DLINKGROUP";
+document.tF0.computerName.value="DLINK";
+document.tF0.computerDescription.value="File Server";
+document.tF0.remoteEnable.checked=false;
+
+
+				if (preSmbEnb == 1)
+					stDIS(false);
+				else
+					stDIS(true)
+			</script>-->
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<td class=normalText>
+			<script language="javascript">
+				document.write('<a name="shList">Sharing Folder List (up to '+(shareMaxNum - 2)+' folders):</a><br><br>');
+				if (diskNum > 0) {
+					var didx, enbStr, empIdx = -1;
+					document.write('<table border="0" cellspacing="1" cellpadding="5" width=80%>');
+					document.write('<tr><td class=tdTitler>Sharing Folder</td><td class=tdTitler>Path</td>\n');
+					for (i = 2 ; i < shareMaxNum ; i++) {
+						if (shName[i] == '') {
+							if (empIdx == -1) empIdx = i;
+							continue;
+						}
+						document.write('<tr>');
+						if (shEnable[i] == 1)
+							enbStr = 'checked';
+						else
+							enbStr = '';
+						document.write('<td class=tdText><input type="checkbox" name=enb',i,' value=1 ',enbStr,'>&nbsp;&nbsp;'+shName[i]+'</td>');
+						didx = shDisk[i];
+						document.write('<td class=tdText>Device: '+drive_Info+'<br>Volume: '+usb_ms_type+'<br>Path: '+shPathStr[i]+'</td>');
+						//document.write('<td class=tdText><input type="button" class="formsbutton" name="editb" value="Edit" onclick="javascript:window.location.replace(\'/usb_fsrv_f.html/'+i+'\');">&nbsp;');
+						//if (shName[i] != '')
+						//	document.write('<a href=" " onclick="javascript:void(disFolderHandler('+i+'));" class="button87b_0margin"><input type="button" class="formsbutton" name="deletedb" value="Delete"></a>');
+						document.write('</td></tr>');
+					}
+					//if (empIdx != -1) {
+					//	document.write('<tr><td class=tdText colspan=2>&nbsp;</td>');
+					//	document.write('<td class=tdText><input type="button" class="formsbutton" name="addb" value="Add" onclick="click_add();");"></td></tr>');
+					//}
+					document.write('</table>');
+				}
+				//else document.write('<font color=red>No any USB mass storage connected !</font>\n');
+			</script>
+			
+			
+		</td>
+	</tr>
+	<tr><td>
+			<table border="0" cellspacing="1" cellpadding="5" width=80%>
+		<tr>
+			<td class=tdTitler>UserName</td>
+			<td class=tdTitler>Path</td>
+			<td class=tdTitler>Configure</td>
+		</tr>
+		<SCRIPT language="javascript">
+			if (diskNum > 0) {
+				var dIdx, empIdx = -1;
+				for (i = 0 ; i < entryNum ; i++) {
+					if (user_value[i] == '') {
+						if (empIdx == -1) empIdx = i;
+						continue;
+					}
+					if (enb_value[i] == 1)
+						enbStr = 'checked';
+					else
+						enbStr = '';
+					document.write('<tr><td class=tdText><input type="checkbox" name=ftp_enable',i,' value=1 ',enbStr,'>&nbsp;&nbsp;'+user_value[i]+'</td>');
+					//dIdx = disk_value[i];
+					document.write('<td class=tdText>Device: '+drive_Info+'<br>Volume: '+usb_ms_type+'<br>Path: '+pathValue[i]+'</td>');
+					//var aa_value = user_value[i];
+					document.write('<td class=tdText><input type="button" class="formsbutton" name="edit',i,'" value="Edit" onclick="window.location.href=\'smb_cfg.cmd?action=edit&username='+user_value[i]+'\'">&nbsp;');					
+					if ((user_value[i] != 'anonymous'))
+						document.write('<input type="button" class="formsbutton" name="delete',i,'" value="Delete" onclick="window.location.href=\'smb_cfg.cmd?action=remove&username='+user_value[i]+'\'">');
+					document.write('</td></tr>');
+				}
+				if (smb_user_info =='')  {
+					document.write('<tr><td class=tdText colspan=2>&nbsp;</td>');
+					document.write('<td class=tdText><input type="button" class="formsbutton" name="addb" value="Add" onclick="click_add();"></td></tr>');					
+				}
+			}
+			else document.write('<tr><td class=tdTitle colspan=3><font color=red>No any USB mass storage connected !</font></td></tr>');
+		</SCRIPT>
+		</table>
+				<!--<P align=center><a href="javascript:document.forms[0].submit()" onClick="return evaltF();" class="button87b"><input type="button" class="formsbutton" name="savesetting" value="SAVE SETTINGS"></a>-->
+				<!---<td><a href=''><input type="button" class="formsbutton" name="cancelb" value="CANCEL" onClick='btnCancel()'></P>-->
+    <!--    <P align=center><INPUT onclick=atmcfg() type=button value="ATM Interface"></P>-->
+		</TD></TR></TBODY></TABLE>
+  <!--<TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>ETH interface</TD></TR>
+    <TR>
+      <TD class=content>
+        <P>use ETH to configure you wan interface.</P>
+
+          <P align=center><INPUT onclick=ethcfg() type=button value="ETH Interface"></P>
+		  
+         </TD></TR></TBODY></TABLE>-->
+				<P align=center><INPUT onclick='evaltF()' type=button class="formsbutton"  name="savesetting" value="SAVE SETTINGS">
+				<INPUT onclick='btnCancel()' type=button class="formsbutton"  name="cancelb" value="CANCEL"></P>		 
+</FORM>
+ <SCRIPT type=text/javascript>
+mainBodyEnd();
+ThirdRowEnd();
+Footer()
+mainTableEnd()
+</SCRIPT>
+</BLOCKQUOTE></BODY></HTML>

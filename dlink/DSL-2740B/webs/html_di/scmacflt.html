@@ -1,0 +1,760 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, bridge)%>';
+//var interfaceInfo = 'br_0_0_35/atm0';
+var interfaces = interfaceInfo.split('|');
+var ifCount = 0;
+
+var doEdit = false;
+var editId;
+
+var iptSchedule = '1';
+
+var i = 0;
+var j = 0;
+var macPolicy = '<%ejGetOther(wanInterfaceInfo,macPolicy)%>';
+//var macPolicy = 'eth0,FORWARD';
+var macEntrys = macPolicy.split('|');
+var macNum = macEntrys.length;
+if(macPolicy=='') macNum =0;
+var macRule = new Array(macNum);
+
+function uVe(bridgeIfc, policy)
+{
+	this.bridgeIfc = bridgeIfc;
+	this.policy = policy;
+}
+
+for (i = 0; i < macNum; i++)
+	macRule[i] = new uVe('',0,'');
+
+for (i = 0; i < macNum; i++)
+{
+	entry = macEntrys[i].split(',');
+	macRule[i] = new uVe(entry[0], entry[1]);
+}	
+
+var doEdit = false;
+
+//Frederick,061206	add addition of iptable rule
+var iptSchedule = '1';
+
+function btnApply() {
+if(doEdit == false){
+   var loc = 'scmacflt.cmd?action=add';
+   }else{
+   var loc = 'scmacflt.cmd?action=edit';
+   }
+   var okChk = 0;
+   
+   with ( document.forms[1] ) {
+      loc += '&protocol=' + protocol.value;
+	  if ( isValidName(txtfltname.value,"Bridge filter name") == false ) return;
+	  // Bridge filter name
+      loc += '&fltName=' + encodeUrl(txtfltname.value);
+      if (destMac.value != '') {
+         if (isValidMacAddress(destMac.value,IS_MAC_FLT,"Destination Mac Address") == false ) return;
+         loc += '&destMac=' + destMac.value;
+      }
+      if (srcMac.value != '') {
+         if (isValidMacAddress(srcMac.value,IS_MAC_FLT) == false || srcMac.value == 'ff:ff:ff:ff:ff:ff' ) {
+            alert('MAC address "' + srcMac.value + '" is invalid. Eg. 11:22:33:AA:BB:CC');
+            return;
+         }
+         loc += '&srcMac=' + srcMac.value;
+      }
+      if (protocol.value == 0 && destMac.value == '' && srcMac.value == '') {
+         alert('There are three condition: Protocol Type, Destination MAC Address, Source MAC Address. At least one  of three condition must be specified.');
+         return;
+      }
+      if (ifCount == 1) {
+         if (ifChk.checked)
+            okChk = 1;
+      }
+      else {
+         for (i = 0; i < ifCount; i++) 
+            if (ifChk[i].checked)
+               okChk++;
+      }
+      if (!okChk) {
+         alert('At least one configured Bridge interface must be selected.');
+         return;
+      }    
+      loc += '&wanIf=';
+
+         var first = true;
+	 if (ifCount == 1)
+	    loc += ifChk.value
+	 else {
+           for (i = 0; i < ifCount; i++)
+            if (ifChk[i].checked) {
+               if (!first)
+                  loc += '|';
+               loc += ifChk[i].value;
+               first = false;
+            }
+	 }   
+
+
+	//Frederick,061206	add iptable schedule option
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptSchedItem.selectedIndex;
+		var iptval = iptSchedItem.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+
+      loc += '&direction=' + direction.value;
+   }
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function toggle(cb) {
+   var chkCount = 0;
+   with ( document.forms[1] ) {
+      if (ifCount == 1)
+         chkAll.checked = cb.checked;
+      else {      
+         for (i = 0; i < ifCount; i++)
+            if (ifChk[i].checked)
+               chkCount++;
+         if (chkCount == ifCount)
+            chkAll.checked = true;
+         else
+            chkAll.checked = false;
+      }
+   }
+}
+
+function toggleIfs() {
+   var chkStatus = false;
+   with ( document.forms[1] ) {
+      if (chkAll.checked)
+         chkStatus = true;
+      if (ifCount == 1){
+         ifChk.checked = chkStatus;
+		 if (chkStatus == true)
+         	ifChk.disabled  = true;
+      else
+            ifChk.disabled  = false;
+      }else
+         for (i = 0; i < ifCount; i++){
+            ifChk[i].checked = chkStatus;
+            if (chkStatus == true)
+                ifChk[i].disabled  = true;
+            else
+                ifChk[i].disabled  = false;
+        }
+   }
+}
+
+function btnCancel(){
+    with ( document.forms[1] ) {
+		fltrAddInfo.style.display = 'none';
+		removeFltr.disabled = 0;
+		addFltr.disabled = 0;
+		editFltr.disabled = 0;
+	}
+
+	switchIfc(0);
+}
+
+function btnBack(){
+   var loc = 'scmacflt.cmd?action=view';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+function clearFields(){
+	var chkStatus = false;
+    with ( document.forms[1] ) {
+	protocol.selectedIndex = 0;
+	destMac.disabled = 0;
+	srcMac.disabled = 0;
+	protocol.disabled = 0;
+	direction.disabled = 0;
+	txtfltname.value = destMac.value = srcMac.value = "";
+	direction.selectedIndex = 0;
+	iptSchedItem.selectedIndex = 0;
+	chkAll.checked = true;
+	chkAll.disabled  = false;
+	if (ifCount == 1){
+         ifChk.checked = chkStatus;
+		 if (chkStatus == true)
+         	ifChk.disabled  = true;
+      else
+            ifChk.disabled  = false;
+      }else
+         for (i = 0; i < ifCount; i++){
+            ifChk[i].checked = chkStatus;
+            if (chkStatus == true)
+                ifChk[i].disabled  = true;
+            else
+                ifChk[i].disabled  = false;
+        }
+	}
+}
+
+function addClick(){
+
+	switchIfc(0);
+
+    with ( document.forms[1] ) {
+		fltrAddInfo.style.display = 'block';
+		removeFltr.disabled = 1;
+		addFltr.disabled = 1;
+		editFltr.disabled = 1;
+		txtfltname.disabled = 0;
+		clearFields();doEdit = false;
+		toggleIfs();
+	}
+}
+
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  var hasChecked = false;
+
+  var tmpPVC;
+  var tmpProtocol;
+  var tmpDestMAC;
+  var tmpSrcMac;
+  var tmpFrameDir;
+  var tmpSched;
+  var tmpName;
+  
+  switchIfc(1);
+
+with ( document.forms[1] ) {
+
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+			hasChecked = true;
+			tmpName = document.getElementById( "lblName" + i).innerHTML;
+        		checkedCount++;
+			showEdit(i);	
+      		}
+		}
+
+	} else if (rml.checked == true){
+		tmpName = document.getElementById( "lblName" + 0).innerHTML;
+		hasChecked = true;
+   		checkedCount++;
+		showEdit(0);	
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+
+		fltrAddInfo.style.display = 'block';
+		removeFltr.disabled = 1;
+		addFltr.disabled = 1;
+		editFltr.disabled = 1;
+		txtfltname.disabled = 1;
+		txtfltname.value = tmpName;
+		//destMac.disabled = 1;
+		//srcMac.disabled = 1;
+		//protocol.disabled = 1;
+		//direction.disabled = 1;
+		
+}
+  doEdit = true;
+}
+
+//show the entry to be edited
+function showEdit(index){
+
+with ( document.forms[1] ) {
+
+		destMac.value = rule[index].dstMac;
+		srcMac.value = rule[index].srcMac;
+		if (rule[index].wanIfc == 'ALL'){
+			chkAll.checked = true;
+			toggleIfs();
+		} else {
+			chkAll.checked = false;
+			chkAll.disabled = 1;
+			if (ifCount == 1){
+				if (ifChk.value == rule[index].wanIfc)
+					ifChk.checked = true;
+				ifChk.disabled = 1;
+			} else {
+				for (i = 0; i < ifCount; i++){
+	        		if (ifChk[i].value == rule[index].wanIfc) {
+		               ifChk[i].checked = true;
+					} else
+	    	           ifChk[i].checked = false;
+			    ifChk[i].disabled = 1;
+	        	}
+			}
+		}		
+		for (i = 0; i < direction.length; i++){
+			if (direction[i].value == rule[index].direction){
+				direction.selectedIndex = i;
+				break;
+			}
+		}
+		for (i = 0; i < protocol.length; i++){
+			if (protocol[i].value == rule[index].proto){
+				protocol.selectedIndex = i;
+				break;
+			}
+		}		
+		for(j = 0 ; j < iptSchedItem.length; j ++){ 
+			if(iptSchedItem[j].value == rule[index].schedule) {
+				iptSchedItem.selectedIndex = j;
+				return;	
+			}
+		}		
+  }
+}
+
+/*mode 0: add, mode 1: edit*/
+function switchIfc(mode){
+
+	with ( document.forms[1] ) {
+		
+		id_dropIfc.style.display = 'none';
+		id_radioIfc.style.display = 'none';
+
+		//if (mode == 0)
+			id_radioIfc.style.display = 'block';
+		//else
+		//	id_dropIfc.style.display = 'block';
+
+	}
+}
+
+function chgPolicy() {
+   var loc = 'scmacpolicy.html';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+
+//aids, 060912 fix to unify all remove behavior.
+var has_selected_items = false;
+     with ( document.forms[1] ) {
+     if (rml)
+  {
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true ){
+			has_selected_items=true;
+            lst += rml[i].value + ', ';
+		 }
+      }
+   else if ( rml.checked == true ){
+	  has_selected_items=true;
+      lst = rml.value;
+   }
+}
+}
+	if (has_selected_items){
+   		var loc = 'scmacflt.cmd?action=remove&rmLst=' + lst;
+   		var code = 'location=\"' + loc + '\"';
+   		eval(code);
+	}
+	else{
+		alert("There are no items to remove!");
+		return;
+}
+}
+/*
+function frmLoad(){
+
+	with ( document.forms[0] ) {
+		if (macP == 0){
+			macFltGP1.checked = true;
+			macFltGP2.checked = false;
+		} else {
+			macFltGP2.checked = true;
+			macFltGP1.checked = false;
+		}
+	}
+}
+*/
+
+function doRefresh() {
+   var loc = 'scmacflt.html';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+
+function btnYes(rml) {
+   	var i;
+  	var hasChecked = false;
+	var code;
+   	var policy;
+
+
+	with ( document.forms[0] ) {
+		code = 'location="' + 'scmacflt.cmd?action=changemp&changeLst=' ;
+  		if (rml)
+  		{		
+			if (rml.length > 0){
+				for (i = 0; i < rml.length; i++)
+    				{
+      					if(rml[i].checked == true)
+      					{
+						hasChecked = true;
+						code +=  macRule[i].bridgeIfc + ", ";
+      					}
+				}
+
+			} else if (rml.checked == true){
+				hasChecked = true;
+				code +=  macRule[0].bridgeIfc + ", ";
+		}
+
+    		
+ 	 }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+	var response = confirm('Change bridge filtering global policy will remove all bridge filter rules listed below.\nPress "OK" to change policy or "Cancel" to keep current bridge filter rules.');
+
+   if (response)   {
+   
+	code += '"';
+	 eval(code);
+   }
+   }
+  
+	
+   
+
+}
+// done hiding -->
+</script>
+	<script language="JavaScript" src="menu.js"></script>
+   </head>
+<form>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Filtering Options";
+HelpItem="macfilteradd";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Bridge Filtering
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<P>Bridge Filtering is only effective on ATM PVCs configured in Bridge mode. 
+				<font color=green><b>ALLOW</b></font> means that all MAC layer frames will be 
+				<font color=green><b>ALLOWED</b></font> except those matching with any of the 
+				specified rules in the following table. <font color=red><b>DENY</b></font> means 
+				that all MAC layer frames will be <font color=red><b>DENIED</b></font> except those 
+				matching with any of the specified rules in the following table.</p>
+				<p>
+				Create a filter to identify the MAC layer frames by specifying at least one 
+               condition below. If multiple conditions are specified, all of them take effect. 
+               Click "Apply" to save and activate the filter.</p>				
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Bridge Filtering Policy(<font color=red><b>Configured in Bridge mode only</b></font>)
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+				<p>	FORWARD:<b><font color='green'>ALLOW</font></b> all packets but <b><font color='red'>DENY</font></b> those matching any of specific rules listed</p>	
+				<p>	BLOCKED:<b><font color='green'>DENY</font></b> all packets but <b><font color='red'>ALLOW</font></b> those matching any of specific rules listed</p>	
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<div class=overflow><table class=formlisting><tr class=form_label_row><td class='form_label_col' width='10%'>&nbsp;</td><td class='form_label_col' width='80%'><label width='200px'>Bridge Interface</label></td>
+      <td class='form_label_col' width='10%'>Policy</td>
+</tr>
+
+<script language=javascript>
+for(i = 0; i< macNum; i++)
+document.write("<tr class=form_label_row><td class='form_label_col'><input type='checkbox' name='rml' value='" + macRule[i].bridgeIfc + "'></td><td>"+macRule[i].bridgeIfc+"</td><td class='form_label_col'>" + macRule[i].policy +"</td></tr>");
+</script>
+
+</table></center><br><br><center></div>
+</td>
+	</tr>
+</table>
+<p align=center><input type='button' onClick='btnYes(this.form.rml)' value='Change Policy'><input type='button' onClick='doRefresh()' value='Cancel'></p>
+</form>
+<form>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Bridge Filter Setup
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<center>
+<div class=overflow>
+<table class=formlisting>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Name</td>
+      <td class='form_label_col'>Interface</td>
+      <td class='form_label_col'>Protocol</td>
+      <td class='form_label_col'>Destination MAC</td>
+      <td class='form_label_col'>Source MAC</td>
+      <td class='form_label_col'>Frame&nbsp;Direction</td>
+      <td class='form_label_col'>Schedule Rule</td>
+   </tr>
+   
+
+<script language="javascript">    	
+MAX_ENTRY = 16;
+var macs = "<%ejGetOther(wanInterfaceInfo, macs)%>";
+//var macs = "wri,atm0,2,11:22:33:44:55:66,66:22:33:55:44:11,2,always";
+var entrys = macs.split('|');
+var entryNum = entrys.length;
+if(macs=="") entryNum =0;
+var rule = new Array(MAX_ENTRY);
+for (i = 0; i < MAX_ENTRY; i++)	rule[i] = new rVe('','','','','','');
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split(',');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6]);
+}
+
+function rVe(fltName, wanIfc, proto,dstMac, srcMac, direction, schedule)
+{
+   this.fltName = fltName; this.wanIfc = wanIfc;   this.dstMac = dstMac;    this.direction = direction;
+   this.proto = proto;   this.srcMac = srcMac;   this.schedule = schedule;   
+}
+
+for (i = 0; i < entryNum; i++)
+{
+    document.writeln('<tr>');     
+    var temp ;
+	temp = rule[i].fltName + '|' + rule[i].wanIfc;
+	document.writeln('<td><div align=center><input type=checkbox name=rml value='+temp+'></div></td>');
+    document.writeln('<td><div align=center id=lblName'+i+'>'+rule[i].fltName+'</div></td>'); 
+	document.writeln('<td><div align=center>'+rule[i].wanIfc+'</div></td>');          
+
+	switch(rule[i].proto){
+	case '0':document.writeln('<td><div align=center></div></td>');  break;		
+	case '1':document.writeln('<td><div align=center>PPPOE</div></td>');  break;
+	case '2':document.writeln('<td><div align=center>IPV4</div></td>');  break;
+	case '3':document.writeln('<td><div align=center>IPV6</div></td>');  break;
+	case '4':document.writeln('<td><div align=center>AppleTalk</div></td>');  break;
+	case '5':document.writeln('<td><div align=center>IPX</div></td>');  break;
+	case '6':document.writeln('<td><div align=center>NetBEUI</div></td>');  break;
+	case '7':document.writeln('<td><div align=center>IGMP</div></td>');  break;
+	}
+	
+	document.writeln('<td><div align=center>'+rule[i].dstMac+'</div></td>');       
+    document.writeln('<td><div align=center>'+rule[i].srcMac+'</div></td>');       
+	
+switch(rule[i].direction){
+	case '0':document.writeln('<td><div align=center>LAN=&gt;WAN</div></td>');  break;		
+	case '1':document.writeln('<td><div align=center>WAN=&gt;LAN</div></td>');  break;
+	case '2':document.writeln('<td><div align=center>LAN&lt;=&gt;WAN</div></td>');  break;
+	}	
+	
+    document.writeln('<td><div align=center>'+rule[i].schedule+'</div></td>');
+	document.writeln('</tr>');  
+} 
+
+</script>      
+   
+</font></table><br>
+<br></div>
+</td>
+	</tr>
+</table>
+<p align=center>
+<input type='button' id=addFltr onClick='addClick()' value='Add'>
+<input type='button' id=editFltr onClick='btnEdit(this.form.rml)' value='Edit'>
+<input type='button' id=removeFltr onClick='removeClick(this.form.rml)' value='Delete'></p>
+
+<div id=fltrAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Add Bridge Filter
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+
+               <br>   
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+			   <tr>
+                  <td class=form_label>Filter Name&nbsp;:</td>
+                  <td><input type='text' size="16" maxlength="15" name="txtfltname"></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Protocol Type&nbsp;:</td>
+                  <td><select name='protocol' size="1">
+                        <option value="0" selected>
+                        (Click to select)
+                        <option value="1">
+                        PPPoE
+                        <option value="2">
+                        IPv4
+                        <option value="3">
+                        IPv6
+                        <option value="4">
+                        AppleTalk
+                        <option value="5">
+                        IPX
+                        <option value="6">
+                        NetBEUI
+                        <option value="7">
+                        IGMP
+                        </option>
+                     </select></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Destination MAC Address&nbsp;:</td>
+                  <td><input type='text' name="destMac" size="16" maxlength="17"></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Source MAC Address&nbsp;:</td>
+                  <td><input type='text' name="srcMac" size="16" maxlength="17"></td>
+               </tr>  
+               <tr>
+                  <td class=form_label> Frame Direction&nbsp;:</td>
+                  <td><select name='direction' size="1">
+                        <option value="2" selected>
+                        LAN&lt;=&gt;WAN
+                        <option value="1">
+                        WAN=&gt;LAN
+                        <option value="0">
+                           LAN=&gt;WAN
+                        </option>
+                     </select></td>
+               </tr>
+				<tr>
+<td class=form_label>Schedule:</td>
+<td><select name="iptSchedItem">
+<option value="Always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';//tods = 'aaa|bbb|';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT><option value="Never">Never</option></select>
+
+<a href="iptschedadd.html"> View Schedule Details</a>
+            </table>
+            <br>
+            WAN&nbsp;Interfaces&nbsp;(Configured in Bridge mode only)
+            <br>
+            <br>
+            <table>
+			<tbody id='id_radioIfc'>
+               <tr>
+				<td>
+                  <input type='checkbox' name='chkAll' checked onclick='toggleIfs()'>&nbsp;&nbsp;Select&nbsp;All</td>
+               </tr>
+                  <script language="javascript">
+<!-- hide 
+{
+   var i = 0;
+   if(interfaces != "") {
+      for ( i = 0; i < interfaces.length; i++ ) {
+         var names = interfaces[i].split('/');
+           document.writeln("<tr><td><input type='checkbox' name='ifChk' checked value=" + 
+                           names[1] + " disabled='true'>" + "&nbsp;&nbsp;" + interfaces[i] + "</td></tr>");
+         ifCount++;
+      }
+   }
+}
+// done hiding -->
+</script>
+	</tbody>
+            </table>
+
+<div id='id_dropIfc'>
+
+<select name='selEditIfc'>
+ <script language="javascript">
+<!-- hide 
+{
+   var i = 0;
+
+   document.writeln("<option value='ALL' >ALL"); 
+
+   if(interfaces != "") {
+      for ( i = 0; i < interfaces.length; i++ ) {
+         var names = interfaces[i].split('/');	
+	  document.writeln("<option value=" + names[1] + " >" + interfaces[i]); 
+
+      }
+   }
+
+}
+// done hiding -->
+</script>
+
+</select>
+
+</div>
+
+
+      		</td>
+		</tr>
+	</table>
+<p align=center><input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+      <P><FONT color=red>Please take notice that you need reboot your device after your schedule is changed. This makes sure that the bridge filter works well.</FONT></P>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

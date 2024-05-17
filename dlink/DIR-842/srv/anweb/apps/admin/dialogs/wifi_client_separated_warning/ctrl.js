@@ -1,0 +1,1 @@
+"use strict";function WiFiClientSeparatedWarnCtrl($scope){$scope.getWarning=function(){return"5GHz"==$scope.ngDialogData.band?"wifi_client_separated_warn24":"wifi_client_separated_warn5"},$scope.offClient=function(){$scope.closeThisDialog({action:"canсel"})},$scope.cancel=function(){$scope.closeThisDialog(null)}}

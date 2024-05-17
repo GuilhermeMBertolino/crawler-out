@@ -1,0 +1,130 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+
+<SCRIPT language=javascript>
+<!-- hide
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function btnPrev()
+{
+    //var code = 'location="wlsecure.html"';
+    var code = 'location="wlsecintro.html"'; /* 20101116, Linus Shi, mod to fix bug#10232, mark: 11161008 */
+
+    eval(code);
+}
+
+
+function isValidwepKey(val, size, fieldname) {
+   var ret = false;
+   var len = val.length;
+   var dbSize = size * 2;
+
+//	var addcomment1 = "Please enter 13 ASCII characters or 26 hexadecimal digits for a 128-bit WEP encryption key.";
+//	var addcomment2 = "Please enter 5 ASCII characters or 10 hexadecimal digits for a 64-bit WEP encryption key.";
+
+   if ( len == size )
+      ret = true;
+   else if ( len == dbSize ) {
+      for ( i = 0; i < dbSize; i++ )
+         if ( isHexaDigit(val.charAt(i)) == false )
+            break;
+      if ( i == dbSize )
+         ret = true;
+   } else
+      ret = false;
+/*
+	if (fieldname != typeof undefined) //show error message if fieldname is available
+	   if (ret == false){
+		if (size == 5)
+			alertInvalid (fieldname,val,addcomment2);
+		else if (size == 13)
+			alertInvalid (fieldname,val,addcomment1);
+	   }
+*/
+   return ret;
+}
+
+
+function btnNext(){
+    var loc = 'wlsecfin.wl?';
+	loc += 'sessionKey=' + sessionKey;
+	with ( document.forms[0] ) {
+
+			 val = wlwepkey.value;
+			  if ( val == '') {
+				alert('Cannot choose key that has empty value.');
+				return;
+			}		
+			if ( isValidwepKey(val, 13) == false && isValidwepKey(val, 5) == false) {
+						alert('Invalid Network Key!');
+						return;
+			}
+
+	loc += '&WizardKEY=' + encodeUrl(wlwepkey.value);
+	}
+  var code = 'location="' + loc + '"';
+  eval(code);
+}
+
+function btnCancel(){
+  window.parent.frames[0].tmp_ssidWizard='<%ejGetWl(wlSsid)%>';;//20110610,owen, bug11469,SSID setting lost after back to wizard page.
+  var code = 'location="wireless.html"';
+  eval(code);
+
+}
+
+// done hiding -->
+</SCRIPT>
+
+
+
+</HEAD>
+<BODY>
+<BLOCKQUOTE>
+  <SCRIPT language=JavaScript>
+TabHeader="Setup";
+SideItem="Wireless Settings";
+HelpItem="diwlansecure";
+</SCRIPT>
+
+  <SCRIPT type=text/javascript>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</SCRIPT>
+
+  <FORM>
+  <TABLE id=box_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>WELCOME TO THE D-LINK WIRELESS SECURITY SETUP WIZARD </TD></TR>
+    <TR>
+      <TD class=content>
+        <P>The WEP(or Wired Equivalent Privacy)key must meet one of the following guidelines:</P>
+		<P>- Exactly 5 or 13 characters <BR>
+		- Exactly 10 or 26 characters using 0-9 and A-F</P>
+		<P>A longer WEP key is more secure than a short one.</P>
+        <TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0>
+          <TBODY>
+          <TR>
+            <TD class=form_label>
+              <DIV>Network Key &nbsp;:</DIV></TD>
+            <TD><INPUT id=SSID maxLength=32 name='wlwepkey'></TD></TR>
+    
+</TBODY></TABLE></TD></TR></TBODY></TABLE>
+   <P align=center><INPUT onclick=btnPrev() type=button value="Prev"><INPUT onclick=btnNext() type=button value="Next"><INPUT onclick=btnCancel() type=button value="Cancel">
+   </P></FORM>
+  <SCRIPT type=text/javascript>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</SCRIPT>
+</BLOCKQUOTE></BODY></HTML>

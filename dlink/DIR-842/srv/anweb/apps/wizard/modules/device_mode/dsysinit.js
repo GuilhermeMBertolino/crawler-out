@@ -1,0 +1,1 @@
+"use strict";!function(){var deviceMode=angular.module(regdep("device-mode"),["devinfo"]);deviceMode.service("device-mode",["devinfo",function(devinfo){return{fetch:function(){return devinfo.once("version").then(function(res){return{deviceMode:res.deviceMode?res.deviceMode.toLowerCase():"",hwSwitchSupport:!1}})}}}])}();

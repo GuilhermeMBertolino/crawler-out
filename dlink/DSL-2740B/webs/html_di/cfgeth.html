@@ -1,0 +1,202 @@
+<html>
+   <head>
+      <meta http-equiv="Pragma" content="no-cache">
+      <LINK href="stylemain.css" type="text/css" rel="stylesheet">
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript" src="portName.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var buildvlm =  '<%ejGetOther(sysInfo, buildWanVlanMux)%>';
+var brdId = '<%ejGet(boardID)%>';
+var interfaceInfo = '<%ejGetOther(ethL2AvaIntf, 0)%>';
+var interfaces = interfaceInfo.split('|');
+var i;
+var intfDisp = '';
+var brdIntf = '';
+var serviceId = '<%ejGet(serviceId)%>';
+var wanL2ifname = '<%ejGet(wanL2IfName)%>';//add by Van
+var wanL2ifcnameforEdit = '';
+if (serviceId == 1)
+{
+    wanL2ifcnameforEdit = '<%ejGet(wanL2IfName)%>'
+}
+
+function EthIntfSort()  
+{  
+  var select=document.getElementById('ethInf')
+  var ary=new Array()  
+  var index=select.options.length  
+  for(var i=0;i<index;i++)  
+  {  
+	ary[i]=new Array(2);
+	ary[i][0]=select.options[0].text;  
+	ary[i][1]=select.options[0].value;  
+	select.remove(0);  
+  }  
+  ary.sort()  
+  for(var i=0;i<ary.length;i++)  
+  {  
+    var option=document.createElement("Option")  
+    option.text=ary[i][0];
+    option.value=ary[i][1];
+    select.options.add(option);
+		  
+  }  
+}  
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+         //showhide('divBuildVlanMux', buildvlm);
+         EthIntfSort();
+   }
+   var select=document.getElementById('ethInf');
+   var index = select.options.length;
+   for(i=0;i<index;i++)
+	 	if((wanL2ifname != '') && (wanL2ifname == select.options[i].value)) {
+			select.selectedIndex = i;
+		    break;
+	 	}
+}
+
+function btnBack() {
+   var code = 'location="ethwan.cmd"';
+   eval(code);
+}
+
+
+function btnSave() {
+   var loc = 'ethwan.cmd?action=add';
+
+   with ( document.forms[0] ) {
+      var idx = ethIntf.selectedIndex;
+      var ifc = ethIntf.options[idx].value;
+	//  loc += '&wanL2IfName=' + ifc;
+	   if ( ifc == "lan1" )
+       		loc += '&ifname=' + 'eth0';
+    	else if ( ifc == "lan2" )
+       		loc += '&ifname=' + 'eth1';
+	else if ( ifc == "lan3" )
+			loc += '&ifname=' + 'eth2';
+	else if ( ifc == "lan4" )
+			loc += '&ifname=' + 'eth3';
+	 else 
+	 	    loc += '&ifname=' + ifc;
+	  
+      if (connMode[0].checked == true)
+         loc += '&connMode=0';
+      else if (connMode[1]. checked == true)
+         loc += '&connMode=1';
+      else if (connMode[2]. checked == true)
+         loc += '&connMode=2';
+   }
+      loc += '&sessionKey=<%ejGetOther(sessionKey)%>';
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onload="frmLoad()">
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Internet Setup";
+HelpItem="wancfghelp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+   <form ID="Form1">
+           <table id=box_header border="0" cellpadding="4" cellspacing="0">
+             <tr>
+			   <td class=topheader>
+				<b>ETHERNET WAN SETUP</b></td>										
+		     </tr>
+		     <tr>
+			    <td class=content>
+				<p>				
+                You can setup this device to Internet by another ways, assigning one of the LAN ports to be a WAN port. Therefore, you can keep using this device even you changed your internet service
+                from ADSL to others, e.g. Cable Modem, FTTH.<br></p>	
+			    </td>
+		     </tr>
+	       </table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<b>ETHERNET WAN PORT SELECTION</b></td>										
+		</tr>
+                <tr>
+		<td class=content>
+		<p>Please assign a Ethernet port to be the WAN port.<br></p>	
+		</td>
+                </tr>
+                <tr>
+                 <td class=content>
+ <script language="javascript">
+<!-- hide
+            if (interfaces.length > 0) 
+            {
+               document.write("<p><b>Assign a Ethernet port: ");
+               document.write("<select id='ethInf'name='ethIntf'>");
+               for (i = 0; i < interfaces.length; i++) 
+               {
+                  brdIntf = brdId + '|' + interfaces[i];
+                  intfDisp = getUNameByLName(brdIntf);
+                  brdIntf = '';
+				  if (interfaces[i] != 'eth0')
+                      //document.write("<option value='" + interfaces[i] + "'>" + interfaces[i] + "/" + intfDisp);
+                      document.write("<option value='" + interfaces[i] + "'>" + intfDisp);                      
+               }
+               if ((serviceId == 1) && (wanL2ifcnameforEdit != ''))
+               {
+                   brdIntf = brdId + '|' + wanL2ifcnameforEdit;
+                   intfDisp = getUNameByLName(brdIntf); 
+                   if (wanL2ifcnameforEdit != 'eth0')
+                      //document.write("<option value='" + wanL2ifcnameforEdit + "' selected>" + wanL2ifcnameforEdit + "/" + intfDisp);
+                      document.write("<option value='" + wanL2ifcnameforEdit + "' selected>" + intfDisp);                      
+               }
+               document.write("</select>");
+            }
+// done hiding -->
+</script>
+
+            <div id="divBuildVlanMux">
+            <br>
+
+            <table border="0" cellpadding="0" cellspacing="0">
+           	 <td><strong>Select Connection Mode</strong></td><br>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='connMode' checked>&nbsp;Default Mode - Single service over one connection</td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='connMode'>&nbsp;VLAN MUX Mode - Multiple Vlan service over one connection</td>
+                  </tr>
+            </table>
+
+            </div>
+            <br>
+            </td></tr>
+            </table>
+            </p>
+            <center>
+               <input type='button' onClick='btnBack()' value='Back'> <input type='button' onClick='btnSave()' value='Apply/Save'>
+            </center>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+      </blockquote>
+   </body>
+</html>

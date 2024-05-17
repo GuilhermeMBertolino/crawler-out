@@ -1,0 +1,146 @@
+<!--
+Copyright (C) 2010, Ayecom Wuhan Corporation
+All Rights Reserved.
+
+THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+
+$Id: wlmacflt.html, v 1.0 2010/11/10 13:53:30 Exp, rewrited by Linus Shi $
+-->
+
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+			<script language="javascript" src="menu.js"></script>
+            <script language="javascript">
+
+<!-- hide
+var wlan_ifname = '<%ejGetWl(wlCurIdxIfcName)%>';
+var macs = '<%ejGetWlFltMac(wlfltmacs)%>';
+var macEntrys = macs.split('|');
+var macNum = macEntrys.length -1;
+var macRule = new Array(macNum);
+
+function mVe(wlmacfltname, mac)
+{
+    this.wlmacfltname = wlmacfltname;
+    this.mac = mac;
+}
+
+for (i = 0; i < macNum; i++)
+{
+    macRule[i] = new mVe('','');
+}
+
+for (i = 0; i < macNum; i++)
+{
+    entry = macEntrys[i].split(',');
+    macRule[i] = new mVe(entry[0], entry[1]);
+}
+
+function btnApply() 
+{
+    var loc = 'wlmacflt.cmd?action=add';
+    var enbl = '<%ejGetWl(wlEnbl_wl0v0)%>';
+
+    if ( enbl == '0' ) 
+	{
+        alert('Cannot apply the change since wireless is currently disabled.');
+        return;
+    }
+   
+    with ( document.forms[0] ) 
+    {
+        if ( isValidMacAddress(wlFltMacAddr.value) == false ) 
+		{
+            msg = 'MAC address "' + wlFltMacAddr.value + '" is invalid MAC address.';
+            alert(msg);
+            return;
+        }
+
+        wlFltMacAddr.value = wlFltMacAddr.value.toUpperCase();
+        for(i = 0; i < macNum; i++) 
+        {
+            if(wlFltMacAddr.value == macRule[i].mac && wlan_ifname == macRule[i].wlmacfltname)
+            {
+                alert("MAC address already exists in the wireless MAC address filters!");
+                return;
+            }
+        }
+
+        loc += '&wlFltMacAddr=' + wlFltMacAddr.value;
+    }
+
+	var code = 'location="' + loc + '"';
+    eval(code);
+}
+// done hiding -->
+
+</script>
+   </head>
+   
+   <body>
+   <blockquote>
+
+	<script language="JavaScript">
+	TabHeader="Advanced";
+	SideItem="Advanced Wireless";
+	HelpItem="wlmacfilteradd";
+	</script> 
+	<script type='text/javascript'>
+		mainTableStart();	
+		logo();
+		TopNav();
+		ThirdRowStart();
+		Write_Item_Images();
+		mainBodyStart();
+	</script>
+      
+     <form onSubmit='return false'>
+     <table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+		<td class=topheader>
+		Wireless -- MAC Filter
+		</td>
+		</tr>
+		<tr>
+		<td class=content>
+		<p>Sets wireless mac filter.	</p>
+		<p>Enter the MAC address and click "Save/Apply" to add the MAC address to the wireless 
+           MAC address filters.</p>
+		</td>
+		</tr>
+	 </table>
+	
+	    <TABLE id=body_header cellSpacing=0 border=0>
+		<TBODY>
+		<TR><TD class=topheader>Wireless -- MAC Filter</TD></TR>
+		<TD class=content>   
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width="100">MAC Address:</td>
+                  <td><input type='text' name='wlFltMacAddr'></td>
+               </tr>
+            </table>
+            <br>
+            </TD>
+            </TBODY>
+        </TABLE>
+		<br>
+            <center><input type='button' onClick='btnApply()' value='Save/Apply'></center>
+         </form>
+         
+    <script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+	</script>
+
+    </blockquote>
+   </body>
+</html>

@@ -1,0 +1,1192 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+	<script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onload="frmLoad()">
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Port Triggering";
+HelpItem="porttriggering";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Port Triggering
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+			<p>Some applications require that specific ports in the Router's firewall be opened for access by the remote parties. Port Trigger dynamically opens up the 'Open Ports' in the firewall when an application on the LAN initiates a TCP/UDP connection to a remote party using the 'Triggering Ports'. The Router allows the remote party from the WAN side to establish new connections back to the application on the LAN side using the 'Open Ports'.</p>
+
+				<p>
+				Some applications such as games, video conferencing, remote access applications 
+            and others require that specific ports in the Router's firewall be opened for 
+            access by the applications. You can configure the port settings from this 
+            screen by selecting an existing application or creating your own (Custom 
+                     application)and click "Apply" to add it.The addition of the differences of trigger port range should not be higher than 1000.</p>
+
+			<p><b> A maximum of 32 entries can be configured.</b></p>
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Port Triggering
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<table class=formlisting>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Application</td>
+      <td class='form_label_col' colspan=3>Trigger</td>
+      <td class='form_label_col' colspan=3>Open</td>
+      <td class='form_label_col'>Schedule Rule</td>
+      <td class='form_label_col'>WAN Interface</td>
+   </tr>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Name</td>
+      <td class='form_label_col'>Protocol</td>
+      <td class='form_label_col' colspan=2>Port Range</td>
+      <td class='form_label_col'>Protocol</td>
+      <td class='form_label_col' colspan=2>Port Range</td>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>&nbsp;</td>
+   </tr>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Start</td>
+      <td class='form_label_col'>End</td>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Start</td>
+      <td class='form_label_col'>End</td>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>&nbsp;</td>
+      </tr>
+<script language="javascript">    	
+MAX_ENTRY = 32;
+var prttrgs = "<%ejGetOther(prttrg,prttrgs)%>";
+//prttrgs = "Asheron's Call,9000,9013,2,9000,9013,2,always|";
+var entrys = prttrgs.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+var remain_tPort = 1000;
+
+for (i = 0; i < MAX_ENTRY; i++)	rule[i] = new rVe('','','','','','','','','');
+
+	for (j = 0; j < entryNum; j++)
+	{
+		var entry = entrys[j].split(',');
+		rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7],entry[8]);
+        remain_tPort = remain_tPort - (rule[j].tEnd - rule[j].tStart + 1);
+	}
+
+function rVe(appName, tStart, tEnd, tProto, oStart, oEnd, oProto , schedule,interface)
+{
+   this.appName = appName;
+   this.schedule = schedule;
+   this.tStart = tStart;
+   this.tEnd = tEnd;
+   this.tProto = tProto;
+   this.oStart = oStart;
+   this.oEnd = oEnd;
+   this.oProto = oProto;   
+   this.interface = interface;
+}
+
+for (i = 0; i < entryNum; i++)
+{
+    document.writeln('<tr>');
+
+	var temp = rule[i].interface+'|'+rule[i].tProto+'|'+rule[i].tStart+'|'+rule[i].tEnd+'|'+rule[i].oProto+'|'+rule[i].oStart+'|'+rule[i].oEnd;	
+    document.writeln('<td><div align=center><input type=checkbox name=rml value='+escape(temp)+'></div></td>');
+    document.writeln('<td><div align=center id=lblAppName'+i+'>'+rule[i].appName+'</div></td>'); 
+
+    document.writeln('<td><div align=center>'+rule[i].tProto+'</div></td>'); 
+    document.writeln('<td><div align=center>'+rule[i].tStart+'</div></td>'); 
+	document.writeln('<td><div align=center>'+rule[i].tEnd+'</div></td>');	
+    document.writeln('<td><div align=center>'+rule[i].oProto+'</div></td>'); 
+	document.writeln('<td><div align=center>'+rule[i].oStart+'</div></td>'); 	
+    document.writeln('<td><div align=center>'+rule[i].oEnd+'</div></td>'); 	
+    document.writeln('<td><div align=center id=lblSched'+i+'>'+rule[i].schedule+'</div></td>'); 
+    document.writeln('<td><div align=center id=lblIfc'+i+'>'+rule[i].interface+'</div></td>'); 
+  
+    document.writeln('</tr>');
+}	   
+</script>    
+</table>
+<br>
+</td>
+	</tr>
+</table>
+<p align=center>
+<input type='button' id='addPrtTrg' onClick='addClick()' value='Add'>
+<input type='button' id='editPrtTrg' onClick='btnEdit(this.form.rml)' value='Edit'>
+<input type='button' id='removePrtTrg' onClick='removeClick(this.form.rml)' value='Delete'>
+</p>
+	
+<div id=prtTrgAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Port Triggering
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td><b>Remaining number of entries that can be configured&nbsp;:</b></td>
+                  <td>
+                     <b><SCRIPT language=javascript>
+var num = '<%ejGetOther(prttrg,ptnum)%>';document.write(32-num);</SCRIPT>		</b>
+                  </td>
+               </tr>
+            </table>   
+            </br>         
+            <table class=formarea border="0" cellpadding="0" cellspacing="0" width=100%>
+            		<tr>
+                  <td class=form_label_noWidth colspan=2>Use Interface</td>
+                  <td><b>:</b>&nbsp;&nbsp;</td>
+                     <td><select name='dstWanIf' size="1">
+               <script language="javascript">
+               <!-- hide
+               {
+                  var i = 0;
+                  var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+                  var interfaces = interfaceInfo.split('|');
+               
+                  for ( i = 0; i < interfaces.length; i++ ) {
+                     var names = interfaces[i].split('/');
+                     document.write("  <option value='" + names[1] + "'>");
+                     document.writeln(interfaces[i]);
+                  } 
+               }
+               // done hiding -->
+               </script>
+                      </select></td>
+           </tr>
+
+               <tr>
+                  <td class=form_label_noWidth colspan=2>Application Name</td>
+				  	<td><b>:</b>&nbsp;&nbsp;</td>
+					<td></td>
+               </tr>
+				<TBODY id=serviceInfo>
+               <tr>
+                  <td align=right><input type="radio" name="radiosrv"  onclick='radioClick()' checked></td>
+				  <td class=form_label_noWidth width=122>Select an application</td>
+				  	<td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><div id='id_autosrv'><select name='srvname' size="1" onChange='appSelect(this.value)'>
+                        <option value="0" selected>
+                        (Click to select)
+                        <option value="Aim Talk">
+                        Aim Talk
+                        <option value="Asheron's Call">
+                        Asheron's Call
+                        <option value="Calista IP Phone">
+                        Calista IP Phone
+                        <option value="Delta Force (Client/Server)">
+                        Delta Force (Client/Server)
+                        <option value="ICQ">
+                        ICQ
+                        <option value="Napster">
+                        Napster
+                        <option value="Net2Phone">
+                        Net2Phone</option>
+                        <!--<option value="QuickTime 4 Client">
+                        QuickTime 4 Client</option>-->
+                        <option value="Rainbow Six/Rogue Spear">
+                        Rainbow Six/Rogue Spear</option>
+                     </select></div></td>
+               </tr>
+				</TBODY>
+				<TBODY id=serverInfo>
+               <tr>
+                  <td align=right><input type="radio" name="radiosrv" onclick='radioClick()'></td>
+				  <td class=form_label_noWidth width=122>Custom application</td>
+				  	<td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><div id='id_cussrv'><input type='text' size="28" name="cusAppName" maxlength="15" ></div></td>
+               </tr>
+                     </TBODY>
+			 <tr>
+<td class=form_label_noWidth colspan=2>Schedule</td>
+	<td><b>:</b>&nbsp;&nbsp;</td>
+<td align=left><select name="iptscheditem">
+<option value="always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';//tods = 'aa|bb|cc|';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT>
+<option value="never">Never</option>
+</select>&nbsp;&nbsp;<a href="iptschedadd.html"> View Available Schedules</a></td>
+             
+               </tr>
+            </table>
+
+            <table class=formlisting>
+               <tr class=form_label_row>
+                  <td class='form_label_col'>Trigger Port Start </td>
+                  <td class='form_label_col'>Trigger Port End</td>
+                  <td class='form_label_col'>Trigger Protocol</td>                  
+                  <td class='form_label_col'>Open Port Start</td>
+                  <td class='form_label_col'>Open Port End</td>
+                  <td class='form_label_col'>Open Protocol</td>
+
+               </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5"  name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEnd"></td>
+                  <td><select name='tProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStart"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEnd"></td>
+                  <td><select name='oProto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+            </table>
+			</td>										
+		</tr>
+	</table>
+<p align=center>
+<input type='button' onClick='btnApply()' value='Apply'>
+<input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>  
+
+
+<div id=prtTrgEditInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+                      
+		<tr>
+			<td class=topheader>
+				Port Triggering
+			</td>										
+		</tr>
+		
+		<tr>
+			<td class=content>
+ 
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class=form_label_left colspan="2"></td><td></td>
+               </tr>
+
+                   <!---tr>
+                   <td ></td>
+                  <td class=form_label_130PX >Use Interface&nbsp;:</td>
+                     <td><select name='dstWanIfEdit'>
+               <script language="javascript">
+               {
+                  var i = 0;
+                  var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+                  var interfaces = interfaceInfo.split('|');
+               
+                  for ( i = 0; i < interfaces.length; i++ ) {
+                     var names = interfaces[i].split('/');
+                     document.write("  <option value='" + names[1] + "'>");
+                     document.writeln(interfaces[i]);
+                  } 
+               }
+               </script>
+                      </select></td>
+           </tr---->
+   
+   
+               <tr>
+                  <td ></td>
+				  <td class=form_label_130PX>Use Interface&nbsp;:</td>
+                  <td><input type='text' size="28" name="dstWanIfEdit" maxlength="15" readonly disabled></td>
+               </tr>
+               
+               <tr>
+                  <td ></td>
+				  <td class=form_label_130PX>Application Name&nbsp;:</td>
+                  <td><input type='text' size="28" name="cusAppNameEdit" maxlength="15" readonly disabled></td>
+               </tr>
+               <tr>
+				  <td></td>
+				  <td class=form_label_130PX>Schedule&nbsp;:</td>
+                  <td><select name="iptscheditemEdit">
+				  
+<option value="always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';//tods = 'aaa|bb|cc|';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT>
+<option value="never">Never</option>				  
+</select>&nbsp;&nbsp;<a href="iptschedadd.html">View Available Schedules</a></td>
+				</tr>
+            </table>
+
+            <table class=formlisting>
+               <tr class=form_label_row>
+                  <td class='form_label_col'>Trigger Port Start </td>
+                  <td class='form_label_col'>Trigger Port End</td>
+                  <td class='form_label_col'>Trigger Protocol</td>                  
+                  <td class='form_label_col'>Open Port Start</td>
+                  <td class='form_label_col'>Open Port End</td>
+                  <td class='form_label_col'>Open Protocol</td>
+
+               </tr>
+               <tr>
+                  <td><input type='text' size="7" maxlength="5" name="tStartEdit"></td>
+                  <td><input type='text' size="7" maxlength="5" name="tEndEdit"></td>
+                  <td><select name='tProtoEdit'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="7" maxlength="5" name="oStartEdit"></td>
+                  <td><input type='text' size="7" maxlength="5" name="oEndEdit"></td>
+                  <td><select name='oProtoEdit'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                </tr>
+            </table>
+			</td>										
+		</tr>
+	</table>
+<p align=center><input type='button' onClick='btnApplyEdit()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+</form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	delaytimer=250;
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+       
+      </blockquote>
+   </body>
+</html>
+            <script language="javascript">
+<!-- hide
+TOTAL_ROW = 8;
+var appName ='' ;
+remain = 32;
+NO_SEL_MSG = 'There is no application is selected';
+RE_ALL_MSG = 'Require BOTH Trigger/Open port range(Start/End values)';
+
+//frederick,061220	add rule schedule
+var iptSchedule = '1';
+
+var doEdit = false;
+
+var editId;
+
+MAX_ENTRY = 32;
+var prttrgs = "<%ejGetOther(prttrg,prttrgs)%>";
+//prttrgs = "Asheron's Call,9000,9013,2,9000,9013,2,always|";
+var entrys = prttrgs.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+var remain_tPort = 1000;
+
+for (i = 0; i < MAX_ENTRY; i++)	rule[i] = new rVe('','','','','','','','','');
+
+	for (j = 0; j < entryNum; j++)
+	{
+		var entry = entrys[j].split(',');
+		rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7],entry[8]);
+        remain_tPort = remain_tPort - (rule[j].tEnd - rule[j].tStart + 1);
+	}
+
+function rVe(appName, tStart, tEnd, tProto, oStart, oEnd, oProto , schedule,interface)
+{
+    this.appName = appName;
+    this.schedule = schedule;
+    this.tStart = tStart;
+    this.tEnd = tEnd;
+    this.tProto = tProto;
+    this.oStart = oStart;
+    this.oEnd = oEnd;
+    this.oProto = oProto;   
+    this.interface = interface;
+}
+
+function enable_checkbox(is_enable,is_edit)
+{
+	with ( document.forms[0] ) 
+	{
+		if (1 ==entryNum)
+			{
+				if (0 == is_enable)
+					rml.disabled =true;
+				else
+					rml.disabled = false;
+				if (0 == is_edit)
+					rml.checked = false;
+			}
+		else
+		{
+			for (i = 0; i < entryNum; i++)
+			{
+				if (0 == is_enable)
+					rml[i].disabled = true;
+				else 
+				    rml[i].disabled = false;
+				if (0 == is_edit)
+					rml[i].checked = false;
+
+			}
+		}
+	}
+}
+
+function btnApply() {
+   var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+   if(interfaceInfo == '')
+   {
+         alert('No WAN Interface available.');
+         return;
+   }
+
+   var loc = 'scprttrg.cmd?action=add';
+   with ( document.forms[0] ) {
+    //if(("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1')&&
+	if(('<%ejGet(timeisSet)%>' != '1')&&
+		((iptscheditem.selectedIndex!=0)&&(iptscheditem.selectedIndex != (iptscheditem.length - 1)))){
+    	alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+		return;
+	}
+      if (radiosrv[0].checked == true) {
+         if (appName == '') {
+            alert(NO_SEL_MSG);
+            return;
+         }
+         loc += '&appName=' + appName;
+      }
+      else {
+		 if (isValidName (cusAppName.value,"Custom application name") == false) return; 
+         loc += '&appName=' + encodeUrl(cusAppName.value);
+      }  
+
+      var idx = dstWanIf.selectedIndex;
+      var ifc = dstWanIf.options[idx].value;
+      loc += '&dstWanIf=' + ifc;
+	  
+      for (i = 0; i < TOTAL_ROW; i++) {
+         if (tStart[i].value == "" && tEnd[i].value == "" && oStart[i].value == "" && oEnd[i].value == "")
+            break;
+         if (tStart[i].value == "" || tEnd[i].value == "" || oStart[i].value == "" || oEnd[i].value == "") {
+            alert(RE_ALL_MSG);
+            return;
+         }
+      }
+      if (i == 0) {
+         alert(RE_ALL_MSG);
+         return;
+      }
+	 var numall = '<%ejGetOther(prttrg,ptnum)%>'
+      if (i > (32-parseInt(numall))) {
+         alert('Exceed the maximum allowable entry count by ' + (32-parseInt(numall)));
+         return;
+      }    
+      if (i > remain) {
+         remain = i - remain;
+         alert('Exceed the maximum allowable entry count by ' + remain);
+         remain = 32;
+         return;
+      }    
+	  //frank,060727,check if have a blank row between configured rows
+	  var j;
+      for (j = i+1; j < TOTAL_ROW; j++) {
+         if (tStart[j].value != "" || tEnd[j].value != "" || oStart[j].value != "" || oEnd[j].value != "") {
+ 		    i++;
+            alert('Row ' +i + ' is not configured.');
+            return;
+         }
+      }
+
+      tProtoLoc = '&tProto=';
+      tStartLoc = '&tStart=';
+      tEndLoc = '&tEnd=';
+      oProtoLoc = '&oProto=';
+      oStartLoc = '&oStart=';
+      oEndLoc = '&oEnd=';
+      eCount = i;    
+      for (i = 0; i < eCount; i++) {
+         if ( isValidPort(oStart[i].value,"Open port range (Start)") == false ) return;
+         if ( isValidPort(oEnd[i].value,"Open port range (End)") == false ) return;
+         if ( isValidPort(tStart[i].value,"Triggering port range (Start)") == false ) return;
+         if ( isValidPort(tEnd[i].value,"Triggering port range (End)") == false ) return;
+         tS = parseInt(tStart[i].value,10);
+         tE = parseInt(tEnd[i].value,10);
+         if (tS > tE) {
+            alert('Triggering port range [' + tS + '-' + tE + '] is invalid.');
+            return;
+         }
+     if(tE-tS >= 1000)
+     {
+         alert('The sum of all triggering port range difference should lower than 1000.');
+         return; 
+     }
+     oS = parseInt(oStart[i].value);
+     oE = parseInt(oEnd[i].value);
+     if ( oS > oE ) 
+	 {
+         alert('Open port range [' + oS + '-' + oE + '] is invalid.');
+         return;
+     }
+
+	 /* 20110621, Linus Shi, modify open port range input check becuase of linux kernel codes issue, mark: 06211105 */
+     if(oE-oS >= 16)
+     {
+         alert('Open port range [' + oE + '-' + oS + '] difference should lower than 16. Otherwise, a part of open ports cannot work.');
+         return; 
+     }
+     /* 20110621, Linus Shi, end ------------------------------------------------------------------- mark: 06211105 */
+
+		 /* 20101111, Linus Shi, begin mod to fix bug#10224: same rules can be added in port triggering, mark: 11111135 */
+         for (j = 0; j < entryNum; j++)
+         {
+             if ((rule[j].appName == appName || rule[j].appName == cusAppName.value)) 
+			 	 /*&& tStart[i].value == rule[j].tStart && tEnd[i].value == rule[j].tEnd &&
+			     oStart[i].value == rule[j].oStart && oEnd[i].value == rule[j].oEnd &&
+			     tProto[i].value == rule[j].tProto && oProto[i].value == rule[j].oProto)*/
+             {
+                 alert("The same Port Triggering entry already exists!");
+				 return;
+			 }
+		 }
+		 /* 20101111, Linus Shi, end ------------------------------------------------------------------- mark: 11111135 */
+	 
+         tStartLoc = tStartLoc + tStart[i].value + ',';
+         tEndLoc = tEndLoc + tEnd[i].value + ',';
+         tProtoLoc = tProtoLoc + tProto[i].value + ',';
+         oStartLoc = oStartLoc + oStart[i].value + ',';
+         oEndLoc = oEndLoc + oEnd[i].value + ',';
+         oProtoLoc = oProtoLoc + oProto[i].value + ',';
+      }          
+
+	//Frederick,061220	add schedule option
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptscheditem.selectedIndex;
+		var iptval = iptscheditem[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+     
+   }
+   loc = loc + tStartLoc + tEndLoc + tProtoLoc + oStartLoc + oEndLoc + oProtoLoc;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnApplyEdit() {
+   var loc = 'scprttrg.cmd?action=edit';
+
+   with ( document.forms[0] ) {
+	if(('<%ejGet(timeisSet)%>' != '1')&&
+		((iptscheditemEdit.selectedIndex!=0)&&(iptscheditemEdit.selectedIndex != (iptscheditemEdit.length - 1)))){
+    	alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+		//return;
+	}
+
+	  //if (isValidName (cusAppNameEdit.value,"Custom application name") == false) return; 
+      loc += '&appName=' + encodeUrl(cusAppNameEdit.value);	
+
+      loc += '&dstWanIf=' + encodeUrl(dstWanIfEdit.value);
+	  
+      if (tStartEdit.value == "" && tEndEdit.value == "" && oStartEdit.value == "" && oEndEdit.value == "")        
+      if (tStartEdit.value == "" || tEndEdit.value == "" || oStartEdit.value == "" || oEndEdit.value == "") {
+            alert(RE_ALL_MSG);
+            return;
+        }
+
+      tProtoLoc = '&tProto=';
+      tStartLoc = '&tStart=';
+      tEndLoc = '&tEnd=';
+      oProtoLoc = '&oProto=';
+      oStartLoc = '&oStart=';
+      oEndLoc = '&oEnd=';
+
+  
+      if ( isValidPort(oStartEdit.value,"Open port range (Start)") == false ) return;
+      if ( isValidPort(oEndEdit.value,"Open port range (End)") == false ) return;
+      if ( isValidPort(tStartEdit.value,"Triggering port range (Start)") == false ) return;
+      if ( isValidPort(tEndEdit.value,"Triggering port range (End)") == false ) return;
+      tS = parseInt(tStartEdit.value,10);
+      tE = parseInt(tEndEdit.value,10);
+      if (tS > tE) {
+      	alert('Triggering port range [' + tS + '-' + tE + '] is invalid.');
+       	return;
+      }
+	 if(tE-tS >= 1000)
+     {
+         alert('Triggering port range [' + tE + '-' + tS + '] difference should lower than 1000.');
+         return; 
+     }
+	 oS = parseInt(oStartEdit.value);
+     oE = parseInt(oEndEdit.value);      
+	 if ( oS > oE ) 
+	 {
+       	 alert('Open port range [' + oS + '-' + oE + '] is invalid.');
+         return;
+	 }
+
+	 /* 20110621, Linus Shi, modify open port range input check becuase of linux kernel codes issue, mark: 06211105 */
+     if(oE-oS >= 16)
+     {
+         alert('Open port range [' + oE + '-' + oS + '] difference should lower than 16. Otherwise, a part of open ports cannot work.');
+         return; 
+     }
+     /* 20110621, Linus Shi, end ------------------------------------------------------------------- mark: 06211105 */
+
+     tStartLoc = tStartLoc + tStartEdit.value + ',';
+     tEndLoc = tEndLoc + tEndEdit.value + ',';
+     tProtoLoc = tProtoLoc + tProtoEdit.value + ',';
+     oStartLoc = oStartLoc + oStartEdit.value + ',';
+     oEndLoc = oEndLoc + oEndEdit.value + ',';
+     oProtoLoc = oProtoLoc + oProtoEdit.value + ',';
+       
+
+	//Frederick,061220	add schedule option
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptscheditemEdit.selectedIndex;
+		var iptval = iptscheditemEdit[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+    
+   }
+   loc = loc + tStartLoc + tEndLoc + tProtoLoc + oStartLoc + oEndLoc + oProtoLoc;
+   loc += '&editId=' + editId;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function clearAll()
+{
+   with (document.forms[0]) {
+      for (i = 0; i < TOTAL_ROW; i++) {
+         tStart[i].value = tEnd[i].value = oStart[i].value = oEnd[i].value = "";
+         tProto[i].value = oProto[i].value = 1;
+      }
+   }
+}
+
+function appSelect(v)
+{
+   clearAll();
+   with (document.forms[0]) {
+      switch(v) {
+      case '0':
+         srvname.selectedIndex = 0;
+         srvname.options[0].value = "0";
+         appName = "";
+         break;                                  //trigger   open
+      case 'Aim Talk':   //  Aim Talk                   TCP 4099,  TCP 5191
+         appName = "Aim Talk";
+         tStart[0].value = tEnd[0].value = 4099;
+         oStart[0].value = oEnd[0].value = 5191;
+         break;
+      case 'Asheron\'s Call':  // Asheron's Call                UDP 9000-9013, UDP 9000-9013
+         appName = "Asheron's Call";
+         tStart[0].value = oStart[0].value = 9000;
+         tEnd[0].value = oEnd[0].value = 9013;
+         tProto[0].value = oProto[0].value = 2;
+         break;
+      case 'Calista IP Phone':  //Calista IP Phone               TCP 5190, UDP 3000
+         appName = "Calista IP Phone";
+         tStart[0].value = tEnd[0].value = 5190;
+         oStart[0].value = oEnd[0].value = 3000;
+         oProto[0].value = 2;
+         break;
+      case 'Delta Force (Client/Server)':  //Delta Force (Client/Server)    UDP 3568, BOTH 3100-3999
+         appName = "Delta Force (Client/Server)";
+         tStart[0].value = tEnd[0].value = 3568;
+         tProto[0].value = 2;
+         oStart[0].value = 3100;
+         oEnd[0].value = 3999;
+         oProto[0].value = 0;
+         break;
+      case 'ICQ':  //ICQ                            UDP 4000, TCP 20000-20059
+         appName = "ICQ";
+         tStart[0].value = tEnd[0].value = 4000;
+         tProto[0].value = 2;
+         oStart[0].value = 20000;
+         oEnd[0].value = 20059;
+         break;
+      case 'Napster':  //Napster                        TCP 6699, TCP 6699, 6697, 4444, 5555, 6666, 7777, 8888
+         appName = "Napster";
+         tStart[0].value = tEnd[0].value = tStart[1].value = tEnd[1].value = tStart[2].value = tEnd[2].value = 
+         tStart[3].value = tEnd[3].value = tStart[4].value = tEnd[4].value = tStart[5].value = tEnd[5].value = 
+         tStart[6].value = tEnd[6].value = 6699;
+         oStart[0].value = oEnd[0].value = 6699;
+         oStart[1].value = oEnd[1].value = 6697;
+         oStart[2].value = oEnd[2].value = 4444;
+         oStart[3].value = oEnd[3].value = 5555;
+         oStart[4].value = oEnd[4].value = 6666;
+         oStart[5].value = oEnd[5].value = 7777;
+         oStart[6].value = oEnd[6].value = 8888;
+         break;
+      case 'Net2Phone':   // Net2Phone                      UDP 6801, UDP 6801
+         appName = "Net2Phone";
+         tStart[0].value = tEnd[0].value = 6801;
+         tProto[0].value = 2;
+         oStart[0].value = oEnd[0].value = 6801;
+         oProto[0].value = 2;
+         break;
+      case 'QuickTime 4 Client':  //  QuickTime 4 Client             TCP 554, UDP 6970-32000 // 2). TCP 554, BOTH 6970-7000
+         appName = "QuickTime 4 Client";
+         tStart[0].value = tEnd[0].value = tStart[1].value = tEnd[1].value = 554;
+         oStart[0].value = oStart[1].value = 6970;
+         oEnd[0].value = 32000;
+         oEnd[1].value = 7000;
+         oProto[0].value = 2;
+         oProto[1].value = 0;
+         break;
+      case 'Rainbow Six/Rogue Spear':   // Rainbow Six/Rogue Spear        TCP 2346, BOTH 2436-2438
+         appName = "Rainbow Six/Rogue Spear";
+         tStart[0].value = tEnd[0].value = 2346;
+         oStart[0].value = 2436;
+         oEnd[0].value = 2438;
+         oProto[0].value = 0;
+         break;
+      default:
+         alert('Not support selection');
+      }
+   }  
+}
+
+
+function radioClick()
+{
+   with (document.forms[0]) {
+      if (radiosrv[0].checked == true) {
+         cusAppName.value = '';
+		 appSelect(srvname.value)
+
+		changeBlockState('id_cussrv',true);
+		changeBlockState('id_autosrv',false);
+      } else {
+         appSelect("0");
+
+		changeBlockState('id_autosrv',true);
+		changeBlockState('id_cussrv',false);
+	  }
+   }
+//aids, 0603016}
+}
+
+function btnCancel(){
+    with ( document.forms[0] ) {
+		prtTrgAddInfo.style.display = 'none';
+		prtTrgEditInfo.style.display = 'none';
+		removePrtTrg.disabled = 0;
+		addPrtTrg.disabled = 0;
+		editPrtTrg.disabled = 0;
+		enable_checkbox(1,1);
+	}
+}
+
+function btnBack(){
+   var loc = 'scprttrg.html';
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function addClick(){
+
+var num ='<%ejGetOther(prttrg,ptnum)%>'; 
+   if(num == 32)	{alert("A maximum 32 entries can be configured."); return;}
+    with ( document.forms[0] ) {
+		prtTrgAddInfo.style.display = 'block';
+		prtTrgEditInfo.style.display = 'none';
+		removePrtTrg.disabled = 1;
+		addPrtTrg.disabled = 1;
+		editPrtTrg.disabled = 1;
+		enable_checkbox(0,0);
+	}
+}
+
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  
+  var tmpAppName;
+  var tmpTPortStart;
+  var tmpTPortEnd;
+  var tmpTProtocol;
+  var tmpOPortStart;
+  var tmpOPortEnd;
+  var tmpOProtocol;
+  var tmpSched;
+  var tmpIfc;
+  
+  var tmpData;  
+
+with ( document.forms[0] ) {
+
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+				hasChecked = true;
+        		checkedCount++;
+        		editId = unescape(rml[i].value);
+
+				tmpData = unescape(rml[i].value).split("|");
+
+			  	tmpAppName = document.getElementById( "lblAppName" + i ).innerHTML;
+				tmpIfc=tmpData[0];
+				tmpTProtocol = tmpData[1];
+				tmpTPortStart = tmpData[2];
+				tmpTPortEnd = tmpData[3];
+				tmpOProtocol = tmpData[4];
+				tmpOPortStart = tmpData[5];
+				tmpOPortEnd = tmpData[6];
+				tmpSched = document.getElementById( "lblSched" + i ).innerHTML;
+
+      		}
+		}
+	} else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = unescape(rml.value);
+
+		tmpData = unescape(rml.value).split("|");
+
+	  	tmpAppName = document.getElementById( "lblAppName0").innerHTML;
+		tmpIfc=tmpData[0];
+		tmpTProtocol = tmpData[1];
+		tmpTPortStart = tmpData[2];
+		tmpTPortEnd = tmpData[3];
+		tmpOProtocol = tmpData[4];
+		tmpOPortStart = tmpData[5];
+		tmpOPortEnd = tmpData[6];
+		tmpSched = document.getElementById( "lblSched0").innerHTML;
+
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only one item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+
+	/*for (i = 0; i < dstWanIfEdit.length; i++){
+		if (dstWanIfEdit[i].value == tmpIfc){
+			dstWanIfEdit.selectedIndex = i;
+			break;
+}
+}*/
+      dstWanIfEdit.value=tmpIfc;
+	cusAppNameEdit.value = tmpAppName;
+
+	for (i = 0; i < iptscheditemEdit.length; i++){
+		if (iptscheditemEdit[i].value == tmpSched){
+			iptscheditemEdit.selectedIndex = i;
+			break;
+}
+}
+
+	tStartEdit.value = tmpTPortStart;
+	tEndEdit.value = tmpTPortEnd;
+
+	/*for (i = 0; i < tProtoEdit.length; i++){
+		if (tProtoEdit[i].value == tmpTProtocol){
+			tProtoEdit.selectedIndex = i;
+			break;
+		}
+	}*/
+	if(tmpTProtocol=='TCP')
+		tProtoEdit.selectedIndex =1;
+	else if(tmpTProtocol=='UDP')
+		tProtoEdit.selectedIndex =2;
+	else 
+		tProtoEdit.selectedIndex =0;
+
+	oStartEdit.value = tmpOPortStart;
+	oEndEdit.value = tmpOPortEnd;
+
+	/*for (i = 0; i < oProtoEdit.length; i++){
+		if (oProtoEdit[i].value == tmpOProtocol){
+			oProtoEdit.selectedIndex = i;
+			break;
+		}
+	}*/
+	if(tmpOProtocol=='TCP')
+		oProtoEdit.selectedIndex =1;
+	else if(tmpOProtocol=='UDP')
+		oProtoEdit.selectedIndex =2;
+	else 
+		oProtoEdit.selectedIndex =0;
+	
+		prtTrgAddInfo.style.display = 'none';
+		prtTrgEditInfo.style.display = 'block';
+		removePrtTrg.disabled = 1;
+		addPrtTrg.disabled = 1;
+		editPrtTrg.disabled = 1;
+		enable_checkbox(0,1);
+}
+  doEdit = true;
+
+}
+
+function removeClick(rml) {
+	var lst = '';
+	var has_selected_items = false;
+	var str='';
+   with ( document.forms[0] ) {
+     if (rml)
+  {
+	if (rml.length > 0)
+    	for (i = 0; i < rml.length; i++) {
+        	if ( rml[i].checked == true ){
+			has_selected_items=true;
+			str=unescape(rml[i].value);
+			 if (str.indexOf('TCP or UDP') != -1)
+			 	str=str.replace(/(TCP\ or\ UDP)/g,"TCP/UDP")
+	            	lst += str+ ',';
+			}
+      	}
+   	else if ( rml.checked == true ){
+		has_selected_items=true;
+			str=unescape(rml.value);
+			 if (str.indexOf('TCP or UDP') != -1)
+			 	str=str.replace(/(TCP\ or\ UDP)/g,"TCP/UDP")
+	            	lst = str;
+
+      //	lst =unescape( rml.value);
+	}
+	}
+}
+	if (has_selected_items){
+   		var loc = 'scprttrg.cmd?action=remove&rmLst=' + lst;
+
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	} else{
+		alert("There are no items to remove!");
+return;
+}
+}
+
+function frmLoad(){
+	radioClick();
+}
+
+// done hiding -->
+</script>

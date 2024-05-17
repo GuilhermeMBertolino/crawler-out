@@ -1,0 +1,886 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+//Frederick,060911	add iptable schedule option
+var iptSchedule = '1';
+var doEdit = false;
+
+function protoChg(){
+  with ( document.forms[0] )
+    {
+	    var status = false;
+        if(protocol.selectedIndex == 4|| protocol.selectedIndex ==0)
+        {
+            status = true;
+            srcport.value = dstport.value = "";		
+        }
+        srcport.disabled = status;
+        dstport.disabled = status;
+	}
+}
+
+function btnApply() {
+
+if(doEdit == false){
+   var loc = 'scoutflt.cmd?action=add';
+   }else{
+   var loc = 'scoutflt.cmd?action=edit';
+   }
+   
+   with ( document.forms[0] ) {	
+	if(('<%ejGet(timeisSet)%>' != '1')&&
+		((iptscheditem.selectedIndex!=0)&&(iptscheditem.selectedIndex != (iptscheditem.length - 1)))){
+    	alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+		return;
+	}
+
+      if ( isValidName(txtfltname.value,"Outgoing IP filter name") == false ) return;
+
+      if ( srcaddr.value == "" && srcmask.value == "" && srcport.value == "" && srcsrt.value == "" && srcend.value == "" &&
+           dstaddr.value == "" && dstmask.value == "" && dstport.value == "" && dessrt.value == "" && desend.value == "" &&
+           protocol.selectedIndex == 0 ) {
+         msg = 'At least one condition must be specified.'
+         alert(msg);
+         return;
+      }      
+	  
+if(dstmask.value == "255.255.255.255")	dstmask.value = "";
+if(srcmask.value == "255.255.255.255")	srcmask.value = "";
+
+      if ( srcaddr.value != "" && isValidRemoteIpAddress(srcaddr.value,"Source address", TYPE_NETWORK_ADDRESS) == false) {
+         return;
+      }
+	if (srcmask.value=="" && srcaddr.value!=""){
+		if (isValidRemoteIpAddress(srcaddr.value,"Source address") == false){
+         		return;
+		}
+	}
+      if ( srcmask.value != "" && isValidSubnetMask(srcmask.value,"Source subnet mask") == false ) return;
+
+
+	  //add by Van 0912251526
+      if ( srctype.selectedIndex == 2 ) {
+         if ( srcsrt.value =="" || srcend.value =="") {
+		 	alert("The Source start ip or end ip is empty!");
+		    return;
+         	}
+
+		 if (isValidRemoteIpAddress(srcsrt.value,"Source start ip address") == false){
+         		return;
+		}
+		 if (isValidRemoteIpAddress(srcend.value,"Source end ip address") == false){
+         		return;
+		}
+		 
+		 if (!(isValidRange(srcend.value,srcsrt.value))) {
+		 	alert("The Source End IP has to be equal or greater than Start IP address.");
+			return;
+		 }
+      }else if( srctype.selectedIndex == 1 ){
+         if(srcaddr.value == "" || srcmask.value == "" ){
+		 	alert("The Source ip or mask is empty!");
+			return;
+         }
+      }
+
+	  if ( destype.selectedIndex == 2) {
+	  	if ( dessrt.value == "" || desend.alue == "") {
+			alert("The Destination start ip or end ip is empty!");
+			return;
+	  	}
+
+		if (isValidRemoteIpAddress(dessrt.value,"Destination start ip address") == false){
+         		return;
+		}
+		if (isValidRemoteIpAddress(desend.value,"Destination end ip address") == false){
+         		return;
+		}
+		
+		if (!(isValidRange(desend.value,dessrt.value))) {
+			alert("The Destination End IP has to be equal or greater than Start IP address.");
+			return;
+	  	}
+	  }else if( destype.selectedIndex == 1 ){
+         if(dstaddr.value == "" || dstmask.value == "" ){
+		 	alert("The Destination ip or mask is empty!");
+			return;
+         }
+      }
+	  //end add
+	  
+      if ( srcaddr.value == "" && srcmask.value != "" ) {
+         msg = 'Cannot have source subnet mask without source IP address.';
+         alert(msg);
+         return;
+      }
+      if (srcaddr.value != "" && srcmask.value != ""){	  	  
+	  if (!DoValidateIpRange(srcaddr.value,srcmask.value)) return;
+      	}
+
+      if ( srcport.value != "" && isValidPort(srcport.value,"Source port") == false ) return;
+
+      if ( dstaddr.value != "" && isValidRemoteIpAddress(dstaddr.value,"Destination address", TYPE_NETWORK_ADDRESS) == false ) {
+         return;
+      }
+	if (dstmask.value=="" && dstaddr.value!=""){
+		if (isValidRemoteIpAddress(dstaddr.value,"Destination address") == false ){
+         		return;
+		}
+	}
+      if ( dstmask.value != "" && isValidSubnetMask(dstmask.value,"Destination subnet mask") == false ) return;
+
+
+      if ( dstaddr.value == "" && dstmask.value != "" ) {
+         msg = 'Cannot have destination subnet mask without destination IP address.';
+         alert(msg);
+         return;
+      }
+      if (dstaddr.value != "" && dstmask.value != ""){	  
+	  if (!DoValidateIpRange(dstaddr.value,dstmask.value)) return;
+      	}
+
+      if ( dstport.value != "" && isValidPort(dstport.value,"Destination port") == false ) return;
+
+      if ( (srcport.value != "" || dstport.value != "") && 
+           (protocol.selectedIndex == 0 || protocol.selectedIndex == 4) ) {
+         msg = 'TCP or UDP Protocol must be selected together with port number';
+	 alert(msg);
+	 return;
+      } 
+      
+
+	//Frederick,060724	make sure that everything obtained will be in decimal form
+	var lSourcePort = srcport.value;
+	var lDestPort = dstport.value;
+
+	if (lSourcePort.indexOf(':') != -1){
+		portrange = lSourcePort.split(':');
+		lSourcePort = parseInt(portrange[0],10) + ":" + parseInt(portrange[1],10);
+	}
+	else
+		lSourcePort = parseInt(lSourcePort,10);
+
+	
+	if (lDestPort.indexOf(':') != -1){
+		portrange = lDestPort.split(':');
+		lDestPort = parseInt(portrange[0],10) + ":" + parseInt(portrange[1],10);
+	}
+	else
+		lDestPort = parseInt(lDestPort,10);
+
+	//060724
+
+      // outgoing IP filter name
+      loc += '&fltName=' + encodeUrl(txtfltname.value);
+
+      // protocol
+      idx = protocol.selectedIndex;
+      val = protocol.options[idx].value;
+      loc += '&protocol=' + val;
+
+      // source address
+      if ( srcaddr.value != "" )
+         loc += '&srcAddr=' + srcaddr.value;
+
+	  //add by Van 0912251225
+	  if ( srcsrt.value != "" && srcend.value != "") {
+	  	 loc += '&srcStartAddr=' + srcsrt.value;
+	     loc += '&srcEndAddr=' + srcend.value;
+	  }
+
+	  if ( dessrt.value != "" && desend.value != "") {
+	  	 loc += '&dstStartAddr=' + dessrt.value;
+		 loc += '&dstEndAddr=' + desend.value;
+	  }
+      //add end
+	  
+      // source subnet mask
+      if ( srcmask.value != "" )
+         loc += '&srcMask=' + srcmask.value;
+
+      // source port
+      if ( srcport.value != "" ){
+         loc += '&srcPort=' + lSourcePort;
+      }else{
+         if((protocol.selectedIndex != 0 ) && (protocol.selectedIndex != 4 )){
+             loc += '&srcPort=1:65535';
+         }
+      }
+
+      // destination address
+      if ( dstaddr.value != "" )
+         loc += '&dstAddr=' + dstaddr.value;
+
+      // destination subnet mask
+      if ( dstaddr.value != "" )
+         loc += '&dstMask=' + dstmask.value;
+
+      // destination port
+      if ( dstport.value != "" ){
+         loc += '&dstPort=' + lDestPort;
+      }else{
+         if((protocol.selectedIndex != 0 ) && (protocol.selectedIndex != 4 )){
+             loc += '&dstPort=1:65535';
+         }
+      }
+
+
+	  //Frederick,060911	add iptable schedule option
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptscheditem.selectedIndex;
+		var iptval = iptscheditem.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+   }
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+//add by Van 1001051544
+function isValidRange(EndIp, StartIp)
+{
+   addrEnd = EndIp.split('.');
+   addrStart = StartIp.split('.');
+   for(i=0;i<4;i++) {
+       E = parseInt(addrEnd[i]);
+       S = parseInt(addrStart[i]);
+       if (E == S) 
+          continue;
+	   if (E > S)
+	   	  break;
+	   if (E < S)
+	   	  return false;
+   	}
+   return true;
+}
+//add end
+
+function btnCancel(){
+    with ( document.forms[0] ) {
+		fltrAddInfo.style.display = 'none';
+		removeFltr.disabled = 0;
+		addFltr.disabled = 0;
+		editFltr.disabled = 0;
+	}
+}
+
+//add by Van 0912241120
+function srcChg() {
+	with ( document.forms[0] )
+	{
+	    var status = false;
+		if (srctype.selectedIndex == 2) {
+			srcaddr.value = "";
+			srcmask.value = "";
+			document.getElementById("divsrcrge").style.display = 'block';
+			document.getElementById("divsource").style.display= 'none';
+			}
+		else
+			{
+			srcsrt.value = "";
+			srcend.value = "";
+			document.getElementById("divsrcrge").style.display = 'none';
+			document.getElementById("divsource").style.display = 'block';
+			}
+		if(srctype.selectedIndex == 0 || srctype.selectedIndex == 2 )
+			{
+			  status = true;
+			  srcmask.value = "";
+			}
+		srcmask.disabled = status;
+    }
+}
+
+function desChg() {
+	with ( document.forms[0] )
+	{
+	    var status = false;
+		if (destype.selectedIndex == 2) {
+			dstaddr.value = "";
+			dstmask.value = "";
+			document.getElementById("divdesrge").style.display = 'block';
+			document.getElementById("divdestination").style.display = 'none';
+			}
+		else
+			{
+			dessrt.value = "";
+			desend.value = "";
+			document.getElementById("divdesrge").style.display = 'none';
+			document.getElementById("divdestination").style.display = 'block';
+			}
+		if(destype.selectedIndex == 0 || destype.selectedIndex == 2 )
+			{
+			  status = true;
+			  dstmask.value = "";
+			}
+		dstmask.disabled = status;
+    }
+}
+//add end
+
+function addClick(){
+var num = '<%ejGetOutbndFlt(obdnum)%>'; 
+   if(num == 16)	{alert("A maximum 16 entries can be configured."); return;}
+   doEdit = false;
+    with ( document.forms[0] ) {
+		fltrAddInfo.style.display = 'block';
+		removeFltr.disabled = 1;
+		addFltr.disabled = 1;
+		editFltr.disabled = 1;
+		txtfltname.disabled = 0;
+		txtfltname.value = srcaddr.value =srcmask.value= srcport.value = dstaddr.value = dstmask.value = dstport.value ='';
+		protocol.selectedIndex = iptscheditem.selectedIndex = 0;
+        protoChg();
+		//add by Van 0912241122
+		srctype.selectedIndex = destype.selectedIndex = 0;
+		srcChg();
+		desChg();
+		//add end
+	}
+}
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  
+  var tmpName = '';
+  var tmpProtocol = '';
+  var tmpSrcAdd = '';
+  var tmpSrcMask = '';
+  var tmpSrcPort = '';
+  var tmpDstAdd = '';
+  var tmpDstMask = '';
+  var tmpDstPort = '';
+  var tmpSched = '';
+  var tmpSrcStart = '';
+  var tmpSrcEnd = '';
+  var tmpDstStart = '';
+  var tmpDstEnd = '';
+
+with ( document.forms[0] ) {
+
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+				hasChecked = true;
+        		checkedCount++;
+        		editId = rml[i].value;
+				tmpName = document.getElementById( "lblName" + i).innerHTML;
+				tmpProtocol = document.getElementById( "lblProtocol" + i).innerHTML;
+				if(document.getElementById( "lblSrcAdd" + i) != null)
+				{
+					tmpSrcAdd = document.getElementById( "lblSrcAdd" + i).innerHTML;
+					tmpSrcMask = document.getElementById( "lblSrcMask" + i).innerHTML;
+				}
+				if(document.getElementById( "lblSrcPort" + i) != null)
+				{
+				    tmpSrcPort = document.getElementById( "lblSrcPort" + i).innerHTML;
+				}
+				if(document.getElementById( "lblDstAdd" + i) != null)
+				{
+					tmpDstAdd = document.getElementById( "lblDstAdd" + i).innerHTML;
+					tmpDstMask = document.getElementById( "lblDstMask" + i).innerHTML;
+				}
+				
+				if(document.getElementById( "lblSrcPort" + i) != null)
+				{
+				    tmpSrcPort = document.getElementById( "lblSrcPort" + i).innerHTML;
+				}
+				
+				if(document.getElementById( "lblDstAdd" + i) != null)
+				{
+					tmpDstAdd = document.getElementById( "lblDstAdd" + i).innerHTML;
+					tmpDstMask = document.getElementById( "lblDstMask" + i).innerHTML;
+				}
+				if(document.getElementById( "lblDstPort" + i) != null)
+				{
+				    tmpDstPort = document.getElementById( "lblDstPort" + i).innerHTML;
+				}
+				tmpSched = document.getElementById( "lblSched" + i).innerHTML;
+				if(document.getElementById( "lblSrcStart" + i) != null)
+				{
+					tmpSrcStart = document.getElementById( "lblSrcStart" + i).innerHTML;
+					tmpSrcEnd = document.getElementById( "lblSrcEnd" + i).innerHTML;
+				}
+				if(document.getElementById( "lblDstStart" + i) != null)
+				{
+					tmpDstStart = document.getElementById( "lblDstStart" + i).innerHTML;
+					tmpDstEnd = document.getElementById( "lblDstEnd" + i).innerHTML;
+				}
+      		}
+		}
+
+	} else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = rml.value;
+		tmpName = document.getElementById( "lblName0" ).innerHTML;
+		tmpProtocol = document.getElementById( "lblProtocol0" ).innerHTML;
+		if(document.getElementById( "lblSrcAdd0" ) != null)
+		{
+			tmpSrcAdd = document.getElementById( "lblSrcAdd0" ).innerHTML;
+			tmpSrcMask = document.getElementById( "lblSrcMask0" ).innerHTML;
+		}
+		if(document.getElementById( "lblSrcPort0" ) != null)
+		{
+		    tmpSrcPort = document.getElementById( "lblSrcPort0" ).innerHTML;
+		}
+		
+		if(document.getElementById( "lblDstAdd0" ) != null)
+		{
+			tmpDstAdd = document.getElementById( "lblDstAdd0" ).innerHTML;
+			tmpDstMask = document.getElementById( "lblDstMask0" ).innerHTML;
+		}
+		
+		if(document.getElementById( "lblDstPort0" ) != null)
+		{
+		    tmpDstPort = document.getElementById( "lblDstPort0" ).innerHTML;
+		}
+		tmpSched = document.getElementById( "lblSched0" ).innerHTML;
+		
+		if(document.getElementById( "lblSrcStart0" ) != null)
+		{
+			tmpSrcStart = document.getElementById( "lblSrcStart0" ).innerHTML;
+			tmpSrcEnd = document.getElementById( "lblSrcEnd0" ).innerHTML;
+		}
+		if(document.getElementById( "lblDstStart0" ) != null)
+		{
+			tmpDstStart = document.getElementById( "lblDstStart0" ).innerHTML;
+			tmpDstEnd = document.getElementById( "lblDstEnd0" ).innerHTML;
+		}
+		
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+		txtfltname.disabled = 1;
+		txtfltname.value = tmpName;
+		srcaddr.value = tmpSrcAdd;
+		srcmask.value = tmpSrcMask;
+		srcport.value = tmpSrcPort;
+		dstaddr.value = tmpDstAdd;
+		dstmask.value = tmpDstMask;
+		dstport.value = tmpDstPort;
+		
+		srcsrt.value = tmpSrcStart;
+		srcend.value = tmpSrcEnd;
+		
+		dessrt.value = tmpDstStart;
+		desend.value = tmpDstEnd;
+		
+		for (i = 0; i < protocol.length; i++){
+			if (protocol[i].value == tmpProtocol){			
+				protocol.selectedIndex = i;
+				break;
+}
+}
+
+		for (i = 0; i < iptscheditem.length; i++){
+			if (iptscheditem[i].value == tmpSched){
+				iptscheditem.selectedIndex = i;
+				break;
+			}
+		}		
+
+
+		document.getElementById("fltrAddInfo").style.display = 'block';
+		removeFltr.disabled = 1;
+		addFltr.disabled = 1;
+		editFltr.disabled = 1;
+		
+		if(tmpSrcAdd != '' && tmpSrcMask == '')
+			srctype.selectedIndex = 0;
+		if(tmpDstAdd != '' && tmpDstMask == '')
+			destype.selectedIndex = 0;
+		
+		if(tmpSrcAdd != '' && tmpSrcMask != '')
+			srctype.selectedIndex = 1;
+		if(tmpDstAdd != '' && tmpDstMask != '')
+			destype.selectedIndex = 1;
+		
+		if(tmpSrcStart != '' && tmpSrcEnd != '')
+			srctype.selectedIndex = 2;
+		if(tmpDstStart != '' && tmpDstEnd !='')
+			destype.selectedIndex = 2;
+		
+		srcChg();
+		desChg();
+		protoChg();
+  }
+  doEdit = true;
+
+}
+
+function removeClick(rml) {
+	var lst = '';
+	var has_selected_items = false;
+   with ( document.forms[0] ) {
+     if (rml)
+  {
+	if (rml.length > 0)
+    	for (i = 0; i < rml.length; i++) {
+        	if ( rml[i].checked == true ){
+				has_selected_items=true;
+            	lst += rml[i].value + ', ';
+			}
+      	}
+   	else if ( rml.checked == true ){
+		has_selected_items=true;
+      	lst = rml.value;
+	}
+	}
+	}
+
+	if (has_selected_items){
+   		var loc = 'scoutflt.cmd?action=remove&rmLst=' + lst;
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	} else{
+		alert("There are no items to remove!");
+		return;
+}
+}
+
+// done hiding -->
+      </script>
+   <script language="JavaScript" src="menu.js"></script>
+   </head>
+<body>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Filtering Options";
+HelpItem="outfilter";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script><form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Outgoing IP Filtering
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				This screen allows you to create a filter rule to identify outgoing IP traffic 
+            by specifying a new filter name and at least one condition below. All of the 
+            specified conditions in this filter rule must be satisfied for the rule to take 
+            effect. Click "Apply" to save and activate the filter.</p>			
+				<p>By default, all outgoing IP traffic from LAN is allowed, but some IP 
+				traffic can be <font color=red><b>BLOCKED</b></font> by setting up filters.</p>
+			</td>
+		</tr>
+	</table>
+	
+			<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Active Outbound Filter
+			</td>
+		</tr>
+		<tr>
+<td class=content>
+<div class="overflow"><table class=formlisting>
+    <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Name</td>
+      <td class='form_label_col'>Protocol</td>
+      <td class='form_label_col'>Source Address / Mask</td>
+      <td class='form_label_col'>Source Port</td>
+      <td class='form_label_col'>Dest. Address / Mask</td>
+      <td class='form_label_col'>Dest. Port</td>
+      <td class='form_label_col'>Schedule Rule</td>
+   </tr>
+   
+   <script language="javascript">    
+   
+MAX_ENTRY = 16;
+var outbnds = '<%ejGetOutbndFlt(outbnds)%>';
+var entrys = outbnds.split('|');
+var entryNum = entrys.length - 1;
+
+var rule = new Array(MAX_ENTRY);
+for (i = 0; i < MAX_ENTRY; i++)
+{
+	rule[i] = new rVe('','','','','','','','','','','','', '');
+}
+
+	for (j = 0; j < entryNum; j++)
+	{
+		var entry = entrys[j].split(',');
+		rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12]);
+	}
+	
+function rVe(fltName, protocol, srcaddr, srcmask, srcport, dstaddr, dstmask, dstport, schedule, srcstart, srcend, dststart, dstend )
+{
+   this.fltName = fltName;   this.protocol = protocol;   this.srcaddr = srcaddr;
+   this.srcmask = srcmask;   this.srcport = srcport;     this.dstaddr = dstaddr;
+   this.dstmask = dstmask;   this.dstport = dstport;     this.schedule = schedule;
+   this.srcstart = srcstart; this.srcend = srcend;       this.dststart = dststart;  this.dstend = dstend;
+   if(this.srcport==0) this.srcport='';
+   if(this.dstport==0) this.dstport='';
+}
+var smask = new Array(MAX_ENTRY);	
+var dmask = new Array(MAX_ENTRY);	
+
+for (i = 0; i < entryNum; i++)
+{
+document.writeln('<tr><td><div align=center><input type=checkbox name=rml value='+rule[i].fltName+'></div></td>');
+    document.writeln('<td><div align=center id=lblName'+i+'>'+rule[i].fltName+'</div></td>');    
+	if(rule[i].protocol == '0')
+    document.writeln('<td><div align=center'+i+'>TCP/UDP<label id=lblProtocol'+i+' style="display:none">0</label></div></td>'); 
+	else if(rule[i].protocol == '1')
+    document.writeln('<td><div align=center'+i+'>TCP<label id=lblProtocol'+i+' style="display:none">1</label></div></td>');  
+	else if(rule[i].protocol == '2')
+    document.writeln('<td><div align=center'+i+'>UDP<label id=lblProtocol'+i+' style="display:none">2</label></div></td>');  
+	else if(rule[i].protocol == '3')
+    document.writeln('<td><div align=center'+i+'>ICMP<label id=lblProtocol'+i+' style="display:none">3</label></div></td>');  
+    //add by Van 10081027
+	else if(rule[i].protocol == '4')
+	document.writeln('<td><div align=center'+i+'>TCP/UDP/ICMP<label id=lblProtocol'+i+' style="display:none">4</label></div></td>');
+    //add end
+	else
+	document.writeln('<td><div align=center'+i+'>&nbsp;<label id=lblProtocol'+i+' style="display:none">5</label></div></td>'); 
+
+smask[i] = 0; dmask[i]=0;
+var part = rule[i].srcmask.split('.');
+	for(j = 0; j < part.length; j++){
+	if(getRightMostOneBitPos(part[j])>0)
+		smask[i] = smask[i] + getRightMostOneBitPos(part[j]) + 1;
+	}
+part = rule[i].dstmask.split('.');
+	for(j = 0; j < part.length; j++){
+	if(getRightMostOneBitPos(part[j])>0)
+		dmask[i] = dmask[i] + getRightMostOneBitPos(part[j]) + 1;
+	}	
+	// write network IP
+	if(smask[i]!=0&&rule[i].srcmask != '255.255.255.255' && rule[i].srcaddr != '')
+    	document.writeln('<td><label id=lblSrcAdd'+i+'>'+rule[i].srcaddr+'</label>/<label id=lblSrcMask'+i+'>'+rule[i].srcmask+'</label></td>');   
+	// write single IP
+    else if(rule[i].srcaddr != '')
+		document.writeln('<td><label id=lblSrcAdd'+i+'>'+rule[i].srcaddr+'</label><label id=lblSrcMask'+i+'></label></td>');   
+	// write range IP
+	else if(rule[i].srcstart != '' && rule[i].srcend != '')
+		document.writeln('<td><label id=lblSrcStart'+i+'>'+rule[i].srcstart+'</label>-<label id=lblSrcEnd'+i+'>'+rule[i].srcend+'</label></td>');   
+	else
+		document.writeln('<td>&nbsp;</td>'); 
+	if(rule[i].srcport != '')
+		document.writeln('<td><label align=center id=lblSrcPort'+i+'>'+rule[i].srcport+'</label></td>');    
+    else
+	    document.writeln('<td>&nbsp;</td>');
+	if(dmask[i]!=0&&rule[i].dstmask != '255.255.255.255' && rule[i].dstaddr != '')
+    	document.writeln('<td><label id=lblDstAdd'+i+'>'+rule[i].dstaddr+'</label>/<label id=lblDstMask'+i+'>'+rule[i].dstmask+'</label></td>');      
+	else if(rule[i].dstaddr != '')
+		document.writeln('<td><label align=center id=lblDstAdd'+i+'>'+rule[i].dstaddr+'</label><label id=lblDstMask'+i+'></label></td>');  
+	// write range IP
+	else if(rule[i].dststart != '' && rule[i].dstend!= '')
+		document.writeln('<td><label id=lblDstStart'+i+'>'+rule[i].dststart+'</label>-<label id=lblDstEnd'+i+'>'+rule[i].dstend+'</label></td>');   
+	else
+		document.writeln('<td>&nbsp;</td>');   
+	if(rule[i].dstport != '')
+		document.writeln('<td><div align=center id=lblDstPort'+i+'>'+rule[i].dstport+'</div></td>');
+    else
+	    document.writeln('<td>&nbsp;</td>');
+    document.writeln('<td><div align=center id=lblSched'+i+'>'+rule[i].schedule+'</div></td></tr>');        
+}		  
+   </script>
+
+
+   
+</table><br>
+</td></tr></table>
+	<p align=center>
+<input type='button' id=addFltr onClick='addClick()' value='Add'>
+<input type='button' id=editFltr onClick='btnEdit(this.form.rml)' value='Edit' class='btn'>
+<input type='button' id=removeFltr onClick='removeClick(this.form.rml)' value='Delete' class='btn'>
+</p>
+	
+<div id=fltrAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Outbound IP Filtering
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <br>
+            <table class=formarea>
+               <tr>
+                  <td class=form_label>Filter Name&nbsp;:</td>
+                  <td><input type='text' size="22" maxlength="15" name="txtfltname"></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Protocol&nbsp;:</td>
+                  <td><select name='protocol' size="1" onchange="protoChg()">
+                        <option value="5">(Click to select)
+                        <option value="0">
+                        TCP and UDP
+                        <option value="1">
+                        TCP
+                        <option value="2">
+                        UDP
+                        <option value="3">
+                        ICMP
+                        <option value="4">
+                        Any
+                     </select></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Source IP Type&nbsp;:</td>
+                  <td><select name='srctype' size="1" onchange="srcChg()">
+                        <option value="0">
+                        Single IP
+                        <option value="1">
+                        Network IP
+                        <option value="2">
+                        IP Range
+                     </select></td>
+               </tr></table>
+               
+               <div id='divsrcrge'>
+               <table class=formarea>
+			   <tr>
+			      <td class=form_label>Source IP address</td>
+			   </tr>
+			   <tr>
+			      <td class=form_label>Start&nbsp;:</td>
+	              <td><input type='text' size='22' name='srcsrt' maxlength='15'></td>
+			   </tr>
+			   <tr>
+			      <td class=form_label>End&nbsp;:</td>
+			      <td><input type='text' size='22' name='srcend' maxlength='15'></td>
+               </tr>
+               </table>
+               </div>
+               
+               
+               <div id='divsource'>
+               <table class=formarea>
+               <tr>
+                  <td class=form_label>Source IP address&nbsp;:</td>
+                  <td><input type='text' size='22' name='srcaddr' maxlength='15'></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Source Subnet Mask&nbsp;:</td>
+                  <td><input type='text' size='22' name='srcmask' maxlength='15'></td>
+               </tr>
+               </table>
+			   </div>
+			   
+			   <table class=formarea>
+                  <td class=form_label>Source Port&nbsp;:</td>
+                  <td><input type='text' size="22" name="srcport" maxlength="11">&nbsp;(port or port:port)</td>
+               </tr>
+               </table>
+               </div>
+               
+               <table class=formarea>
+               <tr>
+                  <td class=form_label>Destination IP Type&nbsp;:</td>
+                  <td><select name='destype' size="1" onchange="desChg()">
+                        <option value="0">
+                        Single IP
+                        <option value="1">
+                        Network IP
+                        <option value="2">
+                        IP Range
+                     </select></td>
+               </tr></table>
+               
+               <div id='divdesrge'>
+               <table class=formarea>
+               <tr>
+			      <td class=form_label>Destination IP address</td>
+			   </tr>
+			   <tr>
+			      <td class=form_label>Start&nbsp;:</td>
+			      <td><input type='text' size='22' name='dessrt' maxlength='15'></td>
+			   </tr>
+			   <tr>
+			      <td class=form_label>End&nbsp;:</td>
+			      <td><input type='text' size='22' name='desend' maxlength='15'></td>
+               </tr>
+               </table>
+               </div>
+
+               <div id='divdestination'>
+               <table class=formarea>
+               <tr>
+                  <td class=form_label>Destination IP address&nbsp;:</td>
+                  <td><input type='text' size="22" name="dstaddr" maxlength="15"></td>
+               </tr>
+               <tr>
+                  <td class=form_label>Destination Subnet Mask&nbsp;:</td>
+                  <td><input type='text' size="22" name="dstmask" maxlength="15"></td>
+               </tr>
+               </table>
+               </div>
+
+               <table class=formarea>
+               <tr>
+                 <td class=form_label>Destination Port&nbsp;:</td>
+                  <td><input type='text' size="22" name="dstport" maxlength="11">&nbsp;(port or port:port)</td>
+               </tr>
+				<tr>
+ <td class=form_label>Schedule&nbsp;:</td>
+<td><select name="iptscheditem">
+<option value="Always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT>
+<option value="Never">Never</option>
+</select>&nbsp;&nbsp;<a href="iptschedadd.html">View Available Schedules</a></td>
+				</tr>
+            </table>
+      		</td>
+		</tr>
+	</table>
+<p align=center><input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+         </div></form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

@@ -1,0 +1,1 @@
+"use strict";!function(){angular.module("app").service("noticeUtil",["$rootScope",function(rs){return{subscribe:function(cb){rs.$watch(function(){return rs.appEvents.notifications.length},cb)},getList:function(){return _.map(rs.appEvents.notifications,function(notice){var output=angular.copy(notice);return output.view=output,delete output.close,output})}}}])}();

@@ -1,0 +1,191 @@
+<html>
+   <head>
+      <meta http-equiv="Pragma" content="no-cache">
+      <LINK href="stylemain.css" type="text/css" rel="stylesheet">
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var port = '<%ejGet(portId)%>';
+var chipId = <%ejGetOther(sysInfo, chipId)%>;
+var buildvlm =  '<%ejGetOther(sysInfo, buildWanVlanMux)%>';
+var qos = '<%ejGet(enblQos)%>';
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+      showhide('divBuildVlanMux', buildvlm);
+   }
+}
+
+function btnBack() {
+   var code = 'location="dslptm.cmd"';
+   eval(code);
+}
+
+
+function btnSave() {
+   var loc = 'dslptm.cmd?action=add';
+   var portId;
+
+   with ( document.forms[0] ) {
+      if (path0.checked == true && path1.checked == true) {
+            portId = '4';
+      }
+      else if (path0.checked == true) {
+            portId = '0';
+      }
+      else if (path1.checked == true) {
+            portId = '1';
+      }
+      else {
+         alert('At least one latency check box need be selected.');
+         return;
+      }
+      loc += '&portId=' + portId;
+
+      if (priorityNorm.checked == false && priorityHigh.checked == false) {
+         alert('At least one priority check box need be selected.');
+         return;
+      }	  	
+      if (priorityNorm.checked == true)
+         loc +='&ptmPriorityNorm=1';
+      else
+         loc +='&ptmPriorityNorm=0';
+      if (priorityHigh.checked == true)
+         loc +='&ptmPriorityHigh=1';
+      else 
+         loc +='&ptmPriorityHigh=0';
+
+      if ( enblQos.checked == true )
+         loc += '&enblQos=1';
+      else
+         loc += '&enblQos=0';
+
+      if (connMode[0].checked == true)
+         loc += '&connMode=0';
+      else if (connMode[1]. checked == true)
+         loc += '&connMode=1';
+      else if (connMode[2]. checked == true)
+         loc += '&connMode=2';
+	  
+   }
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnCancel(){
+   var loc = 'cfgptm.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onload="frmLoad()">
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Internet Setup";
+HelpItem="wancfghelp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+         <form ID="Form1">
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<b>WAN</b></td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>				
+            This screen allows you to configure an PTM PVC identifier,<br>
+            select a service categoryS. Otherwise choose an existing interface by selecting the checkbox to enable it. <br><br></p>
+				
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<b>PTM  Configuration</b></td>										
+		</tr>
+			<td class=content>
+			<table cellSpacing='4' cellPadding='0' border='0'>
+	     <tr>
+           <td><strong>Select DSL Latency</strong></td><br>
+             <tr>
+                <td colspan="2"><input type='checkbox' name='path0' checked>&nbsp;Path0</td>
+             </tr>
+             <tr>
+                <td colspan="2"><input type='checkbox' name='path1'>&nbsp;Path1</td>
+             </tr>
+       </table>
+            <table border="0" cellpadding="0" cellspacing="0">
+           	 <td><strong>Select PTM Priority</strong></td><br>
+                  <tr>
+                     <td colspan="2"><input type='checkbox' name='priorityNorm' checked>&nbsp;Normal Priority</td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type='checkbox' name='priorityHigh'>&nbsp;High Priority (Preemption)</td>
+                  </tr>
+	    </table>
+            <div id="divBuildVlanMux">
+            <br>
+            <table border="0" cellpadding="0" cellspacing="0">
+           	 <td><strong>Select Connection Mode</strong></td><br>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='connMode' checked>&nbsp;Default Mode - Single service over one connection</td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='connMode'>&nbsp;VLAN MUX Mode - Multiple Vlan service over one connection</td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='connMode'>&nbsp;MSC Mode - Multiple Service over one Connection</td>
+                  </tr>
+            </table>
+            </div>
+
+            <div id='qosInfo'>
+               <br>
+               <b>Enable Quality Of Service</b>
+               <br>
+               <br>
+               Enabling packet level QoS for this PTM interface. Use <b>Advanced Setup/Quality of Service</b> to 
+               assign priorities for the applications.<br>
+               <br>
+               <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                     <td width='30' height="30"><input type='checkbox' name='enblQos'></td>
+                     <td>Enable Quality Of Service.</td>
+                  </tr>
+               </table>
+            </div>
+            </td>
+            </table>
+
+            <br>
+            <center>
+               <input type='button' onClick='btnBack()' value='Back'> <input type='button' onClick='btnSave()' value='Apply/Save'><input type='button' onClick='btnCancel()' value='Cancel'>
+            </center>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+      </blockquote>
+   </body>
+</html>

@@ -1,0 +1,205 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+var interfaces = interfaceInfo.split('|');
+var gtwyIfc = '<%ejGetOther(sysInfo, dfltGwIfc)%>'; if (gtwyIfc == '&nbsp') gtwyIfc = '';
+
+var enblIP6 = '<%ejGetOther(sysInfo, enblIPv6)%>';
+var intfInfo6 = '<%ejGetOther(wanInterfaceInfo, route6)%>';
+var intf6 = intfInfo6.split('|');
+var gtwy6Ifc = '<%ejGetOther(sysInfo, dfltGw6Ifc)%>'; if (gtwy6Ifc == '&nbsp') gtwy6Ifc = '';
+
+function btnApply() {
+   var loc = 'rtdefaultcfg.cgi?';
+
+   with (document.forms[0]) {
+       var idx = wanIf.selectedIndex;
+       var ifc = wanIf.options[idx].value;
+       loc += 'wanIfName=' + ifc;
+
+       if (enblIP6 == '1') {
+          var idx6 = wanIf6.selectedIndex;
+          var ifc6 = wanIf6.options[idx6].value;
+          loc += '&dfltGw6Ifc=' + ifc6;
+       }
+   }
+   
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function hideGw6Info(hide) {
+   var status = 'visible';
+
+   if ( hide == 1 )
+      status = 'hidden';
+   if (document.getElementById)  // DOM3 = IE5, NS6
+      document.getElementById('gw6Info').style.visibility = status;
+   else {
+      if (document.layers == false) // IE4
+         document.all.gw6Info.style.visibility = status;
+   }
+}
+
+function frmLoad() {
+
+  with ( document.forms[0] ) {
+    if (enblIP6 == '1')
+       hideGw6Info(0);
+    else
+       hideGw6Info(1);
+   	if (gtwyIfc == '' ) {
+	  return;
+   	}
+  }
+}
+
+function btnCancel(){
+   var loc = 'rtdefaultcfg.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+// done hiding -->
+</script>
+<script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onLoad='frmLoad()'>
+      <blockquote>
+
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Routing";
+HelpItem="dfltgateway";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Routing -- Default Gateway
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Select a preferred wan interface as the system default gateway. Click "Apply" button
+               to save it.</P>		  </td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Default Gateway
+			</td>										
+		</tr>
+		<tr>
+   	      <td class=content>        
+               <table>
+               <tr>
+				  <td class=form_label_left>Use Interface</td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+				  <td><select name='wanIf'>
+                           <script language="javascript">
+<!-- hide
+{
+   var i = 0;
+   var names = interfaces[i].split('/');
+	
+   if (names == '') {
+      document.write("  <option value='&nbsp' selected>NO CONFIGURED INTERFACE");
+      alert('No configured WAN interface existed for system default gateway.');
+   }
+   else {
+	  for ( i = 0; i < interfaces.length; i++ ) {
+   	     names = interfaces[i].split('/');
+	     if ( names[1] == gtwyIfc )
+	        document.write("  <option value='" + names[1] + "' selected>");
+	     else
+	        document.write("  <option value='" + names[1] + "'>");
+	     document.writeln(interfaces[i]);
+	  }
+   }
+//for IPoWAN ?  ~~~
+//   if (gtwyIfc == 'br0')
+//      document.writeln("  <option value='br0' selected> LAN/br0");
+//   else
+//      document.writeln("  <option value='br0'> LAN/br0");
+}
+
+// done hiding -->
+</script>
+                        </select></td>
+                  </tr>
+               </table>
+               <br>
+            <br>
+            <div id='gw6Info'>
+            <P>Select a preferred wan interface as the system default IPv6 gateway.<br></P>
+               <table>
+                  <tr>
+                     <td>Selected WAN Interface</td>
+                     <td><select name='wanIf6'>
+                           <script language="javascript">
+<!-- hide
+{
+   var i = 0;
+   
+   document.writeln("  <option value=''>");
+   
+   for ( i = 0; i < intf6.length; i++ ) {
+      var names = intf6[i].split('/');
+	   if (names == '') {
+	      document.write("  <option value='&nbsp' selected>NO CONFIGURED INTERFACE");
+	   }
+	  
+      if ( names[1] == gtwy6Ifc )
+         document.write("  <option value='" + names[1] + "' selected>");
+      else
+         document.write("  <option value='" + names[1] + "'>");
+      document.writeln(intf6[i]);
+   }
+   //document.writeln("  <option value='br0'> LAN/br0");
+}
+
+// done hiding -->
+</script>
+                        </select></td>
+                  </tr>
+              </table><br><br>
+
+            </div>
+			</td>
+			</tr></table>
+			<br>
+            <center>
+               <input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'>
+            </center>
+         </form>
+      </blockquote>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+
+   </body>
+</html>
+

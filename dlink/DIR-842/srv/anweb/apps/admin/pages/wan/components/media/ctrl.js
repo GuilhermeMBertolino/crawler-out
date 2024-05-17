@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controller("WanMediaCtrl",["$scope",function(){}]);

@@ -1,0 +1,1 @@
+document.write('<script type="text/javascript" charset="utf-8" src="/js/jquery.validate1.js?v=20191126101002"><\/script>');

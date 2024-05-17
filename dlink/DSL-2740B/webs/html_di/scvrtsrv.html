@@ -1,0 +1,2338 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+          
+   <script language="JavaScript" src="menu.js"></script>
+<script language="JavaScript">
+<!-- hide
+// 20091118, Roger Yu add
+var lanIp = '<%ejGet(ethIpAddress)%>';
+var lanMask = '<%ejGet(ethSubnetMask)%>';
+var broadIP = getBroadcastIP(lanIp, lanMask);
+var braodSplit = broadIP.split(".");
+var e1 = braodSplit[3] - 1;
+var s1 = getDhcpStart(lanIp, lanMask) + 2; /* 20101228, Linus Shi, mod to fix bug#10874, mark: 12281256 */
+var startip = '';
+var endip = '';
+
+var port = '<%ejGetSrvCntr(srvcntrrport)%>';
+var entryport = port.split(',');
+portrule = new rVe1(entryport[0], entryport[1], entryport[2], entryport[3], entryport[4], entryport[5]);
+function rVe1(ftp,http,snmp,ssh,telnet,tftp)
+{
+   
+     this.portftp = ftp;
+    this.porthttp = http;
+    this.portsnmp = snmp;  
+    this.portssh = ssh;  
+    this.porttelnet = telnet;  
+    this.porttftp = tftp;  
+}
+
+//add by Van 0911241021
+/*var lanparts = lanIp.split("."); 
+var maskparts = lanMask.split(".");
+var startparts = new Array();
+
+for (i = 0; i < 3; i++) 
+{
+    //startip = startip + braodSplit[i] + ".";
+	startparts[i] = lanparts[i] & maskparts[i];//add by Van 0911241032
+	startip = startip + startparts[i] + "."; //add by Van 0911241021
+    endip = endip + braodSplit[i] + ".";
+}
+
+startip = startip + s1;
+endip = endip + e1;*/
+
+/* 20120224, Linus Shi, add to fix bug#13120, mark: 02241116 */
+//Caculating the number of hosts under specific Mask
+function hostsOfMask(mask)
+{
+if(mask==0)
+  {return 255;}
+if(mask==128)
+  {return 127;}
+if(mask==192)
+  {return 63;}
+if(mask==224)
+  {return 31;}
+if(mask==240)
+  {return 15;}
+if(mask==248)
+  {return 7;}
+if(mask==252)
+  {return 3;}
+if(mask==254)
+  {return 1;}
+else
+  {return 0;}
+}
+
+//function setSrvIpRange(lanIp) 
+{
+    var broadIP;
+    var braodSplit;
+    var routermask;
+    var maskParts;
+
+	//with ( document.forms[0] ) 
+    {
+        //if ( isValidIpAddress(lanIp, "Address") == false ) return;
+        //if ( isValidSubnetMask(lanMask, "Address") == false ) return;
+
+		routermask = reencodeIP(lanMask);
+	    maskParts = routermask.split('.');
+	    //if ( maskParts.length != 4 )
+            //return false;
+        var mask0 = parseInt(maskParts[0]);
+        var mask1 = parseInt(maskParts[1]);
+	    var mask2 = parseInt(maskParts[2]);
+	    var mask3 = parseInt(maskParts[3]);	  
+
+        //Frederick,060726	Reencode ip to match lan ip
+        lanIp = reencodeIP(lanIp);
+        addrParts = lanIp.split('.');
+        //if ( addrParts.length != 4 )
+            //return false;
+        t1 = parseInt(addrParts[3]) + 1;	  
+        /*if (startip != '' && t1 > 255) 
+		{
+            alert("Last portion of IP Address has to be less than 254 for Enabled DHCP Server");
+            return false;
+        }*/
+        broadIP = getBroadcastIP(lanIp, lanMask);
+        braodSplit = broadIP.split(".");
+        startip = endip = "";
+	  
+     /*
+	1)The Subnet Mask is 255.255.255.0
+		DHCP rule: value=1~253 range=(value+1)~254, value=254 range=(1~value-1)
+
+			ex: IP = 192.168.100.253, and mask is 255.255.255.0
+			range=192.168.100.254~192.168.100.254
+
+			ex: IP = 192.168.100.254, and mask is 255.255.255.0
+			range=192.168.100.1~192.168.100.253
+
+	2)The Subnet Mask is 255.255.0.0
+		DHCP rule: value=1~255 range=(value)~255, value>255  range=error
+		DHCP rule: value=1~253 range=(value+1)~254, value>254  range=error
+
+		ex: IP = 192.168.100.253, and mask is 255.255.0.0
+		range=192.168.100.254~192.168.255.254
+	
+		ex: IP = 192.168.100.254, and mask is 255.255.0.0
+		range=error because if the range is 192.168.1.254~192.168.255.253 the router ip will include to dhcp range, 
+		so when the subnet mask is 255.255.0.0 can not setting 192.168.x.254
+	*/   
+        var check0 = parseInt(addrParts[0]);
+        var check1 = parseInt(addrParts[1]);
+        var check2 = parseInt(addrParts[2]);
+        var check3 = parseInt(addrParts[3]);
+	  
+        if(mask3==0 && mask2==0 && mask1==0 && (mask0 <= 255 && mask0 >=0))
+	    {
+            //mask = x.0.0.0
+            if(check3==1)
+            {
+                startip = (check0 & mask0)  + ".0.0.2";
+            }
+            else
+            {
+                startip = (check0 & mask0)  + ".0.0.1";
+            }
+            endip =   ((check0 & mask0)+parseInt(hostsOfMask(mask0)) -1)  + ".255.255.254";
+        }
+
+        if(mask3==0 && mask2==0 && (mask1<=255 && mask1 >=0) && mask0==255)
+        {
+            // mask = 255.x.0.0
+            if(check3==1)
+            {
+                startip = addrParts[0] + "." + (check1 & mask1)  + ".0.2";
+            }
+            else
+            {
+                startip = addrParts[0] + "." +(check1 & mask1)  + ".0.1";
+            }
+            endip =  addrParts[0] + "." +((check1 & mask1)+parseInt(hostsOfMask(mask1)))  + ".255.254";
+        }
+		
+        if(mask3==0 && (mask2<=255 && mask2 >=0) && mask1==255 && mask0==255)
+		{
+		    // mask = 255.255.x.0
+            if(check3==1)
+            {
+                startip = addrParts[0] + "." + addrParts[1]+ "." + (check2 & mask2)  + ".2";
+            }
+            else
+            {
+                startip = addrParts[0] + "." + addrParts[1] + "."+(check2 & mask2)  + ".1";
+            }
+            endip =  addrParts[0] + "." + addrParts[1]+ "."+ ((check2 & mask2)+parseInt(hostsOfMask(mask2)))  + ".254";
+        }
+		
+        if((mask3<=255 && mask3>=0) && mask2==255 && mask1==255 && mask0==255)
+		{
+            // mask = 255.255.255.x
+            startip ='';
+            endip = '';
+            for (i = 0; i < 3; i++) 
+            {
+                startip = startip + addrParts[i] + ".";
+                endip = endip + braodSplit[i] + ".";
+            }
+			
+            //ex. 192.168.0.1 or 192.168.0.129 mask:255.255.255.128
+            if(((check3 & mask3)+1)==check3)
+            {
+                startip = startip + (check3+1);
+            }
+            else
+            {
+                startip = startip + ((check3 & mask3)+1);
+		    }
+            endip =  endip + ((check3 & mask3) + parseInt(hostsOfMask(mask3)) -1);
+        }
+    }
+}
+/* 20120224, Linus Shi, end ----------------- mark: 02241116 */
+
+
+-->
+</script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<form name="vsFrm">
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Port Forwarding";
+HelpItem="portforwarding";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Port Forwarding
+			</td>		
+		</tr>
+		<tr>
+			<td class=content>
+<p>Port Forwarding allows you to direct incoming traffic from the WAN side (identified by protocol and external port) to the internal server with a private IP address on the LAN side. The internal port is required only if the external port needs to be converted to a different port number used by the server on the LAN side. A maximum of  32 entries can be configured.</p>
+<p>Select the service name, and enter the server IP address and click "Apply"             to forward IP packets for this service to the specified server.             <b>  NOTE: The "Internal Port End" cannot be changed.  It is the same as "External Port End"             normally and will be the same as the "Internal Port Start" or "External Port End" if either             one is modified</b></p>			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Port Forwarding Setup
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<br>
+<div class=overflow>
+<table class=formlisting>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Server Name</td>
+      <td class='form_label_col'>External Port Start</td>
+      <td class='form_label_col'>External Port End</td>
+      <td class='form_label_col'>Protocol</td>
+      <td class='form_label_col'>Internal Port Start</td>
+      <td class='form_label_col'>Internal Port End</td>
+      <td class='form_label_col'>Server IP Address</td>
+      <td class='form_label_col'>Remote IP Address</td>
+      <td class='form_label_col'>Inbound Filter</td>
+      <td class='form_label_col'>WAN Interface</td>
+   </tr>
+<script language="javascript">    	
+MAX_ENTRY = 32;
+var vrtsrvs = "<%ejGetOther(vrtsrv,vrtsrvs)%>";
+//vrtsrvs = "Baldur's Gate,192.168.1.23,47621,47622,47623,47624,1,always,0.0.0.0,3232235799|aaate,192.168.13.23,47624,47624,47624,47624,0,never,1.2.3.4,3232235799|";
+var entrys = vrtsrvs.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+for (i = 0; i < MAX_ENTRY; i++)	rule[i] = new rVe('','','','','','','','','','','');
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split(',');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7], entry[8],entry[9],entry[10]);
+}
+
+function rVe(srvName, addr,eStart, eEnd, iStart, iEnd, proto,schedule,remote,ip,wanIf)
+{
+   this.srvName = srvName;   this.addr = addr;
+   this.schedule = schedule;  
+   this.eStart = eStart;   this.eEnd = eEnd;
+   this.proto = proto;   this.iStart = iStart;   this.iEnd = iEnd;   
+   this.remote = remote;this.ip = ip;this.wanIf = wanIf;
+}
+
+for (i = 0; i < entryNum; i++)
+{
+    document.writeln('<tr>');
+    var temp ;
+	
+/*ipObj->internalClient, ipObj->externalPort, ipObj->X_BROADCOM_COM_ExternalPortEnd, 
+ipObj->portMappingProtocol, ipObj->internalPort, ipObj->X_BROADCOM_COM_InternalPortEnd
+*/
+ 	temp = rule[i].addr+'|'+rule[i].eStart+'|'+rule[i].eEnd+'|'+rule[i].proto+'|'+rule[i].iStart+'|'+rule[i].iEnd;	
+	/*if(rule[i].proto == '1')
+	temp = rule[i].ip+'|'+rule[i].eStart+'|'+rule[i].eEnd+'|1|0|0|'+rule[i].iStart+'|'+rule[i].iEnd;	
+	else if(rule[i].proto == '2')
+	temp = rule[i].ip+'|'+rule[i].eStart+'|'+rule[i].eEnd+'|0|1|0|'+rule[i].iStart+'|'+rule[i].iEnd;	
+	else
+	temp = rule[i].ip+'|'+rule[i].eStart+'|'+rule[i].eEnd+'|1|1|0|'+rule[i].iStart+'|'+rule[i].iEnd;	*/	
+    document.writeln('<td><div align=center><input type=checkbox name=rml value='+escape(temp)+'></div></td>');	
+    document.writeln('<td><div align=center  id=lblAppName'+i+'>'+rule[i].srvName+'</div></td>'); 
+
+    document.writeln('<td><div align=center>'+rule[i].eStart +'</div></td>');
+    document.writeln('<td><div align=center>'+rule[i].eEnd+'</div></td>'); 
+    document.writeln('<td><div align=center>'+rule[i].proto+'</div></td>'); 
+/*
+    if(rule[i].proto == '1')
+    document.writeln('<td><div align=center>TCP</div></td>');  
+	else if(rule[i].proto == '2')
+    document.writeln('<td><div align=center>UDP</div></td>');  
+	else if(rule[i].proto == '0')
+    document.writeln('<td><div align=center>TCP/UDP</div></td>');  	
+	else
+	document.writeln('<td><div align=center>&nbsp</div></td>'); 	
+	*/	
+	document.writeln('<td><div align=center>'+rule[i].iStart +'</div></td>');
+    document.writeln('<td><div align=center>'+rule[i].iEnd+'</div></td>'); 	
+
+	document.writeln('<td><div align=center id=lblIPAddress'+i+'>'+rule[i].addr+'</div></td>'); 
+    /* 20101208, Linus Shi, begin mod to fix bug#10461 & port forawarding rules UI display 
+	    issues when item value is null. mark: 12081500 */
+    if(rule[i].remote != '')
+    {
+        document.writeln('<td><div align=center id=lblRemote'+i+'>'+rule[i].remote+'</div></td>'); 
+    }
+    else
+    {
+        document.writeln('<td><div align=center id=lblRemote'+i+'>&nbsp</div></td>'); 	
+    }
+    if(rule[i].schedule != '')
+    {
+        document.writeln('<td><div align=center id=lblSched'+i+'>'+rule[i].schedule+'</div></td>');
+    }
+	else
+	{
+	    document.writeln('<td><div align=center id=lblSched'+i+'>&nbsp</div></td>');
+	}
+	/* 20101208, Linus Shi, end ---------------------------------------- mark: 12081500 */
+    document.writeln('<td><div align=center id=lblWanif'+i+'>'+rule[i].wanIf+'</div></td>');
+
+    document.writeln('</tr>');
+} 
+document.writeln('</table>');
+</script>   
+
+  
+<br><br></div>
+</td>
+	</tr>
+</table>
+<p align=center>
+<input type='button' id=addScvrt onClick='addClick()' value='Add'>
+<input type='button' id=editScvrt onClick='btnEdit(this.form.rml)' value='Edit'>
+<input type='button' id=removeScvrt onClick='removeClick(this.form.rml)' value='Delete'>
+</p>
+
+
+<div id=scvrtAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Port Forwarding Setup
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+
+            <br>
+            <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                     <td><b>Remaining number of entries that can be configured:</b></td>
+                     <td>
+                        <b>
+                          <SCRIPT language=javascript>
+				var num = '<%ejGetOther(vrtsrv,vsnum)%>';document.write(32-num);
+				</SCRIPT>	
+                        </b>
+                     </td>
+                  </tr>
+            </table>
+            </br>
+            <table class=formarea  border="0" cellpadding="0" cellspacing="0" width=100%>
+
+                           <tr>
+<!-- hide                     <td><input type="checkbox" name='ifStr' checked>&nbsp;Use Interface</td>
+// done hiding -->
+			 <td class=form_label_noWidth colspan=2 width=23%><b>Use Interface<b></td>
+		     <td><b>:</b>&nbsp;&nbsp;</td>
+                     <td ><select name='dstWanIf'>
+               <script language="javascript">
+               <!-- hide
+               {
+                  var i = 0;
+                  var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+                  var interfaces = interfaceInfo.split('|');
+               
+                  for ( i = 0; i < interfaces.length; i++ ) {
+                     var names = interfaces[i].split('/');
+                     document.write("  <option value='" + names[1] + "'>");
+                     document.writeln(interfaces[i]);
+                  } 
+               }
+               // done hiding -->
+               </script>
+                      </select></td>
+               </tr>
+
+
+               <tr>
+                  	<td class=form_label_noWidth colspan=2 width=23%>Server Name</td>
+				 	<td><b>:</b>&nbsp;&nbsp;</td>
+					<td></td>
+               </tr>
+               <tr>
+				  <td align=right><input type="radio" name="radiosrv" onclick='radioClick()' checked></td>
+                  <td class=form_label_noWidth><b>Select a Service<b></td>
+					<td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><div id='id_autoSrvName'><select name='srvName' size="1" onChange='appSelect(this.value)'>
+                        <option value="FIRST_APP">(Click to select)</option>
+                        <option value="Active Worlds">Active Worlds</option>
+                        <option value="Age of Empires">Age of Empires</option>
+				    	    	<option value="Age of Empires Expansion: The Rise of Rome">Age of Empires Expansion: The Rise of Rome</option>
+				    	    	<option value="Age of Empires II Expansion: The Conquerors">Age of Empires II Expansion: The Conquerors</option>
+				    	    	<option value="Age of Empires II: The Age of Kings">Age of Empires II: The Age of Kings</option>
+				    	    	<option value="Age of Kings">Age of Kings</option>
+				    	    	<option value="Age of Wonders">Age of Wonders</option>
+				    	    	<option value="Aliens vs. Predator">Aliens vs. Predator</option>
+				    	    	<option value="AOL Instant Messenger">AOL Instant Messenger</option>
+				    	    	<option value="Audiogalaxy Satellite">Audiogalaxy Satellite</option>
+				    	    	<option value="AUTH">AUTH</option>
+				    	    	<option value="Baldur's Gate">Baldur's Gate</option>
+				    	    	<option value="BattleCom">BattleCom</option>
+				    	    	<option value="Battlefield Communicator">Battlefield Communicator</option>
+				    	    	<option value="Black and White">Black and White</option>
+				    	    	<option value="Blizzard Battle.net">Blizzard Battle.net</option>
+				    	    	<option value="Buddy Phone">Buddy Phone</option>
+				    	    	<option value="Bungie.net">Bungie.net</option>
+				    	    	<option value="Camerades">Camerades</option>
+				    	    	<option value="CART Precision Racing">CART Precision Racing</option>
+				    	    	<option value="Close Combat for Windows">Close Combat for Windows</option>
+				    	    	<option value="Close Combat III: The Russian Front">Close Combat III: The Russian Front</option>
+				    	    	<option value="Close Combat: A Bridge Too Far">Close Combat: A Bridge Too Far</option>
+				    	    	<option value="Combat Flight Simulator 2: WWII Pacific Theater">Combat Flight Simulator 2: WWII Pacific Theater</option>
+				    	    	<option value="Combat Flight Simulator: WWII Europe Series">Combat Flight Simulator: WWII Europe Series</option>
+				    	    	<option value="Crimson Skies">Crimson Skies</option>
+				    	    	<option value="CuSeeMe">CuSeeMe</option>
+				    	    	<option value="Dark Reign 2">Dark Reign 2</option>
+				    	    	<option value="Delta Force 2">Delta Force 2</option>
+				    	    	<option value="Delta Three PC to Phone">Delta Three PC to Phone</option>
+				    	    	<option value="Descent 3">Descent 3</option>
+				    	    	<option value="Descent Freespace">Descent Freespace</option>
+				    	    	<option value="Diablo I">Diablo I</option>
+				    	    	<option value="Diablo II">Diablo II</option>
+				    	    	<option value="DialPad.Com">DialPad.Com</option>
+				    	    	<option value="DirectX 7 Games">DirectX 7 Games</option>
+				    	    	<option value="DirectX 8 Games">DirectX 8 Games</option>
+				    	    	<option value="Domain Name Server (DNS)">Domain Name Server (DNS)</option>
+				    	    	<option value="Doom">Doom</option>
+				    	    	<option value="Dune 2000">Dune 2000</option>
+				    	    	<option value="Dwyco Video Conferencing">Dwyco Video Conferencing</option>
+				    	    	<option value="Elite Force">Elite Force</option>
+				    	    	<option value="Everquest">Everquest</option>
+				    	    	<option value="F-16">F-16</option>
+				    	    	<option value="F-22 Lightning 3">F-22 Lightning 3</option>
+				    	    	<option value="F-22 Raptor">F-22 Raptor</option>
+				    	    	<option value="F22 Raptor (Novalogic)">F22 Raptor (Novalogic)</option>
+				    	    	<option value="Falcon 4.0">Falcon 4.0</option>
+				    	    	<option value="Fighter Ace II">Fighter Ace II</option>
+				    	    	<option value="Flight Simulator 2000">Flight Simulator 2000</option>
+				    	    	<option value="Freetel">Freetel</option>
+				    	    	<option value="FTP Server">FTP Server</option>
+				    	    	<option value="GNUtella">GNUtella</option>
+				    	    	<option value="Golf 2001 Edition">Golf 2001 Edition</option>
+				    	    	<option value="Go2Call">Go2Call</option>
+				    	    	<option value="Half Life">Half Life</option>
+				    	    	<option value="Half Life Server">Half Life Server</option>
+				    	    	<option value="Heretic II Server">Heretic II Server</option>
+				    	    	<option value="I76">I76</option>
+				    	    	<option value="ICUII Client">ICUII Client</option>
+				    	    	<option value="Ivisit">Ivisit</option>
+				    	    	<option value="IPSEC">IPSEC</option>
+				    	    	<option value="IRC">IRC</option>
+				    	    	<option value="IStreamVideo2HP">IStreamVideo2HP</option>
+				    	    	<option value="KaZaA">KaZaA</option>
+				    	    	<option value="Kohan Immortal Sovereigns">Kohan Immortal Sovereigns</option>
+				    	    	<option value="LapLink Gold">LapLink Gold</option>
+				    	    	<option value="Links 2001">Links 2001</option>
+				    	    	<option value="Lotus Notes Server">Lotus Notes Server</option>
+				    	    	<option value="Mail (POP3)">Mail (POP3)</option>
+				    	    	<option value="Mail (SMTP)">Mail (SMTP)</option>
+				    	    	<option value="MechCommander 2.0">MechCommander 2.0</option>
+				    	    	<option value="MechWarrior 4">MechWarrior 4</option>
+				    	    	<option value="Media Player 7">Media Player 7</option>
+				    	    	<option value="Midtown Madness 2">Midtown Madness 2</option>
+				    	    	<option value="Mig 29">Mig 29</option>
+				    	    	<option value="Monster Truck Madness 2">Monster Truck Madness 2</option>
+				    	    	<option value="Motocross Madness 2">Motocross Madness 2</option>
+				    	    	<option value="Motorhead Server">Motorhead Server</option>
+				    	    	<option value="MSN Gaming Zone">MSN Gaming Zone</option>
+				    	    	<option value="MSN Messenger">MSN Messenger</option>
+				    	    	<option value="Myth">Myth</option>
+				    	    	<option value="Myth II Server">Myth II Server</option>
+				    	    	<option value="Myth: The Fallen Lords">Myth: The Fallen Lords</option>
+				    	    	<option value="Need for Speed">Need for Speed</option>
+				    	    	<option value="NetMech">NetMech</option>
+				    	    	<option value="Netmeeting 2.0, 3.0, Intel Video Phone">Netmeeting 2.0, 3.0, Intel Video Phone</option>
+				    	    	<option value="Network Time Protocol (NTP)">Network Time Protocol (NTP)</option>
+				    	    	<option value="News Server (NNTP)">News Server (NNTP)</option>
+				    	    	<option value="OKWeb">OKWeb</option>
+				    	    	<option value="OKWin">OKWin</option>
+				    	    	<option value="Outlaws">Outlaws</option>
+				    	    	<option value="Pal Talk">Pal Talk</option>
+				    	    	<option value="pcAnywhere v7.5">pcAnywhere v7.5</option>
+				    	    	<option value="PhoneFree">PhoneFree</option>
+				    	    	<option value="Polycom ViaVideo H.323">Polycom ViaVideo H.323</option>
+				    	    	<option value="Polycom ViaVideo H.324">Polycom ViaVideo H.324</option>
+				    	    	<option value="PPTP">PPTP</option>
+				    	    	<option value="Quake">Quake</option>
+				    	    	<option value="Quake II (Client and Server)">Quake II (Client and Server)</option>
+				    	    	<option value="Quake III">Quake III</option>
+				    	    	<option value="RealAudio">RealAudio</option>
+				    	    	<option value="Real Player 8 Plus">Real Player 8 Plus</option>
+ 				    	    	<option value="Red Alert">Red Alert</option>
+				    	    	<option value="Rise of Rome">Rise of Rome</option>
+				    	    	<option value="Roger Wilco">Roger Wilco</option>
+				    	    	<option value="Rogue Spear">Rogue Spear</option>
+				    	    	<option value="Secure Shell Server (SSH)">Secure Shell Server (SSH)</option>
+				    	    	<option value="Secure Web Server (HTTPS)">Secure Web Server (HTTPS)</option>
+				    	    	<option value="ShoutCast">ShoutCast</option>
+				    	    	<option value="SNMP">SNMP</option>
+				    	    	<option value="SNMP Trap">SNMP Trap</option>
+				    	    	<option value="Speak Freely">Speak Freely</option>
+				    	    	<option value="StarCraft">StarCraft</option>
+				    	    	<option value="Starfleet Command">Starfleet Command</option>
+				    	    	<option value="StarLancer">StarLancer</option>
+				    	    	<option value="SWAT3">SWAT3</option>
+				    	    	<option value="Telnet Server">Telnet Server</option>
+				    	    	<option value="The 4th Coming">The 4th Coming</option>
+				    	    	<option value="TFTP">TFTP</option>
+				    	    	<option value="Tiberian Sun: C&C III"">Tiberian Sun: C&C III"</option>
+				    	    	<option value="Total Annihilation">Total Annihilation</option>
+				    	    	<option value="Ultima">Ultima</option>
+				    	    	<option value="Unreal Tournament">Unreal Tournament</option>
+				    	    	<option value="Urban Assault">Urban Assault</option>
+				    	    	<option value="VoxPhone 3.0">VoxPhone 3.0</option>
+				    	    	<option value="Warbirds 2">Warbirds 2</option>
+				    	    	<option value="Web Server (HTTP)">Web Server (HTTP)</option>
+				    	    	<option value="WebPhone 3.0">WebPhone 3.0</option>
+				    	    	<option value="Westwood Online">Westwood Online</option>
+				    	    	<option value="Windows 2000 Terminal Server">Windows 2000 Terminal Server</option>
+				    	    	<option value="X Windows">X Windows</option>
+				    	    	<option value="Yahoo Pager">Yahoo Pager</option>
+				    	    	<option value="Yahoo Messenger Chat">Yahoo Messenger Chat</option>
+                                                <option value="WOL">WOL</option>
+                    </select>
+					</div>
+                  </td>
+               </tr>
+               <tr>
+				  <td align=right ><input type="radio" name="radiosrv" onclick='radioClick()'></td>
+ <td class=form_label_noWidth><b>Custom Server<b></td>
+					<td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><div id='id_cusSrvName'><input type='text' size="45"  maxlength="15" name="cusSrvName"></div></td>
+               </tr>
+				<tr>
+<!--
+<td class=form_label_noWidth colspan=2>Schedule</td>
+<td><b>:</b>&nbsp;&nbsp;</td>
+<td align=left><select name="iptscheditem">
+<option value="always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';//tods = 'aaa|bbb|';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT>
+<option value="never">Never</option>
+</select>&nbsp;&nbsp;<a href="iptschedadd.html"> View Available Schedules</a>
+</td>
+-->
+<td class=form_label_noWidth colspan=2>Inbound Filter</td>
+<td><b>:</b>&nbsp;&nbsp;</td>
+<td align=left><select name=iptscheditem> 
+<OPTION value="Allow All" selected>Allow All</OPTION> 
+<SCRIPT language=javascript>
+MAX_ENTRY = 16;
+var inbnds = '<%ejGetInbndFlt(ibdName)%>';
+var entrys = inbnds.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+
+for (i = 0; i < MAX_ENTRY; i++)
+{
+    rule[i] = new rVe('','','','','','','','','','');
+}
+
+	for (j = 0; j < entryNum; j++)
+	{
+		var entry = entrys[j].split('/');
+		rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7], entry[8],entry[9]);
+	}
+
+function rVe(fltName, wanInfo, protocol, srcaddr, srcmask, srcport, dstaddr, dstmask, dstport,schedule )
+{
+   this.fltName = fltName;   this.wanInfo = wanInfo;   this.protocol = protocol;
+   this.srcaddr = srcaddr;   this.srcmask = srcmask;   this.srcport = srcport;
+   this.dstaddr = dstaddr;   this.dstmask = dstmask;      this.dstport = dstport;   
+   this.schedule = schedule;
+   if(this.srcport==0) this.srcport='';
+   if(this.dstport==0) this.dstport='';
+}
+
+for (i = 0; i< entryNum; i++)
+{
+    document.write("<OPTION value=\"Allow "+ rule[i].fltName +"\">Allow " + rule[i].fltName + "</OPTION>");
+	document.write("<OPTION value=\"Deny "+ rule[i].fltName +"\">Deny " + rule[i].fltName + "</OPTION>");
+}
+</SCRIPT>
+<OPTION value="Deny All">Deny All</OPTION>
+</select></td>
+</tr> 
+
+               <tr>
+                  <td class=form_label_noWidth colspan=2>Server IP Address</td>
+					<td><b>:</b>&nbsp;&nbsp;</td>
+				  <td align=left><input type='text' size="16" maxlength="15" name="sIp">
+<SCRIPT language=javascript>
+   document.write("[" + startip + " - " + endip + "]");
+</SCRIPT>
+</td>
+               </tr>
+            </table>
+            <br>
+            <table class=formlisting>
+               <tr class=form_label_row>
+                  <td class='form_label_col'>External Port Start</td>
+                  <td class='form_label_col'>External Port End</td>
+                  <td class='form_label_col'>Protocol</td>
+                  <td class='form_label_col'>Internal Port Start</td>
+                  <td class='form_label_col'>Internal Port End</td>
+                  <td class='form_label_col'>Remote Ip Address</td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 0)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 0)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart" onkeypress='kPressed()' onblur='setiEnd(0)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" name="eStart" maxlength="5" onchange='setiPt(0, 1)'></td>
+                  <td><input type='text' size="8" name="eEnd" maxlength="5" onchange='setiPt(1, 1)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(1)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 2)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 2)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(2)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 3)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 3)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(3)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 4)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 4)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(4)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 5)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 5)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(5)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 6)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 6)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(6)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 7)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 7)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(7)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 8)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 8)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(8)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 9)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 9)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(9)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 10)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 10)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(10)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStart" onchange='setiPt(0, 11)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEnd" onchange='setiPt(1, 11)'></td>
+                  <td><select name='proto'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStart"  onkeypress='kPressed()' onblur='setiEnd(11)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEnd"></td>
+				  <td><input type='text' size="14" name="iSrcIp"></td>
+               </tr>
+               <br>
+            </table>
+            <br>
+      		</td>
+		</tr>
+	</table>
+            <p align=center><input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+
+
+<div id=scvrtEditInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Port Forwarding Setup
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <table class=formarea  border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td colspan="2"></td><td></td>
+               </tr>
+
+               <!---tr>
+                <td></td>
+                  <td class=form_label_130PX >Use Interface</td>
+                  <td><select name='dstWanIfEdit'>
+               <script language="javascript">
+               {
+                  var i = 0;
+                  var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+                  var interfaces = interfaceInfo.split('|');
+               
+                  for ( i = 0; i < interfaces.length; i++ ) {
+                     var names = interfaces[i].split('/');
+                     document.write("  <option value='" + names[1] + "'>");
+                     document.writeln(interfaces[i]);
+                  } 
+               }
+               </script>
+                      </select></td>
+           </tr---->
+           
+               <tr>
+			<td></td>
+                  <td class=form_label_130PX>Use Interface</td>
+                  <td><input type='text' size="45"  maxlength="15" name="dstWanIfEdit" readonly disabled></td>
+               </tr>
+
+               <tr>
+				  <td></td>
+                  <td class=form_label_130PX>Server Name&nbsp;:</td>
+                  <td><input type='text' size="45"  maxlength="15" name="editCusSrvName" readonly disabled></td>
+               </tr>
+               <tr>
+				  <td></td>
+<!--
+				  <td class=form_label_130PX>Schedule&nbsp;:</td>
+                  <td><select name="iptscheditemEdit">
+<option value="always">Always</option>
+<SCRIPT language=javascript>
+function rVe(nm){   this.name = nm;}  
+var tods = '<%ejGetTod(name)%>';//tods = 'aaa|bbb|';
+var ts = tods.split('|');
+var tNum = ts.length - 1;
+var t = new Array(tNum);
+for (i = 0; i < tNum; i++)	t[i] = new rVe(ts[i]);
+		
+for (i = 0; i< tNum; i++){
+	document.write('<OPTION value='+t[i].name+'>' + t[i].name + '</OPTION>');
+}
+</SCRIPT>
+<option value="never">Never</option></select>&nbsp;&nbsp;<a href="iptschedadd.html">View Available Schedules</a></td>
+-->
+<td class=form_label_130PX>Inbound Filter</td>
+<td><select name=iptscheditemEdit> 
+<OPTION value="Allow All" selected>Allow All</OPTION> 
+<SCRIPT language=javascript>
+MAX_ENTRY = 16;
+var inbnds = '<%ejGetInbndFlt(ibdName)%>';
+var entrys = inbnds.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+
+for (i = 0; i < MAX_ENTRY; i++)
+{
+    rule[i] = new rVe('','','','','','','','','','');
+}
+
+	for (j = 0; j < entryNum; j++)
+	{
+		var entry = entrys[j].split('/');
+		rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7], entry[8],entry[9]);
+	}
+
+function rVe(fltName, wanInfo, protocol, srcaddr, srcmask, srcport, dstaddr, dstmask, dstport,schedule )
+{
+   this.fltName = fltName;   this.wanInfo = wanInfo;   this.protocol = protocol;
+   this.srcaddr = srcaddr;   this.srcmask = srcmask;   this.srcport = srcport;
+   this.dstaddr = dstaddr;   this.dstmask = dstmask;      this.dstport = dstport;   
+   this.schedule = schedule;
+   if(this.srcport==0) this.srcport='';
+   if(this.dstport==0) this.dstport='';
+}
+
+for (i = 0; i< entryNum; i++)
+{
+    document.write("<OPTION value=\"Allow "+ rule[i].fltName +"\">Allow " + rule[i].fltName + "</OPTION>");
+	document.write("<OPTION value=\"Deny "+ rule[i].fltName +"\">Deny " + rule[i].fltName + "</OPTION>");
+}
+</SCRIPT>
+<OPTION value="Deny All">Deny All</OPTION>
+</select></td>
+</tr> 
+
+              <tr>
+				  <td></td>
+                  <td class=form_label_130PX>Server IP Address&nbsp;:</td>
+				  <td><input type='text' size="16" maxlength="15" name="ipEdit">
+<SCRIPT language=javascript>
+   document.write("[" + startip + " - " + endip + "]");
+</SCRIPT></td>
+               </tr>
+            </table>
+            <br>
+            <table class=formlisting>
+               <tr class=form_label_row>
+                  <td class='form_label_col'>External Port Start</td>
+                  <td class='form_label_col'>External Port End</td>
+                  <td class='form_label_col'>Protocol</td>
+                  <td class='form_label_col'>Internal Port Start</td>
+                  <td class='form_label_col'>Internal Port End</td>
+                  <td class='form_label_col'>Remote Ip Address</td>
+               </tr>
+               <tr>
+                  <td><input type='text' size="8" maxlength="5" name="eStartEdit" onchange='setiPtEdit(0)'></td>
+                  <td><input type='text' size="8" maxlength="5" name="eEndEdit" onchange='setiPtEdit(1)'></td>
+                  <td><select name='protoEdit'>
+                        <option value='0'>
+                        TCP/UDP
+                        <option value='1' selected>
+                        TCP
+                        <option value='2'>
+                        UDP
+                     </select></td>
+                  <td><input type='text' size="8" maxlength="5" name="iStartEdit" onkeypress='kPressed()' onblur='setiEndEdit(0)'>
+                  <td><input type='text' size="8" maxlength="5" name="iEndEdit" disabled></td>
+				  <td><input type='text' size="14" name="iRmtEdit"></td>
+               </tr>
+            </table>
+            <br>
+      		</td>
+		</tr>
+	</table>
+            <p align=center><input type='button' onClick='btnApplyEdit()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+
+         </form>
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>
+<script language="javascript">
+<!-- hide
+TOTAL_ROW = 12
+TOTAL_APP = 134
+var usedName = '';
+var remain = 32;;
+FIRST_APP = "Select One";
+RE_ALL_MSG = 'Require BOTH External/Internal port range(Start/End values)';
+keyPressed = false;
+
+var doEdit = false;
+
+var editId;
+
+//frederick,061206	add rule schedule
+var iptSchedule = '1';
+
+// Declare an array (TOTAL_APP) of vs applications 
+var v = new Array(TOTAL_APP);
+
+v[0] = new cV("Active Worlds",4);
+v[0].e[0] = new iVe("3000", "3000", "1", "3000", "3000");
+v[0].e[1] = new iVe("5670", "5670", "1", "5670", "5670");
+v[0].e[2] = new iVe("7777", "7777", "1", "7777", "7777");
+v[0].e[3] = new iVe("7000", "7000", "1", "7000", "7000");
+
+v[1] = new cV("Age of Empires",4);
+v[1].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[1].e[1] = new iVe("6073",   "6073", "1", "6073", "6073");
+v[1].e[2] = new iVe("2300",   "2400", "1", "2300", "2400");
+v[1].e[3] = new iVe("2300",   "2400", "2", "2300", "2400");                        
+
+v[2] = new cV("Age of Empires Expansion: The Rise of Rome",4);
+v[2].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[2].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[2].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[2].e[3] = new iVe("2300", "2400", "2", "2300", "2400");   
+
+v[3] = new cV("Age of Empires II Expansion: The Conquerors",4);
+v[3].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[3].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[3].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[3].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[4] = new cV("Age of Empires II: The Age of Kings",4);
+v[4].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[4].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[4].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[4].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[5] = new cV("Age of Kings",4);
+v[5].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[5].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[5].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[5].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[6] = new cV("Age of Wonders",4);
+v[6].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[6].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[6].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[6].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[7] = new cV("Aliens vs. Predator",3);
+v[7].e[0] = new iVe("80", "80", "2", "80", "80");
+v[7].e[1] = new iVe("2300", "2400", "2", "2300", "2400");
+v[7].e[2] = new iVe("8000", "8999", "2", "8000", "8999");
+v[7].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[8] = new cV("AOL Instant Messenger",1);
+v[8].e[0] = new iVe("443", "443", "1", "443", "443");
+
+v[9] = new cV("Audiogalaxy Satellite",2);
+v[9].e[0] = new iVe("41000", "50000", "1", "41000", "50000");
+v[9].e[1] = new iVe("1117", "5190", "1", "1117", "5190");
+ 
+v[10] = new cV("AUTH",1);
+v[10].e[0] = new iVe("113", "113", "1", "113", "113");
+
+v[11] = new cV("Baldur's Gate",2);
+v[11].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[11].e[1] = new iVe("47624", "47624", "2", "47624", "47624");
+
+v[12] = new cV("BattleCom",4);
+v[12].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[12].e[1] = new iVe("47624", "47624", "2", "47624", "47624");
+v[12].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[12].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[13] = new cV("Battlefield Communicator",2);
+v[13].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[13].e[1] = new iVe("47624", "47624", "2", "47624", "47624");
+
+v[14] = new cV("Black and White",4);
+v[14].e[0] = new iVe("2611", "2612", "1", "2611", "2612");
+v[14].e[1] = new iVe("6667", "6667", "1", "6667", "6667");
+v[14].e[2] = new iVe("6500", "6500", "2", "6500", "6500");
+v[14].e[3] = new iVe("27900", "27900", "2", "27900", "27900");
+
+v[15] = new cV("Blizzard Battle.net",3);
+v[15].e[0] = new iVe("4000", "4000", "1", "4000", "4000");
+v[15].e[1] = new iVe("6112", "6112", "1", "6112", "6112");
+v[15].e[2] = new iVe("6112", "6112", "2", "6112", "6112");
+
+v[16] = new cV("Buddy Phone",1);
+v[16].e[0] = new iVe("700", "701", "2", "700", "701");
+
+v[17] = new cV("Bungie.net",1);
+v[17].e[0] = new iVe("3453", "3453", "1", "3453", "3453");
+
+v[18] = new cV("Camerades",2);
+v[18].e[0] = new iVe("2047", "2048", "1", "2047", "2048");
+v[18].e[1] = new iVe("2047", "2048", "2", "2047", "2048");
+
+v[19] = new cV("CART Precision Racing",4);
+v[19].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[19].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[19].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[19].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[20] = new cV("Close Combat for Windows",4);
+v[20].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[20].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[20].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[20].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[21] = new cV("Close Combat III: The Russian Front",4);
+v[21].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[21].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[21].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[21].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[22] = new cV("Close Combat: A Bridge Too Far",4);
+v[22].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[22].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[22].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[22].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[23] = new cV("Combat Flight Simulator 2: WWII Pacific Theater",4);
+v[23].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[23].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[23].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[23].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[24] = new cV("Combat Flight Simulator: WWII Europe Series",4);
+v[24].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[24].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[24].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[24].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[25] = new cV("Crimson Skies",4);
+v[25].e[0] = new iVe("28805", "28805", "1", "28805", "28805");
+v[25].e[1] = new iVe("28801", "28801", "1", "28801", "28801");
+v[25].e[2] = new iVe("3040", "3040", "1", "3040", "3040");
+v[25].e[3] = new iVe("1121", "1121", "1", "1121", "1121");
+
+v[26] = new cV("CuSeeMe",12);
+v[26].e[0] = new iVe("24032", "24032", "2", "24032", "24032"); 
+v[26].e[1] = new iVe("1414", "1414", "2", "1414", "1414");
+v[26].e[2] = new iVe("1424", "1424", "2", "1424", "1424");
+v[26].e[3] = new iVe("1503", "1503", "1", "1503", "1503");
+v[26].e[4] = new iVe("1720", "1720", "1", "1720", "1720");
+v[26].e[5] = new iVe("1812", "1813", "2", "1812", "1813"); 
+v[26].e[6] = new iVe("7640", "7640", "2", "7640", "7640"); 
+v[26].e[7] = new iVe("7642", "7642", "1", "7642", "7642");
+v[26].e[8] = new iVe("7648", "7648", "1", "7648", "7648");
+v[26].e[9] = new iVe("7648", "7648", "2", "7648", "7648");
+v[26].e[10] = new iVe("7649", "7649", "1", "7649", "7649");
+v[26].e[11] = new iVe("56800", "56800", "2", "56800", "56800");
+
+v[27] = new cV("Dark Reign 2",2);
+v[27].e[0] = new iVe("26214", "26214", "1", "26214", "26214");
+v[27].e[1] = new iVe("26214", "26214", "2", "26214", "26214"); 
+
+v[28] = new cV("Delta Force 2",1);
+v[28].e[0] = new iVe("3568", "3569", "2", "3568", "3569");
+
+v[29] = new cV("Delta Three PC to Phone",6);
+v[29].e[0] = new iVe("12053", "12053", "1", "12053", "12053");
+v[29].e[1] = new iVe("12083", "12083", "1", "12083", "12083");
+v[29].e[2] = new iVe("12080", "12080", "2", "12080", "12080");
+v[29].e[3] = new iVe("12120", "12120", "2", "12120", "12120"); 
+v[29].e[4] = new iVe("12122", "12122", "2", "12122", "12122");
+v[29].e[5] = new iVe("24150", "24179", "2", "24150", "24179");
+
+v[30] = new cV("Descent 3",3);
+v[30].e[0] = new iVe("7170", "7170", "1", "7170", "7170");
+v[30].e[1] = new iVe("2092", "2092", "2", "2092", "2092");
+v[30].e[2] = new iVe("3445", "3445", "2", "3445", "3445");
+
+v[31] = new cV("Descent Freespace",5);
+v[31].e[0] = new iVe("3999", "3999", "1", "3999", "3999");
+v[31].e[1] = new iVe("4000", "4000", "2", "4000", "4000");
+v[31].e[2] = new iVe("7000", "7000", "2", "7000", "7000");
+v[31].e[3] = new iVe("3493", "3493", "2", "3493", "3493"); 
+v[31].e[4] = new iVe("3440", "3440", "2", "3440", "3440");
+
+v[32] = new cV("Diablo I",2);
+v[32].e[0] = new iVe("6112", "6112", "1", "6112", "6112");
+v[32].e[1] = new iVe("6112", "6112", "2", "6112", "6112");
+
+v[33] = new cV("Diablo II",2);
+v[33].e[0] = new iVe("4000", "4000", "1", "4000", "4000");
+v[33].e[1] = new iVe("6112", "6119", "2", "6112", "6119");
+
+v[34] = new cV("DialPad.Com",5);
+v[34].e[0] = new iVe("51200", "51201", "2", "51200", "51201");
+v[34].e[1] = new iVe("7175", "7175", "1", "7175", "7175");
+v[34].e[2] = new iVe("51210", "51210", "1", "51210", "51210");
+v[34].e[3] = new iVe("8680", "8686", "1", "8680", "8686"); 
+v[34].e[4] = new iVe("1584", "1585", "1", "1584", "1585");
+
+v[35] = new cV("DirectX 7 Games",3);
+v[35].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[35].e[1] = new iVe("2300", "2400", "1", "2300", "2400");
+v[35].e[2] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[36] = new cV("DirectX 8 Games",2);
+v[36].e[0] = new iVe("6073", "6073", "1", "6073", "6073");
+v[36].e[1] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[37] = new cV("Domain Name Server (DNS)",2);
+v[37].e[0] = new iVe("53", "53", "1", "53", "53");
+v[37].e[1] = new iVe("53", "53", "2", "53", "53");
+
+v[38] = new cV("Doom",2);
+v[38].e[0] = new iVe("666", "666", "1", "666", "666");
+v[38].e[1] = new iVe("666", "666", "2", "666", "666");
+
+v[39] = new cV("Dune 2000",2);
+v[39].e[0] = new iVe("4000", "4000", "1", "4000", "4000");
+v[39].e[1] = new iVe("1140", "1234", "2", "1140", "1234");
+
+v[40] = new cV("Dwyco Video Conferencing",4);
+v[40].e[0] = new iVe("12000", "16090", "2", "12000", "16090");
+v[40].e[1] = new iVe("1024", "5000", "1", "1024", "5000");
+v[40].e[2] = new iVe("6700", "6702", "1", "6700", "6702");
+v[40].e[3] = new iVe("6880", "6880", "1", "6880", "6880");
+
+v[41] = new cV("Elite Force",4);
+v[41].e[0] = new iVe("26000", "26000", "2", "26000", "26000");
+v[41].e[1] = new iVe("27500", "27500", "2", "27500", "27500");
+v[41].e[2] = new iVe("27910", "27910", "2", "27910", "27910");
+v[41].e[3] = new iVe("27960", "27960", "2", "27960", "27960");
+
+v[42] = new cV("Everquest",3);
+v[42].e[0] = new iVe("1024", "6000", "1", "1024", "6000");
+v[42].e[1] = new iVe("1024", "6000", "2", "1024", "6000");
+v[42].e[2] = new iVe("6001", "7000", "1", "6001", "7000");
+
+v[43] = new cV("F-16",1);
+v[43].e[0] = new iVe("3862", "3863", "2", "3862", "3863");
+
+v[44] = new cV("F-22 Lightning 3",3);
+v[44].e[0] = new iVe("3875", "3875", "2", "3875", "3875");
+v[44].e[1] = new iVe("4533", "4534", "2", "4533", "4534");
+v[44].e[2] = new iVe("4660", "4670", "2", "4660", "4670");
+
+v[45] = new cV("F-22 Raptor",1);
+v[45].e[0] = new iVe("3874", "3875", "2", "3874", "3875");
+
+v[46] = new cV("F22 Raptor (Novalogic)",1);
+v[46].e[0] = new iVe("3874", "3874", "2", "3874", "3874");
+
+v[47] = new cV("Falcon 4.0",1);
+v[47].e[0] = new iVe("2934", "2935", "2", "2934", "2935");
+
+v[48] = new cV("Fighter Ace II",6);
+v[48].e[0] = new iVe("50000", "50100", "1", "50000", "50100");
+v[48].e[1] = new iVe("50000", "50100", "2", "50000", "50100");
+v[48].e[2] = new iVe("47624", "47624", "1", "47624", "47624");
+v[48].e[3] = new iVe("6073", "6073", "1", "6073", "6073");
+v[48].e[4] = new iVe("2300", "2400", "1", "2300", "2400");
+v[48].e[5] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[49] = new cV("Flight Simulator 2000",4);
+v[49].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[49].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[49].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[49].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[50] = new cV("Freetel",1);
+v[50].e[0] = new iVe("21300", "21303", "2", "21300", "21303");
+
+v[51] = new cV("FTP Server",1);
+v[51].e[0] = new iVe("21", "21", "1", "21", "21");
+
+v[52] = new cV("GNUtella",2);
+v[52].e[0] = new iVe("6346", "6347", "1", "6346", "6347");
+v[52].e[1] = new iVe("6346", "6347", "2", "6346", "6347");
+
+v[53] = new cV("Golf 2001 Edition",4);
+v[53].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[53].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[53].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[53].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[54] = new cV("Go2Call",2);
+v[54].e[0] = new iVe("2090", "2091", "2", "2090", "2091");
+v[54].e[1] = new iVe("2090", "2090", "1", "2090", "2090");
+
+v[55] = new cV("Half Life",6);
+v[55].e[0] = new iVe("6003", "6003", "1", "6003", "6003");
+v[55].e[1] = new iVe("6003", "6003", "2", "6003", "6003");
+v[55].e[2] = new iVe("7001", "7001", "1", "7001", "7001");
+v[55].e[3] = new iVe("7001", "7001", "2", "7001", "7001");
+v[55].e[4] = new iVe("27005", "27005", "2", "27005", "27005");
+v[55].e[5] = new iVe("27010", "27015", "2", "27010", "27015");
+
+v[56] = new cV("Half Life Server",1);
+v[56].e[0] = new iVe("27015", "27015", "2", "27015", "27015");
+
+v[57] = new cV("Heretic II Server",2);
+v[57].e[0] = new iVe("28910", "28910", "1", "28910", "28910");
+v[57].e[1] = new iVe("28910", "28910", "2", "28910", "28910");
+
+v[58] = new cV("I76",1);
+v[58].e[0] = new iVe("21154", "21156", "2", "21154", "21156");
+        
+v[59] = new cV("ICUII Client",6);
+v[59].e[0] = new iVe("2019", "2019", "1", "2019", "2019"); 
+v[59].e[1] = new iVe("2000", "2038", "1", "2000", "2038");
+v[59].e[2] = new iVe("2050", "2051", "1", "2050", "2051");
+v[59].e[3] = new iVe("2069", "2069", "1", "2069", "2069");
+v[59].e[4] = new iVe("2085", "2085", "1", "2085", "2085");
+v[59].e[5] = new iVe("3010", "3030", "1", "3010", "3030");  
+        
+v[60] = new cV("IPSEC",1); 
+v[60].e[0] = new iVe("500", "500", "2", "500", "500"); 
+       
+v[61] = new cV("Ivisit",2);
+v[61].e[0] = new iVe("9943", "9943", "2", "9943", "9943");
+v[61].e[1] = new iVe("56768", "56768", "2", "56768", "56768");
+
+v[62] = new cV("IRC",3);
+v[62].e[0] = new iVe("1024", "5000", "1", "1024", "5000");
+v[62].e[1] = new iVe("6660", "6669", "1", "6660", "6669");
+v[62].e[2] = new iVe("113", "113", "2", "113", "113");
+
+v[63] = new cV("IStreamVideo2HP",2);
+v[63].e[0] = new iVe("8076", "8077", "1", "8076", "8077");
+v[63].e[1] = new iVe("8076", "8077", "2", "8076", "8077");
+
+v[64] = new cV("KaZaA",1);
+v[64].e[0] = new iVe("1024", "1024", "1", "1024", "1024");
+
+v[65] = new cV("Kohan Immortal Sovereigns",4);
+v[65].e[0] = new iVe("3855", "3855", "1", "3855", "3855");
+v[65].e[1] = new iVe("3855", "3855", "2", "3855", "3855");
+v[65].e[2] = new iVe("17437", "17437", "1", "17437", "17437");
+v[65].e[3] = new iVe("17437", "17437", "2", "17437", "17437");
+
+v[66] = new cV("LapLink Gold",1);
+v[66].e[0] = new iVe("1547", "1547", "1", "1547", "1547");
+
+v[67] = new cV("Links 2001",4);
+v[67].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[67].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[67].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[67].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[68] = new cV("Lotus Notes Server",1);
+v[68].e[0] = new iVe("1352", "1352", "1", "1352", "1352");
+
+v[69] = new cV("Mail (POP3)",1);
+v[69].e[0] = new iVe("110", "110", "1", "110", "110");
+
+v[70] = new cV("Mail (SMTP)",1);
+v[70].e[0] = new iVe("25", "25", "1", "25", "25");
+
+v[71] = new cV("MechCommander 2.0",4);
+v[71].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[71].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[71].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[71].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[72] = new cV("MechWarrior 4",4);
+v[72].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[72].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[72].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[72].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[73] = new cV("Media Player 7",2);
+v[73].e[0] = new iVe("1755", "1755", "1", "1755", "1755");
+v[73].e[1] = new iVe("70", "7000", "2", "70", "7000");
+
+v[74] = new cV("Midtown Madness 2",4);
+v[74].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[74].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[74].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[74].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[75] = new cV("Mig 29",1);
+v[75].e[0] = new iVe("3862", "3863", "2", "3862", "3863");
+
+v[76] = new cV("Monster Truck Madness 2",4);
+v[76].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[76].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[76].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[76].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[77] = new cV("Motocross Madness 2",4);   
+v[77].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[77].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[77].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[77].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[78] = new cV("Motorhead Server",2);   
+v[78].e[0] = new iVe("16000", "16000", "1", "16000", "16000");
+v[78].e[1] = new iVe("16000", "16000", "2", "16000", "16000");
+
+v[79] = new cV("MSN Gaming Zone",6);
+v[79].e[0] = new iVe("6667", "6667", "1", "6667", "6667");
+v[79].e[1] = new iVe("28800", "29000", "1", "28800", "29000");
+v[79].e[2] = new iVe("47624", "47624", "1", "47624", "47624");
+v[79].e[3] = new iVe("6073", "6073", "1", "6073", "6073");
+v[79].e[4] = new iVe("2300", "2400", "1", "2300", "2400");
+v[79].e[5] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[80] = new cV("MSN Messenger",5);
+v[80].e[0] = new iVe("6891", "6901", "1", "6891", "6901");
+v[80].e[1] = new iVe("1863", "1963", "1", "1863", "1963");
+v[80].e[2] = new iVe("1863", "1863", "2", "1863", "1863");
+v[80].e[3] = new iVe("5190", "5190", "2", "5190", "5190");
+v[80].e[4] = new iVe("6901", "6901", "2", "6901", "6901");
+
+v[81] = new cV("Myth",1);
+v[81].e[0] = new iVe("3453", "3453", "1", "3453", "3453");
+
+v[82] = new cV("Myth II Server",1);
+v[82].e[0] = new iVe("3453", "3453", "1", "3453", "3453"); 
+
+v[83] = new cV("Myth: The Fallen Lords",1);
+v[83].e[0] = new iVe("3453", "3453", "1", "3453", "3453");
+
+v[84] = new cV("Need for Speed",2);
+v[84].e[0] = new iVe("9442", "9442", "1", "9442", "9442"); 
+v[84].e[1] = new iVe("6112", "6112", "2", "6112", "6112"); 
+
+v[85] = new cV("NetMech",1);
+v[85].e[0] = new iVe("21154", "21156", "2", "21154", "21156"); 
+
+v[86] = new cV("Netmeeting 2.0, 3.0, Intel Video Phone",6);
+v[86].e[0] = new iVe("1024", "65534", "2", "1024", "65534"); 
+v[86].e[1] = new iVe("1024", "1502", "1", "1024", "1502");
+v[86].e[2] = new iVe("1504", "1730", "1", "1504", "1730");
+v[86].e[3] = new iVe("1732", "65534", "1", "1732", "65534");
+v[86].e[4] = new iVe("1503", "1503", "1", "1503", "1503");
+v[86].e[5] = new iVe("1731", "1731", "1", "1731", "1731"); 
+
+v[87] = new cV("Network Time Protocol (NTP)",1);
+v[87].e[0] = new iVe("123", "123", "2", "123", "123"); 
+
+v[88] = new cV("News Server (NNTP)",1);
+v[88].e[0] = new iVe("119", "119", "1", "119", "119");
+
+v[89] = new cV("OKWeb",3);
+v[89].e[0] = new iVe("80", "80", "1", "80", "80"); 
+v[89].e[1] = new iVe("443", "443", "1", "443", "443");
+v[89].e[2] = new iVe("5210", "5220", "1", "5210", "5220");
+
+v[90] = new cV("OKWin",3);
+v[90].e[0] = new iVe("1729", "1729", "1", "1729", "1729"); 
+v[90].e[1] = new iVe("1909", "1909", "1", "1909", "1909");
+v[90].e[2] = new iVe("80", "80", "1", "80", "80");
+
+v[91] = new cV("Outlaws",2);
+v[91].e[0] = new iVe("5310", "5310", "1", "5310", "5310"); 
+v[91].e[1] = new iVe("5310", "5310", "2", "5310", "5310");
+
+v[92] = new cV("Pal Talk",5);
+v[92].e[0] = new iVe("2090", "2090", "2", "2090", "2090"); 
+v[92].e[1] = new iVe("2091", "2091", "2", "2091", "2091");
+v[92].e[2] = new iVe("2090", "2090", "1", "2090", "2090");
+v[92].e[3] = new iVe("2091", "2091", "1", "2091", "2091");
+v[92].e[4] = new iVe("2095", "2095", "1", "2095", "2095");
+
+v[93] = new cV("pcAnywhere v7.5",2);
+v[93].e[0] = new iVe("5631", "5631", "1", "5631", "5631"); 
+v[93].e[1] = new iVe("5631", "5631", "2", "5631", "5631");
+
+v[94] = new cV("PhoneFree",5);
+v[94].e[0] = new iVe("1034", "1035", "1", "1034", "1035"); 
+v[94].e[1] = new iVe("1034", "1035", "2", "1034", "1035"); 
+v[94].e[2] = new iVe("9900", "9901", "2", "9900", "9901"); 
+v[94].e[3] = new iVe("2644", "2644", "1", "2644", "2644");
+v[94].e[4] = new iVe("8000", "8000", "1", "8000", "8000");
+
+v[95] = new cV("Polycom ViaVideo H.323",1);
+v[95].e[0] = new iVe("3230", "3235", "1", "3230", "3235");
+
+v[96] = new cV("Polycom ViaVideo H.324",1);
+v[96].e[0] = new iVe("3230", "3235", "2", "3230", "3235");
+      
+v[97] = new cV("PPTP",1);
+v[97].e[0] = new iVe("1723", "1723", "1", "1723", "1723");
+            
+v[98] = new cV("Quake",2);
+v[98].e[0] = new iVe("26000", "26000", "1", "26000", "26000");
+v[98].e[1] = new iVe("26000", "26000", "2", "26000", "26000");
+
+v[99] = new cV("Quake II (Client/Server)",1);
+v[99].e[0] = new iVe("27910", "27910", "2", "27910", "27910");
+
+v[100] = new cV("Quake III",1);
+v[100].e[0] = new iVe("27660", "27680", "2", "27660", "27680");
+
+v[101] = new cV("Red Alert",1);
+v[101].e[0] = new iVe("5009", "5009", "2", "5009", "5009");
+
+v[102] = new cV("RealAudio",1);
+v[102].e[0] = new iVe("6790", "32000", "2", "6790", "32000");
+
+v[103] = new cV("Real Player 8 Plus",1);
+v[103].e[0] = new iVe("7070", "7070", "2", "7070", "7070");
+
+v[104] = new cV("Rise of Rome",2);
+v[104].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[104].e[1] = new iVe("47624", "47624", "2", "47624", "47624");
+
+v[105] = new cV("Roger Wilco",2);
+v[105].e[0] = new iVe("3782", "3782", "1", "3782", "3782");
+v[105].e[1] = new iVe("3782", "3783", "2", "3782", "3783"); 
+
+v[106] = new cV("Rogue Spear",1);
+v[106].e[0] = new iVe("2346", "2346", "1", "2346", "2346"); 
+
+v[107] = new cV("Secure Shell Server (SSH)",1);
+v[107].e[0] = new iVe("22", "22", "1", "22", "22");
+
+v[108] = new cV("Secure Web Server (HTTPS)",1);
+v[108].e[0] = new iVe("443", "443", "1", "443", "443");
+
+v[109] = new cV("ShoutCast",1);
+v[109].e[0] = new iVe("8000", "8005", "1", "8000", "8005");
+
+v[110] = new cV("SNMP",1);
+v[110].e[0] = new iVe("161", "161", "2", "161", "161");
+
+v[111] = new cV("SNMP Trap",1);
+v[111].e[0] = new iVe("162", "162", "2", "162", "162");
+
+v[112] = new cV("Speak Freely",1);
+v[112].e[0] = new iVe("2074", "2076", "2", "2074", "2076");
+
+v[113] = new cV("StarCraft",1);
+v[113].e[0] = new iVe("6112", "6112", "2", "6112", "6112"); 
+
+v[114] = new cV("Starfleet Command",4);   
+v[114].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[114].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[114].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[114].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[115] = new cV("StarLancer",4);   
+v[115].e[0] = new iVe("47624", "47624", "1", "47624", "47624");
+v[115].e[1] = new iVe("6073", "6073", "1", "6073", "6073");
+v[115].e[2] = new iVe("2300", "2400", "1", "2300", "2400");
+v[115].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[116] = new cV("SWAT3",2);   
+v[116].e[0] = new iVe("16639", "16639", "1", "16639", "16639");
+v[116].e[1] = new iVe("16638", "16638", "2", "16638", "16638");
+
+v[117] = new cV("Telnet Server",1);   
+v[117].e[0] = new iVe("23", "23", "1", "23", "23");
+        
+v[118] = new cV("TFTP",1);   
+v[118].e[0] = new iVe("69", "69", "2", "69", "69");
+        
+v[119] = new cV("The 4th Coming",2);   
+v[119].e[0] = new iVe("11677", "11677", "2", "11677", "11677");
+v[119].e[1] = new iVe("11679", "11679", "2", "11679", "11679");
+
+v[120] = new cV("Tiberian Sun: C&C III",1);   
+v[120].e[0] = new iVe("1234", "1234", "2", "1234", "1234");
+
+v[121] = new cV("Total Annihilation",1);   
+v[121].e[0] = new iVe("47624", "47624", "2", "47624", "47624"); 
+
+v[122] = new cV("Ultima",5);
+v[122].e[0] = new iVe("5001", "5010", "1", "5001", "5010"); 
+v[122].e[1] = new iVe("7775", "7777", "1", "7775", "7777"); 
+v[122].e[2] = new iVe("8800", "8900", "1", "8800", "8900"); 
+v[122].e[3] = new iVe("9999", "9999", "1", "9999", "9999");
+v[122].e[4] = new iVe("7875", "7875", "1", "7875", "7875"); 
+
+v[123] = new cV("Unreal Tournament",3);
+v[123].e[0] = new iVe("7777", "7790", "2", "7777", "7790"); 
+v[123].e[1] = new iVe("27900", "27900", "2", "27900", "27900"); 
+v[123].e[2] = new iVe("8080", "8080", "1", "8080", "8080");
+
+v[124] = new cV("Urban Assault",4);
+v[124].e[0] = new iVe("47624", "47624", "1", "47624", "47624"); 
+v[124].e[1] = new iVe("6073", "6073", "1", "6073", "6073"); 
+v[124].e[2] = new iVe("2300", "2400", "1", "2300", "2400"); 
+v[124].e[3] = new iVe("2300", "2400", "2", "2300", "2400");
+
+v[125] = new cV("VoxPhone 3.0",2);
+v[125].e[0] = new iVe("12380", "12380", "1", "12380", "12380"); 
+v[125].e[1] = new iVe("12380", "12380", "2", "12380", "12380"); 
+
+v[126] = new cV("Warbirds 2",1);
+v[126].e[0] = new iVe("912", "912", "1", "912", "912");
+
+v[127] = new cV("Web Server (HTTP)",1);
+v[127].e[0] = new iVe("80", "80", "1", "80", "80");
+
+v[128] = new cV("WebPhone 3.0",1);
+v[128].e[0] = new iVe("21845", "21845", "1", "21845", "21845");
+
+v[129] = new cV("Westwood Online",3);
+v[129].e[0] = new iVe("4000", "4000", "2", "4000", "4000"); 
+v[129].e[1] = new iVe("1140", "1234", "1", "1140", "1234");
+v[129].e[2] = new iVe("1140", "1234", "2", "1140", "1234");
+
+v[130] = new cV("Windows 2000 Terminal Server",2);
+v[130].e[0] = new iVe("3389", "3389", "1", "3389", "3389"); 
+v[130].e[1] = new iVe("3389", "3389", "2", "3389", "3389");
+
+v[131] = new cV("X Windows",2);
+v[131].e[0] = new iVe("6000", "6000", "1", "6000", "6000"); 
+v[131].e[1] = new iVe("6000", "6000", "2", "6000", "6000");
+
+v[132] = new cV("Yahoo Pager",1);
+v[132].e[0] = new iVe("5050", "5050", "1", "5050", "5050");
+
+v[133] = new cV("Yahoo Messenger Chat",2);
+v[133].e[0] = new iVe("5000", "5001", "1", "5000", "5001"); 
+v[133].e[1] = new iVe("5055", "5055", "2", "5055", "5055");
+
+v[133] = new cV("WOL",2);
+v[133].e[0] = new iVe("7", "7", "2", "7", "7");//2 is UDP
+v[133].e[1] = new iVe("9", "9", "2", "9", "9");
+
+MAX_ENTRY = 32;
+var vrtsrvs = "<%ejGetOther(vrtsrv,vrtsrvs)%>";
+var entrys = vrtsrvs.split('|');
+var entryNum = entrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+for (i = 0; i < MAX_ENTRY; i++)	rule[i] = new rVe('','','','','','','','','','','');
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split(',');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5],entry[6], entry[7], entry[8],entry[9],entry[10]);
+}
+
+function rVe(srvName, addr, eStart, eEnd, iStart, iEnd, proto, schedule, remote, ip, wanIf)
+{
+    this.srvName = srvName;   
+    this.addr = addr;
+    this.schedule = schedule;  
+    this.eStart = eStart;   
+    this.eEnd = eEnd;
+    this.proto = proto;   
+    this.iStart = iStart;   
+    this.iEnd = iEnd;   
+    this.remote = remote;
+    this.ip = ip;
+    this.wanIf = wanIf;
+}
+
+function enable_checkbox(is_enable,is_edit)
+{
+	with ( document.forms[0] ) 
+	{
+		if (1 ==entryNum)
+			{
+				if (0 == is_enable)
+					rml.disabled =true;
+				else
+					rml.disabled = false;
+				if (0 == is_edit)
+					rml.checked = false;
+			}
+		else
+		{
+			for (i = 0; i < entryNum; i++)
+			{
+				if (0 == is_enable)
+					rml[i].disabled = true;
+				else 
+				    rml[i].disabled = false;
+				if (0 == is_edit)
+					rml[i].checked = false;
+			}
+		}
+	}
+}
+
+function cV(name, entryNum)
+{   
+   this.name = name;
+   this.eNum = entryNum;
+   this.e = new Array(5);
+}
+   
+function iVe(eStart, eEnd, proto, iStart, iEnd)
+{
+   this.eStart = eStart;
+   this.eEnd = eEnd;
+   this.proto = proto;
+   this.iStart = iStart;
+   this.iEnd = iEnd;
+}
+
+function clearAll()
+{
+   with (document.vsFrm) {
+      for (i = 0; i < TOTAL_ROW; i++) {
+         eStart[i].value = eEnd[i].value = iStart[i].value = iEnd[i].value = "";
+         proto[i].value = 1;
+         iEnd[i].disabled = 1;
+      }
+}
+}
+
+function appSelect(sName) {
+   clearAll();
+   with (document.vsFrm) {   
+      if (sName == FIRST_APP) {
+         usedName = '';
+         return;
+      }
+      for(i = 0; i < TOTAL_APP; i++) { 
+    	   if(v[i].name == sName) {
+            var entryNum = v[i].eNum;
+            usedName = sName;
+    	    	for (j = 0; j < entryNum; j++) {
+    	    	   eStart[j].value = v[i].e[j].eStart;
+    	    	   eEnd[j].value = v[i].e[j].eEnd;
+    	    	   iStart[j].value = v[i].e[j].iStart;
+    	    	   iEnd[j].value = v[i].e[j].iEnd;
+    	    	   proto[j].value = v[i].e[j].proto;
+            }
+            break;
+         }
+      }
+ if( sName== "WOL")//WOL
+ {
+  alert("Please reserve an IP from DHCP pool for \"Wake on LAN\" function.");
+ }
+   }
+}
+
+function btnApply() {
+   var tmp_ip_str, i;
+   var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+   if(interfaceInfo == '')
+   {
+         alert('No WAN Interface available.');
+         return;
+   }
+   var ethIp = '<%ejGet(ethIpAddress)%>';
+   
+   var loc = 'scvrtsrv.cmd?action=add';
+   with (document.vsFrm) {
+    //if(("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1')&&
+	if(('<%ejGet(timeisSet)%>' != '1')&&
+		((iptscheditem.selectedIndex!=0)&&(iptscheditem.selectedIndex != (iptscheditem.length - 1)))){
+    	alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+		return;
+	}
+    if (radiosrv[0].checked == true) {
+         if (usedName == '') {
+            alert('There is no application is selected');
+            return;
+         }
+         loc += '&srvName=' + usedName;
+     }
+     else {
+		 if (isValidName(cusSrvName.value,"Custom application name",BLANK_INVALID,SPACE_VALID) == false) return;
+         loc += '&srvName=' + encodeUrl(cusSrvName.value);
+     }   
+	  
+	var idx = dstWanIf.selectedIndex;
+      var ifc = dstWanIf.options[idx].value;
+	   loc += '&dstWanIf=' + ifc;
+
+	  tmp_ip_str = sIp.value;
+      if (isValidIpAddress(sIp.value,"Internal server IP address") == false) return;
+      if(false == is_valid_lan_side_ip(tmp_ip_str) || false == isOverlapModemIp(endip, startip, tmp_ip_str) ||
+	      (ethIp == tmp_ip_str))
+      {
+           alert('Internal server IP address "' + tmp_ip_str + '" should be in lan ip range and not be router ip.');//modify by Van
+           return;
+      }
+	  
+      loc += '&srvAddr=' + sIp.value;    
+      for (i = 0; i < TOTAL_ROW; i++) {
+         if (eStart[i].value == "" && eEnd[i].value == "" && iStart[i].value == "" && iEnd[i].value == "")
+            break;
+         if (eStart[i].value == "" || eEnd[i].value == "" || iStart[i].value == "" || iEnd[i].value == "") {
+            alert(RE_ALL_MSG);
+            return;
+         }
+      }
+      if (i == 0) {
+         alert(RE_ALL_MSG);
+         return;
+      }
+  	 var numall =  '<%ejGetOther(vrtsrv,vsnum)%>';
+      if (i > (32-parseInt(numall))) {
+         alert('Exceed the maximum allowable entry count by ' + (32-parseInt(numall)));
+         return;
+      }   
+
+	  //frank,060727,check if have a blank row between configured rows
+	  var j;
+      for (j = i+1; j < TOTAL_ROW; j++) {
+         if (eStart[j].value != "" || eEnd[j].value != "" || iStart[j].value != "" || iEnd[j].value != "") {
+ 		    i++;
+            alert('Row ' +i + ' is not configured.');
+            return;
+         }
+      }
+      protoLoc = '&proto=';
+      eStartLoc = '&eStart=';
+      eEndLoc = '&eEnd=';
+      iStartLoc = '&iStart=';
+      iEndLoc = '&iEnd=';
+	  iSrcIpLoc = '&iSrcIp=';
+      eCount = i;    
+      for (i = 0; i < eCount; i++) {
+		 
+         if (isValidPort(eStart[i].value,"External port start") == false ) return;
+         if (isValidPort(eEnd[i].value,"External port end") == false ) return;
+         if (isValidPort(iStart[i].value,"Internal port start") == false ) return;
+         if (isValidPort(iEnd[i].value, "Internal port end") == false ) return;
+
+         eS = parseInt(eStart[i].value,10);
+         eE = parseInt(eEnd[i].value,10);
+
+         if (eS > eE) {
+            alert('External port range [' + eS + '-' + eE + '] is invalid.');
+            return;
+         }
+         iS = parseInt(iStart[i].value,10);
+         iE = parseInt(iEnd[i].value,10);
+         if ( iS > iE ) {
+            alert('Internal port range [' + iS + '-' + iE + '] is invalid.');
+            return;
+         }
+		 if(iS != iE)
+	 	 {
+			if((eE - eS) != (iE - iS))
+				{
+	               alert("External port range differ should be same with internal port range ");
+               		return;
+				}
+	 
+	 	 }
+
+		 /* 20101111, Linus Shi, begin mod to fix bug#10224: same rules can be added in port forwarding, mark: 11111135 */
+         for (j = 0; j < entryNum; j++)
+         {
+             if ((rule[j].srvName == usedName || rule[j].srvName == cusSrvName.value))
+			 	 /*&& eStart[i].value == rule[j].eStart && eEnd[i].value == rule[j].eEnd &&
+			     iStart[i].value == rule[j].iStart && iEnd[i].value == rule[j].iEnd &&
+			     proto[i].value == rule[j].proto && sIp.value == rule[j].addr &&
+			     iSrcIp[i].value == rule[j].remote)*/
+             {
+                 alert("The same Port Forwarding entry already exists!");
+				 return;
+			 }
+		 }
+		 /* 20101111, Linus Shi, end ------------------------------------------------------------------- mark: 11111135 */
+
+	     //only be moved when wan access is enabled for this service	 
+         if (parseInt(eStart[i].value) <= 80 && parseInt(eEnd[i].value) >= 80)
+            alert('Since port "' + "80" + '" is used as the default value when WAN access is enabled for this service, the DSL router\nWEB server port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         if (parseInt(eStart[i].value) <= 23 && parseInt(eEnd[i].value) >= 23)
+            alert('Since port "' + "23" + '"  is used as the default value when WAN access is enabled for this service, the DSL router\nTELNET server port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         if (parseInt(eStart[i].value) <= 22 && parseInt(eEnd[i].value) >= 22)
+            alert('Since port "' + "22" + '"  is used as the default value when WAN access is enabled for this service, the DSL router\nSSH server port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         if (parseInt(eStart[i].value) <= 21 && parseInt(eEnd[i].value) >= 21)
+            alert('Since port "' + "21" + '"  is used as the default value when WAN access is enabled for this service, the DSL router\nFTP server port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         if (parseInt(eStart[i].value) <= 69 && parseInt(eEnd[i].value) >= 69)
+            alert('Since port "' + "69" + '"  is used as the default value when WAN access is enabled for this service, the DSL router\nTFTP server port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         if (parseInt(eStart[i].value) <= 161 && parseInt(eEnd[i].value) >= 161)
+            alert('Since port "' + "161"  + '"  is used as the default value when WAN access is enabled for this service, the DSL router\nSNMP port will be moved to new port.\nPlease check Maintence->Access Control->Services.');
+         eStartLoc = eStartLoc + eStart[i].value + ',';
+         eEndLoc = eEndLoc + eEnd[i].value + ',';
+         protoLoc = protoLoc + proto[i].value + ',';
+         iStartLoc = iStartLoc + iStart[i].value + ',';
+         iEndLoc = iEndLoc + iEnd[i].value + ',';
+
+         tmp_str = iSrcIp[i].value;
+         if (tmp_str != '')
+         {
+	        if (isValidRemoteIpAddress(tmp_str) == false) {
+               alert('Remote IP address "' + tmp_str + '" is invalid.');
+               return;
+            }
+	
+			if(true == is_private_ip(tmp_str))
+			{
+               alert('Remote IP address "' + tmp_str + '" is invalid. It should not be in lan ip range or wan ip.');
+               return;
+			}
+         } 		 
+         iSrcIpLoc = iSrcIpLoc + tmp_str + ',';
+    
+       /*   if (iSrcIp[i].value != '')
+         {
+             iSrcIpLoc = iSrcIpLoc + iSrcIp[i].value + ',';
+         } */		 
+      }   
+
+	//Frederick,061206	add schedule option
+/*    
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptscheditem.selectedIndex;
+		var iptval = iptscheditem.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+*/
+        loc +='&inbnd=' + iptscheditem[iptscheditem.selectedIndex].value;
+   }
+  /* if (iSrcIpLoc == '')
+   {
+      loc = loc + protoLoc + eStartLoc + eEndLoc + iStartLoc + iEndLoc;
+   }
+   else
+   {
+      iSrcIpLoc = '&iSrcIp=' + iSrcIpLoc;
+   }*/
+   loc = loc + protoLoc + eStartLoc + eEndLoc + iStartLoc + iEndLoc + iSrcIpLoc;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function btnApplyEdit() {
+   var loc = 'scvrtsrv.cmd?action=edit';
+   var tmp_ip_str;
+   var ethIp = '<%ejGet(ethIpAddress)%>';
+   
+   with (document.vsFrm) {
+    //if(("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1')&&
+	if(('<%ejGet(timeisSet)%>' != '1')&&
+		((iptscheditemEdit.selectedIndex!=0)&&(iptscheditemEdit.selectedIndex != (iptscheditemEdit.length - 1)))){
+    	alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+		return;
+	}
+	  //if (isValidName(editCusSrvName.value,"Server Name",BLANK_INVALID,SPACE_VALID) == false) return;	  
+      loc += '&srvName=' + encodeUrl(editCusSrvName.value);
+      loc += '&dstWanIf=' + encodeUrl(dstWanIfEdit.value);
+
+	/*var idx = dstWanIfEdit.selectedIndex;
+      var ifc = dstWanIfEdit.options[idx].value;
+      if (ifc=='') {
+         alert('Need to select a WAN Interface for this port triggering entry".');
+         return;
+      }
+      loc += '&dstWanIf=' + ifc;*/
+	  	
+	  tmp_ip_str = ipEdit.value;
+      if (isValidIpAddress(ipEdit.value,"Server IP Address") == false) return;
+      if(false == is_valid_lan_side_ip(tmp_ip_str) || false == isOverlapModemIp(endip, startip, tmp_ip_str) ||
+	      (ethIp == tmp_ip_str))
+	  {
+	  	 alert('Internal server IP address "' + tmp_ip_str + '" should be in lan ip range and not be router ip.');//modify by Van
+		 return;
+	  }
+
+	     loc += '&srvAddr=' + ipEdit.value;   
+
+	  if (eStartEdit.value == "" && eEndEdit.value == "" && iStartEdit.value == "" && iEndEdit.value == "")
+      if (eStartEdit.value == "" || eEndEdit.value == "" || iStartEdit.value == "" || iEndEdit.value == "") {
+         alert(RE_ALL_MSG);
+            return;
+	  }
+
+      protoLoc = '&proto=';
+      eStartLoc = '&eStart=';
+      eEndLoc = '&eEnd=';
+      iStartLoc = '&iStart=';
+      iEndLoc = '&iEnd=';
+      iSrcIpLoc = '&iSrcIp=';
+         if (isValidPort(eStartEdit.value,"External port start") == false ) return;
+         if (isValidPort(eEndEdit.value,"External port end") == false ) return;
+         if (isValidPort(iStartEdit.value,"Internal port start") == false ) return;
+         if (isValidPort(iEndEdit.value, "Internal port end") == false ) return;
+
+         eS = parseInt(eStartEdit.value,10);
+         eE = parseInt(eEndEdit.value,10);
+
+         if (eS > eE) {
+            alert('External port range [' + eS + '-' + eE + '] is invalid.');
+            return;
+         }
+         iS = parseInt(iStartEdit.value,10);
+         iE = parseInt(iEndEdit.value,10);
+         if ( iS > iE ) {
+            alert('Internal port range [' + iS + '-' + iE + '] is invalid.');
+            return;
+         }
+
+		 if(iS != iE)
+	 	 {
+			if((eE - eS) != (iE - iS))
+				{
+	               alert("External port range differ should be same with internal port range ");
+               		return;
+				}
+	 
+	 	 }
+
+         if (iRmtEdit.value != '')
+         {
+			
+			/* 20081217, Annette, define tmp_str to avoid iRmtEdit.value can not be displayed after is_private_ip() called. */
+			tmp_str = iRmtEdit.value;
+	        if (isValidRemoteIpAddress(tmp_str) == false) {
+               alert('Remote IP address "' + tmp_str + '" is invalid.');
+               return;
+            }
+	
+			if(true == is_private_ip(tmp_str))
+			{
+               alert('Remote IP address "' + tmp_str + '" is invalid. It should not be in lan ip range or wan ip.');
+               return;
+			}
+         }
+         if (parseInt(eStartEdit.value) <= 80 && parseInt(eEndEdit.value) >= 80)
+            alert('Since port 80 is used, the DSL router\nWEB server port will be moved to 8080.');
+         if (parseInt(eStartEdit.value) <= 23 && parseInt(eEndEdit.value) >= 23)
+            alert('Since port 23 is used, the DSL router\nTELNET server port will be moved to 2323.');
+         if (parseInt(eStartEdit.value) <= 22 && parseInt(eEndEdit.value) >= 22)
+            alert('Since port 22 is used, the DSL router\nSSH server port will be moved to 2222.');
+         if (parseInt(eStartEdit.value) <= 21 && parseInt(eEndEdit.value) >= 21)
+            alert('Since port 21 is used, the DSL router\nFTP server port will be moved to 2121.');
+         if (parseInt(eStartEdit.value) <= 69 && parseInt(eEndEdit.value) >= 69)
+            alert('Since port 69 is used, the DSL router\nTFTP server port will be moved to 6969.');
+         if (parseInt(eStartEdit.value) <= 161 && parseInt(eEndEdit.value) >= 161)
+            alert('Since port 161 is used, the DSL router\nSNMP port will be moved to 16116.');
+         eStartLoc = eStartLoc + eStartEdit.value+ ',';
+         eEndLoc = eEndLoc + eEndEdit.value+ ',';
+         protoLoc = protoLoc + protoEdit.value+ ',';
+         iStartLoc = iStartLoc + iStartEdit.value+ ',';
+         iEndLoc = iEndLoc + iEndEdit.value+ ',';
+	  iSrcIpLoc = iSrcIpLoc + iRmtEdit.value;
+
+	//Frederick,061206	add schedule option
+/*    
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptscheditemEdit.selectedIndex;
+		var iptval = iptscheditemEdit.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+*/
+        loc +='&inbnd=' + iptscheditemEdit[iptscheditemEdit.selectedIndex].value;
+   }
+    
+    loc = loc + protoLoc + eStartLoc + eEndLoc + iStartLoc + iEndLoc + iSrcIpLoc;
+   
+   loc = loc + '&editId=' + editId;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function radioClick()
+{
+    with ( document.forms[0] ) {
+   if (document.vsFrm.radiosrv[0].checked == true) {
+      document.vsFrm.cusSrvName.value = '';
+	  appSelect(document.vsFrm.srvName.value);
+
+			changeBlockState('id_cusSrvName',true);
+			changeBlockState('id_autoSrvName',false);
+
+   		} else{
+			appSelect(FIRST_APP);		
+
+			changeBlockState('id_cusSrvName',false);
+			changeBlockState('id_autoSrvName',true);
+   }
+	}
+
+}
+
+function frmLoad() {
+   ethIp = '<%ejGet(ethIpAddress)%>';
+   ethMask = '<%ejGet(ethSubnetMask)%>';
+   document.vsFrm.sIp.value = '';
+   mask = ethMask.split('.');
+   lan = ethIp.split('.');
+   for (i = 0; i < 3; i++) {
+      m = parseInt(mask[i]);
+      if (m == 255)
+         document.vsFrm.sIp.value = document.vsFrm.sIp.value + lan[i] + '.';
+   }
+   clearAll();
+	radioClick();
+}
+
+function setiPt(flgEnd, i)   
+{
+   if (flgEnd) 
+      document.vsFrm.iEnd[i].value = document.vsFrm.eEnd[i].value
+   else         
+      document.vsFrm.iStart[i].value = document.vsFrm.eStart[i].value;
+}
+
+function setiPtEdit(flgEnd)   
+{
+   if (flgEnd) 
+      document.vsFrm.iEndEdit.value = document.vsFrm.eEndEdit.value
+   else         
+      document.vsFrm.iStartEdit.value = document.vsFrm.eStartEdit.value;
+}
+
+function kPressed()
+{
+   keyPressed = true;
+}
+
+function setiEnd(i)
+{
+   if (keyPressed) {
+      document.vsFrm.iEnd[i].value = document.vsFrm.iStart[i].value;
+      keyPressed = false;
+   }
+}
+
+function setiEndEdit(i)
+{
+   if (keyPressed) {
+      document.vsFrm.iEndEdit.value = document.vsFrm.iStartEdit.value;
+      keyPressed = false;
+   }
+}
+
+function btnCancel(){
+    with ( document.forms[0] ) {
+		scvrtAddInfo.style.display = 'none';
+		scvrtEditInfo.style.display = 'none';
+		removeScvrt.disabled = 0;
+		addScvrt.disabled = 0;
+		editScvrt.disabled = 0;
+		enable_checkbox(1,1);
+	}
+}
+
+function addClick(){
+  var num =  '<%ejGetOther(vrtsrv,vsnum)%>'; 
+   if(num == 32)	{alert("A maximum 32 entries can be configured."); return;}
+
+    with ( document.forms[0] ) {
+		scvrtAddInfo.style.display = 'block';
+		scvrtEditInfo.style.display = 'none';
+		removeScvrt.disabled = 1;
+		addScvrt.disabled = 1;
+		editScvrt.disabled = 1;
+		enable_checkbox(0,0);
+	}
+}
+
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+
+  var tmpAppName;
+  var tmpEPortStart;
+  var tmpEPortEnd;
+  var tmpProto;
+  //var tmpProtUDP;
+  var tmpIPortStart;
+  var tmpIPortEnd;
+  var tmpIP;
+  var tmpSched;
+  var tmpWanif;
+  var tmpRmt;
+
+  var tmpData;
+
+with ( document.forms[0] ) {
+
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+				hasChecked = true;
+        		checkedCount++;
+        		editId = unescape(rml[i].value);
+				
+				tmpData = unescape(rml[i].value).split("|");
+
+			  	tmpAppName = document.getElementById( "lblAppName" + i).innerHTML;
+				tmpEPortStart = tmpData[1];
+				tmpEPortEnd = tmpData[2];
+				tmpProto = tmpData[3];
+				///tmpProtUDP = tmpData[4];
+				tmpIPortStart = tmpData[4];
+				tmpIPortEnd = tmpData[5];
+				tmpRmt = document.getElementById( "lblRemote" + i).innerHTML;
+				tmpIP = document.getElementById( "lblIPAddress" + i).innerHTML;
+				tmpSched = document.getElementById( "lblSched" + i).innerHTML;
+				tmpWanif = document.getElementById( "lblWanif" + i).innerHTML;
+				
+
+      		}
+		}
+
+	} else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId =unescape(rml.value);
+   	//temp = rule[i].ip+'|'+rule[i].eStart+'|'+rule[i].eEnd+'|'+rule[i].proto+'|'+rule[i].iStart+'|'+rule[i].iEnd;	
+////192.168.1.22|3568|3569|TCP/UDP|3568|3569
+
+		tmpData =unescape(rml.value).split("|");
+
+	  	tmpAppName = document.getElementById( "lblAppName0").innerHTML;
+		tmpEPortStart = tmpData[1];
+		tmpEPortEnd = tmpData[2];
+		tmpProto = tmpData[3];
+		///tmpProtUDP = tmpData[4];
+		tmpIPortStart = tmpData[4];
+		tmpIPortEnd = tmpData[5];
+		tmpRmt = document.getElementById( "lblRemote0").innerHTML;
+		tmpIP = document.getElementById( "lblIPAddress0" ).innerHTML;
+		tmpSched = document.getElementById( "lblSched0" ).innerHTML;
+		tmpWanif = document.getElementById( "lblWanif0" ).innerHTML;
+
+
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only one item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+
+		editCusSrvName.value = tmpAppName;
+		eStartEdit.value = tmpEPortStart;
+		eEndEdit.value = tmpEPortEnd;
+		protoEdit.value = tmpProto;
+		ipEdit.value = tmpIP;
+		iStartEdit.value = tmpIPortStart;
+		iEndEdit.value = tmpIPortEnd;
+
+		/* 20081215, Annette, blank is set to the null srcip for display beautifull, mark: 12151705 */
+		if(tmpRmt == '&nbsp;')
+			iRmtEdit.value = '';
+		else
+			iRmtEdit.value = tmpRmt;		
+		/* 20081215, Annette, end---------------------------------- mark: 12151705 */
+	  dstWanIfEdit.value=tmpWanif;
+		
+	/*for (i = 0; i < dstWanIfEdit.length; i++){
+		if (dstWanIfEdit[i].value == tmpWanif){
+			dstWanIfEdit.selectedIndex = i;
+			break;
+}
+}
+        if ( (tmpProtTCP == 1) && (tmpProtUDP == 1) ){
+           protoEdit.selectedIndex = 0;
+        }else if ( tmpProtTCP == 1 ) {
+           protoEdit.selectedIndex = 1;
+        }else if ( tmpProtUDP == 1 ){
+           protoEdit.selectedIndex = 2;
+}*/
+		/*for (i = 0; i < protoEdit.length; i++){
+			if (protoEdit[i].value == tmpProto){
+				protoEdit.selectedIndex = i;
+				break;	
+			}
+		}*/
+		if(tmpProto=='TCP')
+			protoEdit.selectedIndex =1;
+		else if(tmpProto=='UDP')
+			protoEdit.selectedIndex =2;
+		else 
+			protoEdit.selectedIndex =0;
+				
+		for (i = 0; i < iptscheditemEdit.length; i++){
+			if (iptscheditemEdit[i].value == tmpSched){
+				iptscheditemEdit.selectedIndex = i;
+				break;	
+			}
+		}
+
+		scvrtAddInfo.style.display = 'none';
+		scvrtEditInfo.style.display = 'block';
+		removeScvrt.disabled = 1;
+		addScvrt.disabled = 1;
+		editScvrt.disabled = 1;
+		enable_checkbox(0,1);
+		}
+  doEdit = true;
+		
+}
+		
+
+function removeClick(rml) {
+	var lst = '';
+	var has_selected_items = false;
+   with ( document.forms[0] ) {
+     if (rml)
+  {
+	if (rml.length > 0)
+    	for (i = 0; i < rml.length; i++) {
+        	if ( rml[i].checked == true ){
+				has_selected_items=true;
+            	lst +=unescape(rml[i].value) + ',';
+			}
+      	}
+   	else if ( rml.checked == true ){
+		has_selected_items=true;
+      	lst = unescape(rml.value);
+	}
+	}
+	}
+
+	if (has_selected_items){
+   		var loc = 'scvrtsrv.cmd?action=remove&rmLst=' + lst;
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	} else{
+		alert("There are no items to remove!");
+		return;
+}
+
+}
+
+// done hiding -->
+</script>

@@ -1,0 +1,220 @@
+<html>
+   <head>
+        <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1" >
+        <META HTTP-EQUIV="Pragma" CONTENT="no-cache" >
+        <META HTTP-EQUIV="Expires" CONTENT="-1" >
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+ <script language="javascript" src="util.js"></script>
+ <script language="javascript" src="menu.js"></script>
+            <script language="javascript">
+<!-- hide
+var inProgress = '<%ejGet(autoScanInProgress)%>';
+var prtcl = '<%ejGetOther(memInfo, ntwkPrtcl)%>';
+var isVccInUsed = '<%ejGetOther(memInfo, isVccInUsed)%>';
+var vpi = '<%ejGet(atmVpi)%>';
+var vci = '<%ejGet(atmVci)%>';
+var user = '<%ejGet(curUserName)%>';
+var status = '<%ejGetOther(sysInfo, adslStatus)%>';
+
+var request = false;
+try {
+  request = new XMLHttpRequest();
+} 
+catch (trymicrosoft) 
+{
+  try {
+    request = new ActiveXObject("Msxml2.XMLHTTP");
+  } catch (othermicrosoft) {
+    try {
+      request = new ActiveXObject("Microsoft.XMLHTTP");
+    } catch (failed) {
+      request = false;
+    }  
+  }
+}
+
+if (!request)
+{
+  alert("Error initializing XMLHttpRequest!");
+}
+
+function checkAutoScan() {
+   var loc = 'autoscan.cgi';
+
+   if ( inProgress == '0' ) {
+      switch ( prtcl ) {
+         case 'PPPoE':
+         case 'PPPoA':
+            loc = 'wizppp.html';
+            break;
+	   case 'User Select':
+	   	loc = 'wizprtcl.html';
+		break;
+         default:
+            loc = 'wizprtcl.html';
+            break;
+      }
+   	var code = 'location="' + loc + '"';
+   	eval(code);
+	
+   }else{
+	getCustomerInfo();
+	//alert("roger debug")
+   	}
+	
+}
+
+function frmLoad() {
+   writepage();
+   //setTimeout("checkAutoScan()", 1000);
+   setInterval("checkAutoScan()", 2000);
+}
+
+function btnCancel() {
+   var loc = 'autoscancancel.cgi?autoScanInProgress=0';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function getCustomerInfo() 
+{
+  var url = "autoscan.cgi";
+  request.open("GET", url, true);
+  request.onreadystatechange = updatePage;
+  request.send(null);
+}
+
+function updatePage() 
+{
+  if (request.readyState == 4) {
+    if (request.status == 200) {
+	parserequest();  
+	writepage();  
+    }
+  }
+}
+
+function parserequest(){
+
+var reback = new Array();
+var retext = request.responseText;
+//alert(retext);
+reback = retext.split(":");
+isVccInUsed = reback[0];
+inProgress = reback[1];
+vpi = reback[2];
+vci = reback[3];
+status = reback[4];
+
+if(inProgress == 0){
+	var loc = 'wizprtcl.html';
+
+	if(status != 0)
+		loc = 'autoscanerr.html';
+   	var code = 'location="' + loc + '"';
+   	eval(code);	
+}
+else if (inProgress == 2)
+{
+	var loc = 'autoscanerr.html';
+   	var code = 'location="' + loc + '"';
+   	eval(code);
+}
+}
+
+function openurl(url){
+var retinfo;	
+var objxml=new ActiveXObject("microsoft.xmlhttp"); 
+	objxml.open("get",url,false); 
+	objxml.send(); 
+	retinfo=objxml.responsetext; 
+	if (objxml.status=="200"){ 
+		return retinfo; 
+	} 
+	else{ 
+	return "-2"; 
+	} 
+}
+
+
+function writepage(){
+     if ( isVccInUsed == '1' ) {
+        msg = 'DSL Router has been trying ';
+        msg += 'PVC (' + vpi + '/' + vci + '). ';
+        msg += 'It is already in use.<br><br>';
+        msg += 'Please wait...';
+     } else
+     switch ( prtcl ) {
+     case 'PPPoA':
+        msg = 'DSL Router can be connected using ';
+        msg += 'PVC (' + vpi + '/' + vci + ') with PPPoA protocol.';
+        break;
+     case 'PPPoE':
+        msg = 'DSL Router can be connected using ';
+        msg += 'PVC (' + vpi + '/' + vci + ') with PPPoE protocol.';
+        break;
+     case 'Bridge':
+        msg = 'DSL Router can be connected using ';
+        msg += 'PVC (' + vpi + '/' + vci + ') with Bridge protocol.';
+        break;
+     default:
+        msg = 'DSL Router is trying ';
+        msg += 'PVC (' + vpi + '/' + vci + ').<br><br>';
+        msg += 'Please wait...';
+        break;
+     }
+     msg += '<br><br><br>';
+    document.getElementById("autoinfo").innerHTML = msg;
+}
+
+// done hiding -->
+    </script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="temp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Internet Connection Wizard
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <form  name="form1" id="form1" >
+                              
+                              <b>DSL Router Auto-connection Progress Information</b><br><br>
+                              <p>The DSL Router Auto-connect is in progress.</p>
+                              <div id = autoinfo>
+
+                              </div>
+                              <br><br>
+                              <center>
+                              <input type='button' onClick='btnCancel()' value='Cancel'>
+                              </center>
+                              
+                              </form>
+</td></tr></table>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</form>
+</blockquote>
+   </body>
+</html>

@@ -1,0 +1,205 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=utf-8">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+var macAddress = '<%ejGetOther(memInfo, pcMacAddr)%>';
+//var wizVpi ='<%ejGet(atmVpi)%>';
+//var wizVci ='<%ejGet(atmVci)%>'; 
+
+function frmLoad(){
+	//window.parent.frames[0].currurl = 'wizdynamic.html';
+	with(document.forms[0]){
+// 		autopvc.checked = false;
+// 		autopvc.disabled = true;
+		
+/*		if(window.parent.frames[0].autoPvcScan == 0){
+			vpi.disabled = false;
+			vci.disabled = false;
+			contype.disabled = false;
+		}else{*/		
+			vpi.disabled = true;
+			vci.disabled = true;
+			contype.disabled = true;
+// 		}
+		
+		vpi.value = window.parent.frames[0].wizVpi;// reopen by jack 2008.6.2
+		vci.value = window.parent.frames[0].wizVci;
+		//vpi.value = wizVpi;// add by jack 2008.04.24
+		//vci.value = wizVci;
+		
+		    macaddr.value = window.parent.frames[0].wizMacAddr;
+		
+		    if (macaddr.value  == 'undefined')
+			macaddr.value = '<%ejGet(clientMac)%>';
+		
+		if(window.parent.frames[0].wizConTypeSerial == 4)
+			contype.selectedIndex = 0;
+		else
+			contype.selectedIndex = 1;
+	
+
+	}
+
+
+
+}
+	
+
+function btnCancel(){
+
+ 	 var code = 'location="wan.html"';
+
+  	eval(code);
+
+}
+
+function btnNext(){
+
+	with(document.forms[0]){
+	 window.parent.frames[0].wizVpi = vpi.value;
+	 window.parent.frames[0].wizVci = vci.value;
+	 window.parent.frames[0].wizMacAddr = macaddr.value;
+	 
+	 if(macaddr.value != "")
+			if ( isValidMacAddress(macaddr.value) == false ) {
+               	alert('MacAddress "' + macaddr.value + '" is invalid MacAddress.');
+               	return;
+             	}	 	
+
+	 if(contype.selectedIndex == 0){
+	 	window.parent.frames[0].wizConTypeSerial = 4;
+	 	window.parent.frames[0].wizType = 'LLC';
+	 }else{
+	 	window.parent.frames[0].wizConTypeSerial = 5;
+	 	window.parent.frames[0].wizType = 'VC Mux';
+	 }
+
+	}
+	
+  	var code = 'location="wizwl.html"';
+
+  	eval(code);
+
+}
+
+function btnPrev(){
+
+    var code = 'location="wizwan.html"'; 	
+  	eval(code);
+}
+
+function setMac(){
+	with (document.forms[0]) {
+		macaddr.value = macAddress;
+	}
+}
+
+
+function changedynamicAuto(){
+
+ 	with (document.forms[0]) {
+		
+		if (autopvc.checked == true) {			
+			vpi.disabled = true;
+			vci.disabled = true;		
+		} else {		
+			vpi.disabled = false;
+			vci.disabled = false;
+		}
+		
+	}
+	
+}
+
+
+
+
+
+// done hiding -->
+	</SCRIPT>
+
+</HEAD>
+<BODY onload=frmLoad()>
+<BLOCKQUOTE>
+  <SCRIPT language=JavaScript>
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="setupInternet"
+</SCRIPT>
+
+  <SCRIPT type=text/javascript>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</SCRIPT>
+
+  <FORM>
+  <TABLE id=box_header cellSpacing=0 width=690 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>1 > 2 > Step 3: Setup Internet Connection > 4 > 5 > 6 
+ </TD></TR>
+    <TR>
+      <TD class=content>
+        <P>You have selected Dynamic IP Internet connection.  Please enter the appropriate information below as provided by your ISP. Some ISPs require that you clone your PC MAC adaddress to the DSL router, simply Click on the button provided.
+Click <strong>Next</strong> to continue.
+</P>
+        <P>
+        <TABLE class=formarea width="100%" align=center>
+          <TBODY>
+          <TR>
+<!--            <TD class=form_label align=right>Auto PVC Scan&nbsp;:&nbsp;</> </TD>
+            <TD><INPUT id=autopvc onclick=changedynamicAuto() type=checkbox 
+              name=autopvc></SELECT></TD>
+//costumer request remove auto PVC scan feature, and the </SELECT> tag is seems not use 
+-->
+
+          </TR>
+          <TR>
+            <TD class=form_label align=right><LABEL 
+              id=lblvpi>VPI&nbsp;:&nbsp;</LABEL> </TD>
+            <TD><INPUT id=vpi name=vpi> </TD></TR>
+          <TR>
+            <TD class=form_label align=right><LABEL 
+              id=lblvci>VCI&nbsp;:&nbsp;</LABEL> </TD>
+            <TD><INPUT id=vci name=vci> </TD></TR>
+          <TR>
+            <TD class=form_label align=right>Connection Type&nbsp;:&nbsp;</> 
+            </TD>
+            <TD><SELECT id=contype name=contype> <OPTION value="" 
+                selected>1483 Bridged IP LLC</OPTION> <OPTION value="">1483 
+                Bridged IP VC-Mux</OPTION></SELECT> </TD></TR>
+          <TR>
+            <TD class=form_label><LABEL  >Cloned MAC 
+              Address&nbsp;:</LABEL></TD>
+            <TD><INPUT id=macaddr maxLength=20></TD></TR>
+          <TR>
+            <TD align=middle colSpan=2><INPUT class=button_submit  onclick=setMac() type=button value="Copy Your PC's MAC Address"> 
+            </TD></TR>
+          <TR></TR></TBODY></TABLE></P>
+        <P align=center><INPUT onclick=btnPrev() type=button value=Back><INPUT onclick=btnNext() type=button value=Next><INPUT onclick=btnCancel() type=button value=Cancel></P></TD></TR></TBODY></TABLE>
+             <TABLE>
+            <TBODY>
+            <TR>
+            <TD>
+            <br>
+            <br>
+            <br>
+            <br>
+
+       </TD></TR></TBODY>
+     </TABLE> 
+  <SCRIPT type=text/javascript>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</SCRIPT>
+  </FORM></BLOCKQUOTE></BODY></HTML>

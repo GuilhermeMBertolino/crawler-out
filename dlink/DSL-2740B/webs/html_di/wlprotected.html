@@ -1,0 +1,470 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+
+var WscDevPin    = '<%ejGetWl(wlWscDevPin)%>';
+var WscStaPin     = '<%ejGetWl(wlWscStaticPin)%>';
+var WscMode       = '<%ejGetWl(wlWscMode)%>';
+var WscIRMode   = '<%ejGetWl(wlWscIRMode)%>';
+var WscAPMode  = '<%ejGetWl(wlWscAPMode)%>';
+var WscAddER    = '<%ejGetWl(wlWscAddER)%>';
+var WscAPLockcap ='<%ejGetWl(wsc_apLockCap)%>';
+var wl_switch = '<%ejGetWl(wireless_switch)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var enbl = '<%ejGetWl(wlEnbl_wl0v0)%>';
+//alert(WscAPMode);
+function btnConnect(){
+var loc = 'wlprotected.wl?';
+
+  with (document.forms[0]) {
+
+if ( enbl == '1' ){
+  if (wscenable.checked == true) {
+
+  loc += 'wl_wsc_mode=enabled';
+  //loc += '&wsc_config_state=0';
+  loc += '&wlWscConfig=ap-pbc';
+ 
+  if (validateChecksum() == false){
+	alert("Invalid PIN number.");
+	return;
+  }
+
+  loc += '&wlWscDevPin=' + encodeUrl(document.forms[0].getDefault.value);
+  loc += '&wsc_addER=0';
+  loc += '&wl_wsc_reg=enabled';
+  loc += '&wsc_proc_status=0';
+  loc += '&wsc_method=2&wsc_config_command=1';
+  loc += '&wsc_force_restart=y';
+
+  if(ap_locked.checked == true) { 
+     loc += '&wsc_apLockCap=1';
+  } else {
+     loc += '&wsc_apLockCap=0';    
+  }
+
+
+  } else {
+      loc += 'wl_wsc_mode=disabled';
+      loc += '&wlWscConfig=ap-pbc';
+      loc += '&wsc_proc_status=4';
+      loc += '&wl_wsc_reg=enabled&wsc_config_state=0';
+  }
+  }else{
+	alert('Cannot apply the change since wireless is currently disabled.');
+	return;
+  }
+
+
+}
+      loc += '&sessionKey=' + sessionKey;
+      var code = 'location="' + loc + '"';
+      //send to server
+      eval(code);
+}
+
+function Pshide(obj, hide)
+{
+    if(typeof(HTMLElement)!="undefined" && !window.opera) 
+    { 
+        HTMLElement.prototype.__defineGetter__("outerHTML",function() 
+        { 
+            var a=this.attributes, str="<"+this.tagName, i=0;for(;i<a.length;i++) 
+            if(a[i].specified) 
+                str+=" "+a[i].name+'="'+a[i].value+'"'; 
+            if(!this.canHaveChildren) 
+                return str+" />"; 
+            return str+">"+this.innerHTML+"</"+this.tagName+">"; 
+        }); 
+		
+        HTMLElement.prototype.__defineSetter__("outerHTML",function(s) 
+        { 
+            var r = this.ownerDocument.createRange(); 
+            r.setStartBefore(this); 
+            var df = r.createContextualFragment(s); 
+            this.parentNode.replaceChild(df, this); 
+            return s; 
+        }); 
+		
+        HTMLElement.prototype.__defineGetter__("canHaveChildren",function() 
+        { 
+            return !/^(area|base|basefont|col|frame|hr|img|br|input|isindex|link|meta|param)$/.test(this.tagName.toLowerCase()); 
+        }); 
+    } 
+    
+    with(document.forms[0])
+    {
+        if( hide[0].checked  == true)
+        {
+        obj.outerHTML="<input type=password name='"+obj.name+"' value='"+obj.value+ "' maxLength='"+ obj.maxLength+ "'>"
+        }
+        else
+        {
+        obj.outerHTML="<input type=text name='"+obj.name+"' value='"+obj.value+"' maxLength='"+ obj.maxLength+"'>"
+        }
+    }
+}
+
+
+function btnCancel(){
+
+  var code = 'location="wlprotected.html"';
+  eval(code);
+
+}
+
+
+function validateChecksum()
+{
+	var accum = 0;
+	var temp;
+	var pin =  document.forms[0].getDefault.value
+	
+	if(isInvalidNumber(document.forms[0].getDefault.value)||document.forms[0].getDefault.value.length !=8)
+		return false;
+	
+	for(i=0;i<8;i++)
+	{
+		temp = 1*pin.charAt(i);
+		if(i%2 == 0)
+			accum += 3*(temp%10);
+		else 
+			accum += 1*(temp%10);			
+	}
+	return (0 == (accum%10));	
+	
+}
+
+
+function do_resetunconfig(){
+   var code = 'location="wldefault.wl"';
+   eval(code);
+}
+
+
+function add_client(){
+  var loc = 'wlcfg.wl?';
+
+  loc += 'wl_wsc_mode=enabled';
+  loc += '&wsc_config_state=0';
+  loc += '&wl_wsc_reg=disabled';
+  loc += '&wsc_addER=0&wlWscConfig=er-done&wsc_proc_status=0&wsc_force_restart=y';
+  loc += '&sessionKey=' + sessionKey;
+      var code = 'location="' + loc + '"';
+      //send to server
+      eval(code);
+}
+
+function gobackunconfig() {
+	var loc = 'wlprotected.wl?';
+
+	if ( enbl == '0' ) {
+      alert('Cannot apply the change since wireless is currently disabled.');
+      return;
+    }	
+
+	loc += 'sessionKey=' + sessionKey;
+ 	loc += '&wlWscConfig=None';
+
+	if (WscAPMode == '1') {
+ 	  loc += '&wsc_config_state=0';
+          document.forms[0].getDefault.disabled=true;
+	}else {
+	  loc += '&wsc_config_state=1';
+          document.forms[0].getDefault.disabled=false;
+	}
+
+      	var code = 'location="' + loc + '"';
+     	 //send to server
+      	eval(code);
+}
+
+function getDevPin() {
+
+  with (document.forms[0]) {
+    getDefault.value = WscStaPin;
+
+  }
+}
+
+
+function genPin(){
+  var accum =0;
+  var PIN;
+  var digit;
+
+  	PIN=Math.floor(Math.random()*10000000);
+  	//PIN=1234; test
+  	PIN *= 10;
+ 
+	accum += 3 * (Math.floor(PIN / 10000000) % 10); 
+	accum += 1 * (Math.floor(PIN / 1000000) % 10); 
+	accum += 3 * (Math.floor(PIN / 100000) % 10); 
+	accum += 1 * (Math.floor(PIN / 10000) % 10); 
+	accum += 3 * (Math.floor(PIN / 1000) % 10); 
+	accum += 1 * (Math.floor(PIN / 100) % 10); 
+	accum += 3 * (Math.floor(PIN / 10) % 10); 
+	digit = (accum % 10);
+	accum = (10 - digit) % 10;
+        PIN += accum;
+
+    
+      //Transfer PIN to be string and 
+      //Add '0' if the PIN code < 10000000
+        PIN = PIN+'';
+        var x = PIN.length;
+        for(var i=x;i<8;i++)
+ 	 {
+	    PIN = '0' + PIN;
+ 	 }
+ 
+
+  	with (document.forms[0]) {
+      
+        getDefault.value = PIN;
+
+	}
+       
+}
+
+function run_appin(){
+
+  with (document.forms[0]) {
+  if (wscenable.checked == true)
+  {
+     RPD.disabled = false;
+     GNP.disabled = false;
+     //AWS.disabled = false;
+     pskhide[0].checked = true; 
+     Pshide(getDefault, pskhide);
+     ap_locked.disabled = false;
+  } else {
+
+     RPD.disabled = true;
+     GNP.disabled = true;
+     //AWS.disabled = true;
+     ap_locked.disabled = true;
+  }
+
+ }
+}
+
+function ap_lock(){
+ with (document.forms[0]) {
+  
+/*
+  if(ap_locked.checked == true) {    
+    wsc_reset.disabled = true; 
+    }  else {
+    wsc_reset.disabled = false;
+    }
+*/
+  }
+}
+
+function frmLoad() {
+
+  with (document.forms[0]) {
+  	if ( enbl == '1' ){
+    if (WscMode == "enabled") {
+     wscenable.checked = true;
+     RPD.disabled = false;
+     GNP.disabled = false;	 
+     //AWS.disabled = false;
+     ap_locked.disabled = false;
+     pskhide[0].checked = true; 
+     Pshide(getDefault, pskhide);
+     } else {
+     wscenable.checked = false;
+     RPD.disabled = true;
+     GNP.disabled = true;	 
+     //AWS.disabled = true;	 
+     ap_locked.disabled = true;
+     pskhide[0].checked = true; 
+     Pshide(getDefault, pskhide);
+     }
+  	}else{
+	 wscenable.disabled = true;
+     RPD.disabled = true;
+     GNP.disabled = true;	 
+     //AWS.disabled = true;	 
+     ap_locked.disabled = true;
+	}
+ 
+    if (WscDevPin == "") {
+    getDefault.value = defaultPIN;
+    } else {
+    getDefault.value = WscDevPin;
+    }
+
+//Yocheng added for Block/unBlock PIN code column sync to "Configured/unConfigured".
+//20120113.
+    if(WscAPMode==1)
+    {getDefault.disabled=true;}
+    else
+    {getDefault.disabled=false;}
+
+    if ( WscAPLockcap == "1") {
+    ap_locked.checked = true;
+    } else {
+    ap_locked.checked = false;
+    }
+
+	/* 20100406, Linus Shi, begin mod to fix bug #7482, mark: 04061615 */
+	if ('0' == wl_switch)
+	{
+        wscenable.disabled = 1;
+	    ap_locked.disabled = 1;
+	    getDefault.disabled = 1;
+	    RPD.disabled = 1;
+	    GNP.disabled = 1;
+	    //AWS.disabled = 1;	
+	}
+	/* 20100406, Linus Shi, end ----------------------- mark: 04061615 */
+  }
+
+}
+
+// done hiding -->
+    </SCRIPT>
+
+</HEAD>
+<BODY onload=frmLoad()>
+<BLOCKQUOTE>
+  <SCRIPT language=JavaScript>
+TabHeader="Advanced";
+SideItem="WI-FI Protected Setup";
+HelpItem="protected";
+</SCRIPT>
+
+<SCRIPT type=text/javascript>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</SCRIPT>
+
+ <FORM>
+
+
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+		<td class=topheader>Wi-Fi Protected Setup</td>
+		</tr>
+		<tr>
+		<td class=content>
+		<p>Wi-Fi Protected Setup is used to easily add devices to a network using a PIN or button press. Devices must support Wi-Fi Protected Setup in order to be configured by this method.</p>
+		<p>If the PIN changes, the new PIN will be used in following Wi-Fi Protected Setup process. Clicking on "Cancel" button will not reset the PIN.</p>
+                <p>However, if the new PIN is not applied, it will get lost when the device reboots or loses power.</p>
+		<p id="not_admin_message" style="display:none">You must be logged in as Administrator to use these features.</p>
+		</td>
+		</tr>
+		</table>
+
+	<table id=body_header>
+	<tr><td class=topheader>Wi-Fi Protected Setup</td></tr>
+			<p>
+			<tr><td class=content>
+			  <table width="500" border="0">
+                <tr>
+                  <td align="right">Enable&nbsp;:</td>
+                  <td align="left"><input name='wscenable' type='checkbox' onClick=run_appin();></td>
+                </tr>
+                <tr>
+                  <td align="right"><label>Lock Wireless Security Settings&nbsp;:</label></td>
+                  <td align="left"><input name="ap_locked" type="checkbox"></td>
+                </tr>
+              
+                <tr>
+                  <td align="right">WPS Configured State&nbsp;:</td>
+                  <script language="JavaScript" >
+                  var WscAPMode  = '<%ejGetWl(wlWscAPMode)%>';
+                  
+                  if (WscAPMode == '1')
+		      document.write("<td align='left'>Configured  &nbsp;&nbsp;&nbsp;&nbsp;<input style='vertical-align:middle' name='gounconfig' value='Back to Unconfigured' onClick=gobackunconfig(); type='button'/></td>");
+                  else
+                      document.write("<td align='left'>Unconfigured  &nbsp;&nbsp;&nbsp;&nbsp;<input style='vertical-align:middle' name='gounconfig' value='Set to Configured' onClick=gobackunconfig(); type='button'/></td>");
+
+                  </script>
+		</tr>
+<!--
+                <tr>
+                  <td align="right"><label></label></td>
+                  <script language="JavaScript" >
+                  var WscAPMode  = '<%ejGetWl(wlWscAPMode)%>';
+                  
+                  if (WscAPMode == '1')
+		      document.write("<td align='left'><input name='gounconfig' value='Reset to Unconfigured' onClick=gobackunconfig(); type='button'/></td>");
+                  else
+                      document.write("<td align='left'><input name='gounconfig' value='Set to Configured' onClick=gobackunconfig(); type='button'/></td>");
+
+                  </script>
+		</tr>
+ -->
+              <!--  <tr>
+                  <td><label></label></td>
+                  <td align="left"><input id="wifisc_reset_unconfig_btn" class="button_submit" name="wsc_reset" type="button" value="Reset to Unconfigured" onClick="do_resetunconfig();" /></td>
+                </tr>
+                -->
+              </table>
+              <p>
+			<!--		<input type="button" value="Add clinet" onclick=add_client()>
+                --></td></tr>											
+	</table>
+
+
+	<table id=body_header>
+	  <tr><td width="672" class=topheader>PIN Settings</td>
+	  </tr>
+										
+          <tr><td class=content>
+	   
+	    <table width="500" border="0">
+          <tr>
+            <td width="160" align="right"><label for="wifisc_current_pin" class="duple">Current PIN&nbsp;:</label></td>
+            <td width="330" align="left"><input type="text" name="getDefault" maxLength=64>
+            <input type='radio' name='pskhide' id='pskhide' onClick='Pshide(getDefault, pskhide)'>Hide
+                <input type='radio' name='pskhide' id='pskhide' onClick='Pshide(getDefault, pskhide)'>Display</td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td align="left"><input id="wifisc_reset_pin_button" name="RPD" value="Reset PIN to Default" onClick=getDevPin();  type="button"/>
+            <input id="wifisc_get_new_pin_button" name="GNP" value="Generate New PIN" onClick=genPin(); type="button"/></td>
+          </tr>
+        </table>
+	    <label for="wifisc_current_pin" class="duple"><br>
+	    </label>
+
+          </tr></td>
+	</table>
+
+
+	<table id=body_header>
+	  <tr><td class=topheader>Add Wireless Station</td></tr>
+	  <tr><td class=content>
+
+	  
+	  <p align="center">
+	    <input onClick="window.location='wlwpsauto.html';" name="AWS" type="button" id="wifisc_add_sta_start_button" class="button_submit" value="Add Wireless Device with WPS"/>
+	    <p>
+          </td></tr>
+	</table>
+								
+
+ <P align=center><INPUT onclick=btnConnect() type=button value="Apply"><INPUT onclick=btnCancel() type=button value="Cancel"></P></FORM>
+
+  <SCRIPT type=text/javascript>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</SCRIPT>
+</BLOCKQUOTE></BODY></HTML>

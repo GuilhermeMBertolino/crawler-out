@@ -1,0 +1,2250 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+	  <script language="JavaScript" src="menu.js"></script>
+	  <script language="JavaScript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+/*-------------------------------USB status (common)-----------------------------*/
+var diskNum = '<%ejGet(disknum)%>';
+var part_num = '<%ejGet(partitions)%>';
+var partitions_deactive_failed = '<%ejGet(partitions_deactive_failed)%>';
+var disk_type =  '<%ejGet(disk_type)%>';
+if (disk_type > '1')
+	part_num -=1;
+var drive_Info = '<%ejGet(vendor)%>' + '(<%ejGet(model)%>)';
+var usb_ms_vendor = '<%ejGet(vendor)%>';
+var usb_ms_model = '<%ejGet(model)%>';
+var usb_ms_type = '<%ej_get_fs_type(type)%>';
+var usb_size = '<%ej_get_partitions_size(all)%>';
+var mountNum = '<%ejGet(partitions)%>';
+var mount_flag = '<%ej_get_mount_flag(mount_flag)%>';
+var support_samba = '<%ejGetOther(sysInfo,support_samba)%>';
+var support_wftp = '<%ejGetOther(sysInfo,support_wftp)%>';
+var support_ftp = '<%ejGetOther(sysInfo,support_ftp)%>';
+
+var samba_enable = '<%ejGet(fs_enable)%>';
+var ftp_enable = '<%ejGet(ftp_enbale)%>';
+var wftp_enable='<%ejGet(wftpEnable)%>';
+var errPort='Invalid port number input. Valid number should be 1~65535.';
+var errVolume='Invalid volume selection.';
+
+var profile_num=5;
+var volMaxNum = 7;
+var mountMaxNum = 4;
+var shareMaxNum = 18;
+
+var enb_value=new Array(5);
+var partition_value=new Array(5);
+var disk_value=new Array(5);
+var user_value=new Array(5);
+var pathValue=new Array(5);
+var partition_size=new Array(5);
+var	volType = new Array(volMaxNum+1);
+var	volMount = new Array(volMaxNum+1);
+var	volShareNum = new Array(volMaxNum+1);
+
+volMount[0] = 1;
+var mount_entrys = mount_flag.split('|');
+var flag_num = mount_entrys.length - 1;
+var mount_enable = new Array(flag_num);
+for (j = 0 ; j <flag_num; j++) {
+	mount_enable[j] = mount_entrys[j];
+}
+partition_size = usb_size.split(',');
+var array = drive_Info.split('|');
+var length = array.length-1;
+var info;
+for (i=0;i<length; i++)
+{
+	if (Index == i)	
+		info = array[i];
+}
+var usb_info = info + ' ' + (usb_size + ' free');
+
+var wftp_partition_value = '<%ejGet(wftp_index)%>';
+var support_webdav  = '0';
+
+var array = usb_ms_type.split('|');
+var length = array.length - 1;
+for (i=0;i<length; i++)
+{
+	volType[i]=array[i];
+}
+var ftp_user_info = '<%ej_get_ftp_userid(user_info)%>';
+var entrys = ftp_user_info.split('|');
+
+var entryNum = entrys.length - 1;
+var rule = new Array(profile_num);
+
+for (i = 0; i < profile_num; i++)
+{
+	rule[i] = new rVe('','','','');
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('&');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3]);
+
+}
+
+function rVe(userId, path,enable,partition_index)
+{
+   this.userId = userId;   this.path = path;  
+   this.enable = enable;
+   this.partition_index = partition_index;
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('&');
+	user_value[j] = entry[0];
+	pathValue[j] =entry[1];
+	enb_value[j] = entry[2];
+	partition_value[j] = entry[3]; 
+}
+
+/*
+function part_stat(volId){
+	var j, strTmp, tt, cnt = 0, cntFtp = 0, cntWFtp = 0, cntWebDAV = 0;
+	var stri = '';
+	// check file server
+	strTmp = '';
+	tt = '';
+	strTmp = '';
+	for (j = 0 ; j < entryNum ; j++) {
+		if (user_value[j] != '') {
+			if (cntFtp > 0) strTmp += ',';
+			strTmp += user_value[j];
+			cntFtp++;
+		}
+	}
+	if (cntFtp > 0 && 1 == volId) {
+		if (tt != '') tt += ', ';
+		tt += 'FTP('+strTmp+')';
+	}
+
+	// check wftp
+	if ((wftp_partition_value == volId)) {
+		if (tt != '') tt += ', ';
+		tt += 'Web-FTP';
+		cntWFtp = 1;
+	}
+
+if (support_webdav  == '1')
+{
+	// check webdav
+	strTmp = '';
+	for (j = 0 ; j < webdav_entryNum ; j++) {
+		if ((webdav_index == volId) && (webdav_user_value[j] != '') && (webdav_enb_value[j] == 1)) {
+			if (cntWebDAV > 0) strTmp += ',';
+			strTmp += webdav_user_value[j];
+			cntWebDAV++;
+		}
+	}
+	if ((cntWebDAV > 0)) {
+		if (tt != '') tt += ', ';
+		tt += 'WebDAV('+strTmp+')';
+	}
+}
+
+	if (tt == '') stri += '&nbsp;';
+	else stri += tt;
+	
+if (support_webdav  == '1')
+{
+	volShareNum[volId] = cnt + cntFtp + cntWFtp + cntWebDAV;
+}
+else
+	volShareNum[volId] = cnt + cntFtp + cntWFtp ;
+
+document.write("<td class=form_label>"+stri+"</td>\n");		
+}
+
+*/
+var stri;
+// volId: 1 based
+function part_stat(volId){
+	var j, strTmp, tt, cnt = 0, cntFtp = 0, cntWFtp = 0, cntWebDAV = 0, cntUshare = 0;
+	tt = '';
+	// check file server
+	if (support_samba == '1')
+	{ 
+		strTmp = '';
+		
+		if (samba_enable == '1'){
+			for (j = 2 ; j < shareMaxNum ; j++) {
+				if ((shVol[j] == volId) && (shName[j] != '') && (shEnable[j] == '1')) {
+					if (cnt > 0) strTmp += ',';
+					strTmp += shName[j];
+					cnt++;
+				}
+			}
+			if (cnt > 0) {
+				tt += 'File Server('+strTmp+')';
+			}
+		}
+	}
+	// check ftp
+
+	if (support_ftp== '1')
+	{
+		strTmp = '';
+		if (ftp_enable == '1'){
+			for (j = 0 ; j < entryNum ; j++) {
+				if ((partition_value[j] == volId) && (user_value[j] != '') && (enb_value[j] == '1')) {
+					if (cntFtp > 0) strTmp += ',';
+					strTmp += user_value[j];
+					cntFtp++;
+				}
+			}
+			if (cntFtp > 0) {
+				if (tt != '') tt += ', ';
+				tt += 'FTP('+strTmp+')';
+			}
+		}
+	}
+	// check wftp
+	if (support_wftp == '1')
+	{
+		if (wftp_enable == '1'){
+			if (wftp_partition_value == volId) {
+				if (tt != '') tt += ', ';
+				tt += 'Web-FTP';
+				cntWFtp = 1;
+			}
+		}
+	}
+	if (support_webdav  == '1')
+	{
+		// check webdav
+		strTmp = '';
+		for (j = 0 ; j < webdav_entryNum ; j++) {
+			if ((webdav_index == volId) && (webdav_user_value[j] != '') && (webdav_enb_value[j] == 1)) {
+				if (cntWebDAV > 0) strTmp += ',';
+				strTmp += webdav_user_value[j];
+				cntWebDAV++;
+			}
+		}
+		if ((cntWebDAV > 0)) {
+			if (tt != '') tt += ', ';
+			tt += 'WebDAV('+strTmp+')';
+		}
+	}
+/*
+	if (support_ushare == '1')
+	{
+		if (ushare_enable == '1'){
+		if (ushare_index == volId) {
+			if (tt != '') tt += ', ';
+			tt += 'UPnP-Share';
+			cntUshare = 1;
+			}
+		}
+	}
+*/	
+	//alert(tt);
+	if (tt == '') stri = '&nbsp;';
+	else stri = tt;
+    
+	volShareNum[volId] = 0;
+	if (support_samba == '1')
+	{
+		volShareNum[volId] += cnt;
+	}
+	if (support_ftp== '1')
+	{
+		volShareNum[volId] += cntFtp;
+	}
+	if (support_wftp== '1')
+	{
+		volShareNum[volId] += cntWFtp;
+	}
+	if (support_webdav  == '1')
+	{
+		volShareNum[volId] += cntWebDAV;
+	}
+/*	
+	if (support_ushare == '1')
+		volShareNum[volId] += cntUshare;
+*/		
+document.write("<td class=form_label>"+stri+"</td>\n");		
+}
+function getDISK() {
+	var j, k;
+	if (diskNum == 0) return;
+	
+	if (part_num != -1) {
+		for (j = 1 ; j <= part_num; j++) {
+			if (volType[j-1] == 'vfat')
+				volType[j-1] = 'FAT32';
+			//document.write('<tr><td class=form_label>'+(j)+'.  '+volType[j-1]+'</td>\n');
+			document.write("<td class=form_label>"+drive_Info+"</td>\n");
+			document.write("<td class=form_label>"+j+"</td>\n");
+			document.write("<td class=form_label>"+partition_size[j-1]+"</td>\n");
+		 if ((volMount[j-1] == 0) && (mountNum >= mountMaxNum)) {
+				document.write('<td class=form_label>&nbsp;</td>\n');
+				document.write('<td class=form_label>&nbsp;</td></tr>\n');
+			}
+			else {
+				if ((mount_enable[j-1] == 1) || (disk_type == 1))
+				{
+					//document.write('<td class=form_label>');
+					//part_stat(j);
+					//document.write('</td>');
+					//stri += '<td class=tdText>';
+					part_stat(j);
+					//stri += '</td>';					
+					document.write('<td class=form_label><input type="button" class="formsbutton" name="deactb'+j+'" value="Deactivate" onclick="void(mountFunc('+j+',2));"></a></td></tr>');;
+				}
+				else {
+				     document.write("<td class=form_label>&nbsp;</td>\n");		
+					document.write('<td class=form_label><input type="button" class="formsbutton" name="actb'+j+'" value="Active" onclick="javascript:void(mountFunc('+j+',1));"></a></td></tr>');
+				}
+			}
+		}
+	}
+	//document.write('<tr><td></td></tr></table>');
+}
+
+// flag: 1-mount, 2-unmount
+// diskId: 0 based
+// volId: 1 based
+function mountFunc(volId, flag) {
+	if (volShareNum[volId] > 0) {
+	//	alert('This partition has been shared for some service. Please disable these services before you deactivate this partition.');
+	//	return false;
+	}
+
+	if ((disk_type == '1') || (part_num == 1))
+	{
+		alert('Only one partition, you cannot deactivate.');
+		return false;
+	}
+	
+	var loc = 'partition_mount.cmd?';
+	loc += 'mount=' + flag;
+	loc += '&index=' + volId;
+	var code = 'location="' + loc + '"';
+	//alert('eval(code)='+code);
+	eval(code);
+	//return true;
+	//document.tF0.volID.value = volId - 1;
+	//document.tF0.volType.value = volTypeID[volId];
+	//document.tF0.mountflag.value = flag;
+	//document.tF0.submit();
+}
+
+
+function click_Update(){
+	var loc = 'usbdetect.cgi';
+	var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function click_Unplug(){
+	if (confirm('Before you disable this function. Please make sure no any user is connecting to the USB. Unexpect disconnect could result client user file crash or system hang-up. Do you really want to continue ?') == false) {
+		return false;
+	}
+	else{
+		var loc = 'usbremove.cgi';
+		var code = 'location=\"' + loc + '\"';
+		eval(code);
+	}
+}
+
+function frmLoad(){
+	with (document.forms[0]) {
+           ftp_remoteEnable.style.display = "none";
+
+	if (preSmbEnb == 1)
+        {
+			smbEnable.checked = true;
+            showhide("div_samba_user", 1);
+        }
+		else
+        {
+			smbEnable.checked = false;
+            showhide("div_samba_user", 0);
+        }
+        enablesmb();    
+		groupName.value=servergroup;
+		computerName.value=servername;
+		computerDescription.value=serverdesc;
+		if (fs_browse_remote == 1) {		
+			remoteEnable.checked = true;
+		}
+		else {			
+			remoteEnable.checked=false;
+		}
+
+		removeSmbuser.disabled = 0;
+		addSmbuser.disabled = 0;
+		editSmbuser.disabled = 0;
+	    shareName.disabled = 0;
+		
+		if (wftpFunc == 1)
+			wftpEnb.checked = true;
+		else
+			wftpEnb.checked = false;
+        enablewebsrv();    
+		wftp_curPath.value = wftp_pathValue;
+		wftp_port.value = http_browse_port;
+		if (http_browse_remote == 1) {
+			wftp_remoteEnable.defaultChecked = true;
+			wftp_remoteEnable.checked = true;
+		}
+		else {
+			wftp_remoteEnable.defaultChecked = false;
+			wftp_remoteEnable.checked = false;
+		}
+		if (wftp_partition.value != 99) {
+			wftp_curPath.disabled = false;
+		}
+		else {
+			wftp_curPath.disabled = true;
+		}
+		
+        
+        if (ftpFunc == 1)
+        {
+			ftpEnb.checked = true;
+            showhide("div_ftp_user", 1);
+        }
+		else
+        {
+			ftpEnb.checked = false;
+            showhide("div_ftp_user", 0);
+        }
+        enableftp();
+		ftp_port.value=ftp_port_num;
+		ftpCtrlPort=21;
+		max_conn.value=ftp_max_conn;
+		idle_time.value=ftp_idle_time;
+		if (ftp_browse_remote == 1) {
+			ftp_remoteEnable.defaultChecked = true;
+			ftp_remoteEnable.checked = true;
+		}
+		else {
+			ftp_remoteEnable.defaultChecked = false;
+			ftp_remoteEnable.checked=false;
+		}
+	
+		removeftpuser.disabled = 0;
+		addftpuser.disabled = 0;
+		editftpuser.disabled = 0;
+		ftpid.disabled = 0;
+		
+        if (buildUsbFtp == '1')
+        {
+            ftp.style.display = "block";
+		}
+		
+		if(partitions_deactive_failed == "1")
+		{
+			alert("Deactivate failed: Device or resource busy!");
+			var loc = "partition_umount.cmd";
+			var code = 'location="' + loc + '"';
+			eval(code);	
+		}		
+	}
+
+}
+
+/*-----------------------------------------------------------------------------------*/
+
+/*----------------------------SMB server------------------------------------------*/
+var preSmbEnb = '<%ejGet(fs_enable)%>';
+var servername = '<%ejGet(fs_name)%>';
+var serverdesc = '<%ejGet(fs_disp)%>';
+var servergroup = '<%ejGet(fs_group)%>';
+var fs_num = '<%ej_get_fs_number(num)%>';
+var fs_browse_remote = '<%ejGet(fs_remote)%>';
+if (fs_num == '')
+	fs_num = '1';
+var shName = new Array(shareMaxNum);
+var shEnable = new Array(shareMaxNum);
+var shVol = new Array(shareMaxNum);
+var shPathStr = new Array(shareMaxNum);
+var shDisk = new Array(shareMaxNum);
+
+var fs_user_info = '<%ej_get_fs_userid(user_info)%>';
+var entrys = fs_user_info.split('|');
+var SmbentryNum = entrys.length - 1;
+var smb_rule = new Array(16);
+
+for (i = 0; i < 16; i++)
+{
+	smb_rule[i] = new _rVe('','','','','');
+}
+
+for (j = 0; j < SmbentryNum; j++)
+{
+	var entry = entrys[j].split('&');
+	smb_rule[j] = new _rVe(entry[0], entry[1], entry[2], entry[3], entry[4]);
+}
+
+function _rVe(userId, path, enable, index, accessMode)
+{
+   this.userId = userId;   this.path = path; 
+   this.enable = enable;   this.index = index;
+   this.accessMode = accessMode
+}
+
+shEnable[0] = 0;
+shDisk[0] = 0;
+shVol[0] = 0;
+shName[0] = 'Printer';
+shPathStr[0] = '';
+shEnable[1] = 0;
+shDisk[1] = 0;
+shVol[1] = 0;
+shName[1] = 'Disk_Array';
+shPathStr[1] = '\\';
+
+
+SmbentryNum += 2;
+for (j = 2; j < SmbentryNum; j++)
+{
+	shName[j] = smb_rule[j-2].userId;
+	shPathStr[j] = smb_rule[j-2].path;
+	shEnable[j] = smb_rule[j-2].enable;
+	shVol[j] = smb_rule[j-2].index;
+}
+
+function btnSmb() {
+	var strTmp1, strTmp2, i, enbIdx;
+    
+	var loc= 'file_server_cfg.cmd?action=save';
+	with(document.forms[0]){
+	
+		if (isBlank(computerName.value)) {
+			alert('Please enter the Server Name');
+			computerName.focus();
+			return false;
+		}
+		if (isInvalidDomain(computerName.value, "Server Name")) {
+			computerName.focus();
+			return false;
+		}		
+		loc += '&servername=' + computerName.value;
+	
+		if (isSpecialChar2(computerDescription.value, "Server Description")) {
+			computerDescription.focus();
+			return false;
+		}
+		loc += '&serverDesc=' + computerDescription.value;
+	
+		if (isBlank(groupName.value)) {
+			alert('Please enter the Group Name');
+			groupName.focus();
+			return false;
+		}
+		if (isInvalidDomain(groupName.value, "Group Name")) {
+			groupName.focus();
+			return false;
+		}
+		strTmp1 = computerName.value;
+		strTmp2 = groupName.value;
+		computerName.value = strTmp1.toUpperCase();
+		groupName.value = strTmp2.toUpperCase();
+		if (computerName.value == groupName.value) {
+			alert('The Server Name and the Group Name may not be the same.\nPlease change your input for the Server Name or the Group Name.');
+		computerName.focus();
+		return false;
+		}
+		//loc += '&groupName=' + groupName.value;
+		if (smbEnable.checked == false)
+			loc += '&fs_enable=0';
+		else
+			loc += '&fs_enable=1';		
+		loc += '&fs_name=' + computerName.value;
+		loc += '&fs_group=' + groupName.value;
+		loc += '&fs_disp=' + computerDescription.value;
+		
+		// check folder disable from enable state
+		/*
+		if (diskNum > 0) {
+			strTmp1 = '';
+			for (i = 2 ; i < SmbentryNum ; i++) {
+				strTmp2 = 'enb'+i;
+				enbIdx = getElementsByFieldName(document.tF, strTmp2);
+				if (document.tF.elements[enbIdx].checked == false) {
+					if (strTmp1 != '') strTmp1 += ', ';
+					strTmp1 += shName[i];
+					loc += "&disable_userId" + i + "=" + shName[i];
+				}
+				else
+				{
+					loc += "&enable_userId" + i + "=" + shName[i];
+				}		
+			}
+			if (strTmp1 != '') {
+				if (confirm('You\'ve tried to disable these folders:\n'+strTmp1+'.\nPlease make sure no any user are connecting to these sharing folders. Unexpect disconnect could result client user file crash or system hang-up. Do you really want to continue ?') == false) 			{
+					return false;
+				}
+			}
+		}
+		*/
+		if (remoteEnable.checked == false){
+			loc += '&fs_remote=' + 0;
+		}
+		else {
+			loc += '&fs_remote=' + 1;
+		}
+		
+	}
+	
+	var code = 'location="' + loc + '"';
+	eval(code);	
+
+}
+
+function btnCancel() {
+	var loc = "storagecfg.html";
+	var code = 'location="' + loc + '"';
+	eval(code);	
+}
+
+function btnAdd(){
+    with ( document.forms[0] ) {
+    if (document.getElementById)
+		document.getElementById('smbuserAddInfo').style.display = 'block';
+	else
+		document.all.smbuserAddInfo.style.display = 'block';
+		removeSmbuser.disabled = 1;
+		addSmbuser.disabled = 1;
+		editSmbuser.disabled = 1;
+		shareName.disabled = 0;
+		clearFields();
+		editId='';
+		doEdit = false;
+		
+	}
+}
+
+function clearFields(){
+	with ( document.forms[0] ) {
+		shareName.value = '';
+		sharePath.value = '';
+		shareRPass.value = '';
+		shareRPassCof.value = '';
+		shareFPass.value = '';
+		shareFPassCof.value = '';
+		shareType[0].checked = true;
+		stPwd(1);
+	}
+
+}
+
+function stPwd(nr){
+	with ( document.forms[0] ) {
+		switch(nr){
+		case 0:
+			shareRPass.style.backgroundColor="#D4D0C8";
+			shareRPassCof.style.backgroundColor="#D4D0C8";
+			shareFPass.style.backgroundColor="#D4D0C8";
+			shareFPassCof.style.backgroundColor="#D4D0C8";
+			shareRPass.disabled=true;
+			shareRPassCof.disabled=true;
+			shareFPass.disabled=true;
+			shareFPassCof.disabled=true;
+			break;
+		case 1:
+			shareRPass.style.backgroundColor="#FFFFFF";
+			shareRPassCof.style.backgroundColor="#FFFFFF";
+			shareFPass.style.backgroundColor="#D4D0C8";
+			shareFPassCof.style.backgroundColor="#D4D0C8";
+			shareRPass.disabled=false;
+			shareRPassCof.disabled=false;
+			shareFPass.disabled=true;
+			shareFPassCof.disabled=true;
+			sec_akt=1;
+			break;
+		case 2:
+			shareRPass.style.backgroundColor="#D4D0C8";
+			shareRPassCof.style.backgroundColor="#D4D0C8";
+			shareFPass.style.backgroundColor="#FFFFFF";
+			shareFPassCof.style.backgroundColor="#FFFFFF";
+			shareRPass.disabled=true;
+			shareRPassCof.disabled=true;
+			shareFPass.disabled=false;
+			shareFPassCof.disabled=false;
+			sec_akt=2;
+			break;
+		case 3:
+			shareRPass.style.backgroundColor="#FFFFFF";
+			shareRPassCof.style.backgroundColor="#FFFFFF";
+			shareFPass.style.backgroundColor="#FFFFFF";
+			shareFPassCof.style.backgroundColor="#FFFFFF";
+			shareRPass.disabled=false;
+			shareRPassCof.disabled=false;
+			shareFPass.disabled=false;
+			shareFPassCof.disabled=false;
+			sec_akt=3;
+			break;
+		}
+	}
+}
+
+function changeDir() {
+	with ( document.forms[0] ) {
+		partId = shareVol.value;
+		sharePath.value = '/';
+		if (partId == 0) {
+			sharePath.disabled = true;
+		}
+		else {
+			sharePath.disabled = false;
+		}
+        index = document.tF.shareVol.value;
+        if (mount_enable[index-1] == 0)
+        {
+                alert('This partition has been deactivated in the usb main page, please active it first!');
+                shareVol.value = 0;
+        }		
+	}
+}
+
+function getPartition() {
+	var i, stri;
+	var tmpSt;
+	stri = '<select size="1" name="shareVol" onChange="changeDir();">';
+	stri += '<option value=0>-- Select Volume --</option>';
+	for (i = 1 ; i <= part_num; i++) {
+		if (i==1)
+			tmpSt = ' selected';
+		else tmpSt = '';
+		
+		stri += '<option value='+i+tmpSt+'>'+i+'. '+volType[i-1]+'</option>';
+	}
+	stri += '</select>';
+
+	//document.getElementById('Partition').innerHTML=stri;
+	document.write("<td>"+stri+"</td>");
+}
+
+function openBrowse() {
+
+    with ( document.forms[0] ) {
+		if ((diskId.value == -1) || (shareVol.value == 0)) 		  {
+			alert(errVolume);
+			return false;
+		}
+		var theURL
+		if (part_num == '1')
+			theURL = '/usb_fs_tree.html';// + arg;
+		else
+			theURL = '/usb_fs_tree.cmd?index=' + shareVol.value;
+	//alert('select URL:[' + theURL + '],  selectIdx:'+selectIdx);
+		if (window.win && (window.win.closed == false)) {
+			window.win.close();
+		}
+
+		browseIdx = fs_num;
+		dev_Idx = shareVol.value;
+		win = window.open(theURL,'tree','scrollbars=yes,resizable=no,width=600,height=508');
+		return true;
+
+	}
+}
+
+function btnsmbuser() {
+	var k, ty, strTmp1;
+    with ( document.forms[0] ) {
+	// make sure volume index is valid
+		if (shareVol.value == 0) {
+			alert(errVolume);
+			shareVol.focus();
+			return false;
+		}
+
+	// check share folder name isn't empty & invalid character
+		if (isBlank(shareName.value)) {
+			alert('Please enter the Sharing Foler Name.');
+			shareName.focus();
+			return false;
+		}
+		if (isInvalidDomain(shareName.value, "Sharing Folder Name")) {
+			shareName.focus();
+			return false;
+		}
+		if (isInvalidPath(sharePath.value, "Directory")) {
+			sharePath.focus();
+			return false;
+		}
+
+		if (isInvalidName(shareName.value)) {
+			alert("Sharing Foler Name should use digit, letter and _");
+			shareName.focus();
+			return false;
+		}
+
+
+		// check duplicate
+		for (k = 2 ; k < shareMaxNum ; k++) {
+			//if (k == foldId) continue;
+
+			if (shEnable[k]) {
+				strTmp1 = shareName.value;
+				if (strTmp1.toUpperCase() == shName[k].toUpperCase() && (doEdit == false)) {
+					alert('The input name \''+shareName.value+'\' is duplicate with another sharing folder. Please select another name for this folder.');
+					shareName.focus();
+					return false;
+				}
+			}
+		}
+
+		// warning security selection
+		//if (shareSecure.checked) {
+		if (shareType[0].checked) ty = 0;
+		else if (shareType[1].checked) ty = 1;
+		//else if (shareType[2].checked) ty = 2;
+
+		// check password confirm
+		if ((ty == 0) || (ty == 2)) {
+			if (shareRPass.value != shareRPassCof.value) {
+				alert('The read-only password is not match. Please try to input again.');
+				shareRPass.value = '';
+				shareRPassCof.value = '';
+				shareRPass.focus();
+				return false;
+			}
+			//if (shareSecure.checked &&
+			if(isBlank(shareRPass.value)) {
+				if (confirm('Note: The read-only password is empty. It means any user could access your share folder without secure protection. Would you like to continue ?') == false) {
+					shareRPass.focus();
+					return false;
+				}
+			}
+			//if (ty == 0) shareFPass.value = '';
+		}
+		if ((ty == 1) || (ty == 2)) {
+			if (shareFPass.value != shareFPassCof.value) {
+				alert('The full-access password is not match. Please try to input again.');
+				shareFPass.value = '';
+				shareFPassCof.value = '';
+				shareFPass.focus();
+				return false;
+			}
+			//if (shareSecure.checked &&
+			if(isBlank(shareFPass.value)) {
+				if (confirm('Note: The full access password is empty. It means any user could access your share folder without secure protection. Would you like to continue ?') == false) {
+					shareFPass.focus();
+					return false;
+				}
+			}
+			//if (ty == 1) shareRPass.value = '';
+		}
+	//}
+	/*else {
+		if (confirm('Note: You have disable the secure protection for this share folder. Would you like to continue ?') == false) {
+			shareSecure.focus();
+			return false;
+		}
+	}*/
+	  if(doEdit == true)
+		var loc= 'fs_user_cfg.cmd?action=edit';
+	  else
+		var loc= 'fs_user_cfg.cmd?action=add';
+		
+		loc += '&userId=' + shareName.value;
+		
+             if (smbuserEnable.checked == false){
+			loc += '&smbuserEnable=0';
+		}
+		else {
+			loc += '&smbuserEnable=1';
+		}
+		 
+	//if (shareSecure.checked)
+	//{
+		//loc += '&fs_sec=1';
+		if (0 == ty)
+			loc += '&accessmode=' + ty + '&r_password=' + encodeUrl(shareRPass.value);
+		else if (1 == ty)
+
+			loc += '&accessmode=' + ty + '&r_password=' + encodeUrl(shareFPass.value);
+
+			//20110720, because samba just save the r_password parameter, so the full password need save to this parameter.
+		//else
+			//loc += '&accessmode=' + ty + '&f_password=' + shareFPass.value + '&r_password=' + shareRPass.value;
+		
+	//}
+	//else
+		//loc += '&fs_sec=0';
+		if (sharePath.value == '/'){
+			loc += '&path=*';
+		}
+		else
+			loc += '&path=' + sharePath.value;
+	}
+	
+	loc += '&index=' +  document.tF.shareVol.value;
+    //var code = 'location=\"' + loc + '\"';
+	var code = 'location="' + loc + '"';
+	//alert(code);
+	eval(code);
+	return true;
+}
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  var startTime;
+  var endTime;
+  var tmpRuleName;
+  var checkId = 0;
+
+with ( document.forms[0] ) {
+
+	
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    		{
+      			if(rml[i].checked == true)
+      			{
+				hasChecked = true;
+        			checkedCount++;
+				checkId = i;
+      			}
+		}
+	} 
+	else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = rml.value;
+		//tmpRuleName = lblRuleName.innerHTML;
+		//startTime = lblStart.innerHTML.split(':');
+		//endTime = lblEnd.innerHTML.split(':');
+
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+		clearFields();
+		smbuserEnable.checked = smb_rule[checkId].enable;
+		shareName.value = smb_rule[checkId].userId;
+		sharePath.value = smb_rule[checkId].path;
+		setSelect(shareVol,smb_rule[checkId].index);
+		if ( smb_rule[checkId].accessMode == '1' )
+			 shareType.checked = true;
+		else		
+			 shareType.checked = false;
+		if(document.getElementById)
+			document.getElementById('smbuserAddInfo').style.display = 'block';
+		else
+			document.all.schedAddInfo.style.display = 'block';
+		removeSmbuser.disabled = 1;
+		addSmbuser.disabled = 1;
+		editSmbuser.disabled = 1;
+		shareName.disabled = 1;
+		
+}
+  doEdit = true;
+
+}
+
+function btnRemove(rml) {
+	var lst='';
+	var hasChecked = false;
+	if (rml){
+		if (rml.length > 0)
+			for (i = 0; i < rml.length; i++) {
+				if ( rml[i].checked == true ){
+					lst += rml[i].value + ', ';
+					hasChecked = true;
+				}
+			}
+		else if ( rml.checked == true ){
+			lst = rml.value;
+			hasChecked = true;
+		}
+	}
+
+	if (!hasChecked) {
+		alert ("Please select an item to delete!");
+		return;
+	}
+
+	//var loc = 'sciptsched.sched?action=remove&rmLst=' + lst;
+	var loc = 'file_server_cfg.cmd?action=remove&userId='+lst;
+	var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function btnCancelSmb() {
+    with ( document.forms[0] ) {
+    if (document.getElementById)
+		document.getElementById('smbuserAddInfo').style.display = 'none';
+	else
+		document.all.smbuserAddInfo.style.display = 'none';
+		removeSmbuser.disabled = 0;
+		addSmbuser.disabled = 0;
+		editSmbuser.disabled = 0;
+		shareName.disabled = 0;
+	}
+}
+
+/*-----------------------------------------------------------------------------------*/
+
+/*----------------------------------------ftp server-------------------------------*/
+
+var ftpCtrlPort=0;
+var ftpFunc='<%ejGet(ftp_enbale)%>';
+var ftp_user_info = '<%ej_get_ftp_userid(user_info)%>';
+var ftp_port_num = '<%ejGet(ftp_port)%>';
+var ftp_idle_time = '<%ejGet(ftp_idle_time)%>';
+var ftp_max_conn = '<%ejGet(ftp_max_conn)%>';
+var ftp_browse_remote = '<%ejGet(ftp_remote)%>';
+var usb_ms_drive_Info = '<%ejGet(vendor)%>' + '(<%ejGet(model)%>)';
+var part_Num =  '<%ejGet(partitions)%>';
+var ftpUerNum = '<%ej_get_ftp_number(usernum)%>';
+if (disk_type > '1')
+	part_Num -=1;
+var tcpudpListenCnt = new Array(2);
+var tcpudpListen = new Array(2);
+tcpudpListenCnt[0] = 18;
+tcpudpListen[0] = new Array(18);
+tcpudpListen[0][0] = 80;
+tcpudpListen[0][1] = 22;
+tcpudpListen[0][2] = 23;
+tcpudpListen[0][3] = 161;
+tcpudpListen[0][4] = 25;
+tcpudpListen[0][5] = 80;
+tcpudpListen[0][6] = 80;
+tcpudpListen[0][7] = 80;
+tcpudpListen[0][8] = 80;
+tcpudpListen[0][9] = 80;
+tcpudpListen[0][10] = 80;
+tcpudpListen[0][11] = 80;
+tcpudpListen[0][12] = 80;
+tcpudpListen[0][13] = 5060;
+tcpudpListen[0][14] = 4626;
+tcpudpListen[0][15] = 139;
+tcpudpListen[0][16] = 8000;
+tcpudpListen[0][17] = 80;
+var tcpListenStr = '80, 22, 23, 161, 25, 80, 80, 80, 80, 80, 80, 80, 80, 5060, 4626, 139, 8000, 80';
+tcpudpListenCnt[1] = 9;
+tcpudpListen[1] = new Array(9);
+tcpudpListen[1][0] = 33201;
+tcpudpListen[1][1] = 5060;
+tcpudpListen[1][2] = 1900;
+tcpudpListen[1][3] = 138;
+tcpudpListen[1][4] = 137;
+tcpudpListen[1][5] = 520;
+tcpudpListen[1][6] = 32768;
+tcpudpListen[1][7] = 53;
+tcpudpListen[1][8] = 8080;
+var udpListenStr = '33201, 5060, 1900, 138, 137, 520, 32768, 53, 8080';
+var forwardport = new Array();
+var forwardport_cnt =0 ;
+var part_index = new Array(5);
+var ftp_user_value = new Array(5);
+//var ftp_user_info = 'anonymous.\\|';
+var entrys = ftp_user_info.split('|');
+
+var ftp_entryNum = entrys.length - 1;
+
+var ftp_rule = new Array(profile_num);
+
+for (i = 0; i < profile_num; i++)
+{
+	ftp_rule[i] = new rVe('','','','','');
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('&');
+	ftp_rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4]);
+}
+
+function rVe(userId, path, enable, index, accessMode)
+{
+   this.userId = userId;   this.path = path; 
+   this.enable = enable;   this.index = index;
+   this.accessMode = accessMode;
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	ftp_user_value[j] = ftp_rule[j].userId;
+	pathValue[j] = ftp_rule[j].path;
+	enb_value[j] = ftp_rule[j].enable;
+	part_index[j] = ftp_rule[j].index;
+}
+
+function btnFtp() {
+	
+	var i, j, strTmp1, strTmp2, enbIdx, tport;
+	
+	var loc= 'ftp_cfg.cmd?action=save';
+	with ( document.forms[0] ) {
+		if (ftpEnb.checked == false){
+			loc += '&ftp_enable=' + 0;
+		}
+		else {
+			loc += '&ftp_enable=' + 1;
+		}
+		// check control port
+		tport = ftp_port.value;
+		if (isNValidPort(tport)) {
+			alert(errPort);
+			return false;
+		}
+
+		// check port duplicate
+		if ((tport != ftpCtrlPort) || (ftpFunc == 0)) {
+			errStr = 'Following ports have been reserved for system services:\n';
+			if (tcpudpListenCnt[0] > 0) errStr = errStr + 'TCP: '+tcpListenStr+'\n';
+				errStr = errStr + 'Please modify your port settings in the "Port Number" field.';
+			for (j = 0 ; j < tcpudpListenCnt[0] ; j++) {
+				if (tport == tcpudpListen[0][j]) {
+					alert(errStr);
+					return false;
+				}
+			}
+		}
+
+		// check connection too large
+		if ((max_conn.value > 10) || (max_conn.value <= 0) ||
+			isNaN(max_conn.value)) {
+			alert('Invalid connection number input. Valid number should be 1~10.');
+			return false;
+		}
+		loc += '&max_conn=' + max_conn.value;
+		// check timeout too small
+		if ((idle_time.value > 300) || (idle_time.value < 0) ||
+			isNaN(idle_time.value)) {
+			alert('Invalid idle timeout input. Valid number should be 0~300.');
+			return false;
+		}
+		loc += '&port=' + ftp_port.value;
+		loc += '&idle_time=' + idle_time.value;
+		// check folder disable from enable state
+		/*
+		if (diskNum > 0) {
+			strTmp1 = '';
+			for (i = 0 ; i < entryNum ; i++) {
+				strTmp2 = 'ftp_enable'+i;
+				enbIdx = getElementsByFieldName(document.tF, strTmp2);
+				if (document.tF.elements[enbIdx].checked == false) {
+					enb_value[i] = 0;
+					loc += "&disable_userId" + i + "=" + user_value[i];
+					//loc += '&userId' + user_value[i];
+					if (strTmp1 != '') strTmp1 += ', ';
+					strTmp1 += user_value[i];
+				}
+				else{
+					enb_value[i] = 1;
+					loc += "&enable_userId" + i + "=" + user_value[i];
+				}
+			}
+			if (strTmp1 != '') {
+				if (confirm('You\'ve tried to disable these profiles:\n'+strTmp1+'.\nPlease make sure no any user are using these profiles. Unexpect disconnect could result client user file crash or system hang-up. Do you really want to continue ?') == false) {
+					return false;
+				}
+			}
+		}*/
+		if (ftp_remoteEnable.checked == false){
+			loc += '&ftp_remote=' + 1;
+		}
+		else {
+			loc += '&ftp_remote=' + 1;
+		}
+	}	
+    //var code = 'location=\"' + loc + '\"';
+	var code = 'location="' + loc + '"';
+	//alert(code);
+	eval(code);
+	
+}
+
+function btnAddftp(){
+    with ( document.forms[0] ) {
+    if (document.getElementById)
+		document.getElementById('ftpuserAddInfo').style.display = 'block';
+	else
+		document.all.ftpuserAddInfo.style.display = 'block';
+		removeftpuser.disabled = 1;
+		addftpuser.disabled = 1;
+		editftpuser.disabled = 1;
+		ftpid.disabled = 0;
+		//clearFields();
+		//editId='';
+		doEditftp = false;
+		ftpid.value = '';
+		ftp_curPath.value = '';
+		
+	}
+}
+
+var stri;
+function ftp_getDISK() {
+	var tmpSt, k4;
+	var partNum;
+	//var volType_name = "volType" + k4;
+	k4 =document.tF.disk_value.value;
+	if (k4 == 99) partNum = -1;
+	else partNum = part_Num ;
+	
+	stri = '<select size="1" id="ftp_partition" name="ftp_partition" onChange="ftp_getNum();">';
+	stri += '<option value=99>-- Select Volume --</option>';
+	if (partNum != -1) {
+		for (j = 1 ; j <= partNum; j++) {
+			//if (volMount[diskId][j] > 0) {
+				//if (j == partition_value[proIdx]) 
+				tmpSt = '';
+				//else tmpSt = '';
+				stri += '<option value='+j+tmpSt+'>'+j+'. '+volType[j-1]+'</option>';
+			
+		}
+	}	
+    stri += '</select>';
+    
+	//document.getElementById('keylen').innerHTML = stri;
+	document.write("<td>"+stri+"</td>");
+}
+
+function ftp_getNum() {
+	var index;
+	with ( document.forms[0] ) {
+		ftp_curPath.value = '/';
+
+        index = ftp_partition.value;
+        if (mount_enable[index-1] == 0)
+        {
+            alert('This partition has been deactivated in the usb main page, please active it first!');
+            ftp_partition.value = 99;
+        }
+		
+		if (ftp_partition.value != 99) {
+			ftp_curPath.disabled = false;
+		}
+		else {
+			ftp_curPath.disabled = true;
+		}
+	}
+
+}
+function openBrowseftp() {
+	with ( document.forms[0] ) {
+		var volIdx = ftp_partition.value;
+		var dskIdx = disk_value.value;
+		//var arg = volIdx * 1000 + proIdx + '/' + dskIdx;
+		var theURL
+		if (part_Num == '1')
+			theURL = '/usb_ftp_tree.html';// + arg;
+		else
+			theURL = '/usb_ftp_tree.cmd?index=' + ftp_partition.value;
+
+		if ((dskIdx == 99) || (volIdx == 99)) {
+			alert(errVolume);
+			return false;
+		}
+
+		if (window.win && (window.win.closed == false)) {
+			window.win.close();
+		}
+
+		browseIdx = ftpUerNum;
+		dev_Idx = ftp_partition.value;
+		win = window.open(theURL,'tree','scrollbars=yes,resizable=no,width=600,height=508');
+		return true;
+	}	
+}
+
+function btnftpuser() {
+	var k;
+	with ( document.forms[0] ) {
+		if (isBlank(ftpid.value)){
+			alert('Empty User ID string input.');
+			ftpid.focus();
+			return false;
+		}
+	// make sure volume index is valid
+		if (ftp_partition.value == 99) {
+			alert('make sure volume index is valid');
+			ftp_partition.focus();
+			return false;
+		}
+
+	// compare password mismatch
+		if ((ftpPass.value != ftpPassV.value) || (isBlank(ftpPass.value))) {
+			alert('compare password mismatch');
+			ftpPass.value = "";
+			ftpPassV.value = "";
+			ftpPass.focus();
+			return false;
+		}
+
+		// check path empty
+		if (isBlank(ftp_curPath.value)) {
+			alert('Empty path string input.');
+			ftp_curPath.focus();
+			return false;
+		}
+
+		// check username duplicate
+		for (k = 0 ; k < profile_num ; k++) {
+			if (doEditftp == true) break;
+			if (ftpid.value == ftp_user_value[k]) {
+				alert('Duplicate userID input.');
+				ftpid.focus();
+				return false;
+			}
+		}
+		if(doEditftp == true)
+			var loc= 'ftp_user_cfg.cmd?action=edit';
+		else
+			var loc= 'ftp_user_cfg.cmd?action=add';
+		loc += '&userId=' + ftpid.value;
+		loc += '&password=' + ftpPass.value;
+		loc += '&accessmode=' + access_mode.value;
+		if (ftp_curPath.value == '/'){
+			loc += '&path=*';
+		}
+		else
+			loc += '&path=' + ftp_curPath.value;
+	}
+	
+	loc += '&index=' + document.tF.ftp_partition.value;
+    //var code = 'location=\"' + loc + '\"';
+	var code = 'location="' + loc + '"';
+	//alert(code);
+	eval(code);
+}
+
+function btnEditftp(ftprml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  var startTime;
+  var endTime;
+  var tmpRuleName;
+  var checkId = 0;
+
+with ( document.forms[0] ) {
+
+	
+  if (ftprml)
+  {
+	if (ftprml.length > 0){
+		for (i = 0; i < ftprml.length; i++)
+    		{
+      			if(ftprml[i].checked == true)
+      			{
+				hasChecked = true;
+        			checkedCount++;
+				checkId = i;
+      			}
+		}
+	} 
+	else if (ftprml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = ftprml.value;
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+		//clearFields();
+		ftpid.value = '';
+		ftp_curPath.value = '';
+		ftpid.value = ftp_rule[checkId].userId ;
+		ftp_curPath.value = ftp_rule[checkId].path;
+		setSelect(ftp_partition,ftp_rule[checkId].index);
+		//if ( smb_rule[checkId].accessMode == '1' )
+		//	 shareType.checked = true;
+		//else		
+		//	 shareType.checked = false;
+			 
+		if(document.getElementById)
+			document.getElementById('ftpuserAddInfo').style.display = 'block';
+		else
+			document.all.ftpAddInfo.style.display = 'block';
+		removeftpuser.disabled = 1;
+		addftpuser.disabled = 1;
+		editftpuser.disabled = 1;
+		ftpid.disabled = 1;
+		
+}
+  doEditftp = true;
+
+}
+
+function btnRemoveftp(ftprml) {
+	var lst='';
+	var hasChecked = false;
+	if (ftprml){
+		if (ftprml.length > 0)
+			for (i = 0; i < ftprml.length; i++) {
+				if ( ftprml[i].checked == true ){
+					lst += ftprml[i].value + ', ';
+					hasChecked = true;
+				}
+			}
+		else if ( ftprml.checked == true ){
+			lst = ftprml.value;
+			hasChecked = true;
+		}
+	}
+
+	if (!hasChecked) {
+		alert ("Please select an item to delete!");
+		return;
+	}
+
+	//var loc = 'sciptsched.sched?action=remove&rmLst=' + lst;
+	var loc = 'ftp_cfg.cmd?action=remove&userId='+lst;
+	var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function btnCancelftp() {
+    with ( document.forms[0] ) {
+    if (document.getElementById)
+		document.getElementById('ftpuserAddInfo').style.display = 'none';
+	else
+		document.all.ftpuserAddInfo.style.display = 'none';
+		removeftpuser.disabled = 0;
+		addftpuser.disabled = 0;
+		editftpuser.disabled = 0;
+		ftpid.disabled = 0;
+	}
+}
+/*-----------------------------------------------------------------------------------*/
+
+/*--------------------------------------web server---------------------------------*/
+
+var tcpudpListenCnt = new Array(2);
+var tcpudpListen = new Array(2);
+tcpudpListenCnt[0] = 16;
+tcpudpListen[0] = new Array(16);
+tcpudpListen[0][0] = 80;
+tcpudpListen[0][1] = 22;
+tcpudpListen[0][2] = 23;
+tcpudpListen[0][3] = 25;
+tcpudpListen[0][4] = 161;
+tcpudpListen[0][5] = 80;
+tcpudpListen[0][6] = 8080;
+tcpudpListen[0][7] = 80;
+tcpudpListen[0][8] = 80;
+tcpudpListen[0][9] = 80;
+tcpudpListen[0][10] = 80;
+tcpudpListen[0][11] = 5060;
+tcpudpListen[0][12] = 4626;
+tcpudpListen[0][13] = 139;
+tcpudpListen[0][14] = 80;
+tcpudpListen[0][15] = 80;
+var tcpListenStr = '80, 22, 23, 25, 161, 80, 8080, 80, 80, 80, 80, 5060, 4626, 139, 80, 80';
+tcpudpListenCnt[1] = 9;
+tcpudpListen[1] = new Array(9);
+tcpudpListen[1][0] = 33201;
+tcpudpListen[1][1] = 5060;
+tcpudpListen[1][2] = 1900;
+tcpudpListen[1][3] = 138;
+tcpudpListen[1][4] = 137;
+tcpudpListen[1][5] = 520;
+tcpudpListen[1][6] = 32768;
+tcpudpListen[1][7] = 53;
+tcpudpListen[1][8] = 8080;
+var udpListenStr = '33201, 5060, 1900, 138, 137, 520, 32768, 53, 8080';
+var forwardport = new Array();
+var forwardport_cnt =0 ;
+
+tcpListenStr="80,";
+for(i=0;i<tcpudpListen[0].length;i++)
+{
+if((tcpudpListen[0][i]!=http_browse_port)&& (tcpudpListen[0][i]!="80")&&(tcpListenStr.indexOf(tcpudpListen[0][i])<0))
+tcpListenStr=tcpListenStr+tcpudpListen[0][i]+",";
+}
+var ForwardStr="";
+for(i=0;i<forwardport_cnt;i++)
+{
+if(ForwardStr.indexOf(forwardport[i])<0)
+ForwardStr=ForwardStr+forwardport[i]+",";
+}
+
+var wftpFunc='<%ejGet(wftpEnable)%>';
+var http_browse_port = '<%ejGet(wftpPort)%>';
+var wftp_index = '<%ejGet(wftp_index)%>';
+if (http_browse_port == '0')
+	http_browse_port = 8000;
+var http_browse_remote = '<%ejGet(wftp_remote)%>';
+var wftp_pathValue = '<%ejGet(wftp_path)%>';
+
+
+function openBrowseWftp() {
+	with ( document.forms[0] ) {
+		var volIdx = wftp_partition.value;
+		var dskIdx = disk_value.value;
+		//var arg = volIdx * 1000 + '/' + dskIdx;
+		var theURL
+		if (part_num == '1')
+			theURL = '/usb_wftp_tree.html';
+		else
+			theURL = '/usb_wftp_tree.cmd?index=' + wftp_partition.value;
+
+		if ((dskIdx == 99) || (volIdx == 99)) {
+			alert(errVolume);
+			return false;
+		}
+
+		if (window.win && (window.win.closed == false)) {
+			window.win.close();
+		}
+
+		browseIdx = 0;
+		dev_Idx = wftp_partition.value;
+		win = window.open(theURL,'tree','scrollbars=yes,resizable=no,width=600,height=508');
+		return true;
+	}
+}
+
+function getNum() {
+	var index;
+	with ( document.forms[0] ) {	
+		wftp_curPath.value = '/';
+
+        index = wftp_partition.value;
+        if (mount_enable[index-1] == 0)
+        {
+            alert('This partition has been deactivated in the usb main page, please active it first!');
+            wftp_partition.value = 99;
+        }	
+		
+		if (wftp_partition.value != 99) {
+			wftp_curPath.disabled = false;
+		}
+		else {
+			wftp_curPath.disabled = true;
+		}	
+	}
+}
+
+var stri;
+function wftp_getDISK() {
+	var tmpSt, k4;
+	var partNum;
+	//var volType_name = "volType" + k4;
+	k4 = document.tF.disk_value.value;
+	if (k4 == 99) partNum = -1;
+	else partNum = part_num ;
+	
+	stri = '<select size="1" id="wftp_partition" name="wftp_partition" onChange="getNum();">';
+	stri += '<option value=99>-- Select Volume --</option>';
+	if (partNum != -1) {
+		for (j = 1 ; j <= partNum ; j++) {
+			//if (wftpFunc == 0)
+				//tmpSt = '';
+		    if (j == wftp_index) 
+				tmpSt = ' selected';
+			else 
+				tmpSt = '';
+				stri += '<option value='+j+tmpSt+'>'+j+'. '+volType[j-1]+'</option>';
+			//}
+		}
+	}	
+    stri += '</select>';
+    
+	//document.getElementById('keylen').innerHTML = stri;
+	document.write("<td>"+stri+"</td>");
+}
+
+function btnWftp() {
+	var tport;
+	var loc= 'websrv_cfg.cmd?action=save';
+	
+	with ( document.forms[0] ) {	
+		if (wftpEnb.checked == false){
+			loc += '&wftp_enable=0';
+		}
+		else {
+			loc += '&wftp_enable=1';
+		}
+
+		if (wftp_remoteEnable.checked == false){
+			loc += '&wftp_remote=0';
+		}
+		else {
+			loc += '&wftp_remote=1';
+		}
+		// make sure volume index is valid
+		if (wftp_partition.value == 99) {
+			alert(errVolume);
+		if (diskNum > 0) wftp_partition.focus();
+		return false;
+		}
+
+		// check control port
+		tport = wftp_port.value;
+		if (isNValidPort(tport)) {
+			alert(errPort);
+			return false;
+		}			
+	
+	
+		// check port duplicate
+		//if ((tport != http_browse_port) || (wftpFunc == 0)) {
+		if ((tport != http_browse_port)) {
+			errStr = 'Following ports have been reserved for other system services:\n';
+			if (tcpudpListenCnt[0] > 0) errStr = errStr + 'TCP: '+tcpListenStr+'\n';
+				errStr = errStr + 'Please modify your port settings in the "Port Number" field.';
+			for (j = 0 ; j < tcpudpListenCnt[0] ; j++) {
+				if (tport == tcpudpListen[0][j]) {
+					alert(errStr);
+					return false;
+				}
+			}
+			errStr = 'Following ports have been reserved for forwarding ports:\n';
+			if (forwardport_cnt > 0) errStr = errStr +ForwardStr+'\n';
+				errStr = errStr + 'Please modify your port settings in the "Port Number" field.';
+			for (j = 0 ; j < forwardport_cnt ; j++) {
+				if (tport == forwardport[j]) {
+					alert(errStr);
+					return false;
+				}
+			}
+		}
+		loc += '&port=' + wftp_port.value;
+	
+		if (wftp_curPath.value == '/'){
+			loc += '&path=*';
+		}
+		else
+			loc += '&path=' + wftp_curPath.value;
+		//var code = 'location=\"' + loc + '\"';
+	}
+	loc += '&index=' + document.tF.wftp_partition.value;
+	var code = 'location="' + loc + '"';
+	//alert(code);
+	eval(code);
+}
+
+function enablesmb()
+{
+    with (document.forms[0])
+    {
+        if (smbEnable.checked == true)
+            showhide("div_samba_cfg", 1);
+        else
+            showhide("div_samba_cfg", 0);
+    }
+}
+
+function enableftp()
+{
+    with (document.forms[0])
+    {
+        if (ftpEnb.checked == true)
+            showhide("div_ftp_cfg", 1);
+        else
+            showhide("div_ftp_cfg", 0);
+    }
+}
+
+function enablewebsrv()
+{
+    with (document.forms[0])
+    {
+        if (wftpEnb.checked == true)
+            showhide("div_web_cfg", 1);
+        else
+            showhide("div_web_cfg", 0);
+    }
+}
+/*-----------------------------------------------------------------------------------*/
+// done hiding -->
+    </script>
+   </head>
+<body onload="frmLoad()">
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="USB Setup";
+HelpItem="storagecfg";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<script language='javascript'>
+</script>
+  <FORM name="tF">
+	<!--<br>-->
+    <table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				USB SETUP
+			</td>										
+		</tr>
+
+		<tr>
+			<td class=content>
+				<p>
+				This IAD supports the USB Host controller function. You can enable this function and plug-in your USB device to share it with other people over your LAN network.</p>
+      		</td>
+
+		</tr>
+	</table>
+
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				USB Device Status
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				<script LANGUAGE="JavaScript">
+				if (diskNum  > 0) 
+				{
+					document.write('<font color="red">Warning!</font> If you would like to unplug the USB storage, please click "Safely Remove Device" button in the "Current USB Device Status" table to make sure all un-saved data have been written into disk completely. Directly unplugging device may cause your USB storage crash.');
+				}
+				</script>
+				</p>
+      		</td>
+		</tr>
+		<tr>
+			<td>
+				<table class=formlisting>
+
+					<tr class=form_label_row>
+						 <td class='form_label_col'>Connected Device</td>       
+						 <td class='form_label_col'>Partitions</td>
+						 <td class='form_label_col'>Size</td>
+						 <td class='form_label_col'>Service Status</td>
+						 <td class='form_label_col'>&nbsp;</td>
+					</tr>
+					<script language="javascript">	  
+						getDISK(); 
+						// done hiding 
+					</script>
+				</table>
+			</td>
+		</tr>
+					<tr><td><br></td></tr>
+		<tr align="center">
+			<td><input type="button"  onclick="click_Update();" name="updateb" value="Status Refresh">
+			<input type="button"  onclick="click_Unplug();" name="uplugb" value="Safely Remove Device"></td>
+		</tr>
+			<tr><td><br></td></tr>
+	</table>
+
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Samba File Server
+			</td>										
+		</tr>
+		<tr>
+             <td class=content>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea> 
+            <tr>
+				<td class=form_label>Enable Samba File Server&nbsp;:</td>
+				<td><input type="checkbox" name="smbEnable" value=1 onclick = "enablesmb();"></td>
+			</tr>
+            </table>
+            <div id = div_samba_cfg>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea>           
+			<tr>
+				<td class=form_label>Server Name&nbsp;:</td>
+				<td><input type="text" class="textbox_180_nb" name="computerName" size="25" maxlength="13">
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Server Description&nbsp;:</td>
+				<td><input type="text" class="textbox_180_nb" name="computerDescription" size="25" maxlength="39">
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Group Name&nbsp;:</td>
+				<td><input type="text" class="textbox_180_nb" name="groupName" size="25" maxlength="13">
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Remote Access&nbsp;:</td>
+				<td><input type="checkbox" name="remoteEnable" value=1>
+				</td>
+			</tr>      
+			</table>
+            </div>
+      		</td>
+		</tr>
+		<!--<tr>
+			<td class=content>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea>
+				<script language="javascript">
+			  	if (diskNum > 0) {
+					var enbStr, empIdx = -1;
+					document.write('<tr><td>Sharing Folder List (up to '+(shareMaxNum - 2)+' folders)</td></tr>');
+					document.write('<table border="0" cellspacing="1" cellpadding="5" width=80%>');
+					document.write('<tr><td class=tdTitler>Sharing Folder</td><td class=tdTitler>Path</td><td class=tdTitler>Configure</td>\n');
+					for (i = 2 ; i < SmbentryNum ; i++) {
+						if (shName[i] == '') {
+							if (empIdx == -1) empIdx = i;
+							continue;
+						}
+						document.write('<tr>');
+						if (shEnable[i] == 1)
+							enbStr = 'checked';
+						else
+							enbStr = '';
+						document.write('<td class=tdText><input type="checkbox" name=enb',i,' value=1 ',enbStr,'>&nbsp;&nbsp;'+shName[i]+'</td>');
+						document.write('<td class=tdText>Device: '+drive_Info+'<br>Volume: '+volType[shVol[i]-1]+'<br>Path: '+shPathStr[i]+'</td>');
+						document.write('<td class=tdText><input type="button" class="formsbutton" name="edit',i,'" value="Edit" onclick="window.location.href=\'file_server_cfg.cmd?action=edit&userId='+shName[i]+'\'">&nbsp;');
+						if (shName[i] != '')
+							document.write('<input type="button" class="formsbutton" name="delete',i,'" value="Delete" onclick="window.location.href=\'file_server_cfg.cmd?action=remove&userId='+shName[i]+'\'">');
+						document.write('</td></tr>');
+					}
+					document.write('</table>');
+				}
+				else document.write('<tr><td><font color=red>No USB Mass Storage device detected!</font></td></tr>\n');
+			</script>
+			</table>			
+			</td>
+		<tr>-->
+					<tr><td><br></td></tr>
+		<tr align="center">
+			<td><input type="button"  onclick="btnSmb();" name="apply" value="Apply">
+			<input type="button"  onclick="btnCancel();" name="cancel" value="Cancel"></td>
+		</tr>
+			<tr><td><br></td></tr>	
+		
+	</table>	
+
+<div id=div_samba_user>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Samba File Server User Profile
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+				<table class=formlisting>
+
+					<tr class=form_label_row>
+						 <td class='form_label_col'>&nbsp;</td>
+						 <td class='form_label_col'>Enable</td>
+						 <td class='form_label_col'>Username</td>       
+						 <td class='form_label_col'>Access Mode</td>
+						 <td class='form_label_col'>Connected Device</td>
+						 <td class='form_label_col'>Path</td>
+					</tr>
+					<script language="javascript">	  					
+						for(i = 0; i < SmbentryNum - 2; i++){
+							document.write('<tr class=form_label_row><td class=form_label_col><input type=checkbox name=rml value=' + smb_rule[i].userId + '></td>');
+						
+							if(smb_rule[i].enable == 1)
+								document.write('<td class=form_label_col align=center>Enable</td>');
+							else
+								document.write('<td class=form_label_col align=center>Disable</td>');
+
+							document.write('<td class=form_label_col align=center>'+smb_rule[i].userId+'</td>');
+
+							if(smb_rule[i].accessMode == 1)	
+								document.write('<td class=form_label_col align=center>Full-access</td>');
+							else
+								document.write('<td class=form_label_col align=center>Read-only</td>');
+							
+							document.write('<td class=form_label_col align=center>'+drive_Info+', Volume '+smb_rule[i].index+'</td>');
+							document.write('<td class=form_label_col align=center>'+smb_rule[i].path+'</td>');
+						}
+						// done hiding
+					</script>
+				</table>
+      		</td>
+		</tr>
+	</table>
+<p align=center>
+<input type='button' id='addSmbuser' name='addSmbuser' onClick='btnAdd()' value='Add'>&nbsp;
+<script language="javascript">
+if (fs_num < 17) {
+	document.write("<input type='button' id='editSmbuser' name='editSmbuser' onClick='btnEdit(this.form.rml)' value='Edit'>&nbsp;");
+	document.write("<input type='button' id='removeSmbuser' name='removeSmbuser' onClick='btnRemove(this.form.rml)' value='Delete'>");
+}
+</script>
+</p>
+
+<div id=smbuserAddInfo style='display:none'>
+	<table id=body_header border=0 cellSpacing=0>
+
+		<tr>
+			<td class=topheader>
+				ADD/EDIT Samba File Server User Profile
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea>
+			<tr>
+				<td class=form_label>Enable&nbsp;:</td>
+				<td><input type="checkbox" name="smbuserEnable" value=1 checked="true"></td>
+			</tr>
+			<tr>
+				<td class=form_label>Sharing Folder Name&nbsp;:</td>
+				<td><input type="text" class="textbox_180_nb" name="shareName" size="25" maxlength="13">
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Connected Device&nbsp;:</td>
+					<SCRIPT language="javascript">
+						<!--					
+						document.write('<td>'+drive_Info+', </td>');
+						document.write('<td><input type="hidden" name="diskId" value=0>&nbsp;&nbsp;');						
+						//document.write('<span id="Partition"></span>');
+						//getPartition();
+						//document.write('</td>');
+						document.write('<select size="1" id="shareVol" name="shareVol" onChange="changeDir();">');
+						document.write('<option value=0>-- Select Volume --</option>');
+						for (i = 1 ; i <= part_num; i++) {
+							if (i==1)
+								tmpSt = ' selected';
+							else 
+								tmpSt = '';		
+						document.write('<option value='+i+tmpSt+'>'+i+'. '+volType[i-1]+'</option>');
+						}
+
+						document.write('</select>');
+						
+						
+						
+						//-->
+						</SCRIPT>
+				
+			</tr>
+			<tr>
+				<td class=form_label>Path&nbsp;:</td>
+						<SCRIPT language="javascript">
+						<!--
+						document.write('<td><input type="text" class="textbox_350vt_nb" name="sharePath" maxlength=80 disabled>&nbsp;<input type="button" class="formsbutton" name="browseb" value="Browse" onclick="openBrowse()"></td>\n');
+						//-->
+						</SCRIPT>
+				</td>
+			</tr>		
+			<tr>
+				<td class=form_label>Access Mode&nbsp;:</td>
+						<td><input type="radio" name="shareType" value=0 onclick=stPwd(1)>Read-only
+						<input type="radio" name="shareType" value=1 checked onclick=stPwd(2)>Full-access</td>
+			</tr>
+			<tr>
+				<td class=form_label>Read-only Password&nbsp;:</td>
+				<td><input type="password" name="shareRPass" size=31 maxlength=14>
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Password Confirm&nbsp;:</td>
+				<td><input type="password" name="shareRPassCof" size=31 maxlength=14>
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Full-access Password&nbsp;:</td>
+				<td><input type="password" name="shareFPass" size=31 maxlength=14>
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Password Confirm&nbsp;:</td>
+				<td><input type="password" name="shareFPassCof" size=31 maxlength=14>
+				</td>
+			</tr>				
+			</table>
+
+			</TD>
+		</TR>
+	</table>
+<p align=center><input type='button' value="Apply" onClick='btnsmbuser()'><input type='button' value="Cancel" onClick='btnCancelSmb()'></p>
+</div>
+</div>
+<div id=ftp style="DISPLAY: none">
+
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				FTP File Server
+			</td>										
+		</tr>
+		<tr>
+            <td class=content>
+            <table border="0" cellpadding="0" cellspacing="0" class=formarea>
+            <tr>
+				<td class=form_label>Enable FTP Server&nbsp;:</td>
+				<td><input type="checkbox" name="ftpEnb" value=1 onclick="enableftp();"></td>
+			</tr>
+            </table>
+            <div id=div_ftp_cfg>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea>
+			<tr>
+				<td class=form_label>Port Number&nbsp;:</td>
+				<td><input type="text" class="textbox_100_nb" name="ftp_port" size=5 maxlength=5></td>
+			</tr>
+			<tr>
+				<td class=form_label>Maximum connections&nbsp;:</td>
+				<td><input type="text" class="textbox_100_nb" name="max_conn" size=5 maxlength=2>
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Idle timeout&nbsp;:</td>
+				<td><input type="text" class="textbox_100_nb" name="idle_time" size=5 maxlength=3>&nbsp;&nbsp;min. (0 for no timeout)
+			</td>
+		</tr>
+	     <tr>
+				<td class=form_label>&nbsp;</td>
+				<td><input type="checkbox" name="ftp_remoteEnable" value=1>
+				</td>
+		<tr>
+		</table>
+        </div>
+      		</td>
+		</tr>
+						<tr><td><br></td></tr>
+		<tr align="center">
+			<td><input type="button"  onclick="btnFtp();" name="apply" value="Apply">
+			<input type="button"  onclick="btnCancel();" name="cancel" value="Cancel"></td>
+		</tr>
+			<tr><td><br></td></tr>					
+		
+	</table>	
+	
+<div id=div_ftp_user>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				FTP Server User Profile
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+    	    <table class=formlisting>
+			
+				<tr class=form_label_row>
+						 <td class='form_label_col'>&nbsp;</td>
+						 <td class='form_label_col'>Enable</td>
+						 <td class='form_label_col'>User ID</td>       
+						 <td class='form_label_col'>Access Mode</td>
+						 <td class='form_label_col'>Connected Device</td>
+						 <td class='form_label_col'>Path</td>
+				</tr>
+					<script language="javascript">	  					
+						for(i = 0; i < ftp_entryNum; i++){
+							document.write('<tr class=form_label_row><td class=form_label_col><input type=checkbox name=ftprml value=' + ftp_rule[i].userId + '></td>');
+						
+							if(ftp_rule[i].enable == 1)
+								document.write('<td class=form_label_col align=center>Enable</td>');
+							else
+								document.write('<td class=form_label_col align=center>Disable</td>');
+								document.write('<td class=form_label_col align=center>'+ftp_rule[i].userId+'</td>');
+							if(ftp_rule[i].accessMode == 1)	
+								document.write('<td class=form_label_col align=center>Full-access</td>');
+							else
+								document.write('<td class=form_label_col align=center>Read-only</td>');
+								document.write('<td class=form_label_col align=center>'+drive_Info+', Volume '+ftp_rule[i].index+'</td>');
+								document.write('<td class=form_label_col align=center>'+ftp_rule[i].path+'</td>');
+						}
+						// done hiding
+					</script>				
+			</table>		
+      		</td>
+		</tr>
+	</table>	
+<p align=center>
+<input type='button' id='addftpuser' name='addftpuser' onClick='btnAddftp()' value='Add'>&nbsp;
+<script language="javascript">
+	document.write("<input type='button' id='editftpuser' name='editftpuser' onClick='btnEditftp(this.form.ftprml)' value='Edit'>&nbsp;");
+	document.write("<input type='button' id='removeftpuser' name='removeftpuser' onClick='btnRemoveftp(this.form.ftprml)' value='Delete'>");
+
+</script>
+</p>
+<div id=ftpuserAddInfo style='display:none'>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				ADD/EDIT FTP Server UserProfile
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+		<table border="0" cellpadding="0" cellspacing="0" class=formarea>
+		<tr>
+			<td class=form_label>User ID</td>
+			<td><input type="text" name="ftpid" class="textbox_180_nb" maxlength=32></td>
+		</tr>
+		<tr>
+			<td class=form_label>Password</td>
+			<td><input type="password" class="textbox_180_nb" name="ftpPass" maxlength=32></td>
+		</tr>
+		<tr>
+			<td class=form_label>Password Comfirm</td>
+			<td><input type="password" class="textbox_180_nb" name="ftpPassV" maxlength=32></td>
+		</tr>
+		<tr>
+			<td class=form_label>Access Mode</td>
+			<td>
+				<select name=access_mode class=selectList>
+					<option value=0>Read-only</option>
+					<option value=1>Full-access</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td class=form_label>Volume</td>
+			<td class=tdText>
+				<SCRIPT language="javascript">
+				if (diskNum > 1) {
+					document.write('<select size="1" name="disk_value" onChange="ftp_getDISK();">');
+					document.write('<option value=99>-- Select Disk --</option>');
+					for (k = 0 ; k < diskNum ; k++) {
+						if (k == 0) 
+							tmpS = ' selected';//disk_value[proIdx]) tmpS = ' selected';
+						else tmpS = '';
+						if (usb_ms_drive_Info != '')
+							document.write('<option value='+k+tmpS+'>'+usb_ms_drive_Info+'</option>');
+						else
+							document.write('<option value='+k+tmpS+'>Mass storage '+(k+1)+'</option>');
+					}
+					document.write('</select>&nbsp;&nbsp;');
+				}
+				else {
+					document.write(usb_ms_drive_Info+', ');
+					document.write('<input type="hidden" name="disk_value" value=0>&nbsp;&nbsp;');
+				}
+				document.write('<span id="keylen"></span>');
+				ftp_getDISK();
+				</SCRIPT>
+			</td>
+		</tr>
+		<tr>
+			<td class=form_label>Path</td>
+			<td>
+				<input type="text" class="textbox_350vt_nb" name="ftp_curPath" maxlength=255 disabled>&nbsp;<input type="button" class="formsbutton" name="browseb" value="Browse" onclick="openBrowseftp()">
+			</td>
+		</tr>
+		</table>
+      		</td>
+		</tr>
+	</table>	
+
+<p align=center><input type='button' value="Apply" onClick='btnftpuser()'><input type='button' value="Cancel" onClick='btnCancelftp()'></p>
+</div>
+</div>
+</div>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Web File Server
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+			<table border="0" cellpadding="0" cellspacing="0" class=formarea>
+			<tr>
+				<td class=form_label>Enable Web Server&nbsp;:</td>
+				<td><input type="checkbox" name="wftpEnb" value=1 onclick="enablewebsrv();"></td>
+			</tr>
+            </table>
+            <div id=div_web_cfg>
+            <table border="0" cellpadding="0" cellspacing="0" class=formarea>
+            <tr>
+				<td class=form_label>Volume&nbsp;:</td>
+					<SCRIPT language="javascript">
+					if (diskNum > 0) {
+						if (diskNum > 1) {
+							document.write('<select size="1" name="disk_value" onChange="wftp_getDISK();">');
+							document.write('<option value=99>-- Select Disk --</option>');
+							for (k = 0 ; k < part_num ; k++) {
+								if (k == 0) tmpS = ' selected';
+								else tmpS = '';
+								if (isBlank(usb_ms_type) == false)
+									document.write('<option value='+k+tmpS+'>'+volType[k]+'</option>');
+								else
+									document.write('<option value='+k+tmpS+'>Mass storage '+(k+1)+'</option>');
+							}
+							document.write('</select>&nbsp;&nbsp;');
+						}
+						else {
+							document.write('<td>'+drive_Info+', </td>');
+							document.write('<td><input type="hidden" name="disk_value" value=0>&nbsp;&nbsp;</td>');
+						}
+						//document.write('<span id="keylen"></span>');
+						wftp_getDISK();
+					}
+					else {
+						document.write('<font color=red>No USB Mass Storage device detected!</font>');
+						document.write('<input type="hidden" name="disk_value" value=99>');
+						document.write('<input type="hidden" name="wftp_partition" value=99>');
+					}
+				</SCRIPT>
+			</tr>
+			<tr>
+				<td class=form_label>Path&nbsp;:</td>
+				<td><input type="text" class="textbox_350vt_nb" name="wftp_curPath" maxlength=40 disabled>&nbsp;<input type="button" class="formsbutton" name="browseb" value="Browse" onclick="openBrowseWftp()">
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Port Number&nbsp;:</td>
+				<td><input type="text" class="textbox_100_nb" name="wftp_port" maxlength=5>
+			</td>
+				</td>
+			</tr>
+			<tr>
+				<td class=form_label>Remote Access&nbsp;:</td>
+				<td><input type="checkbox" name="wftp_remoteEnable" value=1>
+				</td>
+			</tr>
+			</table>
+            </div>
+      		</td>
+		</tr>
+		
+						<tr><td><br></td></tr>
+		<tr align="center">
+			<td><input type="button"  onclick="btnWftp();" name="apply" value="Apply">
+			<input type="button"  onclick="btnCancel();" name="cancel" value="Cancel"></td>
+		</tr>
+			<tr><td><br></td></tr>			
+	</table>	
+
+</FORM>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+
+</blockquote>
+   </body>
+</html>

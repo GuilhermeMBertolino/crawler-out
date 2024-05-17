@@ -1,0 +1,524 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+
+function btnBack(){
+	var loc= 'usb_fsrv.html';
+    var code = 'location=\"' + loc + '\"';
+    eval(code);
+}
+
+function btnCancel(){
+	var loc= 'usb_fsrv.html';
+    var code = 'location=\"' + loc + '\"';
+    eval(code);
+}
+var profile_num = 0;
+
+var diskId = 1;
+var partId = 1;
+var foldId = 1;
+var foldIdSt = 1;
+
+diskId=0;
+partId=0;
+foldId=2;
+foldIdSt=-1;
+
+var errPort='Invalid port number input. Valid number should be 1~65535.';
+var errVolume='Invalid volume selection.';
+
+var shareMaxNum = 0;
+var volMaxNum = 0;
+var mountMaxNum = 0;
+var diskMaxNum = 0;
+var prMaxNum = 0;
+var diskNum = '<%ejGet(disknum)%>';
+var prNum = 0;
+var prUINum = 0;
+var cpName = '';
+var gpName = '';
+var preSmbEnb;
+var ftpMaxNum = 0;
+shareMaxNum = 18;
+volMaxNum = 7;
+mountMaxNum = 4;
+cpName = 'DLINK';
+gpName = 'DLINKGROUP';
+prMaxNum = 1;
+var usb_ms_devName = new Array(4);
+var usb_ms_vendor = new Array(4);
+var usb_ms_model = new Array(4);
+//var usb_ms_drive_Info = new Array(4);
+var usb_ms_serial = new Array(4);
+var usb_ms_type = new Array(4);
+var usb_ms_removable = new Array(4);
+var usb_ms_eject = new Array(4);
+usb_ms_devName[0] = 'da';
+usb_ms_vendor[0] = 'Kingston';
+usb_ms_model[0] = 'DataTraveler 2.0';
+usb_ms_serial[0] = '';
+usb_ms_type[0] = 0;
+//usb_ms_drive_Info[0] = 'Kingston (DataTraveler 2.0)';
+usb_ms_removable[0] = true;
+usb_ms_eject[0] = false;
+var part_Num =  '<%ejGet(partitions)%>';
+var drive_Info = '<%ejGet(fstype)%>';
+var usb_ms_drive_Info = '<%ejGet(vendor)%>' + '(<%ejGet(model)%>)';
+if (drive_Info == 'vfat')
+	drive_Info = 'FAT32';
+
+var dev_type = new Array(2);
+var dev_remove = new Array(2);
+var dev_eject = new Array(2);
+var pr_Info = new Array(1);
+
+//drive_Info[0] = 'Kingston (DataTraveler 2.0)';
+dev_type[0] = 0;
+dev_remove[0] = true;
+dev_eject[0] = false;
+
+//drive_Info[1] = '';
+dev_type[1] = 0;
+dev_remove[1] = false;
+dev_eject[1] = false;
+
+pr_Info[0] = '';
+prUINum = 1;
+prNum = 0;
+ftpMaxNum = 5;
+
+
+var mountNum;
+var shEnable = new Array(shareMaxNum);
+var shDisk = new Array(shareMaxNum);
+var shVol = new Array(shareMaxNum);
+var shName = new Array(shareMaxNum);
+var shPathStr = new Array(shareMaxNum);
+
+var	resStartIdx = new Array(volMaxNum+1);
+var	resEndIdx = new Array(volMaxNum+1);
+var	volLabelMix = new Array(volMaxNum+1);
+var	volLabel = new Array(volMaxNum+1);
+var	volSerial = new Array(volMaxNum+1);
+var	volType = new Array(volMaxNum+1);
+var	volTypeID = new Array(volMaxNum+1);
+var	volID = new Array(volMaxNum+1);
+var	volMount = new Array(volMaxNum+1);
+var	volValid = new Array(volMaxNum+1);
+var	volSize = new Array(volMaxNum+1);
+var	volFree = new Array(volMaxNum+1);
+var	partInfo = new Array(volMaxNum+1);
+
+shEnable[0] = 0;
+shDisk[0] = 0;
+shVol[0] = 0;
+shName[0] = 'Printer';
+shPathStr[0] = '';
+shEnable[1] = 0;
+shDisk[1] = 0;
+shVol[1] = 0;
+shName[1] = 'Disk_Array';
+shPathStr[1] = '\\';
+shEnable[2] = 1;
+shDisk[2] = 0;
+shVol[2] = 1;
+shName[2] = 'SEAN';
+shPathStr[2] = '\\';
+
+
+/*volLabelMix[0] = 'No Disk';
+volID[0] = 0;
+volValid[0] = true;
+volLabelMix[0][1] = 'SEAN (FAT32)';
+volLabel[0][1] = 'SEAN';
+volSerial[0][1] = '485D-49A6';
+volType[0][1] = 'FAT32';
+volValid[0][1] = true;
+volSize[0][1] = '1.87 GB';
+volFree[0][1] = '154.92 MB';
+volID[0][1] = 1;
+volTypeID[0][1] = 11;
+volMount[0][1] = 1;
+partInfo[0][1] = 'SEAN (1.87 GB, 154.92 MB free, FAT32)';
+*/
+
+
+/*
+volNum[0] = 8;
+
+volLabelMix[1][0] = 'No Disk';
+volID[1][0] = 0;
+volValid[1][0] = true;
+
+
+volNum[1] = 8;
+mountNum = 1;
+*/
+
+var stri;
+function getDISK() {
+	var tmpSt, k4;
+	var partNum;
+	//var volType_name = "volType" + k4;
+	k4 = document.tF0.disk_value.value;
+	if (k4 == 99) partNum = -1;
+	else partNum = part_Num ;
+	
+	stri = '<select size="1" name="ftp_partition" onChange="getNum();">';
+	stri += '<option value=99>-- Select Volume --</option>';
+	if (partNum != -1) {
+		for (j = 1 ; j <= partNum; j++) {
+			//if (volMount[diskId][j] > 0) {
+				//if (j == partition_value[proIdx]) 
+				tmpSt = ' selected';
+				//else tmpSt = '';
+				stri += '<option value='+j+tmpSt+'>'+j+'. '+ drive_Info+'</option>';
+			
+		}
+	}	
+    stri += '</select>';
+    
+	document.getElementById('keylen').innerHTML = stri;
+}
+
+function openBrowse() {
+	var volIdx = document.tF0.ftp_partition.value;
+	var dskIdx = document.tF0.disk_value.value;
+	//var arg = volIdx * 1000 + proIdx + '/' + dskIdx;
+	var theURL = '/usb_ftp_tree.html';// + arg;
+
+	if ((dskIdx == 99) || (volIdx == 99)) {
+		alert(errVolume);
+		return false;
+	}
+
+	if (window.win && (window.win.closed == false)) {
+		window.win.close();
+	}
+
+	browseIdx = ftpUerNum;
+	win = window.open(theURL,'tree','scrollbars=yes,resizable=no,width=600,height=508');
+	return true;
+}
+
+var mountExceed = "Partition mounted number exceed!! Maximun allow mount " + mountMaxNum + " partitions.";
+
+function getNum() {
+	document.tF0.curPath.value = '\\';
+	if (document.tF0.ftp_partition.value != 99) {
+		document.tF0.curPath.disabled = false;
+	}
+	else {
+		document.tF0.curPath.disabled = true;
+	}
+}
+
+var ftpUerNum = '<%ej_get_ftp_number(usernum)%>';
+
+profile_num=5;
+var enb_value=new Array(5);
+var partition_value=new Array(5);
+//var disk_value=new Array(5);
+var user_value=new Array(5);
+var pathValue=new Array(5);
+var ftp_user_info = '<%ej_get_ftp_userid(user_info)%>';
+//var ftp_user_info = 'anonymous.\\|';
+var entrys = ftp_user_info.split('|');
+
+var entryNum = entrys.length - 1;
+
+var rule = new Array(profile_num);
+
+for (i = 0; i < profile_num; i++)
+{
+	rule[i] = new rVe('','');
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('.');
+	rule[j] = new rVe(entry[0], entry[1]);
+}
+
+function rVe(userId, path )
+{
+   this.userId = userId;   this.path = path;  
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	user_value[j] = rule[j].userId;
+	pathValue[j] = rule[j].path;
+	enb_value[j] = 1;
+}
+
+
+function setFirstLoad() {
+	document.tF0.proIdx.value = ftpUerNum;
+	//if (document.tF0.disk_value.value != 99) {
+		//if (document.tF0.ftp_partition.value == 99)
+			//document.tF0.curPath.disabled = true;
+		//else
+			//document.tF0.curPath.disabled = false;
+	//}
+	//else {	
+	//	document.tF0.ftp_partition.disabled = true;
+	///	document.tF0.curPath.disabled = true;
+	//}
+	document.tF0.curPath.disabled = true;
+	/*
+	document.tF0.ftpid.value = '<%ejGet(ftp_user_id)%>';
+	document.tF0.ftpPass.value = '<%ejGet(ftp_password)%>';
+	document.tF0.curPath.value = '<%ejGet(ftp_share_path)%>';
+	*/
+	document.tF0.ftpid.value = '<%ejGet(smb_user_id)%>';
+	document.tF0.ftpPass.value = '<%ejGet(smb_password)%>';
+	document.tF0.curPath.value = '<%ejGet(smb_share_path)%>';
+	document.tF0.access_mode.value = '<%ejGet(smb_access_mode)%>';
+	document.tF0.ftpPassV.value = document.tF0.ftpPass.value;	
+	
+	if (document.tF0.ftpid.value == 'anonymous'){
+		document.tF0.curPath.disabled = true;
+		//document.tF0.ftpPassV.value = document.tF0.ftpPass.value;
+		document.tF0.ftpid.disabled = true;
+		document.tF0.ftpPass.disabled = true;
+		document.tF0.ftpPassV.disabled = true;
+	}
+	//get_edit_user_info();	
+}
+
+function get_edit_user_info(){
+	
+	document.tF0.ftpid.value = '<%ejGet(smb_user_id)%>';
+	document.tF0.ftpPass.value = '<%ejGet(smb_password)%>';
+	document.tF0.curPath.value = '<%ejGet(smb_share_path)%>';
+	alert(document.tF0.ftpid.value);
+	if (document.tF0.ftpid.value == 'anonymous'){
+		document.tF0.ftpPassV.value = document.tF0.ftpPass.value;
+		found = 'anonymous';	
+		alert(found);
+	}
+}
+function evaltF() {
+	var k;
+
+	// make sure volume index is valid
+	if (document.tF0.ftp_partition.value == 99) {
+		alert('make sure volume index is valid');
+		document.tF0.ftp_partition.focus();
+		return false;
+	}
+
+	// compare password mismatch
+	if (document.tF0.ftpPass.value != document.tF0.ftpPassV.value) {
+		alert('compare password mismatch.');
+		document.tF0.ftpPass.value = "";
+		document.tF0.ftpPassV.value = "";
+		document.tF0.ftpPass.focus();
+		return false;
+	}
+
+	// check path empty
+	if (isBlank(document.tF0.curPath.value)) {
+		alert('Empty path string input.');
+		document.tF0.curPath.focus();
+		return false;
+	}
+
+	// check username duplicate
+	for (k = 0 ; k < profile_num ; k++) {
+		//if (k == proIdx) continue;
+		if (document.tF0.ftpid.value == user_value[k]) {
+			alert('Duplicate userID input.');
+			document.tF0.ftpid.focus();
+			return false;
+		}
+	}
+	
+	var loc= 'smb_user_cfg.cmd?action=edit';
+	loc += '&username=' + document.tF0.ftpid.value;
+	loc += '&password=' + document.tF0.ftpPass.value;
+	loc += '&accessmode=' + document.tF0.access_mode.value;
+	if (document.tF0.curPath.value == '/'){
+		loc += '&path=*';
+	}
+	else
+		loc += '&path=' + document.tF0.curPath.value;
+    //var code = 'location=\"' + loc + '\"';
+	var code = 'location="' + loc + '"';
+	eval(code);
+}
+ //done hiding -->
+</SCRIPT>
+<link rel="stylesheet" type="text/css" media="screen" href="wftp.css">
+</HEAD>
+<BODY onload="setFirstLoad()">
+<BLOCKQUOTE>
+
+<SCRIPT language=JavaScript>
+TabHeader="Setup";
+SideItem="USB Setup";
+HelpItem="usb";
+</SCRIPT>
+
+<SCRIPT type=text/javascript>
+mainTableStart();	
+logo();
+TopNav();
+ThirdRowStart();
+Write_Item_Images();
+mainBodyStart();
+</SCRIPT>
+
+  <FORM name="tF0">
+<input type="hidden" name="ftp_enable" value=1>
+<input type="hidden" name="proIdx">
+  <TABLE id=box_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>USB setup</TD></TR>
+    <TR>
+      <TD class=content>
+        <P>
+		This IAD supports the USB Host controller function. You can enable this function and plug-in your USB device to share it with other people over your LAN network.
+<!--    <p> The supported USB devices include:
+			<br><br>
+			USB mass storage: hard disk, flash disk or single slot card reader, up to 1 device.<br>
+			USB-Hub: up to 1 device.<br>
+
+			<br><br>
+			After you plug-in the USB device into this IAD. You may click "Update Status" to see the device information in the "Current USB Device Status" table.
+			Three different file system formats are supported: FAT12, FAT16 and FAT32, and up to 4 partitions could be activated at the same time. For your convenience, the  IAD will activate the first 4 partitions automatically when you plug-in an USB storage device. If you have more than 4 partitions in your storage device, you could "Deactivate" some unused partitions and "Activate" other partitions that you would like to use. Please activate the partitions before you configure the "File Server", "FTP Server" and "Web FTP Server".</p>-->
+		</P>
+		</TD></TR></TBODY></TABLE>
+  <TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>samba Server</TD></TR>
+    <TR>
+     <TD class=content>
+		<p class=subtitle>
+			samba Server /
+			<SCRIPT language="javascript">
+			<!--
+				document.write(' User Profile ' + (ftpUerNum));
+			//-->
+			</SCRIPT>
+	 </td>
+	</tr>
+				
+<tr>
+	<td>
+		<table border="0" cellspacing="1" cellpadding="5" width=80%>
+		<tr>
+			<td class=tdTitler>Username</td>
+			<td class=tdText>
+				<SCRIPT language="javascript">
+				
+					document.write('<input type="text" name="ftpid" class="textbox_180_nb" maxlength=32>');
+				
+				</SCRIPT>
+			</td>
+		</tr>
+		<tr>
+			<td class=tdTitler>Password</td>
+			<td class=tdText>
+				<SCRIPT language="javascript">
+				
+					document.write('<input type="password" class="textbox_180_nb" name="ftpPass"" maxlength=32>');
+				
+				</SCRIPT>
+			</td>
+		</tr>
+		<tr>
+			<td class=tdTitler>Password Comfirm</td>
+			<td class=tdText>
+				<SCRIPT language="javascript">
+				
+					document.write('<input type="password" class="textbox_180_nb" name="ftpPassV" maxlength=32>');
+				
+				</SCRIPT>
+			</td>
+		</tr>
+		<tr>
+			<td class=tdTitler>Access Mode</td>
+			<td class=tdText>
+				<select name=access_mode class=selectList>
+					<option value=0>Read-only</option>
+					<option value=1>Full-access</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td class=tdTitler>Volume</td>
+			<td class=tdText>
+				<SCRIPT language="javascript">
+				if (diskNum > 1) {
+					document.write('<select size="1" name="disk_value" onChange="getDISK();">');
+					document.write('<option value=99>-- Select Disk --</option>');
+					for (k = 0 ; k < diskNum ; k++) {
+						if (k == 0) 
+							tmpS = ' selected';//disk_value[proIdx]) tmpS = ' selected';
+						else tmpS = '';
+						if (usb_ms_drive_Info != '')
+							document.write('<option value='+k+tmpS+'>'+usb_ms_drive_Info+'</option>');
+						else
+							document.write('<option value='+k+tmpS+'>Mass storage '+(k+1)+'</option>');
+					}
+					document.write('</select>&nbsp;&nbsp;');
+				}
+				else {
+					document.write(usb_ms_drive_Info+', ');
+					document.write('<input type="hidden" name="disk_value" value=0>&nbsp;&nbsp;');
+				}
+				document.write('<span id="keylen"></span>');
+				getDISK();
+				</SCRIPT>
+			</td>
+		</tr>
+		<tr>
+			<td class=tdTitler>Path</td>
+			<td class=tdText>
+				<input type="text" class="textbox_350vt_nb" name="curPath" maxlength=255 disabled>&nbsp;<input type="button" class="formsbutton" name="browseb" value="Browse" onclick="openBrowse()">
+			</td>
+		</tr>
+		</table>
+<!--	</td>
+</tr>-->
+<SCRIPT LANGUAGE="JavaScript">document.tF0.ftpid.value="";
+document.tF0.access_mode.selectedIndex=0;
+document.tF0.curPath.value="";
+document.tF0.disk_value.value="0";
+</SCRIPT>
+
+				<!--<P align=center><a href="javascript:document.forms[0].submit()" onClick="return evaltF();" class="button87b"><input type="button" class="formsbutton" name="savesetting" value="SAVE SETTINGS"></a>-->
+				<!---<td><a href=''><input type="button" class="formsbutton" name="cancelb" value="CANCEL" onClick='btnCancel()'></P>-->
+    <!--    <P align=center><INPUT onclick=atmcfg() type=button value="ATM Interface"></P>-->
+		</TD></TR></TBODY></TABLE>
+  <!--<TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>ETH interface</TD></TR>
+    <TR>
+      <TD class=content>
+        <P>use ETH to configure you wan interface.</P>
+
+          <P align=center><INPUT onclick=ethcfg() type=button value="ETH Interface"></P>
+		  
+         </TD></TR></TBODY></TABLE>-->
+				<P align=center><INPUT onclick='evaltF()' type=button class="formsbutton"  name="savesetting" value="SAVE SETTINGS">
+				<INPUT onclick='btnCancel()' type=button class="formsbutton"  name="cancelb" value="CANCEL"></P>		 
+</FORM>
+ <SCRIPT type=text/javascript>
+mainBodyEnd();
+ThirdRowEnd();
+Footer()
+mainTableEnd()
+</SCRIPT>
+</BLOCKQUOTE></BODY></HTML>

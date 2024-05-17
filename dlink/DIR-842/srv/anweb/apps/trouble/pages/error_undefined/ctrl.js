@@ -1,0 +1,1 @@
+"use strict";angular.module("trouble").controller("errorUndefinedCtrl",["$scope","troubleCheck",function($scope,troubleCheck){var data=troubleCheck.getData();data.ipv4gw?data.ipv4gw:data.ipv6gw,$scope.title="dcc_trouble_neterr",$scope.message="dcc_neterr_desc"}]);

@@ -1,0 +1,207 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+			<script language="javascript" src="util.js"></script>
+			<script language="JavaScript" src="menu.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var progress = 0;
+
+function isInProgress() {
+   if ( progress == 0 )  {
+      progress = 1;
+      return true;
+   }
+   alert('Upload firmware is in progress. Please wait for a minute.');
+   return false;
+}
+
+function stSubmit() {
+       var temp = document.frmUpload.filename.value.search(".bin");
+	var temp1 = document.frmUpload.filename.value.search(".w");
+	if (temp < 2  &&temp1 < 2)
+	{
+		alert("Please enter a valid filename.");
+		return ;
+	}
+    if(checkFile(document.frmUpload.filename.value))
+	    document.frmUpload.submit();
+}
+
+// done hiding -->
+</script>
+ <!--  <script language="JavaScript" src="menu.html"></script> -->
+   </head>
+<body>
+
+<blockquote>
+<script language="JavaScript">
+TabHeader="Maintenance";
+SideItem="Firmware Update";
+HelpItem="firmware";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form name='frmUpload' method='post' ENCTYPE='multipart/form-data' action='upload.cgi'  onSubmit='return isInProgress();'>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Firmware
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+			<b>Step 1:</b> Obtain an updated firmware image file from your ISP.<br>
+            <br>
+            <b>Step 2:</b> Enter the path to the image file location in the box below or 
+            click the &quot;Browse&quot; button to locate the image file.<br>
+            <br>
+            <b>Step 3:</b> Click the "Update Firmware" button once to upload the new image 
+            file.<br>
+            <br>
+            NOTE: The update process takes about 2 minutes to complete, and your DSL Router 
+            will reboot. Please DO NOT power off your router before the update is complete.<br></p>            
+			</td>
+		</tr>
+	</table>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Firmware Update
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <TABLE class=formarea id=tools_firmware_info cellSpacing=0 cellPadding=0 summary="" border=0>
+
+		  <script language="javascript">
+                  FWdate =  '<%ejGet(buildTime)%>';
+                  var FWdatename = FWdate.split('-'); 
+                  var FWdatename_a = FWdatename[0].split('.'); 
+		  document.write("  <tr> ");
+                  document.write("  <td class='hd'>Firmware Date:</td> ");
+		  document.write("  <td> ");
+		  if (FWdatename_a[1] == '01' ) {
+                  document.write(" Jan ");
+                  } else if (FWdatename_a[1] == '02' ) {
+                  document.write(" Feb "); 
+                  } else if (FWdatename_a[1] == '03' ) {
+                  document.write(" Mar ");
+                  } else if (FWdatename_a[1] == '04' ) {                  
+                  document.write(" Apr ");
+                  } else if (FWdatename_a[1] == '05' ) {
+                  document.write(" May ");
+                  } else if (FWdatename_a[1] == '06' ) {
+                  document.write(" Jun ");
+                  } else if (FWdatename_a[1] == '07' ) {
+                  document.write(" Jul ");
+                  } else if (FWdatename_a[1] == '08' ) {
+                  document.write(" Aug ");
+                  } else if (FWdatename_a[1] == '09' ) {
+                  document.write(" Sep ");
+                  } else if (FWdatename_a[1] == '10' ) {
+                  document.write(" Oct ");
+                  } else if (FWdatename_a[1] == '11' ) {
+                  document.write(" Nov ");
+                  } else if (FWdatename_a[1] == '12' ) {
+                  document.write(" Dec ");
+                  } 
+                  document.write(FWdatename_a[2]);
+                  document.write(" ");
+                  document.write(FWdatename_a[0]);
+		  document.write("  </td> ");
+                  document.write("  </tr>")
+                  </script>
+
+
+		  <script language="javascript">
+                  FWversion =  '<%ejGet(sysVersion)%>';
+                  var FWname = FWversion.split('_'); 
+ 
+                  if (FWname[0] != 'SEA') {
+                  document.write("  <tr> ");
+                  document.write("  <td class='hd'>Board ID:</td> ");
+                  document.write("  <td><%ejGet(boardID)%></td> ");
+                  document.write("  </tr>")
+                   }
+                  </script>
+
+               <tr>
+                  <td class='hd'>Software Version:</td>
+                  <td><%ejGet(sysVersion)%></td>
+               </tr>
+                  
+		  <script language="javascript">
+                  FWversion =  '<%ejGet(sysVersion)%>';
+                  var FWname = FWversion.split('_'); 
+ 
+                  if (FWname[0] != 'SEA') {
+                  document.write("  <tr> ");
+                  document.write("  <td class='hd'>Bootloader (CFE) Version:</td> ");
+                  document.write("  <td><%ejGet(cfeVersion)%></td> ");
+                  document.write("  </tr>")
+                   }
+                  </script>
+
+
+<script language="javascript">
+var VdslIncluded = '<%ejGetOther(isVdsl, VdslIncluded)%>';
+if ( VdslIncluded != 'false' ) {
+  document.write("  <tr> ");
+  document.write("  <td class='hd'>VDSL Software Version:</td> ");
+  document.write("  <td><%ejGet(sysVdslVersion)%></td> ");
+  document.write("  </tr>");
+}
+</script>
+
+<script language="javascript">
+<!-- hide
+  FWversion =  '<%ejGet(sysVersion)%>';
+  var FWname = FWversion.split('_'); 
+ 
+  if (FWname[0] != 'SEA') {
+
+if ('<%ejGetWl(wlInterface)%>' == '1') {
+  document.writeln("               <tr>");
+  document.writeln("                  <td class='hd'>Wireless Driver Version:</td>");
+  document.writeln("                  <td><%ejGetWl(wlVersion)%></td>");
+  document.writeln("               </tr>");
+}
+}
+// done hiding -->
+</script>
+                
+             </TABLE>
+            <br>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class="body">Firmware File Name:&nbsp;
+                  </td>
+                  <td><input type='file' name='filename' size='45'></td>
+               </tr>
+            </table>
+      		</td>
+		</tr>
+	</table>
+<p align=center><input type='button' value='Update Firmware' onclick='stSubmit()'></p>
+</form>
+
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

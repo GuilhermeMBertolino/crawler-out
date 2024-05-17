@@ -1,0 +1,1 @@
+"use strict";!function(){angular.module("app").controller("statsRoutingForm",["$scope","$state","StatsRoutingUtil",function($scope,$state,util){$scope.isActivate=!1,function(){util.pull().then(function(){$scope.isActivate=!0,$scope.$emit("pageload")})["catch"](function(){$state.go("error",{code:"msg_pull_error",message:"msg_error_desc"})})}()}])}();

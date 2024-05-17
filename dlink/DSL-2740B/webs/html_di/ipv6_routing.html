@@ -1,0 +1,402 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language="javascript" src="util.js"></script>
+<script language='javascript'>
+<!-- hide
+
+var doEdit = false;
+var edit_entry = -1;
+function removeClick(rml, EntryCt) {
+
+	var lst = '';
+	var has_selected_items = false;
+	var i = 0;
+   with ( document.forms[0] )
+   {
+	    if (rml)
+	  	{
+			if (rml.length > 0)
+			{
+		    	for (i = 0; i < rml.length; i++) 
+				{
+		        	if ( rml[i].checked == true )
+					{
+						has_selected_items=true;
+		            	lst += rml[i].value + ', ';
+					}
+		      	}
+			}
+			else if ( rml.checked == true )
+			{
+					has_selected_items=true;
+			      	lst = rml.value;
+			}
+		}
+	}
+
+	if (has_selected_items){
+   		var loc = 'route6cfg.cmd?action=remove&rmLst=' + lst;
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	} else{
+		alert("There are no items to remove!");
+		return;
+	}   
+}
+
+function addClick(EntryCt){
+	var glbEntryCt = EntryCt;
+	var routes= '<%ejGetIpv6Route(routes)%>';
+	var MAX_ENTRY = 20;
+	var entrys = routes.split('|');
+
+	if(entrys.length > MAX_ENTRY)
+	{
+		alert("Olny 20 Static IPV6 Routes can be configured");
+		return;
+	}
+	with (document.forms[0]){
+		routeInfo.style.display = "block";
+		rule_name.disabled = 0;
+		if (glbEntryCt < 20)
+		{
+			addRoute.disabled = 1;
+		}
+		if (glbEntryCt != 0){
+			editRoute.disabled = 1;
+			removeRoute.disabled = 1;
+		}	clearFields();doEdit = false;
+	}
+}
+function editClick(rml) {
+	var lst='';
+	var hasChecked = false;
+	var checkedCount = 0;
+	var checkId = 0;
+	var tmpName= '';
+	var tmpDstAddr = '';
+	var tmpDstPrefix = '';
+	var tmpMetric = '';
+	var tmpGtwy = '';
+	var tmpGtwyIf = '';
+	var i = 0;
+	edit_entry = -1;
+	if(rml)
+	{
+		if(rml.length > 1)
+		{
+			for(i = 0; i < rml.length; i++)
+			{
+				if(rml[i].checked == true)
+				{
+					checkedCount++;
+					hasChecked = true;
+					edit_entry = i;
+					tmpName = document.getElementById( "lblName" + i).innerHTML;
+					var tmpDstStr = document.getElementById( "lblDstAddr" + i).innerHTML;
+					var tmpDstEntry = tmpDstStr.split('/');
+					tmpDstAddr = tmpDstEntry[0];
+					tmpDstPrefix = tmpDstEntry[1];
+					tmpMetric = document.getElementById( "lblMetric" + i).innerHTML;
+					tmpGtwy = document.getElementById( "lblGtwy" + i).innerHTML;
+					tmpGtwyIf = document.getElementById( "lblGtwyIf" + i).innerHTML;
+				}
+			}
+		}
+		else if(rml.checked == true)
+		{
+			hasChecked = true;
+			i = 0;
+			edit_entry = 0;
+			tmpName = document.getElementById( "lblName" + i).innerHTML;
+			var tmpDstStr = document.getElementById( "lblDstAddr" + i).innerHTML;
+			var tmpDstEntry = tmpDstStr.split('/');
+			tmpDstAddr = tmpDstEntry[0];
+			tmpDstPrefix = tmpDstEntry[1];
+			tmpMetric = document.getElementById( "lblMetric" + i).innerHTML;
+			tmpGtwy = document.getElementById( "lblGtwy" + i).innerHTML;
+			tmpGtwyIf = document.getElementById( "lblGtwyIf" + i).innerHTML;
+			
+		}
+	}
+	if(!hasChecked)
+	{
+		alert("Please select a rule to edit!");
+		doEdit = false;
+		return;
+	}
+	if(checkedCount > 1)
+	{
+		alert('Please select only 1 item to edit');
+		doEdit = false;
+		return;
+	}
+    with ( document.forms[0] ) {
+		document.getElementById("routeInfo").style.display = 'block';
+		addRoute.disabled = 1;
+		editRoute.disabled = 1;
+		removeRoute.disabled = 1;
+		rule_name.disabled = 1;
+		rule_name.value = tmpName;
+		dstAddr.value = tmpDstAddr;
+		dstAddrPrefix.value = tmpDstPrefix;
+		metric.value = tmpMetric;
+		dstGtwy.value = tmpGtwy;
+		for(i = 0; i < dstIf.length; i++)
+		{
+			if (dstIf[i].value == tmpGtwyIf){
+				dstIf.selectedIndex = i;
+				break;
+			}
+		}
+		doEdit = true;
+	}	
+		
+}
+function clearFields(){
+  with (document.forms[0]) {
+    dstAddr.value = "" ; dstAddrPrefix.value = "" ; 
+	rule_name.value = "";
+    dstGtwy.value = "";
+	dstIf.selectedIndex = 0; 
+  }   
+}
+
+function is_existing_route(name, dst_addr, dst_prefix, metric, dst_gtwy, dst_if)
+{
+	var routes= '<%ejGetIpv6Route(routes)%>';
+	var entrys = routes.split('|');
+	var entryNum = entrys.length - 1;
+	var i;
+
+	for (i = 0; i < entryNum; i++)
+	{
+		var entry = entrys[i].split('\1');
+		if (doEdit == true && edit_entry == i) 
+		{
+	              continue;
+		}
+		if(entry[0] == name)
+		{
+		      return true;
+		}
+		if((entry[1] == dst_addr) && (entry[2] == dst_prefix) && 
+			(entry[3] == metric) && (entry[4] == dst_gtwy) && (entry[5] == dst_if))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+function btnApply() {
+	var loc;
+	if(doEdit == false){
+	  loc = 'route6cfg.cmd?action=add';   
+	}else{
+	  loc = 'route6cfg.cmd?action=edit';
+	}
+    with ( document.forms[0] ) {
+   	   loc += '&ruleName=' + rule_name.value;
+       loc += '&dstAddr=' + dstAddr.value;
+       loc += '&dstAddrPrefix=' + dstAddrPrefix.value;
+	   loc += '&metric=' + parseInt(metric.value);
+
+		if(is_existing_route(rule_name.value,dstAddr.value,dstAddrPrefix.value,metric.value,dstGtwy.value,dstIf.value))
+		{
+			alert("The same static route is existing!");
+			return;
+		}
+	   
+    if (dstGtwy.value == '') {
+       alert('Need to input gateway address!');
+       return;
+    }
+       loc += '&dstGtwy=' + dstGtwy.value;
+	   loc += '&dstIf=' + dstIf.value;
+    }
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+
+function btnBack(){
+   var loc = 'ipv6_routing.html';
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnCancel(){
+   with (document.forms[0]){
+   	routeInfo.style.display = "none";
+	{
+	   	addRoute.disabled = 0;
+	}
+	{
+	   	editRoute.disabled = 0;
+	   	removeRoute.disabled = 0;
+	}
+	}
+   clearFields();
+}
+   
+function frmLoad(){
+}
+// done hiding -->
+</script>
+<script language='JavaScript' src='menu.js'></script>
+</head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<form>
+<script language='JavaScript'>
+TabHeader='Advanced';
+SideItem='IPv6 Routing';
+HelpItem='ipv6routing';
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<table id=box_header border=0 cellSpacing=0>
+	<tr>
+		<td class=topheader>
+			Routing
+		</td>
+	</tr>
+   <tr>
+		<td class=content>
+			<p>	
+This Routing page allows you to specify custom routes that determine how data is moved around your network.<p><b>
+A maximum 20 entries can be configured</b>
+ </p>
+		</td>
+	</tr>
+</table>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Static IPV6 Routes
+			</td>
+		</tr>
+<td class=content>
+<div class=overflow>
+<table class=formlisting>
+<tr class=form_label_row>
+   <tr align='center'>
+      <td class='hd'>&nbsp;</td>
+      <td class='hd'>Name</td>
+      <td class='hd'>Destination Addr/Prefix Length</td>
+      <td class='hd'>Metric</td>
+      <td class='hd'>Gateway Addr</td>
+      <td class='hd'>Interface</td>
+   </tr>
+   <tr align='center'>
+<script type='text/javascript'>
+//var routes = 'aaa/bbb/64/32/eee/fff|aaa/bbb/64/32/eee/fff|';
+var routes= '<%ejGetIpv6Route(routes)%>';
+var MAX_ENTRY = 20;
+var entrys = routes.split('|');
+
+var entryNum = entrys.length - 1;
+
+var rule = new Array(MAX_ENTRY);
+
+for (i = 0; i < MAX_ENTRY; i++)
+{
+	rule[i] = new rVe('','','','','','');
+
+}
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('\1');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5]);
+}
+
+function rVe(name, dst_addr, dst_prefix, metric, dst_gtwy, dst_if)
+{
+	this.name = name; this.dst_addr = dst_addr; this.dst_prefix = dst_prefix;
+	this.metric = metric, this.dst_gtwy = dst_gtwy, this.dst_if = dst_if
+}
+	for(i = 0; i < entryNum;i++){
+      document.writeln("<tr><td align='center'><input type='checkbox' name='rml' value='" + rule[i].name + "'></td>");
+	  document.writeln('<td><div align=center id=lblName'+i+'>'+rule[i].name+'</div></td>');  
+	  document.writeln('<td><div align=center id=lblDstAddr'+i+'>'+rule[i].dst_addr+ '/' + rule[i].dst_prefix + '</div></td>');  
+	  document.writeln('<td><div align=center id=lblMetric'+i+'>'+rule[i].metric+'</div></td>');  
+	  document.writeln('<td><div align=center id=lblGtwy'+i+'>'+rule[i].dst_gtwy+'</div></td>');  
+	  document.writeln('<td><div align=center id=lblGtwyIf'+i+'>'+rule[i].dst_if+'</div></td></tr>');  
+	}
+</script>      
+   </tr>
+   
+</table>
+</div>
+</td>
+</tr>
+</table>
+<br>
+<center>
+<input name='addRoute'  type='button' onClick='addClick(1)' value='Add'>
+<input name='editRoute' type='button' onClick='editClick(this.form.rml)' value='Edit'>
+<input name='removeRoute' type='button' onClick='removeClick(this.form.rml)' value='Remove'></center>
+		<div id=routeInfo style={display:none}>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Static Route Add/Edit</td>
+		</tr>
+		<tr>
+			<td class=content>
+            <br>
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class=form_label_noWidth>Rule Name</td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><input type='text' name='rule_name' size='12' maxlength='16'></td>
+               </tr>
+               <tr>
+                  <td class=form_label_noWidth>Destination IPv6/Prefix</td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><input type='text' name='dstAddr' size='32' maxlength='64'>/</td>
+                  <td><input type='text' name='dstAddrPrefix' size='3' maxlength='3'></td>
+               </tr>
+               <tr>
+                  <td class=form_label_noWidth>Metric</td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><input type='text' name='metric' size='3' maxlength='3'></td>               </tr>
+               <tr>
+                  <td class=right>&nbsp;&nbsp;<b>Gateway IP Address</b></td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><input type='text' name='dstGtwy' size='32' maxlength='64'></td>
+               </tr>
+               <tr>
+                  <td class=right>&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Use Interface</b></td>
+				  <td><b>:</b>&nbsp;&nbsp;</td>
+                  <td><select name='dstIf'>
+    					<option value='WAN' selected>WAN
+ 						<option value='LAN'> LAN/br0</select></td>
+               </tr>
+            </table>
+            <br>
+      		</td>
+		</tr>
+	</table>
+<p align=center><input type='button' onClick='btnBack()' value='Back'>
+<input type='button' onClick='btnApply()' value='Apply'>
+<input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+</form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+</body>
+</html>

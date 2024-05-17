@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controller("WanIpsecCtrl",["$scope",function($scope){$scope.ipsec=$scope.conn.IPsec,$scope.getDPDActions=function(){return[{name:"ipsec_dpd_action_restart",value:"restart"},{name:"ipsec_dpd_action_hold",value:"hold"},{name:"ipsec_dpd_action_clear",value:"clear"},{name:"off",value:"none"}]}}]);

@@ -1,0 +1,191 @@
+<html>
+<head>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<link rel='STYLESHEET' type='text/css' href='stylemain.css'>
+<script language='JavaScript' src='menu.js'></script> 
+<script language='JavaScript' src='util.js'></script> 
+<SCRIPT language="JavaScript">
+
+function isVNumber(input)
+{ 
+	var ret = false;
+	var i = 0;
+	for (i=0;i<input.length;i++)
+	{
+		if ((input.charAt(i) < '0' || input.charAt(i) > '9'))
+		{	
+			ret = true;
+			break;
+		}
+	}
+	return ret;
+}
+
+
+   function btnadd(){
+      var loc = 'voipcfg.cmd?action=ptopadd';
+      with ( document.forms[0] ) {
+	  	loc +='&index=' + index.value;
+
+		if ( pnumber.value=="" || isVNumber(pnumber.value)){
+		  alert("Invalid Phone number.");
+		  pnumber.value = "";
+		  pnumber.focus();
+		  return;
+		}		
+		 loc += '&phone=' +pnumber.value;
+		if ( userid.value=="" || isVNumber(userid.value)){
+		  alert("Invalid User ID.");
+		  userid.value = "";
+		  userid.focus();
+		  return;
+		}
+		  if(isValidIpAddress(ipaddress.value) == false){
+		     alert("Invalid IP address.");
+			 ipaddress.value = ""; ipaddress.focus();
+			 return;
+		  }
+		  loc += '&userid=' + userid.value + '&tip=' + ipaddress.value; 
+		  if(isValidPort(port.value) == false){
+		     alert("Invalid port.");
+			 port.value = ""; port.focus();
+			 return;
+		  }
+		  loc += '&port=' + port.value;
+	  }
+      var code = 'location="' + loc + '"';
+      eval(code);
+   }
+	function btnback(){
+		window.location = 'vptop.htm';
+		}
+
+function frmLoad(){
+with( document.forms[0] ){
+index.selectedIndex = '<%ejGetvoipIndex(voipindex)%>';
+index.disabled = true;
+pnumber.value = '<%ejGetP2Pauto(phone)%>';
+userid.value = '<%ejGetP2Pauto(userid)%>';
+ipaddress.value = '<%ejGetP2Pauto(tip)%>';
+port.value = '<%ejGetP2Pauto(port)%>';
+if(port.value == '') port.value = '5060';
+}
+}
+function btndel(index){
+loc = "voipcfg.cmd?action=ptopdel";
+loc += "&index="+'<%ejGetvoipIndex(voipindex)%>' + '&number=' + '<%ejGetP2Pauto(phone)%>' + '&ip=' + '<%ejGetP2Pauto(tip)%>' + '&port='+ '<%ejGetP2Pauto(port)%>';
+var code = 'location="' + loc + '"';
+      eval(code);
+} 	
+// done hiding -->
+</script>
+
+
+
+</head>
+
+<body onload='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Voice";
+SideItem="Peer to Peer";
+HelpItem="P2P";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form onload='frmLoad()'>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				VOIP Configuration
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				The Router can be configured to handle voice signals over the Internet Protocol (Voice Over IP - VOIP).<br><br>
+			</td>
+		</tr>
+	</table>
+
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Peer to Peer Settings
+			</td>										
+		</tr>
+
+		<tr><td>
+<table class=formarea border="0" cellpadding="0" cellspacing="0">
+<br>
+ <tr><td class=form_label>Index</td>
+				<td><select name='index' size="1" >
+                        <option value="1">
+                        1
+                        <option value="2">
+                        2
+                        <option value="3">
+                        3
+                        <option value="4">
+                        4
+                        <option value="5">
+                        5
+                        <option value="6">
+                        6
+                        <option value="7">
+                        7
+                        <option value="8">
+                        8
+                        <option value="9">
+                        9
+                        <option value="10">
+                        10
+                     </select></td>
+                        </tr>
+                           <tr>
+                              <td class=form_label>Phone Number</td>
+							  <td><input type = "text" name="pnumber" size="16" maxlength = "16"></td>
+                           </tr>
+                           <tr>
+                              <td class=form_label>User @ IP Address</td>
+							  <td><input type="text" name="userid" size="16" maxlength="16">@
+<input type="text" name="ipaddress" size="24" maxlength="31"></td>
+                           </tr>
+                           <tr>
+                              <td class=form_label>Port</td>
+							   <td><input type="text" name="port" size="24" maxlength="31"></td>
+                           </tr>  
+<tr><td></td></tr>						   
+<tr><td></td></tr>						   
+</table>         
+		
+		
+		</td></tr>
+	</table>
+<br>
+<center>
+<SCRIPT language="JavaScript">
+	if('<%ejGetP2Pauto(phone)%>' != ''){
+		document.writeln('<input type=\'button\', onClick=\'btndel()\', value=\'Delete\'>');
+		document.writeln('<input type=button onClick=btnback() value=Back>');
+		document.writeln('<input type=button onClick=btnadd() value=Apply>');		
+	}else{
+		document.writeln('<input type=button onClick=btnback() value=Back>');
+		document.writeln('<input type=button onClick=btnadd() value=Apply>');
+	}
+</SCRIPT></center>
+</form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script></blockquote>
+</body>
+</html>
+

@@ -1,0 +1,531 @@
+<html>
+   <head>
+      <meta http-equiv="Pragma" content="no-cache">
+      <LINK href="stylemain.css" type="text/css" rel="stylesheet">
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var upRate = parseInt('<%ejGetOther(lineRate, 0, 0)%>');
+var pcrMax = 255000;   // Assuming nitro: 255000 * 49 * 8 = 100Mbps  // SASHA: VDSL
+// var pcrMax = 1887;   // 1887 * 53 * 8 = 800000
+var serviceCat = '<%ejGet(atmServiceCategory)%>';
+var qos = '<%ejGet(enblQos)%>';
+var hideQos = false;
+var numQueue = parseInt('<%ejGetOther(memInfo, queueNum)%>');
+var numQueueMax = 8;
+var port = '<%ejGet(portId)%>';
+var vpi = '<%ejGet(atmVpi)%>';
+var vci = '<%ejGet(atmVci)%>';
+var buildvlm =  '<%ejGetOther(sysInfo, buildWanVlanMux)%>';
+
+if ( isNaN(upRate) == false )
+   pcrMax = Math.ceil((upRate * 1000) / (49 * 8));  // SASHA new value for VDSL
+
+var numPvcMax = 8;
+var chipId = '<%ejGetOther(sysInfo, chipId)%>';
+
+if (( chipId == '6348' ) || ( chipId == '6358' ))
+   numPvcMax = 16;
+
+var numPvc = parseInt('<%ejGet(numPvc)%>');
+   
+function disableQos() {
+   with ( document.forms[0] ) {
+      enblQos.checked = false;
+      enblQos.disabled = 1;
+   }
+}
+
+function enableQos() {
+   with ( document.forms[0] ) {
+      if ( qos == '1' )
+         enblQos.checked = true;
+      else
+         enblQos.checked = false;
+      enblQos.disabled = 0;
+   }
+}
+
+function hideQosInfo(hide) {
+   if ( hide == 1 ) {
+      disableQos();
+      showhide('qosInfo', 0);
+   }
+   else {
+      enableQos();
+      showhide("qosInfo", 1);
+   }
+}
+
+function hideInfo(hide) {
+
+   with (document.forms[0]) {
+      if (hide == 3)    // hide all 3
+      {
+         showhide('first1', 0);
+         showhide('2and3', 0);
+      }
+      else if (hide == 2)  // hide 2 and 3
+      {
+         showhide('first1', 1);
+         showhide('2and3', 0);
+      }
+      else if (hide == 0) // hide none
+      {
+         showhide('first1', 1);
+         showhide('2and3', 1);
+      }
+   }
+}
+
+function shouldQosBeHidden() {
+   var ret = false;
+   
+   // only allow QoS enabled for ubr, ubrwpcr, ntr_vbr
+   if (serviceCat == 'UBR' ||
+       serviceCat == 'UBRWPCR' ||
+       serviceCat == 'VBR-nrt' ) {
+      // if PVC is not QoS enabled
+      if ( qos == '0' ) {
+         if ( numQueue > 5 )   // 5 = 8 - 3
+            ret = true;
+      }
+   } else
+      ret = true;
+      
+   return ret;
+}
+
+function hideVccInfo(hide) {
+
+   if ( hide == 1 ) {
+      showhide('vccInfo', 0);
+      hideInfo(3);
+      hideQosInfo(1);
+   } else {
+      showhide('vccInfo', 1);
+      hideQosInfo(0);
+      hideInfo(3);
+   }
+}
+
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+      atmVpi.value = '<%ejGet(atmVpi)%>';
+      atmVci.value = '<%ejGet(atmVci)%>';
+   }
+   
+   hideQos = shouldQosBeHidden();
+   
+   if (serviceCat == 'UBR') {
+      document.forms[0].serviceCategory[0].selected = true;
+      hideInfo(3);
+   }
+   else if (serviceCat == 'UBRWPCR') {
+      document.forms[0].serviceCategory[1].selected = true;
+      hideInfo(2);
+   }
+   else if (serviceCat == 'CBR') {
+     document.forms[0].serviceCategory[2].selected = true;
+      hideInfo(2);
+   }
+   else if (serviceCat == 'VBR-nrt') {
+      document.forms[0].serviceCategory[3].selected = true;
+      hideInfo(0);
+   }
+   else if (serviceCat == 'VBR-rt') {
+      document.forms[0].serviceCategory[4].selected = true;
+      hideInfo(0);
+   }
+   else {
+      document.forms[0].serviceCategory[0].selected = true;
+      hideInfo(3);
+   }
+   // if it is 6348 or 6358 chip
+   if (( chipId == '6348' ) || ( chipId == '6358' )) {
+      // if PVC is available but queue is not then
+      // only allow to add UBR PVC
+      if ( numPvc < numPvcMax && numQueue >= numQueueMax ) {
+         for ( i = 4; i > 0; i-- )
+            document.forms[0].serviceCategory.options[i] = null;
+         hideInfo(3);
+      }
+   }
+
+   with ( document.forms[0] ) {
+      linkType[0].checked = true;
+      showhide('divBuildVlanMux', buildvlm);
+   }
+    
+   
+}
+
+function btnBack() {
+   var code = 'location="dslatm.cmd"';
+   eval(code);
+}
+
+
+function btnSave() {
+   var loc = 'dslatm.cmd?action=add';
+   var portId;
+
+   with ( document.forms[0] ) {
+      if ( isNaN(parseInt(atmVpi.value)) == true || (isNaN(atmVpi.value) == true)) {
+         alert('VPI "' + atmVpi.value + '" is invalid.');
+         return;
+      }
+      if ( isNaN(parseInt(atmVci.value)) == true || (isNaN(atmVci.value) == true)) {
+         alert('VCI "' + atmVci.value + '" is invalid.');
+         return;
+      }
+	  
+      vpi = parseInt(atmVpi.value);
+      if ( vpi < 0 || vpi > 255 ) {
+         alert('VPI "' + atmVpi.value + '" is out of range [0-255].');
+         return;
+      }
+	  
+      vci = parseInt(atmVci.value);
+      if ( vci < 32 || vci > 65535 ) {
+         alert('VCI "' + atmVci.value + '" is out of range [32-65535].');
+         return;
+      }
+      loc += '&atmVpi=' + atmVpi.value;
+      loc += '&atmVci=' + atmVci.value;
+
+      if (chipId == '6368') {
+         if (path0.checked == true && path1.checked == true) {
+               portId = '4';
+         }
+         else if (path0.checked == true) {
+               portId = '0';
+         }
+         else if (path1.checked == true) {
+               portId = '1';
+         }
+         else {
+            alert('At least one latency needs be selected.');
+            return;
+         }
+      }
+      else {
+//         if (latency[0].checked == true) {
+               portId = '0';
+//         }
+//         else {
+//               portId = '1';
+//         }
+      }          
+      loc += '&portId=' + portId;
+
+      if (connMode[0].checked == true)
+         loc += '&connMode=0';
+      else if (connMode[1]. checked == true)
+         loc += '&connMode=1';
+      else if (connMode[2]. checked == true)
+         loc += '&connMode=2';
+      
+      if (linkType[0].checked == true)
+         loc +='&linkType=EoA';
+      else if (linkType[1].checked == true)
+         loc +='&linkType=PPPoA';
+      else if (linkType[2].checked == true)
+         loc +='&linkType=IPoA';
+      
+      loc += '&encapMode=' + encSel.options[encSel.selectedIndex].value;
+      
+      loc += '&atmServiceCategory=' + serviceCategory.value;
+      if (serviceCategory.value != 'UBR') {
+         if ( isNaN(parseInt(peakCell.value)) == true) {
+            alert('Peak Cell Rate "' + peakCell.value + '" is invalid.');
+            return;
+         }
+         peak = parseInt(peakCell.value);
+         if ( peak <= 0 || peak > pcrMax ) {
+            alert('Peak Cell Rate "' + peakCell.value + '" is out of range [1-' + pcrMax + '].');
+            return;
+         }
+         loc += '&atmPeakCellRate=' + peakCell.value;
+      } else
+         loc += '&atmPeakCellRate=0';
+      
+      if (serviceCategory.value == 'VBR-nrt' || serviceCategory.value == 'VBR-rt') {
+         if ( isNaN(parseInt(sustainableCell.value)) == true) {
+            alert('Sustainable Cell Rate "' + sustainableCell.value + '" is invalid.');
+            return;
+         }
+         sustainable = parseInt(sustainableCell.value);
+         if ( sustainable <= 0 || sustainable > pcrMax ) {
+            alert('Sustainable Cell Rate "' + sustainableCell.value + '" is out of range [1-' + pcrMax + '].');
+            return;
+         }
+         if ( sustainable >= peak) {
+            alert('Sustainable Cell Rate "' + sustainableCell.value + '" has to be smaller than Peak Cell Rate');
+            return;
+         }
+         if ( isNaN(parseInt(maximumBurst.value)) == true) {
+            alert('Maximum Burst Size "' + maximumBurst.value + '" is invalid.');
+            return;
+         }
+         maximum = parseInt(maximumBurst.value);
+         if ( maximum <= 0 || maximum > 1000000 ) {
+            alert('Maximum Burst Size "' + maximumBurst.value + '" is out of range [1-1000000].');
+            return;
+         }
+         loc += '&atmSustainedCellRate=' + sustainableCell.value;
+         loc += '&atmMaxBurstSize=' + maximumBurst.value;
+      } else {
+         loc += '&atmSustainedCellRate=0';
+         loc += '&atmMaxBurstSize=0';
+      }
+      if ( enblQos.checked == true )
+         loc += '&enblQos=1';
+      else
+         loc += '&enblQos=0';
+
+   }
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function cbClick(obj) {
+   var idx = obj.selectedIndex;
+   var val = obj.options[idx].value;
+   if ( val == "UBR" )
+      hideInfo(3);
+   else if (val == "UBRWPCR" || val == "CBR")
+      hideInfo(2);
+   else
+      hideInfo(0);   
+   if (val == 'CBR' || val == 'VBR-rt')
+      hideQosInfo(1);     
+   else {
+      if ( hideQos == false )
+         hideQosInfo(0);    
+   }
+}
+
+function encClick()
+{
+   with ( document.forms[0] ) {
+      if (linkType[1].checked == true ) {
+         encSel.options[0].text = "VC/MUX";
+         encSel.options[1].text = "LLC/ENCAPSULATION";
+         showhide('divBuildVlanMux', 0);
+      } else if (linkType[2].checked == true ) {
+         encSel.options[0].text = "LLC/SNAP-ROUTING";
+         encSel.options[1].text = "VC/MUX";
+         showhide('divBuildVlanMux', 0);
+      } else {
+         encSel.options[0].text = "LLC/SNAP-BRIDGING";
+         encSel.options[1].text = "VC/MUX";
+         showhide('divBuildVlanMux', buildvlm);
+      }
+   }
+}
+
+function btnCancel(){
+   var loc = 'atm_add.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onload="frmLoad()">
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Internet Setup";
+HelpItem="wancfghelp";
+</script> 
+<script type='text/javascript'>
+    mainTableStart();    
+    logo();
+    TopNav();
+    ThirdRowStart();
+    Write_Item_Images();
+    mainBodyStart();
+</script>
+         <form ID="Form1">
+    <table id=box_header border=0 cellSpacing=0>
+        <tr>
+            <td class=topheader>
+                <b>WAN</b></td>                                        
+        </tr>
+        <tr>
+            <td class=content>
+                <p>                
+            This screen allows you to configure an ATM PVC identifier (VPI and VCI), select DSL latency, 
+            select a service categoryS. Otherwise choose an existing interface by selecting
+            the checkbox to enable it. <br><br></p>
+                
+            </td>
+        </tr>
+    </table>
+    <table id=body_header border=0 cellSpacing=0>
+        <tr>
+            <td class=topheader>
+                <b>ATM PVC Configuration</b></td>                                        
+        </tr>
+            <td class=content>
+<script language="javascript">
+<!-- hide
+{              
+
+     document.write("<table cellSpacing='4' cellPadding='0' border='0'>");
+     document.write("<tr>");
+     document.write("<td>VPI: [0-255]</td>");
+     document.write("<td><input type='text' size='4' name='atmVpi'></td>");
+     document.write("</tr>");
+     document.write("<tr>");
+     document.write("<td>VCI: [32-65535]");
+     document.write("</td>");
+
+     document.write("<td><input type='text' size='4' name='atmVci'></td>");
+     document.write("</tr>");
+     document.write("</table>");
+    if ( chipId == '6368' ) {
+        document.write("<table cellSpacing='4' cellPadding='0' border='0'>");
+        document.write("<td>Select DSL Latency</td><br>");
+        document.write("<tr>");
+        document.write("<td colspan='2'><input type='checkbox' name='path0' checked>&nbsp;Path0</td>");
+        document.write("</tr>");
+        document.write("<tr>");
+        document.write("<td colspan='2'><input type='checkbox' name='path1'>&nbsp;Path1</td>");
+        document.write("</tr>");
+        document.write("</table>");
+    }
+}
+// done hiding -->
+</script>
+            <table border="0" cellpadding="0" cellspacing="0" id="table1">
+        <tr>
+                <td><strong>Select DSL Link Type (EoA is for PPPoE, IPoE, and Bridge.)</strong></td><br>
+            </tr>
+            <tr>
+                     <td>
+                        <input type='radio' name='linkType' onClick='encClick()' value="1" checked>&nbsp;EoA</td>
+                  </tr>
+            <tr>
+                     <td>
+                        <input type='radio' name='linkType' onClick='encClick()' value="2">&nbsp;PPPoA</td>
+                  </tr>
+        <tr>
+                     <tr>
+                     <td>
+                        <input type='radio' name='linkType' onClick='encClick()' value="3">&nbsp;IPoA</td>
+                  </tr>
+        </table><br>
+            <div id='encInfo'>
+               <table border="0" cellpadding="0" cellspacing="0" id="table2">
+               <tr>
+                  <td>Encapsulation Mode:</td>
+                  <td><select name='encSel' id='encSel'>
+                        <option value="0">LLC/SNAP-BRIDGING</option>
+                        <option value="1">VC/MUX</option>
+                     </select></td>
+               </tr>
+               </table><br>
+            </div>
+            <table border="0" cellpadding="0" cellspacing="0" id="table3">
+               <tr>
+                  <td>Service Category:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                  <td><select name="serviceCategory" size="1" onClick='cbClick(this)'>
+                        <option value="UBR" selected>
+                        UBR Without PCR
+                        <option value="UBRWPCR">
+                        UBR With PCR
+                        <option value="CBR">
+                        CBR
+                        <option value="VBR-nrt">
+                        Non Realtime VBR
+                        <option value="VBR-rt">
+                           Realtime VBR</option>
+                     </select></td>
+               </tr>
+            </table>
+            <div id='first1'>
+               <table border="0" cellpadding="0" cellspacing="0" id="table4">
+                  <tr>
+                     <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Cell Rate: 
+                        [cells/s]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;</td>
+                     <td><input type="text" size="6" name="peakCell"></td>
+                  </tr>
+               </table>
+            </div>
+            <div id='2and3'>
+               <table border="0" cellpadding="0" cellspacing="0" id="table5">
+                  <tr>
+                     <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sustainable Cell Rate: [cells/s]</td>
+                     <td><input id="Text5" type="text" size="6" name="sustainableCell"></td>
+                  </tr>
+                  <tr>
+                     <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maximum Burst Size: 
+                        [cells]&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                     <td><input type="text" size="6" name="maximumBurst"></td>
+                  </tr>
+               </table>
+            </div>
+
+            <div id="divBuildVlanMux">
+            <br>
+            <table border="0" cellpadding="0" cellspacing="0" id="table6">
+                <td><strong>Select Connection Mode</strong></td><br>
+                  <tr>
+                     <td><input type='radio' name='connMode' checked value="1">&nbsp;Default Mode - Single service over one connection</td>
+                  </tr>
+                  <tr>
+                     <td><input type='radio' name='connMode' value="2">&nbsp;VLAN MUX Mode - Multiple Vlan service over one connection</td>
+                  </tr>
+                  <tr>
+                     <td><input type='radio' name='connMode' value="3">&nbsp;MSC Mode - Multiple Service over one Connection</td>
+                  </tr>
+            </table>
+            </div>
+            
+           <div id='qosInfo'>
+               <br>
+               <b>Enable Quality Of Service</b>
+               <br>
+               <br>
+               Enabling packet level QoS for a PVC improves performance for selected classes 
+               of applications.&nbsp;&nbsp;QoS cannot be set for&nbsp;CBR and Realtime VBR. 
+               &nbsp;QoS consumes system resources; therefore the number of PVCs 
+               will be reduced. Use <b>Advanced Setup/Quality of Service</b> to 
+               assign priorities for the applications.<br>
+               <br>
+               <table border="0" cellpadding="0" cellspacing="0" id="table7">
+                  <tr>
+                     <td width='30' height="30"><input type='checkbox' name='enblQos'></td>
+                     <td>Enable Quality Of Service.</td>
+                  </tr>
+               </table>
+            </div>
+            <p>
+            <br>
+            </td>
+            </table>
+            </p>
+            <center>
+               <input type='button' onClick='btnBack()' value='Back'> <input type='button' onClick='btnSave()' value='Apply/Save'><input type='button' onClick='btnCancel()' value='Cancel'>
+            </center>
+         </form>
+<script type='text/javascript'>
+    mainBodyEnd();
+    ThirdRowEnd();
+    Footer()
+    mainTableEnd()
+</script>
+      </blockquote>
+   </body>
+</html>

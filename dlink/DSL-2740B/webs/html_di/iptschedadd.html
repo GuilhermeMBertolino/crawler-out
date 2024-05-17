@@ -1,0 +1,625 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var doEdit = false;
+var editId;
+
+var tods = '<%ejGetTod(tods)%>';
+//var tods = '<%ejGetTod(name)%>';
+var MAX_ENTRY = 16;
+
+// initialize rule array
+var todentrys = tods.split('|');
+var entry;
+var todNum = todentrys.length - 1;
+var rule = new Array(MAX_ENTRY);
+var hourStart = new Array(todNum);
+var hourEnd = new Array(todNum);
+var minStart = new Array(todNum);
+var minEnd = new Array(todNum);
+
+var days = new Array(MAX_ENTRY);
+for (i = 0; i < MAX_ENTRY; i++)
+	rule[i] = new rVe('','',-1,'','',0);
+
+for (i = 0; i < MAX_ENTRY; i++)
+	days[i] = new dVe(0,0,0,0,0,0,0);
+
+for (i = 0; i < todNum; i++)
+{
+	entry = todentrys[i].split(',');
+	rule[i] = new rVe(entry[0], entry[1], entry[2], entry[3], entry[4]);
+	hourStart[i] = parseInt(parseInt(rule[i].start) / 60);
+	minStart[i] = parseInt(rule[i].start) % 60;
+	hourEnd[i] = parseInt(parseInt(rule[i].end) / 60);
+	minEnd[i] = parseInt(rule[i].end) % 60;
+	if(hourStart[i] < 10)
+		hourStart[i] = '0' + hourStart[i];
+	if(hourEnd[i] < 10)
+		hourEnd[i] = '0' + hourEnd[i];
+	if(minStart[i] < 10)
+		minStart[i] = '0' + minStart[i];
+	if(minEnd[i] < 10)
+		minEnd[i] = '0' + minEnd[i];
+	
+			if (rule[i].days != -1)
+			{
+				for (j = 0; j < 7; j++)
+				{
+					if ((parseInt(rule[i].days) >> j) & 1)
+					{
+							if (j == 0)
+								days[i].monday = 1;
+							if (j == 1)
+								days[i].tuesday = 1;
+							if (j == 2)
+								days[i].wednesday = 1;
+							if (j == 3)
+								days[i].thursday = 1;
+							if (j == 4)
+								days[i].friday = 1;
+							if (j == 5)
+								days[i].saturday = 1;
+							if (j == 6)
+								days[i].sunday = 1;
+					}
+				}
+			}
+}
+
+function rVe(name, mac, days, start, end)
+{
+   this.username = name;
+   this.mac = mac;
+   this.days = days;
+   this.start = start;
+   this.end = end;
+}
+
+function dVe(mon, tue, wed, thu, fri, sat, sun)
+{
+   this.monday = mon;
+   this.tuesday = tue;
+   this.wednesday = wed;
+   this.thursday = thu;
+   this.friday = fri;
+   this.saturday = sat;
+   this.sunday = sun;
+}
+
+function btnApply(place) {
+
+  var loc = 'sciptsched.sched?action=add&';
+  if (doEdit == true && editId != '')
+  {
+    loc = 'sciptsched.sched?action=edit&';
+  }
+    with ( document.forms[0] ) {
+
+      /* 20100924, Linus Shi, begin add to fix bug#9902, mark: 09141200 */
+      if (isExclamation(rulename.value) == false)
+      {
+          alert("Invalid rule name.");
+          return;
+	  }
+	  /* 20100924, Linus Shi, end ---------------------- mark: 09141200 */
+
+	  if (isValidName(rulename.value,"Rule name") == false) return;
+
+	  var rule = rulename.value; 
+	  
+	  if (doEdit != true&&todNum>=MAX_ENTRY)
+	  {
+          alert("The number of rules added is 16,cann't add any more");
+          return;
+        }
+
+	  if (( rule.toLowerCase() == 'always' ) || ( rule.toLowerCase() == 'never' ))
+	  {
+          alert("Invalid rule name.");
+          return;
+        }
+
+        loc += "schedule="+rulename.value;
+
+        var day = 0;
+
+        if( monday.checked )
+          day = 1;
+
+        if( tuesday.checked )
+          day |= 2;
+
+        if( wednesday.checked )
+          day |= 4;
+
+        if( thursday.checked )
+          day |= 8;
+
+        if( friday.checked )
+          day |= 16;
+
+        if( saturday.checked )
+          day |= 32;
+
+        if( sunday.checked )
+          day |= 64;
+
+        if( day == 0 ) {
+          alert("No days were specified.");
+          return;
+        }
+
+        loc += "&days=" + day;
+
+        loc += '&start_time=';
+
+		var startTime = strTimeHr.value + ':' + strTimeMin.value;
+		var endTime = endTimeHr.value + ':' + endTimeMin.value;
+
+		if ((strTimeHr.value == endTimeHr.value) && (strTimeMin.value == endTimeMin.value))
+		{
+			alert("Start Time should not be equal to End Time.");
+			return;
+		}
+
+		if (startTime != ""){
+			st_time = isValidTime(startTime,"Start Time");
+			if (st_time == -1) return;
+		}
+		else
+			st_time = 0; //00:00
+
+        loc += st_time;
+
+        loc += '&end_time=';
+
+		if (endTime != ""){
+			en_time = isValidTime(endTime,"End Time");
+			if (en_time == -1) return;
+		}
+		else
+			en_time = 1439; //23:59
+
+        loc += en_time;
+
+        if( en_time < st_time ) {
+          alert( 'End time cannot be earlier than start time.');
+          return;
+        }
+        var code = 'location="' + loc + '"';
+        //if("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1')
+        if('<%ejGet(timeisSet)%>' != '1')
+          alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+        eval(code);
+    }
+
+}
+
+function setAllDays(value)
+{
+    with ( document.forms[0] ) {
+		if (value == 1){
+			sunday.checked = true;
+			monday.checked = true;
+			tuesday.checked = true;
+			wednesday.checked = true;
+			thursday.checked = true;
+			friday.checked = true;
+			saturday.checked = true;
+			sunday.disabled = true;
+			monday.disabled = true;
+			tuesday.disabled = true;
+			wednesday.disabled = true;
+			thursday.disabled = true;
+			friday.disabled = true;
+			saturday.disabled = true;
+		} else {
+			sunday.checked = false;
+			monday.checked = false;
+			tuesday.checked = false;
+			wednesday.checked = false;
+			thursday.checked = false;
+			friday.checked = false;
+			saturday.checked = false;
+			sunday.disabled = false;
+			monday.disabled = false;
+			tuesday.disabled = false;
+			wednesday.disabled = false;
+			thursday.disabled = false;
+			friday.disabled = false;
+			saturday.disabled = false;
+		}
+	}
+}
+
+function frmLoad(){
+    with ( document.forms[0] ) {
+		setAllDays(0);
+		SelDays.checked = true;
+	}
+}
+
+function setWholeDay(){
+    with ( document.forms[0] ) {
+		if(allday.checked == true){
+			strTimeHr.value = "00";
+			strTimeMin.value = "00";
+			endTimeHr.value = "23";
+			endTimeMin.value = "59";
+			strTimeHr.disabled = true;
+			strTimeMin.disabled = true;
+			endTimeHr.disabled = true;
+			endTimeMin.disabled = true;
+		} else {
+			strTimeHr.value = "";
+			strTimeMin.value = "";
+			endTimeHr.value = "";
+			endTimeMin.value = "";
+			strTimeHr.disabled = false;
+			strTimeMin.disabled = false;
+			endTimeHr.disabled = false;
+			endTimeMin.disabled = false;
+		}
+	}
+}
+
+function btnRemove(rml) {
+	var lst='';
+	var hasChecked = false;
+	if (rml){
+		if (rml.length > 0)
+			for (i = 0; i < rml.length; i++) {
+				if ( rml[i].checked == true ){
+					lst += rml[i].value + ', ';
+					hasChecked = true;
+				}
+			}
+		else if ( rml.checked == true ){
+			lst = rml.value;
+			hasChecked = true;
+		}
+	}
+
+	if (!hasChecked) {
+		alert ("Please select an item to delete!");
+		return;
+	}
+
+	var loc = 'sciptsched.sched?action=remove&rmLst=' + lst;
+	var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function btnCancel() {
+    with ( document.forms[0] ) {
+		schedAddInfo.style.display = 'none';
+		removeSched.disabled = 0;
+		addSched.disabled = 0;
+		editSched.disabled = 0;
+	}
+}
+function btnAdd(){
+
+   if (todNum>=MAX_ENTRY) {
+          alert("The number of rules added is 16,cann't add any more");
+          return;
+      }
+
+
+    with ( document.forms[0] ) {
+    if (document.getElementById)
+		document.getElementById('schedAddInfo').style.display = 'block';
+	else
+		document.all.schedAddInfo.style.display = 'block';
+		removeSched.disabled = 1;
+		addSched.disabled = 1;
+		editSched.disabled = 1;
+		clearFields();
+		editId='';
+		doEdit = false;
+	}
+}
+
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  var startTime;
+  var endTime;
+  var tmpRuleName;
+  var checkId = 0;
+
+with ( document.forms[0] ) {
+
+	
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    		{
+      			if(rml[i].checked == true)
+      			{
+				hasChecked = true;
+        			checkedCount++;
+				checkId = i;
+      			}
+		}
+	} 
+	else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = rml.value;
+		//tmpRuleName = lblRuleName.innerHTML;
+		startTime = lblStart.innerHTML.split(':');
+		endTime = lblEnd.innerHTML.split(':');
+
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+		clearFields();
+		
+		if (days[checkId].sunday == 1){
+			sunday.checked = true;
+		}
+		if (days[checkId].monday == 1){
+			monday.checked = true;
+		}
+		if (days[checkId].tuesday == 1){
+			tuesday.checked = true;
+		}
+		if (days[checkId].wednesday == 1){
+			wednesday.checked = true;
+		}
+		if (days[checkId].thursday == 1){
+			thursday.checked = true;
+		}
+		if (days[checkId].friday == 1){
+			friday.checked = true;
+		}
+		if (days[checkId].saturday == 1){
+			saturday.checked = true;
+		}
+
+		strTimeHr.value = hourStart[checkId];
+		strTimeMin.value = minStart[checkId];
+		endTimeHr.value = hourEnd[checkId];
+		endTimeMin.value = minEnd[checkId];
+		rulename.value = rule[checkId].username;
+		editId = rule[checkId].username;
+		if(document.getElementById)
+			document.getElementById('schedAddInfo').style.display = 'block';
+		else
+			document.all.schedAddInfo.style.display = 'block';
+		removeSched.disabled = 1;
+		addSched.disabled = 1;
+		editSched.disabled = 1;
+		rulename.disabled = 1;
+		
+}
+  doEdit = true;
+
+}
+
+function clearFields(){
+	with ( document.forms[0] ) {
+		rulename.disabled = 0;
+		rulename.value = '';
+		strTimeHr.value = '';
+		strTimeMin.value = '';
+		endTimeHr.value = '';
+		endTimeMin.value = '';
+		SelDays.checked = true;
+		setAllDays(0);
+		allday.checked = false;
+	}
+
+}
+
+
+// done hiding -->
+    </script>
+<script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onload='frmLoad()'>
+      <blockquote>
+      <form onsubmit="return false;">
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Schedules";
+HelpItem="Schedules";
+</script>
+<script type='text/javascript'>
+	mainTableStart();
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Schedule
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+				<p>Schedule allows you to create scheduling rules to be applied for your firewall.</p>
+				<p>Maximum of 16 entries.</p>
+			</td>
+		</tr>
+	</table>
+
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Schedule Rule
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<div class=overflow><table class=formlisting>
+    <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Rule Name</td>
+      <td class='form_label_col'>Sun</td>
+      <td class='form_label_col'>Mon</td>
+      <td class='form_label_col'>Tue</td>
+      <td class='form_label_col'>Wed</td>
+      <td class='form_label_col'>Thu</td>
+      <td class='form_label_col'>Fri</td>
+      <td class='form_label_col'>Sat</td>
+      <td class='form_label_col'>Start</td>
+      <td class='form_label_col'>Stop</td>
+   </tr>
+
+<script language="javascript">
+	for(i = 0; i < todNum; i++)
+	{
+	
+	document.write('<tr class=form_label_row><td class=form_label_col><input type=checkbox name=rml value=' + rule[i].username + '></td>');
+	document.write('<td class=form_label_col><label id=lblRuleName>' + rule[i].username + '</label></td>');
+	if(days[i].sunday == 1)
+      		document.write('<td align=center><label id=lblSun>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblSun>&nbsp;</label></td>');
+	if(days[i].monday == 1)
+      		document.write('<td align=center><label id=lblMon>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblMon>&nbsp;</label></td>');
+	if(days[i].tuesday == 1)
+      		document.write('<td align=center><label id=lblTue>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblTue>&nbsp;</label></td>');
+	if(days[i].wednesday == 1)
+      		document.write('<td align=center><label id=lblWed>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblWed>&nbsp;</label></td>');
+	if(days[i].thursday == 1)
+      		document.write('<td align=center><label id=lblThu>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblThu>&nbsp;</label></td>');
+	if(days[i].friday == 1)
+      		document.write('<td align=center><label id=lblFri>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblFri>&nbsp;</label></td>');
+	if(days[i].saturday == 1)
+      		document.write('<td align=center><label id=lblSat>X</label></td>');
+	else
+		document.write('<td align=center><label id=lblSat>&nbsp;</label></td>');
+	
+      document.write('<td class=form_label_col><label id=lblStart>' + hourStart[i] + ':' + minStart[i] + '</label></td>');
+      document.write('<td class=form_label_col><label id=lblEnd>' + hourEnd[i] + ':' + minEnd[i] + '</label></td>');
+      document.write('</tr>');
+	}
+</script>
+     
+
+      </table><br><br></div></td>
+                                                     
+
+</tr>
+</table>
+<p align=center>
+<input type='button' id='addSched' name='addSched' onClick='btnAdd()' value='Add'>&nbsp;
+<script language="javascript">
+//if(todNum > 0)
+{
+	document.write("<input type='button' id='editSched' name='editSched' onClick='btnEdit(this.form.rml)' value='Edit'>&nbsp;");
+	document.write("<input type='button' id='removeSched' name='removeSched' onClick='btnRemove(this.form.rml)' value='Delete'>");
+}
+</script>
+</p>
+
+<div id=schedAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Add Schedule Rule
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+            <br>
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+              <TR>
+                <TD class=form_label_30><LABEL for=sname>Name&nbsp;:</LABEL></TD>
+                <td><input type='text' name='rulename' size='20' maxlength='30'></td>
+			  </TR>
+              <TR>
+                <TD class=form_label_30>Day(s)&nbsp;:</TD>
+                <TD><INPUT id=allweek onclick=setAllDays(1) type=radio value=127 name=set_days>
+                  	<LABEL for=allweek>All Week</LABEL>
+					<INPUT id=SelDays onclick=setAllDays(0) type=radio value=0 name=set_days>
+					<LABEL for=SelDays>Select Day(s)</LABEL> </TD>
+			  </TR>
+			  <tbody id='id_days'>
+              <TR>
+                <TD class=form_label_30></TD>
+                <TD>
+                		<INPUT id=sunday type=checkbox><LABEL for=sunday>Sun</LABEL>&nbsp;
+				<INPUT id=monday type=checkbox><LABEL for=monday>Mon</LABEL>&nbsp;
+				<INPUT id=tuesday type=checkbox><LABEL for=tuesday>Tue</LABEL>&nbsp;
+				<INPUT id=wednesday type=checkbox><LABEL for=wednesday>Wed</LABEL>&nbsp;
+				<INPUT id=thursday type=checkbox><LABEL for=thursday>Thu</LABEL>&nbsp;
+				<INPUT id=friday type=checkbox><LABEL for=friday>Fri</LABEL>&nbsp;
+				<INPUT id=saturday type=checkbox><LABEL for=saturday>Sat</LABEL>
+		 </TD>
+			  </TR>
+			  </tbody>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=allday>All Day - 24 hrs&nbsp;:</LABEL></TD>
+                <TD><INPUT id=allday type=checkbox onclick='setWholeDay()'> </TD>
+			  </TR>
+
+			  <tbody id='id_time'>
+              <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id=strTimeHr style="WIDTH: 40px" maxLength=2> :
+					<INPUT id=strTimeMin style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id=endTimeHr style="WIDTH: 40px" maxLength=2> :
+					<INPUT id=endTimeMin style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>
+			  </tbody>
+			</table>
+
+			</TD>
+		</TR>
+	</table>
+<p align=center><input type='button' value="Apply" onClick='btnApply()'><input type='button' value="Cancel" onClick='btnCancel()'></p>
+</div>
+
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+         </form>
+      </blockquote>
+   </body>
+</html>

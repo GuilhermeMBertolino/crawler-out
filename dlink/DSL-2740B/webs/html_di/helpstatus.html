@@ -1,0 +1,326 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+<script language="javascript" src="util.js"></script>
+<script language="JavaScript" src="menu.js"></script>
+<script language="javascript">
+<!-- hide
+var progress = 0;
+var wireless = '<%ejGetWl(wlInterface)%>';
+var buildVoice='<%ejGetOther(sysInfo, buildVoice)%>';
+//var buildVoice='1';
+var buildIPv6 = '<%ejGet(enblv6)%>';
+function btnBridge() {
+   var loc = 'scmacflt.cmd?action=view';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+/* 20081231, Lily,help page do not display wireless info , mark: 12311426*/
+function frmLoad()
+{
+    if('1' != wireless)
+    {
+        showhide('wlanInfo', 0);
+        showhide('wlClientHelp', 0);
+    }
+}
+/* 20081231, Lily, end---------------------------------- mark: 12311426*/
+
+// done hiding -->
+    </script>
+   </head>
+<body onload = frmLoad()>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Help";
+SideItem="Status";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Status Help
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<UL>
+              <LI><A href="helpstatus.html#DeviceInfo">Device Info</A>
+              <SCRIPT language=javascript>
+              if('1' == wireless)
+              {
+                   document.write('<LI><A href="helpstatus.html#WirelessClients">Wireless Clients</A>');
+              }
+              </SCRIPT>
+              <LI><A href="helpstatus.html#DHCPClients">DHCP Clients</A>
+              <SCRIPT language=javascript>
+              if('1' == buildVoice)
+              {
+                   document.write('<LI><A href="helpstatus.html#VoiceStatus">Voice Status</A>');
+              }
+			  </SCRIPT>
+              <LI><A href="helpstatus.html#Logs">Logs</A>
+              <LI><A href="helpstatus.html#Statistics">Statistics</A>
+              <LI><A href="helpstatus.html#RouteInfo">Route Info</A>
+               <SCRIPT language=javascript>
+              if('1' == buildIPv6)
+              {
+                   document.write('<LI><A href="helpstatus.html#IPv6_status">IPv6 Status</A>');
+				   document.write('<LI><A href="helpstatus.html#ipv6routestatus">IPv6 Routing Info</A>');
+				   
+              }
+			  </SCRIPT>
+              </LI>
+						</UL>	
+			</td>
+		</tr>
+	</table>
+	<br>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=DeviceInfo name=DeviceInfo>Device Info</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<P>shows details of the router such as the version of the firmware, bootloader, LAN IP address, etc.</P>
+						<DL>
+						<DT>Modem Info
+						<DD>
+						<DL>
+						<DT>Model Name
+						<DD>Model name of the adsl router.
+						<DT>Date/Time
+						<DD>Internal Time of your router.
+						<DT>Firmware Version
+						<DD>Also known as the firmware version. It shows what is the current firmware version used.
+						<DT>MAC Address
+						<DD>MAC Address of your router.
+						</DD>
+						</DL>
+						<BR>
+						<DT>WAN Info
+						<DD>Displays WAN connections previously set up in the <a href="internet.html">Setup->Internet Setup</a> section.
+						The information added in the status section is the extra column for connection status information, 
+						displaying either ADSL Link Down or ADSL Link Up.
+						<DL>
+						<DT>Default Gateway
+						<DD>Current IP Address of the gateway used. You can manually configure you Gateway or set it to auto by 
+						going to <a href="routing.html">Advanced->Routing</a>.
+						<DT>Primary and Secondary DNS
+						<DD><p>Shows the current preferred(Primary) and alternate(Secondary) DNS used. You can manually configure 
+						the DNS or set it to auto by going to <a href="dnscfg.html">Advanced->DNS</a>.</P>
+						<DT>Line Rate - Upstream(Kbps)
+						<DD>Displays how fast your upload per second is. Will only show if you are already connected to your ISP.
+						<DT>Line Rate - Downstream(Kbps)
+						<DD>Displays how fast your download per second is. Will only show if you are already connected to your ISP.
+						</DD>
+						</DL>
+						<BR>
+						<div id=wlanInfo>
+						<DT>WLAN Info
+						<DD>Displays WLAN setup details configured in <a href="wlcfg.html">Setup->Wireless</a>
+						<DL>
+						<DT>Status
+						<DD>Tells you if your wireless is enabled or disabled.
+						<DT>Visisbility
+						<DD>Tells you if your wireless network is visible or invisible to other wireless devices.<br>
+						When Visible mode, your wireless network name is broadcast to anyone within the range of your signal. When Invisible, you must enter the Wireless Network Name (SSID) on the your wireless device manually to connect to the network.
+						<DT>SSID
+						<DD>Your wireless network name.
+						<DT>Security
+						<DD>Displays what your currect security settings is set to.
+						</DD>
+						</DL>
+						</div>
+						<BR>
+						<DT>LAN Info
+						<DD>Displays LAN setup details of your modem.
+						<DL>
+						<DT>LAN IP Address
+						<DD>Current IP Address of the ADSL router.
+						<DT>Submask
+						<DD>Your modem's current subnet.
+						<DT>DHCP
+						<DD>Shows if your modem's DHCP is enabled.
+						</DD>
+						</DL>
+						<BR>
+      		</td>
+		</tr>
+	</table>
+	<br>
+	
+	<div id=wlClientHelp>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=WirelessClients name=WirelessClients>Wireless Clients</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+					<P>Displays the stations (identified by their BSSID) that are associated with your wireless router.  
+					The system auto Refresh to renew the page for new wireless stations every 30 seconds.</P>
+	  		</td>
+		</tr>
+	</table>
+       </div>
+
+	<br>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=DHCPClients name=DHCPClients>DHCP Clients</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+					<P>This shows the computers, identified by the hostname and MAC address that have acquired IP addresses by the DHCP server with the time that the lease for the IP address is up</P>
+	  		</td>
+		</tr>
+	</table>
+	<SCRIPT language=javascript>
+    if('1' == buildVoice)
+    {
+        document.write('<br>');
+		document.write('<table id=body_header width="690" border=0 cellSpacing=0>');
+		document.write('<tr>');
+		document.write('<td class=topheader>');
+		document.write('<A id=VoiceStatus name=VoiceStatus>Voice Status</a>');
+		document.write('</td>');
+		document.write('</tr>');
+		document.write('<tr>');
+		document.write('<td class=content>');
+		document.write('<P>This shows whether these voip numbers registered.</P>');
+		document.write('</td>');
+		document.write('</tr>');
+		document.write('</table>');
+    }
+	</SCRIPT>
+
+	<br>	
+	
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=Logs name=Logs>Logs</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<P>If the log is enabled, the system will log selected events including Emergency, Alert, Critical, 
+						Error, Warning, Notice, Informational, and Debugging.  
+						All events above or equal to the selected display level will be displayed.</P>
+						<P>You can configure the system logs here: <a href="logintro.html">Maintenance->System Log</a>.</P>
+      		</td>
+		</tr>
+	</table>
+	<br>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=Statistics name=Statistics>Statistics</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<P>The Statistics page displays all of the LAN, WAN, and Wireless 
+            packet transmit and receive statistics.</P>
+            <DL>
+              <DT>Sent 
+              <DD>The number of packets sent from the router. 
+              <DT>Received 
+              <DD>The number of packets received by the router. 
+              <DT>TX Packets Dropped 
+              <DD>The number of packets that were dropped while being sent, due 
+              to errors, collisions, or router resource limitations. 
+              <DT>RX Packets Dropped 
+              <DD>The number of packets that were dropped while being received, 
+              due to errors, collisions, or router resource limitations. 
+              <DT>Collisions 
+              <DD>The number of packets that were dropped due to Ethernet 
+              collisions (two or more devices attempting to use an Ethernet 
+              circuit at the same time). 
+              <DT>Errors 
+              <DD>The number of transmission failures that cause loss of a 
+              packet. A 
+              noisy radio-frequency environment can cause a high error rate on 
+              the wireless LAN. </DD></DL>
+      		</td>
+		</tr>
+	</table>
+	<br>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=RouteInfo name=RouteInfo>Route Info</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<p>The Route Info section displays route information showing the IP addresses of the destination, 
+						gateway, and subnet mask as well as other route information.</p>
+      		</td>
+		</tr>
+	</table>
+
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=IPv6_status name=IPv6_status>IPv6 Status</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+			<p>Depending on the type of WAN connection, you can take one of the following sets of actions </p>
+
+			 <DL>
+              <DT>DHCP Connection  
+              <DD>Clicking the DHCP Release button unassigns the router's IP address. The router will not respond to IP messages from the WAN side until you click the DHCP Renew button or power-up the router again. Clicking the DHCP Renew button causes the router to request a new IP address from the ISP's server. 
+              <DT>PPPoE, PPTP, L2TP Connection  
+              <DD>Depending on whether the WAN connection is currently established, you can click either the Connect to attempt to establish the WAN connection or the Disconnect to break the WAN connection. 
+              <DT>Static IP 
+              <DD>Static IP mode is always on, so no action buttons are avaliable. 
+              <DT>LAN Computers 
+              <DD>This area of the screen continually updates to show all DHCP enabled computers and devices connected to the LAN side of your router. The detection "range" is limited to the address range as configured in DHCP Server. Computers that have an address outside of this range will not show. If the DHCP Client (i.e. a computer configured to "Automatically obtain an address") supplies a Host Name then that will also be shown. Any computer or device that has a static IP address that lies within the detection "range" may show, however its host name will not. 
+              </DD></DL>
+      		</td>
+		</tr>
+	</table>
+
+	<br>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<A id=RouteInfo name=ipv6routestatus>IPv6 Route Info</a>
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+						<p>The Route Info section displays route information showing the IPv6 addresses of the destination, 
+						gateway, and subnet mask as well as other route information.</p>
+      		</td>
+		</tr>
+	</table>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

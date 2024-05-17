@@ -1,0 +1,333 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+      <script language="javascript" src="util.js"></script>
+	<script language="JavaScript" src="menu.js"></script>
+            <script language="javascript">
+<!-- hide
+//frederick,061211	add rule schedule
+
+var i = 0;
+var j = 0;
+var editOrgUrl;
+var urls = '<%ej_get_urlfilter(urls)%>';
+var urlEntrys = urls.split('|');
+var urlNum = urlEntrys.length -1;
+var rulNumLeft = 15-urlNum;
+var urlRule = new Array(urlNum);
+
+
+
+function uVe(url, schedule)
+{
+	this.url = url;
+	this.schedule = schedule;
+}
+
+for (i = 0; i < urlNum; i++)
+	urlRule[i] = new uVe('',0,'');
+
+for (i = 0; i < urlNum; i++)
+{
+	entry = urlEntrys[i].split(',');
+	urlRule[i] = new uVe(entry[0], entry[1]);
+}
+
+
+var schedule = '<%ejGetTod(name)%>';
+var schEntry = schedule.split('|');
+var schNum = schEntry.length - 1;
+
+var doEdit = false;
+var editId = '';
+function btnApply() {
+   var loc = 'urlfilter.cmd?action=add';
+  if (doEdit == true )
+  {
+    loc = 'urlfilter.cmd?action=edit';
+  }
+
+   with ( document.forms[0] ) {
+   	var temp, ret;
+		temp = txtUrl.value;
+
+		if (temp.search ("http://") > -1)
+			ret = temp.replace("http://","");	
+		else
+			ret = temp;
+	  if (!isValidName(ret,"URL",BLANK_INVALID,SPACE_INVALID)) return;
+		if (encodeUrl(ret) == ERROR_ENCODE_URL) return;
+		if (doEdit != true ) {
+		  	for (i = 0; i < urlNum; i++)
+				if(encodeUrl(ret)==urlRule[i].url)
+				{
+					alert('This url ' + temp +' had been added yet.');
+					return;
+				}
+		  }
+		  else
+		 {
+		      if(editOrgUrl != ret)
+			  {
+					for (i = 0; i < urlNum; i++)
+			       	{
+						if(encodeUrl(ret)==urlRule[i].url)
+						{
+							alert('This url ' + temp +' had been exist yet.');
+							return;
+						}
+			       	}
+			  }
+
+			
+			  
+		  }
+
+		  if (doEdit == true )
+		  {
+		      loc += '&EditUrl=' + encodeUrl(editOrgUrl);
+		  }
+		  
+	      loc += '&TodUrl=' + encodeUrl(ret);
+	      var iptidx = iptSchedItem.selectedIndex;
+		var iptval = iptSchedItem.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+   	      var code = 'location="' + loc + '"';
+   	      eval(code);
+      }
+}
+
+function btnRemove(rml) {
+var lst='';
+var hasChecked = false;
+	if (rml){ 
+		if (rml.length > 0)
+			for (i = 0; i < rml.length; i++) {
+				if ( rml[i].checked == true ){
+					lst += rml[i].value + ',';
+					hasChecked = true;
+				}
+			}
+		else if ( rml.checked == true ){
+			lst = rml.value;
+			hasChecked = true;
+		}
+	} 
+
+	if (!hasChecked){
+		alert("Please select an item to delete!");
+		return;
+	} 
+
+	var loc = 'urlfilter.cmd?action=remove&rmLst=' + lst;	
+	var code = 'location=\"' + loc + '\"';
+	eval(code);
+}
+
+function btnCancel(){
+    with ( document.forms[0] ) {
+		urlAddInfo.style.display = 'none';
+		removeUrl.disabled = 0;
+		addUrl.disabled = 0;
+		editUrl.disabled = 0;
+	}
+
+}
+
+function btnAdd(){
+    with ( document.forms[0] ) {
+		urlAddInfo.style.display = 'block';
+		removeUrl.disabled = 1;
+		addUrl.disabled = 1;
+		editUrl.disabled = 1;
+		txtUrl.disabled = 0;
+             txtUrl.value = '';
+		editId='';
+		doEdit = false;
+	}
+}
+
+function btnEdit(rml) {
+	var lst='';
+	var hasChecked = false;
+	var checkedCount = 0;
+	var checkId = 0;
+	if (rml){
+		if (rml.length > 1){
+			for(i=0;i<rml.length;i++)
+			{
+				if(rml[i].checked == true)
+					{
+					checkedCount++;
+					hasChecked = true;
+					checkId = i;
+					}
+			}
+			
+		} else if ( rml.checked == true ){
+			editId = rml.value
+			lst = rml.value;
+			hasChecked = true;
+		}
+	}
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		 doEdit = false;
+		 editId = '';
+		return;
+	}
+	if(checkedCount > 1) {
+		alert ("Please select only 1 item to edit!");
+		 doEdit = false;
+		 editId = '';
+		return;
+	}
+
+    with ( document.forms[0] ) {
+		urlAddInfo.style.display = 'block';
+		removeUrl.disabled = 1;
+		addUrl.disabled = 1;
+		editUrl.disabled = 1;
+		txtUrl.value = urlRule[checkId].url;
+		txtUrl.disabled = 0;
+		editOrgUrl = txtUrl.value;
+		for (i = 0; i < iptSchedItem.length; i++){
+			if (iptSchedItem[i].value == urlRule[checkId].schedule){
+				iptSchedItem.selectedIndex = i;
+				break;
+			}
+		}		
+
+		doEdit = true;
+		editId = urlRule[checkId].url;
+	}
+
+}
+
+function formLoad(){
+	with ( document.forms[0] ){
+		if(urlNum==15)
+			document.getElementById("addUrl").disabled=1;
+		else
+			document.getElementById("addUrl").disabled=0;
+	}
+}
+
+// done hiding -->
+      </script>
+   </head>
+   <body>
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Parental Control";
+HelpItem="webfilter";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form onsubmit="return false;">
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Block Website
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				This page allows you to block websites. If enabled, the websites listed here will be denied access
+				to clients trying to browse that website.</p>				
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Block Website
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<div class=overflow>
+<table class=formlisting>
+ <tr class=form_label_row><td class='form_label_col' width='10%'>&nbsp;</td><td class='form_label_col' width='80%'><label width='200px'>URL/Keyword</label></td>
+      <td class='form_label_col' width='10%'>Schedule Rule</td>
+</tr>
+
+<script language=javascript>
+for(i = 0; i< urlNum; i++)
+document.write("<tr class=form_label_row><td class='form_label_col'><input type='checkbox' name='rml' value='" + urlRule[i].url + "'></td><td>"+urlRule[i].url+"</td><td class='form_label_col'>" + urlRule[i].schedule +"</td></tr>");
+</script>
+	
+
+
+</table>
+</center><br><br><center>
+</div>
+</td>
+	</tr>
+</table>
+
+<br>
+<script language=javascript>
+if(urlNum==15)
+	document.write("<p><FONT color=red>");
+else
+	document.write("<p><FONT color=green>");
+document.write("Can add 15 block websites," + urlNum+" already added,"+rulNumLeft+" left.");
+document.write("</FONT></p>");
+</script>
+
+<p align=center><input type='button' id='addUrl' name='addUrl' onClick='btnAdd()' value='Add'>&nbsp;<input type='button' id='editUrl' name='editUrl' onClick='btnEdit(this.form.rml)' value='Edit'>&nbsp;<input type='button' id='removeUrl' name='removeUrl' onClick='btnRemove(this.form.rml)' value='Delete'></p>
+<div id=urlAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Block Website
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+
+            <br>
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class=form_label>URL/Keyword&nbsp;:</td>
+                  <td><input type='text' size="22" maxlength="95" name="txtUrl" value=''></td>
+               </tr>
+			   <tr>
+<td class=form_label>Schedule:</td><td><select name="iptSchedItem">
+<option value="Always">Always</option>
+<script language=javascript>
+for(i = 0; i < schNum; i++)
+document.write("<option value="+ schEntry[i]+">"+schEntry[i]+"</option>");
+if(urlNum==15)
+	document.getElementById("addUrl").disabled=1;
+else
+	document.getElementById("addUrl").disabled=0;
+</script>
+<option value="Never">Never</option></select><a href="iptschedadd.html"> View Schedule Details</a>
+            </table>
+			</td>										
+		</tr>
+	</table>
+	<p align=center><input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></P>
+</div>
+<script type='text/javascript'>
+	mainBodyEnd();
+	delaytimer=250;
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+         </form>
+      </blockquote>
+   </body>
+</html>

@@ -1,0 +1,1 @@
+"use strict";!function(){angular.module("app").constant("SysNtpConstants",function(){return{weekDays:[{label:"ntp_short_mon",value:"1"},{label:"ntp_short_tue",value:"2"},{label:"ntp_short_wed",value:"3"},{label:"ntp_short_thu",value:"4"},{label:"ntp_short_fri",value:"5"},{label:"ntp_short_sat",value:"6"},{label:"ntp_short_sun",value:"0"}]}}())}();

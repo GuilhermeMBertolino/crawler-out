@@ -1,0 +1,197 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+function frmLoad(){
+   with ( document.forms[0] ) {
+		from.value = '<%ej_get_trustedip(fromip)%>';
+		to.value = '<%ej_get_trustedip(toip)%>';
+   }
+}
+
+var ethIp = '<%ejGet(ethIpAddress)%>';
+//var ethIp = '192.168.10.200';
+var ethSubMask = '<%ejGet(ethSubnetMask)%>';
+//var ethSubMask = '255.255.255.0';
+var enableLan2 = '<%ejGet(enblLan2)%>';
+//var enableLan2 = '1';
+var lan2IpAddress = '<%ejGet(lan2IpAddress)%>';
+//var lan2IpAddress = '1.2.3.4';
+var lan2SubnetMask = '<%ejGet(lan2SubnetMask)%>';
+//var lan2SubnetMask = '255.255.255.0';
+
+function isEndGTEStart(to, from)
+{
+    addrFrom = from.value.split('.');
+	for (i=0; i < addrFrom.length; i++){
+		addrFrom[i] = parseInt(addrFrom[i],10);
+		//	alert(addrFrom[i]);
+		//addrFrom[i] += "";
+	}
+    addrTo = to.value.split('.');
+	for (i=0; i < addrTo.length; i++){
+		addrTo[i] = parseInt(addrTo[i],10);
+		//	alert(addrTo[i]);
+		//addrTo[i] += "";
+	}
+	if (addrTo[0] < addrFrom[0] || addrTo[1] < addrFrom[1] || addrTo[2] < addrFrom[2] || addrTo[3] < addrFrom[3])
+	{	
+		return false;
+	}
+	return true;
+}
+
+function btnSave(reboot) {
+   var loc = 'urlfilter.cmd?action=trusted';
+
+   with ( document.forms[0] ) {
+		if(from.value == '' && to.value == ''){
+		loc += "&from=0.0.0.0&to=0.0.0.0"
+		}
+		else
+		{
+			if ( isValidIpAddress(from.value,"From Address") == false ) return;
+			//added by Van
+			if ( from.value == ethIp)
+			{
+				alert("From Address" + " " + from.value + " is invalid lan Ip.");
+				return;
+			}
+			//end added
+            if ( isValidIpAddress(to.value,"To Address") == false ) return;
+			if(enableLan2 != '1')
+			{
+				if (isSameSubNet(from.value, ethSubMask, ethIp, ethSubMask) == false ) 
+				{
+           		 	alert ("From Address" + " " + from.value + " is invalid lan Ip.");
+            		return;
+         		}
+	    		if (isSameSubNet(to.value, ethSubMask, ethIp, ethSubMask) == false ) 
+				{
+            		alert ("To Address" + " " + to.value + " is invalid lan Ip.");
+            		return;
+         		}
+				if (!(isEndGTEStart(to, from))) {
+					alert ("To Address" + " " + to.value + " has to be equal or greater than " + "From Address" + " " + from.value + ".");
+            		return;
+         		}
+			}
+			else
+			{
+				if (isSameSubNet(from.value, lan2SubnetMask, lan2IpAddress, lan2SubnetMask) == true && 
+					isSameSubNet(to.value, lan2SubnetMask, lan2IpAddress, lan2SubnetMask) == true) 
+				{
+           		 	if (!(isEndGTEStart(to, from))) {
+						alert ("To Address" + " " + to.value + " has to be equal or greater than " + "From Address" + " " + from.value + ".");
+            			return;
+         			}
+         		}
+				else
+				{
+           		 	if (isSameSubNet(from.value, ethSubMask, ethIp, ethSubMask) == false ) 
+					{
+           		 		alert ("From Address" + " " + from.value + " is invalid lan Ip.");
+            			return;
+         			}
+	    			if (isSameSubNet(to.value, ethSubMask, ethIp, ethSubMask) == false ) 
+					{
+            			alert ("To Address" + " " + to.value + " is invalid lan Ip.");
+            			return;
+         			}
+					if (!(isEndGTEStart(to, from))) {
+						alert ("To Address" + " " + to.value + " has to be equal or greater than " + "From Address" + " " + from.value + ".");
+            			return;
+         			}
+         		}
+			}
+			loc += "&from=" + from.value;
+			loc += "&to=" + to.value;		
+		}
+			
+   }
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnCancel(){
+   var loc = 'trusted.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onload='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Parental Control";
+HelpItem="trusted";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Trusted Computers
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				To exclude a range of IP which is not restricted by Block Website, the range of Ip is free to access any web site even if the site is blocked by Block Website. But Trusted Computers function don't influence Block MAC Address, that is to say: if a pc mac is restricted by Block MAC Address, even if the pc Ip Address is in Trusted User IP Range, the pc can't connect to the route too.</p>				<p></p>
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Trusted User IP Range
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+			  <table border="0" cellpadding="0" cellspacing="0" class=formarea>
+               <tr>
+                  <td class=form_label>From:</td>
+                  <td><input type="text" name="from" size="16"></td>
+               </tr>
+               <tr>
+                  <td class=form_label>To:</td>
+                  <td><input type="text" name="to" size="16"></td>
+               </tr>
+            </table>
+			</td>										
+		</tr>
+	</table>
+<p align=center>
+<input type='button' onClick='btnSave()' value='Apply'>
+<input type='button' onClick='btnCancel()' value='Cancel'>
+</p>
+</form>
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

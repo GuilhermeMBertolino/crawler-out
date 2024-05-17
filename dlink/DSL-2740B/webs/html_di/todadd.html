@@ -1,0 +1,426 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var macUsed =  '<%ejGetOther(memInfo, pcMacAddr)%>';
+var iptSchedule = '1';
+
+var doEdit = false;
+
+
+var macs = '<%ejGetMac(macs)%>';//macs = 'abc,11:22:33:44:55:66,Always|';
+var macEntrys = macs.split('|');
+var macNum = macEntrys.length -1;
+var macNumLeft = 31 - macNum;
+var macRule = new Array(macNum);
+
+function mVe(username, mac, schedule)
+{
+	this.username = username;
+	this.mac = mac;
+	this.schedule = schedule;
+}
+
+for (i = 0; i < macNum; i++)
+	macRule[i] = new mVe('','','');
+
+for (i = 0; i < macNum; i++)
+{
+	entry = macEntrys[i].split(',');
+	macRule[i] = new mVe(entry[0], entry[1], entry[2]);
+}
+
+var schedule = '<%ejGetTod(name)%>';
+var schEntry = schedule.split('|');
+var schNum = schEntry.length - 1;
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+     radioMac[0].checked = true;
+     pcMac.value = macUsed;
+	 pcMac.disabled = 1;
+   }
+
+//Frederick,061206 If firewall scheduling option is turned on ,don't need to let user explicitly create schedule here
+   if ( iptSchedule == '1')
+		if (document.getElementById)  // DOM3 = IE5, NS6
+      		document.getElementById('todAddInfo').style.display = 'none';
+	   else 
+    	  document.all.todAddInfo.style.display = 'none';
+//061206
+	
+}
+
+function btnApply() {
+
+  var loc = 'blockmac.tod?action=add&';
+  
+  if (doEdit == true && editId != '')
+  {
+    loc = 'blockmac.tod?action=edit&';
+  }
+	
+    with ( document.forms[0] ) {
+
+	  if (isValidName(username.value,"Parental Control rule name") == false) return;
+
+	  if (macUsed == ""){
+		  //alertInvalid("Mac Address entered",,"Please enter a MAC address");
+		  alertInvalid("Mac Address entered","","Please enter a MAC address");
+		  return;
+	  }
+	  else
+	  	if (isValidMacAddress(macUsed,IS_NOT_MAC_FLT,"MAC Address") == false) return;
+
+        loc += "username="+username.value+"&mac="+macUsed;
+
+
+	//Frederick,061206 process only if firewall scheduling is off
+	 if ( iptSchedule != '1'){
+		;
+		//do nothing
+	}//061206
+	else	//Frederick,061206	add iptable schedule option
+	  if ( iptSchedule == '1' ){
+		var iptidx = iptSchedItem.selectedIndex;
+		var iptval = iptSchedItem.options[iptidx].value;
+		loc += '&schedule=' + iptval;
+	  }
+	  //alert(loc);
+        var code = 'location="' + loc + '"';
+        //if(("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1'))
+        if('<%ejGet(timeisSet)%>' != '1')		
+          alert("WARNING: Modem time is not set and Parental Control will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+        eval(code);
+    }
+}
+
+function radioClick()
+{
+   with (document.forms[0]) {
+      if (radioMac[1].checked == true)
+      	{
+      	  cusMac.disabled = 0;
+         macUsed = cusMac.value;
+      	}	 
+      else
+      	{
+      	  cusMac.disabled = 1;	
+         macUsed = '<%ejGetOther(memInfo, pcMacAddr)%>';
+      	}	 
+   }
+}
+
+function cusEnterMac()
+{
+   with (document.forms[0]) {
+      if (radioMac[1].checked == true)
+      {   
+		if(cusMac.value==pcMac.value)
+		{
+			alert ("Please input other MAC Address rather than Browser's MAC Address!");
+			cusMac.value = '';
+		}
+		macUsed = cusMac.value;
+		cusMac.focus = 1;
+      }
+   }
+}
+
+function btnCancel(){
+    with ( document.forms[0] ) {
+		todAddInfo.style.display = 'none';
+		if (macNum > 0)
+			removeTod.disabled = 0;
+		addTod.disabled = 0;
+		editTod.disabled = 0;
+	}
+}
+
+function btnBack(){
+   var loc = 'parentalctrl.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+function addClick(){
+    with ( document.forms[0] ) {
+		todAddInfo.style.display = 'block';
+		if (macNum > 0)
+			removeTod.disabled = 1;
+		addTod.disabled = 1;
+		editTod.disabled = 1;
+		username.value = '';username.disabled = 0; cusMac.disabled = 1;cusMac.value = '';radioMac[0].checked = true;
+		doEdit = false;
+	}
+}
+
+  var tmpUsername;
+  var tmpMac;
+  var tmpSched;
+  
+function btnEdit(rml) {
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+
+
+  var checkId = 0;
+
+with ( document.forms[0] ) {
+
+  if (rml)
+  {
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+			hasChecked = true;
+        		checkedCount++;
+			checkId = i;
+      		}
+		}
+
+	} else if (rml.checked == true){
+		hasChecked = true;
+   		checkedCount++;
+		editId = rml.value;
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only 1 item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+		tmpUsername = macRule[checkId].username;
+		tmpMac = macRule[checkId].mac;
+		tmpSched = macRule[checkId].schedule;
+		
+		for(i=0;i<iptSchedItem.length;i++)
+			if(iptSchedItem.options[i].value == tmpSched)
+				iptSchedItem.selectedIndex = i;
+		
+		editId = tmpUsername;
+		
+		if (tmpMac == '<%ejGetOther(memInfo, pcMacAddr)%>'){
+			cusMac.value = "";
+			radioMac[0].checked = true;
+		}else{
+			cusMac.value = tmpMac;
+			radioMac[1].checked = true;
+		}
+		
+		radioClick();
+
+		if (tmpUsername == "")
+			username.value = "";
+		else
+			username.value = tmpUsername;
+
+		todAddInfo.style.display = 'block';
+		removeTod.disabled = 1;
+		addTod.disabled = 1;
+		editTod.disabled = 1;
+		username.disabled = 1;
+}
+  doEdit = true;
+
+}
+
+function removeClick(rml) {
+	var lst = '';
+	var has_selected_items = false;
+   		
+	if (rml.length > 0)
+    	for (i = 0; i < rml.length; i++) {
+   			if ( rml[i].checked == true ){
+				has_selected_items=true;
+            	lst += rml[i].value + ',';
+			}
+      	}
+   	else if ( rml.checked == true ){
+		has_selected_items=true;
+      	lst = rml.value;
+	}
+	
+	if (has_selected_items){
+   
+		var loc = 'blockmac.tod?action=remove&rmLst=' + lst;
+		var code = 'location="' + loc + '"';
+   
+		eval(code);
+	} else
+		alert("There are no items to remove");
+
+}
+
+
+// done hiding -->
+    </script>
+<script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body onLoad='frmLoad()'>
+      <blockquote>
+         <form>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Parental Control";
+HelpItem="tod";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Block MAC Address
+			</td>		
+		</tr>
+		<tr>
+			<td class=content><p>
+<p>This page adds a time of day restriction to a special LAN device connected to the    	     router. The "Browser's MAC Address" automatically displays the MAC address of the             LAN device where the browser is running. To restrict another LAN device, click the              "Other MAC Address" button and enter the MAC address of the other LAN device.             To find out the MAC address of a Windows-based PC, open a command prompt window and             type "ipconfig /all".</p>			</p></td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Block MAC Address
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<div class="overflow">
+<table class=formlisting>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Username</td>
+      <td class='form_label_col'>MAC</td>
+      <td class='form_label_col'>Schedule Rule</td>
+   </tr>
+<script language=javascript>   
+for(i = 0; i < macNum; i++) {
+    document.write('<tr class=form_label_row>');
+      document.write('<td align=center><input type=checkbox name=rml value='+macRule[i].username+'></td>');
+      document.write('<td class=form_label_col><label id=lblUsername>'+ macRule[i].username+'</label></td>');
+      document.write('<td class=form_label_col><label id=lblMac>' + macRule[i].mac + '</label></td>');
+      document.write('<td class=form_label_col>'+ macRule[i].schedule+'<label id=lblSched style=display:none>-2</label></td>');
+  document.write('</tr>');
+}
+  </script>
+</table><br>
+<br></div>
+</td>
+	</tr>
+</table>
+
+<br>
+<script language=javascript>
+if(macNum==31)
+	document.write("<p><FONT color=red>");
+else
+	document.write("<p><FONT color=green>");
+document.write("Can add 31 block macs," + macNum+" already added,"+macNumLeft+" left.");
+document.write("</FONT></p>");
+</script>
+	
+<p align=center>
+<input type='button' id=addTod onClick='addClick()' value='Add'>
+<input type='button' id=editTod onClick='btnEdit(this.form.rml)' value='Edit'>
+<script language=javascript>
+if (macNum > 0)
+	document.write("<input type='button' id=removeTod onClick='removeClick(this.form.rml)' value='Delete'>");
+
+if(macNum==31)
+	document.getElementById("addTod").disabled=1;
+else
+	document.getElementById("addTod").disabled=0;
+
+</script>
+</p>
+
+
+<div id=todAddInfo style={display:none}>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Time of Day Restriction
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+<br>
+            <table border="0" cellpadding="0" cellspacing="0" class=formarea>
+               <tr>
+                  <td class=form_label>User Name:</td>
+                  <td><input type='text' name='username' size='20' maxlength='30'></td>
+               </tr>
+            </table>
+            <table border="0" cellpadding="0" cellspacing="0" class=formarea>
+               <tr>
+                  <td colspan="2"  class=form_label>&nbsp;</td>
+               </tr>
+               <tr>
+                  <td class=form_label>
+                     <input type="radio" name="radioMac" onclick='radioClick()'>&nbsp;&nbsp;Browser's 
+                     MAC Address:&nbsp;
+                  </td>
+                  <td><input type='text' size="16" maxlength="17" name="pcMac" readonly></td>
+               </tr>
+               <tr>
+                  <td class=form_label>
+                     <input type="radio" name="radioMac" onclick='radioClick()'>&nbsp;&nbsp;Other 
+                     MAC Address: (xx:xx:xx:xx:xx:xx)&nbsp;</td>
+                  <td><input type='text' size="16" name="cusMac" onchange='cusEnterMac()' maxlength="17"></td>
+               </tr>
+               <tr>
+                  <td colspan="1">&nbsp;</td>
+               </tr>
+            </table>
+
+			<table class=formarea border='0' cellpadding='0' cellspacing='0'>
+				<tr><td class=form_label>Blocking on Schedule:&nbsp;</td><td>
+				<select name="iptSchedItem">
+					<option value="Always">Always</option>
+					<script language=javascript>
+					for(i = 0; i < schNum; i++)
+						document.write("<option value="+ schEntry[i]+">"+schEntry[i]+"</option>");
+					</script>
+					<option value="Never">Never</option>
+				</select>
+				<a href="iptschedadd.html"> View Schedule Details</a>
+			</table>
+      		</td>
+		</tr>
+	</table>
+<p align=center><input type='button' value="Apply" onClick='btnApply()'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+</div>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+         </form>
+      </blockquote>
+   </body>
+</html>

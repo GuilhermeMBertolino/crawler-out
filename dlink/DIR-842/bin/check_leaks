@@ -1,0 +1,31 @@
+#!/bin/sh
+
+show_errors() {
+	local ERRORS=$1
+	local FILE=$2
+	for err in $ERRORS; do
+		PID=$(echo $err | grep -o "==[[:digit:]]\+==")
+
+		if [ -z "$PID" ]; then
+			continue;
+		fi
+
+		grep $PID $FILE
+	done
+}
+
+for i in /var/log/*.vlog; do
+	echo "$i"
+
+	ERRORS=$(grep "ERROR" $i | grep -v "0 errors")
+	show_errors "$ERRORS" $i
+
+	ERRORS=$(grep "Process terminating" $i)
+	show_errors "$ERRORS" $i
+
+	ERRORS=$(grep "Invalid read" $i)
+	show_errors "$ERRORS" $i
+
+	ERRORS=$(grep "Invalid write" $i)
+	show_errors "$ERRORS" $i
+done

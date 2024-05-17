@@ -1,0 +1,376 @@
+<html>
+  <head>
+    <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var ddnsinfo = '';
+var doEdit = false;
+var editId;
+
+
+function frmLoad() {
+  with (document.forms[0]) {
+    ddnsMode.selectedIndex = 0;
+  }
+
+//  ddnsChange();
+}
+
+function btnApply(place) {
+
+   if (!doEdit)
+  var loc = place + '?action=add&ddnsRefresh=0&service=';
+else
+  var loc = place + '?action=edit&editId=' + editId +'&ddnsRefresh=0&service=';
+  
+  var hostname = ddnsinfo.split('|');
+  var itemselect = '';
+  var pwrdselect = '';
+
+  if ( place == "ddnsmngr.cmd" ) {
+    with ( document.forms[0] ) {
+      loc += ddnsMode.selectedIndex;
+	  
+     update_username = convertSpclChar(ddnsUsername.value);
+     update_password = convertSpclChar(ddnsPassword.value);
+
+	if(!isValidName(ddnsHostname.value,"Hostname",BLANK_INVALID,SPACE_INVALID)) return;	  
+
+	//Frederick,060724	dont allow special character '<' as first character this will confuse html tags..
+	
+//    if (( ddnsMode[ddnsMode.selectedIndex].value == 'dyndns' ) ||
+//		( ddnsMode[ddnsMode.selectedIndex].value == 'dtdns' ) ||
+//		( ddnsMode[ddnsMode.selectedIndex].value == 'zoneedit' ))
+			itemselect = "Username";
+//	else
+//			itemselect = "Email address";
+
+	if (ddnsMode[ddnsMode.selectedIndex].value == 'tzo')
+		pwrdselect = "Key";
+	else
+		pwrdselect = "Password";
+
+	astr = ddnsUsername.value;
+
+	if (astr.charAt(0) == "<")
+	{
+    	alert(itemselect + ' cannot have < as first character.' );
+		return;
+	}
+	
+	if (!isValidName(update_username,itemselect,BLANK_INVALID,SPACE_INVALID)) return;
+    	loc += '&username=' + update_username;
+
+	if (itemselect == "Email address")
+		if (!isValidEmail(update_username,itemselect)) return;
+		
+	if (!isValidName(update_password,pwrdselect,BLANK_INVALID,SPACE_INVALID)) return;
+      loc += '&password=' + update_password;
+
+	if(!doEdit){
+	  for ( i = 0; i < hostname.length; i++ ) {
+      	if( hostname[i] == ddnsHostname.value){
+			alert('Hostname already in use.' );
+			return;
+		}      	
+   	  }
+	}
+
+      loc += '&hostname=' + ddnsHostname.value;
+
+	} //with
+
+    var code = 'location="' + loc + '"';
+    eval(code);
+  }
+}
+
+function btnCancel(){
+	doEdit = false;
+    with ( document.forms[0] ) {
+		ddnsAddInfo.style.display = 'none';
+		removeDDNS.disabled = 0;
+		addDDNS.disabled = 0;
+		editDDNS.disabled = 0;
+	}
+}
+
+function addClick() {
+	doEdit = false;
+    with ( document.forms[0] ) {
+		ddnsAddInfo.style.display = 'block';
+		removeDDNS.disabled = 1;
+		addDDNS.disabled = 1;
+		editDDNS.disabled = 1;		
+		ddnsHostname.value = ddnsUsername.value = ddnsPassword.value ='';
+	}
+}
+
+function btnEdit(rml){
+  var i;
+  var checkedCount = 0 ;
+  editId='';
+  var hasChecked = false;
+  
+  var tmpHostname;
+  var tmpUsername;
+  var tmpPassword;
+  var tmpService;
+
+with ( document.forms[0] ) {
+  if (rml)
+  {  
+	if (rml.length > 0){
+		for (i = 0; i < rml.length; i++)
+    	{
+      		if(rml[i].checked == true)
+      		{
+				hasChecked = true;
+        		checkedCount++;
+        		editId = rml[i].value;
+			  	tmpHostname = document.getElementById( "lblHostname" + i).innerHTML;
+			  	tmpUsername = document.getElementById( "lblUsername" + i).innerHTML;
+			  	tmpPassword = document.getElementById( "lblPassword" + i).innerHTML;
+			  	tmpService = document.getElementById( "lblService" + i).innerHTML;
+      		}
+		}
+	} else if (rml.checked == true){	
+		hasChecked = true;
+   		checkedCount++;
+		editId = rml.value;
+	  	tmpHostname = document.getElementById( "lblHostname0" ).innerHTML;
+	  	tmpUsername = document.getElementById( "lblUsername0" ).innerHTML;
+	  	tmpPassword = document.getElementById( "lblPassword0" ).innerHTML;
+	  	tmpService = document.getElementById( "lblService0" ).innerHTML;
+	}
+
+    if (checkedCount > 1){
+      alert ("Please select only one item to edit!");
+      hasChecked = false;
+      editId ='';
+      return;
+    }
+  }
+
+	if (!hasChecked) {
+		alert ("Please select an item to edit!");
+		return;
+	}
+
+		ddnsHostname.value = tmpHostname;
+		ddnsUsername.value = tmpUsername;
+		ddnsPassword.value = tmpPassword;
+
+	    ddnsMode.selectedIndex = tmpService;	
+		ddnsAddInfo.style.display = 'block';
+		removeDDNS.disabled = 1;
+		addDDNS.disabled = 1;
+		editDDNS.disabled = 1;		
+  }
+  doEdit = true;
+
+}
+
+function removeClick(rml) {
+	var lst = '';
+	var has_selected_items = false;
+   with ( document.forms[0] ) {
+     if (rml)
+  {
+	if (rml.length > 0)
+    	for (i = 0; i < rml.length; i++) {
+        	if ( rml[i].checked == true ){
+				has_selected_items=true;
+            	lst += rml[i].value + ', ';
+			}
+      	}
+   	else if ( rml.checked == true ){
+		has_selected_items=true;
+      	lst = rml.value;
+	}
+	}
+	} 
+	if (has_selected_items){
+   		var loc = 'ddnsmngr.cmd?action=remove&rmLst=' + lst;
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	} else{
+		alert("There are no items to remove!");
+		return;
+}	
+}
+
+// done hiding -->
+    </script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Dynamic DNS";
+HelpItem="ddns";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>      <form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				DDNS
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+        This page allows you to add a Dynamic DNS address.
+			</p>
+		<p>The Dynamic DNS service allows you to alias a dynamic IP address to a static hostname in 
+		any of the many domains, allowing your DSL router to be more easily accessed from various locations 
+		on the Internet.</p>
+		<p>Choose Add or Remove to configure Dynamic DNS.</p>
+
+			</td>
+		</tr>
+	</table>
+
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Dynamic DNS
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+<div class=overflow>
+<table class=formlisting>
+   <tr class=form_label_row>
+      <td class='form_label_col'>&nbsp;</td>
+      <td class='form_label_col'>Hostname</td>
+      <td class='form_label_col'>Username</td>
+      <td class='form_label_col'>Service</td>
+   </tr>
+   
+      <script language="javascript">   
+  	 
+   var ddnss = '<%ejGetDDns(ddns)%>';
+  // ddnss = 'asa,bb,cc,br0,1|';
+   var entrys = ddnss.split('|');
+   var entryNum = entrys.length - 1;
+var rule = new Array(8);
+for (i = 0; i < 8; i++)	rule[i] = new rVe('','','','');
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split(',');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3]);
+}
+
+
+function rVe(hostname,username,password, service)
+{
+   this.hostname = hostname; this.password = password;
+   this.username = username;  this.service = service;
+}
+
+for(i = 0; i < entryNum; i++){
+		document.writeln('<tr>');	
+	document.writeln('<td><div align=center><input type=checkbox name=rml value='+rule[i].hostname+'></div></td>'); 	
+		document.writeln('<td><div align=center id=lblHostname'+i+'>'+rule[i].hostname+'</div></td>');    
+		document.writeln('<td><div align=center id=lblUsername'+i+'>'+rule[i].username+'</div></td>');    
+		if(rule[i].service == '0')
+		document.writeln('<td><div align=center>D-Link DDNS<label id=lblService'+i+' style="display:none">0</label><label id=lblPassword'+i+' style="display:none">'+rule[i].password+'</label></div></td>');    
+		else if(rule[i].service == '1')
+		document.writeln('<td><div align=center>DynDNS(Custom)<label id=lblService'+i+' style="display:none">1</label><label id=lblPassword'+i+' style="display:none">'+rule[i].password+'</label></div></td>');    		
+		else if(rule[i].service == '2')
+		document.writeln('<td><div align=center>DynDNS(Free)<label id=lblService'+i+' style="display:none">2</label><label id=lblPassword'+i+' style="display:none">'+rule[i].password+'</label></div></td>');  
+		else if(rule[i].service == '3')
+		document.writeln('<td><div align=center>DynDNS(Static)<label id=lblService'+i+' style="display:none">3</label><label id=lblPassword'+i+' style="display:none">'+rule[i].password+'</label></div></td>');    		
+		document.writeln('</tr>');
+   }
+   
+      </script>    
+</table><br>
+<br></div></td>
+	</tr>
+</table>
+	<p align=center>
+<input type='button' id=addDDNS onClick='addClick()' value='Add'>
+<input type='button' id=editDDNS onClick='btnEdit(this.form.rml)' value='Edit' class='btn'>
+<input type='button' id=removeDDNS onClick='removeClick(this.form.rml)' value='Delete'>
+</p>
+	
+<div id=ddnsAddInfo style="display:none;">
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Add dynamic DNS
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+ 
+        <br>
+        <table class=formarea border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td class=form_label>D-DNS provider&nbsp;:</td>
+            <td><select name='ddnsMode' size="1" >
+                  <option value="dlinkddns">dlinkddns.com(Free)</option>
+                  <option value="dyndns-custom">DynDNS.org(Custom)</option>
+                  <option value="dyndns">DynDNS.org(Free)</option>
+                  <option value="dyndns-static">DynDNS.org(Static)</option>
+                </select>
+            </td>
+          </tr>
+        </table>
+        <br>
+        <div id="ddnsInfo">
+          <table class=formarea border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class=form_label>Hostname&nbsp;:</td>
+              <td><input type="text" name="ddnsHostname" maxlength="39"></td>
+            </tr>
+          </table>
+        </div>
+		
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width='180'>
+					<table class=formarea border="0" cellpadding="0" cellspacing="0">
+						<tr><td class=form_label>Username&nbsp:</td></tr>
+					</table>
+			  </td>					
+              <td><input type='text' name='ddnsUsername' size='20' maxlength='39'></td>
+            </tr>
+            <tr>
+              <td width='180'>
+					<table class=formarea border="0" cellpadding="0" cellspacing="0">
+						<tr><td class=form_label>Password&nbsp;:</td></tr>
+					</table>
+			  </td>
+              <td><input type="password" maxlength="23" name="ddnsPassword"></td>
+            </tr>
+          </table>
+
+			</td>										
+		</tr>
+	</table>
+          <p align=center><input type='button' value="Apply" onClick='btnApply("ddnsmngr.cmd")'>
+		  <input type='button' onClick='btnCancel()' value='Cancel'></p>
+	</div>	  
+      </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+  </body>
+</html>

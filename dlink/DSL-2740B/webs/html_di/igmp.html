@@ -1,0 +1,190 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var state = '0';
+if ( state == '1' ) {
+   var code = 'location="lancfg2.cgi?lanRefresh=0"';
+   eval(code);
+}
+
+var enblIgmpSnp = '<%ejGetOther(sysInfo,enblIgmpSnp)%>';
+var enblIgmpMode = '<%ejGetOther(sysInfo,enblIgmpMode)%>';
+
+function existIPOE()
+{
+
+   var i = 0;
+   //var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, allEoAPvc)%>';
+   var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, route)%>';
+   var interfaces = interfaceInfo.split('|');
+   
+   for ( i = 0; i < interfaces.length; i++ ) 
+   {
+      var names = interfaces[i].split('/');
+	  var sub = "ipoe_atm";
+	  if(names[0].indexOf(sub)> -1)
+	  {
+        return 1;
+	  }
+   }
+   return 0;
+}
+function hideIgmpSnpInfo(hide) {
+   var status = false;
+
+   if ( hide == 1 )
+      status = true;
+			
+	changeBlockState('igmpSnpInfo',status);
+}
+
+function igmpClick() {
+   with ( document.forms[0] ) {
+		if (chkIgmpSnp.checked == false){
+			changeBlockState('igmpSnpInfo',true);
+		} else {
+			changeBlockState('igmpSnpInfo',false);
+		}
+			  if(existIPOE()){
+	  //igmpSnpInfo.style.display="none";
+	  igmpMode[0].style.display="none";
+	  mode1.style.display="none";
+    	igmpMode[0].checked = false;
+    	igmpMode[1].checked = true;
+	  }
+	}
+}
+
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+      if ( enblIgmpSnp == '1' )
+        chkIgmpSnp.checked = true;
+      else
+        chkIgmpSnp.checked = false;
+      if ( enblIgmpMode == '1' ) {
+    	igmpMode[0].checked = false;
+    	igmpMode[1].checked = true;
+      }
+      else {
+      igmpMode[0].checked = true;
+        igmpMode[1].checked = false;
+      }
+      hideIgmpSnpInfo(0);
+	  igmpClick();
+			  if(existIPOE()){
+	  //igmpSnpInfo.style.display="none";
+	  igmpMode[0].style.display="none";
+	  mode1.style.display="none";
+    	igmpMode[0].checked = false;
+    	igmpMode[1].checked = true;
+	  }
+   }
+}
+
+function btnSave(reboot) {
+   var loc = 'igmp.cgi?';
+
+
+   with ( document.forms[0] ) {
+     if ( chkIgmpSnp.checked == true )
+        loc += 'enblIgmpSnp=1';
+     else
+        loc += 'enblIgmpSnp=0';
+    if ( igmpMode[1].checked == true )
+        loc += '&enblIgmpMode=1';
+     else
+        loc += '&enblIgmpMode=0';
+   }
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnCancel(){
+   var loc = 'igmp.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="Network Tools";
+HelpItem="igmp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				IGMP
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Transmission of identical content, such as multimedia, from a source to a number of recipients.</p>				
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				IGMP Setup
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+			
+
+         <form>
+            <br>
+
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td><input type='checkbox' name='chkIgmpSnp' id='chkIgmpSnp' onclick='igmpClick()'>&nbsp;&nbsp;<label for=chkIgmpSnp><b>Enable IGMP Snooping</b></label></td>
+                </tr>
+		<tbody id=igmpSnpInfo>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='igmpMode' id='igmpMode'><label id=mode1>&nbsp;&nbsp;Standard Mode</label></td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type='radio' name='igmpMode' id='igmpMode'><label id=mode2>&nbsp;&nbsp;Blocking Mode</label></td>
+                  </tr>
+		</tbody>
+            </table>
+            <br>
+
+            <br>
+			</td>										
+		</tr>
+	</table>
+<p align=center><input type='button' onClick='btnSave(0)' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'></p>
+         </form>
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

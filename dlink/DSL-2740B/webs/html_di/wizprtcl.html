@@ -1,0 +1,333 @@
+	<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+ <script language="javascript" src="util.js"></script>
+ <script language="javascript" src="menu.js"></script>
+ <script language="javascript" src="isplist.js"></script>
+<script language="javascript">
+<!-- hide
+var auto = '<%ejGet(enblAutoScan)%>';
+var atmvpi = '<%ejGet(atmVpi)%>';
+var atmvci = '<%ejGet(atmVci)%>';
+var mem = '<%ejGetOther(memInfo, checkAutoScanMemory)%>';
+var prtcl = '<%ejGetOther(memInfo, ntwkPrtcl)%>';
+var macAddress = '<%ejGetOther(memInfo, pcMacAddr)%>';
+var ispPrtcl;
+var encapMode = '<%ejGet(encapMode)%>';
+var ntwkPrtcl = '<%ejGet(ntwkPrtcl)%>';
+//fixed by roger
+var mtu = '<%ejGet(pppMtu)%>';
+if(mtu == '' || mtu == 0)
+	mtu = 1492;
+
+
+function btnCancel(){
+
+  var code = 'location="internet.html"';
+  eval(code);
+
+}
+
+function btnNext(){
+
+    	var loc = '';
+	var param = '';
+	//var conId = '<%ejGetOther(wanInterfaceInfo, conId)%>';
+
+	with (document.forms[0]) 
+	{
+		if (!isInValidRange(vpi.value,0,255,"VPI")) return;
+		if (!isInValidRange(vci.value,32,65535,"VCI")) return;
+
+		if ((isnum(vpi.value) == false)) {
+		        mesg = 'VPI "' + vpi.value + '" is invalid.';
+             		alert(mesg);
+		}
+
+
+		if ((isnum(vci.value) == false)) {
+		        mesg = 'VCI "' + vci.value + '" is invalid.';
+             		alert(mesg);
+		}
+
+
+		if (contype.selectedIndex == 0) {
+			alert("Please select a kind of encapMode. ");
+			return;
+		}
+
+		var tempvpi = parseInt(vpi.value, 10);
+		var tempvci = parseInt(vci.value, 10);
+		//param += '&atmVpi=' + tempvpi;
+		//param += '&atmVci=' + tempvci;
+                window.parent.frames[0].wizAutoscan = '0';
+                window.parent.frames[0].wizVpi = tempvpi;
+                window.parent.frames[0].wizVci = tempvci;
+
+		if (ispPrtcl == "PPPoA")
+		{	
+                    loc = 'wizppp.html';
+                    window.parent.frames[0].wizPrtcl = 'PPPoA';
+		}
+		else if (ispPrtcl == "PPPoE")
+		{
+                    loc = 'wizppp.html';
+                    window.parent.frames[0].wizPrtcl = 'PPPoE';
+		}
+		else if (ispPrtcl == "Dynamic IP")
+		{
+                    loc = 'wizdynamic.html';
+                    window.parent.frames[0].wizPrtcl = 'Dynamic IP'
+		}
+		else if (ispPrtcl == "Static IP")
+		{
+                    loc = 'wizstatic.html';
+                    window.parent.frames[0].wizPrtcl = 'Static IP';
+		}
+		else if (ispPrtcl == "Bridge")
+		{
+                    loc = 'wizwl.html';
+                    window.parent.frames[0].wizPrtcl = 'Bridge';
+		}
+		else if (ispPrtcl == "IPoA")
+		{
+                    loc = 'wizstatic.html';
+                    window.parent.frames[0].wizPrtcl = 'IPoA';
+		}
+		switch (contype.selectedIndex)
+		{
+		case 1:
+                        window.parent.frames[0].wizEncapMode = '0';
+                        break;
+		case 2:
+                        window.parent.frames[0].wizEncapMode = '1';
+                        break;
+		}
+	}
+    var code = 'location="' + loc + '"';
+    eval(code);
+
+}
+
+
+function conTypebyPrtcl(){
+
+	hidemtu(1);
+	hidemac(1);
+
+	with (document.forms[0]) {
+		ispPrtcl = prtcltype[prtcltype.selectedIndex].value;
+		setContype(contype);
+		//if((prtcltype.selectedIndex == 1)||(prtcltype.selectedIndex == 2)) // Ayecom-leander-20071002 fixed bug : PPPoA setting can't be saved by Wizard
+			//hidemtu(0);
+		//else if(prtcltype.selectedIndex == 3)
+			//hidemac(0);
+	
+	}	
+}
+
+function hidemac(hide){
+	
+	var status = 'visible';	 
+	with (document.forms[0]) {
+ 	macaddr.value = '<%ejGet(clientMac)%>';
+	
+   	if ( hide == 1 ){
+      		status = 'hidden';
+		macaddr.value = '';	
+   	}if (document.getElementById)  // DOM3 = IE5, NS6
+      		document.getElementById('macinfo').style.visibility = status;
+   	else {
+      		if (document.layers == false) // IE4
+         	document.all.dhcpInfo.style.visibility = status;
+   	}
+
+}
+	
+}
+
+function hidemtu(hide){
+
+	var status = 'visible';	 
+	with (document.forms[0]) {
+ 	pppmtu.value = mtu;
+	
+   	if ( hide == 1 ){
+      		status = 'hidden';
+		pppmtu.value = '';	
+   	}if (document.getElementById)  // DOM3 = IE5, NS6
+      		document.getElementById('mtuinfo').style.visibility = status;
+   	else {
+      		if (document.layers == false) // IE4
+         	document.all.dhcpInfo.style.visibility = status;
+   	}
+
+}
+
+}	
+
+function setMac(){  
+	with (document.forms[0]) {
+		macaddr.value = macAddress;
+	}
+} 
+
+
+function frmLoad(){
+	if(auto == 0) { //Raypeng add for auto scan fail
+		var loc = 'autoscancancel.cgi?autoScanInProgress=0';
+		var code = 'location="' + loc + '"';
+   		eval(code);
+	}
+
+	with (document.forms[0]) {
+			vpi.value = atmvpi;
+			vci.value = atmvci;
+			vpi.disabled = true;
+			vci.disabled = true;
+		    if (ntwkPrtcl == 0)
+			{
+				prtcltype.value = "PPPoE";
+				if (encapMode == 0)
+					ispEncap = "LLC";
+				else
+					ispEncap = "VC Mux";
+			}
+			else if (ntwkPrtcl == 1)
+			{				
+				prtcltype.value = "PPPoA";
+				if (encapMode == 1)
+					ispEncap = "LLC";
+				else
+					ispEncap = "VC Mux";
+			}
+			else if (ntwkPrtcl == 3)
+			{
+				prtcltype.value = "-1";
+				ispEncap = "-1";
+			}			
+			conTypebyPrtcl();
+	}		
+
+}
+
+
+function btnBack(){
+   var loc = 'wizwan.cgi?enblAutoScan=1';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+
+// done hiding -->
+    </script>
+</head>
+
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="temp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				1 > 2 > Step 3: Setup Internet Connection > 4 > 5 > 6
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <P>Use Auto-Scanned PVC. Please select Protocol and Connection Type from the list below.  Click Next to proceed to next step. </P>
+			<br>
+			<div id=ispSecInfo>
+			<TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+				<tr>
+					<td class=form_label align=right>Protocol&nbsp;:&nbsp;</>
+					</td>
+					<td><select id=prtcltype name=prtcltype onchange='conTypebyPrtcl()'>
+							<option value="-1">(Click to select)</option>
+							<option value="PPPoE">PPPoE</option>
+							<option value="PPPoA">PPPoA</option>
+							<option value="Dynamic IP">Dynamic IPoE</option>
+							<option value="Static IP">Static IPoE</option>
+<script language="javascript">
+						    document.writeln("<option value=\"IPoA\">IPoA</option>");
+</script>
+							<option value="Bridge">Bridge</option>
+						</select>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label align=right>Connection Type&nbsp;:&nbsp;</>
+					</td>
+					<td><select id=contype name=contype>
+							<option value="-1">(Click to select)</option>
+							<option value="pppoevc">PPPoE VC-Mux</option>
+							<option value="pppoellc">PPPoE LLC/Snap-Bridging</option>
+							<option value="pppoavc">PPPoA VC-Mux</option>
+							<option value="pppoallc">PPPoA LLC/Encapsulation</option>
+						</select>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label align=right><label id=lblvpi>VPI&nbsp;:&nbsp;</label>
+					</td>
+					<td><INPUT type=text id=vpi name=vpi>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label align=right><label id=lblvci>VCI&nbsp;:&nbsp;</label>
+					</td>
+					<td><INPUT type=text id=vci name=vci>
+				    </td>
+				</tr>
+			</TABLE>
+			</div>
+						
+			<div id=mtuinfo>
+			<TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+              	<TR>
+                	<td class=form_label align=right><label>Mtu&nbsp;:&nbsp;</label></td>
+                	<TD><input type='text' name='pppmtu'></TD>
+		     	</TR>
+			</table>
+			</div>
+
+			<div id=macinfo>
+			<TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+              	<tr>
+                	<td class=form_label align=right><label>Cloned MAC Address&nbsp;:&nbsp;</LABEL></td>
+            		<td><INPUT type='text' name="macaddr" maxlength="30" size="20"></td></tr>
+          		<tr>
+            		<td align='center' colSpan=2><input class=button_submit  name='cpmac' onclick=setMac() type=button value="Copy Your PC's MAC Address"></td>
+		     	</tr>
+			</table>
+			</div>
+			
+      		</td>
+		</tr>
+	</table>
+			<p align=center><input type='button' value="Back" onClick='btnBack()' id='back'><input type=button value='Next' onclick='btnNext()' id=cmdNxt><input type=button value='Cancel' onclick='btnCancel()'></p>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</form>
+</blockquote>
+   </body>
+</html>

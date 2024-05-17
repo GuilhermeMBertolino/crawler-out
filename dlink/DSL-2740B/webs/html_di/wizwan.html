@@ -1,0 +1,909 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+ <script language="javascript" src="util.js"></script>
+ <script language="javascript" src="menu.js"></script>
+ <script language="javascript" src="isplist.js"></script>
+<script language="javascript">
+<!-- hide
+
+//var auto = '<%ejGet(enblAutoScan)%>';
+//var atmvpi = '<%ejGet(atmVpi)%>';
+//var atmvci = '<%ejGet(atmVci)%>';
+var auto = window.parent.frames[0].wizAutoscan;
+var atmvpi = window.parent.frames[0].wizVpi;
+var atmvci = window.parent.frames[0].wizVci;
+//var macAddress = '<%ejGetOther(memInfo, pcMacAddr)%>';
+var macAddress = window.parent.frames[0].wizMacAddr;
+var ispPrtcl;
+var dslType = 0;
+//var mtu = '<%ejGet(pppMtu)%>';
+var mtu = window.parent.frames[0].wizMtu;
+if (mtu == '' || mtu == 0)
+{
+    mtu = 1492;
+}
+//var countryid = '<%ejGet(countryId)%>';
+//var ispid = '<%ejGet(ispId)%>';
+var countryid = window.parent.frames[0].wizCountry;
+var ispid = window.parent.frames[0].wizIsp;
+var wizprotocol = window.parent.frames[0].wizprotocol;
+var wizcontype = window.parent.frames[0].wizcontype
+var usedPvc = '<%ejUsedPvc(usedPvc)%>';
+var doEdit = window.parent.frames[0].dowanedit;
+
+var wanInterfacePVC = '<%ejGetOther(wanInterfacePVC)%>';
+
+var FWversion =  '<%ejGet(sysVersion)%>';
+var FWversion_get = FWversion.split('_');
+
+function btnCancel()
+{
+    var code = 'location="internet.html"';
+    eval(code);
+}
+
+function isFWversion()
+{
+	var FWversion_get = FWversion.split('_');
+alert(FWversion_get[0]);
+	if (FWversion_get[0] == 'SEA') {
+          
+		return true;
+	} else {
+        
+		return false;
+	}
+}
+
+
+function isPvcUsed(v1, v2)
+{
+	var i = 0;
+	var usedVpi, usedVci;
+	var usedPvc_a = wanInterfacePVC.split('|');
+	for(i = 0; i < usedPvc_a.length; i++)
+	{
+		var tmp = usedPvc_a[i].split('/');
+		usedVpi = tmp[0];
+		usedVci = tmp[1];
+		if(v1 == usedVpi && v2 == usedVci)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
+function btnApply()
+{
+    var loc = '';
+    var param = '';
+    var portId;
+    with(document.forms[0])
+    {
+        if (dslType == 0)
+        {
+            //loc = 'dslatm.cmd?action=add';
+            loc = 'wizppp.cgi?quickSetup=1';
+            if (enblAutoScan.checked == true)
+            {
+                // if there is not enough memory to perform auto scan
+                // or run out of PVCs then display error message.
+                //if ( mem != '0' ) {
+	            //    loc = 'autoscanerr.cgi?';
+	            //    param += 'enblAutoScan=1';
+                //} else {
+	                loc = 'autoscan_test.cgi?';
+	                param += 'enblAutoScan=1';
+	                param += '&atmVpi=' + atmvpi;
+	                param += '&atmVci=' + atmvci;
+	                param += '&enblQos=0';
+                //}
+                param += '&quickSetup=1&serviceId=0';
+            }
+            else
+            {
+                if (!isInValidRange(vpi.value, 0, 255, "VPI"))
+                {
+                    return;
+                }
+                if (!isInValidRange(vci.value, 32, 65535, "VCI"))
+                {
+                    return;
+                }
+                var tempvpi = parseInt(vpi.value, 10);
+                var tempvci = parseInt(vci.value, 10);
+                param += '&enblAutoScan=0';
+                param += '&atmVpi=' + tempvpi;
+                param += '&atmVci=' + tempvci;
+                param += '&atmServiceCategory=UBR';
+                param += '&atmPeakCellRate=0';
+                param += '&quickSetup=1';
+                param += '&portId=0';
+                param += '&enblQos=0';
+                param += '&atmSustainedCellRate=0';
+                param += '&atmMaxBurstSize=0';
+                if (ispPrtcl == "PPPoA")
+                {
+                    loc = 'wizppp.cgi?quickSetup=1';
+                    param += '&linkType=PPPoA';
+                    param += '&connMode=0';
+                }
+                else if (ispPrtcl == "PPPoE")
+                {
+                    loc = 'wizppp.cgi?quickSetup=1';
+                    param += '&linkType=PPPoE';
+                    param += '&connMode=2';
+                }
+                else if (ispPrtcl == "Dynamic IP")
+                {
+                    loc = 'wizwl.cgi?quickSetup=1';
+                    param += '&linkType=DynamicIP';
+                    param += '&connMode=0';
+                }
+                else if (ispPrtcl == "Static IP")
+                {
+                    loc = 'wizstatic.cgi?quickSetup=1';
+                    param += '&linkType=StaticIP';
+                    param += '&connMode=0';
+                }
+                else if (ispPrtcl == "Bridge")
+                {
+                    loc = 'wizwl.cgi?quickSetup=1';
+                    param += '&linkType=Bridge';
+                    param += '&connMode=0';
+                }
+                else if (ispPrtcl == "IPoA")
+                {
+                    loc = 'wizstatic.cgi?quickSetup=1';
+                    param += '&linkType=IPoA';
+                    param += '&connMode=0';
+                }
+
+                // 20091118, Roger Yu add the alert info
+                if (0 == prtcltype.selectedIndex)
+                {
+                    alert('Protocol needs be selected.');
+                    return;
+                }
+
+                if (0 == contype.selectedIndex)
+                {
+                    alert('Connection Type needs be selected.');
+                    return;
+                }
+                // end add
+                switch (contype.selectedIndex)
+                {
+                    case 1:
+                        param += '&encapMode=0';
+                        break;
+                    case 2:
+                        param += '&encapMode=1';
+                        break;
+                }
+                param += '&countryId=' + country.selectedIndex;
+                param += '&ispId=' + isplist.selectedIndex;
+            }
+        }
+        else
+        {
+            loc = 'dslptm.cmd?action=add';
+            param += '&quickSetup=1';
+            if (path0.checked == true && path1.checked == true)
+            {
+                portId = '4';
+            }
+            else if (path0.checked == true)
+            {
+                portId = '0';
+            }
+            else if (path1.checked == true)
+            {
+                portId = '1';
+            }
+            else
+            {
+                alert('At least one latency check box need be selected.');
+                return ;
+            }
+            loc += '&portId=' + portId;
+            if (priorityNorm.checked == true)
+            {
+                param += '&ptmPriorityNorm=1';
+            }
+            else
+            {
+                param += '&ptmPriorityNorm=0';
+            }
+            if (priorityHigh.checked == true)
+            {
+                param += '&ptmPriorityHigh=1';
+            }
+            else
+            {
+                param += '&ptmPriorityHigh=0';
+            }
+            param += '&enblQos=1';
+            
+            if (prtcltype1.selectedIndex == 0)
+            {
+                param += '&linkType=PPPoE';
+                param += '&connMode=2';
+            }
+            else if (prtcltype1.selectedIndex == 1)
+            {
+                param += '&linkType=DynamicIP';
+                param += '&connMode=0';
+            }
+            else if (prtcltype1.selectedIndex == 2)
+            {
+                param += '&linkType=StaticIP';
+                param += '&connMode=0';
+            }
+            else if (prtcltype1.selectedIndex == 3)
+            {
+                param += '&linkType=Bridge';
+                param += '&connMode=0';
+            }
+        }
+    }
+    loc = loc + param;
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+*/
+
+function btnNext()
+{
+    var loc = '';
+    var param = '';
+    var portId;
+    with(document.forms[0])
+    {
+        if (dslType == 0)
+        {
+            //loc = 'dslatm.cmd?action=add';
+            if (enblAutoScan.checked == true)
+            {
+                // if there is not enough memory to perform auto scan
+                // or run out of PVCs then display error message.
+                //if ( mem != '0' ) {
+	            //    loc = 'autoscanerr.cgi?';
+	            //    loc += 'enblAutoScan=1';
+                //} else {
+	                loc = 'autoscan_test.cgi?';
+	                loc += 'enblAutoScan=1';
+	                loc += '&atmVpi=' + atmvpi;
+	                loc += '&atmVci=' + atmvci;
+	                loc += '&enblQos=0';
+                //}
+                loc += '&quickSetup=1&serviceId=0';
+
+                window.parent.frames[0].wizAutoscan = '1';
+            }
+            else
+            {
+                if (!isInValidRange(vpi.value, 0, 255, "VPI"))
+                {
+                    return;
+                }
+                if (!isInValidRange(vci.value, 32, 65535, "VCI"))
+                {
+                    return;
+                }
+	if (FWversion_get[0] == 'SEA') {
+	   if(isPvcUsed(vpi.value, vci.value) && ! doEdit)
+	   {
+			alert("This PVC has been used by another WAN connection!");
+			return;
+	   }
+	}
+
+                var tempvpi = parseInt(vpi.value, 10);
+                var tempvci = parseInt(vci.value, 10);
+
+                window.parent.frames[0].wizAutoscan = '0';
+                window.parent.frames[0].wizVpi = tempvpi;
+                window.parent.frames[0].wizVci = tempvci;
+                
+                if (ispPrtcl == "PPPoA")
+                {
+                    loc = 'wizppp.html';
+                    window.parent.frames[0].wizPrtcl = 'PPPoA';
+                }
+                else if (ispPrtcl == "PPPoE")
+                {
+                    loc = 'wizppp.html';
+                    window.parent.frames[0].wizPrtcl = 'PPPoE';
+                }
+                else if (ispPrtcl == "Dynamic IP")
+                {
+                    loc = 'wizdynamic.html';
+                    window.parent.frames[0].wizPrtcl = 'Dynamic IP';					
+                }
+                else if (ispPrtcl == "Static IP")
+                {
+                    loc = 'wizstatic.html';
+                    window.parent.frames[0].wizPrtcl = 'Static IP';					
+                }
+                else if (ispPrtcl == "Bridge")
+                {
+                    loc = 'wizwl.html';
+                    window.parent.frames[0].wizPrtcl = 'Bridge';
+                }
+                else if (ispPrtcl == "IPoA")
+                {
+                    loc = 'wizstatic.html';
+                    window.parent.frames[0].wizPrtcl = 'IPoA';
+                }
+
+                // 20091118, Roger Yu add the alert info
+                if (0 == prtcltype.selectedIndex)
+                {
+                    alert('Protocol needs be selected.');
+                    return;
+                }
+
+                if (0 == contype.selectedIndex)
+                {
+                    alert('Connection Type needs be selected.');
+                    return;
+                }
+                // end add
+                switch (contype.selectedIndex)
+                {
+                    case 1:
+                        window.parent.frames[0].wizEncapMode = '0';
+                        break;
+                    case 2:
+                        window.parent.frames[0].wizEncapMode = '1';
+                        break;
+                }
+
+                window.parent.frames[0].wizCountry = country.selectedIndex;
+                window.parent.frames[0].wizIsp = isplist.selectedIndex;
+				window.parent.frames[0].wizcontype = contype.selectedIndex;
+				window.parent.frames[0].wizprotocol = prtcltype.selectedIndex;
+            }
+        }
+    }
+
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+
+function disableOption()
+{
+    var status = false;
+    with(document.forms[0])
+    {
+        cmdNxt.disabled = false;
+        //hidemtu(1);
+        //hidemac(1);
+        if ((isplist.selectedIndex == 0) && (enblAutoScan.checked == false))
+        {
+            status = true;
+            cmdNxt.disabled = true;
+            prtcltype.disabled = true;
+            vpi.disabled = true;
+            vci.disabled = true;
+            contype.disabled = true;
+        }
+        else if (enblAutoScan.checked == false)
+        {
+            prtcltype.disabled = false;
+            ;
+            vpi.disabled = false;
+            vci.disabled = false;
+            contype.disabled = false;
+        }
+        //vpi.disabled = status;
+        //vci.disabled = status;
+        //contype.disabled = status;
+        getISPDetails(isplist);
+        if (ispPrtcl == "PPPoE")
+        {
+            prtcltype.selectedIndex = 1;
+            //hidemtu(0);
+        }
+        else if (ispPrtcl == "PPPoA")
+        {
+            prtcltype.selectedIndex = 2;
+            //hidemtu(0); // Ayecom-leander-20071002 fixed bug : PPPoA setting can't be saved by Wizard
+        }
+        else if (ispPrtcl == "Dynamic IP")
+        {
+            prtcltype.selectedIndex = 3;
+            //hidemac(0);
+        }
+        else if (ispPrtcl == "Static IP")
+        {
+            prtcltype.selectedIndex = 4;
+        }
+        else if (ispPrtcl == "IPoA")
+        {
+            prtcltype.selectedIndex = 5;
+        }
+        else if (ispPrtcl == "Bridge")
+        {
+            prtcltype.selectedIndex = 6;
+        }
+        else
+        {
+            prtcltype.selectedIndex = 0;
+        }
+        conTypebyPrtcl();
+        vpi.value = ispVPI;
+        vci.value = ispVCI;
+        if ((isplist.selectedIndex == (isplist.length - 1)) || 
+            (isplist.selectedIndex == 0))
+        {
+            vpi.value = "(Enter a number)";
+            vci.value = "(Enter a number)";
+        }
+    }
+}
+
+function conTypebyPrtcl()
+{
+    //hidemtu(1);
+    //hidemac(1);
+    with(document.forms[0])
+    {
+        ispPrtcl = prtcltype[prtcltype.selectedIndex].value;
+        setContype(contype);
+        //if((prtcltype.selectedIndex == 1)||(prtcltype.selectedIndex == 2)) // Ayecom-leander-20071002 fixed bug : PPPoA setting can't be saved by Wizard
+        //	hidemtu(0);
+        //else if(prtcltype.selectedIndex == 3)
+        //	hidemac(0);
+    }
+}
+
+function hidemac(hide)
+{
+    var status = 'visible';
+    with(document.forms[0])
+    {
+        macaddr.value = '<%ejGet(clientMac)%>';
+        if (hide == 1)
+        {
+            status = 'hidden';
+            macaddr.value = '';
+        }
+        if (document.getElementById)
+        // DOM3 = IE5, NS6
+        {
+            document.getElementById('macinfo').style.visibility = status;
+        }
+        else
+        {
+            if (document.layers == false)
+            // IE4
+            {
+                document.all.dhcpInfo.style.visibility = status;
+            }
+        }
+    }
+}
+
+function hidemtu(hide)
+{
+    var status = 'visible';
+    with(document.forms[0])
+    {
+        if (ispMTU == 0)
+        {
+            pppmtu.value = mtu;
+        }
+        else
+        {
+            pppmtu.value = ispMTU;
+        }
+        if (hide == 1)
+        {
+            status = 'hidden';
+            pppmtu.value = '';
+        }
+        if (document.getElementById)
+        // DOM3 = IE5, NS6
+        {
+            document.getElementById('mtuinfo').style.visibility = status;
+        }
+        else
+        {
+            if (document.layers == false)
+            // IE4
+            {
+                document.all.dhcpInfo.style.visibility = status;
+            }
+        }
+    }
+}
+
+function setMac()
+{
+    with(document.forms[0])
+    {
+        macaddr.value = macAddress;
+    }
+}
+
+function getOther()
+{
+    with(document.forms[0])
+    {
+        vpi.value = window.parent.frames[0].wizVpi;
+        vci.value = window.parent.frames[0].wizVci;
+        
+        ispPrtcl = window.parent.frames[0].wizPrtcl;
+        if (ispPrtcl == "PPPoE")
+        {
+            prtcltype.selectedIndex = 1;
+        }
+        else if (ispPrtcl == "PPPoA")
+        {
+            prtcltype.selectedIndex = 2;
+        }
+        else if (ispPrtcl == "Dynamic IP")
+        {
+            prtcltype.selectedIndex = 3;
+        }
+        else if (ispPrtcl == "Static IP")
+        {
+            prtcltype.selectedIndex = 4;
+        }
+        else if (ispPrtcl == "IPoA")
+        {
+            prtcltype.selectedIndex = 5;
+        }
+        else if (ispPrtcl == "Bridge")
+        {
+            prtcltype.selectedIndex = 6;
+        }
+        else
+        {
+            prtcltype.selectedIndex = 0;
+        }
+        
+        conTypebyPrtcl();
+        if ('0' == window.parent.frames[0].wizEncapMode)
+        {
+            contype.selectedIndex = 1;
+        }
+        else if ('1' == window.parent.frames[0].wizEncapMode)
+        {
+            contype.selectedIndex = 2;
+        }
+        
+    }
+}
+
+function frmLoad()
+{
+    with(document.forms[0])
+    {
+//        selectDSLType();
+//        var dsl = dsltype.selectedIndex;
+        var dsl = 0;
+        
+        if (dsl == 0)
+        {
+            if (auto == '1')
+            {
+                enblAutoScan.checked = true;
+                vpi.value = atmvpi;
+                vci.vaule = atmvci;
+            }
+            else
+            {
+                enblAutoScan.checked = false;
+            }
+            createCountry(country);
+            if (countryid != '' && countryid != '0')
+            {
+                country.selectedIndex = countryid;
+            }
+		
+            getISP();
+            if (ispid != '' && ispid != '0')
+            {
+                isplist.selectedIndex = ispid;
+                disableOption();
+            }				
+            cbClick();
+            if (wizprotocol != '' && wizprotocol != '0')
+            {
+                prtcltype.selectedIndex = wizprotocol;
+            }	
+            if (wizcontype != '' && wizcontype != '0')
+            {
+                contype.selectedIndex = wizcontype;
+            }			
+            /* 20091123, Roger Yu, fix wizard setting, mark: 11231043*/
+            if ((isplist.selectedIndex == (isplist.length - 1)) || 
+                (isplist.selectedIndex == 0))
+            {
+                getOther();
+            }
+            /* 20091123, Roger Yu, end---------------------------------- mark: 11231043*/
+        }
+        else
+        {
+            cmdNxt.disabled = false;
+        }
+    }
+    //disableOption();
+}
+
+function getISP()
+{
+    with(document.forms[0])
+    {
+        changeISP(country, isplist);
+    }
+    disableOption();
+}
+
+function cbClick()
+{
+    with(document.forms[0])
+    {
+        if (enblAutoScan.checked == true)
+        {
+            //atmConfig.disabled = true;
+            country.disabled = true;
+            isplist.disabled = true;
+            prtcltype.disabled = true;
+            contype.disabled = true;
+            vpi.disabled = true;
+            vci.disabled = true;
+        }
+        else
+        {
+            //atmConfig.disabled = false;
+            country.disabled = false;
+            isplist.disabled = false;
+            prtcltype.disabled = false;
+            contype.disabled = false;
+            vpi.disabled = false;
+            vci.disabled = false;
+        }
+        disableOption();
+    }
+}
+
+function btnBack()
+{
+    //var loc = 'wizsntp.cgi?quickSetup=1';
+    var loc = 'wizsntp.html';
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+
+/*function selectDSLType()
+{
+    with(document.forms[0])
+    {
+        dslType = dsltype.selectedIndex;
+        if (dslType == 0)
+        {
+            atmConfig.style.display = "block";
+            ptmConfig.style.display = "none";
+            createCountry(country);
+            getISP();
+            cbClick();
+        }
+        else if (dslType == 1)
+        {
+            atmConfig.style.display = "none";
+            ptmConfig.style.display = "block";
+            cmdNxt.disabled = false;
+        }
+        else
+        {
+            atmConfig.style.display = "none";
+            ptmConfig.style.display = "none";
+        }
+    }
+}*/
+// done hiding -->
+    </script>
+</head>
+
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="temp";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				1 > 2 > Step 3: Setup Internet Connection > 4 > 5 > 6
+			</td>										
+		</tr>
+		<!--tr>
+		  <td class=content>
+            <P>Please select DSL Type. </P>
+			  <TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+               <TR>
+                <TD class=form_label><label for="radio_control">DSL Type&nbsp;:&nbsp;</label></TD>
+                <TD>
+				<select id=dsltype onchange='selectDSLType()'>
+				<Option value=ATM>ATM</Option>
+				<Option value=PTM>PTM</Option>
+				</select></TD>
+			   </TR>
+			  </TABLE>
+		  </td>
+		 </tr-->
+	</table>
+<script language="javascript">
+if(dslType == 1)
+	document.writeln("<div id='atmConfig' style={display:none;}>");
+else
+	document.writeln("<div id='atmConfig' style={display:block;}>");
+</script>
+		<table id=body_header width="690" border=0 cellSpacing=0>
+		 <tr>
+		  <td class=content>
+			 <TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+              <TR>
+                <TD class=form_label><LABEL for=radio_control>Country&nbsp;:&nbsp;</LABEL></TD>
+                <TD>
+				<select id=country onchange='getISP()'>
+				<Option value=0>Select</Option>
+				<Option value=GB>United Kingdom</Option>
+				<Option value=Others>Others</Option>
+				</select></TD>
+			  </TR>
+              <TR>
+                <TD class=form_label><LABEL for=radio_control>ISP Provider&nbsp;:&nbsp;</LABEL></TD>
+                <TD>
+				<select id=isplist onChange='disableOption()'>
+				<Option value=0>Select</Option>
+				<Option value=BT>BT</Option>
+				<Option value=AOL>AOL</Option>
+				<Option value=Tiscali>Tiscali</Option>
+				<Option value=Pipex>Pipex</Option>
+				<Option value=Tesco.Net>Tesco.Net</Option>
+				<Option value=Demon Internet>Demon Internet</Option>
+				<Option value=Virgin.Net>Virgin.Net</Option>
+				<Option value=Wanadoo>Wanadoo</Option>
+				<Option value=One.Tel>One.Tel</Option>
+				<Option value="Zen Internet">Zen Internet</Option>
+				<Option value=Nildram>Nildram</Option>
+				<Option value=Bulldog>Bulldog</Option>
+				<Option value=Easynet>Easynet</Option>
+				<Option value="UK Online">UK Online</Option>
+				<Option value=Others>Others</Option>
+				</select></TD>
+			  </TR>
+				<tr>
+					<td class=form_label> <LABEL for=radio_control>Protocol&nbsp;:&nbsp;</LABEL>
+					</td>
+					<td><select id=prtcltype name=prtcltype onchange='conTypebyPrtcl()'>
+							<option value="-1">(Click to select)</option>
+							<option value="PPPoE">PPPoE</option>
+							<option value="PPPoA">PPPoA</option>
+							<option value="Dynamic IP">Dynamic IPoE</option>
+							<option value="Static IP">Static IPoE</option>
+							<option value="IPoA">IPoA</option>
+							<option value="Bridge">Bridge</option>
+						</select>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label> <LABEL for=radio_control>Connection Type&nbsp;:&nbsp;</LABEL>
+					</td>
+					<td><select id=contype name=contype>
+							<option value="-1">(Click to select)</option>
+							<option value="pppoevc">VC-Mux</option>
+							<option value="pppoellc">LLC/Snap-Bridging</option>
+							<option value="pppoavc">VC-Mux</option>
+							<option value="pppoavc">LLC/Encapsulation</option>
+						</select>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label align=right><label id=lblvpi>VPI&nbsp;:&nbsp;</label>
+					</td>
+					<td><INPUT type=text id=vpi name=vpi>
+				    </td>
+				</tr>
+				<tr>
+					<td class=form_label align=right><label id=lblvci>VCI&nbsp;:&nbsp;</label>
+					</td>
+					<td><INPUT type=text id=vci name=vci>
+				    </td>
+				</tr>
+									
+              <TR>
+                <TD class=form_label width=50%><input type='checkbox' name='enblAutoScan' onClick='cbClick()'></TD>
+                <TD><LABEL for=enblAutoScan>Enable DSL Auto-scan&nbsp;:</LABEL></TD>
+			  </TR>
+			</TABLE>
+			</td>
+			</tr>
+			</table>
+			</div>
+	
+<script language="javascript">
+if(dslType == 0)
+	document.writeln("<div id='ptmConfig' style='display:none'>");
+else
+	document.writeln("<div id='ptmConfig' style='display:block'>");
+</script>
+  <table id=body_header width="690" border=0 cellSpacing=0>
+	<td class=content>
+	<TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+	     <tr>
+	         <td class=form_label><LABEL for=radio_control>Select DSL Latency:</LABEL></td>
+                <tr>
+                  <TD class=form_label width=50%>
+ 			        <input type='checkbox' name='path0'checked>
+ 		          </TD>
+                  <TD><LABEL for=enblPath0>Path0</LABEL></TD>
+                </tr>
+                <tr>
+                  <TD class=form_label width=50%>
+ 			        <input type='checkbox' name='path1'>
+ 		          </TD>
+                  <TD><LABEL for=enblPath1>Path1</LABEL></TD>
+                </tr>
+	       </tr>
+		<tr>
+			<td class=form_label> <LABEL for=radio_control>Protocol&nbsp;:&nbsp;</LABEL>
+			</td>
+			<td><select id=prtcltype1 name=prtcltype1>
+					<option value="PPPoE">PPPoE</option>
+					<option value="Dynamic IP">Dynamic IPoE</option>
+					<option value="Static IP">Static IPoE</option>
+					<option value="Bridge">Bridge</option>
+				</select>
+		    </td>
+		</tr>
+		<tr>
+ 		  <TR>
+                  <TD class=form_label width=50%>
+ 			<input type='checkbox' name='priorityNorm'checked>
+ 		     </TD>
+                  <TD><LABEL for=enblPriorityNorm>Normal Priority</LABEL></TD>
+		  </TR>
+ 		 </table>
+ 		 <TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center width=100%>
+               <TR>
+                  <TD class=form_label width=50%>
+  			<input type='checkbox' name='priorityHigh'>
+  		     </TD>
+	                <TD><LABEL for=enblPriorityHigh>High Priority (Preemption)</LABEL></TD>
+		  </TR>
+ 		 </table>
+	 </td>
+ </table>
+</div>
+<p align=center><input type='button' value="Back" onClick='btnBack()' id='back'><input type=button value='Next' onclick='btnNext()' id=cmdNxt><input type=button value='Cancel' onclick='btnCancel()'></p>
+</form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+   </html>

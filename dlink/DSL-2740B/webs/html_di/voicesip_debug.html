@@ -1,0 +1,326 @@
+<!--
+ Copyright (c) 2008 Broadcom Corporation
+
+ This program is the proprietary software of Broadcom Corporation and/or
+ its licensors, and may only be used, duplicated, modified or distributed
+ pursuant to the terms and conditions of a separate, written license
+ agreement executed between you and Broadcom (an "Authorized License").
+ Except as set forth in an Authorized License, Broadcom grants no license
+ (express or implied), right to use, or waiver of any kind with respect to
+ the Software, and Broadcom expressly reserves all rights in and to the
+ Software and all intellectual property rights therein.  IF YOU HAVE NO
+ AUTHORIZED LICENSE, THEN YOU HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY,
+ AND SHOULD IMMEDIATELY NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE
+ SOFTWARE.
+
+ Except as expressly set forth in the Authorized License,
+
+ 1.     This program, including its structure, sequence and organization,
+ constitutes the valuable trade secrets of Broadcom, and you shall use all
+ reasonable efforts to protect the confidentiality thereof, and to use this
+ information only in connection with your use of Broadcom integrated circuit
+ products.
+
+ 2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED
+ "AS IS" AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS
+ OR WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH
+ RESPECT TO THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL
+ IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR
+ A PARTICULAR PURPOSE, LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET
+ ENJOYMENT, QUIET POSSESSION OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME
+ THE ENTIRE RISK ARISING OUT OF USE OR PERFORMANCE OF THE SOFTWARE.
+
+ 3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM
+ OR ITS LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL,
+ INDIRECT, OR EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY
+ RELATING TO YOUR USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM
+ HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN
+ EXCESS OF THE AMOUNT ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1,
+ WHICHEVER IS GREATER. THESE LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY
+ FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY.
+
+****************************************************************************
+  $Id:
+
+  Filename: voicesip_debug.html
+  Author:
+  Creation Date: 2008
+
+****************************************************************************
+end_copyright_header -->
+<html>
+   <head>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<link rel="stylesheet" href='stylemain.css' type='text/css'>
+<link rel="stylesheet" href='colors.css' type='text/css'>
+<script language="javascript" src="util.js"></script>
+<script language="javascript">
+
+var maxLines = '<%ejGetVoice(maxLines)%>';
+if ( maxLines.search("ejGetVoice") >= 0 ) {
+   maxLines = 2; // if not provided by provisioning, hard-code maxLines
+}
+
+var la   = '<%ejGetVoice(sipLogAddr)%>';
+var lp   = '<%ejGetVoice(sipLogPort)%>';
+var cLogLvl  = '<%ejGetVoice(consolelogLvl)%>';
+var voiceRunning = '<%ejGetVoice(voiceStatus)%>';
+
+for (var i = 0; i < maxLines; i++) {
+   var j = i + 1;
+   eval( "var ve" + j + " \= \"\" " );
+   eval( "var ig" + j + " \= \"\" " );
+   eval( "var eg" + j + " \= \"\" " );
+}
+
+var tmpve = '<%ejGetVoice(vadEnable)%>';
+var tmpig = '<%ejGetVoice(ingressGain)%>';
+var tmpeg = '<%ejGetVoice(egressGain)%>';
+
+if ( tmpve.search("ejGetVoice") < 0 ) {
+   eval( tmpve );
+}
+if ( tmpig.search("ejGetVoice") < 0 ) {
+   eval( tmpig );
+}
+if ( tmpeg.search("ejGetVoice") < 0 ) {
+   eval( tmpeg );
+}
+
+
+// Initialize array that contains possible gain values (need for the drop-down list)
+var minGain = -20;
+var maxGain = 20;
+var gainSelectOptions = Array();
+for ( var i = minGain; i <= maxGain; i++ ) {
+   gainSelectOptions[i-minGain] = "<option value=" + i + " selected>" + i;
+}
+
+
+function btnStartSip(current_view) {
+   var loc = 'voicesipstart.cmd?';
+   loc += addParamsToQuery( loc, current_view );
+   
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function btnStopSip(current_view) {
+   var loc = 'voicesipstop.cmd?';
+   loc += addParamsToQuery( loc, current_view );
+   
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function btnApplySip(current_view) {
+   var loc = 'voicesipapply.cmd?';
+   loc += addParamsToQuery( loc, current_view );
+   
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+function addParamsToQuery( loc_init, current_view) {
+
+   var loc = loc_init;
+
+   with ( document.forms[0] ) {
+      loc += 'currentview=' + current_view;
+
+      loc += '&sipLogAddr=' + sipLogAddr.value.replace(/['" ]/g,'');
+      loc += '&sipLogPort=' + sipLogPort.value.replace(/['" ]/g,'');
+      loc += '&consolelogLvl=' + conLogLvl.value.replace(/['" ]/g,'');
+      
+
+      for (var i = 0; i < maxLines; i++) {
+         var j = i + 1;
+
+         var checkMarkTest = eval("vadEnable" + j + ".checked == true");
+         if ( checkMarkTest ){
+            loc+= "&vadEnable" + j + "=on";
+         } else {
+            loc+= "&vadEnable" + j + "=off";
+         }
+
+         eval( "loc += \'&ingressGain" + j + "=\' + ingressGain" + j + ".value.replace(/[\'\" ]/g,\'\')" );
+         eval( "loc += \'&egressGain" + j + "=\' + egressGain" + j + ".value.replace(/[\'\" ]/g,\'\')" );
+      }
+   }
+
+   return loc;
+}
+
+
+function generatePerLineTable(num_lines)
+{
+   // Generate the table
+   if (document.body.innerHTML) {
+      var tableHtmlOutput = "<table id='perLineTable1' border='1'><tbody id='perLineTbody1'>";
+
+      // Line row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>Line<\/td>"
+      for (var line = 1; line <= maxLines; line++) {
+         var data = line;
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // VAD support row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>VAD support<\/td>"
+      for (var line = 1; line <= maxLines; line++) {
+         var data = "<input type='checkbox' size=10 name=\'vadEnable" + line + "\'>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // Ingress gain row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>Ingress gain<\/td>"
+      for (var line = 1; line <= maxLines; line++) {
+         var data = "<select name='ingressGain" + line + "'>" + gainSelectOptions.join("") + "<\/select>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // Egress gain row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>Egress gain <\/td>"
+      for (var line = 1; line <= maxLines; line++) {
+         var data = "<select name='egressGain" + line + "'>" + gainSelectOptions.join("") + "<\/select>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      tableHtmlOutput += "</tbody></table>";
+      document.getElementById("perLineTablePlaceholder1").innerHTML = tableHtmlOutput;
+   } else {
+      alert("Cannot create per line table in this browser.");
+   }
+
+
+
+}
+
+function frmLoad(current_view) {
+   with ( document.forms[0] ) {
+      enableButtons();
+      sipLogAddr.value = la;
+      sipLogPort.value = lp;
+      conLogLvl.value = cLogLvl;
+      generatePerLineTable( maxLines );
+
+      for (var i = 1; i <= maxLines; i++) {
+         eval("ingressGain" + i + ".value = ig"+i);
+         eval("egressGain" + i + ".value = eg"+i);
+         if ( eval("ve" + i + "== 1") ){
+            eval("vadEnable" + i + ".checked = true");
+         } else {
+            eval("vadEnable" + i + ".checked = false");
+         }
+      }
+   }
+}
+
+
+function enableButtons(){
+   var buttonStart = document.getElementById("StartButton");
+   var buttonStop = document.getElementById("StopButton");
+   var buttonApply = document.getElementById("ApplyButton");
+   
+   if ( voiceRunning == 1 ) {
+      buttonStart.disabled = true;
+      buttonStop.disabled = false;
+      buttonApply.disabled = false;
+   } else {
+      buttonStart.disabled = false; 
+      buttonStop.disabled = true;
+      buttonApply.disabled = true;
+   }
+}
+
+
+</script>
+
+
+<body onLoad="frmLoad('debug')">
+   <blockquote>
+      <form>
+
+      <b>Voice -- SIP Debug configuration</b><br>
+      <br>
+
+      <div id='logInfo'>
+         <table border="0" cellpadding="0" cellspacing="0" ID="Table1">
+            <tr>
+               <td width="150">SIP log server IP Address:</td>
+               <td><input type='text' name='sipLogAddr'></td>
+            </tr>
+            <tr>
+               <td>SIP log server port:</td>
+               <td><input type='text' name='sipLogPort'></td>
+            </tr>
+         </table>
+      </div>
+      <br>
+
+      <div id='consoleLogLevel'>
+         <table border="0" cellpadding="0" cellspacing="0" ID="Table2">
+            <tr>
+               <td width="150">Vodsl Console Log Level: </td>
+               <td><select name="conLogLvl" size="1">
+                  <option value="Error" >
+                  Error
+                  <option value="Notice" >
+                  Notice
+                  <option value="Debug" selected>
+                  Debug
+               </select></td>
+            </tr>
+         </table>
+      </div>
+      <br>
+      
+
+      <div id='Gain'>
+         <table border="0" cellpadding="0" cellspacing="0" ID="Table3">
+           <tbody>
+           </tbody>
+         </table>
+      </div>
+
+      <div class="tableWrapper" id="perLineTablePlaceholder1">
+      <table></table>
+      </div>
+
+      <center>
+         <input type='button' onClick="btnStartSip('debug')" value='Start SIP client' ID="StartButton" disabled=true>
+         <br>
+         <br>
+         <input type='button' onClick="btnStopSip('debug')" value='Stop SIP client' ID="StopButton" disabled=true>
+         <br>
+         <br>
+         <input type='button' onClick="btnApplySip('debug')" value='Apply' ID="ApplyButton" disabled=true>
+         <br>
+      </center>
+
+      </form>
+   </blockquote>
+
+</body>
+
+</html>

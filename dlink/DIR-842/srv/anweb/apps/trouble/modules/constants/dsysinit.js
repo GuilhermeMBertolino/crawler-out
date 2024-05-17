@@ -1,0 +1,1 @@
+"use strict";angular.module("trouble").constant("troubleConstants",{TROUBLE_DEFAULT_AWAY_URL:autoconf.BR2_PACKAGE_ANWEB_CUSTOM_MTS_18276?"/admin/index.html":autoconf.BR2_PACKAGE_ANWEB_PROVIDER_URL});

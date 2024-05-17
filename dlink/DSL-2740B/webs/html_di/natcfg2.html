@@ -1,0 +1,266 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+var prtcl = '<%ejGetOther(memInfo, ntwkPrtcl)%>';
+//add by Van 0912311140
+var buildvlm = '<%ejGet(enVlanMux)%>';
+var vlmid = '<%ejGet(vlanMuxId)%>';
+//add end
+var serviceId = '<%ejGet(serviceId)%>';
+function frmLoad() {
+   var nat = '<%ejGet(enblNat)%>';
+   var fullcone = '<%ejGet(enblFullcone)%>';
+   var firewall = '<%ejGet(enblFirewall)%>';
+   var enableIgmp = '<%ejGet(enblIgmp)%>';
+
+   with ( document.forms[0] ) {
+   	  if(serviceId==1){ 
+	      if ( nat == '1' ) {
+	         enblNat.checked = true;
+	         hideFullconeNat(0);
+	      }
+	      else {
+	         enblNat.checked = false;
+	         hideFullconeNat(1);
+	      }
+   	  }
+      if ( fullcone == '1' )
+         enblFullcone.checked = true;
+      else
+         enblFullcone.checked = false;
+	  if(serviceId==1){ 
+	      if ( firewall == '1' )
+	         enblFirewall.checked = true;
+	      else
+	         enblFirewall.checked = false;
+	  }
+      if ( enableIgmp == '1' )
+         enblIgmp.checked = true;
+      else
+         enblIgmp.checked = false;
+	  //add by Van 0912311138
+	  if (vlmid != '-1') {
+			cbVlan.checked = true;
+			vlanIdText.value = vlmid;
+			showhide('divVlanMux', 1);
+		}else{
+			cbVlan.checked = false;
+			vlanIdText.value = '';
+			showhide('divVlanMux', 0);
+	  }
+	  //add end
+   }
+}
+//add by Van 0912311138
+function vidClick(item){
+
+   if (item.checked)
+      showhide("divVlanMux", 1);
+   else 
+      showhide("divVlanMux", 0);
+
+}
+//add end
+function btnNext() {
+   var loc = 'ifcdns.cgi?';
+
+   with ( document.forms[0] ) {
+      if ( enblNat.checked == true )
+         loc += 'enblNat=1';
+      else
+         loc += 'enblNat=0';
+      if ( enblFullcone.checked == true )
+         loc += '&enblFullcone=1';
+      else
+         loc += '&enblFullcone=0';
+      if ( enblFirewall.checked == true )
+         loc += '&enblFirewall=1';
+      else
+         loc += '&enblFirewall=0';
+      if ( enblIgmp.checked == true )
+         loc += '&enblIgmp=1';
+      else
+         loc += '&enblIgmp=0';
+	  //add by Van 0912311136
+	  if (cbVlan.checked == true) {
+	  	  var patrn=/^[0-9]{1,20}$/;
+          if (!patrn.exec(vlanIdText.value)) {
+			alert("VLAN ID " + vlanIdText.value + " is invalid value.");
+			return;
+		 }	
+	  	  if ( isNaN(parseInt(vlanIdText.value)) == true ){
+			alert("VLAN ID " + vlanIdText.value + " is invalid value.");
+			return;
+		 }	
+         vlmid = parseInt(vlanIdText.value);
+         if ( vlmid < 0 || vlmid > 4095 ) {
+            alert('VLAN ID "' + vlmid + '" is out of range [0-4095].');
+            return;
+         }
+         loc += '&vlanMuxId=' + vlmid;
+         connMode = 1;
+         loc += '&enVlanMux=1';
+		 loc += '&connMode=' + connMode;
+	  }
+	  else {
+		    loc += '&vlanMuxId=-1';
+		    loc += '&enVlanMux=0';
+      }
+	  //add end
+   }
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function btnBack() {
+   var loc = 'wanifc.cmd';
+
+   if ( prtcl == 'IPoE' || prtcl == 'IPoW')
+      loc = 'wancfg.html';
+   else if ( prtcl == 'IPoA' )
+      loc = 'ipoacfg.html';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function hideFullconeNat(hide) {
+   var status = 'visible';
+   if ( hide == 1 )
+      status = 'hidden';
+   if (document.getElementById)  // DOM3 = IE5, NS6
+      document.getElementById('fullconeNatInfo').style.visibility = status;
+   else {
+      if (document.layers) { // Netscape 4
+         if ( hide == 1 )
+            document.forms[0].enblFullcone.value = '';
+         else
+            document.forms[0].enblFullcone.value = '<%ejGet(enblFullcone)%>';
+      } else  // IE 4
+         document.all.fullconeNatInfo.style.visibility = status;
+   }
+}
+
+function natClick(cb) {
+   if ( cb.checked == true )
+      hideFullconeNat(0);
+   else
+      hideFullconeNat(1);
+}
+
+// done hiding -->
+</script>
+      <script language="JavaScript" src="menu.js"></script>
+ </head>
+   <body onLoad='frmLoad()'>
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Internet Setup";
+HelpItem="wancfghelp2";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+    <form>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<b>WAN</b></td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>				
+            Enter information provided to you by your ISP to configure the WAN 
+			IP settings.<br>
+            Notice: If &quot;Obtain an IP address automatically&quot; is chosen, DHCP will 
+			be enabled for PVC in MER mode.<br>
+            If &quot;Use the following Static IP address&quot; is chosen, enter the WAN IP 
+			address, subnet mask and interface gateway.<br><br></p>
+				
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				<b>WAN IP Settings</b></td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <b>Network Address Translation Settings</b>
+            <br><br>
+            Network Address Translation (NAT) allows you to share one Wide Area Network
+            (WAN) IP address for multiple computers on your Local Area Network (LAN).
+            <br><br>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width='30' height="30"><input type='checkbox' name='enblNat' checked="true" onClick='natClick(this)'></td>
+                  <td>Enable NAT</td>
+               </tr>
+            </table>
+            <div id='fullconeNatInfo'>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width='30' height="30"><input type='checkbox' name='enblFullcone'></td>
+                  <td>Enable Fullcone NAT</td>
+               </tr>
+            </table>
+            </div>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width='30' height="30"><input type='checkbox' name='enblFirewall' checked="true"></td>
+                  <td>Enable Firewall</td>
+               </tr>
+            </table>
+            <br><br>
+            <b>IGMP Multicast</b>
+            <br><br>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width='30' height="30"><input type='checkbox' name='enblIgmp'></td>
+                  <td>Enable IGMP Multicast</td>
+               </tr>
+            </table>
+            <table border="0" cellpadding="0" cellspacing="0">
+         	   <tr>
+				<td width='30' height='30'><input type='checkbox' name='cbVlan' onclick='vidClick(this)'></td>
+                <td>Enable VLAN</td>
+			  </tr>
+	 		</table>			
+      		<div id="divVlanMux">
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr>
+				<td>VLAN ID[0-4095]&nbsp;:&nbsp;</td>
+				<td width='30' height='30'><input type='text' name='vlanIdText' size='4'></td>
+				</tr>
+			</table>
+			</div>
+            <br><br>
+			</td>
+		</tr>
+	</table>
+	<br>
+            <center>
+               <input type='button' onClick='btnBack()' value='Back'> <input type='button' onClick='btnNext()' value='Next'>
+            </center>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+      </blockquote>
+   </body>
+</html>

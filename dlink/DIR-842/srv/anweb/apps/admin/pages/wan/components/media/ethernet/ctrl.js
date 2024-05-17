@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controller("WanMediaEthernetCtrl",["$scope",function($scope){$scope.media=$scope.conn.Media,$scope.hasCloneVLAN=function(){var data=$scope.conn;return data.__New&&"Ethernet"==data.MediaType&&("IPv4oE"==data.__Type||"PPPoE"==data.__Type)&&-1==data.Media.Ethernet.__VID}}]);

@@ -1,0 +1,132 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+var enbl = '<%ejGetWl(wlEnbl_wl0v0)%>';
+//var wl_wsc_mode = '<%ejGetWl(wl_wsc_mode)%>';
+var wl_wsc_mode = '<%ejGetWl(wlWscMode)%>';
+
+/* 20100406, Linus Shi, begin mod to fix bug #7482, mark: 04061545 */
+//var wl_switch = '<%ejGetWl(wireless_switch)%>';
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function frmLoad() 
+{
+    with (document.forms[0]) 
+	{
+	    wlwps[0].checked = true;
+		//if ('0' == wl_switch)
+		if (enbl != '1' || wl_wsc_mode == 'disabled') /* 20100928, Linus Shi, mod to fix bug#9880 and #9877, mark: 09281037 */
+		{
+            wlwps[0].disabled = 1;
+		    wlwps[1].disabled = 1;
+		    Next_btn.disabled = 1;
+		    Cancel_btn.disabled = 1;
+		}
+	}
+}
+/* 20100406, Linus Shi, end ----------------------- mark: 04061545 */
+
+function btnCancel(){
+
+  var code = 'location="wireless.html"';
+  eval(code);
+
+}
+
+function btnApply(){
+  var loc = 'wlwps.wl?';  
+   loc += 'sessionKey=' + sessionKey;
+  if (wl_wsc_mode == 'disabled'){
+	if(confirm('The WPS is currently set to disable,Click "Yes" to eanble it or "No" to leave the wizaard')){
+	;
+	}
+	else{
+	var code = 'location="wirelesssetting.html"';
+	eval(code);
+	return;
+	}
+  }
+
+   if ( enbl == '0' ) {
+      alert('Cannot apply the change since wireless is currently disabled.');
+      return;
+   }
+
+   	with ( document.forms[0] ) {
+		if(wlwps[0].checked == true)  
+                var code = 'location="wlwpsauto.html"';
+		//loc += 'wsc_config_state=0'
+		else
+		//loc += 'wsc_config_state=1'
+                 var code = 'location="wlwpssec.html"';
+	}
+//  var code = 'location="' + loc + '"';
+	
+  eval(code);
+}
+
+// done hiding -->
+</SCRIPT>
+</HEAD>
+<BODY onload=frmLoad()>
+<BLOCKQUOTE>
+<SCRIPT language=JavaScript>
+TabHeader="Setup";
+SideItem="Wireless Settings";
+HelpItem="diwireless";
+</SCRIPT>
+
+  <SCRIPT type=text/javascript>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</SCRIPT>
+
+ <FORM>
+  <TABLE id=box_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>ADD WIRELESS DEVICE WITH WPS(WI-FI PROTECTED SETUP) WIZARD </TD></TR>
+    <TR>
+      <TD class=content>
+        <P>This wizard is designed to assist you in connecting your wireless device
+		to your router.It will guide you through step-by-step instructions on how to 
+		get your wireless device connected.Click the button below to begin.</P>
+	  </TD></TR></TBODY></TABLE>
+  <TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+    <TR>
+      <TD class=topheader>Add Wireless Device with WPS(Wi-Fi Protected Setup) </TD></TR>
+    <TR>
+      <TD class=content>
+        <P>Please select one of the following configuration methods and click next to
+		continue.</P>
+        <TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0>
+          <TBODY>
+          <TR>
+		    <TD><INPUT id=wps_enable type="radio"  name='wlwps'></TD>
+            <TD>Auto -- Select this option if your wireless device
+			supports WPS(Wi-Fi Protected Setup)</TD>
+			</TR>
+			<TR>
+		    <TD><INPUT id=wps_enable type="radio"  name='wlwps'></TD>
+            <TD>Manual -- Select this option will display the current
+			wireless settings for you to configure the wireless device manually</TD>
+        </TR></TBODY></TABLE></TD></TR></TBODY></TABLE>
+  <P align=center><INPUT type=button name=Next_btn value="Next" onclick=btnApply()>
+  <INPUT onclick=btnCancel() name=Cancel_btn type=button value=Cancel></P>
+ </FORM>
+  <SCRIPT type=text/javascript>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</SCRIPT>
+</BLOCKQUOTE></BODY></HTML>

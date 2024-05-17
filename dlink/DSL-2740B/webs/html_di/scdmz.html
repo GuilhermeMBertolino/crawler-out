@@ -1,0 +1,501 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+// 20091118, Roger Yu add
+var lanIp = '<%ejGet(ethIpAddress)%>';
+var lanMask = '<%ejGet(ethSubnetMask)%>';
+var broadIP = getBroadcastIP(lanIp, lanMask);
+var braodSplit = broadIP.split(".");
+var e1 = braodSplit[3] - 1;
+var s1 = getDhcpStart(lanIp, lanMask) + 2; /* 20110121, Linus Shi, mod for DMZ IP range issue, mark: 01211026 */
+var startip = '';
+var endip = '';
+//add by Van 0911240959
+/*var lanparts = lanIp.split(".");
+var maskpart = lanMask.split(".");
+var startparts = new Array();*/
+
+var enblUpnp = '<%ejGet(enblUpnp)%>';
+enblUpnp = 0;
+var fwFlag = '<%ejGetFw(fwFlag_DI)%>';
+
+/* 20120224, Linus Shi, add to fix bug#13232, mark: 02241104 */
+var ethIp = '<%ejGet(ethIpAddress)%>';
+
+//Caculating the number of hosts under specific Mask
+function hostsOfMask(mask)
+{
+if(mask==0)
+  {return 255;}
+if(mask==128)
+  {return 127;}
+if(mask==192)
+  {return 63;}
+if(mask==224)
+  {return 31;}
+if(mask==240)
+  {return 15;}
+if(mask==248)
+  {return 7;}
+if(mask==252)
+  {return 3;}
+if(mask==254)
+  {return 1;}
+else
+  {return 0;}
+}
+
+//function setDMZHostRange(lanIp) 
+{
+    var broadIP;
+    var braodSplit;
+    var routermask;
+    var maskParts;
+    //with ( document.forms[0] ) 
+    {
+        //if ( isValidIpAddress(lanIp, "Address") == false ) return;
+        //if ( isValidSubnetMask(lanMask, "Address") == false ) return;
+
+		routermask = reencodeIP(lanMask);
+	    maskParts = routermask.split('.');
+	    //if ( maskParts.length != 4 )
+        //    return false;
+        var mask0 = parseInt(maskParts[0]);
+        var mask1 = parseInt(maskParts[1]);
+	    var mask2 = parseInt(maskParts[2]);
+	    var mask3 = parseInt(maskParts[3]);	  
+
+        //Frederick,060726	Reencode ip to match lan ip
+        lanIp = reencodeIP(lanIp);
+        addrParts = lanIp.split('.');
+        //if ( addrParts.length != 4 )
+        //    return false;
+        t1 = parseInt(addrParts[3]) + 1;	  
+        /*if (startip != '' && t1 > 255) 
+		{
+            alert("Last portion of IP Address has to be less than 254 for Enabled DHCP Server");
+            return false;
+        }*/
+        broadIP = getBroadcastIP(lanIp, lanMask);
+        braodSplit = broadIP.split(".");
+        startip = endip = "";
+	  
+     /*
+	1)The Subnet Mask is 255.255.255.0
+		DHCP rule: value=1~253 range=(value+1)~254, value=254 range=(1~value-1)
+
+			ex: IP = 192.168.100.253, and mask is 255.255.255.0
+			range=192.168.100.254~192.168.100.254
+
+			ex: IP = 192.168.100.254, and mask is 255.255.255.0
+			range=192.168.100.1~192.168.100.253
+
+	2)The Subnet Mask is 255.255.0.0
+		DHCP rule: value=1~255 range=(value)~255, value>255  range=error
+		DHCP rule: value=1~253 range=(value+1)~254, value>254  range=error
+
+		ex: IP = 192.168.100.253, and mask is 255.255.0.0
+		range=192.168.100.254~192.168.255.254
+	
+		ex: IP = 192.168.100.254, and mask is 255.255.0.0
+		range=error because if the range is 192.168.1.254~192.168.255.253 the router ip will include to dhcp range, 
+		so when the subnet mask is 255.255.0.0 can not setting 192.168.x.254
+	*/   
+        var check0 = parseInt(addrParts[0]);
+        var check1 = parseInt(addrParts[1]);
+        var check2 = parseInt(addrParts[2]);
+        var check3 = parseInt(addrParts[3]);
+	  
+        if(mask3==0 && mask2==0 && mask1==0 && (mask0 <= 255 && mask0 >=0))
+	    {
+            //mask = x.0.0.0
+            if(check3==1)
+            {
+                startip = (check0 & mask0)  + ".0.0.2";
+            }
+            else
+            {
+                startip = (check0 & mask0)  + ".0.0.1";
+            }
+            endip =   ((check0 & mask0)+parseInt(hostsOfMask(mask0)) -1)  + ".255.255.254";
+        }
+
+        if(mask3==0 && mask2==0 && (mask1<=255 && mask1 >=0) && mask0==255)
+        {
+            // mask = 255.x.0.0
+            if(check3==1)
+            {
+                startip = addrParts[0] + "." + (check1 & mask1)  + ".0.2";
+            }
+            else
+            {
+                startip = addrParts[0] + "." +(check1 & mask1)  + ".0.1";
+            }
+            endip =  addrParts[0] + "." +((check1 & mask1)+parseInt(hostsOfMask(mask1)))  + ".255.254";
+        }
+		
+        if(mask3==0 && (mask2<=255 && mask2 >=0) && mask1==255 && mask0==255)
+		{
+		    // mask = 255.255.x.0
+            if(check3==1)
+            {
+                startip = addrParts[0] + "." + addrParts[1]+ "." + (check2 & mask2)  + ".2";
+            }
+            else
+            {
+                startip = addrParts[0] + "." + addrParts[1] + "."+(check2 & mask2)  + ".1";
+            }
+            endip =  addrParts[0] + "." + addrParts[1]+ "."+ ((check2 & mask2)+parseInt(hostsOfMask(mask2)))  + ".254";
+        }
+		
+        if((mask3<=255 && mask3>=0) && mask2==255 && mask1==255 && mask0==255)
+		{
+            // mask = 255.255.255.x
+            startip ='';
+            endip = '';
+            for (i = 0; i < 3; i++) 
+            {
+                startip = startip + addrParts[i] + ".";
+                endip = endip + braodSplit[i] + ".";
+            }
+			
+            //ex. 192.168.0.1 or 192.168.0.129 mask:255.255.255.128
+            if(((check3 & mask3)+1)==check3)
+            {
+                startip = startip + (check3+1);
+            }
+            else
+            {
+                startip = startip + ((check3 & mask3)+1);
+		    }
+            endip =  endip + ((check3 & mask3) + parseInt(hostsOfMask(mask3)) -1);
+        }
+    }
+}
+/* 20120224, Linus Shi, end ----------------- mark: 02241104 */
+
+function frmLoad() {
+   var addr = '<%ejGetOther(dmzHost)%>';
+   with ( document.forms[0] ) {
+//alert('fwFlag='+fwFlag);
+        //if (fwFlag & 0x01000000)
+        //spiEnbl.checked = true;
+        if (fwFlag & 0x02000000)
+        {
+//            dosEnbl.checked = true;
+//			if (fwFlag & 16)         fup.checked = true;
+//            if (fwFlag & 32)         xmas.checked = true;
+//            if (fwFlag & 1)         syn.checked = true;
+//            if (fwFlag & 2)         ping.checked = true;
+//            if (fwFlag & 4)         tcp.checked = true;
+//            if (fwFlag & 8)         pod.checked = true;
+//            if (fwFlag & 64)         nll.checked = true;
+//            if (fwFlag & 128)	   srf.checked = true;
+			dosEnb();
+        }
+        else
+        {
+//            dosEnbl.checked = false;
+            dosEnb();
+        }
+        //if(fwFlag & 0x00000800)	nutils.checked = false;
+        //else nutils.checked = true;
+        if(fwFlag & 0x00000100)	pptp.checked = true;
+        if(fwFlag & 0x00000400)	ipsec.checked = true;
+	if(fwFlag & 0x00001000 && enblUpnp == '0')	wm.checked = true;
+        if(fwFlag & 0x00002000)	ftp.checked = true;
+        if(fwFlag & 0x00004000)	nm.checked = true;
+        if(fwFlag & 0x00008000)	sip.checked = true;
+        if(fwFlag & 0x00010000)	wol.checked = true;
+        if(fwFlag & 0x00020000)	mms.checked = true;
+        if(fwFlag & 0x00040000)	rtsp.checked = true;
+
+
+	   	if (addr == '')
+	   	{
+			ethIp = '<%ejGet(ethIpAddress)%>';
+			ethMask = '<%ejGet(ethSubnetMask)%>';
+			dmzAddr.value = '';
+			mask = ethMask.split('.');
+			lan = ethIp.split('.');
+			for (i = 0; i < 3; i++) 
+			{
+				m = parseInt(mask[i]);
+				if (m == 255)
+				dmzAddr.value = dmzAddr.value + lan[i] + '.';
+		    }
+	   	}
+		else
+		{
+			dmzAddr.value = addr;
+		}
+
+    }  
+   }
+
+function dosEnb()
+{
+    with(document.forms[0])
+    {
+//		var status = true;	
+//        if(dosEnbl.checked)  status = false;	
+//		syn.disabled = status; ping.disabled = status; tcp.disabled = status;pod.disabled = status;
+//		fup.disabled = status; xmas.disabled = status; nll.disabled = status; srf.disabled = status;
+//		if(dosEnbl.checked == false)
+//		{
+//			syn.checked = false; ping.checked = false; tcp.checked = false; pod.checked = false;
+//			fup.checked = false; xmas.checked = false; nll.checked = false; srf.checked = false;
+//		}
+//		doslb();
+    }
+}
+function doslb()
+{
+    with(document.forms[0])
+    {
+        if(syn.checked) lsyn.innerHTML= "<b> SYN attack&nbsp;:</b>";
+        else lsyn.innerHTML= "SYN attack&nbsp;:";
+        if(fup.checked) lfup.innerHTML = "<b>FIN/URG/PSH attack&nbsp;:</b>";
+        else lfup.innerHTML = "FIN/URG/PSH attack&nbsp;:";
+        if(ping.checked) lping.innerHTML = "<b>Ping attack&nbsp;:</b>";
+        else lping.innerHTML = "Ping attack&nbsp;:";
+        if(tcp.checked) ltcp.innerHTML = "<b>TCP reset attack&nbsp;:</b>";
+        else ltcp.innerHTML = "TCP reset attack&nbsp;:";
+        if(pod.checked) lpod.innerHTML = "<b>Ping of Death attack&nbsp;:</b>";
+        else lpod.innerHTML = "Ping of Death attack&nbsp;:";
+        if(xmas.checked) lxmas.innerHTML = "<b>Xmas Tree attack&nbsp;:</b>";
+        else lxmas.innerHTML = "Xmas Tree attack&nbsp;:";
+        if(nll.checked) lnll.innerHTML = "<b>Null scanning attack&nbsp;:</b>";
+        else lnll.innerHTML = "Null scanning attack&nbsp;:";
+        if(srf.checked) lsrf.innerHTML = "<b>SYN/RST SYN/FIN attack&nbsp;:</b>";
+        else lsrf.innerHTML = "SYN/RST SYN/FIN attack&nbsp;:";
+    }
+}
+
+
+function btnApply() {
+    // var loc = 'scdmz.cmd?';
+    var loc = 'scdmz.cmd?&dosenbl=1&fwFlag=';
+    var fwFlag = 0;
+
+    var tmp_ip_str;
+    with ( document.forms[0] ) 
+    {
+//	 if (spiEnbl.checked)         fwFlag |=  0x01000000;
+//	if(dosEnbl.checked == true){
+//	fwFlag |= 0x02000000;
+//        if (syn.checked)         fwFlag |= 1;
+//        if (ping.checked)         fwFlag |= 2;
+//        if (tcp.checked)         fwFlag |= 4;
+//        if (pod.checked)         fwFlag |= 8;
+//        if (fup.checked)         fwFlag |= 16;
+//        if (xmas.checked)         fwFlag |= 32;
+//        if (nll.checked)         fwFlag |= 64;
+//        if (srf.checked)	     fwFlag |= 128;
+//
+//	        if ((fwFlag & 0x02000000) != 0 &&(fwFlag & 0x000000ff) == 0)
+//        {
+//            alert("Need to select at least one attack below.");
+//            return false;
+//        }	
+//		}
+//        if(nutils.checked == false)	fwFlag |= 0x00000800;
+        if(pptp.checked)		fwFlag |= 0x00000100;
+        if(ipsec.checked)	fwFlag |= 0x00000400;
+        if(wm.checked && enblUpnp =='0')		fwFlag |= 0x00001000;
+        if(ftp.checked)		fwFlag |= 0x00002000;
+        if(nm.checked)		fwFlag |= 0x00004000;
+        if(sip.checked)		fwFlag |= 0x00008000;
+        if(wol.checked)		fwFlag |= 0x00010000;
+        if(mms.checked)		fwFlag |= 0x00020000;
+        if(rtsp.checked)		fwFlag |= 0x00040000;
+		
+        loc += fwFlag;
+
+//mask = ethMask.split('.');
+lan = ethIp.split('.');
+tempDmzAddr = dmzAddr.value.split('.');
+var DmzAddrCheck = 0; //0 for no modified, 1 for modified. Yocheng 20120308.
+for (i = 0; i < 4; i++)
+    {
+    if(i < 3) //i ==0~2
+      {
+       if(tempDmzAddr[i] ==  lan[i])
+         {DmzAddrCheck = 0;}
+         else
+         {DmzAddrCheck = 1; break;}
+      }
+    else // i ==3
+      {
+       if(tempDmzAddr[i]=='')
+         {DmzAddrCheck = 0;dmzAddr.value='';}
+       else
+         {DmzAddrCheck = 1; break;}
+      }
+    }//DmzAddrCheck is not used, keep it temproary. Yocheng 20120308.
+        if ( dmzAddr.value != '' )
+        {
+      	    tmp_ip_str = dmzAddr.value;
+            if (isValidRemoteIpAddress(dmzAddr.value,"DMZ host address") == false ) return;
+
+            if((false == is_valid_lan_side_ip(tmp_ip_str)) || (false == isOverlapModemIp(endip, startip, tmp_ip_str)) || 
+                (ethIp == tmp_ip_str))
+            {
+                alert('Internal server(DMZ Host) IP Address "' + tmp_ip_str + '" should be in lan ip range and not be router ip.');
+                return;
+            } 
+        }
+        loc += '&address=' + dmzAddr.value;
+    }
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+
+function btnCancel(){
+   var loc = 'scdmz.html';
+
+   var code = 'location="' + loc + '"';
+
+   eval(code);
+
+}
+// done hiding -->
+</script>
+   <script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="DMZ";
+HelpItem="dmz";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Demilitarized Zone
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				The DSL Router will forward IP packets from the WAN that do not belong to any 
+            of the applications configured in the Port Forwarding table to the DMZ host 
+            computer.</p>
+			<p>Enter the computer's IP address and click "Apply" to activate the DMZ host.</p>
+			<p>Clear the IP address field and click "Apply" to deactivate the DMZ host.</p>			
+			</td>
+		</tr>
+	</table>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				DMZ Host
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+<form onSubmit="return false">        
+            <br>
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td class=form_label>DMZ Host IP Address&nbsp;:</td>
+                  <td><input type='text' name='dmzAddr' size='15' maxlength='15'>
+<SCRIPT language=javascript>
+   document.write("[" + startip + " - " + endip + "]");
+</SCRIPT></td>
+               </tr>
+            </table>
+            <br>
+      		</td>
+		</tr>
+	</table>
+
+  <TABLE id=body_header cellSpacing=0 border=0>
+    <TBODY>
+      <TR>
+        <TD class=topheader>Application Level Gateway (ALG) Configuration </TD>
+      </TR>
+      <TR>
+        <TD class=content><TABLE class=formarea width="100%" align=center>
+            <TBODY>
+              <TR>
+                <TD class=form_label_30><LABEL for=pptp>PPTP&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=pptp type=checkbox 
+              _VALUE="data.alg_pptp"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=ipsec>IPSec 
+                  (VPN Passthrough)&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=ipsec type=checkbox 
+              _VALUE="data.alg_ipsec"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=rtsp>RTSP (Online Video Streaming)&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=rtsp type=checkbox 
+              _VALUE="data.alg_rtsp"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=wm>Windows/MSN 
+                  Messenger&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=wm type=checkbox 
+              _VALUE="data.alg_msn"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=ftp>FTP&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=ftp type=checkbox 
+              _VALUE="data.alg_ftp"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=nm>H.323 
+                  (Video Conferencing)&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=nm type=checkbox 
+              _VALUE="data.alg_h323"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=sip>SIP&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=sip type=checkbox 
+              _VALUE="data.alg_sip" onClick='sipClick(this)'></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL 
+            for=wol>Wake-On-LAN&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=wol type=checkbox 
+              _VALUE="data.alg_wol"></TD>
+              </TR>
+              <TR>
+                <TD class=form_label_30><LABEL for=mms>MMS&nbsp;:</LABEL></TD>
+                <TD class=form_data><INPUT id=mms type=checkbox 
+              _VALUE="data.alg_mms"></TD>
+              </TR>
+            </TBODY>
+          </TABLE></TD>
+      </TR>
+    </TBODY>
+  </TABLE>
+
+
+<p align=center><input type='button' onClick='btnApply()' value='Apply'><input type='button' onClick='btnCancel()' value='Cancel'><p>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>

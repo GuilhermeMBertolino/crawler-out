@@ -1,0 +1,192 @@
+<html>
+<head>
+<META http-equiv=Content-Type content="text/html; charset=utf-8">
+
+<script Language="JavaScript">
+var dir_flag=0;
+var i, j;
+var link_file_attr = new Array();	// 0: file; 1:directory; 2: parent directory; 3: current directory
+var link_modify_time = new Array();	// 22-Jan-2005 22:23  
+var link_file_size = new Array();	// 1.6K
+var link_name = new Array();		// file name or directory name
+var link_value = new Array();		// path
+var link_title = '';
+var wftp_info = '<%ej_get_wftp_info(info)%>';
+var entrys = wftp_info.split('|');
+var wftp_remote = entrys[0];
+var wftp_port = entrys[1];
+var wftp_path = entrys[2];
+var lan_ip = '<%ej_get_lan_ip(info)%>';
+var access_mode = '<%ej_get_access_mode(info)%>';
+
+var wftp_dir = "<%ej_get_wftp_dir(info)%>";
+var wftp_parent = '<%ej_get_wftp_parent(info)%>';
+var wftp_cur = '<%ej_get_wftp_cur(info)%>';
+if (wftp_cur == '/')
+{
+	wftp_cur = '';
+}
+if (wftp_remote == '1' && access_mode == 'wan')
+{
+	var wan_ip = '<%ej_get_wan_ip(info)%>';
+}
+
+if(wftp_parent == '0'){
+	if (wftp_remote == '1' && access_mode == 'wan')
+		link_title='http://' + wan_ip + ':' + wftp_port + wftp_path;
+	else
+		link_title='http://' + lan_ip + ':' + wftp_port + wftp_path;
+}
+else{
+	if (wftp_remote == '1' && access_mode == 'wan')
+		link_title='http://' + wan_ip + ':' + wftp_port + wftp_cur;
+	else
+		link_title='http://' + lan_ip + ':' + wftp_port + wftp_cur;
+}
+
+var entrys = wftp_dir.split('|');
+
+var entryNum = entrys.length - 1;
+
+
+var rule = new Array(entryNum);
+for (i = 0; i < entryNum; i++)
+{
+	rule[i] = new rVe('','', '', '');
+}
+
+for (j = 0; j < entryNum; j++)
+{
+	var entry = entrys[j].split('*');
+	rule[j] = new rVe(entry[0], entry[1], entry[2], entry[3]);
+}
+
+function rVe(time, size, name, dir)
+{
+   this.time = time;   this.size = size;  
+   this.name = name;   this.dir = dir;
+}
+if (wftp_parent == '0'){
+	for (x=0;x<entryNum;x++){
+		link_modify_time[x] = rule[x].time;
+		link_file_size[x] = rule[x].size;
+		link_name[x] = rule[x].name;
+		if (wftp_remote == '1' && access_mode == 'wan')
+			link_value[x] = 'http://' + wan_ip + ':' + wftp_port  +  wftp_cur + '/' + link_name[x];
+		else
+			link_value[x] = 'http://' + lan_ip + ':' + wftp_port  +  wftp_cur + '/' + link_name[x];
+		link_file_attr[x] = rule[x].dir;
+	}
+}
+else
+{
+	link_modify_time[0] = '';
+	link_file_size[0] = '';
+	link_name[0] = wftp_parent;
+	if (wftp_remote == '1' && access_mode == 'wan')
+		link_value[0] = 'http://' + wan_ip + ':' + wftp_port  + link_name[0];
+	else
+		link_value[0] = 'http://' + lan_ip + ':' + wftp_port  + link_name[0];
+	link_file_attr[0] = 2;
+	for (x=1;x<(entryNum +1);x++){
+		link_modify_time[x] = rule[x-1].time;
+		link_file_size[x] = rule[x-1].size;
+		link_name[x] = rule[x-1].name;
+		if (wftp_remote == '1' && access_mode == 'wan')
+			link_value[x] = 'http://' + wan_ip + ':' + wftp_port  +  wftp_cur + '/' + link_name[x];
+		else
+			link_value[x] = 'http://' + lan_ip + ':' + wftp_port  +  wftp_cur + '/' + link_name[x];
+		link_file_attr[x] = rule[x-1].dir;
+	}
+}
+var flag = '<%ej_get_sort_method(info)%>';
+function count(index)
+{
+	var loc= 'wftp_sort.cmd?action=';
+	flag==false?true:false;
+    
+    switch(index){
+		case 1:
+			loc += 'name';
+			break;
+		case 2:
+			loc += 'time';
+			break; 
+		case 3:
+			loc += 'size';
+			break; 
+		case 4:
+			loc += 'desc';
+			break;
+    	}
+		if(flag==true){
+    	   loc += '&method=0';
+	    }
+		else
+		{
+			loc += '&method=1';
+		}
+	var code = 'location="' + loc + '"';
+	//alert(code);
+	eval(code);
+}
+document.writeln('<title>Index of '+link_title+'</title>');		
+</script> 
+<link rel="stylesheet" type="text/css" media="screen" href="/wftp.css">
+</head>
+<body>
+<table width="100%" border="0" cellspacing="0" cellpadding="5">
+<tr>
+	<td colspan=4>
+		<script Language="JavaScript">
+		document.writeln('<p class=subtitle>URL: '+link_title+'</p>');
+		</script>
+	</td>
+</tr>
+<tr>
+	<td width=30%>
+		<img src="/images/disk.gif" alt="Icon "><a href="#"  onclick="count(1)">Name</a></td>
+	<td width=20%>
+		<a href="#"  onclick="count(2)">Last modified</a></td>
+	<td width=20%>
+		<a href="#"  onclick="count(3)">Size</a></td>
+	<td width=20%>
+		<a href="#"  onclick="count(4)">Description</a></td>
+</tr>
+<tr><td colspan=4><hr></td></tr>
+<script Language="JavaScript">
+	for (var i = 0 ; i <= link_value.length ; i++) {
+		for (i = 0 ; i < link_value.length ; i++) {
+			if (link_file_attr[i] == 1) { // directory
+				document.write('<tr><td><img src="/images/folder1.gif" alt="[DIR]"> <a href="'+link_value[i]+'" class=normalTextvt>'+link_name[i]+'</a></td>');
+				document.write('<td>'+link_modify_time[i]+'</td>');
+				document.write('<td colspan=2>&nbsp</td></tr>');
+			}
+			else if (link_file_attr[i] == 2) { // parent directory
+				document.write('<tr><td><img src="/images/folderb.gif" alt="[DIR]"> <a href="'+link_value[i]+'" class=normalTextvt>Parent Directory</a></td>');
+				document.write('<td colspan=3>&nbsp</td></tr>');
+			}
+			else if(link_file_attr[i] == 0) { // file
+				document.write('<tr><td><img src="/images/text.gif" alt="[File]"> <a href="'+link_value[i]+'" class=normalTextvt>'+link_name[i]+'</a></td>');
+				document.write('<td>'+link_modify_time[i]+'</td>');
+				document.write('<td>'+link_file_size[i]+'</td>');
+				document.write('<td>&nbsp</td></tr>');
+			}
+		}
+	}	
+</script>
+<tr><td colspan=4><hr></td></tr>
+</table>
+<script>
+for(i=0;i<link_value.length;i++)
+{
+//if( (link_value[i].toLowerCase().indexOf("wftp.htm")>=0) ||(link_value[i].toLowerCase().indexOf("wftp.html")>=0))
+{
+//alert(link_value[i]);
+//window.location.replace(link_value[i]);
+
+}
+}//end for i
+</script>
+</body>
+</html>

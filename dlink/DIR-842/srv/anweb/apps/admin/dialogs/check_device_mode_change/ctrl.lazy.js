@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controllerProvider.register("CheckDeviceModeChangeDialogCtrl",["$scope",function($scope){$scope.isEasymesh=$scope.ngDialogData.isMeshStatusChanged,$scope["continue"]=function(){return window.location.href="/"}}]);

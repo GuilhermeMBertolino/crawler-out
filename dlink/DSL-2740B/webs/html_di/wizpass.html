@@ -1,0 +1,216 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+<script language="JavaScript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+pwdAdmin = '<%ejGet(adminPassword)%>';
+//pwdAdmin = 'admin';
+pwdSupport = '<%ejGet(sptPassword)%>';
+pwdUser = '<%ejGet(usrPassword)%>';
+
+function btnCancel()
+{
+    var code = 'location="internet.html"';
+    eval(code);
+}
+
+function btnNext()
+{
+    //var loc = 'wizpassword.cgi?';
+    var loc = 'wizsntp.html';
+    with(document.forms[0])
+    {
+        var idx = 1; //userName.selectedIndex;
+        switch (idx)
+        {
+            case 0:
+                alert("No username is selected.");
+                return ;
+            case 1:
+                if (pwdOld.value == pwdAdmin)
+                {
+                    break;
+                }
+                else
+                {
+                    alert("Old admin password is wrong.");
+                    return ;
+                }
+            case 2:
+                if (pwdOld.value == pwdSupport)
+                {
+                    break;
+                }
+                else
+                {
+                    alert("Old support password is wrong.");
+                    return ;
+                }
+            case 3:
+                if (pwdOld.value == pwdUser)
+                {
+                    break;
+                }
+                else
+                {
+                    alert("Old user password is wrong.");
+                    return ;
+                }
+        }
+        if (pwdNew.value != pwdCfm.value)
+        {
+            alert("The passwords do not match.");
+            return ;
+        }
+        var str = new String();
+        str = pwdNew.value;
+// 	/*20090209, Rob, Change it from 16 to 12*/
+//         if (str.length > 12)
+//         {
+//             alert('Password should not be longer than 12 characters.');
+//             return ;
+//         }
+	/*20110420, yocheng, data model define admin account's password length to 16 and maintance->Access Control->admin can set 16 length password, so here modified the limitation from 12 to 16.*/
+        if (str.length > 16)
+        {
+            alert('Password should not be longer than 16 characters.');
+            return ;
+        }
+	/*20090209, Rob, Should not be shoter than 4*/
+	 if (str.length < 4)
+        {
+            alert('Password should not be shorter than 4 characters.');
+            return ;
+        }
+        if (str.indexOf(' ') !=  - 1)
+        {
+            alert('Password cannot contain a space.');
+            return ;
+        }
+		
+		/* 20081216, Kevin, begin judge str not empty and valid, mark: 12161534 */
+		
+        if ('' == str)
+        {
+            alert('Password cannot be empty.');
+            return ;
+        }
+/*for fix bug# 11267, Access control--admin issue. yocheng, 20110421.*/
+// 		if (false == isValidPassword(str))
+// 		{
+// 			alert("Invalid Password:Password cannot contain special characters except '[0-9]|[a-z]|[A-Z].'");
+// 			return;
+// 		}
+		
+        /* 20081216, Kevin, end ------------------ mark: 12161534 */
+		
+        switch (idx)
+        {
+            case 2:
+                //loc += 'sptPassword=' + encodeUrl(pwdNew.value);
+                break;
+            case 3:
+                //loc += 'usrPassword=' + encodeUrl(pwdNew.value);
+                break;
+            default:
+                //loc += 'adminPassword=' + encodeUrl(pwdNew.value);
+                break;
+        }
+        //loc += '&quickSetup=1';
+        window.parent.frames[0].oldPasswd = encodeUrl(pwdOld.value);
+        window.parent.frames[0].newPasswd = encodeUrl(pwdNew.value);
+        var code = 'location="' + loc + '"';
+        eval(code);
+    }
+}
+
+function btnSkip()
+{
+    window.parent.frames[0].oldPasswd = '';
+    window.parent.frames[0].newPasswd = '';
+    
+    //var code = 'location="wizisp.cgi?adminPassword="';
+    //var code = 'location="wizsntp.cgi?quickSetup=1"';
+    var code = 'location="wizsntp.html"';
+    eval(code);
+}
+
+function btnPrev()
+{
+    var code = 'location="wizintro.html"';
+    eval(code);
+}
+
+function frmLoad()
+{
+    with(document.forms[0])
+    {
+        pwdOld.value = window.parent.frames[0].oldPasswd;
+        pwdNew.value = window.parent.frames[0].newPasswd;
+        pwdCfm.value = window.parent.frames[0].newPasswd;
+    }
+
+}
+
+// done hiding -->
+    </script>
+
+<script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="wizpass";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Step 1: Change Device Login Password > 2 > 3 > 4 > 5 > 6
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <P>The factory default password of this router is admin.  To help secure your network, D-Link recommends that you should choose a new password.  If you do not wish to choose a new password now, just Click Skip to continue.  Click Next to proceed to next step.</P>
+			<p>
+			<TABLE class=formarea cellSpacing=0 cellPadding=0 summary="" border=0 align=center>
+              <TR>
+                <TD class=form_label><LABEL for=radio_control>Current password&nbsp;:</LABEL></TD>
+                <TD><INPUT id=pwdOld type=password maxlength="16"></TD>
+			  </TR>
+              <TR>
+                <TD class=form_label><LABEL for=radio_control>New password&nbsp;:</LABEL></TD>
+                <TD><INPUT id=pwdNew type=password maxlength="16"></TD>
+			  </TR>
+              <TR>
+                <TD class=form_label><LABEL for=radio_control>Confirm password&nbsp;:</LABEL></TD>
+                <TD><INPUT id=pwdCfm type=password maxlength="16"></TD>
+			  </TR>
+			</TABLE>
+			</p>
+			<p align=center><input type=button value='Back' onclick='btnPrev()'><input type=button value='Next' onclick='btnNext()'><input type=button value='Skip' onclick='btnSkip()'><input type=button value='Cancel' onclick='btnCancel()'></p>
+      		</td>
+		</tr>
+	</table>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</form>
+</blockquote>
+   </body>
+</html>

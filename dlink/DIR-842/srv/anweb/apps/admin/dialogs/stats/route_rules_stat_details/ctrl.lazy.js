@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controllerProvider.register("routeRulesStatDetailsCtrl",function($scope,translate){$scope.model=$scope.ngDialogData.model,$scope.getTitle=function(type){return translate("stats_routing_"+type)+" "+translate("iface").toLowerCase()}});

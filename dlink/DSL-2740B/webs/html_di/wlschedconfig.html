@@ -1,0 +1,445 @@
+<HTML><HEAD><TITLE>D-Link ADSL Router</TITLE>
+<META http-equiv=Content-Type content="text/html">
+<META http-equiv=Pragma content=no-cache><LINK 
+href="stylemain.css" type=text/css rel=stylesheet>
+<SCRIPT language=JavaScript src="util.js"></SCRIPT>
+<SCRIPT language=JavaScript src="menu.js"></SCRIPT>
+<SCRIPT language=javascript>
+<!-- hide
+var enbl = '<%ejGetWl(wlEnbl)%>';
+var wlSchedule = '<%ejGetWl(wl_schedule)%>';
+var wlScheduleAllday = '<%ejGetWl(wl_scheduler_allday)%>';
+var from_h_str = '<%ej_Get_Wl_Schedule(from_h)%>';
+var from_m_str = '<%ej_Get_Wl_Schedule(from_m)%>';
+var to_h_str = '<%ej_Get_Wl_Schedule(to_h)%>';
+var to_m_str = '<%ej_Get_Wl_Schedule(to_m)%>';
+var allday_str = '<%ej_Get_Wl_Schedule(allday)%>';
+var wlRefresh = '<%ejGetWl(wlRefresh)%>';
+
+if ( wlRefresh == '1' ) {
+   var code = 'location="wlschedfresh.wl?wlRefresh=0"';
+   eval(code);   
+}
+
+var from_h = new Array();
+var from_m = new Array();
+var to_h = new Array();
+var to_m = new Array();
+var allday = new Array();
+var week = new Array("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday");
+from_h = from_h_str.split('#');
+from_m = from_m_str.split('#');
+to_h = to_h_str.split('#');
+to_m = to_m_str.split('#');
+allday = allday_str.split('#');
+
+function btnApply() {
+
+   var loc = 'wlsched.wl?';
+ /* 
+   if ( enbl == '0' ) {
+      alert('Cannot apply the change since wireless is currently disabled.');
+      return;
+   }
+*/
+   with ( document.forms[0] ) {
+	  if (wlched.checked == true) {
+	     loc+= 'wl_schedule=1';
+
+         if (set_days[0].checked == true){
+		    loc+= '&wl_scheduler_allday=1';
+		    var start = parseInt(strTimeHr.value, 10) * 60 +  parseInt(strTimeMin.value, 10); 
+		    var end = parseInt(endTimeHr.value, 10) * 60 + parseInt(endTimeMin.value , 10);
+			var startTime = strTimeHr.value + ':' + strTimeMin.value;
+		    var endTime = endTimeHr.value + ':' + endTimeMin.value;
+			//alert(isNaN(strTimeHr.value));
+		    if (start < 0 || start > 1440 || isNaN(strTimeHr.value) || isNaN(strTimeMin.value)){
+			   alert( 'Start time '+ startTime+' is invaild.');
+			   return;
+		    }
+		    if (end < 0 || end > 1440 || isNaN(endTimeHr.value) || isNaN(endTimeMin.value)){
+			   //en_time = isValidTime(endTime,"End Time");
+			   alert( 'End time '+ endTime+' is invaild.');
+			   return;
+		    }
+			loc = loc + "&" + start + "=" + end;
+			loc = loc + "&allday=0" ;
+			for (i = 0; i < 7; i++){
+			   loc = loc + "&" + start + "=" + end;
+			   loc = loc + "&allday=0" ;
+            }
+         }
+		 else {
+		    loc+= '&wl_scheduler_allday=0';
+	        loc = loc + "&" + 0 + "=" + 1440;
+	        loc = loc + "&allday=0" ;
+
+			for (i = 0; i < 7; i++) {
+			   var strartHour = document.getElementById("strTimeHr"+i).value;
+			   var startmin = document.getElementById("strTimeMin"+i).value;
+	           var endHour = document.getElementById("endTimeHr"+i).value;
+	           var endmin = document.getElementById("endTimeMin"+i).value;
+	           var start = parseInt(strartHour, 10) * 60 +  parseInt(startmin, 10);
+	           var end = parseInt(endHour, 10) * 60 + parseInt(endmin, 10);			       			
+			   var startTime = strartHour + ':' + startmin;
+		       var endTime = endHour + ':' + endmin;
+			   
+		       if (start < 0 || start > 1440 || isNaN(strartHour) || isNaN(startmin)){
+			      alert(' Start time '+ startTime+' is invaild.('+week[i]+')');
+			      return;
+		       }
+		       if (end < 0 || end > 1440 || isNaN(endHour) || isNaN(endmin)){
+			      //en_time = isValidTime(endTime,"End Time");
+			      alert( 'End time '+endTime+' is invaild.('+week[i]+')');
+			      return;
+		        }		   
+	           if (start == 0 && end == 1440) {
+		          loc = loc + "&" + 0 + "=" + 0;
+		          loc = loc + "&allday=1" ;
+	           }
+               else {
+		          loc = loc + "&" + start + "=" + end;
+		          loc = loc + "&allday=0" ;
+	           }
+
+            }
+         }
+      }
+      else {
+         loc+= 'wl_schedule=0'; 
+      }
+      var code = 'location="' + loc + '"';
+    //  if("<%ejGetSntp(ntp_enabled)%>" != "1" && '<%ejGetTime(dt_isManual)%>' != '1')
+    //  if('<%ejGet(timeisSet)%>' != '1')
+    //      alert("WARNING: Modem time is not set and iptable scheduler will not work correctly without it!  Please set it in 'Setup/Time and Date'");
+
+      eval(code);
+   }
+
+}
+function btnCancel()
+{
+  var code = 'location="wlschedconfig.html"';
+  eval(code);
+}
+function setAllDays(value)
+{
+   with ( document.forms[0] ) {
+      if (value == 1){
+         document.getElementById("id_time").style.display ='none';
+	     document.getElementById("id_week").style.display ='';
+	  } 
+	  else {
+	     document.getElementById("id_time").style.display ='';
+		 document.getElementById("id_week").style.display ='none';
+	  }
+   }
+}
+
+function setschedule(obj)
+{    
+   with ( document.forms[0] ) {
+      if (obj.checked == false)
+	  {
+	     document.getElementById("schedAddInfo").style.display ='none';
+	  }
+	  else {
+	     document.getElementById("schedAddInfo").style.display ='';	
+      }
+   }
+}
+
+function initwlSchedule()
+{
+   with ( document.forms[0] ) {
+      strTimeHr.value = "00";
+	  strTimeMin.value = "00";
+	  endTimeHr.value = "24";
+	  endTimeMin.value = "00";
+	  for ( i = 0;i < 7;i++){					
+	     document.getElementById("strTimeHr"+i).value = "00";
+	     document.getElementById("strTimeMin"+i).value = "00";
+	     document.getElementById("endTimeHr"+i).value = "24";
+	     document.getElementById("endTimeMin"+i).value = "00";
+	  }
+   }
+}
+
+function frmLoad(){
+   initwlSchedule();
+   with ( document.forms[0] ) {
+	  wlched.checked = wlSchedule == 1?true:false;
+	  setschedule(wlched);
+	  setAllDays(wlScheduleAllday);
+	
+	  var i = 0;
+	  for (i = 0;i < 8;i++){
+	     if (from_h[i].length == 1)
+		    from_h[i] = '0'+from_h[i];
+	     if (from_m[i].length == 1)
+		    from_m[i] = '0'+from_m[i];
+	     if (to_h[i].length == 1)
+		    to_h[i] = '0'+to_h[i];
+	     if (to_m[i].length == 1)
+		    to_m[i] = '0'+to_m[i];
+	  }
+	  if (wlScheduleAllday == '1'){
+		 set_days[0].checked = true
+
+		 strTimeHr.value = from_h[0];
+		 strTimeMin.value = from_m[0];
+		 endTimeHr.value = to_h[0];
+		 endTimeMin.value = to_m[0];
+	  }
+	  else {
+         set_days[1].checked = true;
+		 for ( i = 0;i < 7;i++){
+		    if (allday[i+1] == 1){					
+			   document.getElementById("strTimeHr"+i).value = "00";
+			   document.getElementById("strTimeMin"+i).value = "00";
+			   document.getElementById("endTimeHr"+i).value = "24";
+			   document.getElementById("endTimeMin"+i).value = "00";
+			}
+			else {
+			   document.getElementById("strTimeHr"+i).value = from_h[i+1];
+			   document.getElementById("strTimeMin"+i).value = from_m[i+1];
+			   document.getElementById("endTimeHr"+i).value =  to_h[i+1];
+		 	   document.getElementById("endTimeMin"+i).value = to_m[i+1];
+			}
+				
+		 }
+      }
+			
+   }
+}
+
+
+// done hiding -->
+    </script>
+   </head>
+   <body onload='frmLoad()'>
+      <blockquote>
+      <form onsubmit="return false;">
+<script language="JavaScript">
+TabHeader="Advanced";
+SideItem="WI-FI Schedules";
+HelpItem="wlschedules";
+</script>
+<script type='text/javascript'>
+	mainTableStart();
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Schedule
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+				<p>Schedule allows you to create scheduling rules to be applied for your Wireless(enable/disable).</p>
+			</td>
+		</tr>
+	</table>
+
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>Schedule enable
+			</td>
+	</tr>
+		<tr>
+			<td class=content>
+<div class=overflow><table class=formlisting>
+
+              <TR>
+                <TD class=form_label_30></TD>
+                <TD>
+                		<INPUT id=wlched type=checkbox onclick=setschedule(this)><LABEL for=sunday>enable schedule</LABEL>&nbsp;
+		 </TD>
+			  </TR>
+    </table><br><br></div></td>
+                                                     
+
+</tr>
+</table>
+
+<div id=schedAddInfo style={display:none}>
+	<table id=body_header border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Schedule Rule
+			</td>
+		</tr>
+		<tr>
+			<td class=content>
+            <br>
+            <table class=formarea border="0" cellpadding="0" cellspacing="0">
+              <!--<TR>
+                <TD class=form_label_30><LABEL for=sname>Name&nbsp;:</LABEL></TD>
+                <td><input type='text' name='rulename' size='20' maxlength='30'></td>
+			  </TR>-->
+              <TR>
+                <TD class=form_label_30>Day(s)&nbsp;:</TD>
+                <TD><INPUT id=allweek onclick=setAllDays(1) type=radio value=127 name=set_days>
+                  	<LABEL for=allweek>All Week</LABEL>
+					<INPUT id=SelDays onclick=setAllDays(0) type=radio value=0 name=set_days>
+					<LABEL for=SelDays>Select Day(s)</LABEL> </TD>
+			  </TR>
+			   <div id=um0>
+			  <tbody id='id_days'>
+			  </tbody>
+<tbody id='id_week'>
+              <!--<TR>
+                <TD class=form_label_30><LABEL for=allday>All Day - 24 hrs&nbsp;:</LABEL></TD>
+                <TD><INPUT id=allday type=checkbox onclick='setWholeDay()'> </TD>
+			  </TR>-->
+			 			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	 </tbody>
+			  
+			  </div>
+<div id=um1>
+			  <tbody id='id_time'>
+              <TR><TD>
+                <LABEL for=saturday>Sunday</LABEL>
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr0" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin0" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr0" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin0" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>
+
+              <TR><TD>
+                <LABEL for=sunday>Monday</LABEL>&nbsp;              
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr1" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin1" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr1" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin1" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	
+
+              <TR><TD>
+                <LABEL for=monday>Tuesday</LABEL>&nbsp;              
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr2" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin2" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr2" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin2" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	
+
+              <TR><TD>
+                <LABEL for=tuesday>Wednesday</LABEL>&nbsp;              
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr3" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin3" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr3" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin3" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	
+
+              <TR><TD>
+                <LABEL for=wednesday>Thursday</LABEL>&nbsp;              
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr4" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin4" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr4" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin4" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	
+
+              <TR><TD>
+               <LABEL for=thursday>Friday</LABEL>&nbsp;              
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr5" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin5" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr5" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin5" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>	
+
+              <TR><TD>
+                <LABEL for=friday>Saturday</LABEL>&nbsp;
+		      </TD></TR>
+			  <TR>
+                <TD class=form_label_30><LABEL for=StrTime>Start Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="strTimeHr6" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="strTimeMin6" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD></TR>
+
+              <TR>
+                <TD class=form_label_30><LABEL for=EndTime>End Time&nbsp;:</LABEL></TD>
+                <TD><INPUT id="endTimeHr6" style="WIDTH: 40px" maxLength=2> :
+					<INPUT id="endTimeMin6" style="WIDTH: 40px" maxLength=2>&nbsp;&nbsp;(hour:minute, 24 hour time)
+				</TD>
+			  </TR>		</div>	  
+			  </tbody></tbody>
+			</table>
+
+			</TD>
+		</TR>
+	</table>
+</div>
+<p align=center><input type='button' value="Apply" onClick='btnApply()'><input type='button' value="Cancel" onClick='btnCancel()'></p>
+
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+         </form>
+      </blockquote>
+   </body>
+</html>

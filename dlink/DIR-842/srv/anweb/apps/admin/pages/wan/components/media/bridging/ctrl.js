@@ -1,0 +1,1 @@
+"use strict";angular.module("app").controller("WanMediaBridgingCtrl",["$scope",function($scope){$scope.media=$scope.conn.Media,$scope.hasCloneVLAN=function(){var data=$scope.conn;return data.__New&&"Bridging"==data.MediaType&&("IPv4oE"==data.__Type||"PPPoE"==data.__Type)&&-1==data.Media.Bridging.__VID}}]);

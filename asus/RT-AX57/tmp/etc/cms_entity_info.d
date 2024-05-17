@@ -1,0 +1,1 @@
+/rom/etc/cms_entity_info.d

@@ -1,0 +1,330 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+<script language="javascript" src="menu.js"></script>      
+            <script language="javascript">
+<!-- hide
+
+//var is_ip_changed_s = '<%ejGet(is_ip_changed)%>';
+
+function btnCancel()
+{
+    //var code = 'location="wizcanceldsl.cgi"';
+    var code = 'location="internet.html"';
+    eval(code);
+}
+
+/* 20081205, Feena, begin Add for to take effect immediately, mark: 12051040*/
+function btnRestart()
+{
+    //var loc = 'wizwanrun.cgi?quickSetup=1';
+    var loc = 'wizardsettings.cgi?quickSetup=1';
+    //var loc = 'wizcfg.cgi?quickSetup=1';
+    var param = '';
+
+    /* 20091119, Roger Yu, fix wizard setup mode, mark: 11191836*/
+
+    // set admin/password
+    if (window.parent.frames[0].newPasswd != '')
+    {
+        param += '&adminPassword=' + window.parent.frames[0].newPasswd;
+    }
+    
+    // set datetime
+    if ('1' == window.parent.frames[0].wiz_ntpEnabled)
+    {
+        param += '&ntp_enabled=1&isManual=0';
+        param += '&ntpServer1=' + window.parent.frames[0].wiz_ntp1;
+        param += '&ntpServer2=' + window.parent.frames[0].wiz_ntp2;
+        param += '&timezone=' + window.parent.frames[0].wiz_timezone;
+        if ('1' == window.parent.frames[0].wiz_dstEnabled)
+        {
+            param += '&use_dst=1';
+            param += '&from_day=' + window.parent.frames[0].wiz_fromday;
+            param += '&from_month=' + window.parent.frames[0].wiz_frommonth;
+            param += '&from_weekday=' + window.parent.frames[0].wiz_fromweekday;
+            param += '&from_week=' + window.parent.frames[0].wiz_fromweek;			
+            param += '&from_hour=' + window.parent.frames[0].wiz_fromhour;
+            param += '&to_month=' + window.parent.frames[0].wiz_tomonth;
+            param += '&to_day=' + window.parent.frames[0].wiz_today;
+            param += '&to_weekday=' + window.parent.frames[0].wiz_toweekday;
+            param += '&to_week=' + window.parent.frames[0].wiz_toweek; 			
+            param += '&to_hour=' + window.parent.frames[0].wiz_tohour;
+            param += '&dst_offset=' + window.parent.frames[0].wiz_offset;
+        }
+        else 
+        {
+            param += '&use_dst=0';
+        }
+    }
+    else 
+    {
+        param +='&ntp_enabled=0&isManual=1&use_dst=0';
+		param += '&manualDateTimeStr=' + window.parent.frames[0].wiz_manualDateTimeStr;
+    }
+
+    // set wan interface
+    param += '&enblAutoScan=' + window.parent.frames[0].wizAutoscan;
+    param += '&atmVpi=' + window.parent.frames[0].wizVpi;
+    param += '&atmVci=' + window.parent.frames[0].wizVci;
+    param += '&atmServiceCategory=UBR';
+    param += '&atmPeakCellRate=0';
+    param += '&portId=0';
+    param += '&enblQos=0';
+    param += '&atmSustainedCellRate=0';
+    param += '&atmMaxBurstSize=0';
+    param += '&serviceId=0';
+    param += '&enblNat=1';//yocheng added for initialing NAT,20100923
+    param += '&enblFirewall=1';//yocheng added for initialing Firewall,20100923
+    
+    if ('PPPoA' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=PPPoA&ntwkPrtcl=1';
+        param += '&connMode=0';
+        param += '&pppUserName=' + window.parent.frames[0].wizPppUsername;
+        param += '&pppPassword=' + window.parent.frames[0].wizPppPasswd;
+        param += '&enblOnDemand=0';
+        param += '&pppTimeOut=0';
+        param += '&pppAuthMethod=0';
+	param += '&serviceName=wizard_pvc';
+    }
+    else if ('PPPoE' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=EoA&ntwkPrtcl=0';
+        param += '&connMode=0';
+        param += '&pppUserName=' + window.parent.frames[0].wizPppUsername;
+        param += '&pppPassword=' + window.parent.frames[0].wizPppPasswd;
+        param += '&enblOnDemand=0'; //1';
+        param += '&pppTimeOut=0';
+        param += '&pppAuthMethod=0';
+		param += '&pppServerName=';
+		param += '&pppAuthErrorRetry=0';
+		param += '&enblPppDebug=0';
+		param += '&pppToBridge=0';
+		param += '&enblIgmp=1';
+		param += '&vlanMuxId=-1';
+		param += '&enVlanMux=0';	
+		param += '&pppMtu=1492';
+		param += '&pppMru=1492';
+		param += '&useStaticIpAddress=0';
+		param += '&pppLocalIpAddress=0.0.0.0';
+		param += '&pppIpExtension=0';
+		param += '&enblFullcone=0';
+		param += '&dnsIfc=CurrentIface';
+		param += '&dnsPrimary=0.0.0.0';
+		param += '&dnsSecondary=0.0.0.0';
+		param += '&serviceName=wizard_pvc';
+        param += '&defaultGatewayList=CurrentIface';
+    }
+    else if ('Dynamic IP' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=EoA&ntwkPrtcl=2';
+        param += '&connMode=0';
+        param += '&enblDhcpClnt=1';
+        param += '&dnsIfc=CurrentIface';//Fix bug#15147, Yocheng, 20120710.
+        param += '&dnsPrimary=0.0.0.0';
+        param += '&dnsSecondary=0.0.0.0';
+		param += '&clientMacClone=' + window.parent.frames[0].wizMacAddr;
+    }
+    else if ('Static IP' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=EoA&ntwkPrtcl=6';
+        param += '&connMode=0';
+        param += '&enblDhcpClnt=0';
+        param += '&wanIpAddress=' + window.parent.frames[0].wizWanIp;
+        param += '&wanSubnetMask=' + window.parent.frames[0].wizWanSubnetMask;
+        param += '&wanIntfGateway=' + window.parent.frames[0].wizWanGateway;
+        param += '&dnsPrimary=' + window.parent.frames[0].wizDns1;
+        param += '&dnsSecondary=' + window.parent.frames[0].wizDns2;
+        param += '&dnsIfc=' + '';
+    }
+    else if ('Bridge' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=EoA&ntwkPrtcl=3';
+        param += '&connMode=0';
+    }
+    else if ('IPoA' == window.parent.frames[0].wizPrtcl)
+    {
+        param += '&linkType=IPoA&ntwkPrtcl=5';
+        param += '&connMode=0';
+        param += '&enblDhcpClnt=0';
+        param += '&wanIpAddress=' + window.parent.frames[0].wizWanIp;
+        param += '&wanSubnetMask=' + window.parent.frames[0].wizWanSubnetMask;
+        param += '&wanIntfGateway=' + window.parent.frames[0].wizWanGateway;
+        param += '&dnsPrimary=' + window.parent.frames[0].wizDns1;
+        param += '&dnsSecondary=' + window.parent.frames[0].wizDns2;
+        param += '&dnsIfc=' + '';
+    }
+
+    if ('0' == window.parent.frames[0].wizEncapMode)
+    {
+        param += '&encapMode=0';
+    }
+    else 
+    {
+        param += '&encapMode=1';
+    }
+   // param += '&dns6Type=Static';
+    // set wireless
+    if ('1' == window.parent.frames[0].wizEnabledWl)
+    {
+        param += '&wlEnbl=1&schedule=always';
+        param += '&wlWscConfig=ap-pbc';
+        param += '&wsc_apLockCap=1';
+        param += '&wlSsid=' + window.parent.frames[0].wizSsid;
+        
+        if ('0' == window.parent.frames[0].wizWlhide)
+        {
+            param += '&wlHide=0';
+        }
+        else if ('1' == window.parent.frames[0].wizWlhide)
+        {
+            param += '&wlHide=1';
+        }
+
+        if ('open' == window.parent.frames[0].wizWlAuthMode)
+        {
+            if ('disabled' == window.parent.frames[0].wizWep)
+            {
+                param += '&wlAuthMode=open&wlAuth=0&wlWep=disabled&wlSsidIdx=0';
+            }
+            else
+            {
+                param += '&wlAuthMode=open&wlAuth=0&wlWep=enabled';
+                param += '&wlKeyBit=' + window.parent.frames[0].wizWlKeybit;
+                param += '&wlKeyIndex=1&wlKey1=' + window.parent.frames[0].wizWlKey1;
+                param += '&wlKey2=&wlKey3=&wlKey4=&wlSsidIdx=0';
+            }
+        }
+        else if ('psk' == window.parent.frames[0].wizWlAuthMode)
+        {
+            param += '&wlAuthMode=psk&wlAuth=0';
+            param += '&wlWpaPsk=' + window.parent.frames[0].wizWpaPsk;
+            param += '&wlWep=disabled&wlWpa=tkip+aes&wlPreauth=0&wlSsidIdx=0';
+        }
+        else if ('psk2' == window.parent.frames[0].wizWlAuthMode)
+        {
+            param += '&wlAuthMode=psk2&wlAuth=0';
+            param += '&wlWpaPsk=' + window.parent.frames[0].wizWpaPsk;
+            param += '&wlWep=disabled&wlWpa=aes&wlPreauth=0&wlSsidIdx=0';
+        }
+    }
+    else 
+    {
+        param += '&wlEnbl=0&schedule=never';
+    }
+
+    // set lan
+    param += '&ethIpAddress=' + window.parent.frames[0].ethIp;
+    param += '&ethSubnetMask=' + window.parent.frames[0].ethMask;
+
+    if ('1' == window.parent.frames[0].wizEnbLan2)
+    {
+        param += '&enblLan2=1';
+        param += '&lan2IpAddress=' + window.parent.frames[0].eth2Ip;
+        param += '&lan2SubnetMask=' + window.parent.frames[0].eth2Mask;
+    }
+    else 
+    {
+        param += '&enblLan2=0';
+    }
+
+    if ('1' == window.parent.frames[0].wizEnblDhcp)
+    {
+        param += '&dhcpEthStart=' + window.parent.frames[0].wizDhcpStart;
+        param += '&dhcpEthEnd=' + window.parent.frames[0].wizDhcpEnd;
+        param += '&dhcpLeasedTime=' + window.parent.frames[0].wizDhcpLease;
+        param += '&dhcpSubnetMask=' + window.parent.frames[0].ethMask;
+        param += '&enblDhcpSrv=1';
+    }
+    else 
+    {
+        param += '&enblDhcpSrv=0';
+    }
+
+    if ('1' == window.parent.frames[0].wizLanChanged)
+    {
+        param += '&is_ip_changed=1';
+    }
+    else
+    {
+        param += '&is_ip_changed=0';
+    }
+    
+    /* 20091119, Roger Yu, end---------------------------------- mark: 11191836*/
+
+    if ('1' == window.parent.frames[0].wizLanChanged)
+    {
+        setTimeout("redirect()", 10000);
+    }
+
+    loc = loc + param;
+    var code = 'location="' + loc + '"';
+    //alert(code);
+    eval(code);
+}
+
+function redirect()
+{
+    var loc = '';
+    //var ethIp = '<%ejGet(ethIpAddress)%>';
+    var ethIp = window.parent.frames[0].ethIp;
+    //alert('redirect to the IP Address');
+    loc = 'http://' + ethIp + '/login.html';
+    window.location.href = loc;
+}
+/* 20081205, Feena, end -------------------------------------------------------- mark: 12051040*/
+function btnPrev()
+{
+    var loc;
+
+    loc = 'wizlan.html';
+    var code = 'location="' + loc + '"';
+    eval(code);
+}
+
+// done hiding -->
+    </script>
+
+   </head>
+<body>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Wizard";
+HelpItem="comapply";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				1 > 2 > 3 > 4 > 5 > Step 6: Completed and Apply 
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+            <P>Setup complete.  Click Back to review or modify settings.  Click Finish to apply current settings.</P>
+			<!--<p>If your Internet connection does not work after you click Finish, please go to Maintenance > System > Reboot to restart the device. Otherwise you can try the Setup Wizard again with alternative settings or use Manual Setup if you have your Internet connection details as provided by your ISP.</p>-->
+      		</td>
+		</tr>
+	</table>
+			<p align=center><input type=button value='Back' onclick='btnPrev()'><input type=button value='Finish' onclick='btnRestart()'><input type=button value='Cancel' onclick='btnCancel()'></p>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</form>
+</blockquote>
+   </body>
+</html>

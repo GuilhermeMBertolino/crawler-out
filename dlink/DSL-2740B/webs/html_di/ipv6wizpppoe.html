@@ -1,0 +1,269 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+<script language="JavaScript" src="util.js"></script>
+            <script language="javascript">
+<!-- hide
+
+var ipv6addr_ll = '<%ej_get_ipv6(ipv6addr_ll)%>';
+var ifname = '<%ej_get_ipv6(wanintflist)%>';
+var currintf = '<%ejGet(wanL2IfName)%>';
+var intf_tmp = currintf.split('/');
+var conninfo = '<%ej_get_ipv6(conntype6)%>';
+var tmp = conninfo.split('|');
+
+var wan6_type = '<%ejGet(wanAddr6Type)%>';
+var session_is_new = '<%ejGet(is_new)%>';
+var user_name = '<%ejGet(ip6_user_name)%>';
+var password = '<%ejGet(ip6_password)%>';
+var service_name = '<%ejGet(ip6_service_name)%>';
+
+function btnPrev()
+{
+    var code = 'location="ipv6wizselect.html"';
+    eval(code);
+}
+
+function btnCancel()
+{
+    var code = 'location="ipv6internet.html"';
+    eval(code);
+}
+
+function btnConnect()
+{
+    var code = 'location="internet.html"';
+    eval(code);
+}
+
+function pppoecheck()
+{
+	with (document.forms[0])
+	{
+		if (username.value.length > 64) 
+		{
+			alert('The length of user name ("' + username.value.length + '") is too long [0-64].');
+			return false;
+		}
+		
+		if (!isValidName(username.value, "PPP user name:", BLANK_INVALID, SPACE_INVALID))
+		{
+			return false;
+		}
+		
+		if (passwd[0].value.length > 32) 
+		{
+			alert('The length of password ("' + passwd[0].value.length + '") is too long [0-32].');
+			return false;
+		}
+		
+		if (!isValidName(passwd[0].value, "PPP password:", BLANK_INVALID, SPACE_INVALID))
+		{
+			return false;
+		}
+		
+		if (passwd[0].value != passwd[1].value)
+		{
+			alert('Password is different from the verified password.');
+			return false;
+		}
+		
+		if (srvname.value.length > 32) 
+		{
+			alert('The length of PPP service ("' + srvname.value.length + '") is too long [0-32].');
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function btnNext()
+{
+	var loc = 'ipv6wiz.cmd?action=pppoe6';
+	
+    with (document.forms[0])
+    {
+		if (pppoecheck() == false)
+		{
+			return;
+		}
+
+		loc += '&ppp6username=' + username.value;
+		loc += '&ppp6passwd=' + passwd[0].value;
+		loc += '&ppp6srvname=' + srvname.value;
+
+		if (pppsess[0].checked == true)
+		{
+			loc += '&ppp6share=1';
+		}
+		else
+		{
+			loc += '&ppp6share=0';
+		}
+	}
+	
+	var code = 'location="' + loc + '"';
+	eval(code);
+}
+
+function frmLoad()
+{
+	with (document.forms[0])
+	{
+		if (wan6_type == 'pppoe')
+		{
+			if (session_is_new == '0')
+	    	{
+				pppsess[0].checked = true;
+	    	}
+			else
+			{
+				pppsess[1].checked = true;
+			}
+
+			username.value = user_name;
+			passwd[0].value = password;
+			passwd[1].value = password;
+			srvname.value = service_name;
+		}
+		else
+		{
+			username.value = '';
+			passwd[0].value = '';
+			passwd[1].value = '';
+			srvname.value = '';
+		}
+	}
+}
+
+// done hiding -->
+    </script>
+
+<script language="JavaScript" src="menu.js"></script>
+   </head>
+<body onLoad='frmLoad()'>
+<blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="IPv6";
+HelpItem="ipv6wizpppoe";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Set Username and Password connection(PPPoE)
+			</td>										
+		</tr>
+		
+			<td class=content>
+            <P>To set up this connection you will need to have a Username and Password from your IPv6 Internet Service
+            	Provider. If you do not have this information, please contact your ISP.</P>
+            	
+			<p>
+			<table class=formarea cellSpacing=0 cellPadding=0 border=0>
+                <tr>
+	                <td class=form_label>
+	                	<label for=pppsess>PPPoE Session&nbsp;:</label>
+	                </td>
+
+                    <td>
+                    	<input type='radio' name='pppsess' checked>&nbsp;Share with IPv4
+                    </td>
+
+					<td>&nbsp;&nbsp</td>
+                  	
+                    <td>
+                    	<input type='radio' name='pppsess' disabled>&nbsp;Create a new session
+                    </td>
+                </tr>
+			</table>
+
+			<br><br>
+
+			<table class=formarea cellSpacing=0 cellPadding=0 border=0>
+              <tr>
+                <td class=form_label>
+                	<label for=username>User Name&nbsp;:</label>
+                </td>
+
+                <td>
+                	<input id='username' type='text' name='username' size='15' maxlength='64'>
+                </td>
+			  </tr>
+			</table>
+
+			<table class=formarea cellSpacing=0 cellPadding=0 border=0>  
+              <tr>
+                <td class=form_label>
+                	<label for=passwd>Password&nbsp;:</label>
+                </td>
+
+                <td>
+					<input id='passwd' type='password' name='passwd' size='15' maxlength='32'>
+                </td>
+			  </tr>
+			</table>
+
+			<table class=formarea cellSpacing=0 cellPadding=0 border=0>  
+              <tr>
+                <td class=form_label>
+                	<label for=verify>Verify Password&nbsp;:</label>
+                </td>
+
+                <td>
+                	<input id='verify' type='password' name='passwd' size='15' maxlength='32'>
+                </td>
+			  </tr>
+			</table>
+
+			<table class=formarea cellSpacing=0 cellPadding=0 border=0>  
+              <tr>
+                <td class=form_label>
+                	<label for=srvname>Service Name&nbsp;:</label>
+                </td>
+                
+                <td>
+	                <input id='srvname' type='text' name='srvname' size='15' maxlength='32'>(optional)
+                </td>
+			  </tr>			  
+			</table>
+			</p>
+      		</td>
+
+			<tr>
+			<td class=content>
+			   <P>Note: You may also need to provide a Service Name. If you do not have or know this information, please
+			      contact your ISP.</P>
+            	
+			<p>
+			<p align=center>
+				<input type="button" value='Prev' onclick='btnPrev()'>
+				<input type="button" value='Next' onclick='btnNext()'>
+				<input type="button" value='Cancel' onclick='btnCancel()'>
+				<input type="button" value='Connect' onclick='btnConnect()' disabled="true">
+			</p>
+			</td>
+			</tr>
+      		
+	</table>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</form>
+</blockquote>
+   </body>
+</html>

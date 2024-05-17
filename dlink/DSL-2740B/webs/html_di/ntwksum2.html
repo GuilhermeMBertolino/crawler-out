@@ -1,0 +1,172 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+            <script language="javascript">
+<!-- hide
+var ipExtension = '<%ejGet(pppIpExtension)%>';
+var prtcl = '<%ejGetOther(memInfo, ntwkPrtcl)%>';
+var qs = '<%ejGet(quickSetup)%>';
+var user = '<%ejGet(curUserName)%>';
+var atmCategory = '<%ejGet(atmServiceCategory)%>';
+
+function btnNext() {
+	var loc = '';
+	if (prtcl == 'PPPo3G')
+		loc = 'wanallcfg3g.cmd?action=add';
+	else
+		loc = 'wancfg.cmd?action=add';
+	// disable save button to avoid bugs while clicking this button too fast
+	document.forms[0].btnSave.disabled = 1;
+
+	var code = 'location="' + loc + '"';
+	eval(code);
+}
+
+function btnBack() {
+   var ifc = '<%ejGetWl(wlInterface)%>';
+   var loc = 'natcfg2.html';
+   var serviceId = '<%ejGet(serviceId)%>';
+   var wanIfName = '<%ejGet(wanIfName)%>';
+   var wanL2IfName = '<%ejGet(wanL2IfName)%>';
+
+    if (prtcl == 'Bridge')
+    {     
+        loc = 'wanifc.cmd';
+    }
+    else
+         loc = 'ifcgateway.html';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+// done hiding -->
+      </script>
+      <script language="JavaScript" src="menu.js"></script>
+   </head>
+   <body>
+<form>
+      <blockquote>
+<script language="JavaScript">
+TabHeader="Setup";
+SideItem="Internet Setup";
+HelpItem="wancfghelp3";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+	<table id=box_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+<script type='text/javascript'>
+if (qs == '1'){
+document.write('Wizard');
+}else{
+document.write('WAN');
+}		
+</script>
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>Make sure that the settings below match the settings provided by your ISP.</p>
+
+<script language="javascript">
+<!-- hide
+{
+   document.writeln('<p>Click "Apply" to save these settings. Click "Back" to make any modifications.<br>');
+   document.writeln('NOTE: You need to reboot to activate this WAN interface and further configure services over this interface.<br><br></p>');
+}
+// done hiding -->
+</script>
+
+			</td>
+		</tr>
+	</table>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				Setup - Summary
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+         <br>
+         <table class=formlisting>
+            <tr>
+               <td class='hd'>PORT / VPI / VCI:</td>
+               <td><%ejGetOther(memInfo, portVpiVci)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Connection Type:</td>
+               <td><%ejGetOther(memInfo, ntwkPrtcl)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Description:</td>
+               <td><%ejGet(serviceName)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Service Category:</td>
+<script language="javascript">
+			if (prtcl == 'PPPo3G')
+                document.write('<td>N/A&nbsp;</td>');
+			else
+				document.write('<td>' + atmCategory + '&nbsp;</td>');
+</script>
+			</tr>
+            <tr>
+               <td class='hd'>IP Address:</td>
+               <td><%ejGetOther(memInfo, wanAddr)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Service State:</td>
+               <td><%ejGetOther(memInfo, enblService)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>NAT:</td>
+               <td><%ejGetOther(memInfo, enblNat)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Full Cone NAT:</td>
+               <td><%ejGetOther(memInfo, enblFullcone)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>Firewall:</td>
+               <td><%ejGetOther(memInfo, enblFirewall)%>&nbsp;</td>
+            </tr>
+            <tr>
+               <td class='hd'>IGMP Multicast:</td>
+               <td><%ejGetOther(memInfo, enblIgmp)%>&nbsp;</td>
+            </tr>
+         </table>
+         <br>
+      		</td>
+		</tr>
+	</table><script language="javascript">
+<!-- hide
+{
+   document.writeln("<br>");
+   document.writeln("<center>");
+	
+	 document.writeln("<input type='button' onClick='btnBack()' value='Back'> <input type='button' name='btnSave' onClick='btnNext()' value='Apply'>");
+
+   document.writeln("</center>");
+}
+// done hiding -->
+         </script>
+         </form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+      </blockquote>
+   </body>
+</html>

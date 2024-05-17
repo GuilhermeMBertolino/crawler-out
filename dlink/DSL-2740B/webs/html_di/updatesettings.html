@@ -1,0 +1,165 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+      <link rel="stylesheet" href='stylemain.css' type='text/css'>
+		<script language="javascript" src="util.js"></script>
+		<script language="JavaScript" src="menu.js"></script>
+            <script language="javascript">
+<!-- hide
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var progress = 0;
+
+function isInProgress() {
+   if ( progress == 0 )  {
+      progress = 1;
+      return true;
+   }
+   alert('Updating settings is in progress and the router will reboot. Please wait for a minute.');
+   return false;
+}
+
+function backupClick() {
+   var loc = 'backupsettings.conf';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function restoreClick() {
+   var loc = 'restoreinfo.cgi?';
+   loc += 'sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+
+   if (confirm("Are you sure you want to restore factory default settings?"))
+      eval(code);
+}
+
+function btnReset() {
+   var loc = 'rebootinfo.cgi?';
+   loc += 'sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+function fileSubmit() {
+	var temp = document.frmUpdate.filename.value.search(".conf");
+    	if (temp < 0)
+	{
+		alert("Please enter a valid filename.");
+		return ;
+	}
+
+    if(checkFile(document.frmUpdate.filename.value))
+	    document.frmUpdate.submit();
+
+}
+function frmLoad() {
+   var sysReboot = '0';
+   var lanRefresh = '0';
+
+   if ( sysReboot == '1' )
+      btnReset();
+   else if ( lanRefresh == '1' ) {
+      var code = 'location="resetrouter.cgi?lanRefresh=0"';
+      eval(code);
+   }
+}
+
+// done hiding -->
+    </script>
+   </head>
+<body>
+
+<blockquote>
+<script language="JavaScript">
+TabHeader="Maintenance";
+SideItem="System";
+HelpItem="system";
+</script> 
+<script type='text/javascript'>
+	mainTableStart();	
+	logo();
+	TopNav();
+	ThirdRowStart();
+	Write_Item_Images();
+	mainBodyStart();
+</script>
+<form name='frmUpdate' method='post' ENCTYPE='multipart/form-data' action='uploadsettings.cgi' onSubmit='return isInProgress();'>	
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				System -- Reboot
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Click the button below to reboot the router.</p>
+	      <p align="center">
+    	     <input type='button' onClick='btnReset()' value='Reboot'></p>
+			</td>
+		</tr>
+	</table>
+<BR>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				System -- Backup Settings
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Backup DSL Router configurations. You may save your router configurations to a file on your 
+            PC.</p>
+            <p align="center"><input type='button' value='Backup Settings' onClick='backupClick()'></p>			
+			</td>
+		</tr>
+	</table>
+<BR>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				System -- Update Settings
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Update DSL Router settings. You may update your router settings by using your saved files.</p>
+			<p><table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td>Settings File Name:&nbsp;
+                  </td>
+                  <td><input type='file' name='filename' size='15'></td>
+               </tr>
+            </table>
+			</P>
+            <p align="center"><input type='button' value='Update Settings' onclick='fileSubmit()'></p>			
+			</td>
+		</tr>
+	</table>
+<BR>
+	<table id=body_header width="690" border=0 cellSpacing=0>
+		<tr>
+			<td class=topheader>
+				System -- Restore Default Settings
+			</td>										
+		</tr>
+		<tr>
+			<td class=content>
+				<p>
+				Restore DSL Router settings to the factory defaults.</p>
+            <p align="center"><input type='button' value='Restore Default Settings' onClick='restoreClick()'></p>
+			</td>
+		</tr>
+	</table>
+</form>
+<script type='text/javascript'>
+	mainBodyEnd();
+	ThirdRowEnd();
+	Footer()
+	mainTableEnd()
+</script>
+</blockquote>
+   </body>
+</html>
