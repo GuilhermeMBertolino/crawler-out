@@ -1,1 +1,0 @@
-"use strict";angular.module("trouble").controller("errorPaktCtrl",["$scope","troubleCheck",function($scope,troubleCheck){$scope.paktCode=troubleCheck.getData().pakt,$scope.errorCode=1001!=$scope.paktCode}]);

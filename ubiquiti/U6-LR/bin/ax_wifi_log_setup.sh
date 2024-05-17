@@ -1,1 +1,0 @@
-../usr/etc/ax_wifi_log_setup.sh

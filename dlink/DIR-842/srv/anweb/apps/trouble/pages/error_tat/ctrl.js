@@ -1,1 +1,0 @@
-"use strict";angular.module("trouble").controller("errorTatCtrl",["$scope","$window","troubleCheck",function($scope,$window){$scope.onExitBtnClick=function(){$window.location.href="/"}}]);

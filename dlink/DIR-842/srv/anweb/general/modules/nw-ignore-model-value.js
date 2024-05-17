@@ -1,1 +1,0 @@
-"use strict";!function(){angular.module(regdep("nw-ignore-model-value"),[]).directive("nwIgnoreModelValue",function(){return{restrict:"AEC",require:"ngModel",scope:{ignoreValue:"=nwIgnoreModelValue"},link:function($scope,$element,$attrs,$model){$model.$formatters.unshift(function(modelValue){return $scope.ignoreValue==modelValue?null:modelValue})}}})}();

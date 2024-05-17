@@ -1,1 +1,0 @@
-"use strict";angular.module("app").controllerProvider.register("ModalInfoCtrl",function($scope){$scope.header=$scope.ngDialogData.header,$scope.content=$scope.ngDialogData.content,$scope.contentKey="summary_devmode_info_"+($scope.content.hasHWModeSwitch?"hw_switch_":"")+$scope.content.deviceMode});

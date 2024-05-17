@@ -1,1 +1,0 @@
-"use strict";!function(){angular.module(regdep("ignore-service-fields"),[]).filter("ignoreServiceFields",function(){return function(items){var fields=["max_instance","order"],result={};return angular.forEach(items,function(value,key){fields.includes(key)||(result[key]=value)}),result}})}();

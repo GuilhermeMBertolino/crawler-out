@@ -1,1 +1,0 @@
-/rom/etc/rdpa_init.sh

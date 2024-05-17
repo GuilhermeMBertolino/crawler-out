@@ -1,1 +1,0 @@
-"use strict";angular.module("app").controller("WanIpv4StaticCtrl",["$scope",function(){}]);

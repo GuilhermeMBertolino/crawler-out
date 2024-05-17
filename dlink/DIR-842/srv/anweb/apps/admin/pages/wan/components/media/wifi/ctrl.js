@@ -1,1 +1,0 @@
-"use strict";angular.module("app").controller("WanMediaWifiCtrl",["$scope",function($scope){$scope.media=$scope.conn.Media}]);

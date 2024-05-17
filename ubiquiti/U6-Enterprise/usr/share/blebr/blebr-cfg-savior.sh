@@ -1,1 +1,0 @@
-/usr/share/bleconn/bleconn-cfg-savior.sh

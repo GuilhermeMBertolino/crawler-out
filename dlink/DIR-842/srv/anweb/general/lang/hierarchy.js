@@ -1,1 +1,0 @@
-window.hierarchy = {"tat":["eng","rus"],"kaz":["eng","rus"]}

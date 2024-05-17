@@ -1,1 +1,0 @@
-"use strict";angular.module("wizard").service("customValidation",["funcs",function(funcs){return{DNS:function(value){return funcs.is.ipv4(value),null}}}]);

@@ -1,1 +1,0 @@
-"use strict";angular.module(regdep("inst-num-gen"),[]).factory("InstNumGen",function(){return function(start,prefix){start||(start=1),prefix||(prefix="+"),this.cur=start,this.get=function(){var curInstNum=prefix+this.cur;return this.cur++,curInstNum}}});

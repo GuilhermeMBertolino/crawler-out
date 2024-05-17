@@ -1,1 +1,0 @@
-"use strict";angular.module("app").controllerProvider.register("VlanCtrl",[function(){}]);

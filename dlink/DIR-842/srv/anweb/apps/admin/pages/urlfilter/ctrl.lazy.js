@@ -1,1 +1,0 @@
-"use strict";!function(){angular.module("app").controllerProvider.register("UrlFilterCtrl",["$scope","$state","$location","translate","urlfilterUtil","funcs","devinfo","ngDialog",function(){}])}();

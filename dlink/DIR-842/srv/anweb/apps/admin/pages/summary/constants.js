@@ -1,1 +1,0 @@
-"use strict";!function(){angular.module("app").constant("summaryConstants",{GPON_STATUS_RPC:227,DSL_RPC:24,CPU_AND_RAM:233,DONGLE_RPC:134,STORAGE_RPC:82,PRINTSERVER_RPC:101,PORTS_RPC:175,DEVICE_MODE_RPC:autoconf.BR2_PACKAGE_ANWEB_DSYSINIT?"Device.DeviceInfo.":112,CONFIG_ID_WIFI:35})}();
