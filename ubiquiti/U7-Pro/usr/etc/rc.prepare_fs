@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# Use a live filesystem for /var/log
+. /usr/bin/unifi_util_funcs.sh
+
+prepare_fs_error()
+{
+	echo "prepare_fs: ERROR: $*" > /dev/kmsg
+}
+
+format_mmc_log_part()
+{
+	local log_offset
+	local kernel0_offset
+	local kernel1_offset
+
+	# Protect ourselves so we don't corrupt wrong partition
+	log_offset=$(/bin/mmc_info -On log)
+	[ "$log_offset" = "0" ] && {
+		prepare_fs_error "skip format log: offset cannot be 0"
+		return 1
+	}
+
+	kernel0_offset=$(/bin/mmc_info -On kernel0)
+	kernel1_offset=$(/bin/mmc_info -On kernel1)
+	[ "$log_offset" = "$kernel0_offset" ] || [ "$log_offset" = "$kernel1_offset" ] && {
+		prepare_fs_error "skip format log: log offset overlaps with kernel"
+		return 1
+	}
+
+	mkfs.ext4 -F ${mmc_log_partition}
+}
+
+mount_mmc_log_part()
+{
+	# Check if the partition is already mounted
+	grep -qs "${mmc_log_partition}" /proc/mounts && {
+		echo "Partition already mounted."
+		return 0
+	}
+
+	fsck.ext4 -p ${mmc_log_partition} >/dev/null 2>&1
+	fsck_result=$?
+	[ $fsck_result -ge 0 ] && [ $fsck_result -le 2 ] || {
+		# Any partition errors - we format, new.
+		format_mmc_log_part || return 1
+	}
+
+	mount -t ext4 ${mmc_log_partition} /tmp/log || {
+		format_mmc_log_part || return 1
+		mount -t ext4 ${mmc_log_partition} /tmp/log || return 1
+	}
+
+	# Only keep logs and crashes in /var/log
+	find /tmp/log -mindepth 1 ! -regex '.*\(syslog\|messages\|crash\|fwupdate\.bin\).*' -print0 | xargs -0 rm -rf
+}
+
+[ -n "$(/bin/mmc_info -Fn log)" ] && {
+	mmc_log_partition=$(/bin/mmc_info -Fn log)
+	mount_mmc_log_part
+}

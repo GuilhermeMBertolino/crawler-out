@@ -1,0 +1,45 @@
+#!/bin/sh
+# vim: ft=sh
+
+# reboot in 3 secs after kernel panic
+echo "3" > /proc/sys/kernel/panic
+
+#echo 0 > /proc/sys/kernel/printk
+
+# Console klogd output is silent by default
+dmesg -n 1
+
+echo 1 > /proc/sys/net/ipv4/tcp_thin_dupack
+echo 1 > /proc/sys/net/ipv4/tcp_thin_linear_timeouts
+
+# filesystem
+#   - /dev
+killall -q hotplug2
+[ -x /sbin/hotplug2 ] && /sbin/hotplug2 --override --persistent \
+	--set-rules-file /etc/hotplug2.rules \
+	--set-coldplug-cmd /sbin/udevtrigger \
+	--max-children 1 >/dev/null 2>&1 &
+
+# set hostname
+echo UBNT > /proc/sys/kernel/hostname
+
+# enable TCP Packetization-Layer Path MTU Discovery
+echo 1024 > /proc/sys/net/ipv4/tcp_base_mss
+echo 1 > /proc/sys/net/ipv4/tcp_mtu_probing
+
+# set sane defaults for routing tables and conntrack
+echo "32768" > /proc/sys/net/ipv4/route/max_size
+echo "2048" > /proc/sys/net/ipv4/route/gc_thresh
+# end.
+
+# create /dev/ubnt_sta_ht
+STA_HT_MAJOR=$(grep ubnt_sta_ht /proc/devices | awk '{print $1}')
+if [ ${STA_HT_MAJOR} -gt 0 ]; then
+       mknod /dev/ubnt_sta_ht c ${STA_HT_MAJOR} 0
+fi
+
+if [ -e /bin/ubnt-rssimon ]; then
+        /bin/ubnt-rssimon &
+fi
+
+dmesg > /tmp/sysinit.txt

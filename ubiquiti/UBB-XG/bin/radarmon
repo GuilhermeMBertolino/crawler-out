@@ -1,0 +1,472 @@
+#!/bin/sh
+
+
+trap 'quit_from_script' 2
+
+DFSDEBUG_MIN=$((0x00000013))
+SHOW_PRINTK=0
+
+if [ -e ~/radarmon_printk ]; then
+    SHOW_PRINTK=1
+fi;
+
+STATUS_VERBOSITY_NONE=0
+STATUS_VERBOSITY_TX=1
+STATUS_VERBOSITY_EVERYTHING=2
+
+POLL_RESULT_NO_ACTION=0
+POLL_RESULT_TOGGLE_EXTENDED_STATUS=1
+POLL_RESULT_DECREMENT_COUNTER=2
+POLL_RESULT_INCREMENT_COUNTER=3
+POLL_RESULT_RESET_COUNTER=4
+
+line() {
+        echo "----------------------------------------------------------------------------"
+}
+
+title() {
+        line
+        echo ""
+        echo "                       Radar Detection Monitor"
+        echo "                   (c)2015 Ubiquiti Networks, Inc."
+        echo ""
+        line
+}
+
+banner() {
+        title
+        echo ""
+        echo "This script monitors DFS for radar detection events and reports at fixed intervals."
+        echo ""
+        echo "Background:"
+        echo ""
+        echo "    When NOL is off, UBNT's DFS may match the same radar test pattern more"
+        echo "    than once.  This script cleans that up and makes monitoring output just"
+        echo "    one line when a radar detection succeeds."
+        echo ""
+        echo "WARNING: If the radar pattern overlaps the end of one sampling interval and"
+        echo "         the beginning of the next, and multiple detections occur, you will"
+        echo "         still see radar detection status for both intervals.  Try increasing"
+        echo "         the cooldown interval and waiting for a negative report before "
+        echo "         sending the next test pattern.  This makes it easier to spot a new"
+        echo "         detection."
+        echo ""
+        line
+}
+
+quit_from_script(){
+    echo "quitting... you can 'q' allso"
+    radartool monitor_mode 0 #turn off radar event block
+    exit 0
+}
+
+numdetects() {
+    radartool numdetects | sed -n -r -e "/^Radar: / { s/^Radar: .*detected //;s/ radars.*\$//;p }"
+}
+
+usage() {
+    echo "Usage: $(basename ${0}) <seconds between reports> [cooldown seconds] [penalty seconds]"
+}
+
+sqparam() {
+    local AIFSN="${1}"
+    if [ "${AIFSN}" -lt 1 ]; then
+        echo "AIFSN lower limit reached."
+        AIFSN=1
+    fi;
+    if [ "${AIFSN}" -gt 255 ]; then
+        echo "AIFSN upper limit reached."
+        AIFSN=255
+    fi;
+    echo 0 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 1 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 2 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 3 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 4 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 5 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 6 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 8 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo 9 ${AIFSN} 15 63 0x0 > /proc/sys/dev/uph_wifi0/sqparam
+    echo "AIFSN is ${AIFSN}."
+}
+
+radartool_cmd() {
+    if [ "$(cat /proc/sys/kernel/printk | sed -r -e "s/([0-9]*)\t.*/\1/")" = "9" ]; then
+        echo "radartool"
+    else
+        echo "radartoolw"
+    fi;
+}
+
+delay() {
+        local SECONDS="${1}"
+        if [ -z "${SECONDS}" ]; then
+                sleep 0
+        else
+                INPUT=""
+                read -r -n 1 -t ${SECONDS} INPUT
+                if [ -n "${INPUT}" ]; then
+                        case ${INPUT} in
+                                c)
+                                        echo "Radar log cleared"
+                                        $(radartool_cmd) clearlog 2>&1 >/dev/null
+                                        ;;
+                                r)
+                                        return ${POLL_RESULT_RESET_COUNTER}
+                                        ;;
+                                i)
+                                        sqparam "$(($(get_qparam AIFSN)+1))"
+                                        return 0
+                                        ;;
+                                I)
+                                        sqparam "$(($(get_qparam AIFSN)+10))"
+                                        return 0
+                                        ;;
+                                d)
+                                        sqparam "$(($(get_qparam AIFSN)-1))"
+                                        return 0
+                                        ;;
+                                D)
+                                        sqparam "$(($(get_qparam AIFSN)-10))"
+                                        return 0
+                                        ;;
+                                +)
+                                        return ${POLL_RESULT_INCREMENT_COUNTER}
+                                        ;;
+                                -)
+                                        return ${POLL_RESULT_DECREMENT_COUNTER}
+                                        ;;
+                                v)
+                                        echo "Dumping radar log (verbose):"
+                                        $(radartool_cmd) logv
+                                        ;;
+                                l)
+                                        echo "Dumping radar log:"
+                                        $(radartool_cmd) log
+                                        ;;
+                                e)
+                                        if [ $(($(get_dfsdebug) & 0x10000000)) -gt 0 ]; then
+                                            echo "Radar logging disabled."
+                                            $(radartool_cmd) dfsdebug $(($(get_dfsdebug)-0x10000000)) 2>&1 >/dev/null
+                                        else
+                                            echo "Radar logging enabled."
+                                            $(radartool_cmd) dfsdebug $(($(get_dfsdebug)+0x10000000)) 2>&1 >/dev/null
+                                        fi;
+                                        ;;
+                                a)
+                                        if [ $(($(get_dfsdebug) & 0x20000000)) -gt 0 ]; then
+                                            echo "Radar log and FW pulse counter auto-clear on detection disabled."
+                                            $(radartool_cmd) dfsdebug $(($(get_dfsdebug)-0x20000000)) 2>&1 >/dev/null
+                                        else
+                                            echo "Radar log and FW pulse counter auto-clear on detection enabled."
+                                            $(radartool_cmd) dfsdebug $(($(get_dfsdebug)+0x20000000)) 2>&1 >/dev/null
+                                        fi;
+                                        ;;
+                                x)
+                                        return ${POLL_RESULT_TOGGLE_EXTENDED_STATUS}
+                                        ;;
+                                z)
+                                        clear
+                                        reset
+                                        ;;
+                                q)      
+                                        radartool monitor_mode 0 #turn off radar event block
+                                        echo "Quitting"
+                                        exit 0
+                                        ;;
+                                *)
+                                        echo ""
+                                        line
+                                        echo "Primary Commands:"
+                                        line
+                                        echo ""
+                                        echo "q - quit"
+                                        echo "z - clear/reset screen"
+                                        echo ""
+                                        line
+                                        echo "AIFSN Commands:"
+                                        line
+                                        echo ""
+                                        echo "i - increment AIFSN"
+                                        echo "I - increment AIFSN by 10"
+                                        echo "d - decrement AIFSN"
+                                        echo "D - decrement AIFSN by 10"
+                                        echo ""
+                                        line
+                                        echo "Counter Commands:"
+                                        line
+                                        echo ""
+                                        echo "r - reset radar counter"
+                                        echo "+ - increment radar counter"
+                                        echo "- - decrement radar counter"
+                                        echo ""
+                                        line
+                                        echo "Status Display:"
+                                        line
+                                        echo ""
+                                        echo "x - toggle extended status"
+                                        echo ""
+                                        line
+                                        echo "Radar Pulse Log Commands:"
+                                        line
+                                        echo ""
+                                        echo "e - toggle radar logging"
+                                        echo "a - toggle auto-clear radar log on detection"
+                                        echo ""
+                                        echo "c - clear radar log"
+                                        echo "l - dump radar log (basic)"
+                                        echo "v - dump radar log (detailed)"
+                                        echo ""
+                                        line
+                                        echo ""
+                                        ;;
+                        esac
+                fi;
+        fi
+        return ${POLL_RESULT_NO_ACTION}
+}
+
+get_pct() {
+        local FIELD="${1}"
+        STAT="$(amstainfo -f ${FIELD})"
+        RX_H="$(echo "${STAT}" | sed -n -r -e "2 {s/^([0-9]?[0-9]?)([0-9]).*/\1/;p}")"
+        RX_F="$(echo "${STAT}" | sed -n -r -e "2 {s/^([0-9]?[0-9]?)([0-9]).*/\2/;p}")"
+        if [ "${#RX_H}" -eq 0 ]; then
+                RX_H=" 0"
+        elif [ "${#RX_H}" -eq 1 ]; then
+                RX_H=" ${RX_H}"
+        fi;
+        if [ "${#RX_L}" -eq 0 ]; then
+                RX_L="0"
+        fi;
+        echo "${RX_H}.${RX_F}"
+}
+
+get_rate() {
+        local FIELD="${1}"
+        STAT="$(amstainfo -f ${FIELD} | sed -n -r -e "2 {s/^([0-9]*).*/\1/;p}")"
+        if [ "${STAT:3}" = "000" ]; then
+                STAT="$(echo "${STAT}" | sed -r -e "s/000\$/M/")"
+        elif [ "${#STAT}" = 0 ]; then
+                STAT="DOWN"
+        fi
+        echo "${STAT}"
+}
+
+get_qparam() {
+        local QPARAM="${1}"
+        echo 0 > /proc/sys/kernel/printk
+        dmesg -c 2>&1 >/dev/null
+        echo 0 > /proc/sys/dev/uph_wifi0/gqparam;
+        QPARAM="$(dmesg -c 2>&1 | sed -n -r -e "/ ${QPARAM}/ { s/.* ${QPARAM} ([^ ]*).*/\1/;s~0x00000000~0x0~;p }")"
+        [ "${SHOW_PRINTK}" -eq 1 ] && echo 9 > /proc/sys/kernel/printk
+        echo "${QPARAM}"
+}
+
+get_dfsdebug() {
+    echo 0 > /proc/sys/kernel/printk
+    $(radartool_cmd) 2>&1 | sed -n -r -e "/    dfsdebug\.*/ { s/[^.]*[.]*//;p }"
+    [ "${SHOW_PRINTK}" -eq 1 ] && echo 9 > /proc/sys/kernel/printk
+}
+
+get_logging() {
+    local DFSDEBUG=$(get_dfsdebug)
+    local DESC=""
+    if [ $((${DFSDEBUG} & 0x10000000)) -gt 0 ]; then
+        if [ $((${DFSDEBUG} & 0x20000000)) -gt 0 ]; then
+            echo "log[on ACoD=on]"
+        else
+            echo "log[on ACoD=off]"
+        fi;
+    else
+        echo "log[off]"
+    fi;
+}
+
+get_stats() {
+    local VERBOSITY="${1}"
+    local LINK_IS_DOWN="${2}"
+
+    if [ "${LINK_IS_DOWN}" = "1" ]; then
+        echo "[no-link]"
+    else
+        if [ "${VERBOSITY}" = "${STATUS_VERBOSITY_EVERYTHING}" ]; then
+            echo "tx[$(get_rate txrate)/$(get_pct txuse)%] rx[$(get_rate rxrate)/$(get_pct rxuse)%] Q[$(get_qparam AIFSN)/$(get_qparam CWMIN)/$(get_qparam CWMAX)/$(get_qparam FLAGS)] $(get_logging)"
+        elif [ "${VERBOSITY}" = "${STATUS_VERBOSITY_TX}" ]; then
+            echo "tx[$(get_rate txrate)/$(get_pct txuse)%]"
+        else
+            echo ""
+        fi;
+    fi;
+}
+
+prompt() {
+        local VISIBLE_COUNT="${1}"
+        local STATS="${2}"
+        if [ ${#STATS} -gt 0 ]; then
+            echo "$(date +%H:%M:%S) ${STATS} detects[${VISIBLE_COUNT}]"
+        else
+            echo "$(date +%H:%M:%S) detects[${VISIBLE_COUNT}]"
+        fi;
+}
+
+link_is_down() {
+        if [ ! -e /proc/sys/dev/uph_wifi0/gqparam ] \
+        || [ ! -e /proc/sys/dev/uph_wifi0/sqparam ] ; then
+            echo "1"
+            return;
+        fi;
+        STATIONS=$(($(amstainfo | sed -r -e "/^\$/d" | wc -l)-1))
+        if [ "${STATIONS}" -eq 0 ]; then
+            echo "1"
+            return;
+        fi;
+        echo "0"
+}
+
+monitor() {
+        local INTERVAL="${1}"
+        local COOLDOWN_SECONDS_DEFAULT="${2}"
+        local COOLDOWN_PENALTY="${3}"
+        if [ -z "${INTERVAL}" ]; then
+                usage
+                return 1;
+        fi;
+        if [ -z "${COOLDOWN_SECONDS_DEFAULT}" ]; then
+                COOLDOWN_SECONDS_DEFAULT=2
+        fi;
+        if [ -z "${COOLDOWN_PENALTY}" ]; then
+                COOLDOWN_PENALTY=3
+        fi;
+        # Start with default dfsdebug setting
+        local STATUS_VERBOSITY=${STATUS_VERBOSITY_TX}
+        local VISIBLE_COUNT=0
+        # NB: Change for release
+
+        if [ "${SHOW_PRINTK}" -eq 1 ]; then
+            echo "Enabling console printk output."
+            # Disable kernel output from console
+            echo 9 >/proc/sys/kernel/printk
+        else
+            echo "Disabling console printk output."
+            # Disable kernel output from console
+            echo 0 >/proc/sys/kernel/printk
+        fi;
+        # if event logging is on
+        DEBUG=$(printf "0x%08x" $(($(get_dfsdebug)|${DFSDEBUG_MIN})))
+        echo "Setting dfsdebug to ${DEBUG}."
+        $(radartool_cmd) dfsdebug ${DEBUG} 2>&1 >/dev/null
+        # Reset the counter
+        echo "Reset statistics."
+        $(radartool_cmd) numdetects 0 2>&1 >/dev/null
+        $(radartool_cmd) pulse_counter_reset 2>&1 >/dev/null
+        $(radartool_cmd) clearstats   2>&1 >/dev/null
+        [ "${SHOW_PRINTK}" -eq 1 ] && echo 9 >/proc/sys/kernel/printk
+        OLD_DETECTS=$(numdetects)
+        GOT_RADAR=0
+        COOLDOWN_SECONDS=${COOLDOWN_SECONDS_DEFAULT}
+        COOLDOWN_COUNTER=0
+        while [ 1 ]; do
+                LINK_IS_DOWN="$(link_is_down)"
+                STATS="$(get_stats ${STATUS_VERBOSITY} ${LINK_IS_DOWN})"
+                DETECTS=$(numdetects)
+                # If we detected radar, mark analyzing until we can reach cooldown state.  reset cooldown state.
+                if [ ${DETECTS} -gt ${OLD_DETECTS} ]; then
+                        if [ "${GOT_RADAR}" -eq 0 ]; then
+                                COOLDOWN_COUNTER=0
+                        fi
+                        GOT_RADAR=$((GOT_RADAR+$((DETECTS-OLD_DETECTS))))
+                        if [ "${COOLDOWN_SECONDS}" -gt 0 ]; then
+                                # Add a penalty each time we find radar during cooldown...
+                                if [ "${COOLDOWN_COUNTER}" -gt 0 ]; then
+                                        COOLDOWN_SECONDS=$((COOLDOWN_SECONDS+COOLDOWN_PENALTY))
+                                fi;
+                                echo "$(prompt ${VISIBLE_COUNT} "${STATS}") waiting...[cooldown ${COOLDOWN_SECONDS}s]"
+                        fi
+                else
+                        # We got radar and we are maybe counting cooldowns...
+                        if [ "${GOT_RADAR}" -gt 0 ]; then
+                                COOLDOWN_COUNTER=$((COOLDOWN_COUNTER+1))
+                                if [ $((COOLDOWN_COUNTER)) -lt $((COOLDOWN_SECONDS)) ]; then
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") waiting...[cooldown $((COOLDOWN_SECONDS-COOLDOWN_COUNTER))s]"
+                                else
+                                        # Cooldown is disabled or complete!
+                                        VISIBLE_COUNT=$((VISIBLE_COUNT+1))
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") detected...**RADAR** [+$((GOT_RADAR))]"
+                                        #echo "$(prompt ${VISIBLE_COUNT} "${STATS}") listening..."
+                                        GOT_RADAR=0
+                                        COOLDOWN_COUNTER=0
+                                        COOLDOWN_SECONDS=${COOLDOWN_SECONDS_DEFAULT}
+                                fi;
+                        else
+                                if [ "${LINK_IS_DOWN}" = "1" ]; then
+                                    TXUSE=0
+                                    echo "$(prompt ${VISIBLE_COUNT} "${STATS}") waiting for link..."
+                                else
+                                    TXUSE="$(amstainfo -f txuse | sed -n -r -e "2 {s/^([0-9]*).*/\1/;s/[.]//;p}")"
+                                if [ "${TXUSE}" -lt 170 ]; then
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") *** NOT READY - CHECK STREAM ***"
+                                elif [ "${TXUSE}" -gt 280 ]; then
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") *** NOT READY - CHECK STREAM ***"
+                                elif [ "${TXUSE}" -gt 230 ]; then
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") listening... (WARNING: TXUSE HIGH)"
+                                else
+                                        echo "$(prompt ${VISIBLE_COUNT} "${STATS}") listening..."
+                                fi;
+                                fi;
+                        fi;
+                fi;
+                OLD_DETECTS=${DETECTS}
+                DELAY_RET=0
+                if [ "${GOT_RADAR}" -ne 0 ]; then
+                        if [ "${COOLDOWN_SECONDS}" -gt 0 ]; then
+                                delay 1
+                                DELAY_RET=$?
+                        fi
+                else
+                        delay ${INTERVAL}
+                        DELAY_RET=$?
+                fi
+                # User wants to reset
+                if [ ${DELAY_RET} -eq ${POLL_RESULT_RESET_COUNTER} ]; then
+                        echo "Counter reset."
+                        VISIBLE_COUNT=0
+                        GOT_RADAR=0
+                        COOLDOWN_COUNTER=0
+                        COOLDOWN_SECONDS=${COOLDOWN_SECONDS_DEFAULT}
+                        $(radartool_cmd) pulse_counter_reset 2>&1 >/dev/null
+                elif [ ${DELAY_RET} -eq ${POLL_RESULT_DECREMENT_COUNTER} ]; then
+                        if [ ${VISIBLE_COUNT} -gt 0 ]; then
+                             echo "Counter decremented."
+                             VISIBLE_COUNT=$((VISIBLE_COUNT-1))
+                        else
+                             echo "Counter is already zero."
+                        fi;
+                elif [ ${DELAY_RET} -eq ${POLL_RESULT_INCREMENT_COUNTER} ]; then
+                         echo "Counter incremented."
+                         VISIBLE_COUNT=$((VISIBLE_COUNT+1))
+                elif [ ${DELAY_RET} -eq ${POLL_RESULT_TOGGLE_EXTENDED_STATUS} ]; then
+                        if [ "${STATUS_VERBOSITY}" -eq "${STATUS_VERBOSITY_NONE}" ]; then
+                            STATUS_VERBOSITY="${STATUS_VERBOSITY_TX}"
+                            echo "Extended status display will show TX stats only."
+                        elif [ "${STATUS_VERBOSITY}" -eq "${STATUS_VERBOSITY_TX}" ]; then
+                            STATUS_VERBOSITY="${STATUS_VERBOSITY_EVERYTHING}"
+                            echo "Extended status display will show full stats."
+                        elif [ "${STATUS_VERBOSITY}" -eq "${STATUS_VERBOSITY_EVERYTHING}" ]; then
+                            STATUS_VERBOSITY="${STATUS_VERBOSITY_NONE}"
+                            echo "Extended status display disabled."
+                        else
+                            echo "Extended status display disabled."
+                            STATUS_VERBOSITY="${STATUS_VERBOSITY_NONE}"
+                        fi;
+                fi;
+        done;
+}
+
+echo ""
+banner
+radartool monitor_mode 2 #turn on radar event block mode
+monitor $@
+radartool monitor_mode 0 #turn off radar event block
+exit $?
+

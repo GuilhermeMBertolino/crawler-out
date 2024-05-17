@@ -1,0 +1,17 @@
+version_4_10_or_newer(){
+	MAJOR_VERSION=$(uname -r | awk -F '.' '{print $1}')
+	MINOR_VERSION=$(uname -r | awk -F '.' '{print $2}')
+	if ( [ $MAJOR_VERSION -ge 4 ] && [ $MINOR_VERSION -ge 10 ] ) || [ $MAJOR_VERSION -ge 5 ] ; then
+		echo "1"
+	else
+		echo "0"
+	fi
+}
+
+config_tcp_timestamps() {
+	# Kernels >= 4.10 have random offsets for tcp timestamps, so we can enable it.  Older kernels need to have it disabled
+	# https://www.rapid7.com/db/vulnerabilities/generic-tcp-timestamp/
+	echo "net.ipv4.tcp_timestamps=$(version_4_10_or_newer)" >> /etc/sysctl.conf
+}
+
+boot_hook_add preinit_main config_tcp_timestamps

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+CHECKFILE="/etc/do-firmware-update"
+FWUPDATE="/sbin/fwupdate.real"
+UPDFILE="/tmp/fwupdate.bin"
+echo="logger -t $0 -s"
+
+if [ ".$1" = ".-c" ]; then
+	${FWUPDATE} -c
+	exit $?
+fi
+
+if [ ".$1" = ".-m" ]; then
+	if [  -f ${UPDFILE} ]; then
+		if ${FWUPDATE} -c; then
+			/sbin/sysled -o 1
+			/sbin/sysled -b upgrade
+			echo 255 > /proc/ubnt_ledbar/brightness
+			echo 1 25 3 7 > /proc/ubnt_ledbar/mode
+			${echo} "About to run firmware update"
+			${echo} "About to run firmware update" > /dev/kmsg
+			touch ${CHECKFILE}
+			INITTAB_DEF=/usr/etc/inittab
+			INITTAB_CUR=/etc/inittab
+			cp -f ${INITTAB_DEF} ${INITTAB_CUR}
+		        kill -1 1
+			/sbin/reboot
+			exit 0
+		else
+			${echo} "Firmware update file check failed!"
+		fi
+	else
+		${echo} "Firmware update file (${UPDFILE}) does not exist!"
+	fi
+	exit 1
+fi
+
+${echo} "Warning: $0 called with unknown parameters ($*)"
+exit 1

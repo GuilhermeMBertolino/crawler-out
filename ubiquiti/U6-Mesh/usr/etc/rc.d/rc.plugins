@@ -1,0 +1,68 @@
+#!/bin/sh
+# vim: ft=sh
+
+. /usr/share/ubntconf/plugin.funcs
+
+debug_function() {
+	logger -s "$*"
+}
+
+empty_function(){
+	true
+}
+
+if [ -f /etc/sysconf-trace ]; then
+	debug=debug_function
+else
+	debug=empty_function
+fi
+
+##
+# Parameters:
+# $1 - daemon name (aka my_test)
+# $2 - binary to run (aka testd)
+# $3 - foreground option
+# $4 - background option
+# ... - all other options required to run daemon
+##
+start_daemon() {
+	if [ -z "$2" ]; then
+		echo "Can not start daemon $2($1). Parameters are missing"
+		return 1
+	fi
+	name=$1
+	cmd="$2 $4"
+	shift 4
+
+	$debug "Starting daemon '$name'"
+	$debug "$cmd $*"
+	$cmd $*
+	if [ $? -eq 0 ]; then
+		$debug "'$name' done."
+	else
+		$debug "'$name' failed."
+	fi
+}
+
+##
+# Parameters:
+# $1 - daemon name (aka my_test)
+# $2 - pid file (aka /var/log/testd.pif)
+##
+stop_daemon() {
+	if [ -z "$2" -o ! -s "$2" ]; then
+		$debug "kill `pidof $1`"
+		kill `pidof $1`
+		return 0
+	fi
+	name=$1
+	$debug "Stopping '$name'"
+	$debug "kill `cat $2`"
+	kill `cat $2`
+	if [ $? -eq 0 ]; then
+		$debug "'$name' done."
+	else
+		$debug "'$name' failed."
+	fi
+}
+

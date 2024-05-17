@@ -1,0 +1,39 @@
+[ -f /etc/banner ] && cat /etc/banner
+
+PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+PS1=`cat /proc/sys/kernel/hostname`'-'`cat /etc/version`'# '
+
+export PATH PS1
+
+# habits from ubuntu...
+alias sudo=''
+alias save='syswrapper.sh save-config'
+alias vim='vi'
+alias more='less'
+
+umask 022
+
+alias set-inform='mca-cli-op set-inform'
+alias set-default='mca-cli-op set-default'
+alias setup-netconsole='dmesg -n 8;slhost=$(nslookup syslog.ubnt-ut.com | grep "Address 1" | tail -n1 | awk "{print \$3}");insmod netconsole netconsole=1234@$(ifconfig br0 | grep "inet addr" | sed -e "s/.*addr://" -e "s/ .*//")/eth0,514@$slhost/$(cat /proc/net/arp | grep "$(route -n | grep "^0\.0\.0\.0" | awk "{print \$2}") " | awk "{print \$4}")'
+alias do-upgrade='syswrapper.sh upgrade2'
+alias apply-config='syswrapper.sh apply-config'
+alias soft-restart='syswrapper.sh soft-restart'
+alias supp='syswrapper.sh support-tar'
+
+alias info='mca-cli-op info'
+alias upgrade='mca-cli-op upgrade'
+alias help='mca-cli-op help'
+
+# console output
+alias con='dmesg -n 8'
+alias coff='dmesg -n 1'
+
+if [ -e /etc/persistent/profile ]; then
+	. /etc/persistent/profile
+fi
+
+if [ -e /usr/etc/platdep_profile ]; then
+	. /usr/etc/platdep_profile
+fi
+

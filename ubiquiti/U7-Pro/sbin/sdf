@@ -1,0 +1,39 @@
+#!/bin/sh
+
+SYSTEMCFG_FILTER="/(\
+users\\.[[:digit:]]+\\.password\
+|users\\.[[:digit:]]+\\.name\
+|unifi\\.mcip\
+|unifi\\.key\
+|.*psk\
+|sshd.auth.key\\.[[:digit:]]+\\.comment\
+|sshd.auth.key\\.[[:digit:]]+\\.value\
+|cron\\.[[:digit:]]+\\.user\
+)/s/=.*$/=**static-hidden**/"
+
+MCA_FILTER="/(\
+mgmt\\.authkey\
+)/s/=.*$/=**static-hidden**/"
+
+usage() {
+    cat << EOF
+    Usage: $0 <filter-type> <file>
+        -c configuration sensitive data filter
+        -m mca sensitive data filter
+EOF
+    exit 1
+}
+
+case "$1" in
+    -c)
+        FILTER=${SYSTEMCFG_FILTER}
+        ;;
+    -m)
+        FILTER=${MCA_FILTER}
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+[ -f "$2" ] && sed -r "${FILTER}" "$2"

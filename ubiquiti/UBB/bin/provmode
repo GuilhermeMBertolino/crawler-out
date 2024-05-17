@@ -1,0 +1,540 @@
+#!/bin/sh
+
+PROGNAME=`basename $0`
+MGMT_NET="192.168.172"
+MGMT_IP="$MGMT_NET.1"
+MGMT_PORT=443
+IS_PORT_80_FREE=false
+GEN3=`grep ^feature.g3=1 /etc/board.info`
+if [ ! -z $GEN3 ]; then
+	MGMT_IFC=wl0
+else
+	MGMT_IFC=ath1
+	MGMT_RADIO=wifi1
+fi
+#For debuging on eth0
+#TEST_ON_IFC=eth0
+[ ! -z $TEST_ON_IFC ] && MGMT_IFC=$TEST_ON_IFC
+REDIRECT_URL="https://$MGMT_IP:$MGMT_PORT/"
+REDIR_PORT=8080
+#Seconds to wait before mgmt radio start
+PROV_WAIT=15
+#Seconds till mgmt radio will be off
+PROV_TIMEOUT=$((15*60))
+#Seconds to extend mgmt working time 
+PROV_EXT_TIMEOUT=60
+#Status file
+PROV_STATUS=/var/run/${PROGNAME}_status
+#Info for official UBNT firmware site
+UBNT_FW_HOST="fw-update.ubnt.com"
+UBNT_FW_HOST_PORT=443
+#SSID info
+PMODEL=`grep ^board.model /etc/board.info | awk -F'=' '{print $2}'`
+PHWADDR=`grep ^board.hwaddr /etc/board.info | awk -F'=' '{print $2}'`
+PROVESSID="$PMODEL:$PHWADDR"
+#Check existance of iptables
+type iptables >/dev/null 2>&1 && IPTABLES_ENABLED=yes || IPTABLES_ENABLED=no
+
+log() {
+	logger -t provmode "$@"
+}
+
+dbg() {
+	if [ -f /etc/persistent/provmode_debug ]; then
+		logger -t provmode "$@"
+	fi
+}
+
+is_online() {
+	dbg "is_online()"
+	local timeout=120
+	start=$(date +%s)
+	while [ $(( $(date +%s) - $start )) -lt $timeout ]; do
+		if ping -q -c1 -w5 ping.ubnt.com >/dev/null 2>&1; then
+			return 0
+		fi
+		sleep 3
+	done
+	dbg "is_online() returns false"
+	return 1
+}
+
+add_captive_apple_to_hosts() {
+	echo -e "127.0.0.1\tcaptive.apple.com" >> /etc/hosts
+}
+
+remove_captive_apple_from_hosts() {
+	sed -i '/captive.apple.com/d' /etc/hosts
+}
+
+load_router_modules() {
+	dbg "load_router_modules()"
+	/usr/etc/rc.d/rc.modules load 40-ipt-core
+	/usr/etc/rc.d/rc.modules load 41-ipt-conntrack
+	/usr/etc/rc.d/rc.modules load 42-ipt-nat
+	/usr/etc/rc.d/rc.modules load 42-ipt-nat-extra
+}
+
+init_iptables_rules() {
+	dbg "init_iptables_rules()"
+	local has_forward=`iptables -L FORWARD | grep -c "icmp-host-unreachable"`
+	if [ $has_forward -eq 0 ]; then
+		iptables -I FORWARD -i $MGMT_IFC -j DROP
+		iptables -I FORWARD -i $MGMT_IFC -j REJECT --reject-with icmp-proto-unreachable
+		iptables -I FORWARD -i $MGMT_IFC -p tcp -j REJECT --reject-with icmp-host-unreachable
+		iptables -I FORWARD -i $MGMT_IFC -p udp -j REJECT --reject-with icmp-port-unreachable
+		iptables -I FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+	fi
+	[ ! "$MGMT_PORT" = "80" ] && iptables -t nat -I PREROUTING -i $MGMT_IFC -p tcp --dport 80 -j REDIRECT --to-port $REDIR_PORT
+}
+
+reload_dnsmasq() {
+	dbg "reload_dnsmasq()"
+	[ -e /var/run/prov-dhcpd.pid ] && kill -HUP `cat /var/run/prov-dhcpd.pid`
+}
+
+remove_unms_rules() {
+	dbg "remove_unms_rules()"
+	local rule=`iptables -L FORWARD -nv --line-numbers | grep "ACCEPT.*$MGMT_IFC" | sort -r`
+	local masq_rule=`iptables -t nat -L POSTROUTING -nv --line-numbers | grep "MASQUERADE.*tcp dpt:" | sort -r`
+	local rule_no=`echo "$rule" | cut -f 1 -d " "`
+	local masq_rule_no=`echo "$masq_rule" | cut -f 1 -d " "`
+	for i in $rule_no; do
+		iptables -D FORWARD $i
+	done
+	for i in $masq_rule_no; do
+		iptables -t nat -D POSTROUTING $i
+	done
+}
+
+init_unms_rules() {
+	dbg "init_unms_rules()"
+	remove_unms_rules
+	echo -n > /etc/prov-hosts.conf
+
+	if ! grep -q "^unms.status=enable" /tmp/system.cfg; then
+		reload_dnsmasq
+		return
+	fi
+
+	local unms_host_port=$(sed -rn 's#^unms\.uri=wss://([^+]+).*#\1#p' /tmp/system.cfg)
+	if [ -z "$unms_host_port" ]; then
+		log "UNMS is enabled but unms.uri is not valid."
+		reload_dnsmasq
+		return
+	fi
+
+	if ! is_online; then
+		log "Unable to whitelist access to UNMS: check gateway & DNS config"
+		reload_dnsmasq
+		return
+	fi
+
+	local gw_ifc=$(ip route | grep default | cut -d " " -f 5)
+	local unms_host=$(echo "$unms_host_port"|cut -d : -f 1)
+	local unms_port=$(echo "$unms_host_port"|cut -d : -f 2 -s)
+	[ -z "$unms_port" ] && unms_port=443
+
+	local ip=
+	for ip in $(resolveip $UBNT_FW_HOST); do
+		iptables -I FORWARD -i $MGMT_IFC -p tcp --dport $UBNT_FW_HOST_PORT -d $ip -j ACCEPT > /dev/null 2>&1
+		iptables -t nat -I POSTROUTING -o $gw_ifc -p tcp --dport $UBNT_FW_HOST_PORT -d $ip -j MASQUERADE > /dev/null 2>&1
+		echo "$ip $UBNT_FW_HOST" >> /etc/prov-hosts.conf
+	done
+	[ -z "$ip" ] && log "Cannot resolve firmware update server host"
+	
+	local ip=
+	for ip in $(resolveip $unms_host); do
+		iptables -I FORWARD -i $MGMT_IFC -p tcp --dport $unms_port -d $ip -j ACCEPT > /dev/null 2>&1
+		iptables -t nat -I POSTROUTING -o $gw_ifc -p tcp --dport $unms_port -d $ip -j MASQUERADE > /dev/null 2>&1
+		echo "$ip $unms_host" >> /etc/prov-hosts.conf
+	done
+	[ -z "$ip" ] && log "Cannot resolve UNMS host '$unms_host'"
+	
+	reload_dnsmasq
+}
+
+check_redirect_ports() {
+	local main_port=$MGMT_PORT
+	local redirect_http_port=$REDIR_PORT
+	local proto="https"
+	local server_port=$(sed -nr '/^httpd.port=/{ s/^.+=//p }' /tmp/system.cfg)
+
+	if grep -q "^httpd.https.status=enabled" /tmp/system.cfg; then
+		main_port=$(sed -nr '/^httpd.https.port=/{ s/^.+=//p }' /tmp/system.cfg)
+	else
+		main_port=$server_port
+		proto=http
+	fi
+	[ -z $main_port ] && main_port=$MGMT_PORT
+
+	[ "$main_port" = "$redirect_http_port" -o "$server_port" = "$redirect_http_port" ] && redirect_http_port=$((50000+${REDIR_PORT}))
+
+	# Update info
+	MGMT_PORT=$main_port
+	REDIR_PORT=$redirect_http_port
+	REDIRECT_URL="${proto}://$MGMT_IP:$MGMT_PORT/"
+
+	if [ -n "$server_port" -a "$server_port" != "80" -a "$main_port" != "80" ]; then
+		IS_PORT_80_FREE=true
+	fi
+}
+
+mk_dhcpd_cfg() {
+	dbg "mk_dhcpd_cfg()"
+	cat >/etc/prov-dhcpd.conf << EOF
+dhcp-lease-max=60
+dhcp-leasefile=/tmp/prov-leases
+dhcp-authoritative
+interface=$MGMT_IFC
+dhcp-range=$MGMT_NET.2,$MGMT_NET.254,255.255.255.0,600
+server=$MGMT_IP
+dhcp-option-force=160,"$REDIRECT_URL"
+dhcp-option-force=114,"$REDIRECT_URL"
+addn-hosts=/etc/prov-hosts.conf
+address=/#/$MGMT_IP
+EOF
+	echo -n > /etc/prov-hosts.conf
+}
+
+mk_hostapd_cfg() {
+	dbg "mk_hostapd_cfg()"
+	cat >/etc/prov-hostapd.conf << EOF
+driver=nl80211
+interface=$MGMT_IFC
+ssid=$PROVESSID
+ctrl_interface=/var/run/hostapd_prov
+channel=1
+EOF
+}
+
+run_dhcpd() {
+	dbg "run_dhcpd()"
+	[ -e /var/run/prov-dhcpd.pid ] && kill `cat /var/run/prov-dhcpd.pid `
+	mk_dhcpd_cfg
+	[ -z $TEST_ON_IFC ] && dnsmasq -z -I lo -R -C /etc/prov-dhcpd.conf -x /var/run/prov-dhcpd.pid
+}
+
+run_lighttpd() {
+	dbg "run_lighttpd()"
+	grep -v 'include "/etc/lighttpd_provmode.conf"' /etc/lighttpd.conf > /etc/lighttpd.conf.org
+	[ -f /etc/lighttpd.conf.org ] && cp /etc/lighttpd.conf.org /etc/lighttpd.conf
+
+	echo -e "
+server.max-keep-alive-requests = 0
+" > /etc/lighttpd_provmode.conf
+
+	if [ $IPTABLES_ENABLED = yes ]; then
+
+		echo -e "
+\$SERVER[\"socket\"] == \":$REDIR_PORT\" {
+	url.redirect = ( \"\" => \"$REDIRECT_URL\" )
+	url.redirect-code = 302
+	ssl.engine = \"disable\"
+}
+" >> /etc/lighttpd_provmode.conf
+
+	elif ! netstat -tnlp | grep -qE '(0.0.0.0|$MGMT_IP):80 ' && [ "$IS_PORT_80_FREE" = true ]; then
+
+		# start listening on 80 port and redirect to REDIR_URL
+		echo -e "
+\$SERVER[\"socket\"] == \"$MGMT_IP:80\" {
+	url.redirect = ( \"\" => \"$REDIRECT_URL\" )
+	url.redirect-code = 302
+	ssl.engine = \"disable\"
+}
+" >> /etc/lighttpd_provmode.conf
+
+	elif [ ! "$MGMT_PORT" = "80" ]; then
+
+		# just redirect managament network from http:80 to to REDIR_URL
+		echo -e "
+\$HTTP[\"remoteip\"] == \"$MGMT_IP/24\" {
+	\$HTTP[\"scheme\"] == \"http\" {
+		url.redirect = ( \"\" => \"$REDIRECT_URL\" )
+		url.redirect-code = 302
+		ssl.engine = \"disable\"
+	}
+}
+" >> /etc/lighttpd_provmode.conf
+
+	fi
+
+	echo -e "
+include \"/etc/lighttpd_provmode.conf\"
+" >> /etc/lighttpd.conf
+
+	killall -q lighttpd
+}
+
+run_hostapd() {
+	dbg "run_hostapd()"
+	[ -e /var/run/prov-hostapd.pid ] && kill `cat /var/run/prov-hostapd.pid`
+	mk_hostapd_cfg
+	[ -z $TEST_ON_IFC ] && /bin/hostapd -B -P /var/run/prov-hostapd.pid /etc/prov-hostapd.conf
+}
+
+do_provmode_radio_start()
+{
+	if [ -d /proc/sys/net/airview1 ]; then
+		ifconfig airview1 down
+		wlanconfig airview1 destroy
+		killall -q ubntspecd
+		rm -f /tmp/airview/data
+	fi
+
+	if [ -d /proc/sys/net/ath1 ]; then
+		radarprescan disable
+		ifconfig ath1 down
+		wlanconfig ath1 destroy
+	fi
+
+	if [ ! -z $GEN3 ]; then
+
+		run_hostapd
+
+	else
+		IEEEMODES=`grep ^radio.1.ieee_modes /etc/board.info | awk -F'=' '{print $2}'`
+		CCODE_LOCKED=`grep ^radio.1.ccode_locked /etc/board.info | awk -F'=' '{print $2}'`
+		COUNTRY_ID=2888
+
+		iwpriv $MGMT_RADIO setCountryID $COUNTRY_ID
+		[ -z $TEST_ON_IFC ] && wlanconfig $MGMT_IFC create wlandev $MGMT_RADIO wlanmode ap > /dev/null
+		iwconfig $MGMT_IFC essid $PROVESSID
+		if [ "$((${IEEEMODES} & 1))" == "1" ]; then
+			iwpriv $MGMT_IFC mode 11nght20
+		else
+			iwpriv $MGMT_IFC mode 11naht20
+		fi
+		iwconfig $MGMT_IFC txpower 21
+		if [ "$((${IEEEMODES} & 1))" == "1" ]; then
+			athchans -i $MGMT_IFC 2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462
+		else
+			if [ "${CCODE_LOCKED}" == "2" ]; then
+				athchans -i $MGMT_IFC 5745 5765 5785 5805 5825
+			else
+				athchans -i $MGMT_IFC 5180 5200 5220 5240
+			fi
+		fi
+		iwconfig $MGMT_IFC freq 0
+	fi
+
+	[ ! -z $TEST_ON_IFC ] && brctl delif br0 $MGMT_IFC
+	ifconfig $MGMT_IFC $MGMT_IP netmask 255.255.255.0
+
+	add_captive_apple_to_hosts
+	check_redirect_ports
+	run_dhcpd
+	run_lighttpd
+	if [ $IPTABLES_ENABLED = yes ]; then
+		load_router_modules
+		init_iptables_rules
+		init_unms_rules
+	fi
+
+	rm -f /var/run/boot_provmod_mark
+}
+
+do_provmode_radio_stop()
+{
+	remove_captive_apple_from_hosts
+
+	if [ $IPTABLES_ENABLED = yes ]; then
+		remove_unms_rules
+		iptables -D FORWARD -i $MGMT_IFC -j DROP
+		iptables -D FORWARD -i $MGMT_IFC -j REJECT --reject-with icmp-proto-unreachable
+		iptables -D FORWARD -i $MGMT_IFC -p tcp -j REJECT --reject-with icmp-host-unreachable
+		iptables -D FORWARD -i $MGMT_IFC -p udp -j REJECT --reject-with icmp-port-unreachable
+		iptables -D FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+        
+		local port=`iptables -t nat -L PREROUTING -nv | grep -m1 "tcp dpt:80 redir ports" | cut -f 2 -d "s"`
+		[ ! -z ${port} ] && iptables -t nat -D PREROUTING -i $MGMT_IFC -p tcp --dport 80 -j REDIRECT --to-port ${port}
+	fi
+
+	[ -z $TEST_ON_IFC ] && ifconfig $MGMT_IFC down
+	[ ! -z $TEST_ON_IFC ] && ifconfig $MGMT_IFC 0.0.0.0 && brctl addif br0 $MGMT_IFC
+
+	if [ ! -z $GEN3 ]; then
+		if [ -f /var/run/prov-hostapd.pid ]; then
+			kill `cat /var/run/prov-hostapd.pid`
+			rm -f /var/run/prov-hostapd.pid
+		fi
+		rm -f /etc/prov-hostapd.conf
+	else
+		if [ -d /sys/devices/virtual/net/$MGMT_RADIO ]; then
+			ifconfig $MGMT_RADIO down
+		fi
+		if [ -d /sys/devices/virtual/net/$MGMT_IFC ]; then
+			wlanconfig $MGMT_IFC destroy
+		fi
+	fi
+
+	if [ -f /var/run/prov-dhcpd.pid ]; then
+		kill `cat /var/run/prov-dhcpd.pid`
+		rm -f /var/run/prov-dhcpd.pid
+		rm -f /tmp/prov-leases
+	fi
+
+	if [ -f /etc/lighttpd.conf.org ]; then
+		mv /etc/lighttpd.conf.org /etc/lighttpd.conf
+		rm -f /etc/lighttpd_provmode.conf
+		killall -q lighttpd
+	fi
+
+	touch /var/run/prov_off
+
+	[ -z $GEN3 ] && /usr/etc/init.d/plugin start airview
+
+	rm -f $PROV_STATUS
+}
+
+do_provmode_fast_restart()
+{
+	check_redirect_ports
+	if [ ! -z $GEN3 ]; then
+		if ! ps | grep -q '[h]ostapd.*prov'; then
+			run_hostapd
+		fi
+	fi
+	if ! ps | grep -q '[d]nsmasq.*prov'; then
+		run_dhcpd
+	fi
+	local has_lighttpd_prov=`grep -c 'include "/etc/lighttpd_provmode.conf"' /etc/lighttpd.conf`
+	local has_lighttpd=`grep -c "url.redirect = .* \"$REDIRECT_URL\"" /etc/lighttpd_provmode.conf`
+	if [ $has_lighttpd -eq 0 -o  $has_lighttpd_prov -eq 0 ]; then
+		run_lighttpd
+	fi
+	if [ $IPTABLES_ENABLED = yes ]; then
+		local has_iptables=`lsmod | grep -cE "^ipt_REDIRECT |^ip_tables |^nf_conntrack "`
+		if [ $has_iptables -lt 3 ]; then
+			load_router_modules
+		fi
+		local has_iprules=`iptables -t nat -L PREROUTING -nv | grep -c $MGMT_IFC`
+		if [ $has_iprules -eq 0 ]; then
+			init_iptables_rules
+		else
+			local port=`iptables -t nat -L PREROUTING -nv | grep -m1 "tcp dpt:80 redir ports" | cut -f 2 -d "s"`
+			iptables -t nat -D PREROUTING -i $MGMT_IFC -p tcp --dport 80 -j REDIRECT --to-port ${port}
+			[ ! "$MGMT_PORT" = "80" ] && iptables -t nat -I PREROUTING -i $MGMT_IFC -p tcp --dport 80 -j REDIRECT --to-port $REDIR_PORT
+		fi
+		init_unms_rules
+	fi
+}
+
+do_provmode_start()
+{
+	rm -f /var/run/prov_off
+	# Do not run twice
+	if bgnd -s $PROGNAME > /dev/null 2>&1; then
+		log "Starting management radio"
+		bgnd -r $PROGNAME -- $0 background
+	else
+		log "Reinitializing management radio"
+		bgnd -r ${PROGNAME}_fast -- $0 background_fast
+	fi
+}
+
+do_provmode_stop()
+{
+	if [ -f /var/run/$PROGNAME.pid ]; then
+		log "Stopping management radio"
+		do_provmode_radio_stop
+		kill `cat /var/run/$PROGNAME.pid`
+		rm -f /var/run/$PROGNAME.pid
+	fi
+}
+
+do_provmode_main()
+{
+	echo $$ >> /var/run/$PROGNAME.pid
+	local timeout=$PROV_WAIT
+	local run_time=$PROV_TIMEOUT
+
+	while [ $timeout -gt 0 ]; do
+		echo 0 $timeout > $PROV_STATUS
+		sleep 1
+		timeout=$(($timeout-1))
+		if [ ! -z $GEN3 ]; then
+			iw dev $MGMT_IFC info && break
+		else
+			[ -f /sys/devices/virtual/net/ath0/wireless/status ] && break
+		fi
+	done
+
+	timeout=$PROV_TIMEOUT
+	echo 1 $timeout > $PROV_STATUS
+
+	do_provmode_radio_start
+
+	while [ $timeout -gt 0 ]; do
+		echo 2 $timeout > $PROV_STATUS
+		sleep 1
+		timeout=$(($timeout-1))
+	done
+
+	while true; do
+		if [ ! -e /etc/persistent/provmode_forced ]; then
+			if [ ! -z $GEN3 ]; then
+				if [ `iw dev $MGMT_IFC station dump | wc -l` -lt 2 ]; then
+					dbg "timeout reached and no clients are connected"
+					break
+				fi
+			else
+				if [ `wlanconfig $MGMT_IFC list sta | wc -l` -lt 2 ]; then
+					dbg "timeout reached and no clients are connected"
+					break
+				fi
+			fi
+			if ! grep -q '"ip"\s*:\s*"'$MGMT_NET /tmp/.sessions/* 2>/dev/null; then
+				dbg "timeout reached and there are no web sessions"
+				break
+			fi
+		fi
+		timeout=$PROV_EXT_TIMEOUT
+		run_time=$(($run_time+$timeout))
+		while [ $timeout -gt 0 ]; do
+			echo 3 $timeout > $PROV_STATUS
+			sleep 1
+			timeout=$(($timeout-1))
+		done
+	done
+	echo 4 0 > $PROV_STATUS
+	log "Management radio timeout after $(($run_time/60)) minutes, bringing $MGMT_IFC down."
+	do_provmode_radio_stop
+
+	exit 0
+}
+
+do_provmode_disable()
+{
+	log "Disabling management radio."
+	do_provmode_radio_stop
+	sed -i '/system.airosx.prov.status/d' /tmp/system.cfg
+	/usr/etc/rc.d/rc.softrestart save
+}
+
+case "$1" in
+start)
+	do_provmode_start $*
+	;;
+
+background)
+	do_provmode_main $*
+	;;
+
+background_fast)
+	do_provmode_fast_restart
+	;;
+
+stop)
+	do_provmode_stop $*
+	;;
+
+disable)
+	do_provmode_disable $*
+	;;
+
+*)
+	echo "Usage: $PROGNAME start|stop"
+	;;
+esac

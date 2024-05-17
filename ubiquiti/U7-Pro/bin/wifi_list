@@ -1,0 +1,110 @@
+#!/bin/sh
+
+# Copyright (c) 2023-2024 Ubiquiti Networks, Inc.
+
+echo "Wi-Fi Network Overview"
+echo ""
+
+# For Qualcomm based APs
+[ -f /usr/sbin/wlanconfig ] || exit 1
+
+cd /var/run/hostapd || exit 1
+
+get_wifi_mode() {
+	local device="$1"
+	local mode_output=$(iwpriv "$device" get_mode)
+	echo "$mode_output" | sed -n 's/^.*get_mode:\(.*\)$/\1/p'
+}
+
+get_wifi_standard() {
+	local mode="$1"
+	case "$mode" in
+		*EHT*) echo "Wi-Fi 7" ;;
+		*HE*)
+			if iw phy "$(cat /sys/class/net/$device/phy80211/name)" info | grep -q "Band 4"; then
+				echo "Wi-Fi 6E"
+			else
+				echo "Wi-Fi 6"
+			fi
+			;;
+		*VHT*) echo "Wi-Fi 5" ;;
+		*HT*) echo "Wi-Fi 4" ;;
+		*) echo "$mode" ;;
+	esac
+}
+
+get_channel_width() {
+	echo "$1" | grep -oE '(20|40|80|160|320)'
+}
+
+sort_interfaces() {
+	for device in *; do
+		[ -S "$device" ] && [ "$device" != "global" ] && echo "$device" | sed 's/[^0-9]*//g' | awk -v intf="$device" '{print $0 " " intf}'
+	done | sort -n | cut -d' ' -f2
+}
+
+show_device_info() {
+	local device="$1"
+	local radio_status=$(hostapd_cli -i "$device" status)
+	local freq=$(echo "$radio_status" | awk -F'=' '/^freq=/ {print $2}')
+	local bssid=$(echo "$radio_status" | awk -F'=' '/^bssid\[0\]=/ {print $2}')
+	local ssid=$(echo "$radio_status" | awk -F'=' '/^ssid\[0\]=/ {print $2}')
+
+	local wifi_mode=$(get_wifi_mode "$device")
+	local wifi_standard=$(get_wifi_standard "$wifi_mode")
+	local channel_width=$(get_channel_width "$wifi_mode")
+
+	printf "%-6s | %4s @ %-7s | %-8s | %-17s | %s\n" "$device" "$freq" "$channel_width MHz" "$wifi_standard" "$bssid" "$ssid"
+}
+
+show_associated_clients() {
+	local device="$1"
+	for assoc in $(hostapd_cli -i "$device" list_sta); do
+		local client_info=$(hostapd_cli -i "$device" sta "$assoc")
+		local signal=$(echo "$client_info" | awk -F'=' '/signal=/ {print $2}')
+		local akm_suite=$(echo "$client_info" | awk -F'=' '/AKMSuiteSelector/ {print $2}')
+		local flags=$(echo "$client_info" | awk -F'=' '/flags=/ {print $2}' | tr -d '[]' | sed -e 's/AUTH//' -e 's/ASSOC//' -e 's/AUTHORIZED//' | sed -E 's/(PENDING_POLL|SHORT_PREAMBLE|PREAUTH|WMM|MFP|WPS|MAYBE_WPS|WDS|NonERP|WPS2|GAS|HT|VHT|HE|6GHZ|VENDOR_VHT|WNM_SLEEP_MODE)/\1, /g' | sed 's/, $//')
+
+		# List from: master include/linux/ieee80211.h
+		case "$akm_suite" in
+			00-0f-ac-1) akm="8021X         " ;;
+			00-0f-ac-2) akm="PSK           " ;;
+			00-0f-ac-3) akm="FT_8021X      " ;;
+			00-0f-ac-4) akm="FT_PSK        " ;;
+			00-0f-ac-5) akm="8021X_SHA256  " ;;
+			00-0f-ac-6) akm="PSK_SHA256    " ;;
+			00-0f-ac-7) akm="TDLS          " ;;
+			00-0f-ac-8) akm="SAE           " ;;
+			00-0f-ac-9) akm="FT_OVER_SAE   " ;;
+			00-0f-ac-10) akm="AP_PEER_KEY   " ;;
+			00-0f-ac-11) akm="8021X_SUITE_B " ;;
+			00-0f-ac-12) akm="8021X_SUITE_B_192" ;;
+			00-0f-ac-13) akm="FT_8021X_SHA384" ;;
+			00-0f-ac-14) akm="FILS_SHA256   " ;;
+			00-0f-ac-15) akm="FILS_SHA384   " ;;
+			00-0f-ac-16) akm="FT_FILS_SHA256" ;;
+			00-0f-ac-17) akm="FT_FILS_SHA384" ;;
+			00-0f-ac-18) akm="OWE           " ;;
+			00-0f-ac-19) akm="FT_PSK_SHA384 " ;;
+			00-0f-ac-20) akm="PSK_SHA384    " ;;
+			50-6f-9a-2) akm="WFA_DPP       " ;;
+			*) akm="Unknown       " ;;
+		esac
+
+		# todo: width, nss, and rrm, and wnm info
+		printf "\t%s | %4s dBm | %s | %s\n" "$assoc" "$signal" "$akm" "$flags"
+	done
+}
+
+devices=$(sort_interfaces)
+for device in $devices; do
+	case "$device" in
+		dumtx*|vwire*)
+			continue
+			;;
+	esac
+
+	show_device_info "$device"
+	show_associated_clients "$device"
+	echo ""
+done

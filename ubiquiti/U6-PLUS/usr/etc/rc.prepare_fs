@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# Use a live filesystem for /var/log
+
+prepare_fs_error()
+{
+	echo "prepare_fs: ERROR: $*" > /dev/kmsg
+}
+
+format_mmc_log_part()
+{
+	local LOG_OFFSET
+
+	# Protect ourselves so we don't corrupt wrong partition
+	if ! LOG_OFFSET=$(/bin/mmc_info -On log); then
+		prepare_fs_error "skip format log: offset not found"
+		return 1
+	fi
+	if [ $LOG_OFFSET -eq 0 ]; then
+		prepare_fs_error "skip format log: offset cannot be 0"
+		return 1
+	fi
+
+	local KERNEL0_OFFSET KERNEL1_OFFSET
+	if ! KERNEL0_OFFSET=$(/bin/mmc_info -On kernel0); then
+		prepare_fs_error "skip format log: kernel0 offset not found"
+		return 1
+	fi
+	if ! KERNEL1_OFFSET=$(/bin/mmc_info -On kernel1); then
+		prepare_fs_error "skip format log: kernel1 offset not found"
+		return 1
+	fi
+	if [ $LOG_OFFSET -eq $KERNEL0_OFFSET ]; then
+		prepare_fs_error "skip format log: same offset as kernel0"
+		return 1
+	fi
+	if [ $LOG_OFFSET -eq $KERNEL1_OFFSET ]; then
+		prepare_fs_error "skip format log: same offset as kernel1"
+		return 1
+	fi
+	mkfs.ext4 -F ${MMC_LOG_PART}
+}
+
+mount_mmc_log_part()
+{
+	(fsck.ext4 -p ${MMC_LOG_PART} 2>&1) > /dev/null
+	RC=$?
+
+	case $RC in
+		[0-2])
+			:
+		;;
+		*)
+			# Any partition errors - we format, new.
+			format_mmc_log_part || return 1
+		;;
+	esac
+
+	if ! mount -t ext4 ${MMC_LOG_PART} /tmp/log; then
+		# Mounting failed - try again after formatting.
+		format_mmc_log_part || return 1
+		mount -t ext4 ${MMC_LOG_PART} /tmp/log
+	fi
+
+	# only keep logs in /var/log
+	for file in $(ls -1 /tmp/log | grep -v ^syslog | grep -v ^messages | grep -v ^crash); do
+		rm -rf "/tmp/log/$file"
+	done
+}
+
+if MMC_LOG_PART=$(/bin/mmc_info -Fn log); then
+	mount_mmc_log_part
+fi

@@ -1,0 +1,34 @@
+disable_service() {
+	[ -x /etc/init.d/$1 ] && /etc/init.d/$1 disable
+}
+
+# Cleanup boot by disabling unused services
+disable_qca_services() {
+	disable_service qca-hostapd
+	disable_service qca-wpa-supplicant
+	disable_service linksys_recovery
+	disable_service sysntpd
+	disable_service commit_sysupgrade
+	disable_service qca-nss-drv
+	disable_service led
+	disable_service shortcut-fe
+	disable_service snmpd
+	disable_service ssid_steering
+	disable_service sysntpd
+	disable_service gpio_switch
+	disable_service dropbear
+	disable_service urandom_seed
+	disable_service thermal
+	disable_service qrfs
+	disable_service qca-edma
+	disable_service boot-ftm
+	disable_service wifi_fw_mount
+	disable_service wifi_fw_done
+	disable_service qca-acfg
+	disable_service sysfixtime
+	disable_service dnsmasq
+	disable_service cron
+	disable_service lbd
+}
+
+boot_hook_add preinit_ubnt disable_qca_services

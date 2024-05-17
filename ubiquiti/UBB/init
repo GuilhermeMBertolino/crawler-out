@@ -1,0 +1,171 @@
+#!/bin/sh
+#
+
+# crucial mountpoints
+mount -t proc none /proc
+mount -t sysfs none /sys
+if [ -d /sys/kernel/debug ]
+then
+	mount -t debugfs none /sys/kernel/debug
+fi
+mount -n tmpfs /var -t tmpfs -o size=17825792
+
+if [ -d /sys/fs/pstore ]
+then
+	mount -t pstore none /sys/fs/pstore
+fi
+
+mkdir /dev/pts /dev/shm
+
+mknod /dev/gpio c 127 0
+mknod -m 666 /dev/sflash c 200 0
+
+# rest of the mounts
+mount none /dev/pts -t devpts
+if [ -e /proc/bus/usb ]; then
+	mount none /proc/bus/usb -t usbfs
+fi
+echo "...mounts done"
+
+mkdir -p /var/run /var/tmp /var/log /var/etc /var/etc/persistent/cfg /var/lock
+echo "...filesystem init done"
+
+# print firmware revision
+[ -f /usr/lib/ubnt-hash ] && echo "Revision: " $(cat /usr/lib/ubnt-hash) > /dev/kmsg
+
+# insert hal module
+[ ! -f /lib/modules/*/ubnthal.ko ] || insmod /lib/modules/*/ubnthal.ko
+
+# load LED ring driver
+insmod i2c-core
+insmod i2c-qup
+insmod ledbar
+echo 1 25 0 7 > /proc/ubnt_ledbar/mode
+
+# making sure that critical files are in place
+mkdir -p /etc/rc.d /etc/init.d
+# forced update
+for f in inittab rc.d/rc.sysinit rc.d/rc rc.d/rc.stop ppp; do
+        cp -f -r /usr/etc/$f /etc/$f
+done
+echo "...base ok"
+
+mkdir -p /etc/udhcpc
+# do not update if exist
+for f in passwd group login.defs profile hosts host.conf \
+fstab udhcpc/udhcpc startup.list; do
+    if [ -e /etc/$f ]; then
+		echo -n '.'
+    else
+        cp -f /usr/etc/$f /etc/$f
+    fi
+done
+echo "...update ok"
+
+mkdir -p /etc/sysinit
+# make symlinks if do not exist
+for f in services protocols shells mime.types ethertypes modules.d ssl; do
+    if [ -e /etc/$f ]; then
+		echo -n '.'
+    else
+        ln -s /usr/etc/$f /etc/$f
+	fi
+done
+echo "...symlinks ok"
+
+sysctl -p /usr/etc/sysctl.conf
+
+CFG_SYSTEM="/tmp/system.cfg"
+CFG_RUNNING="/tmp/running.cfg"
+CFG_DEFAULT="/etc/default.cfg"
+
+# Starting watchdog manager
+if [ -e /dev/watchdog -a -x /bin/watchdog ]; then
+    /bin/watchdog -t 1 -T 30 /dev/watchdog
+fi;
+
+# only symlink to default config (needed for cfgmtd)
+if [ -e /sbin/ubntconf ]; then
+	/sbin/ubntconf -l $CFG_DEFAULT
+	echo "ubntconf returned $?" >> /tmp/ubntconf.log
+fi
+
+# System configuration
+mkdir -p /etc/sysinit/
+/sbin/cfgmtd -r -p /etc/ -f $CFG_RUNNING
+if [ $? -ne 0 ]; then
+	/sbin/cfgmtd -r -p /etc/ -t 2 -f $CFG_RUNNING
+	if [ $? -ne 0 ]; then
+		cp $CFG_DEFAULT $CFG_RUNNING
+	fi
+fi
+sort $CFG_RUNNING | tr -d "\r" > $CFG_SYSTEM
+cp $CFG_SYSTEM $CFG_RUNNING
+
+# If watchdog is to be disabled, stop it and prevent auto-restart by removing 
+# the device node.  Other restart code will only start if /dev/watchdog is found 
+# and /bin/watchdog is executable, so removing the node will keep it off.
+if [ -f /etc/persistent/disable_watchdog ]; then
+    killall watchdog
+    rm -f /dev/watchdog
+fi;
+#kick ubnthal to update board files
+CC=`sed -n -e '/radio.1.countrycode=/s/.*\= *//p' $CFG_SYSTEM`
+echo $CC > /proc/ubnthal/halupdate
+
+# board data symlinks, init + default config
+if [ -e /sbin/ubntconf ]; then
+	/sbin/ubntconf -i $CFG_DEFAULT
+	echo "ubntconf returned $?" >> /tmp/ubntconf.log
+	echo "...detect ok"
+fi
+
+if [ -f /sys/fs/pstore/dmesg-ramoops-0 ]; then
+	mkdir -p /tmp/crash
+	mv /sys/fs/pstore/dmesg-* /tmp/crash
+	touch /tmp/crashlog
+fi
+echo "Version: $(cat /lib/version)" >/dev/pmsg0
+
+if [ -e /dev/watchdog0 ]; then
+	RST_ST=$(cat /sys/class/watchdog/watchdog0/bootstatus)
+	if [ $RST_ST -ne 0 ]; then
+		touch /tmp/wdtrst
+	fi
+fi
+
+# But for DFS testing, it's useful to be able to overide this
+if [ -f /etc/persistent/enable_printk ]; then
+    echo 9 > /proc/sys/kernel/printk
+    dmesg -c
+else
+    # Do not clutter serial port, normally
+    echo 1 > /proc/sys/kernel/printk
+fi;
+
+# Set device date to firmware build date
+BDATE=202308231425
+if [ ! -z $BDATE ]; then
+	date -s $BDATE >/dev/null 2>&1
+fi
+
+# Run malware removal tool
+if [ -e /sbin/uav ]; then
+	/sbin/uav > /tmp/uav.log
+fi
+
+# Run configuration parser
+if [ -e /sbin/ubntconf ]; then
+	/sbin/ubntconf
+	echo "ubntconf returned $?" >> /tmp/ubntconf.log
+fi
+
+# Core dumps.
+ulimit -c unlimited
+echo '|/sbin/coredump %e %p %s'
+
+touch /var/run/boot_provmod_mark
+echo "...running /sbin/init"
+exec /sbin/init
+
+echo "INTERNAL ERROR!!! Cannot run /sbin/init."

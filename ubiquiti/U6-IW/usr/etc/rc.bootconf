@@ -1,0 +1,55 @@
+#!/bin/sh
+# vim: ft=sh
+
+. /usr/bin/unifi_util_funcs.sh
+
+# rc.bootconf: To be executed after modules are loaded (S10boot)
+# Process sysctl after a provision
+/etc/init.d/sysctl start
+SYSID=$(get_config_value /proc/ubnthal/system.info systemid)
+FWDIR=/lib/firmware
+PLATDIR=${FWDIR}/platforms
+
+# Link to our platform specific Maple & Pine BDF files
+if [ -d ${PLATDIR}/${SYSID} ]; then
+	find ${PLATDIR}/${SYSID}/ -name "bdwlan.b2*" -exec ln -sf {} ${FWDIR}/IPQ5018 \;
+	find ${PLATDIR}/${SYSID}/ -name "bdwlan.ba*" -exec ln -sf {} ${FWDIR}/qcn9000 \;
+	ln -sf ${PLATDIR}/BDF_revs/regdb.bin ${FWDIR}/IPQ5018
+	ln -sf ${PLATDIR}/BDF_revs/regdb.bin ${FWDIR}/qcn9000
+	echo "rc.bootconf: Platform data loaded. sysid = ${SYSID}" > /dev/kmsg
+else
+	echo "rc.bootconf: No platform data present. sysid = ${SYSID}" > /dev/kmsg
+fi
+
+case "$SYSID" in
+	# Primary 2.5G GMAC port resides on eth1, so we need to swap them
+	a654 | a655 | a656)
+		ip link set eth0 down
+		ip link set eth1 down
+		ip link set eth0 name ethx
+		ip link set eth1 name eth0
+		ip link set ethx name eth1
+	;;
+esac
+
+ip link set eth0 down
+ip link set eth0 address $(get_config_value /proc/ubnthal/system.info eth0.macaddr)
+
+SECOND_ETH=$(get_config_value /proc/ubnthal/system.info eth1.macaddr)
+if [ -n "$SECOND_ETH" ]; then
+	ip link set eth1 down
+	ip link set eth1 address $SECOND_ETH
+fi
+
+# Only ever set once.  Do it here before we provision
+# nss partial offload, pbuf_size=160 bytes, 19375 pbufs, total=160*19375=3100000.
+# This is for 415100 Mem with full offload nss memory settings.
+echo 3203072 > /proc/sys/dev/nss/n2hcfg/extra_pbuf_core0
+echo 31648 > /proc/sys/dev/nss/n2hcfg/n2h_high_water_core0
+echo 4096 > /proc/sys/dev/nss/n2hcfg/n2h_wifi_pool_buf
+echo 256 > /proc/sys/dev/nss/n2hcfg/n2h_queue_limit_core0
+
+# load platform specified script
+[ -f /etc/rc.d/rc.platform ] && . /etc/rc.d/rc.platform 2>&1
+
+dmesg > /tmp/bootconf.txt

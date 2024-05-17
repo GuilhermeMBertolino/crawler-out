@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# -b - prints boot temps
+# -s - stores current temps to boot files
+
+SYS_T=/etc/boot_temp
+RAD_T=/etc/boot_radio_temp
+RAD_T_CRASH=/tmp/boot_reason/kernel_crash
+RAD_T_SYSFS=/sys/devices/platform/soc/a800000.wifi/net/wifi0/thermal/temp
+PER_T_SYSFS=/sys/devices/platform/soc/8af8800.usb3/8a00000.dwc3/xhci-hcd.0.auto/usb2/2-1/prs_attrs/baseband_temp
+
+HWMON_RAD_T_SYSFS="/sys/class/hwmon/hwmon0/temp1_input"
+HWMON_SYS_T_SYSFS="/sys/class/hwmon/hwmon0/temp2_input"
+
+RAD_CELSIUS="N/A"
+SYS_CELSIUS="N/A"
+
+if [ "$1" == "-b" ]; then
+  if [ ! -f ${SYS_T} -o ! -f ${RAD_T} ] ; then
+    echo Not available
+    exit 1
+  fi
+
+  SYS_CELSIUS=$(cat ${SYS_T})
+  echo system boot: ${SYS_CELSIUS}
+
+  RAD_CELSIUS=$(cat ${RAD_T})
+  echo radio boot: ${RAD_CELSIUS}
+
+
+  RAD_CELSIUS_CRASH="N/A"
+  if [ -f ${RAD_T_CRASH} ] ; then
+    RAD_CELSIUS_CRASH=$(sed -nr 's/.*Radio temperature: ([0-9]+)C$/\1/p' ${RAD_T_CRASH})
+  fi
+
+  echo radio crash: ${RAD_CELSIUS_CRASH}
+
+  exit 0
+fi
+
+if [ -c "/dev/i2c-0" ]; then
+  T=$(i2cget -y 0 0x48 0 w 2>/dev/null)
+  if [ ! -z "${T}" ]; then
+    SYS_CELSIUS=$((((${T} >> 12) | ((${T} & 0xff)<<4))/16))
+    if [ "${SYS_CELSIUS}" -gt 128 ]; then
+      SYS_CELSIUS=$((SYS_CELSIUS - 256))
+    fi
+  fi
+fi
+
+if [ -f $HWMON_SYS_T_SYSFS ] ; then
+  TEMP_TMP=`cat ${HWMON_SYS_T_SYSFS}`
+  SYS_CELSIUS=`echo "scale=2; ${TEMP_TMP} / 1000" | bc -l`
+fi
+
+if [ "$1" == "-s" ]; then
+  echo ${SYS_CELSIUS} > ${SYS_T}
+else
+  echo system${BOOT}: ${SYS_CELSIUS}
+fi
+
+if [ -f $HWMON_RAD_T_SYSFS ]; then
+  TEMP_TMP=`cat ${HWMON_RAD_T_SYSFS}`
+  RAD_CELSIUS=`echo "scale=2; ${TEMP_TMP} / 1000" | bc -l`
+else
+  if [ -f $RAD_T_SYSFS ] ; then
+    RAD_CELSIUS=`cat ${RAD_T_SYSFS}`
+  else
+    T=`athdiag --get --address=0x2a454 | grep Value | awk '{print $6}'`
+    RAD_CELSIUS=$((0x7b - (${T} & 0xff) + 50))
+  fi
+fi
+
+if [ "$1" == "-s" ]; then
+  echo ${RAD_CELSIUS} > ${RAD_T}
+else
+  echo radio${BOOT}: ${RAD_CELSIUS}
+fi
+
+if [ -f $PER_T_SYSFS -a "$1" != "-s" ]; then
+  PER_CELSIUS=$(cat ${PER_T_SYSFS})
+  echo peraso: ${PER_CELSIUS}
+fi

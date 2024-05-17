@@ -1,0 +1,227 @@
+#!/bin/sh
+
+if [ $# -eq 0 -o $# -eq 1 ]; then
+	echo "Usage: $0 <output dir> <file name> [emerg <reason>]"
+        exit 1
+fi
+
+ddir=$1
+file=$2
+emerg=0
+
+if [ $# -ge 4 -a "$3" = "emerg" ]; then
+        emerg=1
+        file=/etc/persistent/emerg.supp
+        date > /etc/persistent/emerg
+        echo "$4" >> /etc/persistent/emerg
+fi
+
+rm -rf $ddir
+rm -rf $file
+mkdir $ddir
+if [ $emerg -eq 1 ]; then
+	cp /usr/lib/version $ddir
+	radartool savereports >/dev/null 2>&1
+	mv /tmp/*.dfsz $ddir >/dev/null 2>&1
+	if [ -f /sys/kernel/debug/crashlog ]; then
+		mkdir -p $ddir/crash
+		cp /sys/kernel/debug/crashlog $ddir/crash
+	fi
+	if [ -f /tmp/crash/dmesg-ramoops-0 ]; then
+		mkdir -p $ddir/crash
+		cp /tmp/crash/dmesg-ramoops-* $ddir/crash
+	fi
+	iwconfig > $ddir/iwconfig.txt
+	athstats > $ddir/athstats.txt
+	athstats -ol > $ddir/athstats-ol.txt
+	80211stats -a > $ddir/80211stats.txt
+	wlanconfig ath0 list > $ddir/wlist.txt
+	iwlist ath0 keys > $ddir/wkeys.txt
+	ps > $ddir/ps.txt
+	uptime > $ddir/uptime.txt
+	cat /proc/sys/dev/ubnt_poll/gps_info > $ddir/gps.txt
+	cp -R /proc/net/uph_wifi0/ $ddir
+	iwpriv wifi0 get_dacount > $ddir/dynack.txt
+	iwpriv wifi0 get_distance >> $ddir/dynack.txt
+	iwpriv wifi0 get_acktimeout >> $ddir/dynack.txt
+	wstalist -p > $ddir/wstalist.txt
+	iwlist ath0 scan > $ddir/wscan.txt
+	dmesg -s 16384 > $ddir/dmesg.txt
+	if [ -f /var/log/messages.0 ]; then
+		cat /var/log/messages.* > $ddir/syslog.txt
+	fi
+	cat /var/log/messages >> $ddir/syslog.txt
+	cat /var/log/unms.log* > $ddir/unms.log.txt
+	for i in meminfo slabinfo loadavg vmstat; do
+		cp /proc/$i $ddir
+	done
+
+	for i in `grep eth /proc/net/dev | cut -f 1 -d ":"`; do ethtool ${i} >> $ddir/eth.txt; ethtool -d ${i} >> $ddir/eth-d.txt; ethtool -S ${i} >> $ddir/eth-S.txt; done
+
+    brctl show > $ddir/brctl-show.txt
+	for i in `grep br /proc/net/dev | cut -f 1 -d ":"`; do brctl showmacs ${i} >> $ddir/brctl-showmacs.txt; done
+	apstats -r -i wifi0 -R > $ddir/apstats.txt
+	show_temp > $ddir/temperatures.txt
+	show_temp -b >> $ddir/temperatures.txt
+else
+	top -d1 -n3 -b > $ddir/top.txt
+	if [ -x /usr/bin/clad-client ]; then
+        	/usr/bin/clad-client -c adoption-status > $ddir/clad.txt
+                echo "adoption-status-rc: $?" >> $ddir/clad.txt
+                cat /var/run/x-ubnt 2>/dev/null >> $ddir/clad.txt
+        fi
+	cp /tmp/boot.txt $ddir
+	cp /etc/board.info $ddir
+	cp /tmp/running.cfg $ddir
+	cp /tmp/system.cfg $ddir
+	cp /etc/resolv.conf $ddir
+        cp /etc/dnsmasq.conf $ddir
+        cp /etc/host.conf $ddir
+        cp /etc/hosts $ddir
+        grep -iv psk /etc/wpasupplicant* > $ddir/wpasuplicant
+        cp /etc/inittab $ddir
+        cp /var/run/*_autoip $ddir/autoip
+	cp -R /tmp/airview $ddir
+	cp /tmp/amg_data $ddir
+	cp /usr/lib/version $ddir
+	radartool savereports >/dev/null 2>&1
+	mv /tmp/*.dfsz $ddir >/dev/null 2>&1
+	if [ -f /sys/kernel/debug/crashlog ]; then
+		mkdir -p $ddir/crash
+		cp /sys/kernel/debug/crashlog $ddir/crash
+	fi
+	if [ -f /tmp/crash/dmesg-ramoops-0 ]; then
+		mkdir -p $ddir/crash
+		cp /tmp/crash/dmesg-ramoops-* $ddir/crash
+	fi
+	for i in link addr route neigh ntable tunnel maddr mroute; do
+		echo "#### $i ####" >> $ddir/ip.txt
+		ip -s -d $i >> $ddir/ip.txt
+	done
+	ifconfig -a > $ddir/ifconfig.txt
+	route -n > $ddir/routes.txt
+	du -ah /var > $ddir/var.txt
+	iwconfig > $ddir/iwconfig.txt
+	athstats > $ddir/athstats.txt
+	athstats -ol > $ddir/athstats-ol.txt
+	80211stats -a > $ddir/80211stats.txt
+	wlanconfig ath0 list > $ddir/wlist.txt
+	iwlist ath0 keys > $ddir/wkeys.txt
+	ps > $ddir/ps.txt
+	uptime > $ddir/uptime.txt
+	cat /proc/sys/dev/ubnt_poll/gps_info > $ddir/gps.txt
+	iwpriv wifi0 get_dacount > $ddir/dynack.txt
+	iwpriv wifi0 get_distance >> $ddir/dynack.txt
+	iwpriv wifi0 get_acktimeout >> $ddir/dynack.txt
+	wstalist -p > $ddir/wstalist.txt
+	wpa_cli status > $ddir/wpa.txt
+	echo "wpa supp blacklist:" >> $ddir/wpa.txt
+	wpa_cli blacklist >> $ddir/wpa.txt
+	athchans -g > $ddir/athchans.txt
+	cp -R /etc/sysinit/ $ddir
+	cp -R /etc/persistent/ $ddir
+	cp -R /proc/net/uph_wifi0/ $ddir
+	for i in `grep eth /proc/net/dev | cut -f 1 -d ":"`; do ethtool ${i} >> $ddir/eth.txt; ethtool -d ${i} >> $ddir/eth-d.txt; ethtool -S ${i} >> $ddir/eth-S.txt; done
+	for i in filter nat mangle; do iptables -t ${i} -L -nv >> $ddir/iptables.txt; done
+	for i in filter nat broute; do ebtables -t ${i} -L --Lc >> $ddir/ebtables.txt; done
+	for i in `grep : /proc/net/dev | cut -f 1 -d ":"`; do 
+		echo "#### $i ####" >> $ddir/tc.txt
+	        tc -s -d qdisc show dev ${i} >> $ddir/tc.txt
+	        tc -s -d class show dev ${i} >> $ddir/tc.txt
+	done
+	df > $ddir/df.txt
+	iwpriv ath0 medump 1
+
+        radartool status > $ddir/radartool.txt
+	radartool shownol
+
+	# Wireless Scan must be the last one as it could change current status
+	sc_res=`iwlist ath0 scan`
+	while true; do
+		sc_res=`iwlist ath0 scan last`
+		if echo "$sc_res" | grep -cq "Scan in progress :"; then
+			sleep 1;
+		else
+			break;
+		fi;
+	done
+	echo "$sc_res" > $ddir/wscan.txt
+
+	dmesg -s 16384 -c > $ddir/dmesg.txt
+
+	if [ -f /var/log/messages.0 ]; then
+		cat /var/log/messages.* > $ddir/syslog.txt
+	fi
+	cat /var/log/messages >> $ddir/syslog.txt
+	cat /var/log/unms.log* > $ddir/unms.log.txt
+
+	for i in meminfo slabinfo loadavg vmstat modules kallsyms net/arp mtd uptime; do
+		cp /proc/$i $ddir
+	done
+	
+	/usr/www/status.cgi -p > $ddir/status.cgi.txt
+
+	i=`grep cfg /proc/mtd | cut -b 4`; dd if=/dev/mtdblock${i} of=$ddir/part.cfg > /dev/null 2>&1
+	i=`grep EEPROM /proc/mtd | cut -b 4`; dd if=/dev/mtdblock${i} of=$ddir/part.eeprom > /dev/null 2>&1
+
+    brctl show > $ddir/brctl-show.txt
+	for i in `grep br /proc/net/dev | cut -f 1 -d ":"`; do brctl showmacs ${i} >> $ddir/brctl-showmacs.txt; done
+	apstats -r -i wifi0 -R > $ddir/apstats.txt
+
+	echo 1 20 0xff > /proc/sys/dev/uph_wifi0/debug_tid
+
+	echo 7 > /proc/sys/dev/uph_wifi0/get_diag
+	echo 9 > /proc/sys/dev/uph_wifi0/get_diag
+	dmesg -c > $ddir/ubnt_poll.txt
+
+	iwpriv ath0 txrx_fw_stats 7
+	iwpriv ath0 txrx_fw_stats 2
+	dmesg -c > $ddir/txrx_fw_stats.txt
+
+	# combine tcpdump and upollstats:
+	# - start tcpdump with 100 packet capture limit, read tcpdump pid
+	# - run upollstats for 5 seconds
+	# - kill tcpdump if it's still running
+	tcpdump -i ath0 -c 100 -w $ddir/tcpdump.out & pid=$!
+	upollstats -p 1 -c 5 > $ddir/upollstats.txt
+	kill $pid
+
+	athstats -ol > $ddir/athstats-ol-2.txt
+
+	apstats -r -i wifi0 -R > $ddir/apstats-2.txt
+
+	echo 7 > /proc/sys/dev/uph_wifi0/get_diag
+	echo 9 > /proc/sys/dev/uph_wifi0/get_diag
+	dmesg -c > $ddir/ubnt_poll-2.txt
+
+	iwpriv ath0 txrx_fw_stats 7
+	iwpriv ath0 txrx_fw_stats 2
+	dmesg -c > $ddir/txrx_fw_stats-2.txt
+
+	echo 27 > /proc/sys/dev/uph_wifi0/get_diag; dmesg -c > $ddir/debug_tid.txt
+	echo 0 20 0xff > /proc/sys/dev/uph_wifi0/debug_tid
+
+	show_temp > $ddir/temperatures.txt
+	show_temp -b >> $ddir/temperatures.txt
+
+	ust-ctl -c dump-dfs-prescan -p > $ddir/dfs_prescan.txt
+
+	if [ -x /bin/prs_serial -a -c /dev/ttyACM0 ]; then
+		prs_serial status > $ddir/prs_status.txt
+		echo Baseband > $ddir/prs_temp_histo.txt
+		prs_serial "mib q l 11-6-1-1" >> $ddir/prs_temp_histo.txt
+		prs_serial "mib q l 11-6-1-2" >> $ddir/prs_temp_histo.txt
+		echo Radio >> $ddir/prs_temp_histo.txt
+		prs_serial "mib q l 11-6-2-1" >> $ddir/prs_temp_histo.txt
+		prs_serial "mib q l 11-6-2-2" >> $ddir/prs_temp_histo.txt
+	fi
+
+	if [ -x /bin/support-ext ]; then
+		/bin/support-ext $ddir
+	fi
+fi
+d=`dirname $ddir`
+f=`basename $ddir`
+tar -C ${d} -zcf $file ${f}
+rm -fr $ddir
+[ $emerg -eq 1 ] && cfgmtd -w -p /etc -f /tmp/running.cfg

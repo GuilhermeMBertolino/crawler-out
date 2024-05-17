@@ -1,0 +1,141 @@
+#!/bin/sh
+
+HEADER_FILE=/tmp/.cfg_head
+
+usage() {
+	echo "Usage: $0 encode|decode|check <args>"
+}
+
+encode() {
+	local tmpdir=$(mktemp -d)
+
+	echo "# $1" > "$HEADER_FILE"
+	echo -n "#" >> "$HEADER_FILE"
+	cat /etc/version >> "$HEADER_FILE"
+	cat /etc/board.info >> "$HEADER_FILE"
+
+	CHECKSUM=`md5sum "$HEADER_FILE" | cut -d' ' -f1`
+	echo $CHECKSUM >> "$HEADER_FILE"
+
+	echo "### PART ###" > $tmpdir/system.cfg
+	cat "$HEADER_FILE" | sed 's/.*/#&/' >> $tmpdir/system.cfg
+
+	echo "### PART ###" >> $tmpdir/system.cfg
+	cat /tmp/system.cfg >> $tmpdir/system.cfg
+
+	rm "$HEADER_FILE"
+
+	if [ $2 = "-f" ]; then
+		cp -f /etc/board.info $tmpdir
+		tar -Ocz -C $tmpdir system.cfg board.info
+	else
+		cat $tmpdir/system.cfg
+	fi
+
+	rm -r $tmpdir
+
+	return 0
+}
+
+decode() {
+	local file="$1"
+
+	[ ! -f "$file" ] && {
+		echo "No such file - $file"
+		return 1
+	}
+
+	rm -f /tmp/.cfg_part1 /tmp/.cfg_part2
+
+	# Split backup file into multiple files /tmp/.cfg_part{1,2}
+	(tar -Oxzf "$file" system.cfg || cat "$file") | awk '/### PART ###/{n++}{print >"/tmp/.cfg_part" n }'
+
+	([ ! -f "/tmp/.cfg_part1" ] || [ ! -f "/tmp/.cfg_part2" ]) && {
+		return 1
+	}
+
+	sed -i 's/\(.\{1\}\)//' /tmp/.cfg_part1
+
+	# Remove first and last line
+	sed -i '1d' /tmp/.cfg_part1
+	sed -i '$d' /tmp/.cfg_part1
+
+	# Remove first line
+	sed -i '1d' /tmp/.cfg_part2
+
+	mv /tmp/.cfg_part2 "$2"
+	mv /tmp/.cfg_part1 "$3"
+
+	return 0
+}
+
+check() {
+	local fw backup_ccode backup_flavor device_flavor
+	local file="$1"
+
+	[ ! -f "$file" ] && {
+		echo "No such file - $file"
+		return 1
+	}
+
+	tmpdir=$(mktemp -d)
+	tar -xzf "$file" -C $tmpdir system.cfg || cp "$file" $tmpdir/system.cfg
+
+	backup_ccode=$(sed -nr 's/^radio.1.countrycode=([0-9]+)$/\1/p' $tmpdir/system.cfg)
+	if [ -z "$backup_ccode" ] || ! rd countries | grep -q "\"code\"\s*:\s*$backup_ccode\s*}"; then
+		echo "Unexpected radio configuration (unsupported country code) in uploaded config"
+		return 2
+	fi
+
+	backup_flavor=$(sed -nr 's/^## *([A-Za-z0-9]+)\.+v[0-9]+\..*/\1/p' $tmpdir/system.cfg)
+	device_flavor=$(sed -nr 's/^([A-Za-z0-9]+)\.+v[0-9]+\..*/\1/p' /etc/version)
+
+	rm -r $tmpdir
+
+	[ "$backup_flavor" = "$device_flavor" ] && return 0
+	case "$backup_flavor" in
+		WA|XC)
+			if [ "$device_flavor" = "WA" ] || [ "$device_flavor" = "XC" ]; then
+				return 0
+			else
+				return 1
+			fi
+			;;
+		2WA|2XC)
+			if [ "$device_flavor" = "2WA" ] || [ "$device_flavor" = "2XC" ]; then
+				return 0
+			else
+				return 1
+			fi
+			;;
+		*)
+			return 1
+			;;
+
+	esac
+}
+
+main() {
+	CMD="$1"
+	shift
+	case "$CMD" in
+	encode)
+		encode "$@"
+		return $?
+		;;
+	decode)
+		decode "$@"
+		return $?
+		;;
+	check)
+		check "$@"
+		return $?
+		;;
+	*)
+		usage
+		return 255
+		;;
+	esac
+}
+
+main "$@"

@@ -1,0 +1,289 @@
+#!/bin/sh
+
+GEN3=`grep ^feature.g3=1 /etc/board.info`
+if [ ! -z $GEN3 ]; then
+	return
+fi
+
+_setup_wlan() {
+	# $1 - wlan name; $2 - ieee mode; $3 - country code
+
+	iwpriv wifi1 setCountryID 511
+	wlanconfig "$1" create wlandev wifi1 wlanmode monitor > /dev/null 2>&1
+	iwpriv "$1" mode "$2"
+}
+
+_remove_unms_rules() {
+	local rule=`iptables -L FORWARD -nv --line-numbers | grep "ACCEPT.*$SEC_IFC" | sort -r`
+	local masq_rule=`iptables -t nat -L POSTROUTING -nv --line-numbers | grep "MASQUERADE.*tcp dpt:" | sort -r`
+	local rule_no=`echo "$rule" | cut -f 1 -d " "`
+	local masq_rule_no=`echo "$masq_rule" | cut -f 1 -d " "`
+	for i in $rule_no; do
+		iptables -D FORWARD $i
+	done
+	for i in $masq_rule_no; do
+		iptables -t nat -D POSTROUTING $i
+	done
+}
+
+_stop_provmode() {
+	if [ ! -f /var/run/prov_off -a -f /var/run/provmode.pid ]; then 
+		type iptables >/dev/null 2>&1 && ipt_ena=yes || ipt_ena=no
+		sed -i '/captive\.apple\.com/d' /etc/hosts
+
+		if [ $ipt_ena = yes ]; then
+			_remove_unms_rules
+			iptables -D FORWARD -i ath1 -j DROP
+			iptables -D FORWARD -i ath1 -j REJECT --reject-with icmp-proto-unreachable
+			iptables -D FORWARD -i ath1 -p tcp -j REJECT --reject-with icmp-host-unreachable
+			iptables -D FORWARD -i ath1 -p udp -j REJECT --reject-with icmp-port-unreachable
+			iptables -D FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+	
+			local port=`iptables -t nat -L PREROUTING -nv | grep -m1 "tcp dpt:80 redir ports" | cut -f 2 -d "s"`
+			[ ! -z ${port} ] && iptables -t nat -D PREROUTING -i ath1 -p tcp --dport 80 -j REDIRECT --to-port ${port}
+		fi
+
+		ifconfig ath1 down
+
+		if [ -d /sys/devices/virtual/net/wifi1 ]; then
+			ifconfig wifi1 down
+		fi
+		if [ -d /sys/devices/virtual/net/ath1 ]; then
+			wlanconfig ath1 destroy
+		fi
+
+		if [ -f /var/run/prov-dhcpd.pid ]; then
+			kill `cat /var/run/prov-dhcpd.pid`
+			rm -f /var/run/prov-dhcpd.pid
+			rm -f /tmp/prov-leases
+		fi
+
+		if [ -f /etc/lighttpd.conf.org ]; then
+			mv /etc/lighttpd.conf.org /etc/lighttpd.conf
+			rm -f /etc/lighttpd_provmode.conf
+			killall -q lighttpd
+		fi
+
+		touch /var/run/prov_off
+
+		rm -f /var/run/provmode_status
+
+		kill `cat /var/run/provmode.pid`
+		rm -f /var/run/provmode.pid
+	fi
+}
+
+stop_prescan_vap() {
+	if [ -d /proc/sys/net/ath1 ]; then
+		radarprescan disable
+		ifconfig ath1 down
+		wlanconfig ath1 destroy
+	fi
+}
+
+stop_prescan() {
+	stop_prescan_vap
+	start_spectral "1"
+}
+
+start_prescan_vap() {
+	_setup_wlan "ath1" "$1" "511"
+
+	iwconfig ath1 txpower 0
+	ifconfig ath1 up
+	iwconfig ath1 freq 5520M
+	sleep 2 # wait for interface up
+	DOMAIN=$(radartool dfsdomain |  sed 's/dfs domain : //')
+	radarprescan set_dfsdomain $DOMAIN
+	radarprescan enable
+}
+
+start_prescan() {
+	if [ -n "$(sed -n '/radio\.1\.mode/p' /tmp/system.cfg | cut -d '=' -f2 | grep -i 'master')" ]; then
+		stop_airview
+		_stop_provmode
+
+		start_prescan_vap "11NAHT20"
+
+		CCODE_MAINRADIO=$(iwpriv wifi0 getCountryID |  sed 's/wifi0     getCountryID://')
+		regdomain $CCODE_MAINRADIO | head -n 2 | grep -q ETSI && PRESCAN_TYPE=1 || PRESCAN_TYPE=0
+		bgnd -r radarprescan -- /bin/radarprescan start_scan $CCODE_MAINRADIO $PRESCAN_TYPE
+		if [ "$?" = "0" ]; then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 2
+	fi
+}
+
+stop_airview() {
+	if [ -d /proc/sys/net/airview1 ]; then
+		killall -q ubntspecd
+		ifconfig airview1 down
+		wlanconfig airview1 destroy
+		rm -f /tmp/airview/data
+
+		echo 112640 > /proc/sys/net/core/rmem_max
+	fi
+}
+
+stop_spectral() {
+	stop_prescan_vap
+	stop_airview
+}
+
+start_spectral() {
+	if [ "$(sed -n '/feature\.g2/p' /var/etc/board.info | cut -d '=' -f2)" = "1" ]; then
+		if [ ! -f "/var/run/prov_off" -a -f "/var/run/provmode.pid" -a -f "/sys/devices/virtual/net/ath1/wireless/status" ]; then
+			return
+		fi
+	fi
+
+	# if radio 1 devdomain = 5000 and ieee_mode = 11ng or devdomain = 2400
+	# To get radio 1 country code: "$(sed -n "/radio\.1\.countrycode/p" /tmp/system.cfg | cut -d '=' -f2)"
+
+	if [ "$(sed -n '/radio\.1\.devdomain/p' /var/etc/board.info | cut -d '=' -f2)" = "0" -a -n "$(sed -n '/radio\.1\.ieee_mode/p' /tmp/system.cfg | cut -d '=' -f2 | grep -i '11NG')" -o "$(sed -n '/radio\.1\.devdomain/p' /var/etc/board.info | cut -d '=' -f2)" = "2400" ]; then
+		echo 512000 > /proc/sys/net/core/rmem_max
+		_setup_wlan "airview1" "11NGHT20" "511"
+		FREQ=`regdomain 511 -D 2400 | grep -m 1 "[0-9] [AG] [0-9]" | cut -f 1 -d " "`
+	else
+		if [ ! -f /tmp/.dfs_prescan_done -a -x /bin/radarprescan -a -z $1 ]; then
+			local ret
+			start_prescan
+			ret="$?"
+			[ "$ret" = "0" ] && return
+			[ "$ret" = "1" ] && stop_prescan_vap
+		fi
+		echo 512000 > /proc/sys/net/core/rmem_max
+		_setup_wlan "airview1" "11NAHT20" "511"
+		FREQ=`regdomain 511 -D 5000 | grep -m 1 "[0-9] [AG] [0-9]" | cut -f 1 -d " "`
+	fi
+	iwpriv wifi1 txchainmask 3
+	iwpriv wifi1 rxchainmask 3
+	iwconfig airview1 freq ${FREQ}M
+	iwconfig airview1 essid spectral
+	ifconfig airview1 up
+}
+
+prescan_check() {
+	if [ -n "$(sed -n '/radio\.1\.mode/p' /tmp/system.cfg | cut -d '=' -f2 | grep -i 'master')" ]; then
+		local control="$1"
+		local prov_mode=0
+		local ret=1
+		local main_bw="$2"
+
+		if [ -z "$main_bw" ]; then
+			main_bw=$(iwpriv wifi0 get_chanbw |  sed 's/wifi0     get_chanbw://')
+		fi
+
+		if [ ! -f "/var/run/prov_off" -a -f "/var/run/provmode.pid" -a -f "/sys/devices/virtual/net/ath1/wireless/status" ]; then
+			prov_mode=1
+			_stop_provmode
+		else
+			killall -q radarprescan
+			stop_spectral
+		fi
+
+		if [ $main_bw = 20 -o $main_bw = 10 ]; then
+			start_prescan_vap "11NAHT20"
+		else
+			control=$(($control+10))
+			start_prescan_vap "11naht40minus"
+		fi
+
+		radarprescan check_freq $control
+		ret="$?"
+
+		if [ "$ret" = "2" ]; then
+			echo "RADAR FOUND"
+			ret=1
+		else
+			echo "NO RADAR FOUND"
+			ret=0
+		fi
+		stop_prescan_vap
+
+		if [ "$prov_mode" = "1" ]; then
+			/usr/etc/init.d/plugin start provmode
+		else
+			start_spectral
+		fi
+
+		return $ret
+	else
+		echo "Radio 1 is not AP"
+		return 2
+	fi
+}
+
+help() {
+	echo "Airview utility to start/stop radio's"
+	echo "Usage: airviewradio { start { spectral | prescan } | stop { spectral | prescan } |"
+	echo "                    { check prescan FREQUENCY BANDWIDTH }"
+	echo "  start:"
+	echo "    spectral    - sets up airview1 interface with needed variables"
+	echo "    prescan     - stops airview and provmode utilities, sets up ath1"
+	echo "                  interface, enables radarprescan and starts radarprescan"
+	echo "                  utiltity."
+	echo "    prescan_vap - sets up ath1 interface and enables radarprescan"
+	echo "  stop:"
+	echo "    spectral    - stops prescan (see stop prescan) without starting"
+	echo "                  airview and stops airview by stopping ubntspecd and"
+	echo "                  setting down airview1 iface."
+	echo "    prescan     - stops prescan VAP and starts airview."
+	echo "    prescan_vap - disables radarprescan, destroys ath1 iface"
+	echo "  check:"
+	echo "    prescan     - check if control frequency and bandwith is free from radars"
+	echo "  reset:"
+	echo "    prescan     - reset dfs prescan list"
+}
+
+case "$1" in
+	start)
+		case "$2" in
+			spectral)
+				start_spectral
+				;;
+			prescan)
+				start_prescan
+				;;
+			prescan_vap)
+				start_prescan_vap "$3"
+				;;
+		esac
+		;;
+	stop)
+		case "$2" in
+			spectral)
+				stop_spectral
+				;;
+			prescan)
+				stop_prescan
+				;;
+			prescan_vap)
+				stop_prescan_vap
+				;;
+		esac
+		;;
+	check)
+		if [ "$2" = "prescan" -a -n "$3" ]; then
+			prescan_check "$3" "$4"
+			return $?
+		fi
+		;;
+	help)
+		help
+		;;
+	reset)
+		if [ "$2" = "prescan" ]; then
+			/bin/radarprescan clear
+			rm -f /tmp/.dfs_prescan_done
+		fi
+		;;
+	*)
+		echo "Unrecognized command: ${1} ${2} ${3}!"
+		help
+		;;
+esac

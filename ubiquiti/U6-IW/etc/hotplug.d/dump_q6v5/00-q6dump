@@ -1,0 +1,25 @@
+#!/bin/sh
+
+ANONID=$(cat /proc/ubnthal/system.info | grep -i device.anonid | cut -d "=" -f 2)
+RAMDUMP_FILE_NAME="${DEVICENAME}_${ANONID}.gz"
+RAMDUMP_DIR="/var/log/crash"
+RAMDUMP_FILE="${RAMDUMP_DIR}/${RAMDUMP_FILE_NAME}"
+
+if [ -e "/dev/${DEVICENAME}" ] && [ "$ACTION" = add ]; then
+	/usr/bin/logger "Offload crash has occurred! Collecting ramdump ${DEVICENAME}."
+
+	# Remove previous crash information, if any
+	rm -rf "${RAMDUMP_DIR}"
+	mkdir -p "${RAMDUMP_DIR}"
+
+	# Store on persistent storage.  Crash dump, dmesg, and messages
+	gzip -c "/dev/${DEVICENAME}" > "${RAMDUMP_FILE}"
+	cp "/var/log/messages" "${RAMDUMP_DIR}/messages"
+	dmesg > "${RAMDUMP_DIR}/dmesg"
+
+	syswrapper.sh send-wificoredump "${DEVICENAME}" "${RAMDUMP_FILE}"
+
+	# Force reboot to avoid possible re-entry to the crash handler
+	/usr/bin/logger "Dump has been collected. Rebooting..."
+	reboot -f
+fi

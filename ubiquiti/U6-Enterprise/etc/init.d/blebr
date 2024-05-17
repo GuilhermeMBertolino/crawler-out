@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=1
+USE_PROCD=1
+
+start_service() {
+	local APP=/usr/sbin/blebrd
+	local CFG=/etc/persistent/cfg/blebr.json
+	local SHARE_DIR=/usr/share/blebr
+	local BLECONN_SHARE_DIR=/usr/share/bleconn
+	local STOP_TIMEOUT=11
+
+	# Run blebrd only after adoption
+	# NOTE: Sometimes fw_printenv is lying so let's check if $CFG exist
+	[ -f "$CFG" ] || syswrapper.sh check-is-adopted || return 0
+
+	# Don't run blebrd on devices which are not supported by bleconnd
+	$BLECONN_SHARE_DIR/bleconn-check-sys-support.sh $BLECONN_SHARE_DIR || return 0
+
+	# Generate config
+	$SHARE_DIR/blebr-cfg-maker.sh $CFG $SHARE_DIR $BLECONN_SHARE_DIR || return 1
+
+	procd_open_instance
+	procd_set_param command $APP --syslog $CFG
+	procd_set_param respawn
+	procd_set_param term_timeout $STOP_TIMEOUT
+	procd_close_instance
+}

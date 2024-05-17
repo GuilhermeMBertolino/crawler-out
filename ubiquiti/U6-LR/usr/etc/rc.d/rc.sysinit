@@ -1,0 +1,73 @@
+#!/bin/sh
+# vim: ft=sh
+
+# restore entry if it was removed by procd
+[ -c /dev/sflash ] || mknod -m 644 /dev/sflash c 200 0
+
+# reboot in 3 secs after kernel panic
+echo "3" > /proc/sys/kernel/panic
+
+#echo 0 > /proc/sys/kernel/printk
+
+echo 1 > /proc/sys/net/ipv4/tcp_thin_dupack
+echo 1 > /proc/sys/net/ipv4/tcp_thin_linear_timeouts
+
+# load platform specified script
+[ -f /etc/rc.d/rc.platform ] && . /etc/rc.d/rc.platform
+
+[ -f /proc/1/comm ] && INITNAME=`cat /proc/1/comm`
+
+# load modules only for busybox init
+if [ "${INITNAME}" != "procd" ]; then
+	# create module list, skip ip/eb-tables, drivers
+	if [ -d /etc/modules.d/ ]; then
+		modules=`cd /etc/modules.d && ls`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-nf-.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ipt-.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ip6tables.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-nat-.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ebtables.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ar724x-eth"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ath-11n"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ubnt-poll"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ar93xx-eth"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-atheros-eth"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-ar93xx-ath"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-qca-ssdk.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-qca-wifi.*"`
+		modules=`echo $modules | tr " " "\n" | grep -v -E ".?.?-brcmsdk-*"`
+
+		# load modules
+		. /usr/etc/rc.d/rc.modules load ${modules}
+	fi
+fi
+
+# filesystem 
+#   - /dev
+if [ -e /sbin/hotplug2 ]; then
+	/sbin/hotplug2 --persistent --set-rules-file /usr/etc/hotplug2.rules &
+fi
+
+# create /dev/ubnt_sta_ht
+STA_HT_MAJOR=$(grep ubnt_sta_ht /proc/devices | awk '{print $1}')
+if [ ${STA_HT_MAJOR} -gt 0 ]; then
+	mknod /dev/ubnt_sta_ht c ${STA_HT_MAJOR} 0
+fi
+
+# set hostname
+echo UBNT > /proc/sys/kernel/hostname
+
+# enable TCP Packetization-Layer Path MTU Discovery
+echo 1024 > /proc/sys/net/ipv4/tcp_base_mss
+echo 1 > /proc/sys/net/ipv4/tcp_mtu_probing
+
+# set sane defaults for routing tables and conntrack
+echo "32768" > /proc/sys/net/ipv4/route/max_size
+echo "2048" > /proc/sys/net/ipv4/route/gc_thresh
+# end.
+
+if [ -e /bin/ubnt-rssimon ]; then
+	/bin/ubnt-rssimon &
+fi
+
+dmesg > /tmp/sysinit.txt

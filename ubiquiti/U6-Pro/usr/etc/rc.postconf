@@ -1,0 +1,71 @@
+#!/bin/sh
+# rc.postconf - processed after each provision
+
+. /usr/bin/unifi_util_funcs.sh
+. /lib/update_smp_affinity.sh
+
+SYSID=$(get_config_value /proc/ubnthal/system.info systemid)
+
+performance_config() {
+	#Disable Wdiag log
+	cfg80211tool wifi0 dl_loglevel 0xffff0006
+	cfg80211tool wifi1 dl_loglevel 0xffff0006
+	cfg80211tool wifi0 dcs_enable 0
+	cfg80211tool wifi1 dcs_enable 0
+	case "$SYSID" in
+		a654 | a655 | a656)
+			cfg80211tool wifi2 dl_loglevel 0xffff0006
+			cfg80211tool wifi2 dcs_enable 0
+		;;
+	esac
+	#Flushout stale accelerated connections if any
+	echo 1 > /sys/kernel/debug/ecm/ecm_db/defunct_all
+	echo f > /proc/net/nf_conntrack
+	#Enable flow control on ethernet interfaces
+	ssdk_sh port flowctrl set 1 enable
+	ssdk_sh port flowctrl set 2 enable
+	ssdk_sh port autoneg restart 1
+	ssdk_sh port autoneg restart 2
+}
+
+enable_rps() {
+	irq_nss_rps=`grep nss_queue1 /proc/interrupts | cut -d ':' -f 1 | tr -d ' '`
+	for entry in $irq_nss_rps
+	do
+		echo 2 > /proc/irq/$entry/smp_affinity
+	done
+
+	# Enable NSS RPS
+	sysctl -w dev.nss.rps.enable=1 >/dev/null 2>/dev/null
+
+}
+
+enable_smp_affinity() {
+	enable_smp_affinity_wifi wifi0
+	enable_smp_affinity_wifi wifi1
+	case "$SYSID" in
+		a654 | a655 | a656)
+			enable_smp_affinity_wifi wifi2
+		;;
+	esac
+}
+
+sysctl_setting() {
+	# Config board specific settings
+	case "$SYSID" in
+		dcb4 | dcb5 )
+			/etc/init.d/qca-edma start
+			sysctl -w net.bridge.bridge-nf-call-arptables=0
+			sysctl -w net.bridge.bridge-nf-call-ip6tables=0
+			sysctl -w net.bridge.bridge-nf-call-iptables=0
+		;;
+	esac
+	# Process sysctl after a provision
+	/etc/init.d/sysctl start
+}
+
+echo "==== setup rc.postconf ====" >/dev/kmsg
+performance_config
+enable_rps
+enable_smp_affinity
+sysctl_setting

@@ -1,0 +1,28 @@
+# Perform an upgrade, if one has been requested.
+
+_set_led() {
+        echo $1 > /proc/gpio/led_pattern
+        echo $2 > /proc/gpio/led_tempo
+}
+
+if [ -e /var/log/fwupdate.bin ]; then
+	grep -q debugfs /proc/filesystems && /bin/mount -o noatime -t debugfs debugfs /sys/kernel/debug
+
+	_set_led 12 120
+
+	# We rename fwupdate.bin, and symlink it. This is to reduce
+	# risk of reboot / upgrade loop if something goes sideways
+	mv /var/log/fwupdate.bin /var/log/upgrade-fw.bin
+	ln -sf /var/log/upgrade-fw.bin /tmp/fwupdate.bin
+	sync
+
+	echo "Upgrading, please stand by..."
+	echo
+
+	fwupdate.real -m 2>&1
+	rc=$?
+	echo "Error: firmware upgrade never complted.  Code $rc"
+
+	# fwupdate should reboot for us, but if not, do it here as well.
+	reboot -f
+fi

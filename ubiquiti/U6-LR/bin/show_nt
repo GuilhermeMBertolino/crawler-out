@@ -1,0 +1,16 @@
+#!/bin/sh
+show_nt() {
+	athdebug -i $1 +node > /dev/null
+	iwpriv $1 show_nt > /dev/null 2>&1
+}
+
+if [ $# -lt 1 ]; then
+	RADIO=wifi0
+else
+	RADIO=$1
+fi
+
+dmesg -c > /dev/null 2>&1
+show_nt $RADIO 2>&1
+dmesg -c
+

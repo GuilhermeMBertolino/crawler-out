@@ -1,0 +1,76 @@
+#!/bin/sh
+
+. /usr/etc/rc.d/rc.funcs
+
+
+# reboot in 3 secs after kernel panic
+echo "3" > /proc/sys/kernel/panic
+# invoke kernel panic on OOM
+echo "2" > /proc/sys/vm/panic_on_oom
+
+if [ -f /etc/presysinit ]; then
+       	. /etc/persistent/rc.presysinit
+fi
+
+#mkdir -p /tmp/ath10k
+#/usr/bin/dd if=/dev/mtdblock3 bs=1c skip=4096 count=12064 of=/tmp/ath10k/pre-cal-ahb-a000000.wifi.bin 2>/dev/null &
+#/usr/bin/dd if=/dev/mtdblock3 bs=1c skip=20480 count=12064 of=/tmp/ath10k/pre-cal-ahb-a800000.wifi.bin 2>/dev/null &
+
+# create module list, skip ip/eb-tables
+if [ -d /etc/modules.d/ ]; then
+
+modules=`cd /etc/modules.d && ls`
+modules=`echo $modules | tr " " "\n" | grep -v -E ".*ipt-.*"`
+modules=`echo $modules | tr " " "\n" | grep -v -E ".*ebtables.*"`
+modules=`echo $modules | tr " " "\n" | grep -v -E ".*ip6tables.*"`
+
+# load modules
+. /usr/etc/rc.d/rc.modules load ${modules}
+
+fi
+
+# set hostname
+echo UBB-XG > /proc/sys/kernel/hostname
+
+# set sane defaults for routing tables and conntrack
+echo "32768" > /proc/sys/net/ipv4/route/max_size
+echo "2048" > /proc/sys/net/ipv4/route/gc_thresh
+# end.
+
+# respond to broadcast ping - this is for discovering neighbours IP addresses
+echo "0" > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+# setup motd
+#local ver=$(cat /etc/version)
+cat /usr/lib/version | sed -e "s/ls104x.//" > /etc/version
+_system_ver=$(cat /usr/lib/version | sed -e "s/ls104x.//")
+_system_prd=$(sed -n 's/^board.name=//p' /etc/board.info)
+_system_mac=$(sed -n 's/^board.hwaddr=//p' /etc/board.info)
+sed "s/{VERSION}/$_system_ver/; s/{PRODUCT}/$_system_prd/; s/{MAC}/$_system_mac/" /usr/etc/motd > /etc/motd
+
+
+BOOT_REASON_DIR="/tmp/boot_reason"
+if [ -f "$BOOT_REASON_DIR/watchdog_reboot" ]; then
+	echo -e "\t\tWatchdog reboot detected\n" >> /etc/motd
+elif [ -f "$BOOT_REASON_DIR/kernel_crash" ]; then
+	echo -e "\t\tKernel crashlog detected: $BOOT_REASON_DIR/kernel_crash\n" >> /etc/motd
+elif [ -f "$BOOT_REASON_DIR/emergency" ]; then
+	echo -e "\t\tEmergency reboot detected: $BOOT_REASON_DIR/emergency\n" >> /etc/motd
+fi
+
+# set product u-boot env var
+###/usr/bin/ubntbox product -w
+
+watchdog_start
+# setup soft lock up watchdog in kernel
+# TODO
+###echo 30 >/proc/sys/kernel/watchdog_thresh
+
+if [ -f /etc/postsysinit ]; then
+       	. /etc/persistent/rc.postsysinit
+fi
+
+dmesg > /tmp/boot.txt
+echo 0 > /sys/kernel/debug/persti/boot_cnt
+
+/bin/sfp-rate-setup.sh &

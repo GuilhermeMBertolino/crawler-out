@@ -1,0 +1,146 @@
+#!/bin/sh
+# rc.postconf - processed after each provision
+
+. /usr/bin/unifi_util_funcs.sh
+. /lib/update_smp_affinity.sh
+. /usr/etc/unifi_hostapd_funcs.sh
+
+system_id=$(get_config_value /proc/ubnthal/system.info systemid)
+sysnet=/sys/class/net
+ppecfg=/usr/bin/ppecfg
+
+ppe_cfg() {
+    ppecfg family=$1 cmd=$2 rule_id=$3 src_dev=$4 priority=$5 dscp_tc dscp_tc=$6 action enqueue_pri=$5
+}
+
+ppe_acl_init() {
+    # RFC 8325 + RFC8622 suggested priority map
+    # TOS        DSCP
+    # PHB  HEX  DEC    BIN DEC UP AC
+    # DF    00  0   000000   0  0 BE 0
+    # LE    04  4   000001   1  1 BK 0 // New since RFC8622
+    # CS1   20  32  001000   8  1 BK 0 // Legacy since RFC8622
+    # AF11  28  40  001010  10  0 BE 0
+    # AF12  30  48  001100  12  0 BE 0
+    # AF13  38  56  001110  14  0 BE 0
+    # CS2   40  64  010000  16  0 BE 1
+    # AF21  48  72  010010  18  3 BE 1
+    # AF22  50  80  010100  20  3 BE 1
+    # AF23  58  88  010110  22  3 BE 1
+    # CS3   60  96  011000  24  4 VI 1
+    # AF31  68  104 011010  26  4 VI 1
+    # AF32  70  112 011100  28  4 VI 1
+    # AF33  78  120 011110  30  4 VI 1
+    # CS4   80  128 100000  32  4 VI 2
+    # AF41  88  136 100010  34  4 VI 2
+    # AF42  90  144 100100  36  4 VI 2
+    # AF43  98  152 100110  38  4 VI 2
+    # CS5   A0  160 101000  40  5 VI 2
+    # VA    B0  176 101100  44  6 VO 2
+    # EF    B8  184 101110  46  6 VO 2
+    # CS6   C0  192 110000  48  7 VO 3
+    # CS7   E0  224 111000  56  7 VO 3
+    # All unused codepoints are RECOMMENDED to be mapped to UP 0
+    tos_ac_1="64 72 80 88 96 104 112 120"
+    tos_ac_2="128 136 144 152 160 176 184"
+    tos_ac_3="192 224"
+    idx=0
+
+    # Delete all the rules
+    rules_no=$(acl_dump.sh | tail -1 | awk -F'[^0-9]+' '/acl/{print $2}')
+    for i in $(seq 0 $rules_no); do ppe_cfg acl rule_del $i; done
+
+    # Add rules for interfaces
+    for iface in `ls ${sysnet} | grep -E "^ath|^eth" | grep -v "\."`; do
+        for tos in $tos_ac_1; do ppe_cfg acl rule_add $idx $iface 1 $tos; idx=$((idx + 1)); done
+        for tos in $tos_ac_2; do ppe_cfg acl rule_add $idx $iface 2 $tos; idx=$((idx + 1)); done
+        for tos in $tos_ac_3; do ppe_cfg acl rule_add $idx $iface 3 $tos; idx=$((idx + 1)); done
+    done
+}
+
+sawf_init() {
+	# clean service first
+	wlanconfig wifi0 service_class disable 1
+	wlanconfig wifi0 service_class disable 2
+	wlanconfig wifi0 service_class disable 3
+	wlanconfig wifi0 service_class disable 4
+	wlanconfig wifi0 service_class disable 5
+	wlanconfig wifi0 service_class disable 6
+	wlanconfig wifi0 service_class disable 7
+	wlanconfig wifi0 service_class disable 8
+	wlanconfig wifi0 service_class disable 9
+	wlanconfig wifi0 service_class disable 10
+	wlanconfig wifi0 service_class disable 11
+	wlanconfig wifi0 service_class disable 12
+	wlanconfig wifi0 service_class disable 13
+	wlanconfig wifi0 service_class disable 14
+	wlanconfig wifi0 service_class disable 15
+	wlanconfig wifi0 service_class disable 16
+	wlanconfig wifi0 service_class disable 17
+	wlanconfig wifi0 service_class disable 18
+	wlanconfig wifi0 service_class disable 19
+	wlanconfig wifi0 service_class disable 20
+	# setu service
+	wlanconfig wifi0 service_class create 1 AR_VR 60000 X 81920 16 4 20 1 7 1 40960 16 X X 30000 X
+	wlanconfig wifi0 service_class create 2 Gaming 100 X X X 50 200 10 6 1000 X X X X X X
+	wlanconfig wifi0 service_class create 3 Interactive_Video 3000 200 X X 125 250 20 5 1000 X X X X X X
+	wlanconfig wifi0 service_class create 4 Interactive_Audio 96 X 220 20 75 200 11 6 1000 220 20 X X 96 X
+	wlanconfig wifi0 service_class create 5 VOD Service 3000 X X X 300 10000 30 4 1 X X X X X X
+	wlanconfig wifi0 service_class create 6 VOIP 96 X 220 20 40 200 12 6 10000 220 20 X X 96 X
+	wlanconfig wifi0 service_class create 7 Control Traffic 100 X X X 100 10000 31 4 1000 X X X X X X
+	wlanconfig wifi0 service_class create 8 Data Transfer X X X X X X 60 0 X X X X X X X
+	wlanconfig wifi0 service_class create 9 BE_VOIP 96 X 220 20 40 200 10 0 10000 220 20 X X 96 X
+	wlanconfig wifi0 service_class create 10 BiDi20M_VideoDelay40 30000 X X X 40 X 20 5 X X X X X 30000 X
+	wlanconfig wifi0 service_class create 11 BE_BiDi_GameDelay30 X X X X 30 X 11 0 X X X X X X X
+	wlanconfig wifi0 service_class create 12 BE_BiDi20M_VideoDelay20 30000 X X X 20 X 20 0 X X X X X 30000 X
+	wlanconfig wifi0 service_class create 13 BE_DL_Video40M 60000 X X X X X 21 0 X X X X X X X
+	wlanconfig wifi0 service_class create 14 BE_DL_Video40M 60000 X X X X X 22 0 X X X X X X X
+	wlanconfig wifi0 service_class create 15 BE_DL_VideoDelay10 60000 X X X 10 X 23 0 X X X X X X X
+	wlanconfig wifi0 service_class create 16 BE_BiDi_Video40M 60000 X X X X X 24 0 X X X X X 60000 X
+	wlanconfig wifi0 service_class create 17 BE_UL_Video40M X X X X X X 25 0 X X X X X 60000 X
+	wlanconfig wifi0 service_class create 18 BE_BiDi1.5M_VideoDelay20 2250 X X X 20 X 26 0 X X X X X 2250 X
+	wlanconfig wifi0 service_class create 19 DL_Video100M 150000 X X X X X 27 0 X X X X X X X
+	wlanconfig wifi0 service_class create 20 DL_Video10M_Delay20 15000 X X X 20 X 21 5 X X X X X X X
+	wlanconfig wifi0 sawf_telemetry 1000 10 10000 10
+	wlanconfig wifi0 sawf_sla_detect num_packet 0 0 0 0 0 0 0
+	wlanconfig wifi0 sawf_sla_detect per_second 1 1 0 0 0 0 0
+	wlanconfig wifi0 sawf_sla_detect moving_avg 0 0 0 0 0 0 0
+	wlanconfig wifi0 sawf_sla_detect num_second 0 0 1 1 0 1 1
+}
+
+update_chanlist_symlink() {
+	local output=$(iwpriv wifi0 getCountryID)
+	local active_cc=$(echo "$output" | awk '{split($2,a,":"); print a[2]}')
+	local chanlist="/usr/share/cclists/code-${active_cc}.json"
+
+	rm -f /tmp/running-chanlist.json
+	[ -e "${chanlist}" ] && ln -sf "${chanlist}" /tmp/running-chanlist.json
+}
+
+enable_smp_affinity() {
+	enable_smp_affinity_wifi wifi0
+	enable_smp_affinity_wifi wifi1
+	case "$system_id" in
+		a681 | a682 | a686 | a696)
+			enable_smp_affinity_wifi wifi2
+			;;
+	esac
+}
+
+sysctl_setting() {
+	/etc/init.d/sysctl start
+}
+
+thermaltool_settings() {
+	[ -f /usr/etc/rc.thermaltool ] && . /usr/etc/rc.thermaltool
+}
+
+echo "==== setup rc.postconf ====" >/dev/kmsg
+update_chanlist_symlink
+enable_smp_affinity
+sysctl_setting
+sawf_init
+ppe_acl_init
+thermaltool_settings
+update_hostap_config
+reload_hostapd

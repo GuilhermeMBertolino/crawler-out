@@ -1,0 +1,46 @@
+#!/bin/sh
+# vim: ft=sh
+. /usr/bin/unifi_util_funcs.sh
+
+# rc.bootconf: Execute after modules loaded (S10boot)
+/etc/init.d/sysctl start
+
+system_id=$(get_config_value /proc/ubnthal/system.info systemid)
+firmware_dir=/lib/firmware
+platform_dir=${firmware_dir}/platforms
+
+# Link to platform specific BDF files
+[ -d ${platform_dir}/${system_id} ] && {
+    [ -e ${firmware_dir}/IPQ5332 ] && {
+        find ${platform_dir}/${system_id}/ -name "bdwlan.b16" -exec ln -sf {} ${firmware_dir}/IPQ5332/bdwlan.b16 \;
+        ln -sf ${platform_dir}/BDF_revs/regdb.bin ${firmware_dir}/IPQ5332/regdb.bin
+    }
+
+    [ -e ${firmware_dir}/qcn9224 ] && {
+        for bdwlan in bdwlan.b0002 bdwlan.b0004 bdwlan.b0015 bdwlan.b1005 bdwlan.b1006; do
+            find ${platform_dir}/${system_id}/ -name "$bdwlan" -exec ln -sf {} ${firmware_dir}/qcn9224/$bdwlan \;
+        done
+        ln -sf ${platform_dir}/BDF_revs/regdb.bin ${firmware_dir}/qcn9224/regdb.bin
+    }
+
+    [ -e ${firmware_dir}/qcn9160 ] && {
+        find ${platform_dir}/${system_id}/ -name "bdwlan.b101" -exec ln -sf {} ${firmware_dir}/qcn9160/bdwlan.b101 \;
+        ln -sf ${platform_dir}/BDF_revs/regdb_wifi6.bin ${firmware_dir}/qcn9160/regdb.bin
+    }
+
+    echo "rc.bootconf: Platform data loaded. sysid = ${system_id}" > /dev/kmsg
+} || echo "rc.bootconf: No platform data present. sysid = ${system_id}" > /dev/kmsg
+
+ip link set eth0 down
+ip link set eth0 address $(get_config_value /proc/ubnthal/system.info eth0.macaddr)
+
+second_eth=$(get_config_value /proc/ubnthal/system.info eth1.macaddr)
+[ -n "$second_eth" ] && {
+    ip link set eth1 down
+    ip link set eth1 address $second_eth
+}
+
+# Load platform specified script
+[ -f /etc/rc.d/rc.platform ] && . /etc/rc.d/rc.platform 2>&1
+
+dmesg > /tmp/bootconf.txt

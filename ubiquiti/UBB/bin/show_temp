@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# -b - prints boot temps
+# -s - stores current temps to boot files
+
+SYS_T=/etc/boot_temp
+RAD_T=/etc/boot_radio_temp
+RAD_T_CRASH=/sys/kernel/debug/crashlog
+RAD_T_CRASH_DIR=/tmp/crash
+RAD_T_SYSFS=/sys/devices/platform/soc/a800000.wifi/net/wifi0/thermal/temp
+PER_T_SYSFS=/sys/devices/platform/soc/8af8800.usb3/8a00000.dwc3/xhci-hcd.0.auto/usb2/2-1/prs_attrs/baseband_temp
+RAD_CELSIUS="N/A"
+SYS_CELSIUS="N/A"
+
+if [ "$1" == "-b" ]; then
+  if [ ! -f ${SYS_T} -o ! -f ${RAD_T} ] ; then
+    echo Not available
+    exit 1
+  fi
+
+  SYS_CELSIUS=`cat ${SYS_T}`
+  echo system boot: ${SYS_CELSIUS}
+
+  RAD_CELSIUS=`cat ${RAD_T}`
+  echo radio boot: ${RAD_CELSIUS}
+
+  if [ -d $RAD_T_CRASH_DIR ] ; then
+    RAD_CELSIUS_CRASH=`grep "Radio temperature: " ${RAD_T_CRASH_DIR}/* | awk '{print $NF}' | sed 's/[^-?0-9]//g'`
+    echo radio crash: ${RAD_CELSIUS_CRASH}
+  elif [ -f ${RAD_T_CRASH} ] ; then
+    RAD_CELSIUS_CRASH=`grep "Radio temperature: " ${RAD_T_CRASH} | sed 's/[^-?0-9]//g'`
+    echo radio crash: ${RAD_CELSIUS_CRASH}
+  fi
+
+  exit 0
+fi
+
+if [ -c "/dev/i2c-0" ]; then
+  T=`i2cget -y 0 0x48 0 w 2>/dev/null`
+  if [ ! -z "${T}" ]; then
+    SYS_CELSIUS=$((((${T} >> 12) | ((${T} & 0xff)<<4))/16))
+    if [ "${SYS_CELSIUS}" -gt 128 ]; then
+      SYS_CELSIUS=$((SYS_CELSIUS - 256))
+    fi
+  fi
+fi
+
+if [ "$1" == "-s" ]; then
+  echo ${SYS_CELSIUS} > ${SYS_T}
+else
+  echo system${BOOT}: ${SYS_CELSIUS}
+fi
+
+if [ -f $RAD_T_SYSFS ] ; then
+  RAD_CELSIUS=`cat ${RAD_T_SYSFS}`
+else
+  T=`athdiag --get --address=0x2a454 | grep Value | awk '{print $6}'`
+  RAD_CELSIUS=$((0x7b - (${T} & 0xff) + 50))
+fi
+
+if [ "$1" == "-s" ]; then
+  echo ${RAD_CELSIUS} > ${RAD_T}
+else
+  echo radio${BOOT}: ${RAD_CELSIUS}
+fi
+
+if [ -f $PER_T_SYSFS -a "$1" != "-s" ]; then
+  PER_CELSIUS=`cat ${PER_T_SYSFS}`
+  echo peraso: ${PER_CELSIUS}
+fi

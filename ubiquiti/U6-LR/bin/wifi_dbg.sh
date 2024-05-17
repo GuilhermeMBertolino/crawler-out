@@ -1,0 +1,1 @@
+../usr/etc/wifi_dbg.sh

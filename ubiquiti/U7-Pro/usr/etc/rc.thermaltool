@@ -1,0 +1,83 @@
+#!/bin/sh
+
+. /usr/bin/unifi_util_funcs.sh
+system_id=$(get_config_value /proc/ubnthal/system.info systemid)
+
+thermaltool_settings() {
+	case "$system_id" in
+		a681 | a682 | a686)
+			thermaltool -i wifi0 -set -dc 100 -lo0 -100 -hi0 118 -off0 15
+			thermaltool -i wifi0 -set -dc 100 -lo1   95 -hi1 119 -off1 75
+			thermaltool -i wifi0 -set -dc 100 -lo2  100 -hi2 128 -off2 90
+			thermaltool -i wifi0 -set -dc 100 -lo3  125 -hi3 130 -off3 100
+
+			thermaltool -i wifi1 -set -dc 100 -lo0 -100 -hi0  95 -off0 0
+			thermaltool -i wifi1 -set -dc 100 -lo1   90 -hi1  96 -off1 50
+			thermaltool -i wifi1 -set -dc 100 -lo2   91 -hi2 110 -off2 90
+			thermaltool -i wifi1 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+
+			thermaltool -i wifi2 -set -dc 100 -lo0 -100 -hi0  95 -off0 0
+			thermaltool -i wifi2 -set -dc 100 -lo1   90 -hi1  96 -off1 50
+			thermaltool -i wifi2 -set -dc 100 -lo2   91 -hi2 110 -off2 90
+			thermaltool -i wifi2 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+			;;
+		a688)
+			thermaltool -i wifi0 -set -dc 100 -lo0 -100 -hi0 125 -off0 0
+			thermaltool -i wifi0 -set -dc 100 -lo1   95 -hi1 126 -off1 50
+			thermaltool -i wifi0 -set -dc 100 -lo2  100 -hi2 135 -off2 90
+			thermaltool -i wifi0 -set -dc 100 -lo3  125 -hi3 137 -off3 100
+
+			thermaltool -i wifi1 -set -dc 100 -lo0 -100 -hi0  84 -off0 0
+			thermaltool -i wifi1 -set -dc 100 -lo1   75 -hi1  85 -off1 90
+			thermaltool -i wifi1 -set -dc 100 -lo2   76 -hi2 110 -off2 90
+			thermaltool -i wifi1 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+			;;
+		a691)
+			thermaltool -i wifi0 -set -dc 100 -lo0 -100 -hi0 125 -off0 15
+			thermaltool -i wifi0 -set -dc 100 -lo1   95 -hi1 126 -off1 75
+			thermaltool -i wifi0 -set -dc 100 -lo2  100 -hi2 135 -off2 90
+			thermaltool -i wifi0 -set -dc 100 -lo3  125 -hi3 137 -off3 100
+
+			thermaltool -i wifi1 -set -dc 100 -lo0 -100 -hi0  95 -off0 0
+			thermaltool -i wifi1 -set -dc 100 -lo1   90 -hi1 100 -off1 50
+			thermaltool -i wifi1 -set -dc 100 -lo2   95 -hi2 110 -off2 90
+			thermaltool -i wifi1 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+			;;
+		a696)
+			thermaltool -i wifi0 -set -dc 100 -lo0 -100 -hi0  98 -off0 15
+			thermaltool -i wifi0 -set -dc 100 -lo1   90 -hi1  99 -off1 50
+			thermaltool -i wifi0 -set -dc 100 -lo2   91 -hi2 115 -off2 90
+			thermaltool -i wifi0 -set -dc 100 -lo3  110 -hi3 120 -off3 100
+
+			thermaltool -i wifi1 -set -dc 100 -lo0 -100 -hi0  98 -off0 0
+			thermaltool -i wifi1 -set -dc 100 -lo1   90 -hi1  99 -off1 50
+			thermaltool -i wifi1 -set -dc 100 -lo2   91 -hi2 115 -off2 90
+			thermaltool -i wifi1 -set -dc 100 -lo3  110 -hi3 120 -off3 100
+
+			thermaltool -i wifi2 -set -dc 100 -lo0 -100 -hi0  98 -off0 0
+			thermaltool -i wifi2 -set -dc 100 -lo1   90 -hi1  99 -off1 50
+			thermaltool -i wifi2 -set -dc 100 -lo2   91 -hi2 115 -off2 90
+			thermaltool -i wifi2 -set -dc 100 -lo3  110 -hi3 120 -off3 100
+			;;
+		*)    # Failover
+			echo "Platform $system_id does not have a thermal profile"
+			thermaltool -i wifi0 -set -dc 100 -lo0 -100 -hi0 125 -off0 15
+			thermaltool -i wifi0 -set -dc 100 -lo1   95 -hi1 126 -off1 75
+			thermaltool -i wifi0 -set -dc 100 -lo2  100 -hi2 135 -off2 90
+			thermaltool -i wifi0 -set -dc 100 -lo3  125 -hi3 137 -off3 100
+
+			thermaltool -i wifi1 -set -dc 100 -lo0 -100 -hi0  95 -off0 0
+			thermaltool -i wifi1 -set -dc 100 -lo1   90 -hi1 100 -off1 50
+			thermaltool -i wifi1 -set -dc 100 -lo2   95 -hi2 110 -off2 90
+			thermaltool -i wifi1 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+
+			thermaltool -i wifi2 -set -dc 100 -lo0 -100 -hi0  95 -off0 0
+			thermaltool -i wifi2 -set -dc 100 -lo1   90 -hi1 100 -off1 50
+			thermaltool -i wifi2 -set -dc 100 -lo2   95 -hi2 110 -off2 90
+			thermaltool -i wifi2 -set -dc 100 -lo3  105 -hi3 115 -off3 100
+			;;
+	esac
+}
+
+echo "==== setup rc.thermaltool ====" >/dev/kmsg
+thermaltool_settings

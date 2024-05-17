@@ -1,0 +1,43 @@
+#!/bin/sh
+
+PROG_NAME="$(basename $0)"
+
+usage() {
+	echo "$PROG_NAME - perform a reset to factory defaults"
+	echo "Usage: "
+	echo "$PROG_NAME -h"
+	echo "$PROG_NAME [-R]"
+	echo "  -h | --help      print this page"
+	echo "  -R | --no-reset  do not reset the device after queuing a factory reset"
+}
+
+main() {
+	local reset="1"
+
+	while [ "$#" -gt "0" ]; do
+		case "$1" in
+			-h|--help)
+				usage
+				exit 0
+				;;
+			-R|--no-reset)
+				reset="0"
+				;;
+			*)
+				echo "Invalid usage, use $PROG_NAME -h for help" 1>&2
+				exit 1
+				;;
+		esac
+
+		shift
+	done
+
+	touch /etc/reset-to-defaults || return 1
+	if [ "$reset" -eq "1" ]; then
+		reboot
+	else
+		return 0
+	fi
+}
+
+main "$@"

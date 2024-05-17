@@ -1,0 +1,15 @@
+. /usr/bin/unifi_util_funcs.sh
+. /usr/etc/common.sh
+
+SYSID=$(get_config_value /proc/ubnthal/system.info systemid)
+
+# Enable Internal antenna on UK Ultra
+if [ $SYSID = "dca8" ]; then
+	echo 5 > /sys/class/gpio/export
+	echo 6 > /sys/class/gpio/export
+	echo out > /sys/class/gpio/gpio5/direction
+	echo out > /sys/class/gpio/gpio6/direction
+	echo 1 > /sys/class/gpio/gpio5/value
+	echo 1 > /sys/class/gpio/gpio6/value
+	echo "UK Ultra: Internal antennas selected" > /dev/kmsg
+fi

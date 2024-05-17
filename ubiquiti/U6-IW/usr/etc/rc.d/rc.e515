@@ -1,0 +1,8 @@
+#!/bin/sh
+ubntbox pll get >/dev/null 2>&1
+[ "$?" = "0" ] || exit 0
+
+EXPECTED=DDR400PLL200
+READ=$(ubntbox pll get | awk '{print $4}')
+
+[ "${READ}" = "${EXPECTED}" ] || (ubntbox pll set ${EXPECTED} && reboot)

@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+
+qca_wifi_modules() {
+	. /usr/bin/unifi_util_funcs.sh
+
+	local board_name=$(ipq806x_board_name)
+	local system_id=$(get_config_value /proc/ubnthal/system.info systemid)
+	local firmware_file="firmware.xz"
+
+	[ -d /etc/modules.d.sysinit/ ] && {
+		mv /etc/modules.d.sysinit/* /etc/modules.d/ > /dev/null 2>&1
+	}
+
+	# Remove qca-wifi modules as we load these manually via ubntconf
+	rm -f /etc/modules.d/*qca-wifi* > /dev/null 2>&1
+
+	case "$system_id" in
+		a681 | a696 | a697)
+			firmware_file="firmware2.xz"
+			[ -f /lib/bsp ] && firmware_file="firmware2-bsp.xz"
+			;;
+		*)
+			[ -f /lib/bsp ] && firmware_file="firmware-bsp.xz"
+			;;
+	esac
+
+	echo "WiFi Firmware $system_id selected ($board_name)" > /dev/kmsg
+
+	[ -f /lib/$firmware_file ] && {
+		local user=$(cut -d: -f1 /etc/shadow | head -n 1)
+		local mp_512=$(ls /proc/device-tree/ | grep -c "MP_512")
+
+		echo " $firmware_file: $(sha256sum /lib/$firmware_file | cut -d ' ' -f1)" > /dev/kmsg
+		tar -Jxf /lib/$firmware_file -C /lib/
+		chown -R "$user":root /lib/firmware
+		rm -rf /lib/*.xz
+		rm -rf /lib/firmware/firmware_rdp_feature.ini
+		if [ $mp_512 = 1 ]; then
+			ln -s /lib/firmware/qcn9224/firmware_rdp_feature_512P.ini /lib/firmware/firmware_rdp_feature_512P.ini
+		else
+			ln -s /lib/firmware/qcn9224/firmware_rdp_feature.ini /lib/firmware/firmware_rdp_feature.ini
+		fi
+	}
+}
+
+boot_hook_add preinit_ubnt qca_wifi_modules

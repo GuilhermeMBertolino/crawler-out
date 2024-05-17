@@ -1,0 +1,143 @@
+MMC_BLK_SIZE=512
+MMC_TABLE=/usr/etc/mmc-table.txt
+SYS_FOLDER_BASE=/sys/class/block
+
+# Lookup name by block device
+lookup_by_name()
+{
+	local NAME=$1
+	local BLOCK=$(sed -n "s/: *\"$NAME\"//p" $MMC_TABLE)
+	[ -n "$BLOCK" ] || return 1
+	$PRINT_FUNCTION "$BLOCK" "$NAME"
+}
+
+# Lookup block device by name
+lookup_by_block()
+{
+	local BLOCK=$1
+	local NAME=$(sed -n "s/^$BLOCK: *\"\([^\"]\+\)\".*/\1/p" $MMC_TABLE)
+	[ -n "$NAME" ] || return 1
+	$PRINT_FUNCTION "$BLOCK" "$NAME"
+}
+
+# All print functions take 2 args
+# $1: mmcblk
+# $2: part_name
+print_block()
+{
+	echo "$1"
+}
+
+print_full_block()
+{
+	echo "/dev/$1"
+}
+
+print_name()
+{
+	echo "$2"
+}
+
+print_offset()
+{
+	local FOLDER="$SYS_FOLDER_BASE/$1"
+	local FILE="$FOLDER/start"
+	[ -d "$FOLDER" ] || return 1
+	if [ -f "$FILE" ]; then
+		echo $(( $(cat "$FILE") * MMC_BLK_SIZE ))
+	else
+		echo 0
+	fi
+}
+
+print_size()
+{
+	local FILE="$SYS_FOLDER_BASE/$1/size"
+	[ -f "$FILE" ] || return 1
+	echo $(( $(cat "$FILE") * MMC_BLK_SIZE ))
+}
+
+usage()
+{
+	echo "USAGE: $(basename $0) <OPTIONS> (-n name |-b blk)"
+	echo "Lookup mmc info based on $MMC_TABLE"
+	echo "    -b  Lookup part name by block (ex: mmcblk0p3)"
+	echo "    -n  Lookup block by part name (ex: kernel0)"
+	echo "OPTIONS: Only one print type can be given"
+	echo "    -B  Print block device (default for name lookup)"
+	echo "    -F  Print full /dev/<blk> path"
+	echo "    -N  Print part name (default for block lookup)"
+	echo "    -O  Print part offset in bytes"
+	echo "    -S  Print part size in bytes"
+	exit 3
+}
+
+set_lookup_function()
+{
+	local FUNC=$1
+	if [ -n "$LOOKUP_FUNCTION" -a "$FUNC" != "$LOOKUP_FUNCTION" ]; then
+		echo "Only one method of lookup allowed"
+		usage
+	fi
+	LOOKUP_FUNCTION=$FUNC
+}
+
+set_print_function()
+{
+	local FUNC=$1
+	if [ -n "$PRINT_FUNCTION" -a "$FUNC" != "$PRINT_FUNCTION" ]; then
+		echo "Only one print type allowed"
+		usage
+	fi
+	PRINT_FUNCTION=$FUNC
+}
+
+LOOKUP_FUNCTION=
+LOOKUP_VALUE=
+PRINT_FUNCTION=
+DEFAULT_PRINT_FUNCTION=
+
+while getopts ":BFNSOb:n:" opt; do
+	case $opt in
+	B)
+		set_print_function print_block
+		;;
+	F)
+		set_print_function print_full_block
+		;;
+	N)
+		set_print_function print_name
+		;;
+	O)
+		set_print_function print_offset
+		;;
+	S)
+		set_print_function print_size
+		;;
+	b)
+		set_lookup_function lookup_by_block
+		LOOKUP_VALUE=$OPTARG
+		DEFAULT_PRINT_FUNCTION=print_name
+		;;
+	n)
+		set_lookup_function lookup_by_name
+		LOOKUP_VALUE=$OPTARG
+		DEFAULT_PRINT_FUNCTION=print_block
+		;;
+	\?)
+		usage
+		;;
+	esac
+done
+shift $((OPTIND -1))
+
+if [ -z "$LOOKUP_VALUE" ]; then
+	echo "Please specify a lookup method and value"
+	usage
+fi
+
+[ -f $MMC_TABLE ] || exit 2
+
+[ -n "$PRINT_FUNCTION" ] || PRINT_FUNCTION=$DEFAULT_PRINT_FUNCTION
+
+$LOOKUP_FUNCTION "$LOOKUP_VALUE"

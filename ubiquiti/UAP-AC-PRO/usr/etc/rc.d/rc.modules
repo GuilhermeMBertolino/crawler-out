@@ -1,0 +1,129 @@
+#!/bin/sh
+# vim: ft=sh
+
+
+AKR=0
+AKR_STAGING=0
+AKR_MOD="/lib/wifi/qca-wifi-modules"
+RUNNING_AKR_MOD="/var/run/qca-wifi-modules-load"
+AKR_MOD_STAGING="/tmp/qca-wifi-modules"
+
+# Use staging module list if available
+[ -e ${AKR_MOD_STAGING} ] && {
+	AKR_STAGING=1
+	AKR_MOD=${AKR_MOD_STAGING}
+}
+[ -e "${AKR_MOD}" ] && AKR=1
+
+insert_module() {
+	[ -d /sys/module/$1 ] || {
+		if [ -x /usr/sbin/modprobe ]; then
+			modprobe $1 $2
+		else
+			insmod $1 $2
+		fi
+	}
+}
+
+# SPF5 helper to load and unload wifi modules
+load_wifi_modules() {
+	[ $AKR -eq 0 ] && return
+
+	for ko in `cat ${AKR_MOD}`; do
+		if [ -f /etc/module_para.conf ] ; then
+			module_para=`cat /etc/module_para.conf | grep -w $ko | sed -e 's/[^ ]* //' \
+				| tr "\n" " " | sed 's/[ ]*$//'`
+		else
+			module_para=""
+		fi
+
+		if [ ! -d /sys/module/$ko ]; then
+			if [ -f /tmp/$ko.ko ] ; then
+				insmod /tmp/$ko.ko $module_para
+			else
+				insmod /lib/modules/*/$ko.ko $module_para
+			fi
+		fi
+	done;
+
+	cp ${AKR_MOD} ${RUNNING_AKR_MOD}
+}
+
+unload_wifi_modules() {
+	[ $AKR -eq 0 -o ! -e ${RUNNING_AKR_MOD} ] && return
+
+	for ko in $(cat ${RUNNING_AKR_MOD} | sed '1!G;h;$!d'); do
+		# leave mem_manager loaded unless we have a staging driver in /tmp
+		case ${ko} in
+			mem_manager)
+				if [ ${AKR_STAGING} -eq 0 ]; then
+					continue;
+				fi
+			;;
+		esac
+		[ -d /sys/module/${ko} ] && rmmod ${ko}
+	done
+}
+
+load_modules() {
+	cd /etc/modules.d
+	for ko in `cat $*` ; do
+		if [ -f /etc/module_para.conf ] ; then
+			module_para=`cat /etc/module_para.conf | grep -w $ko | sed -e 's/[^ ]* //' \
+				| tr "\n" " " | sed 's/[ ]*$//'`
+		else
+			module_para=""
+		fi
+
+		if [ -f /tmp/$ko.ko ] ; then
+			insert_module /tmp/$ko.ko $module_para
+		else
+			insert_module /lib/modules/*/$ko.ko $module_para
+		fi
+	done;
+}
+
+unload_modules() {
+	cd /etc/modules.d
+	reverse_list=""
+	for module in `cat $1`; do
+		reverse_list="${module}\n${reverse_list}"
+	done
+	echo -e ${reverse_list} | sed 's/^[^#]/rmmod &/' | ash 2>&- || :
+}
+
+[ ! -e /etc/persistent/no-modules -a -d /etc/modules.d ] || exit 0
+
+what=$1
+if [ $# -gt 1 ]; then
+	shift
+	grp_list=""
+	for grp in $*; do
+		for f in /etc/modules.d/$grp  /etc/modules.d.sysinit/$grp; do
+			[ -f $f ] && grp_list="$grp_list $f"
+		done
+	done
+else
+	grp_list="/etc/modules.d/*"
+fi
+
+case "$what" in
+	load)	for group in $grp_list; do
+			load_modules $group
+		done
+	;;
+	# Convert spaces to lines for awk to reverse order of the grp_list
+	unload) for group in `echo "$grp_list" | tr " " "\n" | awk '{lifo[NR]=$0; lno=NR } END{ for(;lno>-1;lno--){print lifo[lno]; }}'`; do
+			unload_modules $group
+		done
+	;;
+	wifi-load)
+		load_wifi_modules
+	;;
+	wifi-unload)
+		unload_wifi_modules
+	;;
+	*)	echo "Usage: load|unload|wifi-load|wifi-unload"
+		exit 1
+	;;
+esac
