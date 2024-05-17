@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+<html>
+<head>
+<title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+<script src="js/jquery.min.js"></script>
+<script language="javascript" type="text/javascript">
+function testPost()
+{
+    if(isJsonString($("#contents").val()))
+    {
+        doPost($("#contents").val().trim());
+    }
+    else
+    {
+        alert("Invalid Format");
+    }
+    
+}  
+  
+function isJsonString(str)
+{
+    if (/^[\],:{}\s]*$/.test(str.replace(/\\["\\\/bfnrtu]/g, '@').
+    replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
+    replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+      console.log('is JSON');
+      return true;
+      //the json is ok
+    
+    }else{
+      console.log('is not JSON');
+      return false;
+      //the json is not ok
+
+    }
+}
+
+function doPost(postData)
+{
+    $.ajax({
+      url: "cgi-bin/netgear.plua",
+      type: "POST",
+      data: postData,
+      dataType: 'json',
+      contentType: "application/json; charset=utf-8",
+      success : function(resp) {
+          console.log('success');
+      },
+      error : function(xhr, ajaxOptions, thrownError) {
+          console.log('error');
+      },
+      beforeSend : function(json) {
+      }
+    }); //ajax()
+}
+</script>
+</head>
+
+<body>
+  
+<label for="contents">Post Contents:</label>
+<br/>
+<textarea id="contents" name="contents" rows="20" cols="100">
+
+</textarea>
+<br/>
+<button onclick="testPost();">Test POST</button> 
+</body>
+</html>

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+productionFile="/tmp/productionWifiSwitch"
+ttyPathNum=$(echo $(ls /dev/pts))
+
+if [ -f "$productionFile" ]; then
+    if [ "$ACTION" = "pressed" ]; then
+        echo -n -e \\n$BUTTON pressed > /dev/console
+        echo -n -e \\n$BUTTON pressed > /dev/pts/$ttyPathNum
+        exit 0
+    elif [ "$ACTION" = "released" ]; then
+        echo -n -e \\n$BUTTON released > /dev/console
+        echo -n -e \\n$BUTTON released > /dev/pts/$ttyPathNum
+        exit 0
+    fi
+fi
+
+[ "${ACTION}" = "released" ] || exit 0
+
+. /lib/functions.sh
+
+#if [ "$SEEN" -lt 1 ]
+#then
+#	echo "$BUTTON pressed for $SEEN seconds..Treating it as spurrious input" > /dev/console
+#	sync
+#	wifi action
+#else
+
+		echo "$BUTTON pressed for $SEEN seconds..WiFi toggle action" > /dev/console
+		ntgrcli -W
+#fi
+
+return 0

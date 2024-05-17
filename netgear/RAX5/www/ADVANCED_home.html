@@ -1,0 +1,656 @@
+<!DOCTYPE HTML>
+
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+
+
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/embedProgressBar.js"></script>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css"  type="text/css">
+
+  <script language="javascript" type="text/javascript">
+  CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+  $(document).ready(function() {
+     fetchData('target', 'ADVANCED_home','','post_fillout_init');
+     
+     $("#reboot").on("click", function(){
+         if(confirm(window.top.mlang['CCS002']))
+         {
+             formSubmit();
+         }
+     });
+
+     $("button[name='Status']").on("click", function(){
+       openStatusWindow();
+     });
+
+     $("button[name='show_sta']").on("click", function(){
+       openStatisticsWindow();
+     });
+
+
+     $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+ 
+        $('#INT_setup').click(function(ev){
+            parent.highLightMenu('setup_header', 'int_set');
+            parent.loadPage("BAS_wan.html");
+        });
+
+        $('#icon2_title_ap').click(function(ev){
+            parent.highLightMenu('advset_header', 'opmode_head');
+            parent.loadPage("WLG_ap_basic.html");
+        });
+
+        $('#bridge_client_status_link').click(function(ev){
+            parent.highLightMenu('advset_header', 'opmode_head');
+            parent.loadPage("WLG_ap_bridge.html");
+        });
+
+        $('#wireless_setup').click(function(ev){ 
+            if($("input[name='apMode']").val() == "bridge") {
+                parent.highLightMenu('advset_header', 'opmode_head');
+                parent.loadPage("WLG_ap_bridge.html");
+                onClick_wireless_settings();
+            } else {
+            parent.highLightMenu('setup_header', 'wireless_set');
+            parent.loadPage("WLG_wireless.html");
+            }
+        }); 
+        
+        $('#wireless_setup_5G').click(function(ev){
+            if($("input[name='apMode']").val() == "bridge") {
+                parent.highLightMenu('advset_header', 'opmode_head');
+                parent.loadPage("WLG_ap_bridge.html");
+                onClick_wireless_settings();
+            } else {
+            parent.highLightMenu('setup_header', 'wireless_set');
+            parent.loadPage("WLG_wireless.html");
+            }
+        });         
+        
+        $('#guest_setup').click(function(ev){
+            parent.highLightMenu('setup_header', 'guest_set');
+            parent.loadPage("WLG_wireless_guest.html");
+        });         
+  
+        $('#guest_setup_5G').click(function(ev){
+            parent.highLightMenu('setup_header', 'guest_set'); 
+            parent.loadPage("WLG_wireless_guest.html");
+        });
+  });
+  
+  function onClick_wireless_settings()
+  {
+      // open wireless setting window
+      var winoptions = "resizable=0,scrollbars=yes,width=600,height=535,left=400,top=300";
+
+      brWirelessWinVar = window.open('WLG_ap_bridge_wlan.html','net_folder',winoptions);
+
+      if (brWirelessWinVar.focus) {
+          setTimeout('brWirelessWinVar.focus()',200);
+      }
+  }
+
+  function formSubmit() 
+  {   
+    $.ajax({
+      url : "/cgi-bin/netgear.plua?csrftoken="+CSRF_TOKEN,
+      type : "POST",
+      cache : false,
+      dataType : "json",
+      processData: false,
+      contentType: "application/json; charset=utf-8",
+      data : JSON.stringify($("#target").serializeObject("reboot")),
+      success : function(data) {
+          show_EmbedProgressBar('D-genie_377', 120000);
+      },
+      error : function(xhr, ajaxOptions, thrownError) {
+          console.log(xhr.status);
+          console.log(thrownError);
+          show_EmbedProgressBar('D-genie_377', 120000);
+      },
+      beforeSend : function(json) {
+          //setTimeout("redirectProgressBar('D-genie_377')", 100);
+      }
+    }); //ajax()
+
+  }
+
+  function post_fillout_init()
+  {
+      init_status_icon();
+      adjustTable();
+  }      
+  
+  function init_status_icon()
+  {
+      if ( $("[name=internetStatus]").val() == "0") {
+          $("#internetIcon").attr("class", "img_status_good custom_icon");
+      }
+      else {
+          $("#internetIcon").attr("class", "img_status_error_red custom_icon");
+      }
+      
+      if ( $("[name=2GRadioEnable]").val() == "true") {
+          $("#2GRadioIcon").attr("class", "img_status_good custom_icon");
+      }
+      else {
+          $("#2GRadioIcon").attr("class", "img_status_error_red custom_icon");
+      }
+      
+      if ( $("[name=5GRadioEnable]").val() == "true") {
+          $("#5GRadioIcon").attr("class", "img_status_good custom_icon");
+      }
+      else {
+          $("#5GRadioIcon").attr("class", "img_status_error_red custom_icon");
+      }
+      
+      if ( $("[name=2gGuestEnable]").val() == "true") {
+          $("#2gGuestIcon").attr("class", "img_status_good custom_icon");
+      }
+      else {
+          $("#2gGuestIcon").attr("class", "img_status_error_red custom_icon");
+      }
+      
+      if ( $("[name=5gGuestEnable]").val() == "true") {
+          $("#5gGuestIcon").attr("class", "img_status_good custom_icon");
+      }
+      else {
+          $("#5gGuestIcon").attr("class", "img_status_error_red custom_icon");
+      }
+  }
+  
+  function adjustTable()
+  {
+     //Router Information LAN Port
+     if($("input[name='apMode']").val() == "router")
+     {
+         var subTitle = "<tr class=\"basic-text\"><td class=\"basic-text-subTitle\" mlang=\"MRS014\">LAN Port</td><td class=\"basic-text-content\" > </td></tr>";
+         $("#router_info tr:eq(8)").before(subTitle);
+         
+         $("#ap_lan_port_table").hide();
+         $("#bridge_client_status_table").hide();
+     }
+     else if($("input[name='apMode']").val() == "ap")
+     {        
+         $("#internet_port_table").hide();
+         $("#bridge_client_status_table").hide();
+     }
+     else if($("input[name='apMode']").val() == "bridge")
+     {
+         $("#ap_lan_port_table").hide();
+         $("#internet_port_table").hide();
+         $("#guest_tables").hide();
+         
+         if($("input[name='bridgeRadio']").val() == "2G")
+         {
+             $("#wireless_5G_table").hide();
+         }
+         else if($("input[name='bridgeRadio']").val() == "5G")
+         {
+             $("#wireless_2G_table").hide();
+         }
+     }
+     else
+     {
+          $("#ap_lan_port_table").hide();
+         $("#bridge_client_status_table").hide();
+     }
+     
+     //Internet Port Connection
+     $("td[mlang='DG012']").next().html("<span mlang="+$("td[mlang='DG012']").next().text()+"></span>");
+
+    //Wireless Setting Region
+     $("td[mlang='SWS019']").next().each(function(){
+         $(this).html("<span mlang="+$(this).text()+"></span>");
+     });
+     //Wireless Setting Channel Auto
+     $("td[mlang='SWS018']").next().each(function(){
+         if($(this).text()== "0")
+         {
+             $(this).html('<span mlang="SWS001"></span>'+' ( '+$("input[name='GUI_wifi_2G_channel_string']").val()+' )');
+         }
+     });
+     //Wireless Setting Mode
+     $("td[mlang='SWS037']").next().each(function(){
+         $(this).html('<span mlang="PCVP_006"></span>'+'<span >'+$(this).text()+' </span>'+'<span mlang="AQS035"></span>');
+     });
+     //Wireless Setting AP
+     $("td[mlang='MRS052']").next().each(function(){
+         $(this).html("<span mlang="+$(this).text()+"></span>");
+     });
+     //Wireless Setting Broadcast
+     $("td[mlang='MRS023']").next().each(function(){
+         $(this).html("<span mlang="+$(this).text()+"></span>");
+     });
+     //Wireless Setting WPS
+     $("td[mlang='MRS072']").next().each(function(){
+         $(this).html("<span mlang="+$(this).text()+"></span>");
+     });
+     
+     //Wireless Setting Allow to see each other
+     $("td[mlang='SGN014']").next().each(function(){
+         $(this).html("<span mlang="+$(this).text()+"></span>");
+     });
+     window.top.mlangInit($('#router_info'));
+     window.top.mlangInit($('#internet_info'));
+     window.top.mlangInit($('#lan_info'));
+     window.top.mlangInit($('#bridge_client_status'));
+     window.top.mlangInit($('#wireless'));
+     window.top.mlangInit($('#wireless_an'));
+     window.top.mlangInit($('#guest_network'));
+     window.top.mlangInit($('#guest_network_an'));
+     window.top.mlangInit($('#wireless_high'));
+     window.top.mlangInit($('#guest_network_high'));
+
+     addSeperator("router_info");
+     addSeperator("internet_info");
+     addSeperator("lan_info");
+     addSeperator("bridge_client_status");
+     addSeperator("wireless");
+     addSeperator("wireless_an");
+     addSeperator("guest_network");
+     addSeperator("guest_network_an");
+     addSeperator("wireless_high");
+     addSeperator("guest_network_high");
+     
+     //mlang has no tag for "Smart Connect", temporally work around
+     $("td[mlang=RS-Vault_053]").text("Smart Connect");
+  }
+
+  function addSeperator(tableId)
+  {
+      var seperator = "<tr><td><div class=\"basic-table-seperate\"></div></td></tr>";
+      $("#"+ tableId +" tr").each(function(){
+        if($(this).next('tr').length != 0)
+            $(this).after(seperator);
+      });
+  }
+
+  function openStatisticsWindow()
+  {
+    var winoptions;
+    var width = 840;
+    var gui_language = "<?= commonCfg.getGUILanguage()?>";
+
+    if ("German" === gui_language)
+        width = 1200;
+    else if ("Russian" === gui_language)
+        width = 1080;
+
+    winoptions = "width="+ width +",height=600,status=yes,resizable=yes";
+    openDataSubWin('RST_statistics.html',winoptions);
+  }
+
+  function openStatusWindow()
+  {
+    var conn = $("#wanType").val();
+    var winoptions;
+    
+    if($("input[name='apMode']").val() == "ap") 
+    {
+        winoptions = "width=400,height=460,status=yes,resizable=yes";
+        conn = "ap";
+    }
+    else if (conn == "DHCP")
+    {
+        winoptions = "width=400,height=460,status=yes,resizable=yes";
+    }
+    else if (conn == "PPPoE")
+    {
+        winoptions = "width=400,height=360,status=yes,resizable=yes";
+    }
+    else if (conn == "PPTP")
+    {
+        winoptions = "width=400,height=360,status=yes,resizable=yes";
+    }
+    else if (conn == "L2TP")
+    {
+        winoptions = "width=400,height=360,status=yes,resizable=yes";
+    }
+    else
+        winoptions = "width=400,height=260,status=yes,resizable=yes";
+    sessionStorage.setItem("wanType",conn);
+    openDataSubWin('RST_wanstat.html',winoptions);
+
+ 
+
+  }
+
+  function openDataSubWin(filename,win_type)
+  {
+      datSubWinVar = window.open(filename,'datasub_win',win_type);
+      if (datSubWinVar && datSubWinVar.focus)
+        setTimeout('datSubWinVar.focus()',200); 
+  }
+  </script>  
+</head>
+
+<body onload="window.top.change_size($(this));" class="page-body" onResize="window.top.change_size($(this));">
+  <form id="target" name="formname" method="POST" >
+    <div id="main" class="form-group" style="height:600px;overflow:auto;scrolling:auto">
+      <div class="advanced_section_details">
+        <div class="adv_box_field">
+          <div id="box-header-table1" class="box-header-table-custom box-header-table-large">
+            <table>
+              <tr class="box-header">
+                <td class="icon-css">
+                  <div class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text1 curser_class">
+                  <span mlang="3G277">Router Information</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height scroll-class">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="router_info" class="page-table">
+                    
+  
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="btn_sty_1 btn_sty_2">
+            <button type="button" name="reboot" id="reboot" class="button-common button-ADVANCE" mlang="reboot_button" >Reboot</button>
+          </div>
+        </div><!--Router Inormation-->
+
+        <div class="adv_box_field" id="internet_port_table">
+          <div id="box-header-table2" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="width_20">
+                  <div id="internetIcon" class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text2 curser_class" id="INT_setup">
+                  <span mlang="MRS028">Internet Port</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height-1 table-overflow">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="internet_info" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+          <div class="action-zone">
+            <button type="button" name="show_sta" id="show_statistics" class="border_btn" mlang="MRS030">Show Statistics</button>
+            <button type="button" name="Status" id="conn_status" class="purple_button" mlang="MRS006">Connection Status</button>
+          </div>
+        </div><!--Internet Port-->
+
+        <div class="adv_box_field" id="ap_lan_port_table">
+          <div class="box-header-table-custom box-header-table-large">
+            <table>
+              <tr class="box-header">
+                <td class="width_20">
+                  <div class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text2 curser_class" id="icon2_title_ap">
+                  <span mlang="MRS014">LAN Port</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height-1 table-overflow">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="lan_info" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+          <div class="action-zone" >
+            <button type="button" name="show_sta" id="show_statistics" class="border_btn" mlang="MRS030">Show Statistics</button>
+            <button type="button" name="Status" id="conn_status" class="purple_button" mlang="MRS006">Connection Status</button>
+          </div>
+        </div><!--LAN Port-->
+        
+        <div class="adv_box_field" id="bridge_client_status_table">
+          <div class="box-header-table-custom box-header-table-large" id="bridge_client_status_link">
+            <table>
+              <tr class="box-header">
+                <td class="width_20">
+                  <div class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text2 curser_class">
+                  <span>Client Status</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height-1 table-overflow" style="height: 285px;">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="bridge_client_status" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+          <div class="action-zone" style="padding-top: 12px;">
+            <button type="button" name="show_sta" id="show_statistics" class="border_btn" mlang="MRS030">Show Statistics</button>
+          </div>
+        </div><!--Client Status-->
+      </div>
+
+      <div class="adv-home-table-seperate-custom"></div>
+
+      <div class="advanced_section_details">
+        <div class="adv_box_field" id="wireless_2G_table">
+          <div id="box-header-table3" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="icon-css">
+                  <div id="2GRadioIcon" class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text3 curser_class" id="wireless_setup">
+                  <span mlang="LUP009">Wireless Settings</span><span> (2.4G)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23 table-overflow">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="wireless" class="page-table">
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div><!--Wireless Settings (2.4G)-->
+
+        <div class="adv_box_field" id="wireless_5G_table">
+          <div id="box-header-table4" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="icon-css">
+                  <div id="5GRadioIcon" class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text4 curser_class" id="wireless_setup_5G">
+                  <span mlang="LUP009"></span><span> (5G)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23 table-overflow">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="wireless_an" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+        </div><!--Wireless Settings (5G)-->
+      </div>
+      
+      <div class="adv-home-table-seperate-custom"></div>
+      
+      <div class="advanced_section_details" id="guest_tables">
+        <div class="adv_box_field">
+          <div id="box-header-table5" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="icon-css">
+                  <div id="2gGuestIcon" class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text5 curser_class" id="guest_setup">
+                  <span mlang="LUP010">Guest Network</span><span> (2.4G)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23 scroll-class">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="guest_network" class="page-table">
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div><!--Guest Network (2.4G)-->
+
+        <div class="adv_box_field">
+          <div id="box-header-table6" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="width_20">
+                  <div id="5gGuestIcon" class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text6 curser_class" id="guest_setup_5G">
+                  <span mlang="LUP010">Guest Network</span><span> (5G)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="guest_network_an" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+        </div><!--Guest Network (5G)-->
+      </div>
+
+      <!-- hidden the 5GH for RAX30 dual band router
+           TODO : Need use function to switch tri-band and dual band layout -->
+      <div class="adv-home-table-seperate-custom" style="display:none"></div>
+
+      <div class="advanced_section_details" style="display:none">
+        <div class="adv_box_field">
+          <div id="box-header-table7" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="icon-css">
+                  <div class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text7 curser_class" id="wireless_setup_5G_high">
+                  <span mlang="LUP009"></span><span> (5G High)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23 table-overflow">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="wireless_high" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+        </div><!--Wireless Setting (5G High)-->
+
+        <div class="adv_box_field">
+          <div id="box-header-table8" class="box-header-table-custom">
+            <table>
+              <tr class="box-header">
+                <td class="width_20">
+                  <div class="img_status_good custom_icon"></div>
+                </td>
+                <td class="box-header-text header-text6 curser_class" id="guest_setup_5Gh">
+                  <span mlang="LUP010">Guest Network</span><span> (5G High)</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="table_height_23">
+            <table class="adv_table_details_custom">
+              <tr align="left" valign="bottom">
+                <td>
+                  <table id="guest_network_high" class="page-table">
+                   
+                  </table>
+                </td>
+              </tr>
+            </table>  
+          </div>
+        </div><!--Guest Network (5G High)-->
+      </div>
+
+    </div><!--form-group-->
+    <input type="hidden" name="wanType" id="wanType" disabled/>
+    <input type="hidden" name="apMode" disabled/>
+    <input type="hidden" name="bridgeRadio" disabled/>
+    <input type="hidden" name="2GRadioEnable" disabled/>
+    <input type="hidden" name="5GRadioEnable" disabled/>
+    <input type="hidden" name="2gGuestEnable" disabled/>
+    <input type="hidden" name="5gGuestEnable" disabled/>
+    <input type="hidden" name="internetStatus" disabled/>
+    <input type="hidden" name="GUI_wifi_2G_channel_string" disabled/>
+    
+</form>
+</body>
+<? commonCfg.generate_EmbedProgressBar()?>
+</html>

@@ -1,0 +1,366 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <% getIndex("no-cache"); %>
+    <title>guest network Settings</title>
+    <script type="text/javascript" src="util_gw.js"> </script>
+    <!-- <script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="qrcode.js"></script> -->
+    <STYLE type=text/css> @import url(/customer.css); </STYLE> <!--系统公共脚本-->
+    <SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+    <% getInfo("include_css"); %>
+    <style>
+    .on {display:on}
+    .off {display:none}
+    input[disabled] {
+        background-color: #F5F5F5;
+        border: 1px solid #E9E9E9;
+    }
+    </style>
+    <SCRIPT>
+    parent.hideWaitDiv();
+    function enableChange() {
+        if(document.guestSetup.enableguestwlan[0].checked){//可填
+            enableTextField(document.guestSetup.guestwlanband[0])
+            enableTextField(document.guestSetup.guestwlanband[1])
+            enableTextField(document.guestSetup.guestwlanband[2])
+            enableTextField(document.guestSetup.guestssid2g)
+            enableTextField(document.guestSetup.guestssid5g)
+            enableTextField(document.guestSetup.guestpassword)
+            enableTextField(document.guestSetup.guestlimitspeed)
+            enableTextField(document.guestSetup.guestenabletype)
+            enableTextField(document.guestSetup.guestenablehours)
+            enableTextField(document.guestSetup.guestenabledays)
+        }else{
+            disableTextField(document.guestSetup.guestwlanband[0])
+            disableTextField(document.guestSetup.guestwlanband[1])
+            disableTextField(document.guestSetup.guestwlanband[2])
+            disableTextField(document.guestSetup.guestssid2g)
+            disableTextField(document.guestSetup.guestssid5g)
+            disableTextField(document.guestSetup.guestpassword)
+            disableTextField(document.guestSetup.guestlimitspeed)
+            disableTextField(document.guestSetup.guestenabletype)
+            disableTextField(document.guestSetup.guestenablehours)
+            disableTextField(document.guestSetup.guestenabledays)
+        }
+    }
+    function show_ssid()
+    {
+        if (document.guestSetup.guestwlanband[0].checked){
+            get_by_id("ssid2g").style.display = "";
+            get_by_id("ssid5g").style.display = "none";
+        }else if(document.guestSetup.guestwlanband[1].checked){
+            get_by_id("ssid2g").style.display = "none";
+            get_by_id("ssid5g").style.display = "";
+        }else{
+            get_by_id("ssid2g").style.display = "";
+            get_by_id("ssid5g").style.display = "";
+        }
+    }
+    function inputOnFocus(field){
+        field.type='text';
+    }
+    function inputOnBlur(field){
+        field.type='password';
+    }
+    function show_time() {
+        if (document.guestSetup.guestenabletype.value==0){
+            get_by_id("guestenablehours").style.display = "";
+            get_by_id("guestenabledays").style.display = "none";
+        }else if(document.guestSetup.guestenabletype.value==1){
+            get_by_id("guestenablehours").style.display = "none";
+            get_by_id("guestenabledays").style.display = "";
+        }else{
+            get_by_id("guestenablehours").style.display = "none";
+            get_by_id("guestenabledays").style.display = "none";
+        }
+    }
+    function LoadSetting() {
+        if(<% getIndex("enableguestwlan"); %> == 0){
+            document.guestSetup.enableguestwlan[0].checked = true;
+            document.guestSetup.enableguestwlan[1].checked = false;
+        }else{
+            document.guestSetup.enableguestwlan[0].checked = false;
+            document.guestSetup.enableguestwlan[1].checked = true;
+        }
+        enableChange();
+        if(<% getIndex("guestwlanband"); %> == 0){
+            document.guestSetup.guestwlanband[0].checked = true;
+            document.guestSetup.guestwlanband[1].checked = false;
+            document.guestSetup.guestwlanband[2].checked = false;
+        }else if(<% getIndex("guestwlanband"); %> == 1){
+            document.guestSetup.guestwlanband[0].checked = false;
+            document.guestSetup.guestwlanband[1].checked = true;
+            document.guestSetup.guestwlanband[2].checked = false;
+        }else{
+            document.guestSetup.guestwlanband[0].checked = false;
+            document.guestSetup.guestwlanband[1].checked = false;
+            document.guestSetup.guestwlanband[2].checked = true;
+        }
+        show_ssid();
+        document.guestSetup.guestenabletype.value=<% getIndex("guestenabletype"); %>;
+        show_time();
+        if (<% getIndex("multi_ap_controller"); %>  == 2) { //mesh agent can not change
+            var inputs = document.getElementsByTagName("input");
+            for (var i=0; i<inputs.length; i++) {
+                inputs[i].disabled = true;
+            }
+            var selects = document.getElementsByTagName("select");
+            for (var i=0; i<selects.length; i++) {
+                selects[i].disabled = true;
+            }
+        }
+    }
+    function saveClick() {
+        if (document.guestSetup.enableguestwlan[1].checked) {
+            parent.showWaitDiv();
+            return true;
+        }
+        var main_ssid2g = '<% getInfo("ssid2g", "js"); %>';
+        var main_ssid5g = '<% getInfo("ssid5g", "js"); %>';
+        if(document.guestSetup.guestwlanband[0].checked || document.guestSetup.guestwlanband[2].checked ){ // 检测2.4G SSID
+            if(document.guestSetup.guestssid2g.value.trim().length == 0){
+                alert(util_gw_ssid_empty);
+                document.guestSetup.guestssid2g.focus();
+                return false;
+            }
+            var guestssid2g = document.guestSetup.guestssid2g.value.trim()
+            if (guestssid2g == main_ssid2g || guestssid2g == main_ssid5g) {
+                alert(wlguest_ssid_same_as_root_2g);
+                document.guestSetup.guestssid2g.focus();
+                return false;
+            }
+        }
+        if(document.guestSetup.guestwlanband[1].checked || document.guestSetup.guestwlanband[2].checked ){ // 检测5G SSID
+            if(document.guestSetup.guestssid5g.value.trim().length == 0){
+                alert(util_gw_ssid_empty);
+                document.guestSetup.guestssid5g.focus();
+                return false;
+            }
+
+            var guestssid5g = document.guestSetup.guestssid5g.value.trim()
+            if (guestssid5g == main_ssid2g || guestssid5g == main_ssid5g) {
+                alert(wlguest_ssid_same_as_root_2g);
+                document.guestSetup.guestssid5g.focus();
+                return false;
+            }
+        }
+        if(document.guestSetup.guestpassword.value.trim().length < 8 || document.guestSetup.guestpassword.value.trim().length > 63){
+            alert(wlsecurity_no_chinese);
+            document.guestSetup.guestpassword.focus();
+            return false;
+        }
+        if(!/^[0-9]+$/.test(document.guestSetup.guestlimitspeed.value) || document.guestSetup.guestlimitspeed.value>10000){
+            alert(guest_speed_notint);
+            document.guestSetup.guestlimitspeed.focus();
+            return false;
+        }
+        if(document.guestSetup.guestenabletype.value == 0){ // 检测小时
+            if(!/^[1-9][0-9]*$/.test(document.guestSetup.guestenablehours.value)||document.guestSetup.guestenablehours.value>1000){
+                alert(guest_time_notint1);
+                document.guestSetup.guestenablehours.focus();
+                return false;
+            }
+        }
+        if(document.guestSetup.guestenabletype.value == 1){ // 检测天
+            if(!/^[1-9][0-9]*$/.test(document.guestSetup.guestenabledays.value)||document.guestSetup.guestenabledays.value>100){
+                alert(guest_time_notint2);
+                document.guestSetup.guestenabledays.focus();
+                return false;
+            }
+        }
+        parent.showWaitDiv();
+        return true;
+    }
+    </SCRIPT>
+</head>
+<body onload="LoadSetting();">
+<blockquote>
+    <h2>
+        <script>dw(guest_explain)</script>
+    </h2>
+    <hr size=1 noshade align=top>
+    <form action=/boafrm/formGuestNetwork method=POST name="guestSetup">
+        <table border=0 width="100%" cellspacing=4>
+            <tr>
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_enable)</script></b>
+                    </font>
+                </td>
+                <td width="80%"><font size=2><b>
+                    <input type="radio" name="enableguestwlan" value="0" onclick="enableChange()"><script>dw(guest_yes)</script>&nbsp;&nbsp;
+                    <input type="radio" name="enableguestwlan" value="1" onclick="enableChange()"><script>dw(guest_no)</script></b></font>
+                </td>
+            </tr>
+            <tr>
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_band)</script></b>
+                    </font>
+                </td>
+                <td width="80%"><font size=2><b>
+                    <input type="radio" name="guestwlanband" value="0" onclick="show_ssid()"><script>dw(guest_2g)</script>&nbsp;&nbsp;
+                    <input type="radio" name="guestwlanband" value="1" onclick="show_ssid()"><script>dw(guest_5g)</script>&nbsp;&nbsp;
+                    <input type="radio" name="guestwlanband" value="2" onclick="show_ssid()"><script>dw(guest_both)</script></b></font>
+                </td>
+            </tr>
+            <tr id="ssid2g" style="display: ">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_2g_ssid)</script></b>
+                    </font>
+                </td>
+                <td width="80%">
+                    <font size=2>
+                        <input type="text" name="guestssid2g" size="33" maxlength="32" value="<% getInfo("guestssid2g"); %>">
+                    </font>
+                </td>
+            </tr>
+            <tr id="ssid5g" style="display: ">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_5g_ssid)</script></b>
+                    </font>
+                </td>
+                <td width="80%">
+                    <font size=2>
+                        <input type="text" name="guestssid5g" size="33" maxlength="32" value="<% getInfo("guestssid5g"); %>">
+                    </font>
+                </td>
+            </tr>
+            <tr id="password">
+                <td width="20%"><font size="2"><b><script>dw(guest_password)</script></b></font></td>
+                <td width="80%" >
+                    <input type="password" onfocus="inputOnFocus(this)" onblur="inputOnBlur(this)" id="key" name="guestpassword" minlength="8" maxlength="63" size="33" value="<% getInfo("guestpassword"); %>">
+                </td>
+            </tr>
+            <tr style="display: none" class="guest_speed_show">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_speed)</script></b>
+                    </font>
+                </td>
+                <td width="80%">
+                    <font size=2>
+                        <input type="text" name="guestlimitspeed" size="33"  value="<% getIndex("guestlimitspeed"); %>">   <b><script>dw(guest_speed_desc)</script></b>
+                    </font>
+                </td>
+            </tr>
+            <tr style="display: none" class="guest_available_show">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(guest_available)</script></b>
+                    </font>
+                </td>
+                <td width="80%">
+                    <font size=2>
+                        <select size="1" name="guestenabletype" onclick="show_time()">
+                            <option value="0"><script>dw(guest_available_hours)</script></option>
+                            <option value="1"><script>dw(guest_available_days)</script></option>
+                            <option value="2"><script>dw(guest_available_always)</script></option>
+                        </select>
+                    </font>
+                </td>
+            </tr>
+            <tr id="guestenablehours"  style="display: none">
+                <td width="20%"></td>
+                <td width="80%" colspan="2">
+                    <font size=2>
+                        <input type="text" name="guestenablehours" size="33"  value="<% getInfo("guestenablehours"); %>"><b><script>dw(guest_hour_time)</script></b>
+                    </font>
+                </td>
+            </tr>
+            <tr id="guestenabledays"  style="display: none">
+                <td width="20%"></td>
+                <td width="80%" colspan="2">
+                    <font size=2>
+                        <input type="text" name="guestenabledays" size="33"  value="<% getInfo("guestenabledays"); %>"><b><script>dw(guest_day_time)</script></b>
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="/wlguest.htm" name="submit-url">
+        <p><input type="submit" class="save_button_class" value="Save" name="save" onClick="return saveClick()" style="display:none">
+            <script>document.guestSetup.save.value = guest_save;</script>
+            <input type="submit" value="Save & Apply" name="save_apply" onClick="return saveClick()">
+            <script>document.guestSetup.save_apply.value = guest_save_apply;</script>
+        </p>
+    </form>
+    <br>
+    <br>
+    <div style="display: none;" id="qrcode_guest_wifi">
+        <hr size=1 noshade align=top>
+        <br>
+        <br>
+        <div style="text-align: left"><script>dw(guest_qrcode_desc)</script></div>
+        <div id="qrcode_div1" style="float: left;width: 50%;text-align: center">
+            <div style="margin-top: 30px"><script>dw(menu_guest_network)</script> 2.4G</div>
+            <div id="qrcode1" style="width:100px; height:100px; margin:20px auto;"></div>
+        </div>
+        <div id="qrcode_div2" style="float: left;width: 50%;text-align: center">
+            <div style="margin-top: 30px"><script>dw(menu_guest_network)</script> 5G</div>
+            <div id="qrcode2" style="width:100px; height:100px; margin:20px auto;"></div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var enable=<% getIndex("enableguestwlan"); %>;
+        var band=<% getIndex("guestwlanband"); %>;
+        if(enable==1){
+            document.getElementById("qrcode_guest_wifi").style.display="none"
+        }else{
+            if(band == 0){
+                var code2= '<% getInfo("guestqrcode2gstr"); %>'
+                //var code2="WIFI:S:Positivo Convidados_2G;P:Positivo;T:WPA/WPA2;"
+                if(code2.length>0){
+                    // makeCode(code2,"qrcode1");
+                    document.getElementById("qrcode_div1").style.display=""
+                    document.getElementById("qrcode_div1").style.width="100%"
+                }else{
+                    document.getElementById("qrcode_div1").style.display="none"
+                }
+                document.getElementById("qrcode_div2").style.display="none"
+            }else if(band == 1){
+                var code5= '<% getInfo("guestqrcode5gstr"); %>'
+                //var code5="WIFI:S:Positivo Convidados_5G;P:Positivo;T:WPA/WPA2;"
+                if(code5.length>0){
+                    // makeCode(code5,"qrcode2");
+                    document.getElementById("qrcode_div2").style.display=""
+                    document.getElementById("qrcode_div2").style.width="100%"
+                }else{
+                    document.getElementById("qrcode_div2").style.display="none"
+                }
+                document.getElementById("qrcode_div1").style.display="none"
+            }else{
+                var code2= '<% getInfo("guestqrcode2gstr"); %>'
+                //var code2="WIFI:S:Positivo Convidados_2G;P:Positivo;T:WPA/WPA2;"
+                if(code2.length>0){
+                    // makeCode(code2,"qrcode1");
+                    document.getElementById("qrcode_div1").style.display=""
+                }else{
+                    document.getElementById("qrcode_div1").style.display="none"
+                }
+                var code5= '<% getInfo("guestqrcode5gstr"); %>'
+                //var code5="WIFI:S:Positivo Convidados_5G;P:Positivo;T:WPA/WPA2;"
+                if(code5.length>0){
+                    // makeCode(code5,"qrcode2");
+                    document.getElementById("qrcode_div2").style.display=""
+                }else{
+                    document.getElementById("qrcode_div2").style.display="none"
+                }
+            }
+        }
+    // function makeCode (code, id) {
+    //     var qrcode = new QRCode(document.getElementById(id), {
+    //         width : 100,
+    //         height : 100
+    //     });
+    //     qrcode.clear();
+    //     qrcode.makeCode(code);
+    // }
+    </script>
+</blockquote>
+</body>
+
+</html>

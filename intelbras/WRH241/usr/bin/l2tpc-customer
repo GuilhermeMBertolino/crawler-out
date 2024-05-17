@@ -1,0 +1,334 @@
+#!/bin/sh
+
+. /usr/bin/l2tpc-header
+
+L2TPD_CONF=/etc/l2tp/l2tp.conf
+L2TPD_DEFAULT_PORT=1702
+
+wr_conf()
+{
+    echo "$1" >> $L2TPD_CONF
+}
+
+wr_ppp_opts()
+{
+    echo "lac-opts \"$1\"" >> $L2TPD_CONF 
+}
+
+gen_wantype_conf()
+{                                                 
+    # 0x80 is WAN Type L2TP
+    wan_type=`rdcsman $CSID_C_LOCAL_WANTYPE u16` 
+    if [ $wan_type -ne 128 ]; then 
+        return
+    fi
+    wr_conf "section peer"  
+
+    local lns_server="`rdcsman $CSID_C_L2TP_LNS_SERVER str`"
+    wr_conf "peer $lns_server" 
+    wr_conf "lac-handler sync-pppd"
+
+    local l2tp_user="`rdcsman $CSID_C_L2TP_USER str`"          
+    wr_ppp_opts "user $l2tp_user"
+
+    wr_ppp_opts "linkname l2tp" 
+    wr_ppp_opts "debug" 
+    #wr_ppp_opts "dump" 
+    wr_ppp_opts "lcp-echo-interval 30"
+    wr_ppp_opts "lcp-echo-failure 6" 
+    wr_ppp_opts "noipdefault"
+    wr_ppp_opts "default-asyncmap"
+    #wr_ppp_opts "defaultroute" 
+
+    #Get L2TP DNS info. from Server
+    local IF_DNS2="`rdcsman 0x00064100 ipv4`"                                              
+    local IF_DNS2="`rdcsman 0x00064200 ipv4`"
+    if [ "$IF_DNS2" = "0.0.0.0" -a "$IF_DNS2" = "0.0.0.0" ] ; then
+        wr_ppp_opts "usepeerdns"
+    fi  
+
+    local up_script="/etc/ppp/ip-up-l2tp"
+    echo "#!/bin/sh" > $up_script     
+    echo "/usr/bin/l2tp-action ip-up \$*" >> $up_script
+    #echo "/tmp/l2tp-action ip-up \$*" >> $up_script
+    chmod +x $up_script
+    wr_ppp_opts "ip-up $up_script"
+
+    local down_script="/etc/ppp/ip-down-l2tp"
+    echo "#!/bin/sh" > $down_script
+    echo "/usr/bin/l2tp-action ip-down \$*" >> $down_script
+    #echo "/tmp/l2tp-action ip-down \$*" >> $down_script
+    chmod +x $down_script
+    wr_ppp_opts "ip-down $down_script"
+
+    local mtu="`rdcsman $CSID_C_L2TP_MTU u16`"
+    if [ $mtu -gt 0 ]; then
+        wr_ppp_opts "mtu $mtu" 
+    else
+        wr_ppp_opts "mtu 1500" 
+    fi
+    
+    wr_ppp_opts "noauth"
+    wr_ppp_opts "refuse-eap"
+    wr_ppp_opts "nodetach" 
+    wr_ppp_opts "noaccomp"
+    wr_ppp_opts "nobsdcomp"
+    wr_ppp_opts "nodeflate"
+    wr_ppp_opts "nopcomp"
+    wr_ppp_opts "novj"
+    wr_ppp_opts "novjccomp"  
+
+    local use_mppe=`rdcsman $CSID_C_L2TP_ENABLE_MPPE u8`
+    if [ $use_mppe -eq 1 ]; then
+        wr_ppp_opts "refuse-pap"
+        wr_ppp_opts "refuse-chap"
+        wr_ppp_opts "mppe required,stateless"
+    else
+        wr_ppp_opts "nomppe"
+        wr_ppp_opts "nomppc"
+    fi
+    
+    local l2tp_cnt_type=`rdcsman $CSID_C_L2TP_CNT_TYPE u8`
+    if [ $l2tp_cnt_type -eq $L2TP_CNT_TYPE_ONDEMAND ] || [ $l2tp_cnt_type -eq $L2TP_CNT_TYPE_MANUAL ]; then
+        wr_ppp_opts "nopersist"
+        wr_ppp_opts "ipcp-accept-local"
+        wr_ppp_opts "ipcp-accept-remote"
+        wr_ppp_opts "ktune"
+    fi
+
+    # Add pppd arguments (username, password) instead of checking pap-secrets or chap-secrets (Issues for Login Security)
+    local account="`rdcsman 0x00060100 str`" #CSID_C_L2TP_USER
+    local passwd="`rdcsman 0x00060200 str`" #CSID_C_L2TP_PASSWORD
+    wr_ppp_opts "user \\\"$account\\\""
+    wr_ppp_opts "password \\\"$passwd\\\""
+
+    wr_conf "hide-avps no"
+    wr_conf "retain-tunnel 0"
+    wr_conf "persist 0"
+    wr_conf "maxfail 1"
+    wr_conf "holdoff 3"
+
+    hostname="`rdcsman $CSID_C_LOCAL_HOSTNAME str`"
+    if [ "$hostname" != "" ]; then
+        wr_conf "hostname $hostname"  
+    else
+        local romid="`rdcsman $CSID_S_SYS_INFO_ROM_ID str`"
+        wr_conf "hostname $romid"
+    fi
+}
+
+gen_l2tpc_conf()
+{
+    l2tpc_enable=`rdcsman $CSID_C_L2TP_CLI_ENABLE u8`
+    if [ $l2tpc_enable -eq 0 ]; then 
+        return 0
+    fi
+
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_USER_ENABLE $i`
+        user_enable=`rdcsman $addr u8`
+        if [ $user_enable -eq 0 ]; then
+            continue
+        fi   
+        wr_conf "section peer"
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_PEERIP $i`
+        peerip=`rdcsman $addr ipv4`
+        wr_conf "peer $peerip"
+
+        wr_conf "lac-handler sync-pppd"
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_USER $i`
+        user=`rdcsman $addr str`        
+        wr_ppp_opts "user $user"
+
+        wr_ppp_opts "debug" 
+        wr_ppp_opts "dump" 
+        wr_ppp_opts "linkname l2tpc" 
+        wr_ppp_opts "ipparam l2tpc" 
+        wr_ppp_opts "noipdefault"  
+        #wr_ppp_opts "usepeerdns"
+        #wr_ppp_opts "defaultroute"
+        #wr_ppp_opts "mtu 1500" 
+        wr_ppp_opts "nodetach" 
+        wr_ppp_opts "noaccomp"
+              
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_CCP_ENABLE $i`
+        ccp_enable="`rdcsman $addr u8`" 
+        if [ $ccp_enable -eq 1 ]; then
+            wr_ppp_opts "bsdcomp 9,15"
+            wr_ppp_opts "deflate 9,15"
+            wr_ppp_opts "predictor1"
+            wr_ppp_opts "lzs"
+        else
+            wr_ppp_opts "nobsdcomp"
+            wr_ppp_opts "nodeflate"
+        fi
+        wr_ppp_opts "nopcomp"
+        wr_ppp_opts "novj"
+        wr_ppp_opts "novjccomp"        
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_LOCAL_IP $i`
+        local_ip="`rdcsman $addr ipv4`"
+        [ "$local_ip" == "0.0.0.0" ] && local_ip=""
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_REMOTE_IP $i`
+        remote_ip="`rdcsman $addr ipv4`"
+        [ "$remote_ip" == "0.0.0.0" ] && remote_ip=""
+            
+        if [ ! -z "$local_ip" ] || [ ! -z "$remote_ip" ]; then
+            wr_ppp_opts "$local_ip:$remote_ip" 
+        fi
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_LCP_TYPE $i`
+        lcp_type=`rdcsman $addr u8`
+        if [ $lcp_type -eq $L2TP_LCP_TYPE_AUTO ]; then 
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_QOS_ENABLE 0`
+            l2tpc_qos_enable=`rdcsman $addr u8`    
+            if [ $l2tpc_qos_enable -eq 1 ]; then
+                wr_ppp_opts "lcp-echo-interval 2" 
+                wr_ppp_opts "lcp-echo-failure 90" 
+            else        
+                # WAN Type:    
+                #  16 -> LOCAL_WANTYPE_3G        0x10
+                #  17 -> LOCAL_WANTYPE_IBURST    0x11
+                #  21 -> LOCAL_WANTYPE_FLASHOFDM 0x15
+                #  22 -> LOCAL_WANTYPE_S3G       0x16
+                #  64 -> LOCAL_WANTYPE_PPPOE     0x40
+                #  144 -> LOCAL_WANTYPE_DIALUP   0x90
+                addr=`get_csid_addr $CSID_C_LOCAL_WANTYPE 0`
+                wan_type="`rdcsman $addr u32`"  
+                if [ $wan_type -eq 16 ] || [ $wan_type -eq 17 ] ||
+                   [ $wan_type -eq 21 ] || [ $wan_type -eq 22 ] ||
+                   [ $wan_type -eq 64 ] || [ $wan_type -eq 144 ]; then
+                    wr_ppp_opts "lcp-echo-interval 2"  
+                    wr_ppp_opts "lcp-echo-failure 90"  
+                else
+                    wr_ppp_opts "lcp-echo-interval 30" 
+                    wr_ppp_opts "lcp-echo-failure 6"   
+                fi   
+            fi
+        elif [ $lcp_type -eq $L2TP_LCP_TYPE_MANUAL ]; then 
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_LCP_INTERVAL $i`
+            lcp_interval=`rdcsman $addr u8`
+
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_LCP_FAILURE $i`
+            lcp_failure=`rdcsman $addr u8`
+     
+            wr_ppp_opts "lcp-echo-interval $lcp_interval" 
+            wr_ppp_opts "lcp-echo-failure $lcp_failure"   
+        elif [ $lcp_type -eq $L2TP_LCP_TYPE_DISABLE ]; then 
+            echo "Disable LCP Echo Request !"
+        else
+            echo "Unknow LCP Echo Request Type !"
+        fi  
+
+        wr_ppp_opts "noauth"     
+        wr_ppp_opts "refuse-eap" 
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_MPPE $i`
+        used_mppe=`rdcsman $addr u8` 
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_DO_AUTH $i`
+        do_auth=`rdcsman $addr u8` 
+        if [ $do_auth -eq 1 ]; then
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_AUTH_PAP $i`
+            rej_auth=`rdcsman $addr u8` 
+            if [ $rej_auth -eq $L2TP_AUTH_REJECT ] || [ $used_mppe -eq 1 ]; then
+                wr_ppp_opts "refuse-pap" 
+            fi
+     
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_AUTH_CHAP $i`
+            rej_auth=`rdcsman $addr u8` 
+            if [ $rej_auth -eq $L2TP_AUTH_REJECT ] || [ $used_mppe -eq 1 ]; then
+                wr_ppp_opts "refuse-chap" 
+            fi                          
+
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_AUTH_MSCHAP $i`
+            rej_auth=`rdcsman $addr u8` 
+            if [ $rej_auth -eq $L2TP_AUTH_REJECT ]; then
+                wr_ppp_opts "refuse-mschap" 
+            fi                          
+                     
+            addr=`get_csid_addr $CSID_C_L2TP_CLI_AUTH_MSCHAPV2 $i`
+            rej_auth=`rdcsman $addr u8` 
+            if [ $rej_auth -eq $L2TP_AUTH_REJECT ]; then
+                wr_ppp_opts "refuse-mschap-v2" 
+            fi                          
+        fi       
+
+        if [ $used_mppe -eq 1 ]; then
+            if [ $do_auth -eq 0 ]; then
+                wr_ppp_opts "refuse-pap"          
+                wr_ppp_opts "refuse-chap"         
+            fi
+            wr_ppp_opts "mppe required,stateless" 
+        else
+            wr_ppp_opts "noccp"  
+            wr_ppp_opts "nomppe" 
+            wr_ppp_opts "nomppc" 
+        fi           
+
+        addr=`get_csid_addr $CSID_C_L2TP_CLI_CONNECT_TYPE $i`
+        cnt_type=`rdcsman $addr u8`
+        local idle_time="`rdcsman 0x0006370$i u16`"
+        if [ $cnt_type -eq 0 ]; then
+			if [ $idle_time -gt 0 ] ; then
+				wr_ppp_opts "idle $idle_time"           
+			fi
+            wr_ppp_opts "nopersist"          
+            wr_ppp_opts "ipcp-accept-remote" 
+            wr_ppp_opts "ipcp-accept-local"  
+            wr_ppp_opts "ktune"              
+        fi   
+
+        wr_conf "hide-avps no"
+        wr_conf "retain-tunnel 0"
+        wr_conf "persist 0"
+        wr_conf "maxfail 1"
+        wr_conf "holdoff 3"      
+
+        hostname="`rdcsman $CSID_C_LOCAL_HOSTNAME str`"
+        if [ "$hostname" != "" ]; then
+            wr_conf "hostname $hostname"  
+        else
+            wr_conf "hostname l2ptc"  
+        fi
+        wr_conf ""  
+    done
+                      
+}
+
+# The options of L2TP connection applied for pppd 
+# the location of option: /etc/l2tp/l2tp.conf
+gen_l2tpd_conf()
+{
+    rm -f $L2TPD_CONF > /dev/null 2>&1
+
+    wr_conf "global"
+    wr_conf "load-handler \"sync-pppd.so\"" 
+    wr_conf "load-handler \"cmd.so\"" 
+    wr_conf "" 
+
+    local l2tpd_port=`rdcsman $CSID_C_L2TP_PORT u16`
+    if [ $l2tpd_port -gt 0 ]; then
+        wr_conf "listen-port $l2tpd_port" 
+    else
+        wr_conf "listen-port $L2TPD_DEFAULT_PORT" 
+    fi
+    wr_conf "" 
+
+    wr_conf "section sync-pppd"      
+    wr_conf "lac-pppd-opts \"sync\"" 
+    wr_conf "" 
+
+    gen_wantype_conf
+    wr_conf "" 
+
+    gen_l2tpc_conf
+    wr_conf "" 
+
+    wr_conf "section cmd" 
+    wr_conf "" 
+}
+

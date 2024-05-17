@@ -1,0 +1,462 @@
+#!/bin/sh
+
+# Paths to programs
+PPPD=pppd
+CONFIG=/etc/ppp/3g.conf
+
+if test ! -f "$CONFIG" -o ! -r "$CONFIG" ; then
+    echo "$0: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+
+export CONFIG
+. $CONFIG
+. /usr/bin/scriptlib
+
+PIDFILE_START="$PIDFILE.start"
+PIDFILE_CONNECT="$PIDFILE.connect"
+PIDFILE_PPPD="/var/run/ppp-3g.pid"
+PIDFILE_PPPD_BAK="/var/run/bak.ppp-3g.pid"
+
+PPPD_PID=0
+O3G_BRIDGE=`rdcsman 0x001e2531 u32`
+BACKUP=`rdcsman 0x001e000d u16`
+WANTYPE=`rdcsman 0x00010003 u32`
+if [ "$BACKUP" == "1" ] && [ "$WANTYPE" != "16" ] ; then
+	FAILOVER=1
+	echo "1" > /tmp/failover
+else
+    FAILOVER=0
+    echo "0" > /tmp/failover
+fi
+# MTU of Ethernet card attached to modem MUST be 1500.  This apparently
+# fails on some *BSD's, so we'll only do it under Linux
+
+#ifconfig $ETH up mtu 1500
+
+MTU=`rdcsman 0x001e000b u16`
+MRU=`rdcsman 0x001e000b u16`
+MTU_default=1500
+if [ $MTU == "0" ] || [ $MTU == "1500" ] || [ $MTU == "" ]; then
+	MTU="$MTU_default"
+	MRU="$MTU_default"
+fi
+#wrcsman "0x001e000b $MTU"
+
+if test -n "$ACNAME" ; then
+    ACNAME="-C $ACNAME"
+fi
+
+if test -n "$SERVICENAME" ; then
+    SERVICENAMEOPT="-S $SERVICENAME"
+else
+    SERVICENAMEOPT=""
+fi
+
+if test "$CLAMPMSS" = "no" ; then
+    CLAMPMSS=""
+else
+    CLAMPMSS="-m $CLAMPMSS"
+fi
+
+# If DNSTYPE is SERVER, we must use "usepeerdns" option to pppd.
+if test "$DNSTYPE" = "SERVER" ; then
+    PEERDNS=yes
+    USEPEERDNS=yes
+fi
+
+if test "$PEERDNS" = "yes" ; then
+    PEERDNS="usepeerdns"
+else
+    PEERDNS=""
+fi
+
+# Backward config file compatibility -- PEERDNS used to be USEPEERDNS
+if test "$USEPEERDNS" = "yes" ; then
+    PEERDNS="usepeerdns"
+fi
+if test "$USEPEERDNS" = "no" ; then
+    PEERDNS=""
+fi
+#wrcsman "0x001e0102 \"$PEERDNS"
+
+# Backward config file compatibility
+if [ $FAILOVER -eq 0 ] ; then
+	if test "$DEMAND" = "" ; then
+		DEMAND=no
+	fi
+
+	if test "$DEMAND" = "no" ; then
+    	DEMAND_OPTIONS=""
+	elif test "$MANUAL" = "yes" ; then
+		#manual connect
+		CNT_TYPE=`rdcsman 0x001e000a u16`
+		#Manual connect still need idle time parameter
+		IDLE_TIME=`rdcsman 0x001e000c u16`
+		if [ $IDLE_TIME -gt 0 ] ; then
+			if [ $CNT_TYPE -eq 2 ] ; then
+					DEMAND_OPTIONS="idle $IDLE_TIME"
+			elif [ $CNT_TYPE -eq 0 ] ; then
+					DEMAND_OPTIONS="demand nopersist idle $IDLE_TIME holdoff 3 ipcp-accept-remote ipcp-accept-local noipdefault ktune"
+			fi
+		else
+			DEMAND_OPTIONS=""
+		fi
+	else
+	#only on dial-on-deman, set pppd idle time
+		#DEMAND_OPTIONS="demand persist idle $DEMAND ipcp-accept-remote ipcp-accept-local noipdefault ktune"	#org
+		#DEMAND_OPTIONS="demand idle $DEMAND ipcp-accept-remote ipcp-accept-local 10.10.10.10:10.112.112.212"	#rdc-3g
+		DEMAND_OPTIONS="demand nopersist idle $DEMAND holdoff 3 ipcp-accept-remote ipcp-accept-local noipdefault ktune"	#pppoe
+	fi
+else
+# backup 3G always autoreconnect
+	DEMAND_OPTIONS=""
+fi
+wrcsman "0x001e0106 \"$DEMAND_OPTIONS"
+
+# If we're using kernel-mode PPPoE on Linux...
+#if test "$LINUX_PLUGIN" != "" ; then
+ #   PLUGIN_OPTS="plugin $LINUX_PLUGIN nic-$ETH"
+  #  if test -n "$SERVICENAME" ; then
+#	PLUGIN_OPTS="$PLUGIN_OPTS rp_pppoe_service $SERVICENAME"
+ #   fi
+
+    # Interface name MUST BE LAST!!
+  #  PLUGIN_OPTS="$PLUGIN_OPTS $ETH"
+    #modprobe pppoe
+   # modprobe pppoe > /dev/null 2>&1
+#fi
+
+if test "$DEFAULTROUTE" != "no" ; then
+    DEFAULTROUTE="defaultroute"
+else
+    DEFAULTROUTE=""
+fi
+
+if test "$USER" = "" ; then
+    USERNAME="user guest"
+    PASSWORD="password \"guest\""
+#    USERNAME="user virtual"
+else
+    USERNAME="user $USER"
+    PASSWORD="password \"$PW\""
+fi
+wrcsman "0x001e0107 \"$USERNAME"
+
+VENDORID=`cat /var/usbserial | /bin/awk '{print $2}'`
+PRODUCTID=`cat /var/usbserial | /bin/awk '{print $3}'`
+PROFILE=`rdcsman 0x001e0030 u16`
+DIAL_NO=`rdcsman 0x001e0005 str`
+CARD_INFO=`rdcsman 0x801ex0d00 str`
+
+
+if [ $PROFILE -eq 19 ] ; then
+	if [ "$VENDORID" == "16d5" ] && [ "$PRODUCTID" == "6502" ] && [ "$DIAL_NO" == "#777" ] ; then	# AnyData Dual mode dongle
+		send_ATcmd /dev/ttyUSB0 atz
+		sleep 1 
+		rmmod option
+		rmmod usbserial
+		sleep 1
+		modem_switch 0x16d5 0x6502
+		sleep 1
+		modprobe option
+		sleep 1
+		send_ATcmd /dev/ttyUSB0 atz
+	elif [ "$VENDORID" == "16d5" ] && [ "$PRODUCTID" == "6202" ] && [ "$DIAL_NO" == "*99#" ] ; then	# AnyData Dual mode dongle
+		send_ATcmd /dev/ttyUSB3 atz
+	fi
+fi
+
+if [ "$VENDORID" == "12d1" ] && [ "$PRODUCTID" == "1003" ] ; then	# HUAWEI E220
+	BAUDRATE=460800
+elif [ "$VENDORID" == "14E4" ] && [ "$PRODUCTID" == "4325" ] ; then	# SonyEricsson GC89
+	BAUDRATE=57600
+elif [ "$VENDORID" == "af0" ] && [ "$PRODUCTID" == "7601" ] ; then	# LightSpeed HSUPA-380P
+	BAUDRATE=57600
+elif [ "$VENDORID" == "279" ] && [ "$PRODUCTID" == "950b" ] ; then	# 
+	BAUDRATE=57600
+elif [ "$VENDORID" == "1931" ] && [ "$PRODUCTID" == "c" ] ; then	# Option
+    BAUDRATE=921600
+elif [ "$VENDORID" == "10c4" ] && [ "$PRODUCTID" == "ea60" ] ; then	# CP2102 for ZTE Phone (Telexcell)
+	BAUDRATE=230400
+elif [ "$VENDORID" == "403" ] && [ "$PRODUCTID" == "6001" ] ; then  # ftdi_sio
+	BAUDRATE=115200
+elif [ "$VENDORID" == "67b" ] && [ "$PRODUCTID" == "2303" ] ; then	# PL2303 for LG Phone (Telexcell)
+	BAUDRATE=115200
+else
+#	BAUDRATE=115200
+#	BAUDRATE=921600
+	BAUDRATE=460800
+fi
+wrcsman "0x001e0101 $BAUDRATE"
+
+AUTHTYPE=`rdcsman 0x001e000f u16`
+if [ "$AUTHTYPE" == "1" ] ; then
+	AUTHTYPE="refuse-chap refuse-mschap refuse-mschap-v2 refuse-eap"
+elif [ "$AUTHTYPE" == "2" ] ; then
+    AUTHTYPE="refuse-pap refuse-mschap refuse-mschap-v2 refuse-eap"
+else
+    AUTHTYPE=""
+fi
+if [ "$VENDORID" == "201e" ] && [ "$PRODUCTID" == "1008" ] ; then   # Haier CM200
+	AUTHTYPE="refuse-chap"
+elif [ "$VENDORID" == "201e" ] && [ "$PRODUCTID" == "1001" ] ; then   # Haier CM200
+	AUTHTYPE="refuse-chap"
+fi
+wrcsman "0x001e0103 \"$AUTHTYPE"
+
+KA_MODE=`rdcsman 0x001e0010 u16`
+if [ "$KA_MODE" == "2" ] ; then
+	if [ "$VENDORID" == "19d2" ] && [ "$PRODUCTID" == "31" ] ; then	# ZTE 626/636
+		LCP_INTERVAL=""
+		LCP_FAILURE=""
+	else
+		LCP_INTERVAL="lcp-echo-interval $LCP_INTERVAL"
+		LCP_FAILURE="lcp-echo-failure $LCP_FAILURE"
+	fi
+else
+	LCP_INTERVAL=""
+	LCP_FAILURE=""
+fi
+wrcsman "0x001e0104 \"$LCP_INTERVAL"
+wrcsman "0x001e0105 \"$LCP_FAILURE"
+
+#reinitial cfun for builtin model
+
+#if [ "$VENDORID" == "408" ] ; then
+#	send_ATcmd /dev/modem AT+CFUN=0
+#	sleep 1
+#	echo "CFUN = 0" > /tmp/cfun0
+#	send_ATcmd /dev/modem AT+CFUN=1
+#	echo "CFUN = 1" > /tmp/cfun1
+#	sleep 2
+#fi
+
+# Standard PPP options we always use(for running pppoe on kernel mode)
+#PPP_STD_OPTIONS="noauth $USERNAME nodetach debug lock crtscts asyncmap ffffffff /dev/modem $BAUDRATE noipdefault $PEERDNS persist local $AUTHTYPE $LCP_INTERVAL $LCP_FAILURE defaultroute novj nobsdcomp nopcomp noaccomp nodeflate $PPPD_EXTRA "
+PPP_STD_OPTIONS="noauth $USERNAME $PASSWORD nodetach debug lock crtscts /dev/modem $BAUDRATE noipdefault mtu $MTU mru $MRU $PEERDNS local $AUTHTYPE $LCP_INTERVAL $LCP_FAILURE defaultroute novj nobsdcomp nopcomp noaccomp nodeflate $PPPD_EXTRA "
+#PPP_STD_OPTIONS="noauth $USERNAME nodetach debug lock crtscts asyncmap ffffffff /dev/modem $BAUDRATE noipdefault $PEERDNS local $AUTHTYPE $LCP_INTERVAL $LCP_FAILURE defaultroute novj nobsdcomp nopcomp noaccomp nodeflate chap-max-challenge 5 chap-restart 2 pap-max-authreq 5 pap-restart 2 $PPPD_EXTRA "
+
+# Jigger DNS if required...
+if test "$DNSTYPE" = "SERVER" ; then
+    #rm -f /etc/resolv.conf /etc/ppp/resolv.conf
+    rm -f /etc/ppp/resolv.conf
+elif test "$DNSTYPE" = "SPECIFY" ; then
+    # rm -f /etc/resolv.conf /etc/ppp/resolv.conf
+    rm -f /etc/ppp/resolv.conf
+    if [ "$DNS1" != "" -a "$DNS1" != "0.0.0.0" ] || 
+       [ "$DNS2" != "" -a "$DNS2" != "0.0.0.0" ]; then
+        sl_insert_dns_file /etc/resolv.conf $DNS1 $DNS2  
+    fi
+fi
+
+echo $$ > $PIDFILE_CONNECT
+
+if [ $FAILOVER -eq 1 ] ; then
+	GW=`rdcsman 0x80010004 ipv4`
+	IFNAME=`rdcsman 0x8001000B str`
+	route del default gw $GW $IFNAME
+fi
+
+
+#CONNECT="connect \"/usr/bin/chat -v -f /etc/ppp/3g_chat\""
+#DISCONNECT="disconnect /usr/bin/chat -V -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"NO DIALTONE\" \"\" \"\\K\" \"\" \"+++ATH\""
+# clean error code before start a new connection
+wrcsman "0x801e1100 0x0"
+
+CUSTOMER=`rdcsman 0x001e0030 u16`
+# Telexcell use Huawei EC1260
+if [ "$CUSTOMER" == "8" ] && [ "$VENDORID" == "12d1" ] && [ "$PRODUCTID" == "140b" ] ; then
+	USER=`rdcsman 0x001e0001 str`
+	PW=`rdcsman 0x001e0002 str`
+	send_ATcmd /dev/modem AT^PPPCFG=\"$USER\",\"$PW\"
+fi
+# Telexcell LG phone
+if [ "$VENDORID" == "67b" ] && [ "$PRODUCTID" == "2303" ] ; then
+    send_ATcmd /dev/modem AT+CRM=1
+fi
+if [ "$VENDORID" == "403" ] && [ "$PRODUCTID" == "6001" ] ; then
+	send_ATcmd /dev/modem AT+CRM=1
+fi
+
+if [ "$VENDORID" == "1011" ] && [ "$PRODUCTID" == "1f4" ] ; then
+n=1
+	while [ "$n" -lt 6 ] ; do
+		echo "$n"
+		n=$(( $n + 1 )) >/tmp/NN
+		send_ATcmd /dev/modem AT+CRM=1
+		send_ATcmd /dev/modem AT+CRM=? > /tmp/result
+		RUS=`cat /tmp/result | /bin/awk '/OK/'`
+
+		if [ $n -eq 5 ] || [ $RUS -ne "OK" ]; then
+			break
+		fi
+	done
+fi
+if [ "$VENDORID" == "15eb" ] && [ "$PRODUCTID" == "7152" ] ; then
+	send_ATcmd /dev/modem2 ath -t 3
+	send_ATcmd /dev/modem2 ath -t 3
+	send_ATcmd /dev/modem at &
+	sleep 1
+	killall send_ATcmd
+	send_ATcmd /dev/modem at
+	send_ATcmd /dev/modem ATZE0Q0V1
+	send_ATcmd /dev/modem 'ATE0Q0V1&F&D2&C1'
+fi
+if [ "$VENDORID" == "16d8" ] && [ "$PRODUCTID" == "4000" ] ; then
+	send_ATcmd /dev/modem2 ath -t 3
+	send_ATcmd /dev/modem2 ath -t 3
+	send_ATcmd /dev/modem at &
+	sleep 1
+	killall send_ATcmd
+	send_ATcmd /dev/modem at
+	send_ATcmd /dev/modem ATZE0Q0V1
+	send_ATcmd /dev/modem 'ATE0Q0V1&F&D2&C1'
+fi
+VENID=`rdcsman 0x801e1400 u16`
+PROID=`rdcsman 0x801e1500 u16`
+if [ "$VENID" == "3755" ] ; then	#SU-6380U
+	send_ATcmd /dev/modem 'ATS0=0' 	#> /tmp/amanda_test0
+	send_ATcmd /dev/modem 'ATE0V1' 	#> /tmp/amanda_test1
+	send_ATcmd /dev/modem 'ATS0=0' 	#> /tmp/amanda_test2
+	
+	if [ "$PROID" == "20763" ] ; then #SU-6200N
+		modem_switch 0x0eab 0x511b 212000000000 00c20100000003
+		sleep 2
+		modem_switch 0x0eab 0x511b 212000000000 00840300000003
+		sleep 2
+	fi
+	send_ATcmd /dev/modem 'ATE0V1' 	#> /tmp/amanda_test3
+	send_ATcmd /dev/modem 'AT' 		#> /tmp/amanda_test4
+fi
+
+#sleep 3
+if [ ! -d "/etc/ppp/peers" ];then
+	mkdir /etc/ppp/peers
+fi
+#----
+#wrcsman "0x001e0100 0x1ffffff"
+PPP_OPTION=`rdcsman 0x001e0100 u32`
+logger -t "O3G/PPP_OPTION" -p 8.7 "PPP_OPTION:$PPP_OPTION"
+if [ "$PPP_OPTION" == "0" ] ; then
+	logger -t "O3G/PPP_OPTION" -p 8.7 "create file"
+	echo "noauth" > /etc/ppp/peers/3g
+	echo "$USERNAME" >> /etc/ppp/peers/3g
+    echo "$PASSWORD" >> /etc/ppp/peers/3g
+	echo "nodetach" >> /etc/ppp/peers/3g
+	echo "debug" >> /etc/ppp/peers/3g
+	echo "lock" >> /etc/ppp/peers/3g
+	echo "crtscts" >> /etc/ppp/peers/3g
+	#echo "asyncmap ffffffff" >> /etc/ppp/peers/3g
+	echo "/dev/modem" >> /etc/ppp/peers/3g
+	echo "$BAUDRATE" >> /etc/ppp/peers/3g
+	echo "noipdefault" >> /etc/ppp/peers/3g
+	echo "mtu $MTU" >> /etc/ppp/peers/3g
+	echo "mru $MRU" >> /etc/ppp/peers/3g
+	echo "$PEERDNS" >> /etc/ppp/peers/3g
+	echo "local" >> /etc/ppp/peers/3g
+	echo "noccp" >> /etc/ppp/peers/3g
+	if [ "$AUTHTYPE" != "" ]; then
+		echo "$AUTHTYPE" >> /etc/ppp/peers/3g
+	fi
+	if [ "$LCP_INTERVAL" != "" ]; then
+		echo "$LCP_INTERVAL" >> /etc/ppp/peers/3g
+		echo " $LCP_FAILURE" >> /etc/ppp/peers/3g
+	fi
+	echo "defaultroute" >> /etc/ppp/peers/3g
+
+	if [ "$VENID" != "4042" -a "$PROID" != "32772" ]; then
+		echo "novj" >> /etc/ppp/peers/3g
+	fi
+
+	echo "nobsdcomp" >> /etc/ppp/peers/3g
+
+    if [ "$VENID" != "1057" -a "$PROID" != "1592" ]; then
+	    echo "nopcomp" >> /etc/ppp/peers/3g
+	    echo "noaccomp" >> /etc/ppp/peers/3g
+    fi
+
+	echo "nodeflate" >> /etc/ppp/peers/3g 
+	if [ "$PPPD_EXTRA" != "" ]; then
+		echo "$PPPD_EXTRA" >> /etc/ppp/peers/3g
+	fi
+	if [ "$DEMAND_OPTIONS" != "" ]; then
+		echo "$DEMAND_OPTIONS" >> /etc/ppp/peers/3g
+	fi
+	echo "connect \"/usr/bin/chat -v -f /etc/ppp/3g_chat\"" >> /etc/ppp/peers/3g
+#echo "disconnect '/usr/bin/chat -v -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"DIALTONE\" \"\" \"\\K\" \"\" \"+++ATH\" \"\OK\"'">> /etc/ppp/peers/3g
+	echo "disconnect '/usr/bin/chat -v -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"DIALTONE\" \"\" \"\\K\" \"\" \"ATH\" \'">> /etc/ppp/peers/3g
+#----
+else
+	ppp_option
+	if [ $? != 0 ] ; then
+		logger -t "O3G/PPP_OPTION" -p 8.7 "create file again"
+		echo "noauth" > /etc/ppp/peers/3g
+		echo "$USERNAME" >> /etc/ppp/peers/3g
+		echo "$PASSWORD" >> /etc/ppp/peers/3g
+		echo "nodetach" >> /etc/ppp/peers/3g
+		echo "debug" >> /etc/ppp/peers/3g
+		echo "lock" >> /etc/ppp/peers/3g
+		echo "crtscts" >> /etc/ppp/peers/3g
+		#echo "asyncmap ffffffff" >> /etc/ppp/peers/3g
+		echo "/dev/modem" >> /etc/ppp/peers/3g
+		echo "$BAUDRATE" >> /etc/ppp/peers/3g
+		echo "noipdefault" >> /etc/ppp/peers/3g
+		echo "mtu $MTU" >> /etc/ppp/peers/3g
+		echo "mru $MRU" >> /etc/ppp/peers/3g
+		echo "$PEERDNS" >> /etc/ppp/peers/3g
+		echo "local" >> /etc/ppp/peers/3g
+		echo "noccp" >> /etc/ppp/peers/3g
+		if [ "$AUTHTYPE" != "" ]; then
+			echo "$AUTHTYPE" >> /etc/ppp/peers/3g
+		fi
+		if [ "$LCP_INTERVAL" != "" ]; then
+			echo "$LCP_INTERVAL" >> /etc/ppp/peers/3g
+			echo " $LCP_FAILURE" >> /etc/ppp/peers/3g
+		fi
+		echo "defaultroute" >> /etc/ppp/peers/3g
+	    if [ ! "$VENID" == "4042" && "$PROID" == "32772" ]; then
+     	   echo "novj" >> /etc/ppp/peers/3g
+		fi
+		echo "nobsdcomp" >> /etc/ppp/peers/3g
+		echo "nopcomp" >> /etc/ppp/peers/3g
+		echo "noaccomp" >> /etc/ppp/peers/3g
+		echo "nodeflate" >> /etc/ppp/peers/3g 
+		if [ "$PPPD_EXTRA" != "" ]; then
+			echo "$PPPD_EXTRA" >> /etc/ppp/peers/3g
+		fi
+		if [ "$DEMAND_OPTIONS" != "" ]; then
+			echo "$DEMAND_OPTIONS" >> /etc/ppp/peers/3g
+		fi
+		echo "connect \"/usr/bin/chat -v -f /etc/ppp/3g_chat\"" >> /etc/ppp/peers/3g
+		echo "disconnect '/usr/bin/chat -v -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"DIALTONE\" \"\" \"\\K\" \"\" \"ATH\" \'">> /etc/ppp/peers/3g
+	fi
+fi
+
+#sleep 1 to avoid squashfs error
+sleep 1
+
+if [ $O3G_BRIDGE -eq 1 ] ; then
+	3g_bridge -I br0 -C 3GBridge &
+	return 0
+else
+#	ppp_option&
+#	sleep 6
+	pppd call 3g &
+fi
+
+#echo $PPPD $PPP_STD_OPTIONS $DEMAND_OPTIONS connect "/usr/bin/chat -v -f /etc/ppp/3g_chat" disconnect "/usr/bin/chat -V -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"NO DIALTONE\" \"\" \"\\K\" \"\" \"+++ATH\"" > /tmp/3g_ppp_options
+#$PPPD $PPP_STD_OPTIONS $DEMAND_OPTIONS connect "/usr/bin/chat -v -f /etc/ppp/3g_chat" disconnect "/usr/bin/chat -V -t15 ABORT \"BUSY\" ABORT \"ERROR\" ABORT \"NO DIALTONE\" \"\" \"\\K\" \"\" \"+++ATH\"" &
+#$PPPD $PPP_STD_OPTIONS $DEMAND connect "/usr/bin/chat -v -f /etc/ppp/3g_chat" &
+
+wait # wait for all child process
+
+# if CNTTYPE != CNT_TYPE_3G_MANUAL
+if [ $MANUAL != "yes"  ] ; then
+	#killed by commander
+	wrcsman "0x801e0700 0x03 && \
+			0x80010007 0x03"
+	rm -rf $PIDFILE_CONNECT
+fi
+exit
+

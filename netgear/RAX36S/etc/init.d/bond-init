@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+
+START=20
+
+CONFIG=/bin/config
+
+# Disable link aggregation in factory mode
+[ "$($CONFIG get factory_mode)" = "1" ] && $CONFIG set link_aggregation_sta=0
+[ "$($CONFIG get factory_mode)" = "1" ] && $CONFIG set link_aggregation_wan=0
+
+/sbin/insmod /lib/modules/4.1.52/kernel/drivers/net/bonding/bonding.ko
+
+/usr/sbin/bond-set boot
+

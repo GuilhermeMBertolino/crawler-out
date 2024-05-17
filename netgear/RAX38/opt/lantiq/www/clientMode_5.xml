@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <view viewid="clientmode_5">
+        <object viewtype="form">
+            <object name="Device.X_INTEL_COM_BEEROCKS">
+                <parameter Display="No" name="Enable" type="toggle" webname="Enable" required="false"></parameter>
+            </object>
+            <object name="Device.X_LANTIQ_COM_ClientMode.Profile.2">
+                <parameter Display="No" name="Enable" type="toggle" webname="Enable Repeater Mode" required="false"></parameter>
+            </object>
+
+            <object name="Device.X_LANTIQ_COM_ClientMode.EndPoint.1">
+                <parameter Display="No" name="Enable" type="toggle" webname="Enable" required="false"></parameter>
+            </object>
+
+            <object title="End Point Settings" name="Device.X_LANTIQ_COM_ClientMode.EndPoint.2" dependsonparamvalue="false" dependsonobject="Device.X_LANTIQ_COM_ClientMode.EndPoint.1" dependsonparam="Enable">
+                <row>
+                    <col>
+                        <parameter name="RadioType" type="dropdown" url="clientModeRadioBand" webname="Radio Band" firstselect="true" access="readonly"></parameter>
+                    </col>
+                    <col>
+                        <parameter dependsonparamvalue="true" dependsonobject="Device.X_LANTIQ_COM_ClientMode.Profile.2" dependsonparam="EnableApply" name="Enable" type="toggle" webname="Endpoint Enable" access="readonly"></parameter>
+                        <parameter dependsonparamvalue="false" dependsonobject="Device.X_LANTIQ_COM_ClientMode.Profile.2" dependsonparam="EnableApply" name="Enable" type="toggle" webname="Endpoint Enable"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="WDS" type="toggle" webname="WDS" required="false"></parameter>
+                    </col>
+                </row>
+            </object>
+            <object title="End Point Settings" name="Device.X_LANTIQ_COM_ClientMode.EndPoint.2" dependsonparamvalue="true" dependsonobject="Device.X_LANTIQ_COM_ClientMode.EndPoint.1" dependsonparam="Enable">
+                <row>
+                    <col>
+                        <parameter name="RadioType" type="dropdown" url="clientModeRadioBand" webname="Radio Band" firstselect="true" access="readonly"></parameter>
+                    </col>
+                    <col>
+                        <parameter type="toggle" name="Enable" webname="Endpoint Enable" access="readonly"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="WDS" type="toggle" webname="WDS" required="false"></parameter>
+                    </col>
+                </row>
+            </object>
+
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" dependsonparamvalue="false" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" />
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" disable="true" dependsonparamvalue="true" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" />
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" dependsonparamvalue="undefined" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" />
+        </object>
+        <object viewtype="form" name="Device.WiFi.EndPoint.2.WPS" title="End Point WPS" dependsonparamvalue="true" dependsonobject="Device.X_LANTIQ_COM_ClientMode.EndPoint.2" dependsonparam="EnableApply">
+            <row>
+                <col>
+                    <parameter name="X_LANTIQ_COM_Vendor_EndpointPIN" type="string" webname="Endpoint PIN" required="false" access="readonly"></parameter>
+                </col>
+                <col>
+                    <parameter name="ConnectDevice" action="post" routeurl="makePost('cgi_action','Object=Device.WiFi.EndPoint.2.WPS&amp;NOTIFICATION=NOTIFY_WIFI_WPS_ACTION&amp;EndPointAction=PIN&amp;X_LANTIQ_COM_Vendor_EndpointPIN=',$event)" type="eventbutton" webname="Connect via PIN"></parameter>
+                </col>
+            </row>
+            <row>
+                <col>
+                    <parameter name="WPSPushbutton" popup="true" action="post" routeurl="pushbtnclick('cgi_action','Object=Device.WiFi.EndPoint.2.WPS&amp;NOTIFICATION=NOTIFY_WIFI_WPS_ACTION&amp;EndPointAction=PBC&amp;type=false',$event)" type="eventbutton" webname="Connect via PBC"></parameter>
+                </col>
+            </row>
+        </object>
+        <object viewtype="form" title="WiFi Backhaul Settings" dependsonparamvalue="true" dependsonobject="Device.X_LANTIQ_COM_ClientMode.EndPoint.2" dependsonparam="EnableApply">
+            <object name="Device.X_LANTIQ_COM_ClientMode.Profile.2">
+                <row>
+                    <col>
+                        <parameter name="SSID" getObject="" child="Device.X_LANTIQ_COM_ClientMode.Profile.2.Security?ModeEnabled,KeyPassphrase,WEPKey&amp;Device.X_LANTIQ_COM_ClientMode.Rule.4?SSID&amp;Device.X_LANTIQ_COM_ClientMode.Rule.3?SSID" type="string" webname="SSID"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="Scan" action="post" routeurl="clientModeModalToOpen('clientMode_5_scan')" id="Scan" type="eventbutton" webname="Scan" />
+                    </col>
+                </row>
+            </object>
+
+
+            <object name="Device.X_LANTIQ_COM_ClientMode.Profile.2.Security">
+                <parameter name="ModeEnabled" type="dropdown" validvalues="WPA-Personal,WPA2-Personal,WPA-WPA2-Personal,WPA2-Enterprise,WEP-64,WEP-128,None" webname="Authentication Method" required="false"></parameter>
+                <parameter name="WEPKey" type="wepkey" webname="WEP Key" dependsonparamvalue="'WEP-64', 'WEP-128'" dependsonobject="Device.X_LANTIQ_COM_ClientMode.Profile.2.Security" dependsonparam="ModeEnabled"></parameter>
+                <parameter name="KeyPassphrase" type="password" webname="Pass phrase" dependsonparamvalue="'WPA-Personal', 'WPA2-Personal' ,'WPA-WPA2-Personal'" dependsonobject="Device.X_LANTIQ_COM_ClientMode.Profile.2.Security" dependsonparam="ModeEnabled"></parameter>
+            </object>
+            <object name="Device.WiFi.EndPoint.2">
+                <parameter name="X_LANTIQ_COM_Vendor_ConnectionStatus" interval="5000" polling="true" access="readonly" webname="SVAP Status" type="string" required="false"></parameter>
+            </object>
+            <object name="Device.X_LANTIQ_COM_ClientMode.Profile.2">
+                <parameter name="ManualIP" type="dropdown" url="repeaterIpClientMode" webname="Repeater Management IP"></parameter>
+                <parameter name="ManagementIP" dependsonparamvalue="'true'" dependsonobject="Device.X_LANTIQ_COM_ClientMode.Profile.2" dependsonparam="ManualIP" type="ipv4" webname="Manual IP"></parameter>
+                <parameter name="Enable" type="toggle" webname="Enable Repeater Mode" required="false"></parameter>
+            </object>
+            <object title="Access Points" name="Device.X_LANTIQ_COM_ClientMode.Rule.3">
+                <parameter type="description" content='User can change SSIDs of these Access Points.Default value of SSIDs is same as the SSID configured in WiFi backhaul settings'> </parameter>
+                <row>
+                    <col>
+                        <parameter name="RadioType" type="dropdown" access="readonly" url="clientModeRadioBand" webname="Radio" required="false"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="Enable" type="toggle" webname="Enable" required="false"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="SSID" type="string" webname="SSID" required="false"></parameter>
+                    </col>
+                </row>
+            </object>
+            <object name="Device.X_LANTIQ_COM_ClientMode.Rule.4">
+                <row>
+                    <col>
+                        <parameter name="RadioType" type="dropdown" access="readonly" url="clientModeRadioBand" webname="Radio" required="false"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="Enable" type="toggle" webname="Enable" required="false"></parameter>
+                    </col>
+                    <col>
+                        <parameter name="SSID" type="string" webname="SSID" required="false"></parameter>
+                    </col>
+                </row>
+            </object>
+
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" dependsonparamvalue="false" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" />
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" dependsonparamvalue="true" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" disable="true" />
+            <parameter type="submitbutton" name="Modify" action="post" routeurl="Apply($event)" webname="Apply" dependsonparamvalue="undefined" dependsonobject="Device.X_INTEL_COM_BEEROCKS" dependsonparam="Enable" />
+        </object>
+    </view>

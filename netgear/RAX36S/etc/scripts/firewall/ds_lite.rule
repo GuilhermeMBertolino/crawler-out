@@ -1,0 +1,22 @@
+#!/bin/sh
+
+ds_enable=$(config get ipv6_type)
+
+case $1 in
+	"start")
+		if [ "x$ds_enable" = "xdslite" ]; then
+			iptables -w -I FORWARD -i dslite_tun -j ACCEPT
+			iptables -w -I FORWARD -o dslite_tun -j ACCEPT
+			iptables -w -I INPUT -i dslite_tun -j ACCEPT
+			iptables -w -I OUTPUT -o dslite_tun -j ACCEPT
+			iptables -w -I FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+		fi
+		;;
+	"stop")
+		iptables -w -D FORWARD -i dslite_tun -j ACCEPT
+		iptables -w -D FORWARD -o dslite_tun -j ACCEPT
+		iptables -w -D INPUT -i dslite_tun -j ACCEPT
+		iptables -w -D OUTPUT -o dslite_tun -j ACCEPT
+		iptables -w -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+		;;
+esac

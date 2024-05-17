@@ -1,0 +1,86 @@
+#!/bin/sh
+# Paths to programs
+. /usr/bin/scriptlib
+
+#ETH=`rdcsman 0x8000F231 str`
+ETH="ib0"
+CNT_FORCE=`rdcsman 0x8001000E u16`
+#ORG_CNT_TYPE=`rdcsman 0x80040900 u16`
+usage () {
+    echo "$0 [start|stop|restart|status]"
+    exit 1
+}
+
+# main ##########################################################
+[ -z "$1" ] && usage 
+
+case "$1" in
+    start)
+		if [ $CNT_FORCE -eq 1 ] ; then
+            #rewrite connect manual force enable
+			iburst-stop
+		fi
+
+     	echo -n "Bringing up iBurst link"
+        uvm /usr/uo/iburst.conf.uo > /etc/ppp/iburst.conf
+
+#        account="`rdcsman 0x00340100 str`" #CSID_C_IBURST_USER   
+#        passwd="`rdcsman 0x00340200 str`" #CSID_C_IBURST_PASSWORD   
+#        sl_insert_secrets_file "$account" "$passwd"  
+#		chmod 600 /etc/ppp/*-secrets
+			
+		if [ $CNT_FORCE -eq 1 ] ; then
+            #rewrite connect manual force disable
+			wrcsman "0x8001000E 0x00"
+		fi
+
+		iburst-start
+		if [ $? = 0 ] ; then
+			exit 0
+		else
+			wrcsman "0x80340700 0x03 && \
+					 0x80010007 0x03"			
+			exit 1
+		fi
+    	;;
+
+    stop)
+        echo -n "Shutting down iBurst link"
+		iburst-stop > /dev/null 2>&1
+		RET=$?
+		
+		wrcsman "0x80340200 0x00 && \
+				 0x80340300 0x00 && \
+				 0x80340400 0x00 && \
+				 0x80340500 0x00 && \
+				 0x80340600 0x00 && \
+				 0x80340700 0x00 && \
+				 0x80010002 0x00 && \
+				 0x80010003 0x00 && \
+				 0x80010004 0x00 && \
+				 0x80010005 0x00 && \
+				 0x80010006 0x00 && \
+				 0x80010007 0x00"
+
+		
+		ifconfig $ETH 0.0.0.0
+		
+		exit $RET
+			
+        ;;
+
+    restart)
+		$0 stop
+		$0 start
+		;;
+
+    status)
+		iburst-status
+		;;
+
+    *)
+        usage
+        ;;
+esac
+
+exit 0

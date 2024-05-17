@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="guestaccessform">
+<helptext></helptext>
+    <header>
+    <image>images/icons/parentcontrol.png</image>
+        <name>Guest Access</name>
+        <description>Rules for Guest Access of the device.</description>
+    </header>
+    <object title="Rules" name="Device.X_LANTIQ_COM_GuestAccess.Rule.*" viewtype="form" icon="rules2">
+        <row>
+        <col>
+        <parameter name="Radio"  type="dropdown" url="guest_radio" webname="Wireless Band" ></parameter>
+        </col>
+        <col>
+        <parameter name="SSIDName" type="string" webname="Network Name(SSID)"></parameter>
+        </col>
+        </row>
+	<parameter  name="ModeEnabled" type="dropdown"  validvalues="None,WPA-Personal,WPA2-Personal,WPA-WPA2-Personal,WEP-64,WEP-128" webname="Security type"></parameter>
+        <parameter  dependsonparamvalue="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" minlen="8" maxlen="63" dependsonobject="Device.X_LANTIQ_COM_GuestAccess.Rule.*" dependsonparam="ModeEnabled" name="KeyPassphrase"  type="password" webname="Passphrase" ></parameter>
+       <parameter  dependsonparamvalue="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" dependsonobject="Device.X_LANTIQ_COM_GuestAccess.Rule.*" dependsonparam="ModeEnabled" name="RekeyingInterval" type="string" webname="Rekey Interval" ></parameter>
+        <parameter  parent="'WEP-64'" minlen="10" maxlen="10" parentname="Device.X_LANTIQ_COM_GuestAccess.Rule.*" depends="ModeEnabled" name="WEPKey"  type="password" webname="Key(Exactly 10 Hex digits)" ></parameter>
+        <parameter  parent="'WEP-128'" minlen="26" maxlen="26" parentname="Device.X_LANTIQ_COM_GuestAccess.Rule.*" depends="ModeEnabled" name="WEPKey"  type="password" webname="Key(Exactly 26 Hex digits)" ></parameter>
+        <row>
+        <col>
+        <parameter  name="GuestIsolation"  type="toggle"  webname="Guest Isolation" ></parameter>
+        </col>
+        <col>
+        <parameter  name="ServicesIsolation"  type="toggle" webname="Service Isolation" ></parameter>
+        </col>
+        <col>
+        <parameter  name="ServicesWhitelist"  type="string" placeholder="true" dependsonparamvalue="true" dependsonobject="Device.X_LANTIQ_COM_GuestAccess.Rule.*" dependsonparam="ServicesIsolation" webname="Services Whitelist" ></parameter>
+        </col>
+        </row>
+    <parameter name="Add" type="submitbutton" routeurl="Apply($event,'guestaccessview')" webname="Save"/>
+	<parameter name="Close" type="submitbutton" routeurl="Add('guestaccessview')" webname="Cancel"/>
+    </object>
+</view>

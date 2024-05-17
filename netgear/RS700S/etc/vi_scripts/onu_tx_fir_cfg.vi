@@ -1,0 +1,110 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_tx_fir_cfg
+########################################
+###################################################                         
+# SerDes D6S PRBS Generator                                              
+###################################################                      
+# __ARG0: Standard Select : 0 = ITUT modes / 1= IEEE,AE,MPCS modes       
+#                                                                        
+# __ARG1 : pon_type_select = "itut_mode_select" or  "ieee_mode_select"   
+#       itut_mode_select                                                 
+#                   0 = XGS                                              
+#                   1 = XGPON                                            
+#                   2 = GPON                                             
+##                                                                       
+#       ieee_mode_select                                                 
+#               0 = EPON 10/10  | 4 = AE 10g    | 8  = MPCS 10g          
+#               1 = EPON 10/1   | 5 = AE 5g     | 9  = MPCS 5g           
+#               2 = EPON 2/1    | 6 = AE 2.5g   | 10 = MPCS 2.5g         
+#               3 = EPON 1/1    | 7 = AE 1g     | 11 = MPCS 1g           
+################################################                         
+# __ARG2 -6: Tx FIR 5 Tap Values                                         
+#       tx_fir_cm1 = __ARG2                                              
+#       tx_fir_c0  = __ARG3                                              
+#       tx_fir_cp1 = __ARG4                                              
+#       tx_fir_cp2 = __ARG5                                              
+#       tx_fir_cp3 = __ARG6                                              
+#################################################                        
+ 
+ 
+#Input arguments and variables used in ATM file 
+MOV __ARG0,itut_or_ieee_sel
+MOV __ARG1,pon_type_select
+MOV __ARG2,tx_fir_cm1
+MOV __ARG3,tx_fir_c0
+MOV __ARG4,tx_fir_cp1
+MOV __ARG5,tx_fir_cp2
+MOV __ARG6,tx_fir_cp3
+ 
+#enum defines for atm/msg/vi_script 
+MOV 0,enum_itut
+MOV 1,enum_ieee
+#ITUT enum modes defines for atm/msg/vi_script 
+MOV 0,enum_xgs
+MOV 1,enum_xgpon
+MOV 2,enum_gpon
+#IEEE enum modes defines for atm/msg/vi_script 
+MOV 0,enum_epon_10g10g
+MOV 1,enum_epon_10g1g
+MOV 2,enum_epon_2g1g
+MOV 3,enum_epon_1g1g
+MOV 4,enum_ae_10g10g
+MOV 5,enum_ae_5g5g
+MOV 6,enum_ae_2g2g
+MOV 7,enum_ae_1g1g
+MOV 8,enum_mpcs_10g10g
+MOV 9,enum_mpcs_5g5g
+MOV 10,enum_mpcs_2g2g
+MOV 11,enum_mpcs_1g1g
+################################################# 
+ 
+CMP itut_or_ieee_sel,enum_itut
+JNE _L_ifelse_0_1_else
+    CMP pon_type_select,enum_xgs
+    JMPEQ _L_ifelse_0_0_end
+        MOV 0,tx_fir_cm1
+        MOV 0,tx_fir_cp1
+        MOV 0,tx_fir_cp2
+        MOV 0,tx_fir_cp3
+    _L_ifelse_0_0_end:
+    JMP _L_ifelse_0_end
+_L_ifelse_0_1_else:
+CMP itut_or_ieee_sel,enum_ieee
+JNE _L_ifelse_0_3_else
+    MOV 1,ieee_mode_vec
+    LSL pon_type_select,ieee_mode_vec
+    MOV 817,ieee_os1_mask
+    MOV ieee_mode_vec,ieee_os1_sel
+    AND ieee_os1_mask,ieee_os1_sel
+    CMP ieee_os1_sel,0
+    JNE _L_ifelse_0_2_end
+        MOV 0,tx_fir_cm1
+        MOV 0,tx_fir_cp1
+        MOV 0,tx_fir_cp2
+        MOV 0,tx_fir_cp3
+    _L_ifelse_0_2_end:
+    JMP _L_ifelse_0_end
+_L_ifelse_0_3_else:
+    HALT -1
+_L_ifelse_0_end:
+ 
+################################################ 
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_tx_fir_cfg.csv, val_select:val
+########################################
+# cfg_class: tx_fir
+########################################
+# pre_order
+# unorder
+MOV tx_fir_c0,@(0x828cc028{0x3f}<<10)
+MOV tx_fir_cm1,@(0x828cc028{0x3f}<<4)
+MOV tx_fir_cp1,@(0x828cc028{0x7f}<<16)
+MOV tx_fir_cp2,@(0x828cc028{0x1f}<<23)
+MOV tx_fir_cp3,@(0x828cc028{0xf}<<28)
+# post_order
+########################################
+# end of cfg_class: tx_fir
+########################################
+HALT 0
+########################################
+# end of call_msg: onu_tx_fir_cfg
+########################################

@@ -1,0 +1,179 @@
+#!/bin/sh
+
+. /usr/bin/scriptlib
+	
+IFCONFIG=/sbin/ifconfig
+ROUTE="route"
+RESOLV_CONF="/etc/resolv.conf"
+ETH=`rdcsman 0x8000F231 str`
+FAILOVER_ENABLE=`rdcsman 0x00430001 u32` #failover enable
+FAILOVER_WANTYPE=`rdcsman 0x0043000b u32`
+FAILOVER_STATUS=`rdcsman 0x80430600 u32`
+AUTOBAK_MODE=`rdcsman 0x801E4000 u32`
+
+fixip_start()
+{
+	IF_IP=`rdcsman 0x00110001 ipv4`
+	IF_NM=`rdcsman 0x00110002 ipv4`
+	IF_GW=`rdcsman 0x00110003 ipv4`
+ 	IF_DNS1=`rdcsman 0x00110004 ipv4`
+	IF_DNS2=`rdcsman 0x00110005 ipv4` 
+    MTU_SIZE=`rdcsman 0x00110009 u16`
+
+    if [ $MTU_SIZE -eq 0 ] ; then
+        $IFCONFIG $ETH $IF_IP netmask $IF_NM
+	else
+	    $IFCONFIG $ETH $IF_IP netmask $IF_NM mtu $MTU_SIZE
+    fi
+
+    # write to csid_local
+    if [ $FAILOVER_ENABLE -eq 1 -a $FAILOVER_STATUS -eq 1 ] ; then
+		#static is failover wan type
+        if [ $FAILOVER_WANTYPE -eq 4 ] ; then   
+	 		wrcsman "0x80430002 {$IF_IP} && \
+					 0x80430003 {$IF_NM} && \
+					 0x80430004 {$IF_GW} && \
+					 0x80430005 {$IF_DNS1} && \
+					 0x80430006 {$IF_DNS2} && \
+					 0x8043000B \"$ETH && \
+					 0x80430600 0x02" 
+			
+			wrcsman "0x80010002 {$IF_IP} && \
+					 0x80010003 {$IF_NM} && \
+					 0x80010004 {$IF_GW} && \
+					 0x80010005 {$IF_DNS1} && \
+					 0x80010006 {$IF_DNS2} && \
+                     0x8001000B \"$ETH && \
+					 0x80010007 0x02" 
+ 
+            if [ "$IF_DNS1" != "0.0.0.0" ] || [ "$IF_DNS2" != "0.0.0.0" ]; then
+                sl_insert_dns_file /etc/resolv.conf $IF_DNS1 $IF_DNS2
+            fi  
+
+            $ROUTE add default gw $IF_GW dev $ETH
+			echo "ETH $ETH IF_IP $IF_IP IF_NM $IF_NM IF_GW $IF_GW IF_DNS1 $IF_DNS1 IF_DNS2 $IF_DNS2 CNTTIME $CNTTIME" >> /var/run/static2
+		else
+			wrcsman "0x80010002 {$IF_IP} && \
+				     0x80010003 {$IF_NM} && \
+				     0x80010004 {$IF_GW} && \
+				     0x80010005 {$IF_DNS1} && \
+				     0x80010006 {$IF_DNS2} && \
+                     0x80010007 0x02 && \
+                     0x8001000B \"$ETH"
+		fi
+	else	        
+		if [ $AUTOBAK_MODE -eq 0 ] ; then  # Normal Mode
+            $ROUTE add default gw $IF_GW dev $ETH
+
+            if [ "$IF_DNS1" != "0.0.0.0" ] || [ "$IF_DNS2" != "0.0.0.0" ]; then
+                sl_insert_dns_file /etc/resolv.conf $IF_DNS1 $IF_DNS2
+            fi  
+
+            wrcsman "0x80010002 {$IF_IP} && \
+                     0x80010003 {$IF_NM} && \
+                     0x80010004 {$IF_GW} && \
+                     0x80010005 {$IF_DNS1} && \
+                     0x80010006 {$IF_DNS2} && \
+                     0x8001000B \"$ETH && \
+                     0x80010007 0x02"
+        else 
+            echo "Autoback Mode, don't write to local WAN/DNS, Do Nothing ..."
+		fi
+	fi
+	exit 0
+}
+
+fixip_stop()
+{
+	$IFCONFIG $ETH 0.0.0.0
+    if [ $FAILOVER_ENABLE -eq 1 ] ; then
+        if [ $FAILOVER_WANTYPE -eq 4 ] ; then #static is failover wan type  
+            wrcsman "0x80430002 0x00 && \
+                     0x80430003 0x00 && \
+                     0x80430004 0x00 && \
+                     0x80430005 0x00 && \
+                     0x80430006 0x00 && \
+                     0x8043000B 0x00 && \
+                     0x80430600 0x00"
+
+            wrcsman "0x80010002 0x00 && \
+                     0x80010003 0x00 && \
+                     0x80010004 0x00 && \
+                     0x80010005 0x00 && \
+                     0x80010006 0x00 && \
+                     0x8001000B 0x00 && \
+                     0x80010007 0x00" 
+
+        else #static is main wan
+            wrcsman "0x80010002 0x00 && \
+                     0x80010003 0x00 && \
+                     0x80010004 0x00 && \
+                     0x80010005 0x00 && \
+                     0x80010006 0x00 && \
+                     0x8001000B 0x00 && \
+                     0x80010007 0x03"
+        fi
+	else	
+		if [ $AUTOBAK_MODE -eq 0 ] ; then  # Normal Mode
+            wrcsman "0x80010002 0x00 && \
+                     0x80010003 0x00 && \
+                     0x80010004 0x00 && \
+                     0x80010005 0x00 && \
+                     0x80010006 0x00 && \
+                     0x80010007 0x00 && \
+                     0x8001000B 0x00" 
+        else 
+            echo "Autoback Mode, don't write to local WAN/DNS, Do Nothing ..."
+		fi           
+	fi
+	exit 0
+}
+
+fixip_status () {
+    echo "ETH=`rdcsman 0x8000F231 str`"
+    echo "FAILOVER_ENABLE=`rdcsman 0x00430001 u32`" #failover enable
+    echo "FAILOVER_WANTYPE=`rdcsman 0x0043000b u32`"
+    echo "FAILOVER_STATUS=`rdcsman 0x80430600 u32`"
+    echo "AUTOBAK_MODE=`rdcsman 0x801E4000 u32`"   
+
+    echo "FIXIP_IF_IP=`rdcsman 0x00110001 ipv4`"
+    echo "FIXIP_IF_NM=`rdcsman 0x00110002 ipv4`"
+    echo "FIXIP_IF_GW=`rdcsman 0x00110003 ipv4`"
+    echo "FIXIP_IF_DNS1=`rdcsman 0x00110004 ipv4`"
+    echo "FIXIP_IF_DNS2=`rdcsman 0x00110005 ipv4`" 
+    echo "FIXIP_MTU_SIZE=`rdcsman 0x00110009 u16`"    
+
+    echo "CSID_S_LOCAL_WAN_IP      : `rdcsman 0x80010002 ipv4`"
+    echo "CSID_S_LOCAL_WAN_NM      : `rdcsman 0x80010003 ipv4`"
+    echo "CSID_S_LOCAL_WAN_GW      : `rdcsman 0x80010004 ipv4`"
+    echo "CSID_S_LOCAL_WAN_PRIDNS  : `rdcsman 0x80010005 ipv4`"
+    echo "CSID_S_LOCAL_WAN_SECDNS  : `rdcsman 0x80010006 ipv4`"
+    echo "CSID_S_LOCAL_WAN_STATUS  : `rdcsman 0x80010007 u32`"
+    echo "CSID_S_LOCAL_WAN_IF_NAME : `rdcsman 0x8001000B str`"
+
+    echo "CSID_S_FAILOVER_WAN_IP      : `rdcsman 0x80430002 ipv4`"
+    echo "CSID_S_FAILOVER_WAN_NM      : `rdcsman 0x80430003 ipv4`"
+    echo "CSID_S_FAILOVER_WAN_GW      : `rdcsman 0x80430004 ipv4`"
+    echo "CSID_S_FAILOVER_WAN_PRIDNS  : `rdcsman 0x80430005 ipv4`"
+    echo "CSID_S_FAILOVER_WAN_SECDNS  : `rdcsman 0x80430006 ipv4`"
+    echo "CSID_S_FAILOVER_WAN_IF_NAME : `rdcsman 0x8043000b str`"
+    echo "CSID_S_FAILOVER_CNT_TIME    : `rdcsman 0x8043000c u32`"
+}
+
+usage () {
+    echo "$0 [start|stop|status]"
+    exit 1
+}
+
+# main ##########################################################
+[ -z "$1" ] && usage
+case "$1" in
+    start)   fixip_start  ;;
+    stop)    fixip_stop   ;;
+    restart) fixip_stop   ;  fixip_start;;
+    status)  fixip_status ;;
+    *)       usage ;; 
+esac
+exit 0		
+
+

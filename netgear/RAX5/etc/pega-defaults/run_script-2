@@ -1,0 +1,15 @@
+#!/bin/sh
+
+echo "[pega-defaults] run_script-2 running ..." > /dev/console
+
+# PegaBU6, Yocheng Lian, 2022/03/23, For implement WPS feature. #
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b0.dat set WscV2Support "1;1"
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b1.dat set WscV2Support "1;1"
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b0.dat set WscConfStatus "2;2"
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b1.dat set WscConfStatus "2;2"
+
+# Remove certificate of /etc/reserve-data to force re-generate unique certificate in lighttpd boot
+rm -rf /etc/reserve-data/interleaved-lighttpd.pem
+
+# add 'exit 0' in the end of file (all commands MUST be before 'exit 0')
+exit 0

@@ -1,0 +1,135 @@
+#!/bin/sh
+
+IFCONFIG=/sbin/ifconfig
+PROGRAM=udhcpd
+PROGRAM_CONF_FILE="udhcpd.conf"
+PROGRAM_PID_FILE="/var/run/udhcpd.pid"
+LEASE_FILE="/var/run/udhcpd.leases"	
+UVM=uvm
+ETH=`rdcsman 0x8000F201 str`
+
+fixmapping()
+{
+	local i ip mac enable ipbase macbase enbase enptr macptr ipptr
+	
+	enbase=0x00031000
+	macbase=0x00031200
+	ipbase=0x00031400
+	i=0
+	while [ $i -lt 100 ]	
+	do
+		enptr=$(($enbase+$i))
+		enable=`rdcsman $enptr u8`
+	
+		if [ $enable = 1 ] ; then
+			macptr=$(($macbase+$i))
+			ipptr=$(($ipbase+$i))
+			
+			mac=`rdcsman $macptr macc`
+			ip=`rdcsman $ipptr ipv4`		
+			
+			if [ $mac != 00:00:00:00:00:00 -a $ip != 0.0.0.0 ] ; then
+				echo "static_lease $mac $ip" >> /etc/$PROGRAM_CONF_FILE
+			fi		
+		fi	
+		i=$(($i+1))
+	done
+}
+start()
+{	
+	local ipstart ipend maxlease numlease
+	
+	ipstart=`rdcsman 0x00030003 bin`
+	ipstart=0x${ipstart##*-}
+	
+	ipend=`rdcsman 0x00030004 bin`
+	ipend=0x${ipend##*-}
+	
+	if [ $ipstart = 0x00 -a $ipend = 0x00 ] ; then
+		wrcsman "0x0003000b 101"
+	else	
+		numlease=$(($ipend-$ipstart))	
+		numlease=$(($numlease+1))
+	
+		maxlease=`rdcsman 0x0003000b u32`
+	
+		if [ $maxlease -ne $numlease ] ; then
+			wrcsman "0x0003000b $numlease"
+		fi
+	fi		
+	
+	$UVM /usr/uo/$PROGRAM_CONF_FILE.uo > /etc/$PROGRAM_CONF_FILE
+	
+	fixmapping
+	
+	$PROGRAM /etc/$PROGRAM_CONF_FILE	
+}
+
+
+stop()
+{
+	echo "udhcod-stop"
+	if [ -f "$PROGRAM_PID_FILE" -a -r "$PROGRAM_PID_FILE" ] ; then 
+			PROGRAM_PID=`cat $PROGRAM_PID_FILE`
+			rm -f $PROGRAM_PID_FILE
+			kill $PROGRAM_PID > /dev/null 2>&1 || exit 1
+			rm -f $LEASE_FILE
+			exit 0
+	fi  
+	exit 1
+}	
+
+lease()
+{
+	local cnt
+	if [ -f "$PROGRAM_PID_FILE" -a -r "$PROGRAM_PID_FILE" ] ; then 
+		PROGRAM_PID=`cat $PROGRAM_PID_FILE`
+		rm -f $LEASE_FILE
+		kill -USR1 $PROGRAM_PID
+		
+		cnt=0
+		while [ true ] ; do
+			
+			if [ $cnt -gt 30 ] ; then
+				break
+			fi
+			
+			if [ -f $LEASE_FILE -a -r $LEASE_FILE ] ; then
+				dumpleases -f $LEASE_FILE
+				break
+			fi		
+			cnt=$(($cnt+1))
+			
+		done	
+		
+	fi
+	dhcp_list
+}		 
+
+
+# main ##########################################################
+
+case "$1" in
+
+	start)
+		start;;
+	
+	stop)
+		stop;;
+		
+	reload|restart) 
+		$0 stop
+		$0 start;;
+			
+	lease)
+		lease;;
+	
+	*)
+		exit 1 ;;
+esac
+
+exit 0		
+
+
+
+			

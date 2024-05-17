@@ -1,0 +1,109 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+<meta http-equiv="Content-Type" content="text/html">
+<% getIndex("no-cache"); %>
+<title>Save/Reload Setting</title>
+<% getInfo("include_css"); %>
+<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+  <style>
+  .txt{ height:22px; border:1px solid #cdcdcd; width:160px;}
+  .btn{ padding:0px;border-width:1px;border-color:rgb(133, 133, 133);height:24px; width:85px;}
+  .file{ position:absolute; top:0; left:0px; height:30px; filter:alpha(opacity:0);opacity: 0;width:294px }
+  </style>
+<script>
+function fileCheck()
+{
+	var oFile = document.getElementById('binary'); 
+    	if(oFile.value == ""){ 
+		alert(saveconf_load_from_file_empty);
+		return false;
+	}
+	var fileType = getFileType(oFile.value);
+	if(fileType != "dat"){
+		alert(saveconf_invalid);
+		return false;
+	}
+	parent.showWaitDiv();
+	return true;
+}
+function getFileType(str)
+{
+	if(str == "")
+		return "";
+	var name = str.split(".");
+	var type = name[name.length-1];
+	return type;
+}
+
+function saveClick(url)
+{
+	var saveConfig= "<% getInfo("saveConfig"); %>";
+  if (verifyBrowser() == "ie4" ) {
+    window.location.href = url;
+    return false;
+  } else {
+    parent.showWaitDiv()
+    var timer = setTimeout(function () {
+      parent.hideWaitDiv()
+      clearTimeout(timer)
+    },5000)
+    return true;
+  }
+}
+
+function resetClick()
+{
+    if ( !confirm(saveconf_reset_to_default_confm) ) {
+      return false;
+    } else {
+      return true;
+    }
+}
+
+</script>
+
+</head>
+<body>
+<blockquote>
+  <h2><script>dw(preset_title)</script></h2>
+  <table border="0" width="100%">
+    <tr><font size=2>
+    <script>dw(preset_explain)</script>
+    </tr>
+    <tr><hr size=1 noshade align=top></tr>
+    <form action=/boafrm/formSaveConfig method=POST name="saveConfig">
+    <tr>
+        <td width="25%"><font size=2><b><script>dw(preset_tab1)</script></b></td>
+        <td width="75%" colspan="2"><font size=2>
+            <p><input type="submit" value="Save..." name="save_ds" onclick="return saveClick('/def_config.dat')" style="display: block"></p>
+            <script>document.saveConfig.save_ds.value = saveconf_save;</script>
+        </td>
+    </tr>
+    </form>
+    <form method="post" action="boafrm/formUploadConfigDS" enctype="multipart/form-data" name="uploadConfig">
+        <input type="hidden" value="/preSet.htm" name="submit-url">
+        <tr>
+        <td width="25%"><font size=2><b><script>dw(preset_tab2)</script></b></td>
+        <td width="55%" style="position: relative"><font size=2>
+          <input type='text' name='textfield' id='textfield' class='txt' disabled style="width: 200px;"/>
+          <input type='button' name='uploadinput' value='' />
+          <script>document.uploadConfig.uploadinput.value = wlwapiinstalcert_select_file;</script>
+          <input type="file" name="binary" class="file" id="binary" accept=".dat" size="20" onchange="document.getElementById('textfield').value=this.value" />
+        </td>
+        <td width="20%"><font size=2><input type="submit" value="Upload" name="load" onclick="return fileCheck()"></td>
+        <script>document.uploadConfig.load.value = saveconf_load;</script>
+        </tr>
+    </form>
+    <form action=/boafrm/formSaveConfig method=POST name="reset_default_form">
+      <tr>
+        <td width="25%"><font size=2><b><script>dw(factory_reset_config)</script></b></td>
+        <td width="55%"><font size=2><input type="submit" value="Reset" name="reset_def" onclick="return resetClick()"></td>
+        <td width="20%"></td>
+        <script>document.reset_default_form.reset_default.value = saveconf_reset;</script>
+      </tr>
+    </form>
+  </table>
+</blockquote>
+</body>
+</html>

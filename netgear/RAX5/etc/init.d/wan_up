@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+. /lib/network/switch.sh
+START=19
+
+boot() {
+    echo -e "\n\033[31mWAN ports power UP\033[0m\n" > /dev/console
+
+    #write default network.inet informaiton
+    uci_add_state network inet_status inet
+    uci_toggle_state network inet up 0
+    uci_toggle_state network inet check 0
+
+    #enable WAN port
+    pega_set_wan_mac
+    pega_set_opmode
+    wan_ports_up
+}

@@ -1,0 +1,144 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+<meta http-equiv="Content-Type" content="text/html">
+<% getIndex("no-cache"); %>
+<title>Iptv Setting </title>
+<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+<% getInfo("include_css"); %>
+<style>
+.on {display:on}
+.off {display:none}
+table tr td {border-color:grey}
+</style>
+<% language=javascript %>
+<script type="text/javascript" src="util_gw.js"> </script>
+<SCRIPT>
+parent.hideWaitDiv();
+var vlan_id= "";
+var vlanEnabledValue = '<% getInfo("vlanEnabled") %>'
+
+var string_json = '<% getInfo("port_vlan_list"); %>';
+if(!string_json){
+	string_json = '[{"port_id":1,"vlan_id":""},{"port_id":2,"vlan_id":""},{"port_id":3,"vlan_id":""}]'
+}
+var selectedPort = 0
+var vlanData = JSON.parse(string_json)
+vlanData.forEach(function(data){
+	if(data.vlan_id && data.vlan_id != 9){
+		selectedPort = data.port_id
+		vlan_id = data.vlan_id
+	}
+})
+
+function addClick()
+{
+	if (document.formIptvAdd.enabled.checked)
+	{
+		if ( document.formIptvAdd.vlan.value=="")
+		{
+			document.formIptvAdd.vlan.value = 102
+		}
+		if (Checkvlan(document.formIptvAdd.vlan.value) == 1)
+		{
+			alert(iptv_vlan_id_error_alert);
+			document.formIptvAdd.vlan.focus();
+			return false;
+		}
+		if (Checkvlan(document.formIptvAdd.vlan.value) == 2)
+		{
+			alert(iptv_vlan_id_range_alert);
+			document.formIptvAdd.vlan.focus();
+			return false;
+		}
+	}
+	if(document.formIptvAdd.enabled.checked){
+		document.formIptvAdd.vlanEnabled.value = "ON"
+	}else{
+		document.formIptvAdd.vlanEnabled.value = "OFF"
+	}
+	var eles = document.getElementsByName("Lanport")
+	for(var i=0; i<eles.length; i++){
+		if(eles[i].checked == true){
+			document.formIptvAdd['will-sel-'+(i+1)].value = document.formIptvAdd.vlan.value
+		}
+	}
+	parent.showWaitDiv();
+	return true;
+}
+
+function updateState()
+{
+	if (document.formIptvAdd.enabled.checked){
+		enableRadioGroup(document.formIptvAdd.Lanport);
+		enableTextField(document.formIptvAdd.vlan);
+	}
+	else{
+		disableRadioGroup(document.formIptvAdd.Lanport);
+		disableTextField(document.formIptvAdd.vlan);
+	}
+}
+
+function Load_Setting()
+{
+	if (vlanEnabledValue === 'ON')
+		document.formIptvAdd.enabled.checked = true;
+	if ( selectedPort == 1)
+		document.formIptvAdd.elements["Lanport"][0].checked = true;
+	else if (selectedPort == 2 )
+		document.formIptvAdd.elements["Lanport"][1].checked = true;
+	else if (selectedPort == 3 )
+		document.formIptvAdd.elements["Lanport"][2].checked = true;
+
+	document.formIptvAdd.vlan.value = vlan_id;
+	updateState();
+}
+</SCRIPT>
+</head>
+
+<body onload="Load_Setting();">
+<blockquote>
+	<h2><script>dw(iptv_header)</script></h2>
+	<hr size=1 noshade align=top>
+<form action="/boafrm/formVlanSet" method=POST name="formIptvAdd">
+<table border=0 width="500" cellspacing=4 cellpadding=0>
+<tr><td><font size=2><b>
+	 <input type="checkbox" name="enabled" value="ON" ONCLICK=updateState()>&nbsp;&nbsp;<script>dw(iptv_enable)</script></b><br>
+	 </td>
+</tr>
+<tr>
+	<td width="100%" colspan="2"><font size=2>
+		<input type="radio" value="1" name="Lanport" checked><script>dw(iptv_lan_port1)</script>&nbsp;
+		<input type="radio" value="2" name="Lanport"><script>dw(iptv_lan_port2)</script>&nbsp;
+		<input type="radio" value="3" name="Lanport"><script>dw(iptv_lan_port3)</script>&nbsp;
+	</td>
+</tr>
+<tr>
+	<td width="30%" ><font size=2><b><script>dw(iptv_vlan_id)</script></b></font> </td>
+	<td width="70%"><input type="text" name="vlan" value="" size="15" maxlength="17"> <font size=2><script>dw(iptv_default_vlan_id)</script></font>  </td>
+</tr>
+</table>
+	<% getInfo("apply_prompt_comment_start");%>
+	<p><input type="submit" value="Apply Changes" name="addIptv" onClick="return addClick()">&nbsp;&nbsp;
+		<input type="reset" value="Reset" name="reset">
+		<% getInfo("apply_prompt_comment_end");%>
+		<% getInfo("apply_direct_comment_start");%>
+	<p><input type="submit" value="Save" name="addIptv" onClick="return addClick()" style="display: none">
+		<script>document.formIptvAdd.addIptv.value = iptv_save;</script>&nbsp;&nbsp;
+		<input type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()">
+		<script>document.formIptvAdd.save_apply.value = iptv_apply;</script>&nbsp;&nbsp;
+		<input type="reset" value="Reset" name="reset">
+		<script>document.formIptvAdd.reset.value = iptv_reset;</script>
+		<!--<input type="hidden" value="1" name="addIptvFlag">-->
+		<% getInfo("apply_direct_comment_end");%>
+		<input type="hidden" value="/iptv.htm" name="submit-url">
+	 </p>
+	 <input name="vlanEnabled" type="hidden"/>
+	 <input name="will-sel-1" type="hidden" value="9"/>
+	 <input name="will-sel-2" type="hidden" value="9"/>
+	 <input name="will-sel-3" type="hidden" value="9"/>
+</form>
+</table>
+</blockquote>
+</body>
+</html>

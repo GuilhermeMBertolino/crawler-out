@@ -1,0 +1,41 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_rx_tx_pol_inv
+########################################
+#  Polarity Control for PON RX, TX ,LBE signals  
+#  Set the required polarity for these interfaces
+#  0 = Normal , 1= Inverted Polarity
+MOV __ARG0,rx_inv
+MOV __ARG1,tx_inv
+MOV __ARG2,lbe_inv
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_rx_tx_pol_inv.csv, val_select:val
+########################################
+# cfg_class: pol_inv
+########################################
+# pre_order
+# unorder
+MOV rx_inv,@(0x828cc034{0x1}<<7)
+MOV tx_inv,@(0x828cc024{0x1}<<11)
+MOV lbe_inv,@(0x828c404c{0x1}<<1)
+# post_order
+########################################
+# end of cfg_class: pol_inv
+########################################
+CMP rx_inv,1
+JMPEQ _L_ifelse_0_end
+JLT _L_ifelse_0_end
+    HALT -1
+_L_ifelse_0_end:
+CMP tx_inv,1
+JMPEQ _L_ifelse_1_end
+JLT _L_ifelse_1_end
+    HALT -1
+_L_ifelse_1_end:
+CMP lbe_inv,1
+JMPEQ _L_ifelse_2_end
+JLT _L_ifelse_2_end
+    HALT -1
+_L_ifelse_2_end:
+HALT 0
+########################################
+# end of call_msg: onu_rx_tx_pol_inv
+########################################

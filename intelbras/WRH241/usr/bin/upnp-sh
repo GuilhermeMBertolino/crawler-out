@@ -1,0 +1,124 @@
+#!/bin/sh
+#
+# upnp-sh       This script go for starting/stop AmitUPnP using iptables
+#
+
+# From AUTOCONF
+prefix=
+exec_prefix=${prefix}
+
+# Paths to programs
+stop() {
+#	IGD_PID_FILE=/var/run/miniupnpd.pid
+	
+#	killall -15 miniigd 2> /dev/null
+#	if [ -f "$IGD_PID_FILE" ]; then
+#		rm -f $IGD_PID_FILE
+#	fi
+    echo "============= AMIT UPNP Stop ============="
+	MINIUPNP_PID_FILE=/var/run/AmitUPnP.pid
+	killall -15 AmitUPnP 2> /dev/null
+	if [ -f "$MINIUPNP_PID_FILE" ]; then
+		rm -f $MINIUPNP_PID_FILE
+	fi
+}
+
+start() {
+    echo "============= AMIT UPNP Start ============="
+
+	LAN_IF=`rdcsman 0x8000F301 str`
+	WAN_IF=`rdcsman 0x8001000B str`
+
+	if [ -z $LAN_IF ]; then
+		return 0
+	elif [ -z $WAN_IF ]; then
+		#WAN didn't connect, use logic wan interface name
+		WAN_IF=`rdcsman 0x8000F361 str`
+		#return 0
+	fi
+
+	LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`
+	LOCAL_WANTYPE=`rdcsman 0x00010003 u32`
+	LOADSHARING_WANTYPE=`rdcsman 0x0043000b u32`
+	if [ "$LOADSHARING_ENABLE" = "1" ] ; then
+		FIRST_WAN_STATUS=`rdcsman 0x80432b22 u32`
+		SECOND_WAN_STATUS=`rdcsman 0x80430600 u32`
+		if [ "$FIRST_WAN_STATUS" = "2" ] && [ "$SECOND_WAN_STATUS" = "2" ] ; then
+			if [ "$LOCAL_WANTYPE" = "16" ] && [ "$LOADSHARING_WANTYPE" != "2" ] ; then
+				WAN_IF=`rdcsman 0x8043000b str`
+			elif [ "$LOCAL_WANTYPE" != "16" ] && [ "$LOADSHARING_WANTYPE" = "2" ] ; then
+				WAN_IF=`rdcsman 0x80432b24 str`
+			fi
+		elif [ "$FIRST_WAN_STATUS" != "2" ] && [ "$SECOND_WAN_STATUS" = "2" ] ; then
+			WAN_IF=`rdcsman 0x8043000b str`
+		elif [ "$FIRST_WAN_STATUS" = "2" ] && [ "$SECOND_WAN_STATUS" != "2" ] ; then
+			WAN_IF=`rdcsman 0x80432b24 str`
+		fi
+	fi
+
+	# if WPS enable, UPnP must be enabled too.
+	WSC=`rdcsman 0x0019A000 u32`
+	_CMD=
+	if [ $WSC -eq 1 ];then
+		_CMD="$_CMD -wsc /tmp/wscd_config"
+		# enable UPnP
+		wrcsman "0x0015000b 1"
+	fi
+
+	UPNP_ENABLED=`rdcsman 0x0015000b u32`
+	if [ $UPNP_ENABLED = 1 ]; then
+#		route del -net 239.0.0.0 netmask 255.0.0.0 $LAN_IF
+#		route add -net 239.0.0.0 netmask 255.0.0.0 $LAN_IF
+
+		# WAN type is DHCP
+		WAN_DHCP=`rdcsman 0x00010003 u32`
+		if [ $WAN_DHCP -eq 0 ]; then
+			WAN_DHCP=1
+		else
+			WAN_DHCP=0
+		fi
+
+	#	_CMD="$_CMD -igd /tmp/igd_config"
+        _CMD="$WAN_IF $LAN_IF"
+		# if wireless ISP mode , set WAN to wlan0
+		OP_MODE=1
+		if [ "$OP_MODE" = '2' ];then
+		#	miniigd -e $WAN_DHCP -i $LAN_IF -w $WISP_WAN_ID
+		#	mini_upnpd $_CMD &
+            AmitUPnP $_CMD &
+		else
+		#	miniigd -e $WAN_DHCP -i $LAN_IF
+		#	mini_upnpd $_CMD &
+            AmitUPnP $_CMD &
+		fi
+	fi
+	echo "WAN_IF=$WAN_IF,LAN_IF=$LAN_IF"
+	return 0
+}
+
+usage() {
+	echo "$0 [start|stop|restart|reload|config]"
+	exit 1
+}
+
+# +++++++++++++++ main ++++++++++++++++++++++ 
+[ -z "$1" ] && usage;
+
+err=0
+
+case "$1" in
+	config)		;;
+	start)		start;;
+	stop)		stop;;
+	reload)		;;
+	restart)	stop; start;;
+	*)		usage;;
+esac
+#if [ $? = "0" ] ; then
+	#echo $0 $@ ok
+#else
+	#echo $0 $@ error
+#	err=1
+#fi
+
+exit $err

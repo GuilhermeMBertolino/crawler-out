@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+START=91
+
+start() {
+    if [ "$(/bin/config get factory_mode)" = "1" ]; then
+	return
+    fi
+    /usr/bin/csh 2>/dev/null &
+}
+
+stop() {
+    killall csh
+    kill -17 1
+    rm /tmp/csh.log
+}
+
+boot() {
+    start
+}
+
+restart() {
+    stop
+    start
+}

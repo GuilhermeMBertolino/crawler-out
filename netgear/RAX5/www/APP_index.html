@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+      local installEvents = require "commonFunc.installEvents"
+       installEvents.send_guiAccess()
+%>
+<html>
+<head>
+  <META charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/scrollbar.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/mlang.js<? commonCfg.getVer(); ?>"></script>
+
+  <script language="javascript" type="text/javascript">
+  CSRF_TOKEN = <? commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+  $(document).ready(function(){
+      $("[mlang]").each(function(idx, obj) {
+          obj.innerHTML = window.top.mlang[obj.attributes.mlang.value];
+      });
+      $("#ads_link").on("click",function(){
+         postSkipApp();
+      })
+  });
+
+  function postSkipApp()
+  {
+      var postData = {};
+      postData.function = "wizNHApp";
+      var o = {};
+      postData.data = o;
+      //console.log(postData);
+      appPost(JSON.stringify(postData));
+  }
+  
+  function appPost(postData)
+  {
+      $.ajax({
+        url : "/cgi-bin/netgear.plua?csrftoken="+CSRF_TOKEN,
+        type: "POST",
+        data: postData,
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
+        success : function(data) {
+            if(data.status == "error")
+            {   
+                window.top.backUrl = "APP_index.html";
+                //window.top.errorStr = "MBSW02";
+                //location.href ="ErrorMessage.html";
+            }
+        },
+        error : function(xhr, ajaxOptions, thrownError) {
+            console.log(xhr.status);
+            //console.log(thrownError);
+        },
+        beforeSend : function(json) {
+            //setTimeout("redirectProgressBar('D-genie_377')", 100);
+        },
+        complete : function(data) {
+            // Reidrect page after complete post to avoid "NS_BINDING_ABORTED" of firefox
+            location.href = "genie_index.html";  
+        }
+      }); //ajax()
+  }
+  </script>
+</head>
+
+<body>
+  <form id="target" name="formname" method="POST" >
+    <div>
+      <div id="main">
+        <div style="text-align: center;margin-top:59px;margin-bottom: 60px;padding:0 !important;">
+          <img src="images/netgear-log.svg" style="max-width:100% !important; height: auto;"></img>
+        </div>
+       
+        <div style="text-align: center;">
+          <img src="images/nighthawk-mobile.png" style="max-width:400px; height: auto;"></img>
+        </div>
+  
+        <div  style="text-align: center;padding: 0 !important; margin-top: -20px;font-family: system-ui;">
+          <div style="max-width: 620px;font-size:26px;margin: 0 auto 20px auto;">
+            <b mlang="PCVP_093">For the fastest set up, download the Nighthawk app from </b><span> </span><u style="font-weight: bold;">NightHawk-App.com</u>
+          </div>
+          <div style="max-width: 580px;margin: auto;margin-bottom: 30px;font-size: 18px;line-height: 1.39;letter-spacing: 0.27px;text-align: center;color: #848484;font-weight: normal;font-style: normal;font-stretch: normal;" mlang="PCVP_094">
+            Go to Nighthawk-App.com and download the Nighthawk app on your mobile phone or tablet device using a mobile data connection to complete your Wi-Fi network set up.
+          </div>
+        </div>
+      </div><!-- div main -->
+      <div id="footer" style="text-align: center; font-size: 20px; width: 100% !important; padding: 30px 25px; margin-top: 30px;background-color: #f7f7f7;">
+        <a id="ads_link" href="javascript:;" target="_self" >
+        <span style="color: #848484; outline: none; text-decoration: underline; 
+" mlang="PCVP_095">If you don't have a compatible smartphone, click here ></span>
+        </a>        
+      </div>
+    </div>
+
+  </form>
+</body>
+</html>

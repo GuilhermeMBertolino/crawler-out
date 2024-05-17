@@ -1,0 +1,95 @@
+#!/bin/sh
+
+PPP_IFNAME="ppp0"
+WAN_IFNAME="brwan"
+LAN_IFNAME="br0"
+INTERVAL=300
+
+gw_detect()
+{
+	if [ "$(/bin/config get ap_mode)" = "1" -o "$(/bin/config get bridge_mode)" = "1" ];then
+		ifname=$LAN_IFNAME
+		ip=`route -n |grep $ifname | grep 0.0.0.0 |awk '{print $2}' |grep -v 0.0.0.0`
+	elif [ "$(/bin/config get wan_proto)" = "pppoe" -o "$(/bin/config get wan_proto)" = "pptp" -o "$(/bin/config get wan_proto)" = "l2tp" ]; then
+		ifname=$PPP_IFNAME
+		ip=`route -n |grep $ifname | grep 0.0.0.0 |awk '{print $1}' |grep -v 0.0.0.0`
+	else
+		ifname=$WAN_IFNAME
+		ip=`route -n |grep $ifname | grep 0.0.0.0 |awk '{print $2}' |grep -v 0.0.0.0`
+	fi
+
+	if [ "x$ip" = "x" ];then
+		old_gwdiconnection=`/bin/config get gwDisconnDuration`
+		let old_gwdiconnection=old_gwdiconnection+5
+		/bin/config set gwDisconnDuration=$old_gwdiconnection
+		return
+	fi
+	ping -c 2 $ip > /tmp/ping_gw_result 2> /dev/null
+	sleep 5
+	result=`cat /tmp/ping_gw_result`
+
+	if [ "x$result" = "x" ];then
+		old_gwdiconnection=`/bin/config get gwDisconnDuration`
+		let old_gwdiconnection=old_gwdiconnection+5
+		/bin/config set gwDisconnDuration=$old_gwdiconnection
+	else
+		if [ "x$(echo $result |grep "100% packet loss")" != "x" ]; then
+			old_gwdiconnection=`/bin/config get gwDisconnDuration`
+			let old_gwdiconnection=old_gwdiconnection+5
+			/bin/config set gwDisconnDuration=$old_gwdiconnection
+		fi
+	fi
+}
+
+ping_netgear()
+{
+    ping -c 2 www.netgear.com > /tmp/ping_netgear_result 2> /dev/null
+	sleep 5
+    result=`cat /tmp/ping_netgear_result`
+
+	if [ "x$result" = "x" ];then
+		old_disconnetion=`/bin/config get internetDisconnDuration`
+		let old_disconnetion=old_disconnetion+5
+		/bin/config set internetDisconnDuration=$old_disconnetion
+	else
+		if [ "x$(echo $result |grep "100% packet loss")" != "x" ]; then
+			old_disconnetion=`/bin/config get internetDisconnDuration`
+			let old_disconnetion=old_disconnetion+5
+			/bin/config set internetDisconnDuration=$old_disconnetion
+		fi
+	fi
+}
+
+internet_detect()
+{
+    wanport_status=`cat /tmp/port_status` 2> /dev/null
+	wanproto_status=`/bin/config get wan_proto` 2> /dev/null
+	wandod_status=`/bin/config get wan_endis_dod` 2> /dev/null
+    apmode_status=`/bin/config get ap_mode` 2> /dev/null
+    brmode_status=`/bin/config get bridge_mode` 2> /dev/null
+
+    if [ "$wanport_status" != "1" ];then
+		if [ "$apmode_status" = "1" -o "$brmode_status" = "1" ]; then
+			ping_netgear
+		elif [ "$wanproto_status" != "pppoe" -a "$wanproto_status" != "pptp" -a "$wanproto_status" != "l2tp" ] || [ "$wandod_status" != "1" ]; then
+			old_disconnetion=`/bin/config get internetDisconnDuration`
+			let old_disconnetion=old_disconnetion+5
+			/bin/config set internetDisconnDuration=$old_disconnetion
+		fi
+	else
+		if [ "$wanproto_status" = "pppoe" -o "$wanproto_status" = "pptp" -o "$wanproto_status" = "l2tp" ] && [ "$apmode_status" = "0" ] && [ "$brmode_status" = "0" ]; then
+			# If connetion mode is dial-on-demand, then get connection status from file instead of pinging Internet.
+		    if [ "$wandod_status" != "1" ];then
+				ping_netgear
+			fi
+		 else
+			ping_netgear
+	    fi
+	fi
+}
+
+while true
+do
+	gw_detect		#ping-gateway
+	sleep $INTERVAL
+done

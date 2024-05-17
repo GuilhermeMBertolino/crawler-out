@@ -1,0 +1,149 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language="javascript" src="portName.js"></script>
+<script language="javascript" src="util.js"></script>
+<script language='javascript'>
+<!-- hide
+var macPolicyStr = '<%ejGetOther(macPolicyStr)%>';
+var macfltStr = '<%ejGetOther(macfltStr)%>';
+var isBridgedWanExisted = '<%ejGetOther(isBridgedWanExisted)%>';
+var sessionKey = '<%ejGetOther(sessionKey)%>';
+
+function chgPolicy(ChangePolicy) {
+   var lst = '';
+   if (ChangePolicy.length > 0)
+      for (i = 0; i < ChangePolicy.length; i++) {
+         if ( ChangePolicy[i].checked == true )
+            lst += ChangePolicy[i].value + ', ';
+      }
+   else if ( ChangePolicy.checked == true )
+      lst = ChangePolicy.value;
+
+   var loc = 'scmacflt.cmd?action=changemp&changeLst=' + lst;
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function addClick() {
+   var loc = 'scmacflt.html';
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ', ';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+
+   var loc = 'scmacflt.cmd?action=remove&rmLst=' + lst;
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+// done hiding -->
+</script>
+</head>
+<body>
+	<form>
+		<script>tbl_head('MAC Filtering Setup')</script>
+<div id='mcfltr'>		
+		MAC Filtering is only effective on ATM PVCs configured in Bridge mode.
+      <b><font color='green'>FORWARDED</font></b> means that all MAC layer frames will be
+      <b><font color='green'>FORWARDED</font></b> except those matching with any of the
+      specified rules in the following table.  <b><font color='red'>BLOCKED</font></b>
+      means that all MAC layer frames will be <b><font color='red'>BLOCKED</font></b>
+      except those matching with any of the specified rules in the following table.<br><br>
+      
+MAC Filtering Policy For Each Interface: <br>
+<b><font color='red'>WARNING: Changing from one policy to another of an interface will cause
+                  all defined rules for that interface to be REMOVED AUTOMATICALLY! You will need to create 
+                  new rules for the new policy.</font></b><br><br>
+<table border='1' cellpadding='4' cellspacing='0' width='90%'>
+
+   <tr>
+      <td class='hd'>Interface</td>
+     <td class='hd'>Policy</td>
+      <td class='hd'>Change</td>
+   </tr>
+  <script>
+   	var htm;
+   	var rows;
+   	var cols;
+   	rows = macPolicyStr.split('~');
+   	if(macPolicyStr!='')
+	   	for(var i=0;i<rows.length;i++)
+	   	{
+	   			cols = rows[i].split(',');
+	   			if(cols.length!=3) continue;
+	   			htm = '<tr>';
+	   			htm += '<td>'+cols[0]+'</td>';
+	   			if(cols[1]=="FORWARD")
+	   				htm += '<td><b><font color="green">'+cols[1]+'</font></b></td>';
+	   			else
+	   				htm += '<td><b><font color="red">'+cols[1]+'</font></b></td>';
+	   			htm += '<td align="center"><input type="checkbox" name="ChangePolicy" class="button" value='+cols[2]+'></td>';
+	   			htm += '</tr>';
+	   			document.write(htm);
+	   	}
+ 	</script>
+</table><br>
+<br><input type='button' class='button' onClick='chgPolicy(this.form.ChangePolicy)' value='Change Policy'><br>
+Choose Add or Remove to configure MAC filtering rules.<br><br>
+<table border='1' cellpadding='4' cellspacing='0' width='90%'>
+   <tr>
+      <td class='hd'>Interface</td>
+      <td class='hd'>Protocol</td>
+      <td class='hd'>Destination&nbsp;MAC</td>
+      <td class='hd'>Source&nbsp;MAC</td>
+     	<td class='hd'>Frame&nbsp;Direction</td>
+      <td class='hd'>Remove</td>
+   </tr>
+   <script>
+   	var htm;
+   	var rows;
+   	var cols;
+   	rows = macfltStr.split('~');
+   	if(macfltStr!='')
+	   	for(var i=0;i<rows.length;i++)
+	   	{
+	   			cols = rows[i].split(',');
+	   			if(cols.length!=6) continue;
+	   			htm = '<tr>';
+	   			htm += '<td align="center">'+cols[0]+'</td>';
+	   			htm += '<td align="center">'+cols[1]+'</td>';
+	   			htm += '<td align="center">'+cols[2]+'</td>';
+	   			htm += '<td align="center">'+cols[3]+'</td>';
+	   			htm += '<td align="center">'+cols[4]+'</td>';
+	   			htm += '<td align="center"><input type="checkbox" name="rml" class="button" value='+cols[5]+'></td>';
+	   			htm += '</tr>';
+	   			document.write(htm);
+	   	}
+ 	</script>
+</table><br>
+</div>
+<div id='nobridge'><b>No Bridge WAN service found.  A bridge WAN service is needed to configure this service.</b></div>
+<script>
+	if(isBridgedWanExisted=='1')
+	{
+		document.getElementById("nobridge").style.display="block";
+		document.getElementById("mcfltr").style.display="none";
+		tbl_tail("");
+	}
+	else
+	{
+		document.getElementById("nobridge").style.display="none";
+		document.getElementById("mcfltr").style.display="block";
+		tbl_tail("<input type='button' class='button' onClick='addClick()' value='Add'>&nbsp;&nbsp;<input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");
+	}
+</script>
+</form>
+</body>
+</html>

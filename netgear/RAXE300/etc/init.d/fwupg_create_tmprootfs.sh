@@ -1,0 +1,187 @@
+#!/bin/sh
+# Copyright (C) 2021, Broadcom. All Rights Reserved.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+#
+# <<Broadcom-WL-IPTag/Proprietary,Open:.*>>
+#
+
+date=`date`
+echo "===== fwupg_create_tmprootfs.sh @ $date ==" > /data/fwupg_single.log
+
+#ubivol number to dynamically create temporarily rootfs. default volume 12
+#7MB about 94% ussed, reserve 10MB
+N_TMP_UBIVOL=12
+SZ_TMP_UBIVOL=10000000
+
+ubinfo -a
+bcm_bootstate
+
+wl -i wl0 down
+wl -i wl1 down
+wl -i wl2 down
+
+#kill apps who is going to bring up others
+wdtctl -d stop
+killall debug_monitor
+
+# stop armor
+/data/bitdefender/bin/bd stop
+# JYang, Remove bitdefender-release to trigger bdagent update flow in bdagent_init.sh
+# Because the FW may not compatible with local BDAgent. 
+# Need force update after loading new FW
+rm -f /data/bitdefender/bitdefender-release
+
+if [ -r /dev/ubi0_$N_TMP_UBIVOL ]; then
+  echo "/dev/ubi0_$N_TMP_UBIVOL exist...." >> /data/fwupg_single.log
+else
+  ubimkvol /dev/ubi0 -s $SZ_TMP_UBIVOL -n $N_TMP_UBIVOL -N tmprootfs --type=dynamic
+  sleep 2;sync
+fi
+
+count=0
+while [ $count -le 5 ] 
+do
+  if [ -r /dev/ubi0_$N_TMP_UBIVOL ]; then
+    echo "/dev/ubi0_$N_TMP_UBIVOL exist...." >> /data/fwupg_single.log
+    break
+  fi
+
+  echo "/dev/ubi0_$N_TMP_UBIVOL does not exist..." >> /data/fwupg_single.log
+  count=$((count+1))
+  sleep 1
+done
+
+mkdir -p /mnt/new-root
+sleep 1;sync
+mount -t ubifs /dev/ubi0_$N_TMP_UBIVOL /mnt/new-root
+
+
+sleep 1
+lsof
+
+mkdir -p /mnt/new-root/proc
+mkdir -p /mnt/new-root/sys
+mkdir -p /mnt/new-root/tmp
+mkdir -p /mnt/new-root/dev
+mkdir -p /mnt/new-root/var
+mkdir -p /mnt/new-root/var/tmp
+mkdir -p /mnt/new-root/etc
+mkdir -p /mnt/new-root/bin
+mkdir -p /mnt/new-root/sbin
+mkdir -p /mnt/new-root/usr/bin
+mkdir -p /mnt/new-root/lib
+mkdir -p /mnt/new-root/data
+
+mount --bind /proc /mnt/new-root/proc
+mount --bind /sys /mnt/new-root/sys
+mount --bind /tmp /mnt/new-root/tmp
+mount --bind /dev /mnt/new-root/dev
+mount --bind /var /mnt/new-root/var
+mount --bind /var/tmp /mnt/new-root/var/tmp
+mount -- /data /mnt/new-root/data
+
+
+cp /bin/busybox /mnt/new-root/bin
+cp /bin/bcmbusybox /mnt/new-root/bin
+cp /bin/ubi* /mnt/new-root/bin
+cp /bin/bcm_* /mnt/new-root/bin
+cp /lib/libc.* /mnt/new-root/lib
+cp /lib/libbcm_flashutil.so /mnt/new-root/lib
+cp /lib/libbcm_boardctl.so /mnt/new-root/lib
+cp /lib/libbcm_util.so /mnt/new-root/lib
+cp /lib/libsys_util.so /mnt/new-root/lib
+cp /lib/libgen_util.so /mnt/new-root/lib
+cp /lib/librt.* /mnt/new-root/lib
+cp /lib/libdl.* /mnt/new-root/lib
+cp /lib/libpthread.* /mnt/new-root/lib
+cp /lib/ld-linux* /mnt/new-root/lib
+cp /etc/init.d/fwupg_flashing.sh /mnt/new-root/etc
+cp /etc/get_rootfs_dev.sh /mnt/new-root/etc
+
+
+if [ ! -f /mnt/new-root/bin/busybox ]
+then
+	echo "ERROR !! not enough space on /new-root"
+	exit
+fi
+
+cd /mnt/new-root/bin
+
+ln -sf busybox ash
+ln -sf busybox bash
+ln -sf busybox cat
+ln -sf busybox chmod
+ln -sf busybox cp
+ln -sf busybox dmesg
+ln -sf busybox echo
+ln -sf busybox grep
+ln -sf busybox kill
+ln -sf busybox mount
+ln -sf busybox ps
+ln -sf busybox rm
+ln -sf busybox sh
+ln -sf busybox sleep
+ln -sf busybox sync
+ln -sf busybox stty
+ln -sf busybox umount
+ln -sf busybox vi
+ln -sf busybox cut
+ln -sf busybox ls
+ln -sf busybox ln
+ln -sf busybox fuser
+ln -sf busybox lsof
+ln -sf busybox which 
+
+#usr bin
+ln -sf busybox du
+ln -sf busybox killall
+ln -sf busybox sha256sum
+ln -sf busybox test
+ln -sf busybox tftp
+ln -sf busybox which
+ln -sf busybox [
+ln -sf busybox ]
+ln -sf busybox expr
+cd -
+
+
+cd /mnt/new-root/sbin
+ln -sf ../bin/busybox arp
+ln -sf ../bin/busybox chroot
+ln -sf ../bin/busybox halt
+ln -sf ../bin/bcmbusybox ifconfig
+ln -sf ../bin/busybox init
+ln -sf ../bin/busybox pivot_root
+ln -sf ../bin/busybox reboot
+cd -
+
+
+cp /bin/busybox /tmp
+ln -sf /tmp/busybox /tmp/sh
+mount >> /data/fwupg_single.log
+df >> /data/fwupg_single.log
+
+
+#inittab in new rootfs
+echo '::sysinit:/bin/sh -l -c "/etc/fwupg_flashing.sh"' > /mnt/new-root/etc/inittab
+echo '::shutdown:/bin/sh -l -c "bcm_boot_launcher stop"' >> /mnt/new-root/etc/inittab
+sync
+
+mkdir -p /mnt/new-root/old-root
+cd /mnt/new-root
+pivot_root . old-root
+echo "pivot root ..." >> /data/fwupg_single.log
+exec chroot . /tmp/sh -c 'echo $$; kill -QUIT 1' <dev/console >dev/console 2>&1
+echo "chroot..." >> /data/fwupg_single.log

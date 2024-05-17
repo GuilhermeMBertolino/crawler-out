@@ -1,0 +1,48 @@
+
+# TAP
+
+local 0.0.0.0
+[PORT]
+[PROTO_TYPE]
+
+dev tap0
+
+log-append /tmp/openvpn/openvpn_tap.log
+status /tmp/openvpn/openvpn_tap.status 1
+writepid /tmp/openvpn/openvpn_tap.pid
+
+ca /etc/reserve-data/.cert/server/ca.crt
+cert /etc/reserve-data/.cert/server/rax-server.crt
+key /etc/reserve-data/.cert/server/rax-server.key
+dh /etc/reserve-data/.cert/server/dh1024.pem
+
+auth sha1
+tls-server
+cipher AES-128-CBC
+
+#server-bridge [BR_LAN_IP] 255.255.255.0 [BR_LAN_NET].250 [BR_LAN_NET].254
+server-bridge
+#ifconfig-pool-persist ipp-tap.txt 1
+
+client-to-client
+duplicate-cn
+keepalive 10 120
+max-clients 4
+mtu-disc yes
+topology subnet
+script-security 2
+comp-lzo
+fast-io
+
+persist-key
+persist-tun
+
+[PUSH_ROUTE_SUBNET]
+push "route-delay 5"
+push "redirect-gateway def1"
+push "dhcp-option DNS [BR_LAN_IP]"
+push "dhcp-option WINS [BR_LAN_IP]"
+
+verb 5
+mute 5
+

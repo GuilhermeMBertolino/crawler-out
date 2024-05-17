@@ -1,0 +1,226 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <% getIndex("no-cache"); %>
+    <title>guest network Settings</title>
+    <script type="text/javascript" src="util_gw.js"> </script>
+    <!-- <script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="qrcode.js"></script> -->
+    <SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+    <% getInfo("include_css"); %>
+    <style>
+    .time-select {
+        min-width: 44px;
+        width: 70px;
+        padding-left: 4px;    
+    }
+    </style>
+    <SCRIPT>
+    parent.hideWaitDiv();
+
+    function show(){
+        document.getElementById("weekday-select").style.display = ''
+        document.getElementById("time-set").style.display = ''
+    }
+    function hide(){
+        document.getElementById("weekday-select").style.display = 'none'
+        document.getElementById("time-set").style.display = 'none'
+    }
+    function enableChange(ele) {
+        if(ele.value == 1){
+            show()
+        }else{
+            hide()
+        }
+    }
+    function syncEnableDisplay(enable){
+        var enableEles = document.getElementsByName('enable')
+        if(enable == 0){
+            enableEles[0].checked = true
+            hide()
+        }else{
+            enableEles[1].checked = true
+            show()
+        }
+        
+    }
+    function syncWeekdaysDisplay(weekdays){
+        var weekdayEles = document.getElementsByName("weekdays")
+        for(var i=0; i<7; i++){
+            if(weekdays['day'+i] === 1)
+                weekdayEles[i].checked = true
+            else
+                weekdayEles[i].checked = false
+        }
+    }
+    function syncTimeDisplay(){
+        var hour ="<% getInfo("reboot_schedule_hour"); %>"
+        var minute ="<% getInfo("reboot_schedule_minute"); %>"
+        hour = padStart(hour)
+        minute = padStart(minute)
+        document.scheduledSetup._reboot_schedule_time_hour.value = hour
+        document.scheduledSetup._reboot_schedule_time_minute.value = minute
+    }
+    function LoadSetting() {  
+        var enabled = '<% getInfo("reboot_schedule_enable"); %>'
+        syncEnableDisplay(enabled)
+
+        var scheduled_time = '<% getInfo("reboot_schedule_weekmask"); %>' * 1
+        document.getElementById('weekmask_id').value = scheduled_time
+        var scheduled = '0b' + scheduled_time.toString(2)
+        var weekdays = {
+            day0: 0,
+            day1: 0,
+            day2: 0,
+            day3: 0,
+            day4: 0,
+            day5: 0,
+            day6: 0,
+        }
+        
+        if((0b00000001 & scheduled) === 0b00000001){
+            weekdays.day0 = 1
+        }
+        if((0b00000010 & scheduled) === 0b00000010){
+            weekdays.day1 = 1
+        }
+        if((0b00000100 & scheduled) === 0b00000100){
+            weekdays.day2 = 1
+        }
+        if((0b00001000 & scheduled) === 0b00001000){
+            weekdays.day3 = 1
+        }
+        if((0b00010000 & scheduled) === 0b00010000){
+            weekdays.day4 = 1
+        }
+        if((0b00100000 & scheduled) === 0b00100000){
+            weekdays.day5 = 1
+        }
+        if((0b01000000 & scheduled) === 0b01000000){
+            weekdays.day6 = 1
+        }
+
+        syncWeekdaysDisplay(weekdays)
+
+        syncTimeDisplay()
+    }
+    function modifyEnabledViaWeekdays(weekdays){
+        var enableEles = document.getElementsByName('enable')
+        var weekValue = ''
+        for (var key in weekdays) {
+            var value = weekdays[key]
+            weekValue += value
+        }
+        weekValue = weekValue.split('').reverse().join("");
+        document.scheduledSetup.weekmask.value = parseInt(weekValue, 2)
+    }
+    function modifyTime(){
+        document.scheduledSetup.hour.value = parseInt(document.scheduledSetup._reboot_schedule_time_hour.value)
+        document.scheduledSetup.minute.value = parseInt(document.scheduledSetup._reboot_schedule_time_minute.value)
+    }
+    function saveClick() {
+        var weekdayEles = document.getElementsByName("weekdays")
+        var weekdays = {
+            day0: 0,
+            day1: 0,
+            day2: 0,
+            day3: 0,
+            day4: 0,
+            day5: 0,
+            day6: 0,
+        }
+        for(var i=0; i<7; i++){
+            if(weekdayEles[i].checked === true)
+                weekdays['day'+i] = 1
+        }
+        modifyEnabledViaWeekdays(weekdays)
+        modifyTime()
+        parent.showWaitDiv();
+        return true
+    }
+    function padStart(num){
+        if(num<10){
+            num = '0' + num
+        }
+        return num
+    }
+    </SCRIPT>
+</head>
+<body onload="LoadSetting();">
+<blockquote>
+    <h2>
+        <script>dw(scheduled_restart)</script>
+    </h2>
+    <hr size=1 noshade align=top>
+    <form action="/boafrm/formRebootSchedule" method="POST" name="scheduledSetup">
+        <table border=0 width="100%" cellspacing=4>
+            <tr>
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(scheduled_restart)</script></b>
+                    </font>
+                </td>
+                <td width="80%"><font size=2><b>
+                    <input type="radio" name="enable" value="0" onclick="enableChange(this)"/><script>dw(scheduled_restart_close)</script>&nbsp;&nbsp;
+                    <input type="radio" name="enable" value="1" onclick="enableChange(this)"/><script>dw(scheduled_restart_open)</script></b></font>
+                </td>
+            </tr>
+            <tr id="weekday-select" style="display: none">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(scheduled_restart_duplicate)</script></b>
+                    </font>
+                </td>
+                <td width="80%"><font size=2><b>
+                    <input type="hidden" id="weekmask_id" name="weekmask" value="" />
+                    <input type="checkbox" name="weekdays" value="0" ><script>dw(Sunday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="1" ><script>dw(Monday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="2" ><script>dw(Tuesday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="3" ><script>dw(Wednesday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="4" ><script>dw(Thursday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="5" ><script>dw(Friday)</script>&nbsp;&nbsp;
+                    <input type="checkbox" name="weekdays" value="6" ><script>dw(Saturday)</script>&nbsp;&nbsp;
+                </td>
+            </tr>
+            <tr  id="time-set" style="display: none">
+                <td width="20%">
+                    <font size=2>
+                        <b><script>dw(scheduled_restart_time)</script></b>
+                    </font>
+                </td>
+                <td width="80%">
+                    <font size=2>
+                        <input type="hidden" name="hour" value="" />
+                        <input type="hidden" name="minute" value="" />
+                        <select name="_reboot_schedule_time_hour" class="time-select" >
+                            <script>
+                            for(var i=0; i<24; i++){
+                                dw('<option value='+padStart(i)+'>'+padStart(i)+'</option>')
+                            }     
+                            </script>
+                        </select>
+                        <span>:</span>
+                        <select name="_reboot_schedule_time_minute"  class="time-select">
+                            <script>
+                            for(var i=0; i<60; i++){
+                                dw('<option value='+padStart(i)+'>'+padStart(i)+'</option>')
+                            }     
+                            </script>
+                        </select>
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="/scheduled_restart.htm" name="submit-url">
+        <p><input type="submit" class="save_button_class" value="Save" name="save" onClick="return saveClick()">
+            <script>document.scheduledSetup.save.value = scheduled_restart_save;</script>
+            <input type="submit" value="Save & Apply" name="save_apply" onClick="return saveClick()">
+            <script>document.scheduledSetup.save_apply.value = scheduled_restart_save_apply;</script>
+        </p>
+    </form>
+    <br>
+</blockquote>
+</body>
+
+</html>

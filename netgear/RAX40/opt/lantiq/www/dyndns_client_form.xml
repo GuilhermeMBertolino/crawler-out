@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <view viewid="dyndns_client_formpage">
+    <helptext></helptext>
+        <header>
+                <name>Dynamic DNS Client Settings</name>
+                <description></description>
+        </header>
+        <object viewtype="form" name="Device.DynamicDNS.Client.*" title="Client Settings">
+            <parameter name="Enable"  type="checkbox" webname="Enable" ></parameter>
+            <row>
+                <col>
+                    <parameter name="X_LANTIQ_COM_Server"  type="dropdown" webname="Server" url="cgi_get_fillparams?Object=Device.DynamicDNS.Server&amp;Name="></parameter>
+                </col>
+                <col>
+                    <parameter name="X_LANTIQ_COM_Interface"  type="dropdown" webname="Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name="></parameter>
+                </col>
+            </row>
+            <row>
+                <col>
+                    <parameter name="Username"  type="string" webname="Username" ></parameter>
+                </col>
+                <col>
+                    <parameter name="Password"  type="password" webname="Password"/>
+                </col>
+            </row>
+         </object>
+        <object name="Device.DynamicDNS.Client.*.Hostname.*" viewtype="tablePlus">
+            <parameter name="Enable" type="checkbox" Display="No" Value="1"  required="false" webname="Host Name"/>
+            <parameter name="Name" type="stringA" required="false" webname="Host Name"/>
+            <parameter name="delete" action="post" routeurl="dyndnsCustomdelete($event,user,$index)" type="button" webname="delete" maxlen="64"/>
+            <parameter name="edit" action="post" routeurl="dyndnsstatic($data,$index)" type="button" webname="Edit" maxlen="64"/>
+            <parameter name="Add" action="post" routeurl="localadd($event)" type="button" webname="Add" maxlen="64"/>
+        </object>
+        <parameter name="Close" type="submitcancel" routeurl="Add('dyndns')" webname="Cancel" maxlen="64"/>
+        <parameter  name="Add"  action="post" routeurl="dynDnsApply($event,'dyndns')" type="button" webname="Apply" maxlen="64"></parameter> 
+</view>

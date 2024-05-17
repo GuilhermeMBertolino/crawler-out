@@ -1,0 +1,364 @@
+<!DOCTYPE HTML>
+<% 
+    local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css<?= commonCfg.getVer() ?>">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<?= commonCfg.getVer() ?>"></script>
+  <script src="js/validations.js<?= commonCfg.getVer() ?>"></script>
+
+  <script language="javascript" type="text/javascript">
+    
+    CSRF_TOKEN_SUB = <?= commonCfg.genCsrfTokenSubFile('tokenNumber')?>;
+
+    $(document).ready(function()
+    {
+        fetchData('target', 'wireless_apmode_bridge_wlan', '', 'post_fillout_init');
+    });
+
+    function formSubmit() 
+    {   
+        //Sync value from the netgear auto IDs elements to the Pega cgi parameters
+        var wifiIF_autoid = $('select[name=wifiIF_autoid]').val();
+        if (wifiIF_autoid == "Wireless Network(2.4GHz b/g/n/ax)") {
+            $('[name=wifiIF]').val("2G");
+        }
+        else if (wifiIF_autoid == "Wireless Network(5GHz a/n/ac/ax)") {
+            $('[name=wifiIF]').val("5G");
+        }
+        
+        if (validation()) {
+            
+            $.postForm('brWifiSetup', $('#target'), 'cgi-bin/netgear.plua', 'postForm_callback');
+        }
+    }
+    
+    function validation()
+    {
+        var wifiIF_autoid = $('select[name=wifiIF_autoid]').val();
+        
+        if (wifiIF_autoid == "Wireless Network(2.4GHz b/g/n/ax)") {
+            var wifiSsid2G = $('[name=wifiSsid2G]').val();
+            var wifiSecurity2G = $('[name=wifiSecurity2G]:checked').val();
+
+            if (wifiSsid2G.length == 0)
+            {
+                //"SSID cannot be blank."
+                alert(window.opener.top.mlang["SWSE07"]);
+                return false;
+            }
+
+            if (wifiSsid2G.match( /[^\x20-\x7E]/ ))
+            {
+                //"Character is not allowed in SSID."
+                alert(window.opener.top.mlang["SWSE02"]);
+                return false;
+            }
+            
+            if (wifiSecurity2G == "1" || wifiSecurity2G == "2") {  //wpa or wpa2
+                var wifiPassword2G = $('[name=wifiPassword2G]').val();
+                if (wifiPassword2G.length < 8 || wifiPassword2G.length > 63) {
+                    //"A password consists of either 8~63 ASCII characters ..."
+                    alert(window.opener.top.mlang["SWSE15"]);
+                    return false;
+                }
+                
+                if (wifiPassword2G.match( /[^\x20-\x7E]/ )) {
+                    //Character is not allowed in password.
+                    alert(window.opener.top.mlang["SWSE01"]);
+                    $('[name=wifiPassword2G]').focus();
+                    return false;
+                }
+            }
+        }
+        else if (wifiIF_autoid == "Wireless Network(5GHz a/n/ac/ax)") {
+            var wifiSsid5G = $('[name=wifiSsid5G]').val();
+            var wifiSecurity5G = $('[name=wifiSecurity5G]:checked').val();
+
+            if (wifiSsid5G.length == 0)
+            {
+                //"SSID cannot be blank."
+                alert(window.opener.top.mlang["SWSE07"]);
+                return false;
+            }
+
+            if (wifiSsid5G.match( /[^\x20-\x7E]/ ))
+            {
+                //"Character is not allowed in SSID."
+                alert(window.opener.top.mlang["SWSE02"]);
+                return false;
+            }
+            
+            if (wifiSecurity5G == "2") {  //wpa or wpa2
+                var wifiPassword5G = $('[name=wifiPassword5G]').val();
+                if (wifiPassword5G.length < 8 || wifiPassword5G.length > 63) {
+                    //"A password consists of either 8~63 ASCII characters ..."
+                    alert(window.opener.top.mlang["SWSE15"]);
+                    return false;
+                }
+                
+                if (wifiPassword5G.match( /[^\x20-\x7E]/ )) {
+                    //Character is not allowed in password.
+                    alert(window.opener.top.mlang["SWSE01"]);
+                    $('[name=wifiPassword5G]').focus();
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    function postForm_callback(json)
+    {
+        if (json.status == "success") {
+            top.window.opener=null;
+            top.window.close();
+        }
+        else {
+            //"Setting failed."
+            alert(window.opener.top.mlang["genie_1030"]);
+            document.location.reload(); 
+        }
+    }
+    
+    function post_fillout_init()
+    {   
+        init_wifiIF_autoid();
+        
+        $("[mlang]").each(function(idx, obj) {
+              obj.innerHTML = window.opener.top.mlang[obj.attributes.mlang.value];
+        });
+        
+        $('#target [name=wifiIF_autoid]').on('change', function() {
+            onChange_wifiIF_autoid();
+        });
+        $('#target [name=wifiSecurity2G]').on('change', function() {
+            onChange_wifiSecurity2G();
+        });
+        $('#target [name=wifiSecurity5G]').on('change', function() {
+            onChange_wifiSecurity5G();
+        });
+        
+    }
+    
+    /* init function Section --------> Begin */
+    function init_wifiIF_autoid()
+    {
+        onChange_wifiIF_autoid();
+    }
+    
+    /* init function Section --------> End */
+    
+    /* Onclick Callback Section --------> Begin */
+    function onChange_wifiIF_autoid()
+    {
+        var wifiIF_autoid = $('select[name=wifiIF_autoid]').val();
+        
+        if (wifiIF_autoid == "Wireless Network(2.4GHz b/g/n/ax)") {
+            $("#2g_fields").show();
+            $("#5g_fields").hide();
+            onChange_wifiSecurity2G();
+        }
+        else if (wifiIF_autoid == "Wireless Network(5GHz a/n/ac/ax)") {
+            $("#2g_fields").hide();
+            $("#5g_fields").show();
+            onChange_wifiSecurity5G();
+        }
+        
+    }
+    
+    function onChange_wifiSecurity2G()
+    {
+        var wifiSecurity2G = $('[name=wifiSecurity2G]:checked').val();
+        
+        if (wifiSecurity2G == "0") {
+            $("#2g_password_fields").hide();
+        }
+        else {
+            $("#2g_password_fields").show();
+        }
+    }
+    
+    function onChange_wifiSecurity5G()
+    {
+        var wifiSecurity5G = $('[name=wifiSecurity5G]:checked').val();
+        
+        if (wifiSecurity5G == "0") {
+            $("#5g_password_fields").hide();
+        }
+        else {
+            $("#5g_password_fields").show();
+        }
+    }
+    /* Onclick Callback Section --------> End */ 
+  </script>
+
+
+</head>
+
+<body bgcolor="#ffffff">
+    <div class="page-header" style="position: relative;">
+        <span mlang="LUP009">Wireless Settings</span>
+    </div>
+    
+    <div id="main" class="form-group"  style=height:365px;overflow:auto;scrolling:auto">
+    
+    <form id="target"  name="formname">
+        <div class="form-row">
+            <span mlang="D-genie_45">"Please choose a wireless network.</span>:
+        </div>
+        <div class="form-row">    
+            <select name="wifiIF_autoid" id="bridge_sec_type">
+                <option value="Wireless Network(2.4GHz b/g/n/ax)" mlang="SWS098">Wireless Network(2.4GHz b/g/n/ax)</option>
+                <option value="Wireless Network(5GHz a/n/ac/ax)" mlang="SWS080">Wireless Network (5GHz 802.11a/n/ac/ax)</option>
+            </select>
+        </div>
+        
+        <div id="2g_fields">
+            <div class="form-row">
+                <span mlang="RAEM26">Name (SSID)</span>:
+            </div>
+            <div class="form-row">
+                <input type="text" id="ssid" name="wifiSsid2G" size="20" maxlength="32">
+            </div>
+        
+            <div class="space-divider">&nbsp;</div>
+            <div class="divider">&nbsp;</div>
+        
+            <div class="form-row">
+                <a href="javascript:loadhelp('','')" tabindex="-1">
+                    <b mlang="SWS036" >Security Options</b>:
+                </a>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container" >
+                    <div mlang="SWS016">None</div>
+                    <input type="radio" name="wifiSecurity2G" id="security_disable" value="0">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container" >
+                    <div>WPA-Personal [TKIP]</div>
+                    <input type="radio" name="wifiSecurity2G" id="security_wpa" value="1">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container" >
+                    <div>WPA2-Personal [AES]</div>
+                    <input type="radio" name="wifiSecurity2G" id="security_wpa2" value="2">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+        
+            <div class="space-divider">&nbsp;</div>
+            <div class="divider">&nbsp;</div>
+        
+            <div id="2g_password_fields">
+                <div class="form-row">
+                    <a href="javascript:loadhelp('','')" tabindex="-1">
+                        <b mlang="SWS036" >Security Options</b>
+                        &nbsp;
+                        [
+                        <b id="wpa_text" mlang="SWS036">WPA-PSK</b>
+                        <b id="wpa2_text" >WPA2-PSK</b>
+                        ]
+                    </a>
+                </div>
+                <div class="form-row">
+                    <span mlang="SWS034">Password (Network Key)</span>:
+                </div>
+                <div class="form-row">
+                    <input type="text" id="passphrase" size="20" autocomplete="off" maxlength="64" name="wifiPassword2G">
+                    <span mlang="SGN012">(8-63 characters or 64 hex digits)</span>:
+                </div>
+            </div><!--2g_password_fields-->
+        </div> <!--2g_fields-->
+        
+        <div id="5g_fields">
+            <div class="form-row">
+                <span mlang="RAEM26">Name (SSID)</span>:
+            </div>
+            <div class="form-row">
+                <input type="text" id="ssid_an" name="wifiSsid5G" size="20" maxlength="32">
+            </div>
+        
+            <div class="space-divider">&nbsp;</div>
+            <div class="divider">&nbsp;</div>
+        
+            <div class="form-row">
+                <a href="javascript:loadhelp('','')" tabindex="-1">
+                    <b mlang="SWS036" >Security Options</b>:
+                </a>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container" >
+                    <div mlang="SWS016">None</div>
+                    <input type="radio" name="wifiSecurity5G" id="security_an_disable" value="0">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container" >
+                    <div>WPA2-Personal [AES]</div>
+                    <input type="radio" name="wifiSecurity5G" id="security_an_wpa2" value="2">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+        
+            <div class="space-divider">&nbsp;</div>
+            <div class="divider">&nbsp;</div>
+        
+            <div id="5g_password_fields">
+                <div class="form-row">
+                    <a href="javascript:loadhelp('','')" tabindex="-1">
+                        <b mlang="SWS036" >Security Options</b>
+                        &nbsp;
+                        [
+                        <b id="wpa2_text" >WPA2-PSK</b>
+                        ]
+                    </a>
+                </div>
+                <div class="form-row">
+                    <span mlang="SWS034">Password (Network Key)</span>:
+                </div>
+                <div class="form-row">
+                    <input type="text" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="wifiPassword5G">
+                    <span mlang="SGN012">(8-63 characters or 64 hex digits)</span>:
+                </div>
+            </div><!--5g_password_fields-->
+        </div> <!--5g_fields-->
+        
+        <!--To sync the id and values between the netgear auto IDs elements and the Pega cgi parameters -->
+        <input type="hidden" name="wifiIF">
+        
+    </form>
+    </div><!-- form-group end -->
+    
+    <div class="form-btn-row" id="form_btn_div">
+        <button type="button" value="cancel"  onClick="location.href='WLG_ap_bridge_wlan.html';" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+        <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004">Apply</button>
+    </div>
+</html>

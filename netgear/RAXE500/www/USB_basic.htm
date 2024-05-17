@@ -1,0 +1,326 @@
+<!DOCTYPE HTML>
+<html><head>
+<%13%>
+<title>NETGEAR Router <%14%></title> 
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+<link rel="stylesheet" href="css/form2.css">
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<style type="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+  
+    $(document).ready(function()
+    {	
+        if(need_to_check_browser_type())
+            window.location.href="USB_basic_main.htm";
+    
+    
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+function need_to_check_browser_type()
+{
+    var isIE = navigator.userAgent.search("MSIE") > -1; 
+    var isFirefox = navigator.userAgent.search("Firefox") > -1;
+    var isOpera = navigator.userAgent.search("Opera") > -1;
+    var isChrome = navigator.userAgent.search("Chrome") > -1;
+    var isSafari = navigator.userAgent.search("Safari") > -1;
+    var router_smb_link_style = document.getElementsByName('router_smb_link_style');
+
+    if(isChrome & router_smb_link_style[0].value!="others")
+        return true;
+    else if(!isChrome & isSafari & router_smb_link_style[0].value!="safari")
+        return true;
+    else if(isIE & router_smb_link_style[0].value!="explorer")
+        return true;
+    else if(!isSafari & !isIE & router_smb_link_style[0].value!="others")
+        return true;
+    else
+        return false;
+}     
+
+function remove_disk()
+{
+    var msg = ""
+	cf=document.forms[0];
+	
+	if(cf.usb_num.value == 0)
+	{
+         msg+= "<%2617%>.\n";
+    }
+    if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+    }
+    return true;
+}
+
+function loadSettings()
+{
+<%2618%>
+    var cf=document.forms[0];
+    
+    setUSBSupportLevel();
+    
+	if (cf.no_usb_device.value == 1)
+        {
+
+var removeButton;
+cf.Remove.disabled = 'true';
+removeButton=document.getElementsByName("Remove");
+removeButton[0].outerHTML='<button id="safely_remove" type="submit" disabled value="<%2619%>" name="Remove" class="new_apply_bt_disable ui-corner-all" onClick="buttonClick(this,\'<%2619%>\');return remove_disk();"><span style="padding-right: 12px; padding-left: 12px;"> <%2619%></span></button>';
+removeButton[0].style.cursor='default';
+    removeButton[0].style.color='#ffffff';
+    removeButton[0].style.background='#3F354B';
+    removeButton[0].style.height='34px';
+}
+
+    if (cf.umountsucc.value == "1")
+    {
+        //openWarnWindow();
+          alert("<%2620%>");
+    }
+    else if (cf.umountsucc.value == "2")
+    {
+        openWarnWindow();
+    }
+}
+
+function setUSBSupportLevel()
+{
+    var cf=document.forms[0];
+    var SupportLevel = cf.ReadyShareSupportedLevel.value;
+    var support_basic = SupportLevel & 1 ? 1 : 0;
+    var support_remote = SupportLevel & 16 ? 1 : 0;
+    var support_printing = SupportLevel & 4 ? 1 : 0;
+    var support_ready_vault = SupportLevel & 8 ? 1 : 0;
+
+    /* foxconn Han remove, 07/26/2018 I don't see USB_line
+    if(SupportLevel == 0)
+       document.getElementById("USB_line").style.visibility = "hidden";
+    else
+       document.getElementById("USB_line").style.visibility = "visible";
+    */
+     
+    /*
+    if(support_basic)
+        document.getElementById("USB_basic").style.display = "block";
+    else
+        document.getElementById("USB_basic").style.display = "none";
+    */
+
+<%2621%> 
+	if(support_remote)
+        document.getElementById("USB_readycloud").style.display = "block";
+    else
+        document.getElementById("USB_readycloud").style.display = "none";
+<%2622%>
+
+    if(support_printing)
+        document.getElementById("USB_printer").style.display = "block";
+    else
+        document.getElementById("USB_printer").style.display = "none";        
+
+    if(support_ready_vault)
+        document.getElementById("USB_vault").style.display = "block";
+    else
+        document.getElementById("USB_vault").style.display = "none";        
+}
+
+function openWarnWindow()
+{
+     var ischrome = navigator.userAgent.toLowerCase().indexOf('chrome');
+     if(ischrome > -1){
+         var nwin = window.open();
+         nwin.location = "USB_umount.htm";         
+     }else{
+         window.open('USB_umount.htm','','width=400,height=360,status=yes,resizable=yes,alwaysRaised=yes');
+     }
+}
+
+function UpdateAliveLink()
+{
+    parent.$('.SubMenuActive').addClass('SubMenu');
+    parent.$('.SubMenuActive').removeClass('SubMenuActive');
+    parent.$('#Advanced_Settings').addClass('SubMenuActive');
+    parent.$('#Advanced_Settings').removeClass('SubMenu');
+}
+
+//-->
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body onload="change_size(false);loadSettings();"  class="page-body" onResize="change_size(false);" >
+<img class="cover-image" src="<%67%>">
+<!--<img class="body-image" src="<%68%>"> -->
+<div id="full-page-container">
+
+<form id="target"  name="frmService" method="post" action="usb_adv.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+    <img class="subtop-image" src="<%69%>">
+<div class="subhead2"> <%2623%></div>
+<table border="0"    style="height:620px; position: relative; width: 825px;"  class="subhead2-table">
+
+<tr><td class="scrollpane-table-seperate-border pt-20 scroll_container" colspan="2"><div id="main" class="scroll-pane main_bas" style="height:620px;width:825px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+<tbody>
+
+<tr id="USB_basic" style="display: none;">
+    <td colspan="2" class="pb-0">
+       <label class="checkbox-container"><%2624%>
+            <input id="radio_basic" type="radio" name="USB_support" checked>
+            <span class="radio-checkmark"></span>
+	   </label>
+    </td>
+</tr>
+
+<%2625%>
+<tr id="USB_readycloud" style="display: block;">
+    <td colspan="2" class="pb-0">
+        <label class="checkbox-container"><%2626%>
+            <input id="usb_support_cloud" type="radio" name="USB_support"  onclick="location.replace('USB_basic_remote.htm');">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr> 
+<%2627%>
+
+<tr id="USB_printer" style="display: block;">
+    <td colspan="2" class="pb-0">
+        <label class="checkbox-container"><%496%>
+            <input id="usb_support_share_printer" type="radio" name="USB_support"  onclick="location.replace('USB_basic_printing.htm');">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>    
+<tr id="USB_vault" style="display: block;">
+    <td colspan="2" class="pb-0">
+        <label class="checkbox-container"><%497%>
+            <input id="usb_support_share_vault" type="radio" name="USB_support"  onclick="location.replace('USB_basic_vault.htm');">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr> 
+
+<tr style="display: none;"><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+<td colspan="2" ><a href="javascript:loadhelp('USB_basic','device')" 
+tabindex="-1"><b><%2628%>:</b></a>&nbsp;&nbsp;&nbsp;&nbsp; <a id="readyshare_link"><%2629%></a></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+<td colspan="2" ><a href="javascript:loadhelp('USB_basic','available_folder')" tabindex="-1"><b><%2630%></b></a></td>
+</tr>
+<tr>
+<td colspan="2" >
+<table id="available_folder" class="tbWhite" border="1" cellpadding="2" cellspacing="0" width="100%">
+
+<tr class="table_header">
+<td align="center" nowrap="nowrap" width="20%"><span class="thead"><%2631%></span></td>
+<td align="center" nowrap="nowrap" width="17%"><span class="thead"><%2632%></span></td>
+<td align="center" nowrap="nowrap" width="17%"><span class="thead"><%2633%></span></td>
+<td align="center" nowrap="nowrap" width="15%"><span class="thead"><%2634%></span></td>
+<td align="center" nowrap="nowrap" width="15%"><span class="thead"><%2635%></span></td>
+<td align="center" nowrap="nowrap" width="8%"><span class="thead"><%2636%></span></td>
+<td align="center" nowrap="nowrap" width="8%"><span class="thead"><%2637%></span></td>
+</tr>
+
+<%2638%>
+</table>
+</td>
+</tr>
+<tr><td colspan="2" ></td></tr>
+<tr>
+<td colspan="2" >
+<button id="edit" type="button" value="<%673%>" name="Edit" class="button-sty1" onclick="buttonClick(this,'<%673%>');UpdateAliveLink();location.href='USB_adv.htm'"><%673%></button></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+<td colspan="2" >
+<button id="safely_remove" type="submit" value="<%2619%>" name="Remove" class="new_apply_bt ui-corner-all" onclick="buttonClick(this,'<%2619%>');return remove_disk();"><span style="padding-right: 18px; padding-left: 18px;"><%2619%></span></button>
+</td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+
+</tbody></table></div></td></tr>
+
+<tbody><tr align="left" valign="middle">
+<td colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="refresh" value="<%71%>" onclick="buttonClick(this,'<%887%>');location.href='USB_basic.htm'" type="button" name="Refresh" class="button-common common_bt" ><%887%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" style="display: none; width: 802px; top: 510px; visibility: hidden;"> <iframe id="helpframe"  src="USB_basic_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();" style="width: 802px;"></iframe> </div> </td> </tr>
+</tbody></table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div class="subhead2-bottom" style="width: 852px;">
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%203%> </span>
+    <span id="help_button" class="button-help-arrow" style="position: absolute; left: 426px;">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%204%> </span>
+      </div>
+
+
+
+<input type="hidden" name="usb_num" value="<%2639%>">
+<input type="hidden" name="action" value="basic">
+<INPUT name=umountsucc type=hidden value="<%2640%>">
+<INPUT name=router_smb_link_style type=hidden value="<%2641%>">
+<input name="ReadyShareSupportedLevel" type="hidden" value="<%2284%>">
+<a name="helpframe-anchor"></a>
+</form>
+</div>
+</body></html>

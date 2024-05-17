@@ -1,0 +1,69 @@
+#!/bin/sh
+# complete recovery - un-init and recovery to the state of the last known DB.
+# Needed param: interface_name
+if [ -d /opt/lantiq ]
+then
+	vendor_name="lantiq"
+elif [ -d /opt/intel ]
+then
+	vendor_name="intel"
+else
+	vendor_name="puma"
+fi
+
+#UGW
+[ -e /opt/${vendor_name}/wave/scripts/fapi_wlan_wave_lib_common.sh ] && \
+[ ! "$LIB_COMMON_SOURCED" ] && . /opt/${vendor_name}/wave/scripts/fapi_wlan_wave_lib_common.sh
+
+[ -e /opt/${vendor_name}/wave/scripts/fapi_wlan_wave_lib_recovery.sh ] && \
+[ ! "$LIB_RECOVERY_SOURCED" ] && . /opt/${vendor_name}/wave/scripts/fapi_wlan_wave_lib_recovery.sh
+
+#RDKB
+[  -e /etc/wave/scripts/fapi_wlan_wave_lib_common.sh ] && \
+[ ! "$LIB_COMMON_SOURCED" ] && . /etc/wave/scripts/fapi_wlan_wave_lib_common.sh
+
+[ -e /etc/wave/scripts/fapi_wlan_wave_lib_recovery.sh ] && \
+[ ! "$LIB_RECOVERY_SOURCED" ] && . /etc/wave/scripts/fapi_wlan_wave_lib_recovery.sh
+
+script_name="$0"
+interface_name="$1"
+fw_dumps="$2"
+
+# Find the interface index and the radio index
+interface_index=`find_index_from_interface_name $interface_name`
+radio_name=${interface_name%%.*}
+radio_index=`find_index_from_interface_name $radio_name`
+
+sleep_time=${interface_name##wlan}
+
+echo "$script_name:begin" > /dev/console
+echo "sleep $sleep_time" > /dev/console
+sleep $sleep_time
+if [ ! -e "$INIT_COMPLETE_RECOVERY_FLAG" ]; then
+
+	touch $INIT_COMPLETE_RECOVERY_FLAG
+
+	echo "$script_name:complete recovery in progress trigger by $interface_name" > /dev/console
+
+	if [ -e $FAPI_RPC ]
+	then
+		fapi_wlan_cli reset
+	else
+		# for GEN6/5 needs to get FW dumps before execute complete recovery.
+		# if we are here the recovery daemon should be killed.
+		# we must not get FW evacuation in the middle of complete recovery.
+		[ -n "$(pgrep -f fapi_wave_recoveryd)" ] && killall fapi_wave_recoveryd 1>&2
+		echo "$script_name:complete recovery FW dumps in progress $interface_name" > /dev/console
+		[ "$fw_dumps" != "NO_DUMPS" ] && fw_dumps_colloect_and_save $interface_name
+
+		# execute complete recovery.
+		${ETC_PATH}/fapi_wlan_wave_hw_uninit
+		${ETC_PATH}/fapi_wlan_wave_recovery_init
+	fi
+else
+	echo "$script_name:complete recovery in progress cannot re-started for $interface_name" > /dev/console
+fi
+
+update_conf_out "wlan_configuration_status" "success"
+
+echo "$script_name:done" > /dev/console

@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="tools"></adv-child-menu>    
+  <div class="advance-box">
+    <x-help :text="lang_t('time.help')"></x-help>
+	<br><br>
+	<div class="fun-box">
+	  <table class="table">
+	    <tbody>
+		<tr>
+		  <td class="fun-left">{{ lang_t('time.current_time') }}</td>
+		  <td>
+		  	<input type="text" v-model="date" readonly>
+		  	&nbsp;&nbsp;
+		  	<a class="link" @click="submitLocaltime">{{ lang_t('time.copy_time') }}</a>
+		  </td>
+	  	</tr>
+	 	<tr>
+	   	  <td class="fun-left">{{ lang_t('time.time_zone') }}</td>
+	   	  <td>
+			 <select v-model="tz" class="long-select">
+			 <option value="UTC+12">(UTC-12:00) {{ lang_t('time.ntp25') }}</option>
+			 <option value="UTC+11">(UTC-11:00) {{ lang_t('time.ntp1') }}</option>
+			 <option value="UTC+10">(UTC-10:00) {{ lang_t('time.ntp2') }}</option>
+			 <option value="UTC+9">(UTC-09:00) {{ lang_t('time.ntp3') }}</option>
+			 <option value="UTC+8">(UTC-08:00) {{ lang_t('time.ntp4') }}</option>
+			 <option value="UTC+7">(UTC-07:00) {{ lang_t('time.ntp5') }}</option>
+			 <option value="UTC+6">(UTC-06:00) {{ lang_t('time.ntp6') }}</option>
+			 <option value="UTC+5">(UTC-05:00) {{ lang_t('time.ntp7') }}</option>
+			 <option value="UTC+4">(UTC-04:00) {{ lang_t('time.ntp8') }}</option>
+			 <option value="UTC+3">(UTC-03:00) {{ lang_t('time.ntp9') }}</option>
+			 <option value="UTC+2">(UTC-02:00) {{ lang_t('time.ntp10') }}</option> 
+			 <option value="UTC+1">(UTC-01:00) {{ lang_t('time.ntp11') }}</option>
+			 <option value="UTC+0">(UTC-00:00) {{ lang_t('time.ntp12') }}</option>
+			 <option value="UTC-1">(UTC+01:00) {{ lang_t('time.ntp13') }}</option>
+			 <option value="UTC-2">(UTC+02:00) {{ lang_t('time.ntp14') }}</option>
+			 <option value="UTC-3">(UTC+03:00) {{ lang_t('time.ntp15') }}</option>
+			 <option value="UTC-4">(UTC+04:00) {{ lang_t('time.ntp16') }}</option>
+			 <option value="UTC-5">(UTC+05:00) {{ lang_t('time.ntp17') }}</option>
+			 <option value="UTC-6">(UTC+06:00) {{ lang_t('time.ntp18') }}</option>
+			 <option value="UTC-7">(UTC+07:00) {{ lang_t('time.ntp19') }}</option>
+			 <option value="UTC-8">(UTC+08:00) {{ lang_t('time.ntp20') }}</option>
+			 <option value="UTC-9">(UTC+09:00) {{ lang_t('time.ntp21') }}</option>
+			 <option value="UTC-10">(UTC+10:00) {{ lang_t('time.ntp22') }}</option>
+			 <option value="UTC-11">(UTC+11:00) {{ lang_t('time.ntp23') }}</option>
+			 <option value="UTC-12">(UTC+12:00) {{ lang_t('time.ntp24') }}</option>
+		   	 </select>
+	   	  </td>
+	 	</tr>
+	  	<tr>
+		  <td class="fun-left"></td>
+		  <td>
+		  	<x-checkbox v-model="enable" @change="ntp_enable">{{ lang_t('time.sync_time') }}</x-checkbox>
+		  </td>
+	    </tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('time.server') }} 1</td>
+		  <td>
+		    <input type="text" v-model="server_a" v-verify="formRules" data-name="server_a" :disabled="ntp_set"> 
+		  </td>
+	    </tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('time.server') }} 2</td>
+		  <td>
+		    <input type="text" v-model="server_b" v-verify="formRules" data-name="server_b" :disabled="ntp_set">
+		  </td>
+	    </tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('time.server') }} 3</td>
+		  <td>
+		    <input type="text" v-model="server_c" v-verify="formRules" data-name="server_c" :disabled="ntp_set">
+		  </td>
+	    </tr>
+	    <tr><td colspan="2"></td></tr>
+	    <tr>
+		  <td class="fun-left"></td>
+		  <td>
+		    <button type="button" class="btn" @click.prevent="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  </td>
+	    </tr>
+	    </tbody>
+	  </table>
+	  <x-test ref="verifi"></x-test>
+  	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,ntp_set:!1,date:"",tz:"",enable:"",server_a:"",server_b:"",server_c:""}},computed:{formRules:function(){var s=this;return{server_a:function(t,e){var n=cs.string(t,"ntp");0==n?e(s.lang_t("time.msg1")):1==n||2==n?e(s.lang_t("time.msg4")):e()},server_b:function(t,e){var n=cs.string(t,"ntp");0==n?e(s.lang_t("time.msg2")):1==n||2==n?e(s.lang_t("time.msg4")):e()},server_c:function(t,e){var n=cs.string(t,"ntp");0==n?e(s.lang_t("time.msg3")):1==n||2==n?e(s.lang_t("time.msg4")):e()}}}},created:function(){var t=this;t.get_ntp_time(),countTimer=setInterval(function(){t.get_ntp_time("date")},5e3)},methods:{get_ntp_time:function(r){var a=this;uiPost.getNtpCfg(function(t){for(var e=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],n=0;n<12;n++)if(t.currentTime.split(" ")[1]==e[n])var s=n+1;var i=t.currentTime.replace(/\s+/g," ");a.date=i.split(" ")[5]+"-"+s+"-"+i.split(" ")[2]+" "+i.split(" ")[3],"date"!=r&&(a.server_a=t.server.split("*")[0],a.server_b=t.server.split("*")[1],a.server_c=t.server.split("*")[2],a.tz=t.tz,a.enable="1"==t.enable,a.ntp_set=!a.enable)})},ntp_enable:function(t){this.enable?this.ntp_set=!1:this.ntp_set=!0},addZero:function(t){return t<10&&(t="0"+t),t},getDate:function(t){this.date=t},submitLocaltime:function(){this.enable=!1;var t=new Date,e=t.getFullYear()+"-"+this.addZero(t.getMonth()+1)+"-"+this.addZero(t.getDate())+" "+this.addZero(t.getHours())+":"+this.addZero(t.getMinutes())+":"+this.addZero(t.getSeconds());this.date=e;var n={};n.host_time=this.date,uiPost.NTPSyncWithHost(n,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})},handleSubmit:function(){var t,e,n=this,s={},i=cs.string(n.server_a);return 0==i?(Cstool.Msg({content:this.lang_t("time.msg1"),title:""}),!1):1==i?(Cstool.Msg({content:this.lang_t("time.msg4"),title:""}),!1):(tmp=n.server_a,0==(t=cs.string(n.server_b))?(Cstool.Msg({content:this.lang_t("time.msg2"),title:""}),!1):1==t?(Cstool.Msg({content:this.lang_t("time.msg4"),title:""}),!1):(tmp+="*"+n.server_b,0==(e=cs.string(n.server_c))?(Cstool.Msg({content:this.lang_t("time.msg3"),title:""}),!1):1==e?(Cstool.Msg({content:this.lang_t("time.msg4"),title:""}),!1):(tmp+="*"+n.server_c,void Cstool.Verify(this.formRules,function(t){t&&(s.tz=n.tz,s.enable=1==n.enable?"1":"0",s.server=tmp,uiPost.setNtpCfg(s,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))}))}))))}}}</script><script src="/static/js/main.js"></script></body></html>

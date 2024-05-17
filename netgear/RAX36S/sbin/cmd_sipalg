@@ -1,0 +1,13 @@
+#!/bin/sh
+
+config=/bin/config
+
+kernel_version=`uname -r`
+
+if [ "$($config get wan_endis_sipalg)" != "1" ]; then
+	[ -d /sys/module/nf_conntrack_sip ] || /sbin/insmod /lib/modules/$kernel_version/kernel/net/netfilter/nf_conntrack_sip.ko
+        [ -d /sys/module/nf_nat_sip ] || /sbin/insmod /lib/modules/$kernel_version/kernel/net/netfilter/nf_nat_sip.ko
+else
+        [ -d /sys/module/nf_nat_sip ] && /sbin/rmmod nf_nat_sip.ko
+        [ -d /sys/module/nf_conntrack_sip ] && /sbin/rmmod nf_conntrack_sip.ko
+fi

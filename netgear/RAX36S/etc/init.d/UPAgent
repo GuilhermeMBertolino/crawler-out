@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+START=93
+
+start() {
+    /usr/bin/upagent 2>/dev/null &
+}
+
+stop() {
+    killall upagent
+    kill -17 1
+	rm /tmp/upagent.pid
+}
+
+boot() {
+    start
+}
+
+restart() {
+    stop
+	d2 -c upstatus.addXdeviceIdDone false 
+    start
+}
+
+#start_nonopenwrt used for NH ODM to start upagent module 
+#Just call this procedure to start upagent module for NH SKUs
+start_nonopenwrt() {
+  echo "start upagent module for Non openWRT ********* "
+  /usr/bin/upagent &
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"><link rel="stylesheet" href="/static/css/loading.css"></head><style>.cabe-table{border:2px #eee solid}</style><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="mesh"></adv-child-menu>
+  <br><br>
+  <div class="advance-box">
+	<div><x-help :text="lang_t('mesh.help_set')"></x-help></div>
+	<br><br>
+	<div class="fun-box">
+	<table>
+	    <tr><h3>{{lang_t('mesh.neighbor')}}</h3></tr>
+	    <tr>
+			<table class="t_table3 table-bordered table-striped">
+				<thead>
+					<tr>
+						<th>{{lang_t('rule.mac')}}</th>
+						<th>{{lang_t('mesh.mode')}}</th>
+						<th>{{lang_t('mesh.tx')}}</th>
+						<th>{{lang_t('mesh.rx')}}</th>
+						<th>{{lang_t('mesh.rate')}}(Mbps)</th>
+						<th>{{lang_t('mesh.rssi')}}</th>
+						<th>{{lang_t('mesh.expired')}}</th>
+					</tr>
+				</thead>
+				<tr v-for="(list,index) in device">
+					<td>{{list.hwaddr}}</td>
+					<td>{{list.mode }}</td>
+					<td>{{list.txPackets}}</td>
+					<td>{{list.rxPackets}}</td>
+					<td>{{list.linkRate}}</td>
+					<td>{{list.rssi}}%</td>
+					<td>{{list.establishExpTime }}</td>
+				</tr> 
+			</table>
+		</tr>
+		<br>
+		<tr><h3>{{lang_t('mesh.route')}}</h3></tr>
+		<tr>
+			<table class="t_table3 table-bordered table-striped">
+				<thead>
+				    <tr>
+				        <th>{{lang_t('mesh.dest_point')}}</th>
+				        <th>{{lang_t('mesh.next_point')}}</th>
+				        <th>{{lang_t('mesh.portal_enable')}}</th>
+				        <th>{{lang_t('mesh.metric')}}</th>
+				        <th>{{lang_t('mesh.hope_count')}}</th>
+				    </tr>
+				</thead>
+				<tr v-for="(list,index) in route">
+				    <td>{{list.destMAC}}</td>
+				    <td>{{list.nexthopMAC }}</td>
+				    <td>{{list.portalEnable}}</td>
+				    <td>{{list.metric}}</td>
+				    <td>{{list.hopcount}}</td>
+				</tr>      
+			</table>
+		</tr>
+		<br>
+		<tr><h3>{{lang_t('mesh.portal_table')}}</h3></tr>
+		<tr>
+			<table class="t_table3 table-bordered table-striped">
+				<thead>
+				    <tr>
+				    	<th>{{lang_t('rule.mac')}}</th>
+				    </tr>
+			    </thead>
+			<tr v-for="(list,index) in portal" align="center">
+        	    <td>{{list.PortalMAC}}</td>
+        	</tr>
+			</table>
+		</tr>
+	</table>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,device:[],route:[],portal:[]}},computed:{},created:function(){var e=this;uiPost.getMeshNeighborTable(function(t){e.device=t}),uiPost.getMeshRoutingTable(function(t){e.route=t}),uiPost.getMeshPortalTable(function(t){e.portal=t})},methods:{}}</script><script src="/static/js/main.js"></script></body></html>

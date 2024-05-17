@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Hotplug script to initialize USB dongles for LTE emulation
+#
+
+
+source /opt/lantiq/etc/ugw_notify_defs.sh
+
+if [ -n "$ACTION" ]; then
+    if [ "$ACTION" = "add" ]; then
+        if [ -n "$DEVPATH" ]; then
+			grep -q "Vendor=2357" /sys/kernel/debug/usb/devices && grep -q "ProdID=0601" /sys/kernel/debug/usb/devices &&{
+				if ! [ -f /tmp/usb-dongle-load.tmp ]; then
+					touch /tmp/usb-dongle-load.tmp
+
+					# Waiting for kernel modules inserted
+					lsmod | grep cdc_ether
+					while [ $? == 1 ]
+					do
+						sleep 2
+						lsmod | grep cdc_ether
+					done
+					
+					ifconfig wwan0 10.10.10.1 netmask 255.255.255.0 up
+#					ifconfig wwan0 up
+#					udhcpc -i wwan0
+				fi
+			} || true
+		fi
+    elif [ "$ACTION" = "remove" ]; then
+		grep -q "Vendor=2357" /sys/kernel/debug/usb/devices || grep -q "ProdID=0601" /sys/kernel/debug/usb/devices ||{
+			if [ -f /tmp/usb-dongle-load.tmp ]; then
+				rm -f /tmp/usb-dongle-load.tmp
+				ifconfig wwan0 down
+			fi
+		} || true
+    fi
+fi
+

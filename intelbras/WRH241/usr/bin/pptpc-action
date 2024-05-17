@@ -1,0 +1,387 @@
+#!/bin/sh
+
+. /usr/bin/pptpc-header
+
+PPTPC_QOS_ECHO=/var/run/pptpc.qos
+TC_UPLOAD_FLAG=/var/run/tc.upload
+DISCONNECT=0
+CONNECTING=1
+CONNECT=2
+DISCONNECTING=3
+  
+usage()
+{
+    echo "Usage:"
+    echo "pptpc-acton start   -> start PPTP client and autoconnect"
+    echo "pptpc-acton stop    -> stop all current PPTP connections, except WAN type PPTP connection"
+    echo "pptpc-acton restart -> restart PPTP client"
+    echo "pptpc-acton update  -> update PPTP clients' connection status for UI"
+    echo "pptpc-acton status  -> show PPTP clients' connection status from CSID"
+    echo "pptpc-acton show-config -> show PPTP clients' configuration from CSID"
+}
+
+on_3g_failover()
+{
+    tun_idx=$1
+
+    addr=`get_csid_addr $CSID_C_3G_AUTOBAK_ENABLE 0`
+    enable_3g_autobak=`rdcsman $addr u8` 
+
+    if [ ! $enable_3g_autobak -eq 1 ]; then
+        return 
+    fi    
+
+    addr=`get_csid_addr $CSID_S_3G_AUTOBAK_STATUS 0`
+    status=`rdcsman $addr u8`
+
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_IFNAME $i`
+    iface=`rdcsman $addr str`
+    if [ $status -ne $AUTOBAK_STATUS_3G_CONNECT ]; then
+        if [ ! -z "$iface" ]; then 
+            echo "Stop PPTP tunnel $tun_idx since 3G failover has stopped ... "
+			addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $tun_idx`
+			wrcsman "$addr $DISCONNECTING"
+            pptpc-stop $tun_idx 
+        fi
+        return
+    fi
+
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_IFNAME $i`
+    iface=`rdcsman $addr str`
+    if [ -z "$iface" ]; then 
+        echo "Start PPTP tunnel $tun_idx start automatically since 3G failover has started ... "
+        pptpc-start $tun_idx
+        return
+    fi
+
+    iface_exist=`ifconfig $iface 2>/dev/null | grep inet | cut -d ':' -f3 | cut -d ' ' -f1`
+    if [ ! -z "$iface_exist" ]; then 
+        return
+    fi     
+    echo "PPTP tunnel $tun_idx restart automatically (on 3G failover) ... "
+	addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $tun_idx`
+	wrcsman "$addr $DISCONNECTING"
+    pptpc-stop $tun_idx 
+    pptpc-start $tun_idx
+}
+
+update_status()
+{
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_QOS_ENABLE 0`
+    pptpc_qos_enable=`rdcsman $addr u8` 
+    if [ $pptpc_qos_enable -eq 1 ]; then
+        start_qos
+    else
+        stop_qos
+    fi
+ 
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $i`
+        cnt_pid=`rdcsman $addr s32` 
+        
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_USER_ENABLE $i`
+        tun_enable=`rdcsman $addr u8`
+        if [ $tun_enable -eq 0 ]; then
+            if [ $cnt_pid -gt 0 ] && [ $cnt_pid -lt 65535 ]; then
+				addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $i`
+				wrcsman "$addr $DISCONNECTING"
+                pptpc-stop $i 
+            fi
+            continue
+        fi   
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_CONNECT_TYPE $i`
+        cnt_type=`rdcsman $addr u8` 
+        if [ $cnt_type -eq $PPTP_CNT_TYPE_ONFAILOVER ]; then 
+            on_3g_failover $i 
+            continue
+        fi            
+ 
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_IFNAME $i`
+        iface=`rdcsman $addr str`
+        if [ -z "$iface" ]; then
+            if [ $cnt_type -eq $PPTP_CNT_TYPE_AUTORECONNECT ]; then
+                echo "PPTP tunnel $i restart automatically ... "
+                pptpc-start $i
+            elif [ $cnt_type -eq $PPTP_CNT_TYPE_ONDEMAND ]; then
+                echo "PPTP tunnel $i restarts on-demand... "
+                pptpc-ondemand start $i
+            fi  
+            continue
+        fi
+
+        iface_exist=`ifconfig $iface 2>/dev/null | grep inet | cut -d ':' -f3 | cut -d ' ' -f1`
+        if [ ! -z "$iface_exist" ]; then 
+            continue
+        fi
+
+        echo "PPTP tunnel $i is disconnect !"
+		addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $i`
+		wrcsman "$addr $DISCONNECTING"
+        pptpc-stop $i   # NOTE: dial-on-demand connection will restart here
+
+        if [ $cnt_type -eq $PPTP_CNT_TYPE_AUTORECONNECT ]; then
+            echo "PPTP tunnel $i restart automatically ... "
+            pptpc-start $i
+        fi
+    done     
+}
+
+show_cnt_status()
+{
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_TUNLNAME $i`
+        tun_name=`rdcsman $addr str`
+        if [ -z "$tun_name" ]; then
+            continue
+        fi  
+
+        echo "PPTP Tunnel $i"
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_IFNAME $i` 
+        echo IFace: `rdcsman $addr str`
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $i` 
+        echo PID: `rdcsman $addr s32`
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_VIRTUAL_IP $i`
+        echo Virtual IP: `rdcsman $addr ipv4`
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_REMOTE_IP $i` 
+        echo Remote IP: `rdcsman $addr ipv4`
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_REAL_IP $i` 
+        echo Real IP: `rdcsman $addr ipv4`
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_ID $i` 
+        echo Connect ID: `rdcsman $addr u8`
+        
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_TYPE $i` 
+        echo Connect Type: `rdcsman $addr u8`
+        
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $i` 
+        echo Connect Status: `rdcsman $addr u8`
+        echo ""
+    done 
+}
+
+show_config()
+{
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_ENABLE 0`
+    pptp_enable=`rdcsman $addr u8`
+    if [ $pptp_enable -eq 1 ]; then
+        echo "PPTP Client is enable"
+    else
+        echo "PPTP Client is disenable"  
+    fi
+
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_TUNLNAME $i`
+        tun_name=`rdcsman $addr str`
+        if [ -z "$tun_name" ]; then
+            continue
+        fi
+        
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_USER_ENABLE $i`
+        user_enable=`rdcsman $addr u8`
+        echo "Tunnel #$i ($tun_name) user_enable: $user_enable"
+        
+        #addr=`get_csid_addr $CSID_C_PPTP_CLI_PEERIP $i`
+        #peer_ip=`rdcsman $addr ipv4`
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_PEERIP_STR $i`
+        peer_ip=`rdcsman $addr str`        
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_USER $i`
+        account=`rdcsman $addr str`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_PASSWORD $i`
+        passwd=`rdcsman $addr str`
+        echo "peer_ip: $peer_ip account: $account passwd: $passwd "
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_ROUTE $i`
+        route=`rdcsman $addr str`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_CONNECT_TYPE $i`
+        cnt_type=`rdcsman $addr u8`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_MPPE $i`
+        mppe=`rdcsman $addr u8`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_NAT $i`
+        nat=`rdcsman $addr u8`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_ACTIVE $i`
+        is_active=`rdcsman $addr u8`
+        echo "route: $route, cnt_type: $cnt_type, is_mppe: $mppe, is_nat: $nat, is_active $is_active"
+        echo ""
+    done 
+    exit 1
+}       
+
+start_cnt()
+{
+    # HW NAT may affect VPN throughput
+    [ "`lsmod | grep hw_nat`" != "" ] && rmmod hw_nat
+
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $i`
+        wrcsman "$addr 0"
+		addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $i`
+		wrcsman "$addr $DISCONNECT"
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_USER_ENABLE $i`
+        tun_enable=`rdcsman $addr u8`
+        if [ $tun_enable -eq 0 ]; then
+            continue
+        fi
+
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $i`
+        cnt_pid=`rdcsman $addr s32`
+
+        addr=`get_csid_addr $CSID_C_PPTP_CLI_CONNECT_TYPE $i`
+        cnt_type=`rdcsman $addr u8`
+
+        if [ $cnt_pid -eq 0 ]; then 
+            if [ $cnt_type -eq $PPTP_CNT_TYPE_AUTORECONNECT ]; then
+                echo "PPTP tunnel $i starts automatically ... "
+                pptpc-start $i
+            elif [ $cnt_type -eq $PPTP_CNT_TYPE_ONDEMAND ]; then
+                echo "PPTP tunnel $i starts on-demand... "
+                pptpc-ondemand start $i
+            fi
+        fi
+    done 
+}
+
+stop_cnt()
+{
+    for i in $TUN_LIST
+    do
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $i`
+        cnt_pid="`rdcsman $addr s32`"
+        if [ $cnt_pid -gt 0 ] && [ $cnt_pid -lt 65535 ]; then
+            echo "PPTP tunnel $i disconnect !"
+			addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $i`
+			wrcsman "$addr $DISCONNECTING"
+            pptpc-stop $i 
+            wrcsman "$addr 0"
+        else 
+            addr=`get_csid_addr $CSID_C_PPTP_CLI_CONNECT_TYPE $i`
+            cnt_type=`rdcsman $addr u8`
+            if [ $cnt_type -eq $PPTP_CNT_TYPE_ONDEMAND ]; then
+                echo "PPTP tunnel $i stop on-demand... "
+                pptpc-ondemand stop $i
+            fi  
+        fi
+    done   
+    killall pptp-ondemand > /dev/null 2>&1
+}
+
+start_qos()
+{
+    addr=`get_csid_addr $CSID_S_LOCAL_WAN_IF_NAME 0`
+    wan_if="`rdcsman $addr str`"  
+    [ -z "$wan_if" ] && return
+    [ -f $PPTPC_QOS_ECHO ] && return
+    touch $PPTPC_QOS_ECHO 
+
+    #addr=`get_csid_addr $CSID_C_QOS_ENABLE`
+    #qos_enable="`rdcsman $addr u8`"    
+    if [ ! -f $TC_UPLOAD_FLAG ]; then
+        logger -t "pptpc" "Create Queue discipline for PPTP Client !"
+        echo "Create Queue discipline for PPTP Client !"
+        echo 1 > $TC_UPLOAD_FLAG
+
+        local est_max_bw="10Mbps"
+        local reserved_bw="32Kbps" 
+
+        tc qdisc add dev $wan_if root handle 10: htb 
+        tc class add dev $wan_if parent 10:0 classid 10:1  htb rate $est_max_bw ceil $est_max_bw
+        tc class add dev $wan_if parent 10:1 classid 10:10 htb rate $reserved_bw ceil $est_max_bw prio 1
+        tc qdisc add dev $wan_if parent 10:10 handle 20: pfifo
+        tc filter add dev $wan_if protocol ip parent 10:0 prio 1 handle 10 fw classid 10:10  
+    else
+        logger -t "pptpc" "Queue discipline already existed ! Just map Echo Request/Response to its higher priority queue !"
+        echo "Queue discipline already existed ! Just map Echo Request/Response to its higher priority queue !"
+
+        local idx=`cat $TC_UPLOAD_FLAG` 
+        echo $((idx+1)) > $TC_UPLOAD_FLAG
+    fi
+
+    local prio=10
+    iptables -t mangle -N pptpc_qos
+    iptables -t mangle -A POSTROUTING -j pptpc_qos 
+    iptables -t mangle -A pptpc_qos -p tcp --dport 1723 -j MARK --set-mark $prio
+    iptables -t mangle -A pptpc_qos -p 47 -m length --length :64 -j MARK --set-mark $prio 
+}
+
+stop_qos()
+{       
+    [ ! -f $PPTPC_QOS_ECHO ] && return 
+    rm -f $PPTPC_QOS_ECHO
+
+    #addr=`get_csid_addr $CSID_C_QOS_ENABLE`
+    #qos_enable="`rdcsman $addr u8`" 
+    addr=`get_csid_addr $CSID_S_LOCAL_WAN_IF_NAME 0`
+    wan_if="`rdcsman $addr str`" 
+    if [ ! -f $TC_UPLOAD_FLAG ]; then
+        tc qdisc del dev $wan_if root > /dev/null 2>&1 
+    else
+        local idx=`cat $TC_UPLOAD_FLAG` 
+        if [ $idx -eq 0 ] || [ $idx -eq 1 ]; then
+            tc qdisc del dev $wan_if root > /dev/null 2>&1
+            rm -f $TC_UPLOAD_FLAG
+        else        
+            echo $((idx-1)) > $TC_UPLOAD_FLAG    
+            echo "Someone uses the priority qeueues, don't remove it !"
+        fi 
+    fi
+
+    iptables -t mangle -D POSTROUTING -j pptpc_qos > /dev/null 2>&1
+    iptables -t mangle -F pptpc_qos                > /dev/null 2>&1
+    iptables -t mangle -X pptpc_qos                > /dev/null 2>&1  
+}
+
+###################### Main ##############################
+main()
+{
+    case "$1" in
+        restart)
+            stop_cnt
+            stop_qos
+            start_cnt
+            ;;  
+
+        start)
+            start_cnt
+            ;;
+
+        stop)
+            stop_cnt
+            stop_qos
+            ;;	        
+
+        status)
+            show_cnt_status
+            ;;
+
+        show-config)
+            show_config
+            ;;
+
+        update) 
+            update_status
+            ;;
+            
+        *)
+            usage
+            exit 1
+    esac
+}
+
+main $1
+			
+

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+ra0check()
+{	
+	RA0=`ifconfig | grep ra0`
+
+	if [  X"$RA0" != X ] ; then
+		echo 1 > /ram/tmp/WirelessChcek 
+	fi
+	return 0
+}
+
+rai0check()
+{	
+	RAI0=`ifconfig | grep rai0`
+
+	if [  X"$RAI0" != X ] ; then
+		echo 1 > /ram/tmp/WirelessChcek 
+	fi
+	return 0
+}
+
+## Main ##############
+case "$1" in
+	ra0)
+		ra0check
+		;;
+
+	rai0)
+		rai0check
+		;;
+	*)
+		exit 1 ;;
+esac
+exit 0

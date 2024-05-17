@@ -1,0 +1,175 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/style.css"></head><style>.main-pad{padding:1% 3% 1% 3%}.label-list{margin-bottom:15px;border-radius:10px;display:flex}.label-list label{padding:8px 10px;min-width:26px;border:1px #ddd solid;display:inline-block;text-align:center}.label-list label.active{background:#43a7ff;color:#fff}.checkbox{float:right;margin:-7px 0 0 0}</style><body><div id="app"></div><script type="text/x-template" id="main"><div>
+	<div class="toper">
+  	<phone-back type="custom" :title="lang_t('menu.easymesh_set')" @on-click="backFun"></phone-back>
+  </div>
+  
+  <div class="content">
+  	<div class="group">
+	    <div class="item-l">{{ lang_t('easymesh.state') }}:</div>
+	    <div class="item-r">
+			  <x-switch v-model="enabled" @change="submit_status"></x-switch>
+	    </div>
+	  </div>
+    <div v-show="enabled">
+		  <div class="group">
+		    <div class="item-l">{{ lang_t('easymesh.mode') }}:</div>
+		    <div class="item-r">
+				  <select v-model="mode" @change="modeChange">
+				    <option value="controller">{{lang_t('easymesh.controller')}}</option>
+						<option value="agent">{{lang_t('easymesh.agent')}}</option>
+						<option value="auto" v-if="globalConfig.autoMeshModeSupport">{{ lang_t('wifi.auto') }}</option>
+				  </select>
+		    </div>
+		  </div>
+
+		  <div class="group" v-if="origMode == 'auto'">
+				<div class="item-l">{{ lang_t('easymesh.character') }}:</div>
+				<div class="item-r">
+				  <div>{{isConfig=='unknown'?lang_t('common.unknown'):isConfig}}</div>
+				</div>
+		  </div>
+
+		  <div class="group" v-show="!applyShow && isConfig=='agent'">
+				<div class="item-l">{{ lang_t('easymesh.link_status') }}:</div>
+				<div class="item-r">
+				  <div v-html="linkStatusHtml"></div>
+				</div>
+		  </div>
+
+		  <div class="login-bottom">
+		    <div v-show="(!bssShow && isConfig!='unknown') || applyShow">	
+			  <button class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		    </div>
+		    <div v-show="(bssShow || isConfig=='unknown') && !applyShow">
+		      <button class="btn" @click="startFun">{{ lang_t('easymesh.pair') }}</button>
+		    </div>
+		  </div>
+		</div>  
+  
+		<div v-show="enabled && bssShow && !applyShow">
+			<div class="group" style="margin-top: 20px;">
+				<div class="item-l">{{ lang_t('easymesh.bss') }}</div>
+			</div>
+		  <div class="group" v-show="isConfig == 'agent'">
+				<div class="item-l">2.4G{{ lang_t('easymesh.back_haul_pre') }}:</div>
+				<div class="item-r">
+				  <select v-model="backHaulPre">
+						<option value="0">{{ lang_t('easymesh.disable') }}</option>
+						<option value="3">{{ lang_t('easymesh.low') }}</option>
+						<option value="1">{{ lang_t('easymesh.high') }}</option>
+				  </select>
+				</div>
+		  </div>
+
+		  <div class="group" v-show="isConfig == 'agent'">
+				<div class="item-l">5G{{ lang_t('easymesh.back_haul_pre') }}:</div>
+				<div class="item-r select_input">
+				  <select v-model="backHaulPre5g">
+					<option value="0">{{ lang_t('easymesh.disable') }}</option>
+					<option value="3">{{ lang_t('easymesh.low') }}</option>
+					<option value="1">{{ lang_t('easymesh.high') }}</option>
+				  </select>
+				</div>
+		  </div>
+
+		  <div class="group" v-show="">
+				<div class="item-l"><p>{{ lang_t('easymesh.steering') }}:</p></div>
+				<div class="item-r">
+				  <x-switch v-model="steering"></x-switch>
+				</div>
+		  </div>
+
+		  <div class="group" v-show="">
+		  	<div class="item-l"><p>{{lang_t('easymesh.rssi_threshold')}}:<br><small>({{ lang_t('easymesh.range') }}:-90~0)</small></p></div>
+				<div class="item-r">
+				  <input class="right" type="text" v-model="rssiThreshold" maxlength="3">
+				</div>
+		  </div>
+
+		  <div class="group" v-show="isConfig == 'controller'">
+				<div class="item-l">2.4G {{lang_t('easymesh.channel_pre')}}:</div>
+				<div class="item-r select_input">
+				  <select v-model="channelPre">
+					<!-- <option value="0">{{ lang_t('wifi.auto') }}</option> -->
+					<option v-for="v in channel2gOption" :key="v" :value="v">{{ v }}</option>
+				  </select>
+				</div>
+		  </div>
+
+		  <div class="group" v-show="isConfig == 'controller'">
+				<div class="item-l">5G {{lang_t('easymesh.channel_pre')}}:</div>
+				<div class="item-r select_input">
+				  <select v-model="channelPre5g">
+					<!-- <option value="0">{{ lang_t('wifi.auto') }}</option> -->
+					<option v-for="_channel in channel5gOption" :value="_channel">{{ _channel }}</option>
+				  </select>
+				</div>
+		  </div>	
+
+		  <div v-show="isConfig=='controller'">
+				<div class="content">
+					<div>
+					  <div class="label-list">
+						<label style="width:50%;" :class="[0==bIndex?'active':'']" @click="bIndex=0;initData(1);">2.4G</label>
+						<label style="width:50%;" :class="[1==bIndex?'active':'']" @click="bIndex=1;initData(1);">5G</label>
+					  </div>
+					  <div class="label-list">
+							<label :style="{width: apLabelWidth}" :class="[v==apIndex?'active':'']" @click="apIndex=v;initData(2);" v-for="(a,v) in apNum" v-show="(wifiEnables0[v]==0&&bIndex==0)||(wifiEnables1[v]==0&&bIndex==1)">AP-{{v}}</label>
+					  </div>
+					</div>
+				  <div class="group">		
+						<div class="item-l">{{ lang_t('wifi.hide_ssid') }}:</div>
+						<div class="item-r checkbox">		  
+						  <span>
+								<x-checkbox v-model="hssid" ></x-checkbox>
+						  </span>
+						</div>
+				  </div>
+
+				  <div class="group">		
+						<div class="item-l">{{ lang_t('wifi.ssid') }}:</div>
+						<div class="item-r">
+						  <input v-model="ssid" maxlength="32" />
+						</div>
+				  </div>
+
+				  <div class="group">		
+						<div class="item-l">{{ lang_t('wifi.pass_state') }}:</div>
+						<div class="item-r checkbox">
+						  <span>
+								<x-checkbox v-model="ispass"></x-checkbox>
+						  </span>
+						</div>
+				  </div>
+
+				  <div class="group" v-show="ispass">		
+						<div class="item-l">{{ lang_t('wifi.pass') }}:</div>
+						<div class="item-r">
+						  <input v-model="key" maxlength="63" v-pass :disabled="!ispass || wifiOff" />
+						</div>
+				  </div>
+
+				  <div class="group" v-if="globalConfig.wifiWpa2Wpa3Support && ispass">	
+						<div class="item-r">{{ lang_t('wifi.wpa3') }}:</div>	
+						<div class="item-r">		  
+						  <span style="padding-left:10px;">
+								<x-checkbox v-model="wpaMode" @change="tipsFun"></x-checkbox>
+						  </span>
+						</div>
+				  </div>	
+				</div>
+		  </div>	
+			
+			<div class="footer" v-if="enabled && bssShow && !applyShow">
+			  <button class="btn" @click="applyFun()">{{ lang_t('common.apply') }}</button>
+			</div>
+
+		  <!-- <div v-show="isConfig=='agent'">
+				<div class="footer">
+				  <button class="btn" @click="applyFun()">{{ lang_t('common.apply') }}</button>
+				</div> 
+		  </div> -->
+		</div>
+	</div>
+  
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,isBrowser:!0,homepage:!0,addShow:!1,device:{},neighbor_devices:{},isConfig:!1,enabled:!1,origMode:"controller",mode:"controller",deviceName:"",ifname:"0",linkStatus:""}},computed:{linkStatusHtml:function(){var e=this.lang_t("index.disconnected"),t="#db3b21";return"connected"==this.linkStatus&&(e=this.lang_t("index.connected"),t="#28a745"),'<span style="color:'+t+';">'+e+"</span>"}},created:function(){var n=this;(0<=location.href.indexOf("d.carystudio.com")||self!=top)&&(this.isBrowser=!1),uiPost.getEasyMeshCfg(function(e){n._rawData=e,n.enabled="1"==e.enabled,n.isConfig="1"==e.enabled,n.linkStatus=e.status,n.mode=e.mode,n.origMode=e.mode,n.deviceName=e.deviceName,n.ifname=e.ifname,n.addShow="agent"==e.mode}),uiPost.getEasyMeshList(function(e){if(e&&null!=e.ip_addr&&(n.device=e,n.neighbor_devices=n.device.neighbor_devices,null!=n.neighbor_devices))for(var t=0;t<n.neighbor_devices.length;t++)n.neighbor_devices.neighbor_mac!=n.device.child_devices.mac_address||(n.neighbor_devices[t].ip_addr=n.device.child_devices[t].ip_addr)})},methods:{backFun:function(){this.homepage?location.href="home.html?timestamp="+(new Date).getTime():this.homepage=!0},stringConver:function(e){if(null!=e){for(var t="",n=0;n<e.length;n++)t+=e[n],n%2==1&&11!=n&&(t+=":");return t.toUpperCase()}},modeChange:function(){this.isConfig=this.mode==this.origMode&&"1"==this._rawData.enabled},stateChange:function(e){var n=this;if(e!=n.isConfig&&!e){var t={enabled:"0"};uiPost.setEasyMeshCfg(t,function(e){var t=15;null!=e.wtime&&0!=e.wtime&&(t=e.wtime),Cstool.Mark({type:"load",time:t,content:n.lang_t("common.effective"),success:function(){location.href=location.href}})})}},getEasyMeshStatus:function(){var t=this;uiPost.getEasyMeshStatus({},function(e){"connected"==e.status?Cstool.Msg({content:t.lang_t("mesh.success"),type:"alert",ok:function(){self.location.href="/basic/index.html?time="+(new Date).getTime()}}):Cstool.Msg({content:t.lang_t("mesh.fail"),type:"alert",ok:function(){location.href=location.href}})})},startFun:function(){uiPost.setEasyMeshStart({},function(e){var t=10;e.wtime&&"0"!=e.wtime?(t=e.wtime,Cstool.Count(t,"js",function(){location.href=location.href})):location.href=location.href})},clearFun:function(){var n=this;Cstool.Msg({content:n.lang_t("mesh.msg9"),type:"confirm",ok:function(){uiPost.clearEasyMeshCfg(postVar,function(e){var t=15;null!=e.wtime&&0!=e.wtime&&(t=e.wtime),Cstool.Mark({type:"load",time:t,content:n.lang_t("common.effective"),success:function(){location.href=location.href}})})}})},errorFun:function(e){Cstool.Mark({content:e,l_text:this.lang_t("common.back")})},verifyData:function(){var e=this,t=this.errorFun,n=cs.commentstr(this.deviceName);return 0==n?(t(e.lang_t("mesh.device_name")+e.lang_t("mesh.msg10")),!1):1==n?(t(e.lang_t("mesh.device_name")+e.lang_t("mesh.msg11")),!1):void 0},handleSubmit:function(){var n=this,e={};0!=this.verifyData()&&(e.enabled="1",e.mode=n.mode,e.deviceName=n.deviceName,e.ifname=n.ifname,uiPost.setEasyMeshCfg(e,function(e){var t=15;null!=e.wtime&&0!=e.wtime&&(t=e.wtime),Cstool.Mark({type:"load",time:t,content:n.lang_t("common.effective"),success:function(){location.href=location.href}})}))}}}</script><script src="/static/js/main.js"></script></body></html>

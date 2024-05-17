@@ -1,0 +1,103 @@
+#!/bin/sh
+
+. /etc/wlan/wifi_conf
+
+wl0_channel=`nvram get wl0_channel`
+wl1_channel=`nvram get wl1_channel`
+wl2_channel=`nvram get wl2_channel`
+
+wl0_bw_cap=`nvram get wl0_bw_cap`
+wl1_bw_cap=`nvram get wl1_bw_cap`
+wl2_bw_cap=`nvram get wl2_bw_cap`
+
+if [ "$is_dual_band" = "1" ]; then
+	## wl1_chanspec
+	if [ "$wl1_bw_cap" = "1" ]; then
+		wl1_chanspec=`eval cat /etc/wlan/wl_5GL_channels |grep -x $wl1_channel`
+	elif [ "$wl1_bw_cap" = "3" ]; then
+		wl1_chanspec=`eval cat /etc/wlan/wl_5GL_channels |grep -x ${wl1_channel}u`
+		if [ "x$wl1_chanspec" = "x" ]; then
+			wl1_chanspec=`eval cat /etc/wlan/wl_5GL_channels |grep -x ${wl1_channel}l`
+		fi
+	elif [ "$wl1_bw_cap" = "7" ]; then
+		wl1_chanspec=`eval cat /etc/wlan/wl_5GL_channels |grep ^$wl1_channel |grep 80`
+	else #15
+		wl1_chanspec=`eval cat /etc/wlan/wl_5GL_channels |grep ^$wl1_channel |grep 160`
+	fi
+
+	if [ "x$wl1_chanspec" = "x" ]; then
+		echo "wl1 don't suppurt this channel !!!'"
+	else
+		nvram set wl1_chanspec=$wl1_chanspec
+	fi
+
+	## wl0_chanspec
+	nmode_2g=$(nvram get wl0_nmode)
+	if [ "$wl0_bw_cap" = "1" -o "$nmode_2g" = "0" ]; then
+		nvram set wl0_chanspec=$wl0_channel
+	elif [ "$wl0_channel" = "0" ]; then
+		nvram set wl0_chanspec=$wl0_channel
+	elif [ "$wl0_bw_cap" = "3" ]; then
+		if [ "$wl0_channel" -lt "6" ]; then
+			eval nvram set wl0_chanspec=${wl0_channel}l
+		else
+			eval nvram set wl0_chanspec=${wl0_channel}u
+		fi
+	fi
+else
+	## wl0_chanspec
+	if [ "$wl0_bw_cap" = "1" ]; then
+		wl0_chanspec=`eval cat /etc/wlan/wl_5GH_channels | grep ^1 |grep -x $wl0_channel`
+	elif [ "$wl0_bw_cap" = "3" ]; then
+		wl0_chanspec=`eval cat /etc/wlan/wl_5GH_channels | grep ^1 |grep -x ${wl0_channel}u`
+		if [ "x$wl0_chanspec" = "x" ]; then
+			wl0_chanspec=`eval cat /etc/wlan/wl_5GH_channels | grep ^1 |grep -x ${wl0_channel}l`
+		fi
+	elif [ "$wl0_bw_cap" = "7" ]; then
+		wl0_chanspec=`eval cat /etc/wlan/wl_5GH_channels | grep ^1 |grep  $wl0_channel |grep 80`
+	else #15
+		wl0_chanspec=`eval cat /etc/wlan/wl_5GH_channels | grep ^1 |grep  $wl0_channel |grep 160`
+	fi
+
+	if [ "x$wl0_chanspec" = "x" ]; then
+		echo "wl0 don't suppurt this channel !!!'"
+	else
+		nvram set wl0_chanspec=$wl0_chanspec
+	fi
+
+	## wl1_chanspec
+	nmode_2g=$(nvram get wl1_nmode)
+	if [ "$wl1_bw_cap" = "1" -o "$nmode_2g" = "0" ]; then
+		nvram set wl1_chanspec=$wl1_channel
+	elif [ "$wl1_channel" = "0" ]; then
+		nvram set wl1_chanspec=$wl1_channel
+	elif [ "$wl1_bw_cap" = "3" ]; then
+		if [ "$wl1_channel" -lt "6" ]; then
+			eval nvram set wl1_chanspec=${wl1_channel}l
+		else
+			eval nvram set wl1_chanspec=${wl1_channel}u
+		fi
+	fi
+
+	## wl2_chanspec
+	if [ "$is_dual_band" = "0" ]; then 
+		if [ "$wl2_bw_cap" = "1" ]; then
+			wl2_chanspec=`eval cat /etc/wlan/wl_5GL_channels | grep -v ^1 |grep -x $wl2_channel`
+		elif [ "$wl2_bw_cap" = "3" ]; then
+			wl2_chanspec=`eval cat /etc/wlan/wl_5GL_channels | grep -v ^1 |grep -x ${wl2_channel}u`
+			if [ "x$wl2_chanspec" = "x" ]; then
+				wl2_chanspec=`eval cat /etc/wlan/wl_5GL_channels | grep -v ^1 |grep -x ${wl2_channel}l`
+			fi
+		elif [ "$wl2_bw_cap" = "7" ]; then
+			wl2_chanspec=`eval cat /etc/wlan/wl_5GL_channels | grep -v ^1 |grep  $wl2_channel |grep 80`
+		else #15
+			wl2_chanspec=`eval cat /etc/wlan/wl_5GL_channels | grep -v ^1 |grep  $wl2_channel |grep 160`
+		fi
+
+		if [ "x$wl2_chanspec" = "x" ]; then
+			echo "wl2 don't suppurt this channel !!!'"
+		else
+			nvram set wl2_chanspec=$wl2_chanspec
+		fi
+	fi
+fi

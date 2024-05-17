@@ -1,0 +1,39 @@
+#!/bin/sh
+
+add_vpn_monitor_rule() {
+    # VPN dev hostname from netbios
+    iptables -w -t filter -I input_rule -i tun0 -p udp --dport 137 -j NFLOG --nflog-group 1
+    iptables -w -t filter -I input_rule -i tun0 -p udp --dport 138 -j NFLOG --nflog-group 1
+    iptables -w -t filter -I forwarding_rule -i tun0 -p udp --dport 137 -j NFLOG --nflog-group 1
+    iptables -w -t filter -I forwarding_rule -i tun0 -p udp --dport 138 -j NFLOG --nflog-group 1
+    # VPN dev hostname from DHCP
+    iptables -w -t filter -I input_rule -i tun0 -p udp --dport 67 -j NFLOG --nflog-group 1
+    iptables -w -t filter -I forwarding_rule -i tun0 -p udp --dport 67 -j NFLOG --nflog-group 1
+}
+
+del_vpn_monitor_rule() {
+    iptables -t filter -L input_rule | grep 'nflog-group 1' > /dev/null
+    return_code=$?
+
+    if [ $return_code == 0 ]; then
+        # VPN dev hostname from netbios
+        iptables -w -t filter -D input_rule -i tun0 -p udp --dport 137 -j NFLOG --nflog-group 1
+        iptables -w -t filter -D input_rule -i tun0 -p udp --dport 138 -j NFLOG --nflog-group 1
+        iptables -w -t filter -D forwarding_rule -i tun0 -p udp --dport 137 -j NFLOG --nflog-group 1
+        iptables -w -t filter -D forwarding_rule -i tun0 -p udp --dport 138 -j NFLOG --nflog-group 1
+        # VPN dev hostname from DHCP
+        iptables -w -t filter -D input_rule -i tun0 -p udp --dport 67 -j NFLOG --nflog-group 1
+        iptables -w -t filter -D forwarding_rule -i tun0 -p udp --dport 67 -j NFLOG --nflog-group 1
+    fi
+}
+
+tun_en=`uci get openvpn.openvpn_tun.enabled`
+tap_en=`uci get openvpn.openvpn_tap.enabled`
+
+if [ $tun_en == '1' -a $tap_en == '1' ]; then
+    del_vpn_monitor_rule
+    add_vpn_monitor_rule
+else
+    del_vpn_monitor_rule
+fi
+

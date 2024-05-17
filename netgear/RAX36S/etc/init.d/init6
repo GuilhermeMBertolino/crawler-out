@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+#START=80
+
+NET6CONF="/etc/net6conf/net6conf"
+CONFIG="/bin/config"
+ECHO="/bin/echo"
+
+start_netwall()
+{
+	/usr/sbin/net-wall -6 restart
+
+	local ip6_cmd="$(which ip6tables)"
+	#delete INPUT chain "IPv6-CONE"
+	local rules=`$ip6_cmd -vnL INPUT | sed '1,2d' | grep -n IPv6-CONE |awk  -F: '{print  $1}'`
+	$ip6_cmd -D INPUT $rules
+	#delete FORWARD chain "IPv6-CONE"
+	rules=`$ip6_cmd -vnL FORWARD | sed '1,2d' | grep -n IPv6-CONE |awk  -F: '{print  $1}'`
+	$ip6_cmd -D FORWARD $rules
+	#delete mangle table PREROUTING chain "IPv6-CONE"
+	rules=`$ip6_cmd -t mangle -vnL PREROUTING | sed '1,2d' | grep -n IPv6-CONE |awk  -F: '{print  $1}'`
+	$ip6_cmd -t mangle -D PREROUTING $rules
+}
+
+start_radvd()
+{
+	local lanip6=`$CONFIG get ipv6_fixed_lan_ip`
+	local lanprelen=`$CONFIG get ipv6_fixed_lan_prefix_len`
+	local lanprefix=$(6rdcalc "$lanip6/$lanprelen" "0.0.0.0/32")
+	local lanprefix_fixed=${lanprefix%%/*}
+
+	local wanip6=`$CONFIG get ipv6_fixed_wan_ip`
+	local wanprelen=`$CONFIG get ipv6_fixed_wan_prefix_len`
+	local wanprefix=$(6rdcalc "$wanip6/$wanprelen" "0.0.0.0/32")
+	local wanprefix_fixed=${wanprefix%%/*}
+
+
+	if [ "$lanprefix_fixed" != "3ffe:501:ffff:100::" ]; then
+		sed -i '/3ffe:501:ffff:100::/ s/3ffe:501:ffff:100::/'${lanprefix_fixed}'/g' /tmp/radvd.conf
+	fi
+
+	if [ "$wanprefix_fixed" != "3ffe:501:ffff:101::" ]; then
+		sed -i '/3ffe:501:ffff:101::/ s/3ffe:501:ffff:101::/'${wanprefix_fixed}'/g' /tmp/radvd.conf
+ 	fi
+
+	radvd -C /tmp/radvd.conf
+}
+
+start() {
+	local wan6_type=`$CONFIG get ipv6_type`
+	local logo_test=`$CONFIG get endis_ipv6_logo_test`
+
+	#For common buildroot, modify /etc/dhcp6c.conf when boot up.
+	if [ -f "/etc/dhcp6c.conf" ]; then 
+		sed -i "s/wanifname/$($CONFIG get wan_ifname)/g" /etc/dhcp6c.conf
+	fi
+
+	# init the interface id old enable.
+	$CONFIG set ipv6_dhcps_interface_id_oldenable=0
+	if [ "`$CONFIG get ipv6_type`" != "disabled" ]; then
+		if [ "x$logo_test" != "x1" -o "x$wan6_type" != "xfixed" ]; then
+			${NET6CONF} restart
+		else
+			/bin/cp /etc/radvd.conf /tmp/
+			start_netwall
+			start_radvd
+		fi
+	else
+		$ECHO 0 > /proc/sys/net/ipv6/conf/all/accept_ra
+		${NET6CONF} restart
+	fi
+}
+
+stop() {
+	${NET6CONF} stop
+}
+
+restart() {
+	stop
+	sleep 3
+	start
+}

@@ -1,0 +1,762 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cwmp>
+	<model>
+		<object name="InternetGatewayDevice">
+			<param name="DeviceSummary" get_func="TRF_Get_DeviceSummary"/>
+			<param name="LANDeviceNumberOfEntries" get_func="TRF_Get_LANDeviceNumberOfEntries"/>
+			<param name="WANDeviceNumberOfEntries" get_func="TRF_Get_WANDeviceNumberOfEntries"/>
+			<object name="Capabilities">
+				<object name="PerformanceDiagnostic">
+					<param name="DownloadTransports"  get_func="cpe_get_igd_cap_downloadTransports"/>
+					<param name="UploadTransports"  get_func="cpe_get_igd_cap_uploadTransports"/>					
+				</object>			
+			</object>			
+			<object name="DeviceInfo">
+				<param name="Manufacturer" get_func="cpe_get_igd_di_manufacturer"/>
+				<param name="ManufacturerOUI" get_func="cpe_get_igd_di_manufactureroui"/>
+				<param name="ModelName" get_func="cpe_get_igd_di_manufactureroui_modelname"/>
+				<param name="ModelNumber" get_func="cpe_get_igd_di_manufactureroui_modelnumber"/>
+				<param name="Description" get_func="cpe_get_igd_di_manufactureroui_description"/>
+				<param name="ProductClass" get_func="cpe_get_igd_di_productclass"/>
+				<param name="SerialNumber" get_func="cpe_get_igd_di_serialnumber"/>
+				<param name="HardwareVersion" get_func="cpe_get_igd_di_hardwareversion"/>
+				<param name="SoftwareVersion" get_func="cpe_get_igd_di_softwareversion"/>
+				<param name="ModemFirmwareVersion" get_func="cpe_get_igd_di_modemfirmwareversion"/>
+				<param name="EnabledOptions" get_func="cpe_get_igd_di_enabledoptions"/>
+				<param name="AdditionalHardwareVersion" get_func="cpe_get_igd_di_additionalhardwareversion"/>
+				<param name="AdditionalSoftwareVersion" get_func="cpe_get_igd_di_additionalsoftwareversion"/>
+				<param name="SpecVersion" get_func="cpe_get_igd_di_specversion"/>
+				<param name="ProvisioningCode" get_func="cpe_get_igd_di_provisioningcode"/>
+				<param name="UpTime" get_func="cpe_get_igd_di_uptime"/>
+				<param name="FirstUseDate" get_func="cpe_get_igd_di_firstusedate"/>
+				<param name="DeviceLog" get_func="cpe_get_igd_di_devicelog"/>
+				<param name="VendorConfigFileNumberOfEntries" get_func="cpe_get_igd_di_vendorconfigfilenumberofentries"/>
+				<object name="VendorConfigFile" refresh_func="cpe_refresh_igd_di_vendorconfigfile">
+					<object name="{i}">
+						<param name="Name" get_func="cpe_get_igd_di_vc_name"/>
+						<param name="Version" get_func="cpe_get_igd_di_vc_version"/>
+						<param name="Date" get_func="cpe_get_igd_di_vc_date"/>
+						<param name="Description" get_func="cpe_get_igd_di_vc_description"/>
+					</object>	
+				</object>
+				<object name="MemoryStatus">
+					<param name="Total" get_func="cpe_get_igd_di_ms_total"/>
+					<param name="Free" get_func="cpe_get_igd_di_ms_free"/>
+				</object>
+				<object name="ProcessStatus">
+					<param name="CPUUsage" get_func="cpe_get_igd_di_ps_cpuusage"/>
+				</object>
+			</object>			
+			<object name="DeviceConfig">
+				<param name="PersistentData" rw="1" get_func="cpe_get_igd_dc_persistentdata" set_func="cpe_set_igd_dc_persistentdata"/>
+				<param name="ConfigFile" rw="1" get_func="cpe_get_igd_dc_configfile" set_func="cpe_set_igd_dc_configfile"/>
+			</object>
+			<object name="ManagementServer">
+				<param name="EnableCWMP" rw="1" get_func="cpe_get_igd_ms_enablecwmp" set_func="cpe_set_igd_ms_enablecwmp"/>
+				<param name="URL" rw="1" get_func="cpe_get_igd_ms_url" set_func="cpe_set_igd_ms_url"/>
+				<param name="Username" rw="1" get_func="cpe_get_igd_ms_username" set_func="cpe_set_igd_ms_username"/>
+				<param name="Password" rw="1" get_func="cpe_get_igd_ms_password" set_func="cpe_set_igd_ms_password"/>
+				<param name="PeriodicInformEnable" rw="1" get_func="cpe_get_igd_ms_periodicinformenable" set_func="cpe_set_igd_ms_periodicinformenable"/>
+				<param name="PeriodicInformInterval" rw="1" get_func="cpe_get_igd_ms_periodicinforminterval" set_func="cpe_set_igd_ms_periodicinforminterval"/>
+				<param name="PeriodicInformTime" rw="1" get_func="cpe_get_igd_ms_periodicinformtime" set_func="cpe_set_igd_ms_periodicinformtime"/>
+				<param name="ParameterKey" get_func="cpe_get_igd_ms_parameterkey"/>
+				<param name="ConnectionRequestURL" get_func="cpe_get_igd_ms_connectionrequesturl"/>
+				<param name="ConnectionRequestUsername" rw="1" get_func="cpe_get_igd_ms_connectionrequestusername" set_func="cpe_set_igd_ms_connectionrequestusername"/>
+				<param name="ConnectionRequestPassword" rw="1" get_func="cpe_get_igd_ms_connectionrequestpassword" set_func="cpe_set_igd_ms_connectionrequestpassword"/>
+				<param name="UpgradesManaged" rw="1" get_func="cpe_get_igd_ms_upgradesmanaged" set_func="cpe_set_igd_ms_upgradesmanaged"/>
+				<param name="DefaultActiveNotificationThrottle" rw="1" get_func="cpe_get_igd_ms_defaultactivenotificationthrottle" set_func="cpe_set_igd_ms_defaultactivenotificationthrottle"/>
+				<param name="UDPConnectionRequestAddress" get_func="cpe_get_igd_ms_udpconnectionrequestaddress" noti_rw="1" noti_get_func="cpe_noti_get_igd_ms_udpconnectionrequestaddress" noti_set_func="cpe_noti_set_igd_ms_udpconnectionrequestaddress"/>
+				<param name="STUNEnable" rw="1" get_func="cpe_get_igd_ms_stunenable" set_func="cpe_set_igd_ms_stunenable"/>
+				<param name="STUNServerAddress" rw="1" get_func="cpe_get_igd_ms_stunserveraddress" set_func="cpe_set_igd_ms_stunserveraddress"/>
+				<param name="STUNServerPort" rw="1" get_func="cpe_get_igd_ms_stunserverport" set_func="cpe_set_igd_ms_stunserverport"/>
+				<param name="STUNUsername" rw="1" get_func="cpe_get_igd_ms_stunusername" set_func="cpe_set_igd_ms_stunusername"/>
+				<param name="STUNPassword" rw="1" get_func="cpe_get_igd_ms_stunpassword" set_func="cpe_set_igd_ms_stunpassword"/>
+				<param name="STUNMaximumKeepAlivePeriod" rw="1" get_func="cpe_get_igd_ms_stunmaximumkeepaliveperiod" set_func="cpe_set_igd_ms_stunmaximumkeepaliveperiod"/>
+				<param name="STUNMinimumKeepAlivePeriod" rw="1" get_func="cpe_get_igd_ms_stunminimumkeepaliveperiod" set_func="cpe_set_igd_ms_stunminimumkeepaliveperiod"/>
+				<param name="NATDetected" get_func="cpe_get_igd_ms_natdetected" noti_rw="1" noti_get_func="cpe_noti_get_igd_ms_natdetected" noti_set_func="cpe_noti_set_igd_ms_natdetected"/>
+				<param name="ManageableDeviceNumberOfEntries" get_func="cpe_get_igd_ms_manageabledevicenumberofentries"/>
+				<param name="ManageableDeviceNotificationLimit" rw="1" get_func="cpe_get_igd_ms_manageabledevicenotificationlimit" set_func="cpe_set_igd_ms_manageabledevicenotificationlimit"/>	
+				<object name="ManageableDevice" rw="1" refresh_func="cpe_refresh_igd_manageabledevice" add_func="cpe_add_igd_ms_manageabledevice" del_func="cpe_del_igd_ms_manageabledevice">
+					<object name="{i}" rw="1">
+						<param name="ManufacturerOUI" get_func="cpe_get_igd_ms_md_manufactureroui"/>
+						<param name="SerialNumber" get_func="cpe_get_igd_ms_md_serialnumber"/>
+						<param name="ProductClass" get_func="cpe_get_igd_ms_md_productclass"/>
+					</object>
+				</object>			
+			</object>			
+			<object name="Time">
+				<param name="Enable" rw="1" get_func="cpe_get_igd_time_enable" set_func="cpe_set_igd_time_enable"/>
+				<param name="Status" get_func="cpe_get_igd_time_status"/>
+				<param name="NTPServer1" rw="1" get_func="cpe_get_igd_time_ntpserver1" set_func="cpe_set_igd_time_ntpserver1"/>
+				<param name="NTPServer2" rw="1" get_func="cpe_get_igd_time_ntpserver2" set_func="cpe_set_igd_time_ntpserver2"/>
+				<param name="CurrentLocalTime" get_func="cpe_get_igd_time_currentlocaltime"/>
+				<param name="LocalTimeZone" rw="1" get_func="cpe_get_igd_time_localtimezone" set_func="cpe_set_igd_time_localtimezone"/>
+				<param name="LocalTimeZoneName" rw="1" get_func="cpe_get_igd_time_localtimezonename" set_func="cpe_set_igd_time_localtimezonename"/>
+			</object>			
+			<object name="CaptivePortal">
+				<param name="Enable" rw="1" get_func="cpe_get_igd_cp_enable" set_func="cpe_set_igd_cp_enable"/>
+				<param name="Status" get_func="cpe_get_igd_cp_status"/>
+				<param name="AllowedList" rw="1" get_func="cpe_get_igd_cp_allowedlist" set_func="cpe_set_igd_cp_allowedlist"/>
+				<param name="CaptivePortalURL" rw="1" get_func="cpe_get_igd_cp_captiveportalurl" set_func="cpe_set_igd_cp_captiveportalurl"/>				
+			</object>
+			<object name="Layer3Forwarding">
+				<param name="DefaultConnectionService" rw="1" get_func="cpe_get_igd_lf3_defaultconnectionservice" set_func="cpe_set_igd_lf3_defaultconnectionservice"/>
+				<param name="ForwardNumberOfEntries" get_func="cpe_get_igd_lf3_forwardnumberofentries"/>	
+				<object name="Forwarding" rw="1"  refresh_func="cpe_refresh_igd_lf3_forwarding" add_func="cpe_add_igd_lf3_forwarding" del_func="cpe_del_igd_lf3_forwarding">
+					<object name="{i}" rw="1">
+						<param name="Enable" rw="1" get_func="cpe_get_igd_lf3_fd_enable" set_func="cpe_set_igd_lf3_fd_enable"/>
+						<param name="Status" get_func="cpe_get_igd_lf3_fd_status"/>
+						<param name="StaticRoute" get_func="cpe_get_igd_lf3_fd_staticroute"/>
+						<param name="Type" rw="1" get_func="cpe_get_igd_lf3_fd_type" set_func="cpe_set_igd_lf3_fd_type"/>
+						<param name="DestIPAddress" rw="1" get_func="cpe_get_igd_lf3_fd_destipaddress" set_func="cpe_set_igd_lf3_fd_destipaddress"/>
+						<param name="DestSubnetMask" rw="1" get_func="cpe_get_igd_lf3_fd_destsubnetmask" set_func="cpe_set_igd_lf3_fd_destsubnetmask"/>
+						<param name="SourceIPAddress" rw="1" get_func="cpe_get_igd_lf3_fd_sourceipaddress" set_func="cpe_set_igd_lf3_fd_sourceipaddress"/>
+						<param name="SourceSubnetMask" rw="1" get_func="cpe_get_igd_lf3_fd_sourcesubnetmask" set_func="cpe_set_igd_lf3_fd_sourcesubnetmask"/>
+						<param name="GatewayIPAddress" rw="1" get_func="cpe_get_igd_lf3_fd_gatewayipaddress" set_func="cpe_set_igd_lf3_fd_gatewayipaddress"/>
+						<param name="Interface" rw="1" get_func="cpe_get_igd_lf3_fd_interface" set_func="cpe_set_igd_lf3_fd_interface"/>
+						<param name="ForwardingMetric" rw="1" get_func="cpe_get_igd_lf3_fd_forwardingmetric" set_func="cpe_set_igd_lf3_fd_forwardingmetric"/>
+					</object>				
+				</object>				
+			</object>
+			<object name="Layer2Bridging">
+				<param name="MaxBridgeEntries" get_func="cpe_get_igd_lf2_maxbridgeentries"/>
+				<param name="MaxQBridgeEntries" get_func="cpe_get_igd_lf2_maxqbridgeentries"/>
+				<param name="MaxVLANEntries" get_func="cpe_get_igd_lf2_maxvlanentries"/>
+				<param name="BridgeNumberOfEntries" get_func="cpe_get_igd_lf2_bridgenumberofentries"/>
+				<object name="Bridge" rw="1" refresh_func="cpe_refresh_igd_bridge" add_func="cpe_add_igd_lf2_bridge" del_func="cpe_del_igd_lf2_bridge">
+					<object name="{i}" rw="1">
+						<param name="BridgeKey" get_func="cpe_get_igd_lf2_bridge_bridgekey"/>
+						<param name="BridgeStandard" rw="1" get_func="cpe_get_igd_lf2_bridge_bridgestandard" set_func="cpe_set_igd_lf2_bridge_bridgestandard"/>
+						<param name="BridgeEnable" rw="1" get_func="cpe_get_igd_lf2_bridge_bridgeenable" set_func="cpe_set_igd_lf2_bridge_bridgeenable"/>
+						<param name="BridgeStatus" get_func="cpe_get_igd_lf2_bridge_bridgestatus"/>
+						<param name="BridgeName" rw="1" get_func="cpe_get_igd_lf2_bridge_bridgename" set_func="cpe_set_igd_lf2_bridge_bridgename"/>
+						<param name="VLANID" rw="1" get_func="cpe_get_igd_lf2_bridge_vlanid" set_func="cpe_set_igd_lf2_bridge_vlanid"/>
+						<param name="PortNumberOfEntries" get_func="cpe_get_igd_lf2_bridge_portnumberofentries"/>
+						<param name="VLANNumberOfEntries" get_func="cpe_get_igd_lf2_bridge_vlannumberofentries"/>
+						<object name="Port" rw="1" refresh_func="cpe_refresh_igd_br_port" add_func="cpe_add_igd_lf2_bridge_port" del_func="cpe_del_igd_lf2_bridge_port">
+							<object name="{i}" rw="1">
+								<param name="PortEnable" rw="1" get_func="cpe_get_igd_lf2_br_port_portenable" set_func="cpe_set_igd_lf2_br_port_portenable"/>
+								<param name="PortInterface" rw="1" get_func="cpe_get_igd_lf2_br_port_portinterface" set_func="cpe_set_igd_lf2_br_port_portinterface"/>
+								<param name="PortState" get_func="cpe_get_igd_lf2_br_port_portstate"/>
+								<param name="PVID" rw="1" get_func="cpe_get_igd_lf2_br_port_pvid" set_func="cpe_set_igd_lf2_br_port_pvid"/>
+								<param name="AcceptableFrameTypes" rw="1" get_func="cpe_get_igd_lf2_br_port_acceptableframetypes" set_func="cpe_set_igd_lf2_br_port_acceptableframetypes"/>
+							</object>
+						</object>						
+					</object>				
+				</object>
+			</object>			
+			<object name="QueueManagement">
+				<param name="Enable" rw="1" get_func="cpe_get_igd_qm_enable" set_func="cpe_set_igd_qm_enable"/>
+				<param name="MaxQueues" get_func="cpe_get_igd_qm_maxqueues"/>
+				<param name="MaxClassificationEntries" get_func="cpe_get_igd_qm_maxclassificationentries"/>
+				<param name="ClassificationNumberOfEntries" get_func="cpe_get_igd_qm_classificationnumberofentries"/>
+				<param name="MaxQueueEntries" get_func="cpe_get_igd_qm_maxqueueentries"/>
+				<param name="QueueNumberOfEntries" get_func="cpe_get_igd_qm_queuenumberofentries"/>
+				<param name="DefaultEthernetPriorityMark" rw="1" get_func="cpe_get_igd_qm_defaultethernetprioritymark" set_func="cpe_set_igd_qm_defaultethernetprioritymark"/>
+				<object name="Classification" refresh_func="cpe_refresh_igd_classification" add_func="cpe_add_igd_qm_classification" del_func="cpe_del_igd_qm_classification">
+					<object name="{i}" rw="1">
+						<param name="ClassificationEnable" rw="1" get_func="cpe_get_igd_qm_clf_classificationenable" set_func="cpe_set_igd_qm_clf_classificationenable"/>
+						<param name="ClassificationStatus" get_func="cpe_get_igd_qm_clf_classificationstatus"/>
+						<param name="ClassificationOrder" rw="1" get_func="cpe_get_igd_qm_clf_classificationorder" set_func="cpe_set_igd_qm_clf_classificationorder"/>
+						<param name="ClassInterface" rw="1" get_func="cpe_get_igd_qm_clf_classinterface" set_func="cpe_set_igd_qm_clf_classinterface"/>
+						<param name="DestIP" rw="1" get_func="cpe_get_igd_qm_clf_destip" set_func="cpe_set_igd_qm_clf_destip"/>
+						<param name="SourceIP" rw="1" get_func="cpe_get_igd_qm_clf_sourceip" set_func="cpe_set_igd_qm_clf_sourceip"/>
+						<param name="Protocol" rw="1" get_func="cpe_get_igd_qm_clf_protocol" set_func="cpe_set_igd_qm_clf_protocol"/>
+						<param name="DestPort" rw="1" get_func="cpe_get_igd_qm_clf_destport" set_func="cpe_set_igd_qm_clf_destport"/>
+						<param name="DestPortRangeMax" rw="1" get_func="cpe_get_igd_qm_clf_destportrangemax" set_func="cpe_set_igd_qm_clf_destportrangemax"/>
+						<param name="SourcePort" rw="1" get_func="cpe_get_igd_qm_clf_sourceport" set_func="cpe_set_igd_qm_clf_sourceport"/>
+						<param name="SourcePortRangeMax" rw="1" get_func="cpe_get_igd_qm_clf_sourceportrangemax" set_func="cpe_set_igd_qm_clf_sourceportrangemax"/>
+						<param name="SourceMACAddress" rw="1" get_func="cpe_get_igd_qm_clf_sourcemacaddress" set_func="cpe_set_igd_qm_clf_sourcemacaddress"/>
+						<param name="DestMACAddress" rw="1" get_func="cpe_get_igd_qm_clf_destmacaddress" set_func="cpe_set_igd_qm_clf_destmacaddress"/>
+						<param name="DSCPCheck" rw="1" get_func="cpe_get_igd_qm_clf_dscpcheck" set_func="cpe_set_igd_qm_clf_dscpcheck"/>
+						<param name="DSCPMark" rw="1" get_func="cpe_get_igd_qm_clf_dscpmark" set_func="cpe_set_igd_qm_clf_dscpmark"/>
+						<param name="EthernetPriorityCheck" rw="1" get_func="cpe_get_igd_qm_clf_ethernetprioritycheck" set_func="cpe_set_igd_qm_clf_ethernetprioritycheck"/>
+						<param name="EthernetPriorityMark" rw="1" get_func="cpe_get_igd_qm_clf_ethernetprioritymark" set_func="cpe_set_igd_qm_clf_ethernetprioritymark"/>
+						<param name="OutOfBandInfo" rw="1" get_func="cpe_get_igd_qm_clf_outofbandinfo" set_func="cpe_set_igd_qm_clf_outofbandinfo"/>
+						<param name="ClassQueue" rw="1" get_func="cpe_get_igd_qm_clf_classqueue" set_func="cpe_set_igd_qm_clf_classqueue"/>
+					</object>						
+				</object>
+				<object name="Queue"  refresh_func="cpe_refresh_igd_queue" add_func="cpe_add_igd_qm_queue" del_func="cpe_del_igd_qm_queue">
+					<object name="{i}" rw="1">
+						<param name="QueueEnable" rw="1" get_func="cpe_get_igd_qm_que_queueenable" set_func="cpe_set_igd_qm_que_queueenable"/>
+						<param name="QueueStatus" rw="1" get_func="cpe_get_igd_qm_que_queuestatus" set_func="cpe_set_igd_qm_que_queuestatus"/>
+						<param name="QueueInterface" rw="1" get_func="cpe_get_igd_qm_que_queueinterface" set_func="cpe_set_igd_qm_que_queueinterface"/>
+						<param name="QueueWeight" rw="1" get_func="cpe_get_igd_qm_que_queueweight" set_func="cpe_set_igd_qm_que_queueweight"/>
+						<param name="QueuePrecedence" rw="1" get_func="cpe_get_igd_qm_que_queueprecedence" set_func="cpe_set_igd_qm_que_queueprecedence"/>
+						<param name="ShapingRate" rw="1" get_func="cpe_get_igd_qm_que_shapingrate" set_func="cpe_set_igd_qm_que_shapingrate"/>
+						<param name="SchedulerAlgorithm" rw="1" get_func="cpe_get_igd_qm_que_scheduleralgorithm" set_func="cpe_set_igd_qm_que_scheduleralgorithm"/>
+					</object>					
+				</object>				
+			</object>
+			<object name="LANConfigSecurity">
+				<param name="ConfigPassword" rw="1" get_func="cpe_get_igd_ls_configpassword" set_func="cpe_set_igd_ls_configpassword"/>
+			</object>			
+			<object name="IPPingDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="cpe_get_igd_ipd_diagnosticsstate" set_func="cpe_set_igd_ipd_diagnosticsstate"/>
+				<param name="Interface" rw="1" get_func="cpe_get_igd_ipd_interface" set_func="cpe_set_igd_ipd_interface"/>
+				<param name="Host" rw="1" get_func="cpe_get_igd_ipd_host" set_func="cpe_set_igd_ipd_host"/>
+				<param name="NumberOfRepetitions" rw="1" get_func="cpe_get_igd_ipd_numberofrepetitions" set_func="cpe_set_igd_ipd_numberofrepetitions"/>
+				<param name="Timeout" rw="1" get_func="cpe_get_igd_ipd_timeout" set_func="cpe_set_igd_ipd_timeout"/>
+				<param name="DataBlockSize" rw="1" get_func="cpe_get_igd_ipd_datablocksize" set_func="cpe_set_igd_ipd_datablocksize"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_igd_ipd_dscp" set_func="cpe_set_igd_ipd_dscp"/>
+				<param name="SuccessCount" get_func="cpe_get_igd_ipd_successcount"/>
+				<param name="FailureCount" get_func="cpe_get_igd_ipd_failurecount"/>
+				<param name="AverageResponseTime" get_func="cpe_get_igd_ipd_averageresponsetime"/>
+				<param name="MinimumResponseTime" get_func="cpe_get_igd_ipd_minimumresponsetime"/>
+				<param name="MaximumResponseTime" get_func="cpe_get_igd_ipd_maximumresponsetime"/>
+			</object>			
+			<object name="TraceRouteDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="cpe_get_igd_trd_diagnosticsstate" set_func="cpe_set_igd_trd_diagnosticsstate"/>
+				<param name="Interface" rw="1" get_func="cpe_get_igd_trd_interface" set_func="cpe_set_igd_trd_interface"/>
+				<param name="Host" rw="1" get_func="cpe_get_igd_trd_host" set_func="cpe_set_igd_trd_host"/>
+				<param name="NumberOfTries" rw="1" get_func="cpe_get_igd_trd_numberoftries" set_func="cpe_set_igd_trd_numberoftries"/>
+				<param name="Timeout" rw="1" get_func="cpe_get_igd_trd_timeout" set_func="cpe_set_igd_trd_timeout"/>
+				<param name="DataBlockSize" rw="1" get_func="cpe_get_igd_trd_datablocksize" set_func="cpe_set_igd_trd_datablocksize"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_igd_trd_dscp" set_func="cpe_set_igd_trd_dscp"/>
+				<param name="MaxHopCount" rw="1" get_func="cpe_get_igd_trd_maxhopcount" set_func="cpe_set_igd_trd_maxhopcount"/>
+				<param name="ResponseTime" get_func="cpe_get_igd_trd_responsetime"/>
+				<param name="RouteHopsNumberOfEntries" get_func="cpe_get_igd_trd_routehopsnumberofentries"/>
+				<object name="RouteHops" rw="1"  refresh_func="cpe_refresh_igd_routehops">
+					<object name="{i}" rw="1">
+						<param name="HopHost" get_func="cpe_get_igd_trd_rh_hophost"/>
+						<param name="HopHostAddress" get_func="cpe_get_igd_trd_rh_hophostaddress"/>
+						<param name="HopErrorCode" get_func="cpe_get_igd_trd_rh_hoperrorcode"/>
+						<param name="HopRTTimes" get_func="cpe_get_igd_trd_rh_hoprttimes"/>
+					</object>					
+				</object>				
+			</object>
+			<object name="DownloadDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="cpe_get_igd_dd_diagnosticsstate" set_func="cpe_set_igd_dd_diagnosticsstate"/>
+				<param name="Interface" rw="1" get_func="cpe_get_igd_dd_interface" set_func="cpe_set_igd_dd_interface"/>
+				<param name="DownloadURL" rw="1" get_func="cpe_get_igd_dd_downloadurl" set_func="cpe_set_igd_dd_downloadurl"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_igd_dd_dscp" set_func="cpe_set_igd_dd_dscp"/>
+				<param name="EthernetPriority" rw="1" get_func="cpe_get_igd_dd_ethernetpriority" set_func="cpe_set_igd_dd_ethernetpriority"/>
+				<param name="ROMTime" get_func="cpe_get_igd_dd_romtime"/>
+				<param name="BOMTime" get_func="cpe_get_igd_dd_bomtime"/>
+				<param name="EOMTime" get_func="cpe_get_igd_dd_eomtime"/>
+				<param name="TestBytesReceived" get_func="cpe_get_igd_dd_testbytesreceived"/>
+				<param name="TotalBytesReceived" get_func="cpe_get_igd_dd_totalbytesreceived"/>
+				<param name="TCPOpenRequestTime" get_func="cpe_get_igd_dd_tcpopenrequesttime"/>
+				<param name="TCPOpenResponseTime" get_func="cpe_get_igd_dd_tcpopenresponsetime"/>
+			</object>
+			<object name="UploadDiagnostics">
+				<param name="DiagnosticsState" rw="1" get_func="cpe_get_igd_ud_diagnosticsstate" set_func="cpe_set_igd_ud_diagnosticsstate"/>
+				<param name="Interface" rw="1" get_func="cpe_get_igd_ud_interface" set_func="cpe_set_igd_ud_interface"/>
+				<param name="UploadURL" rw="1" get_func="cpe_get_igd_ud_uploadurl" set_func="cpe_set_igd_ud_uploadurl"/>
+				<param name="DSCP" rw="1" get_func="cpe_get_igd_ud_dscp" set_func="cpe_set_igd_ud_dscp"/>
+				<param name="EthernetPriority" rw="1" get_func="cpe_get_igd_ud_ethernetpriority" set_func="cpe_set_igd_ud_ethernetpriority"/>
+				<param name="TestFileLength" rw="1" get_func="cpe_get_igd_ud_testfilelength" set_func="cpe_set_igd_ud_testfilelength"/>
+				<param name="ROMTime" get_func="cpe_get_igd_ud_romtime"/>
+				<param name="BOMTime" get_func="cpe_get_igd_ud_bomtime"/>
+				<param name="EOMTime" get_func="cpe_get_igd_ud_eomtime"/>
+				<param name="TotalBytesSent" get_func="cpe_get_igd_ud_totalbytessent"/>
+				<param name="TCPOpenRequestTime" get_func="cpe_get_igd_ud_tcpopenrequesttime"/>
+				<param name="TCPOpenResponseTime" get_func="cpe_get_igd_ud_tcpopenresponsetime"/>
+			</object>	
+			<object name="UDPEchoConfig">
+				<param name="Enable" rw="1" get_func="cpe_get_igd_uec_enable" set_func="cpe_set_igd_uec_enable"/>
+				<param name="Interface" rw="1" get_func="cpe_get_igd_uec_interface" set_func="cpe_set_igd_uec_interface"/>
+				<param name="SourceIPAddress" rw="1" get_func="cpe_get_igd_uec_sourceipaddress" set_func="cpe_set_igd_uec_sourceipaddress"/>
+				<param name="UDPPort" rw="1" get_func="cpe_get_igd_uec_udpport" set_func="cpe_set_igd_uec_udpport"/>
+				<param name="EchoPlusEnabled" get_func="cpe_get_igd_uec_echoplusenabled"/>
+				<param name="EchoPlusSupported" get_func="cpe_get_igd_uec_echoplussupported"/>
+				<param name="PacketsReceived" get_func="cpe_get_igd_uec_packetsreceived"/>
+				<param name="PacketsResponded" get_func="cpe_get_igd_uec_packetsresponded"/>
+				<param name="BytesReceived" get_func="cpe_get_igd_uec_bytesreceived"/>
+				<param name="BytesResponded" get_func="cpe_get_igd_uec_bytesresponded"/>
+				<param name="TimeFirstPacketReceived" get_func="cpe_get_igd_uec_timefirstpacketreceived"/>
+				<param name="TimeLastPacketReceived" get_func="cpe_get_igd_uec_timelastpacketreceived"/>
+			</object>
+			<object name="LANDevice" rw="1" refresh_func="cpe_refresh_igd_landevice" add_func="cpe_add_igd_landevice" del_func="cpe_del_igd_landevice">
+				<object name="{i}" rw="1">
+					<param name="LANEthernetInterfaceNumberOfEntries" get_func="cpe_get_igd_landevice_lanethernetinterfacenumberofentries"/>
+					<param name="LANUSBInterfaceNumberOfEntries" get_func="cpe_get_igd_landevice_lanusbinterfacenumberofentries"/>
+					<param name="LANWLANConfigurationNumberOfEntries" get_func="cpe_get_igd_landevice_lanwlanconfigurationnumberofentries"/>
+					<object name="LANHostConfigManagement">
+						<param name="MACAddress" get_func="cpe_get_igd_land_macaddress"/>
+						<param name="DHCPServerConfigurable" rw="1" get_func="cpe_get_igd_land_dhcpserverconfigurable" set_func="cpe_set_igd_land_dhcpserverconfigurable"/>
+						<param name="DHCPServerEnable" rw="1" get_func="cpe_get_igd_land_dhcpserverenable" set_func="cpe_set_igd_land_dhcpserverenable"/>
+						<param name="DHCPRelay" get_func="cpe_get_igd_land_dhcprelay"/>
+						<param name="MinAddress" rw="1" get_func="cpe_get_igd_land_minaddress" set_func="cpe_set_igd_land_minaddress"/>
+						<param name="MaxAddress" rw="1" get_func="cpe_get_igd_land_maxaddress" set_func="cpe_set_igd_land_maxaddress"/>
+						<param name="ReservedAddresses" rw="1" get_func="cpe_get_igd_land_reservedaddresses" set_func="cpe_set_igd_land_reservedaddresses"/>
+						<param name="SubnetMask" rw="1" get_func="cpe_get_igd_land_subnetmask" set_func="cpe_set_igd_land_subnetmask"/>
+						<param name="DNSServers" rw="1" get_func="cpe_get_igd_land_dnsservers" set_func="cpe_set_igd_land_dnsservers"/>
+						<param name="DomainName" rw="1" get_func="cpe_get_igd_land_domainname" set_func="cpe_set_igd_land_domainname"/>
+						<param name="IPRouters" rw="1" get_func="cpe_get_igd_land_iprouters" set_func="cpe_set_igd_land_iprouters" noti_rw="1" noti_get_func="cpe_noti_get_igd_land_iprouters" noti_set_func="cpe_noti_set_igd_land_iprouters"/>
+						<param name="DHCPLeaseTime" rw="1" get_func="cpe_get_igd_land_dhcpleasetime" set_func="cpe_set_igd_land_dhcpleasetime"/>
+						<param name="UseAllocatedWAN" rw="1" get_func="cpe_get_igd_land_useallocatedwan" set_func="cpe_set_igd_land_useallocatedwan"/>
+						<param name="AssociatedConnection" rw="1" get_func="cpe_get_igd_land_associatedconnection" set_func="cpe_set_igd_land_associatedconnection"/>
+						<param name="PassthroughLease" rw="1" get_func="cpe_get_igd_land_passthroughlease" set_func="cpe_set_igd_land_passthroughlease"/>
+						<param name="PassthroughMACAddress" rw="1" get_func="cpe_get_igd_land_passthroughmacaddress" set_func="cpe_set_igd_land_passthroughmacaddress"/>
+						<param name="AllowedMACAddresses" rw="1" get_func="cpe_get_igd_land_allowedmacaddresses" set_func="cpe_set_igd_land_allowedmacaddresses"/>
+						<param name="IPInterfaceNumberOfEntries" get_func="cpe_get_igd_land_ipinterfacenumberofentries"/>
+						<param name="DHCPStaticAddressNumberOfEntries" get_func="cpe_get_igd_land_dhcpstaticaddressnumberofentries"/>
+						<param name="DHCPOptionNumberOfEntries" get_func="cpe_get_igd_land_dhcpoptionnumberofentries"/>
+						<param name="DHCPConditionalPoolNumberOfEntries" get_func="cpe_get_igd_land_dhcpconditionalpoolnumberofentries"/>
+						<object name="IPInterface" rw="1" refresh_func="cpe_refresh_igd_ld_ipinterface" add_func="cpe_add_igd_ld_ipinterface" del_func="cpe_del_igd_ld_ipinterface">
+							<object name="{i}" rw="1">
+								<param name="Enable" rw="1" get_func="cpe_get_igd_land_ipinf_enable" set_func="cpe_set_igd_land_ipinf_enable"/>
+								<param name="IPInterfaceIPAddress" rw="1" get_func="cpe_get_igd_land_ipinf_ipinterfaceipaddress" set_func="cpe_set_igd_land_ipinf_ipinterfaceipaddress"/>
+								<param name="IPInterfaceSubnetMask" rw="1" get_func="cpe_get_igd_land_ipinf_ipinterfacesubnetmask" set_func="cpe_set_igd_land_ipinf_ipinterfacesubnetmask"/>
+								<param name="IPInterfaceAddressingType" rw="1" get_func="cpe_get_igd_land_ipinf_ipinterfaceaddressingtype" set_func="cpe_set_igd_land_ipinf_ipinterfaceaddressingtype"/>
+							</object>
+						</object>
+						<object name="DHCPStaticAddress" rw="1" refresh_func="cpe_refresh_igd_ld_dhcpstaticaddress" add_func="cpe_add_igd_ld_dhcpstaticaddress" del_func="cpe_del_igd_ld_dhcpstaticaddress">
+							<object name="{i}" rw="1">
+								<param name="Enable" rw="1" get_func="cpe_get_igd_land_dsa_enable" set_func="cpe_set_igd_land_dsa_enable"/>
+								<param name="Chaddr" rw="1" get_func="cpe_get_igd_land_dsa_chaddr" set_func="cpe_set_igd_land_dsa_chaddr"/>
+								<param name="Yiaddr" rw="1" get_func="cpe_get_igd_land_dsa_yiaddr" set_func="cpe_set_igd_land_dsa_yiaddr"/>
+							</object>
+						</object>						
+						<object name="DHCPOption" rw="1" refresh_func="cpe_refresh_igd_ld_dhcpoption" add_func="cpe_add_igd_ld_dhcpoption" del_func="cpe_del_igd_ld_dhcpoption">
+							<object name="{i}" rw="1">
+								<param name="Enable" rw="1" get_func="cpe_get_igd_land_do_enable" set_func="cpe_set_igd_land_do_enable"/>
+								<param name="Tag" rw="1" get_func="cpe_get_igd_land_do_tag" set_func="cpe_set_igd_land_do_tag"/>
+								<param name="Value" rw="1" get_func="cpe_get_igd_land_do_value" set_func="cpe_set_igd_land_do_value"/>
+							</object>
+						</object>
+						<object name="DHCPConditionalServingPool" rw="1" refresh_func="cpe_refresh_igd_ld_dhcpconditionalservingpool" add_func="cpe_add_igd_ld_dhcpconditionalservingpool" del_func="cpe_del_igd_ld_dhcpconditionalservingpool">
+							<object name="{i}" rw="1">
+								<param name="Enable" rw="1" get_func="cpe_get_igd_land_dcs_enable" set_func="cpe_set_igd_land_dcs_enable"/>
+								<param name="PoolOrder" rw="1" get_func="cpe_get_igd_land_dcs_poolorder" set_func="cpe_set_igd_land_dcs_poolorder"/>
+								<param name="SourceInterface" rw="1" get_func="cpe_get_igd_land_dcs_sourceinterface" set_func="cpe_set_igd_land_dcs_sourceinterface"/>
+								<param name="VendorClassID" rw="1" get_func="cpe_get_igd_land_dcs_vendorclassid" set_func="cpe_set_igd_land_dcs_vendorclassid"/>
+								<param name="VendorClassIDExclude" rw="1" get_func="cpe_get_igd_land_dcs_vendorclassidexclude" set_func="cpe_set_igd_land_dcs_vendorclassidexclude"/>
+								<param name="VendorClassIDMode" rw="1" get_func="cpe_get_igd_land_dcs_vendorclassidmode" set_func="cpe_set_igd_land_dcs_vendorclassidmode"/>
+								<param name="ClientID" rw="1" get_func="cpe_get_igd_land_dcs_clientid" set_func="cpe_set_igd_land_dcs_clientid"/>
+								<param name="ClientIDExclude" rw="1" get_func="cpe_get_igd_land_dcs_clientidexclude" set_func="cpe_set_igd_land_dcs_clientidexclude"/>
+								<param name="UserClassID" rw="1" get_func="cpe_get_igd_land_dcs_userclassid" set_func="cpe_set_igd_land_dcs_userclassid"/>
+								<param name="UserClassIDExclude" rw="1" get_func="cpe_get_igd_land_dcs_userclassidexclude" set_func="cpe_set_igd_land_dcs_userclassidexclude"/>
+								<param name="Chaddr" rw="1" get_func="cpe_get_igd_land_dcs_chaddr" set_func="cpe_set_igd_land_dcs_chaddr"/>
+								<param name="ChaddrMask" rw="1" get_func="cpe_get_igd_land_dcs_chaddrmask" set_func="cpe_set_igd_land_dcs_chaddrmask"/>
+								<param name="ChaddrExclude" rw="1" get_func="cpe_get_igd_land_dcs_chaddrexclude" set_func="cpe_set_igd_land_dcs_chaddrexclude"/>
+								<param name="LocallyServed" rw="1" get_func="cpe_get_igd_land_dcs_locallyserved" set_func="cpe_set_igd_land_dcs_locallyserved"/>
+								<param name="MinAddress" rw="1" get_func="cpe_get_igd_land_dcs_minaddress" set_func="cpe_set_igd_land_dcs_minaddress"/>
+								<param name="MaxAddress" rw="1" get_func="cpe_get_igd_land_dcs_maxaddress" set_func="cpe_set_igd_land_dcs_maxaddress"/>
+								<param name="ReservedAddresses" rw="1" get_func="cpe_get_igd_land_dcs_reservedaddresses" set_func="cpe_set_igd_land_dcs_reservedaddresses"/>
+								<param name="SubnetMask" rw="1" get_func="cpe_get_igd_land_dcs_subnetmask" set_func="cpe_set_igd_land_dcs_subnetmask"/>
+								<param name="DNSServers" rw="1" get_func="cpe_get_igd_land_dcs_dnsservers" set_func="cpe_set_igd_land_dcs_dnsservers"/>
+								<param name="DomainName" rw="1" get_func="cpe_get_igd_land_dcs_domainname" set_func="cpe_set_igd_land_dcs_domainname"/>	
+								<param name="IPRouters" rw="1" get_func="cpe_get_igd_land_dcs_iprouters" set_func="cpe_set_igd_land_dcs_iprouters"/>
+								<param name="DHCPLeaseTime" rw="1" get_func="cpe_get_igd_land_dcs_dhcpleasetime" set_func="cpe_set_igd_land_dcs_dhcpleasetime"/>
+								<param name="UseAllocatedWAN" rw="1" get_func="cpe_get_igd_land_dcs_useallocatedwan" set_func="cpe_set_igd_land_dcs_useallocatedwan"/>
+								<param name="AssociatedConnection" rw="1" get_func="cpe_get_igd_land_dcs_associatedconnection" set_func="cpe_set_igd_land_dcs_associatedconnection"/>
+								<param name="DHCPServerIPAddress" rw="1" get_func="cpe_get_igd_land_dcs_dhcpserveripaddress" set_func="cpe_set_igd_land_dcs_dhcpserveripaddress"/>
+								<param name="DHCPOptionNumberOfEntries" get_func="cpe_get_igd_land_dcs_dhcpoptionnumberofentries"/>
+								<object name="DHCPOption" rw="1" refresh_func="cpe_refresh_igd_ld_dcs_dhcpoption" add_func="cpe_add_igd_ld_dcs_dhcpoption" del_func="cpe_del_igd_ld_dcs_dhcpoption">
+									<object name="{i}" rw="1">
+										<param name="Enable" rw="1" get_func="cpe_get_igd_ld_dcs_do_enable" set_func="cpe_set_igd_ld_dcs_do_enable"/>
+										<param name="Tag" rw="1" get_func="cpe_get_igd_ld_dcs_do_tag" set_func="cpe_set_igd_ld_dcs_do_tag"/>
+										<param name="Value" rw="1" get_func="cpe_get_igd_ld_dcs_do_value" set_func="cpe_set_igd_ld_dcs_do_value"/>
+									</object>									
+								</object>								
+							</object>
+						</object>
+					</object>						
+					<object name="LANEthernetInterfaceConfig" rw="1" refresh_func="cpe_refresh_igd_ld_lanethernetinterfaceconfig" add_func="cpe_add_igd_ld_lanethernetinterfaceconfig" del_func="cpe_del_igd_ld_lanethernetinterfaceconfig">
+						<object name="{i}" rw="1">
+							<param name="Enable" rw="1" get_func="cpe_get_igd_ld_lcm_enable" set_func="cpe_set_igd_ld_lcm_enable"/>
+							<param name="Status" get_func="cpe_get_igd_ld_lcm_status"/>
+							<param name="Name" get_func="cpe_get_igd_ld_lcm_name"/>
+							<param name="MACAddress" get_func="cpe_get_igd_ld_lcm_macaddress"/>
+							<param name="MACAddressControlEnabled" rw="1" get_func="cpe_get_igd_ld_lcm_macaddresscontrolenabled" set_func="cpe_set_igd_ld_lcm_macaddresscontrolenabled"/>
+							<param name="MaxBitRate" rw="1" get_func="cpe_get_igd_ld_lcm_maxbitrate" set_func="cpe_set_igd_ld_lcm_maxbitrate"/>
+							<param name="DuplexMode" rw="1" get_func="cpe_get_igd_ld_lcm_duplexmode" set_func="cpe_set_igd_ld_lcm_duplexmode"/>
+							<object name="Stats">
+								<param name="BytesSent" get_func="cpe_get_igd_ld_lcm_sta_bytessent"/>
+								<param name="BytesReceived" get_func="cpe_get_igd_ld_lcm_sta_bytesreceived"/>
+								<param name="PacketsSent" get_func="cpe_get_igd_ld_lcm_sta_packetssent"/>
+								<param name="PacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_packetsreceived"/>
+								<param name="ErrorsSent" get_func="cpe_get_igd_ld_lcm_sta_errorssent"/>
+								<param name="ErrorsReceived" get_func="cpe_get_igd_ld_lcm_sta_errorsreceived"/>
+								<param name="UnicastPacketsSent" get_func="cpe_get_igd_ld_lcm_sta_unicastpacketssent"/>
+								<param name="UnicastPacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_unicastpacketsreceived"/>
+								<param name="DiscardPacketsSent" get_func="cpe_get_igd_ld_lcm_sta_discardpacketssent"/>
+								<param name="DiscardPacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_discardpacketsreceived"/>
+								<param name="MulticastPacketsSent" get_func="cpe_get_igd_ld_lcm_sta_multicastpacketssent"/>
+								<param name="MulticastPacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_multicastpacketsreceived"/>
+								<param name="BroadcastPacketsSent" get_func="cpe_get_igd_ld_lcm_sta_broadcastpacketssent"/>
+								<param name="BroadcastPacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_broadcastpacketsreceived"/>
+								<param name="UnknownProtoPacketsReceived" get_func="cpe_get_igd_ld_lcm_sta_unknownprotopacketsreceived"/>
+							</object>								
+						</object>
+					</object>										
+					<object name="LANUSBInterfaceConfig" rw="1" refresh_func="cpe_refresh_igd_ld_lanusbinterfaceconfig" add_func="cpe_add_igd_ld_lanusbinterfaceconfig" del_func="cpe_del_igd_ld_lanusbinterfaceconfig">
+						<object name="{i}" rw="1">
+							<param name="Enable" rw="1" get_func="cpe_get_igd_lui_enable" set_func="cpe_set_igd_lui_enable"/>
+							<param name="Status" get_func="cpe_get_igd_lui_status"/>
+							<param name="Name" get_func="cpe_get_igd_lui_name"/>
+							<param name="MACAddress" get_func="cpe_get_igd_lui_macaddress"/>
+							<param name="MACAddressControlEnabled" rw="1" get_func="cpe_get_igd_lui_macaddresscontrolenabled" set_func="cpe_set_igd_lui_macaddresscontrolenabled"/>
+							<param name="Standard" get_func="cpe_get_igd_lui_standard"/>
+							<param name="Type" get_func="cpe_get_igd_lui_type"/>
+							<param name="Rate" get_func="cpe_get_igd_lui_rate"/>
+							<param name="Power" get_func="cpe_get_igd_lui_power"/>
+							<object name="Stats">
+								<param name="BytesSent" get_func="cpe_get_igd_lui_sta_bytessent"/>
+								<param name="BytesReceived" get_func="cpe_get_igd_lui_sta_bytesreceived"/>
+								<param name="CellsSent" get_func="cpe_get_igd_lui_sta_cellssent"/>
+								<param name="CellsReceived" get_func="cpe_get_igd_lui_sta_cellsreceived"/>
+								<param name="ErrorsSent" get_func="cpe_get_igd_lui_sta_errorssent"/>
+								<param name="ErrorsReceived" get_func="cpe_get_igd_lui_sta_errorsreceived"/>
+								<param name="UnicastPacketsSent" get_func="cpe_get_igd_lui_sta_unicastpacketssent"/>
+								<param name="UnicastPacketsReceived" get_func="cpe_get_igd_lui_sta_unicastpacketsreceived"/>
+								<param name="DiscardPacketsSent" get_func="cpe_get_igd_lui_sta_discardpacketssent"/>
+								<param name="DiscardPacketsReceived" get_func="cpe_get_igd_lui_sta_discardpacketsreceived"/>
+								<param name="MulticastPacketsSent" get_func="cpe_get_igd_lui_sta_multicastpacketssent"/>
+								<param name="MulticastPacketsReceived" get_func="cpe_get_igd_lui_sta_multicastpacketsreceived"/>
+								<param name="BroadcastPacketsSent" get_func="cpe_get_igd_lui_sta_broadcastpacketssent"/>
+								<param name="BroadcastPacketsReceived" get_func="cpe_get_igd_lui_sta_broadcastpacketsreceived"/>
+								<param name="UnknownProtoPacketsReceived" get_func="cpe_get_igd_lui_sta_unknownprotopacketsreceived"/>
+							</object>
+						</object>
+					</object>					
+					<object name="WLANConfiguration" rw="1" refresh_func="cpe_refresh_igd_ld_wlanconfiguration" add_func="cpe_add_igd_ld_wlanconfiguration" del_func="cpe_del_igd_ld_wlanconfiguration">
+						<object name="{i}" rw="1">
+							<param name="Enable" rw="1" get_func="cpe_get_igd_wlan_enable" set_func="cpe_set_igd_wlan_enable"/>
+							<param name="Status" get_func="cpe_get_igd_wlan_status"/>
+							<param name="Name" get_func="cpe_get_igd_wlan_name"/>
+							<param name="BSSID" get_func="cpe_get_igd_wlan_bssid"/>
+							<param name="MaxBitRate" rw="1" get_func="cpe_get_igd_wlan_maxbitrate" set_func="cpe_set_igd_wlan_maxbitrate"/>
+							<param name="Channel" rw="1" get_func="cpe_get_igd_wlan_channel" set_func="cpe_set_igd_wlan_channel"/>
+							<param name="AutoChannelEnable" rw="1" get_func="cpe_get_igd_wlan_autochannelenable" set_func="cpe_set_igd_wlan_autochannelenable"/>
+							<param name="BeaconType" rw="1" get_func="cpe_get_igd_wlan_beacontype" set_func="cpe_set_igd_wlan_beacontype"/>
+							<param name="MACAddressControlEnabled" rw="1" get_func="cpe_get_igd_wlan_macaddresscontrolenabled" set_func="cpe_set_igd_wlan_macaddresscontrolenabled"/>
+							<param name="SSID" rw="1" get_func="cpe_get_igd_wlan_ssid" set_func="cpe_set_igd_wlan_ssid" noti_rw="1" noti_get_func="cpe_noti_get_igd_wlan_ssid" noti_set_func="cpe_noti_set_igd_wlan_ssid"/>
+							<param name="KeyPassphrase" rw="1" get_func="cpe_get_igd_wlan_keypassphrase" set_func="cpe_set_igd_wlan_keypassphrase"/>
+							<param name="Standard" get_func="cpe_get_igd_wlan_standard"/>
+							<param name="WEPKeyIndex" rw="1" get_func="cpe_get_igd_wlan_wepkeyindex" set_func="cpe_set_igd_wlan_wepkeyindex"/>
+							<param name="WEPEncryptionLevel" get_func="cpe_get_igd_wlan_wepencryptionlevel"/>
+							<param name="BasicEncryptionModes" rw="1" get_func="cpe_get_igd_wlan_basicencryptionmodes" set_func="cpe_set_igd_wlan_basicencryptionmodes"/>
+							<param name="BasicAuthenticationMode" rw="1" get_func="cpe_get_igd_wlan_basicauthenticationmode" set_func="cpe_set_igd_wlan_basicauthenticationmode"/>
+							<param name="WPAEncryptionModes" rw="1" get_func="cpe_get_igd_wlan_wpaencryptionmodes" set_func="cpe_set_igd_wlan_wpaencryptionmodes"/>
+							<param name="WPAAuthenticationMode" rw="1" get_func="cpe_get_igd_wlan_wpaauthenticationmode" set_func="cpe_set_igd_wlan_wpaauthenticationmode"/>
+							<param name="IEEE11iEncryptionModes" rw="1" get_func="cpe_get_igd_wlan_ieee11iencryptionmodes" set_func="cpe_set_igd_wlan_ieee11iencryptionmodes"/>
+							<param name="IEEE11iAuthenticationMode" rw="1" get_func="cpe_get_igd_wlan_ieee11iauthenticationmode" set_func="cpe_set_igd_wlan_ieee11iauthenticationmode"/>
+							<param name="PossibleChannels" get_func="cpe_get_igd_wlan_possiblechannels"/>
+							<param name="BasicDataTransmitRates" rw="1" get_func="cpe_get_igd_wlan_basicdatatransmitrates" set_func="cpe_set_igd_wlan_basicdatatransmitrates"/>
+							<param name="OperationalDataTransmitRates" rw="1" get_func="cpe_get_igd_wlan_operationaldatatransmitrates" set_func="cpe_set_igd_wlan_operationaldatatransmitrates"/>
+							<param name="PossibleDataTransmitRates" get_func="cpe_get_igd_wlan_possibledatatransmitrates"/>
+							<param name="InsecureOOBAccessEnabled" rw="1" get_func="cpe_get_igd_wlan_insecureoobaccessenabled" set_func="cpe_set_igd_wlan_insecureoobaccessenabled"/>
+							<param name="BeaconAdvertisementEnabled" rw="1" get_func="cpe_get_igd_wlan_beaconadvertisementenabled" set_func="cpe_set_igd_wlan_beaconadvertisementenabled"/>
+							<param name="SSIDAdvertisementEnabled" rw="1" get_func="cpe_get_igd_wlan_ssidadvertisementenabled" set_func="cpe_set_igd_wlan_ssidadvertisementenabled"/>
+							<param name="RadioEnabled" rw="1" get_func="cpe_get_igd_wlan_radioenabled" set_func="cpe_set_igd_wlan_radioenabled"/>
+							<param name="TransmitPowerSupported" get_func="cpe_get_igd_wlan_transmitpowersupported"/>
+							<param name="TransmitPower" rw="1" get_func="cpe_get_igd_wlan_transmitpower" set_func="cpe_set_igd_wlan_transmitpower"/>
+							<param name="AutoRateFallBackEnabled" rw="1" get_func="cpe_get_igd_wlan_autoratefallbackenabled" set_func="cpe_set_igd_wlan_autoratefallbackenabled"/>
+							<param name="LocationDescription" rw="1" get_func="cpe_get_igd_wlan_locationdescription" set_func="cpe_set_igd_wlan_locationdescription"/>
+							<param name="RegulatoryDomain" rw="1" get_func="cpe_get_igd_wlan_regulatorydomain" set_func="cpe_set_igd_wlan_regulatorydomain"/>
+							<param name="TotalPSKFailures" get_func="cpe_get_igd_wlan_totalpskfailures"/>
+							<param name="TotalIntegrityFailures" get_func="cpe_get_igd_wlan_totalintegrityfailures"/>
+							<param name="ChannelsInUse" get_func="cpe_get_igd_wlan_channelsinuse"/>
+							<param name="DeviceOperationMode" rw="1" get_func="cpe_get_igd_wlan_deviceoperationmode" set_func="cpe_set_igd_wlan_deviceoperationmode"/>
+							<param name="DistanceFromRoot" rw="1" get_func="cpe_get_igd_wlan_distancefromroot" set_func="cpe_set_igd_wlan_distancefromroot"/>
+							<param name="PeerBSSID" rw="1" get_func="cpe_get_igd_wlan_peerbssid" set_func="cpe_set_igd_wlan_peerbssid"/>
+							<param name="AuthenticationServiceMode" rw="1" get_func="cpe_get_igd_wlan_authenticationservicemode" set_func="cpe_set_igd_wlan_authenticationservicemode"/>
+							<param name="WMMSupported" get_func="cpe_get_igd_wlan_wmmsupported"/>
+							<param name="UAPSDSupported" get_func="cpe_get_igd_wlan_uapsdsupported"/>
+							<param name="WMMEnable" rw="1" get_func="cpe_get_igd_wlan_wmmenable" set_func="cpe_set_igd_wlan_wmmenable"/>
+							<param name="UAPSDEnable" rw="1" get_func="cpe_get_igd_wlan_uapsdenable" set_func="cpe_set_igd_wlan_uapsdenable"/>
+							<param name="TotalBytesSent" get_func="cpe_get_igd_wlan_totalbytessent"/>
+							<param name="TotalBytesReceived" get_func="cpe_get_igd_wlan_totalbytesreceived"/>
+							<param name="TotalPacketsSent" get_func="cpe_get_igd_wlan_totalpacketssent"/>
+							<param name="TotalPacketsReceived" get_func="cpe_get_igd_wlan_totalpacketsreceived"/>
+							<param name="TotalAssociations" get_func="cpe_get_igd_wlan_totalassociations"/>
+							<object name="AssociatedDevice" rw="1" refresh_func="cpe_refresh_igd_ld_wlan_associateddevice" add_func="cpe_add_igd_ld_wlan_associateddevice" del_func="cpe_del_igd_ld_wlan_associateddevice">
+								<object name="{i}" rw="1">
+									<param name="AssociatedDeviceMACAddress" get_func="cpe_get_igd_wlan_ad_associateddevicemacaddress"/>
+									<param name="AssociatedDeviceIPAddress" get_func="cpe_get_igd_wlan_ad_associateddeviceipaddress"/>
+									<param name="AssociatedDeviceAuthenticationState" get_func="cpe_get_igd_wlan_ad_associateddeviceauthenticationstate"/>
+									<param name="LastRequestedUnicastCipher" get_func="cpe_get_igd_wlan_ad_lastrequestedunicastcipher"/>
+									<param name="LastRequestedMulticastCipher" get_func="cpe_get_igd_wlan_ad_lastrequestedmulticastcipher"/>
+									<param name="LastPMKId" get_func="cpe_get_igd_wlan_ad_lastpmkid"/>
+									<param name="LastDataTransmitRate" get_func="cpe_get_igd_wlan_ad_lastdatatransmitrate"/>
+								</object>								
+							</object>
+							<object name="WEPKey" rw="1" refresh_func="cpe_refresh_igd_ld_wlan_wepkey" add_func="cpe_add_igd_ld_wlan_wepkey" del_func="cpe_del_igd_ld_wlan_wepkey">
+								<object name="{i}" rw="1">
+									<param name="WEPKey" rw="1" get_func="cpe_get_igd_wlan_wk_wepkey" set_func="cpe_set_igd_wlan_wk_wepkey"/>
+								</object>								
+							</object>
+							<object name="PreSharedKey" rw="1" refresh_func="cpe_refresh_igd_ld_wlan_presharedkey" add_func="cpe_add_igd_ld_wlan_presharedkey" del_func="cpe_del_igd_ld_wlan_presharedkey">
+								<object name="{i}" rw="1">
+									<param name="PreSharedKey" rw="1" get_func="cpe_get_igd_wlan_psk_presharedkey" set_func="cpe_set_igd_wlan_psk_presharedkey"/>
+									<param name="KeyPassphrase" rw="1" get_func="cpe_get_igd_wlan_psk_keypassphrase" set_func="cpe_set_igd_wlan_psk_keypassphrase"/>
+									<param name="AssociatedDeviceMACAddress" rw="1" get_func="cpe_get_igd_wlan_psk_associateddevicemacaddress" set_func="cpe_set_igd_wlan_psk_associateddevicemacaddress"/>
+								</object>								
+							</object>
+							<object name="Stats">
+								<param name="ErrorsSent" get_func="cpe_get_igd_wlan_sta_errorssent"/>
+								<param name="ErrorsReceived" get_func="cpe_get_igd_wlan_sta_errorsreceived"/>
+								<param name="UnicastPacketsSent" get_func="cpe_get_igd_wlan_sta_unicastpacketssent"/>
+								<param name="UnicastPacketsReceived" get_func="cpe_get_igd_wlan_sta_unicastpacketsreceived"/>
+								<param name="DiscardPacketsSent" get_func="cpe_get_igd_wlan_sta_discardpacketssent"/>
+								<param name="DiscardPacketsReceived" get_func="cpe_get_igd_wlan_sta_discardpacketsreceived"/>
+								<param name="MulticastPacketsSent" get_func="cpe_get_igd_wlan_sta_multicastpacketssent"/>
+								<param name="MulticastPacketsReceived" get_func="cpe_get_igd_wlan_sta_multicastpacketsreceived"/>
+								<param name="BroadcastPacketsSent" get_func="cpe_get_igd_wlan_sta_broadcastpacketssent"/>
+								<param name="BroadcastPacketsReceived" get_func="cpe_get_igd_wlan_sta_broadcastpacketsreceived"/>
+								<param name="UnknownProtoPacketsReceived" get_func="cpe_get_igd_wlan_sta_unknownprotopacketsreceived"/>								
+							</object>
+							<object name="WPS">
+							<param name="Enable" rw="1" get_func="cpe_get_igd_wlan_wps_enable" set_func="cpe_set_igd_wlan_wps_enable"/>
+							<param name="DeviceName" get_func="cpe_get_igd_wlan_wps_devicename"/>
+							<param name="DevicePassword" rw="1" get_func="cpe_get_igd_wlan_wps_devicepassword" set_func="cpe_set_igd_wlan_wps_devicepassword"/>
+							<param name="UUID" get_func="cpe_get_igd_wlan_wps_uuid"/>
+							<param name="Version" get_func="cpe_get_igd_wlan_wps_version"/>
+							<param name="ConfigMethodsSupported" get_func="cpe_get_igd_wlan_wps_configmethodssupported"/>
+							<param name="ConfigMethodsEnabled" rw="1" get_func="cpe_get_igd_wlan_wps_configmethodsenabled" set_func="cpe_set_igd_wlan_wps_configmethodsenabled"/>
+							<param name="SetupLockedState" get_func="cpe_get_igd_wlan_wps_setuplockedstate"/>
+							<param name="SetupLock" rw="1" get_func="cpe_get_igd_wlan_wps_setuplock" set_func="cpe_set_igd_wlan_wps_setuplock"/>
+							<param name="ConfigurationState" get_func="cpe_get_igd_wlan_wps_configurationstate"/>
+							<param name="LastConfigurationError" get_func="cpe_get_igd_wlan_wps_lastconfigurationerror"/>
+							<param name="RegistrarNumberOfEntries" get_func="cpe_get_igd_wlan_wps_registrarnumberofentries"/>
+							<param name="RegistrarEstablished" get_func="cpe_get_igd_wlan_wps_registrarestablished"/>
+							<object name="Registrar" rw="1" refresh_func="cpe_refresh_igd_ld_wlan_wps_registrar" add_func="cpe_add_igd_ld_wlan_wps_registrar" del_func="cpe_del_igd_ld_wlan_wps_registrar">
+								<object name="{i}" rw="1">
+									<param name="Enable" rw="1" get_func="cpe_get_igd_wlan_wps_reg_enable" set_func="cpe_set_igd_wlan_wps_reg_enable"/>
+									<param name="UUID" get_func="cpe_get_igd_wlan_wps_reg_uuid"/>
+									<param name="DeviceName" get_func="cpe_get_igd_wlan_wps_reg_devicename"/>
+								</object>								
+							</object>							
+						</object>						
+						</object>
+					</object>					
+					<object name="Hosts">
+						<param name="HostNumberOfEntries" get_func="cpe_get_igd_ld_hostnumberofentries"/>
+						<object name="Host" rw="1" refresh_func="cpe_refresh_igd_ld_ht_host" add_func="cpe_add_igd_ld_ht_host" del_func="cpe_del_igd_ld_ht_host">
+							<object name="{i}" rw="1">
+								<param name="IPAddress" get_func="cpe_get_igd_ld_hts_ht_ipaddress"/>
+								<param name="AddressSource" get_func="cpe_get_igd_ld_hts_ht_addresssource"/>
+								<param name="LeaseTimeRemaining" get_func="cpe_get_igd_ld_hts_ht_leasetimeremaining"/>
+								<param name="MACAddress" get_func="cpe_get_igd_ld_hts_ht_macaddress"/>
+								<param name="Layer2Interface" get_func="cpe_get_igd_ld_hts_ht_layer2interface"/>
+								<param name="VendorClassID" get_func="cpe_get_igd_ld_hts_ht_vendorclassid"/>
+								<param name="ClientID" get_func="cpe_get_igd_ld_hts_ht_clientid"/>
+								<param name="UserClassID" get_func="cpe_get_igd_ld_hts_ht_userclassid"/>
+								<param name="HostName" get_func="cpe_get_igd_ld_hts_ht_hostname"/>
+								<param name="InterfaceType" get_func="cpe_get_igd_ld_hts_ht_interfacetype"/>
+								<param name="Active" get_func="cpe_get_igd_ld_hts_ht_active"/>
+							</object>								
+						</object>						
+					</object>
+				</object>
+			</object>				
+			<object name="LANInterfaces">
+				<param name="LANEthernetInterfaceNumberOfEntries" get_func="cpe_get_igd_litf_lanethernetinterfacenumberofentries"/>
+				<param name="LANUSBInterfaceNumberOfEntries" get_func="cpe_get_igd_litf_lanusbinterfacenumberofentries"/>
+				<param name="LANWLANConfigurationNumberOfEntries" get_func="cpe_get_igd_litf_lanwlanconfigurationnumberofentries"/>
+			</object>			
+			<object name="WANDevice" rw="1" refresh_func="cpe_refresh_igd_wandevice" add_func="cpe_add_igd_wandevice" del_func="cpe_del_igd_wandevice">
+				<object name="{i}" rw="1">
+					<param name="WANConnectionNumberOfEntries" get_func="cpe_get_igd_wd_wanconnectionnumberofentries"/>
+					<object name="WANCommonInterfaceConfig">
+						<param name="EnabledForInternet" rw="1" get_func="cpe_get_igd_wd_wic_enabledforinternet" set_func="cpe_set_igd_wd_wic_enabledforinternet"/>
+						<param name="WANAccessType" get_func="cpe_get_igd_wd_wic_wanaccesstype"/>
+						<param name="Layer1UpstreamMaxBitRate" get_func="cpe_get_igd_wd_wic_layer1upstreammaxbitrate"/>
+						<param name="Layer1DownstreamMaxBitRate" get_func="cpe_get_igd_wd_wic_layer1downstreammaxbitrate"/>
+						<param name="PhysicalLinkStatus" get_func="cpe_get_igd_wd_wic_physicallinkstatus"/>
+						<param name="TotalBytesSent" get_func="cpe_get_igd_wd_wic_totalbytessent"/>
+						<param name="TotalBytesReceived" get_func="cpe_get_igd_wd_wic_totalbytesreceived"/>
+						<param name="TotalPacketsSent" get_func="cpe_get_igd_wd_wic_totalpacketssent"/>
+						<param name="TotalPacketsReceived" get_func="cpe_get_igd_wd_wic_totalpacketsreceived"/>
+					</object>
+					<object name="WANEthernetInterfaceConfig">
+						<param name="Enable" get_func="cpe_get_igd_wd_wei_enable"/>
+						<param name="Status" get_func="cpe_get_igd_wd_wei_status"/>
+						<param name="MACAddress" get_func="cpe_get_igd_wd_wei_macaddress"/>
+						<param name="MaxBitRate" get_func="cpe_get_igd_wd_wei_maxbitrate"/>
+						<param name="DuplexMode" get_func="cpe_get_igd_wd_wei_duplexmode"/>
+						<object name="Stats">
+							<param name="BytesSent" get_func="cpe_get_igd_wd_wei_sta_bytessent"/>
+							<param name="BytesReceived" get_func="cpe_get_igd_wd_wei_sta_bytesreceived"/>
+							<param name="PacketsSent" get_func="cpe_get_igd_wd_wei_sta_packetssent"/>
+							<param name="PacketsReceived" get_func="cpe_get_igd_wd_wei_sta_packetsreceived"/>
+						</object>
+					</object>
+					<object name="WANConnectionDevice" rw="1" refresh_func="cpe_refresh_igd_wd_wanconnectiondevice" add_func="cpe_add_igd_wd_wanconnectiondevice" del_func="cpe_del_igd_wd_wanconnectiondevice">
+						<object name="{i}" rw="1">
+							<param name="WANIPConnectionNumberOfEntries" get_func="cpe_get_igd_wd_wcd_wanipconnectionnumberofentries"/>
+							<param name="WANPPPConnectionNumberOfEntries" get_func="cpe_get_igd_wd_wcd_wanpppconnectionnumberofentries"/>
+							<object name="WANEthernetLinkConfig">
+								<param name="EthernetLinkStatus" get_func="cpe_get_igd_wd_wcd_wec_ethernetlinkstatus"/>	
+							</object>
+							<object name="WANIPConnection" rw="1" refresh_func="cpe_refresh_igd_wd_wanipconnection" add_func="cpe_add_igd_wd_wanipconnection" del_func="cpe_del_igd_wd_wanipconnection">
+								<object name="{i}" rw="1">
+									<param name="Enable" rw="1" get_func="cpe_get_igd_wd_wpc_enable" set_func="cpe_set_igd_wd_wpc_enable"/>
+									<param name="Reset" rw="1" get_func="cpe_get_igd_wd_wpc_reset" set_func="cpe_set_igd_wd_wpc_reset"/>
+									<param name="ConnectionStatus" get_func="cpe_get_igd_wd_wpc_connectionstatus"/>
+									<param name="PossibleConnectionTypes" get_func="cpe_get_igd_wd_wpc_possibleconnectiontypes"/>
+									<param name="ConnectionType" rw="1" get_func="cpe_get_igd_wd_wpc_connectiontype" set_func="cpe_set_igd_wd_wpc_connectiontype" noti_rw="1" noti_get_func="cpe_noti_get_igd_wd_wpc_connectiontype" noti_set_func="cpe_noti_set_igd_wd_wpc_connectiontype"/>
+									<param name="Name" rw="1" get_func="cpe_get_igd_wd_wpc_name" set_func="cpe_set_igd_wd_wpc_name"/>
+									<param name="Uptime" get_func="cpe_get_igd_wd_wpc_uptime"/>
+									<param name="IdleDisconnectTime" get_func="cpe_get_igd_wd_wpc_idledisconnecttime"/>
+									<param name="RSIPAvailable" get_func="cpe_get_igd_wd_wpc_rsipavailable"/>
+									<param name="NATEnabled" rw="1" get_func="cpe_get_igd_wd_wpc_natenabled" set_func="cpe_set_igd_wd_wpc_natenabled"/>
+									<param name="AddressingType" rw="1" get_func="cpe_get_igd_wd_wpc_addressingtype" set_func="cpe_set_igd_wd_wpc_addressingtype"/>
+									<param name="ExternalIPAddress" rw="1" get_func="cpe_get_igd_wd_wpc_externalipaddress" set_func="cpe_set_igd_wd_wpc_externalipaddress"/>
+									<param name="SubnetMask" rw="1" get_func="cpe_get_igd_wd_wpc_subnetmask" set_func="cpe_set_igd_wd_wpc_subnetmask"/>
+									<param name="DefaultGateway" rw="1" get_func="cpe_get_igd_wd_wpc_defaultgateway" set_func="cpe_set_igd_wd_wpc_defaultgateway"/>
+									<param name="DNSEnabled" rw="1" get_func="cpe_get_igd_wd_wpc_dnsenabled" set_func="cpe_set_igd_wd_wpc_dnsenabled"/>
+									<param name="DNSOverrideAllowed" rw="1" get_func="cpe_get_igd_wd_wpc_dnsoverrideallowed" set_func="cpe_set_igd_wd_wpc_dnsoverrideallowed"/>
+									<param name="DNSServers" rw="1" get_func="cpe_get_igd_wd_wpc_dnsservers" set_func="cpe_set_igd_wd_wpc_dnsservers" noti_rw="1" noti_get_func="cpe_noti_get_igd_wd_wpc_dnsservers" noti_set_func="cpe_noti_set_igd_wd_wpc_dnsservers"/>
+									<param name="MaxMTUSize" rw="1" get_func="cpe_get_igd_wd_wpc_maxmtusize" set_func="cpe_set_igd_wd_wpc_maxmtusize"/>
+									<param name="MACAddress" rw="1" get_func="cpe_get_igd_wd_wpc_macaddress" set_func="cpe_set_igd_wd_wpc_macaddress"/>
+									<param name="MACAddressOverride" rw="1" get_func="cpe_get_igd_wd_wpc_macaddressoverride" set_func="cpe_set_igd_wd_wpc_macaddressoverride"/>
+									<param name="VlanEnabled" rw="1" get_func="cpe_get_igd_wd_wpc_vlanenabled" set_func="cpe_set_igd_wd_wpc_vlanenabled"/>
+									<param name="VlanID" rw="1" get_func="cpe_get_igd_wd_wpc_vlanid" set_func="cpe_set_igd_wd_wpc_vlanid"/>
+									<param name="VlanPriority" rw="1" get_func="cpe_get_igd_wd_wpc_vlanpriority" set_func="cpe_set_igd_wd_wpc_vlanpriority"/>
+									<param name="ConnectionTrigger" rw="1" get_func="cpe_get_igd_wd_wpc_connectiontrigger" set_func="cpe_set_igd_wd_wpc_connectiontrigger"/>
+									<param name="RouteProtocolRx" rw="1" get_func="cpe_get_igd_wd_wpc_routeprotocolrx" set_func="cpe_set_igd_wd_wpc_routeprotocolrx"/>
+									<param name="PortMappingNumberOfEntries" get_func="cpe_get_igd_wd_wpc_portmappingnumberofentries"/>
+									<object name="DHCPClient">
+										<param name="SentDHCPOptionNumberOfEntries" get_func="cpe_get_igd_wd_wpc_dc_sentdhcpoptionnumberofentries"/>
+										<param name="ReqDHCPOptionNumberOfEntries" get_func="cpe_get_igd_wd_wpc_dc_reqdhcpoptionnumberofentries"/>
+									</object>
+									<object name="PortMapping" rw="1" refresh_func="cpe_refresh_igd_wd_wpc_portmapping" add_func="cpe_add_igd_wd_wpc_portmapping" del_func="cpe_del_igd_wd_wpc_portmapping">
+										<object name="{i}" rw="1">
+											<param name="PortMappingEnabled" rw="1" get_func="cpe_get_igd_wd_wpc_portmappingenabled" set_func="cpe_set_igd_wd_wpc_portmappingenabled"/>
+											<param name="PortMappingLeaseDuration" rw="1" get_func="cpe_get_igd_wd_wpc_portmappingleaseduration" set_func="cpe_set_igd_wd_wpc_portmappingleaseduration"/>
+											<param name="RemoteHost" rw="1" get_func="cpe_get_igd_wd_wpc_remotehost" set_func="cpe_set_igd_wd_wpc_remotehost"/>
+											<param name="ExternalPort" rw="1" get_func="cpe_get_igd_wd_wpc_externalport" set_func="cpe_set_igd_wd_wpc_externalport"/>
+											<param name="ExternalPortEndRange" rw="1" get_func="cpe_get_igd_wd_wpc_externalportendrange" set_func="cpe_set_igd_wd_wpc_externalportendrange"/>
+											<param name="InternalPort" rw="1" get_func="cpe_get_igd_wd_wpc_internalport" set_func="cpe_set_igd_wd_wpc_internalport"/>
+											<param name="PortMappingProtocol" rw="1" get_func="cpe_get_igd_wd_wpc_portmappingprotocol" set_func="cpe_set_igd_wd_wpc_portmappingprotocol"/>
+											<param name="InternalClient" rw="1" get_func="cpe_get_igd_wd_wpc_internalclient" set_func="cpe_set_igd_wd_wpc_internalclient"/>
+											<param name="PortMappingDescription" rw="1" get_func="cpe_get_igd_wd_wpc_portmappingdescription" set_func="cpe_set_igd_wd_wpc_portmappingdescription"/>
+										</object>
+									</object>
+									<object name="Stats">
+										<param name="EthernetBytesSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetbytessent"/>
+										<param name="EthernetBytesReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetbytesreceived"/>
+										<param name="EthernetPacketsSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetpacketssent"/>
+										<param name="EthernetPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetpacketsreceived"/>
+										<param name="EthernetErrorsSent" get_func="cpe_get_igd_wd_wpc_sta_etherneterrorssent"/>
+										<param name="EthernetErrorsReceived" get_func="cpe_get_igd_wd_wpc_sta_etherneterrorsreceived"/>
+										<param name="EthernetUnicastPacketsSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetunicastpacketssent"/>
+										<param name="EthernetUnicastPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetunicastpacketsreceived"/>
+										<param name="EthernetDiscardPacketsSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetdiscardpacketssent"/>
+										<param name="EthernetDiscardPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetdiscardpacketsreceived"/>
+										<param name="EthernetMulticastPacketsSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetmulticastpacketssent"/>
+										<param name="EthernetMulticastPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetmulticastpacketsreceived"/>
+										<param name="EthernetBroadcastPacketsSent" get_func="cpe_get_igd_wd_wpc_sta_ethernetbroadcastpacketssent"/>
+										<param name="EthernetBroadcastPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetbroadcastpacketsreceived"/>
+										<param name="EthernetUnknownProtoPacketsReceived" get_func="cpe_get_igd_wd_wpc_sta_ethernetunknownprotopacketsreceived"/>
+									</object>
+								</object>	
+							</object>	
+							<object name="WANPPPConnection" rw="1" refresh_func="cpe_refresh_igd_wd_wanpppconnection" add_func="cpe_add_igd_wd_wanpppconnection" del_func="cpe_del_igd_wd_wanpppconnection">
+								<object name="{i}" rw="1">
+									<param name="Enable" rw="1" get_func="cpe_get_igd_wd_wpppc_enable" set_func="cpe_set_igd_wd_wpppc_enable"/>
+									<param name="Reset" rw="1" get_func="cpe_get_igd_wd_wpppc_reset" set_func="cpe_set_igd_wd_wpppc_reset"/>
+									<param name="ConnectionStatus" rw="1" get_func="cpe_get_igd_wd_wpppc_connectionstatus" set_func="cpe_set_igd_wd_wpppc_connectionstatus"/>
+									<param name="PossibleConnectionTypes" get_func="cpe_get_igd_wd_wpppc_possibleconnectiontypes"/>
+									<param name="ConnectionType" get_func="cpe_get_igd_wd_wpppc_connectiontype" noti_rw="1" noti_get_func="cpe_noti_get_igd_wd_wpppc_connectiontype" noti_set_func="cpe_noti_set_igd_wd_wpppc_connectiontype"/>
+									<param name="PPPoESessionID" get_func="cpe_get_igd_wd_wpppc_pppoesessionid"/>
+									<param name="DefaultGateway" get_func="cpe_get_igd_wd_wpppc_defaultgateway"/>
+									<param name="Name" rw="1" get_func="cpe_get_igd_wd_wpppc_name" set_func="cpe_set_igd_wd_wpppc_name"/>
+									<param name="Uptime" get_func="cpe_get_igd_wd_wpppc_uptime"/>
+									<param name="IdleDisconnectTime" rw="1" get_func="cpe_get_igd_wd_wpppc_idledisconnecttime" set_func="cpe_set_igd_wd_wpppc_idledisconnecttime"/>
+									<param name="RSIPAvailable" get_func="cpe_get_igd_wd_wpppc_rsipavailable"/>
+									<param name="NATEnabled" rw="1" get_func="cpe_get_igd_wd_wpppc_natenabled" set_func="cpe_set_igd_wd_wpppc_natenabled"/>
+									<param name="Username" rw="1" get_func="cpe_get_igd_wd_wpppc_username" set_func="cpe_set_igd_wd_wpppc_username"/>
+									<param name="Password" rw="1" get_func="cpe_get_igd_wd_wpppc_password" set_func="cpe_set_igd_wd_wpppc_password"/>
+									<param name="PPPEncryptionProtocol" get_func="cpe_get_igd_wd_wpppc_pppencryptionprotocol"/>
+									<param name="PPPCompressionProtocol" get_func="cpe_get_igd_wd_wpppc_pppcompressionprotocol"/>
+									<param name="PPPAuthenticationProtocol" get_func="cpe_get_igd_wd_wpppc_pppauthenticationprotocol"/>
+									<param name="ExternalIPAddress" rw="1" get_func="cpe_get_igd_wd_wpppc_externalipaddress" set_func="cpe_set_igd_wd_wpppc_externalipaddress"/>
+									<param name="RemoteIPAddress" get_func="cpe_get_igd_wd_wpppc_remoteipaddress"/>
+									<param name="MaxMTUSize" rw="1" get_func="cpe_get_igd_wd_wpppc_maxmtusize" set_func="cpe_set_igd_wd_wpppc_maxmtusize"/>
+									<param name="MaxMRUSize" rw="1" get_func="cpe_get_igd_wd_wpppc_maxmrusize" set_func="cpe_set_igd_wd_wpppc_maxmrusize"/>
+									<param name="CurrentMRUSize" get_func="cpe_get_igd_wd_wpppc_currentmrusize"/>
+									<param name="DNSEnabled" rw="1" get_func="cpe_get_igd_wd_wpppc_dnsenabled" set_func="cpe_set_igd_wd_wpppc_dnsenabled"/>
+									<param name="DNSOverrideAllowed" rw="1" get_func="cpe_get_igd_wd_wpppc_dnsoverrideallowed" set_func="cpe_set_igd_wd_wpppc_dnsoverrideallowed"/>
+									<param name="DNSServers" rw="1" get_func="cpe_get_igd_wd_wpppc_dnsservers" set_func="cpe_set_igd_wd_wpppc_dnsservers"/>
+									<param name="MACAddress" rw="1" get_func="cpe_get_igd_wd_wpppc_macaddress" set_func="cpe_set_igd_wd_wpppc_macaddress"/>
+									<param name="MACAddressOverride" rw="1" get_func="cpe_get_igd_wd_wpppc_macaddressoverride" set_func="cpe_set_igd_wd_wpppc_macaddressoverride"/>
+									<param name="TransportType" rw="1" get_func="cpe_get_igd_wd_wpppc_transporttype" set_func="cpe_set_igd_wd_wpppc_transporttype"/>
+									<param name="PPPoEACName" rw="1" get_func="cpe_get_igd_wd_wpppc_pppoeacname" set_func="cpe_set_igd_wd_wpppc_pppoeacname"/>
+									<param name="PPPoEServiceName" rw="1" get_func="cpe_get_igd_wd_wpppc_pppoeservicename" set_func="cpe_set_igd_wd_wpppc_pppoeservicename"/>
+									<param name="ConnectionTrigger" rw="1" get_func="cpe_get_igd_wd_wpppc_connectiontrigger" set_func="cpe_set_igd_wd_wpppc_connectiontrigger"/>
+									<param name="RouteProtocolRx" rw="1" get_func="cpe_get_igd_wd_wpppc_routeprotocolrx" set_func="cpe_set_igd_wd_wpppc_routeprotocolrx"/>
+									<param name="PPPLCPEcho" get_func="cpe_get_igd_wd_wpppc_ppplcpecho"/>
+									<param name="PPPLCPEchoRetry" get_func="cpe_get_igd_wd_wpppc_ppplcpechoretry"/>
+									<param name="PortMappingNumberOfEntries" get_func="cpe_get_igd_wd_wpppc_portmappingnumberofentries"/>
+									<object name="PortMapping" rw="1" refresh_func="cpe_refresh_igd_wd_wpppc_portmapping" add_func="cpe_add_igd_wd_wpppc_portmapping" del_func="cpe_del_igd_wd_wpppc_portmapping">
+										<object name="{i}" rw="1">
+											<param name="PortMappingEnabled" rw="1" get_func="cpe_get_igd_wd_wpppc_portmappingenabled" set_func="cpe_set_igd_wd_wpppc_portmappingenabled"/>
+											<param name="PortMappingLeaseDuration" rw="1" get_func="cpe_get_igd_wd_wpppc_portmappingleaseduration" set_func="cpe_set_igd_wd_wpppc_portmappingleaseduration"/>
+											<param name="RemoteHost" rw="1" get_func="cpe_get_igd_wd_wpppc_remotehost" set_func="cpe_set_igd_wd_wpppc_remotehost"/>
+											<param name="ExternalPort" rw="1" get_func="cpe_get_igd_wd_wpppc_externalport" set_func="cpe_set_igd_wd_wpppc_externalport"/>
+											<param name="ExternalPortEndRange" rw="1" get_func="cpe_get_igd_wd_wpppc_externalportendrange" set_func="cpe_set_igd_wd_wpppc_externalportendrange"/>
+											<param name="InternalPort" rw="1" get_func="cpe_get_igd_wd_wpppc_internalport" set_func="cpe_set_igd_wd_wpppc_internalport"/>
+											<param name="PortMappingProtocol" rw="1" get_func="cpe_get_igd_wd_wpppc_portmappingprotocol" set_func="cpe_set_igd_wd_wpppc_portmappingprotocol"/>
+											<param name="InternalClient" rw="1" get_func="cpe_get_igd_wd_wpppc_internalclient" set_func="cpe_set_igd_wd_wpppc_internalclient"/>
+											<param name="PortMappingDescription" rw="1" get_func="cpe_get_igd_wd_wpppc_portmappingdescription" set_func="cpe_set_igd_wd_wpppc_portmappingdescription"/>
+										</object>
+									</object>
+									<object name="Stats">
+										<param name="EthernetBytesSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetbytessent"/>
+										<param name="EthernetBytesReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetbytesreceived"/>
+										<param name="EthernetPacketsSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetpacketssent"/>
+										<param name="EthernetPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetpacketsreceived"/>
+										<param name="EthernetErrorsSent" get_func="cpe_get_igd_wd_wpppc_sta_etherneterrorssent"/>
+										<param name="EthernetErrorsReceived" get_func="cpe_get_igd_wd_wpppc_sta_etherneterrorsreceived"/>
+										<param name="EthernetUnicastPacketsSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetunicastpacketssent"/>
+										<param name="EthernetUnicastPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetunicastpacketsreceived"/>
+										<param name="EthernetDiscardPacketsSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetdiscardpacketssent"/>
+										<param name="EthernetDiscardPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetdiscardpacketsreceived"/>
+										<param name="EthernetMulticastPacketsSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetmulticastpacketssent"/>
+										<param name="EthernetMulticastPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetmulticastpacketsreceived"/>
+										<param name="EthernetBroadcastPacketsSent" get_func="cpe_get_igd_wd_wpppc_sta_ethernetbroadcastpacketssent"/>
+										<param name="EthernetBroadcastPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetbroadcastpacketsreceived"/>
+										<param name="EthernetUnknownProtoPacketsReceived" get_func="cpe_get_igd_wd_wpppc_sta_ethernetunknownprotopacketsreceived"/>
+									</object>
+								</object>	
+							</object>	
+						</object>					
+					</object>
+				</object>				
+			</object>
+			<object name="DNS">
+				<object name="SD">
+					<param name="Enable" rw="1" get_func="cpe_get_igd_dns_sd_enable" set_func="cpe_set_igd_dns_sd_enable"/>
+					<param name="ServiceNumberOfEntries" get_func="cpe_get_igd_dns_sd_servicenumberofentries"/>
+					<object name="Service" refresh_func="cpe_refresh_igd_dns_sd_service">
+						<object name="{i}">
+							<param name="InstanceName" get_func="cpe_get_igd_dns_sd_ser_instancename"/>
+							<param name="ApplicationProtocol" get_func="cpe_get_igd_dns_sd_ser_applicationprotocol"/>
+							<param name="TransportProtocol" get_func="cpe_get_igd_dns_sd_ser_transportprotocol"/>
+							<param name="Domain" get_func="cpe_get_igd_dns_sd_ser_domain"/>
+							<param name="Port" get_func="cpe_get_igd_dns_sd_ser_port"/>
+							<param name="Target" get_func="cpe_get_igd_dns_sd_ser_target"/>
+							<param name="Status" get_func="cpe_get_igd_dns_sd_ser_status"/>
+							<param name="LastUpdate" get_func="cpe_get_igd_dns_sd_ser_lastupdate"/>
+							<param name="Host" get_func="cpe_get_igd_dns_sd_ser_host"/>
+							<param name="TimeToLive" get_func="cpe_get_igd_dns_sd_ser_timetolive"/>
+							<param name="Priority" get_func="cpe_get_igd_dns_sd_ser_priority"/>
+							<param name="Weight" get_func="cpe_get_igd_dns_sd_ser_weight"/>
+							<param name="TextRecordNumberOfEntries" get_func="cpe_get_igd_dns_sd_ser_textrecordnumberofentries"/>
+							<object name="TextRecord" refresh_func="cpe_refresh_igd_dns_sd_ser_textrecord">
+								<object name="{i}">
+									<param name="Key" get_func="cpe_get_igd_dns_sd_ser_tex_key"/>
+									<param name="Value" get_func="cpe_get_igd_dns_sd_ser_tex_value"/>
+								</object>
+							</object>
+						</object>
+					</object>			
+				</object>
+			</object>											
+		</object>
+	</model>
+	<inform>
+		<paramlist>
+			<param name=""/>
+		</paramlist>
+	</inform>
+	<rpc>
+
+  
+  </rpc>
+</cwmp>

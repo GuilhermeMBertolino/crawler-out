@@ -1,0 +1,29 @@
+#!/bin/sh
+
+FLASH_USAGE=`df -h -P /overlay | grep overlay | awk -F ' ' '{print$3}' | awk -F 'M' '{print$1}'`
+FLASH_TOTAL=`df -h -P /overlay | grep overlay | awk -F ' ' '{print$2}' | awk -F 'M' '{print$1}'`
+MAX_SESSIONS=`cat /proc/sys/net/netfilter/nf_conntrack_max | awk -F ' ' '{printf $1}'`
+CUR_SESSIONS=`cat /proc/sys/net/netfilter/nf_conntrack_count | awk -F ' ' '{printf $1}'`
+MEMORY_TOTAL=`cat /proc/meminfo | grep "MemTotal:" | awk -F ' ' '{printf int(($2)/1024)}'`
+MEMORY_USAGE=`top -n 1 | grep "Mem" | awk -F ' ' '{printf int($2/1024)}'`
+SYSTEM_UPTIME=`uptime | cut -d ' ' -f2`
+SKU=`uci -P/var/state get netgear.board.sku`
+CPU_USAGE=`mpstat -P ALL -u | tail -n +5 | awk '{print (100-$11)}'`
+CPU1_USAGE=`echo $CPU_USAGE | cut -d' ' -f1`
+CPU2_USAGE=`echo $CPU_USAGE | cut -d' ' -f2`
+CPU3_USAGE=`echo $CPU_USAGE | cut -d' ' -f3`
+CPU4_USAGE=`echo $CPU_USAGE | cut -d' ' -f4`
+WLAN_DRIVER_VER=`iwpriv ra0 get_driverinfo | grep -i 'Driver version' | cut -d ':' -f3`
+echo "FLASH_USAGE=$FLASH_USAGE" > /var/debug_info
+echo "FLASH_TOTAL=$FLASH_TOTAL" >> /var/debug_info
+echo "MAX_SESSIONS=$MAX_SESSIONS" >> /var/debug_info
+echo "CUR_SESSIONS=$CUR_SESSIONS" >> /var/debug_info
+echo "MEMORY_TOTAL=$MEMORY_TOTAL" >> /var/debug_info
+echo "MEMORY_USAGE=$MEMORY_USAGE" >> /var/debug_info
+echo "SYSTEM_UPTIME=$SYSTEM_UPTIME" >> /var/debug_info
+echo "SKU=$SKU" >> /var/debug_info
+echo "CPU1_USAGE=$CPU1_USAGE" >> /var/debug_info
+echo "CPU2_USAGE=$CPU2_USAGE" >> /var/debug_info
+echo "CPU3_USAGE=$CPU3_USAGE" >> /var/debug_info
+echo "CPU4_USAGE=$CPU4_USAGE" >> /var/debug_info
+echo "WLAN_DRIVER_VER=$WLAN_DRIVER_VER" >> /var/debug_info

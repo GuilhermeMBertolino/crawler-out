@@ -1,0 +1,9 @@
+#!/bin/sh
+
+[ ifup = "$ACTION" ] && {
+    if [ "wan" = "$INTERFACE" ] || [ "wan_v6" = "$INTERFACE" ]; then
+        timezone_state="$(uci get system.@system[0].timezone_state)"
+        [ "2" = "$timezone_state" ] && exit 0
+        /usr/sbin/ATS -z &
+    fi
+}

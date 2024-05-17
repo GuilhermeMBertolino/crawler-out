@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. /etc/wlan/wifi_conf
+
+show_wireless_status_inteface()
+{
+	#eval "echo "wl -i $1 status" > /dev/console"
+	eval "wl -i $1 status 2>/dev/null"
+}
+
+show_wireless_status()
+{
+	for ifname in ${ifname_list}; do
+		eval "echo "wl -i $ifname status" > /dev/console"
+		eval "wl -i $ifname status 2>/dev/null"
+		if [ $ifname = wl1.1 -o $ifname = wl2.1 ]; then
+			echo "------------------------------------------------------------------------------------"
+		fi
+	done
+}
+
+case "$1" in
+	wl0|wl0.1|wl1|wl1.1|wl2|wl2.1) show_wireless_status_inteface $1;;
+	*) show_wireless_status ;;
+esac
+

@@ -1,0 +1,223 @@
+#!/bin/sh 
+
+DNI_CONFIG=/bin/config
+
+LOGGER="logger -s -p daemon.info -t TM_update"
+CURL="/bin/curl"
+Trend_micro_enable=$($DNI_CONFIG get trend_micro_enable)
+skip_https_cert=$($DNI_CONFIG get skip_https_cert_auth)
+#force to skip tls cert
+skip_https_cert=1
+https_time_out="--connect-timeout 10"
+device_name=`cat /module_name|tr A-Z a-z`
+vs1=0
+cur_vs1=0
+vs2=0
+cur_vs2=0
+old_date=0
+version=0
+cur_version=0
+rel_date=0
+
+judgement_version(){
+	version=`cat /tmp/Trend_Micro.db| grep version | cut -d ":" -f 2`
+	rel_date=`cat /tmp/Trend_Micro.db| grep update_date | cut -d ":" -f 2`
+	cur_version=`cat /TM/database_versions | grep version | cut -d ":" -f 2`
+	vs1=`echo $version | cut -d "-" -f 4 | cut -c 2`
+	cur_vs1=`echo $cur_version | cut -d "-" -f 4 | cut -c 2`
+	vs2=`echo $version | cut -d "." -f 2`
+	cur_vs2=`echo $cur_version | cut -d "." -f 2`
+	old_date=`cat /TM/database_versions | grep update_date | cut -d ":" -f 2`
+}
+
+update() {
+	local UPDATE_STATUS=0
+
+	if [ "x$skip_https_cert" = "x1" ]; then
+		$CURL -k $https_time_out https://http.fw.updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/database_versions 2>/dev/null  > /tmp/Trend_Micro.db
+	else
+		$CURL $https_time_out https://http.fw.updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/database_versions 2>/dev/null  > /tmp/Trend_Micro.db
+	fi	
+		
+	if [ $? -ne 0 ]; then
+		$CURL $https_time_out ftp://updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/database_versions 2>/dev/null  > /tmp/Trend_Micro.db
+		line=`cat /tmp/Trend_Micro.db | grep netgear-detection`
+		if [ "x$line" != "x" ] ; then
+			judgement_version
+			local ftp_support=1
+		else
+			UPDATE_STATUS=100
+			$LOGGER "[ FAIL ] Update failed."
+		fi
+	else
+		judgement_version
+	fi
+	
+	if [ $vs1 -gt $cur_vs1 ] || ([ $vs1 -eq $cur_vs1 ] && [ $vs2 -gt $cur_vs2 ]); then
+		if [ "x$ftp_support" = "x1" ];then
+			$LOGGER "start to get info from ftp://updates1.netgear.com/sw-apps/dynamic-qos/$version"
+			$CURL $https_time_out ftp://updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/$version.zip -o /tmp/$version.zip 2>/dev/null
+		else
+			$LOGGER "start to get info from https://http.fw.updates1.netgear.com/sw-apps/dynamic-qos/$version"
+			if [ "x$skip_https_cert" = "x1" ]; then
+				$CURL -k $https_time_out https://http.fw.updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/$version.zip -o /tmp/$version.zip 2>/dev/null
+			else
+				$CURL $https_time_out https://http.fw.updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/$version.zip -o /tmp/$version.zip 2>/dev/null
+			fi
+		fi
+
+		if [ "$?" = "0" ]; then
+			#[ "$Trend_micro_enable" = "1" ] && shutdown
+			unzip -o /tmp/$version.zip -d  /usr/sbin/
+			version_1=`echo $version | cut -d "." -f -2`
+			sed -i "s/$cur_version/$version_1/g" /TM/database_versions
+			sed -i "s/$old_date/$rel_date/g" /TM/database_versions
+			rm -f /tmp/$version.zip
+			echo " update success !" > /dev/console
+			[ "$Trend_micro_enable" = "1" ] && sleep 3 && start
+			ret_val=$?
+			if [ "X$ret_val" = "X0" ]; then
+				UPDATE_STATUS=0
+			else
+				UPDATE_STATUS=100
+			fi
+		else
+			UPDATE_STATUS=100
+			$LOGGER "fail to download
+			ftp://updates1.netgear.com/sw-apps/dynamic-qos/trend/$device_name/$version.zip"
+		fi
+	else
+		UPDATE_STATUS=11
+		$LOGGER "[ ok ] Everything is up-to-date."
+	fi
+	return $UPDATE_STATUS
+}
+
+auto_update() {
+	ENABLE_AUTO_UPDATE=$($DNI_CONFIG get auto_update)
+	[ "x$ENABLE_AUTO_UPDATE" = "x1" ] || {
+	$LOGGER "Automatic updates are disabled.  Using existing files."
+	return 10
+	}
+update
+ret=$?
+return $ret
+}
+
+setbw()
+{
+	if [ "x$($DNI_CONFIG get bandwidth_type)" = "x1" ]; then
+		ceil_up=$($DNI_CONFIG get uplimit)
+		ceil_down=$($DNI_CONFIG get downlimit)
+	else
+		ceil_up=$($DNI_CONFIG get ookla_uplimit)
+		ceil_down=$($DNI_CONFIG get ookla_downlimit)
+	fi
+	ceil_up=$(echo "$ceil_up/1000"|bc)
+	ceil_down=$(echo "$ceil_down/1000"|bc)
+	if [ "x$ceil_up" != "x" ] && [ "x$ceil_down" != "x" ]; then
+		#[ "$Trend_micro_enable" = "1" ] && shutdown
+		olg_ceil_up=`sed -n "s/ceil_up=//p" /TM/qos.conf | sed -n "s/kbps//p"`
+		olg_ceil_down=`sed -n "s/ceil_down=//p" /TM/qos.conf | sed -n "s/kbps//p"`
+
+		sed -i "s/\(ceil_up=\)$olg_ceil_up\(kbps\)/\1$ceil_up\2/g" /TM/qos.conf
+		sed -i "s/\(ceil_down=\)$olg_ceil_down\(kbps\)/\1$ceil_down\2/g" /TM/qos.conf
+
+		[ "$Trend_micro_enable" = "1" ] && boot
+	fi
+}
+
+boot() {
+	ret=1
+	cmdsched  # config auto update task. common issue.
+	if [ "$($DNI_CONFIG get first_boot_qos)" = "1" ] ; then
+		auto_update
+		ret=$?
+		$DNI_CONFIG set first_boot_qos=0
+	fi
+	[ "$ret" != "0" ] && start
+}
+
+shutdown() {
+	cd /usr/sbin/
+	./setup.sh stop
+
+#	ps -www|grep get_qos_dni_user_info |grep -v grep 2>&-|cut -d ' ' -f 1 |xargs kill -9
+#	ps -www|grep get_qos_dni_app_info |grep -v grep 2>&-|cut -d ' ' -f 1 |xargs kill -9
+#	[ "x`ps -w|grep shn_ctrl |grep -v grep 2>/dev/null`" != "x" ] && killall shn_ctrl
+#	config set trend_micro_console_enable=0
+
+	cd - &>/dev/null
+}
+
+start() {
+	
+	cd /usr/sbin/
+	./setup.sh restart
+	sleep 3 
+	#a improved solution
+	#for get_qos_dni_prio_info
+	#for get_qos_dni_flow_info
+#	/usr/sbin/shn_ctrl -a get_qos_dni_flow_info 1>/dev/null 2>&1 &
+#	/usr/sbin/shn_ctrl -a get_qos_dni_prio_info 1>/dev/null 2>&1 &
+#	config set trend_micro_console_enable=0
+#	ps -www|grep get_qos_dni_user_info |grep -v grep 2>&-|cut -d ' ' -f 1 |xargs kill -9
+#	ps -www|grep get_qos_dni_app_info |grep -v grep 2>&-|cut -d ' ' -f 1 |xargs kill -9
+#	poll=`ps | grep get_qos_dni | grep -v grep 2>&-`
+#	if [ "x$poll" = "x" ] ; then
+#		 /TM/poll_get_info.sh &
+#	fi
+}
+
+stop(){
+	shutdown
+}
+
+restart() {
+	#tcd daemon will indicate qos is running or not
+	tcd_run=`ps -w | grep -e tcd | grep -v grep`
+	[ "x$tcd_run" != "x" ] && shutdown
+	[ "x$Trend_micro_enable" != "x1" ] && return 0
+	 boot
+}
+
+get_priority() {
+	#mac=`echo $1 | sed 's/://g'`
+	cat_id=$2
+	fam_id=$3
+	/TM/priority get_info "$1" "cat= $cat_id" "fam= $fam_id"
+	ret=$?
+	return $ret
+}
+
+set_priority() {
+	#mac=`echo $1 | sed 's/://g'`
+	if [ $1 == "off" ]; then
+		/usr/sbin/shn_ctrl -a set_qos_off
+	elif [ $1 == "on" ]; then
+		/usr/sbin/shn_ctrl -a set_qos_conf -R /TM/qos.conf
+		ret=$?
+		[ "$ret" = "1" ] && echo "set configuration to iqos fail!" >/dev/console && return $ret
+		/usr/sbin/shn_ctrl -a set_qos_on
+	else
+		/TM/priority set_info "$1" "$2"
+		ret=$?
+		[ "$ret" = "10" ] && echo "set priority fail!" >/dev/console
+	fi
+}
+
+echo "QoSControl $0 $1"
+
+case "$1" in
+	setbw) setbw ;;
+	auto_update) auto_update;;
+	update) update;;
+	boot) boot;;
+	shutdown) shutdown;;
+	start) start;;
+	stop) stop;;
+	restart) restart;;
+	get_priority) get_priority $2 $3 $4;;
+	set_priority) set_priority $2 $3;;
+esac
+exit $?

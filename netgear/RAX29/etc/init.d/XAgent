@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# Add $2 to value of symbol $1 as csv 
+csv_add() {
+
+ local SEP=""
+ local VAL=$(d2 -s "${1}")
+ for item in ${VAL//,/ }; do
+    [ "${item}" = "${2}" ] && return 0
+    SEP="," 
+ done
+
+ d2 -c "${1}" "${VAL}${SEP}${2}"
+}
+
+upgrade_cfg() {
+  readycloud_nvram init
+    XAGENT_ID=$(d2 -s xagentcfg[0].x_agent_id)
+    if [ "${XAGENT_ID}empty" == "empty" ]; then
+        d2 -c xagentcfg[0].x_agent_id         "$(readycloud_nvram get x_agent_id)"
+        d2 -c xagentcfg[0].x_agent_claim_code "$(readycloud_nvram get x_agent_claim_code)"
+        d2 -c xagentcfg[0].x_agent_registered "$(readycloud_nvram get x_agent_registered)"
+        d2 -c xagentcfg[0].x_agent_claimed    "$(readycloud_nvram get x_agent_claimed)"
+        
+		#readycloud_nvram unset x_agent_id
+        #readycloud_nvram unset x_agent_claim_code
+        #readycloud_nvram unset x_agent_registered
+        #readycloud_nvram unset x_agent_claimed
+        #readycloud_nvram commit
+    fi
+}
+
+start() {
+    #Set x_force_connection, So xAgent can reach xCloud
+    d2 -c xagentcfg[0].x_force_connection 1
+
+    # add status handler, if needed
+    csv_add xagentcfg[0].x_handler_event_sink /usr/bin/evsinkd2
+
+    # Modify genie soap port to 5000
+    d2 -c xagentcfg[0].genie_soap_port 5000
+
+    SN=`d2 -s general.FSN`
+    MODEL=`d2 -s general.DeviceModel`
+    #enlarge log file based on DAL FAQs - Eanbe Debug Logging.pdf
+    #change log file size back to 512K (CTC-T69063)
+    /opt/xagent/xagent --log_debug --log_file /tmp/xagent.log --log_file_cnt 2 --log_file_size 512K -w -d --ca_file /opt/xagent/certs/ca-bundle-mega.crt --connectivity_log_file /tmp/xagent_connection_events.log --hardware_id ${SN} --model_id ${MODEL} --agent_keepalive 20,3,20
+    pidof xcenvsw.sh || (cd /etc/xagent; ./xcenvsw.sh) &  
+}
+
+stop() {
+    killall xagent
+    d2 -c xagentcfg.x_agent_connected 0
+    d2 -c xagentstatus.pid 0
+}
+
+boot() {
+    [ "`cat /tmp/orbi_type`" = "Satellite" ] && return
+    upgrade_cfg
+    start
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+	start)
+		echo -e "\033[35mStarting XAgent...\033[0m"
+		boot
+		exit 0
+		;;
+
+	stop)
+		echo "Stopping XAgent..."
+		stop
+		exit 0
+		;;
+
+	*)
+		echo "$0: unrecognized option $1"
+		exit 1
+		;;
+
+esac
+

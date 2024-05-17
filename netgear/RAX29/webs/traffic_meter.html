@@ -1,0 +1,688 @@
+<!DOCTYPE HTML>
+<!-- include PHP to use php functions -->
+<? include 'php/commonCfg.php';?>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+  <script src="js/staticRoute.js"></script>
+  <script src="js/embedProgressBar.js"></script>
+
+  <script language="javascript" type="text/javascript">
+
+    CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+
+    $(document).ready(function()
+    {
+        fetchData('target', 'trafficMeter', '', 'post_fillout_init');
+    });
+
+    function formSubmit() {
+        if (validation()) {
+            $.postForm('trafficMeter', $('#target'), 'cgi-bin/rex_cgi');
+        }
+    }
+
+    function validation()
+    {
+        var tm_type = $('[name=tm_type]:checked').val();
+        var volMonthlyLimit = parseInt($('[name=volMonthlyLimit]').val());
+        var volRoundUp = parseInt($('[name=volRoundUp]').val());
+        var popMessage = parseInt($('[name=popMessage]').val());
+        var timeControlLimit= parseInt($('[name=timeControlLimit]').val());
+        var thismonth_connect_time	= $("[name=thismonth_connect_time]").text();
+        var tmp = thismonth_connect_time.split(":");
+        var thismonth_connect_time_hours = parseInt(tmp[0]);
+        //alert(thismonth_connect_time_hours);
+        
+        if (volMonthlyLimit < 0 || volMonthlyLimit > 4095000000) {
+            //Invalid numeric value for Monthly Limit.
+            alert(window.top.mlang["ATME03"]);
+            return false;
+        }
+        
+        if (volRoundUp < 0 || volRoundUp > 4095000000) {
+            //Invalid round up data volume.
+            alert(window.top.mlang["ATME07"]);
+            return false;
+        }
+        
+        if (volRoundUp > volMonthlyLimit) {
+            //Round-up value should be less than Monthly Limit.
+            alert(window.top.mlang["ATME06"]);
+            return false;
+        }
+
+        if(tm_type == "volControl") {
+
+           if (popMessage < 0 || popMessage > 4095000000) {
+                //Invalid numeric value for Watermark at traffic control
+                alert(window.top.mlang["ATME05"]);
+                return false;
+            }
+
+            if (popMessage > volMonthlyLimit) {
+                //Watermark value should be less than Monthly Limit.
+                alert(window.top.mlang["ATME08"]);
+                return false;
+            }
+        }
+
+        if(tm_type == "timeControl") {
+
+            if (popMessage >= timeControlLimit) {
+                //Watermark value should be less than Monthly Limit.
+                alert(window.top.mlang["ATME08"]);
+                return false;
+            }
+
+            if(thismonth_connect_time_hours >= timeControlLimit ){
+                //thismonth 
+                alert(window.top.mlang["ATME03"]+" "+timeControlLimit+" " );
+                return false;
+            }
+
+            if(timeControlLimit >= 744 ){
+                //thismonth total.
+                alert(window.top.mlang["ATME04"]);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    
+    function post_fillout_init()
+    {   
+        /* init function */
+        init_enable();
+        init_date_span();
+
+		
+		
+        /* register a onClick/onChange funtion */
+        $('#target [name=enable]').on('change', function() {
+            $('#target [name=enable]').val($('#target [name=enable]').prop("checked"));
+            onChange_enable();
+        });
+        $('#target [name=tm_type]').on('change', function() {
+            onChange_tm_type();
+        });
+        $('#target [name=volControlType]').on('change', function() {
+            onChange_volControlType();
+        });
+        $('#target [name=restart_counter]').on('click', function() {
+            onChange_restart_counter_button();
+        });
+        $('#target [name=refresh]').on('click', function() {
+            onClick_refresh_button();
+        });
+        $('#target [name=traffic_status]').on('click', function() {
+            onClick_traffic_status_button();
+        });
+        $('#target [name=turnLed]').on('change', function() {
+            $('#target [name=turnLed]').val($('#target [name=turnLed]').prop("checked"));
+        });
+        $('#target [name=disableInternet]').on('change', function() {
+            $('#target [name=disableInternet]').val($('#target [name=disableInternet]').prop("checked"));
+        });
+
+        //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+        $('#ampm')[0].selectedIndex = $('#amPm').prop('selectedIndex');
+        $('#ampm').on('change', function() {
+            $('#amPm')[0].selectedIndex = $('#ampm').prop('selectedIndex');
+        });
+    }
+    
+    /* init function Section --------> Begin */
+    function init_enable()
+    {
+        onChange_enable();
+    }
+    
+    function init_date_span()
+    {
+        var tm_type = $('[name=tm_type]:checked').val();
+        var enable = $('#target [name=enable]').val();
+        var volControlType = $('select[name=volControlType]').val();
+        var new_current_time = date_to_mlang($('span[name=current_time]').text());
+        var new_start_time = date_to_mlang($('span[name=start_time]').text());
+
+        $('span[name=current_time]').text(new_current_time);
+        $('span[name=start_time]').text(new_start_time);
+        if (enable == "true") {
+            if (tm_type == "volControl") {
+                if (volControlType == "No limit") {
+                    $('span[name=left_traffic]').text(window.top.mlang["RS-Vault_348"]);
+                }
+                else {
+                    var val = $('span[name=left_traffic]').text();
+                    val = val.replace("K","");
+                    $('span[name=left_traffic]').text(val + ' '+window.top.mlang["PCVP_120"]);
+                }
+            }
+            else {
+                $('span[name=left_traffic_header]').text(window.top.mlang["genie_194"]);
+            }
+        }
+    }
+    
+    function date_to_mlang(ori_fmt_date)
+    {
+        // ori_fmt_date = Wed Jan 20 16:35:10 2021
+        var date_array = ori_fmt_date.toString().split(/\s+/);
+        
+        var year = date_array[4];
+        var month_abbr = date_array[1];
+        var month = month_to_mlang(month_abbr);
+        var week_abbr = date_array[0];
+        var week = week_to_mlang(week_abbr);
+        var day = date_array[2];
+        var time = date_array[3].split(":");
+        
+        // new_fmt_date = Wednesday, 1 Jul 2020 13:59
+        var new_fmt_date = week + ", " + day + " " + month + " " + year + " " + time[0] + ":" + time[1];
+
+        return new_fmt_date;
+    }
+    /* init function Section --------> End */
+    
+    /* Onclick Callback Section --------> Begin */
+    function onChange_enable()
+    {
+
+        var enable = $('#target [name=enable]').val();
+        var wanMode= $('#target [name=wanMode]').val();
+        
+        if (enable == "true") {
+            //remove readonly of all element
+            $('[name=volMonthlyLimit]').attr('readonly', false);
+            $('[name=volRoundUp]').attr('readonly', false);
+            $('[name=timeControlLimit]').attr('readonly', false);
+            $('[name=counterHour]').attr('readonly', false);
+            $('[name=counterMin]').attr('readonly', false);
+            $('[name=restart_counter]').attr('disabled', false);
+            $('[name=restart_counter]').css('cursor', 'pointer');
+            $('[name=popMessage]').attr('readonly', false);
+            $('[name=refresh]').attr('disabled', false);
+            $('[name=refresh]').css('cursor', 'pointer');
+            $('[name=traffic_status]').attr('disabled', false);
+            $('[name=traffic_status]').css('cursor', 'pointer');
+            $(".no_readonly_element").css("pointer-events", "");
+            $(".no_readonly_element").css("opacity", "");
+            $('[name=tm_type][value=timeControl]').prop('disabled', false);
+            
+            
+            if (wanMode == "Static" || wanMode == "DHCP") {
+                $('[name=tm_type][value=timeControl]').prop('disabled', true);
+                $('[name=tm_type][value=volControl]').prop('checked', true);
+                $('[name=tm_type]').change();
+            }
+            
+            // only when traffic meter is enabled, the readonly/set-able of the sub-enable-elements can be active. 
+            onChange_tm_type();
+        }
+        else if (enable == "false") {
+            //add readonly of all element
+            $('[name=volMonthlyLimit]').attr('readonly', true);
+            $('[name=volRoundUp]').attr('readonly', true);
+            $('[name=timeControlLimit]').attr('readonly', true);
+            $('[name=counterHour]').attr('readonly', true);
+            $('[name=counterMin]').attr('readonly', true);
+            $('[name=restart_counter]').attr('disabled', true);
+            $('[name=restart_counter]').css('cursor', 'default');
+            $('[name=popMessage]').attr('readonly', true);
+            $('[name=refresh]').attr('disabled', true);
+            $('[name=refresh]').css('cursor', 'default');
+            $('[name=traffic_status]').attr('disabled', true);
+            $('[name=traffic_status]').css('cursor', 'default');
+            $(".no_readonly_element").css("pointer-events", "none");
+            $(".no_readonly_element").css("opacity", "0.5");
+            // When traffic meter is disabled, all element should be readonly.
+        }
+    }
+    
+    function onChange_tm_type()
+    {
+
+        var tm_type = $('[name=tm_type]:checked').val();
+        
+        if (tm_type == "volControl") {
+            //un-greyout the volume control elements
+            $("[name=volControlType]").css("pointer-events", "");
+            $("[name=volControlType]").css("opacity", "");
+            $('[name=volMonthlyLimit]').attr('readonly', false);
+            $('[name=volRoundUp]').attr('readonly', false);
+            $('[name=timeControlLimit]').attr('readonly', true);
+            //sync radio value to hidden input value
+            $('[name=volControl]').val("true");
+            $('[name=timeControl]').val("false");
+            
+            // only when volume control is enabled, the readonly/set-able of the sub-enable-elements can be active. 
+            onChange_volControlType()
+        }
+        else if (tm_type == "timeControl") {
+            //greyout the volume control elements
+            $("[name=volControlType]").css("pointer-events", "none");
+            $("[name=volControlType]").css("opacity", "0.5");
+            $('[name=volMonthlyLimit]').attr('readonly', true);
+            $('[name=volRoundUp]').attr('readonly', true);
+            $('[name=timeControlLimit]').attr('readonly', false);
+            //sync radio value to hidden input value
+            $('[name=volControl]').val("false");
+            $('[name=timeControl]').val("true");
+            // When volume control is disabled, all volume control elements should be readonly.
+        }
+    }
+    
+    function onChange_volControlType()
+    {
+        var volControlType = $('select[name=volControlType]').val();
+        var wanMode= $('#target [name=wanMode]').val();
+        
+        if (volControlType == "No limit") { //"noLimit" //LATER check
+            $('[name=volMonthlyLimit]').attr('readonly', true);
+            $('[name=volRoundUp]').attr('readonly', true);
+        }
+        else if (volControlType == "Download only" || volControlType == "Both directions") {  //downloadOnly || BothDirections
+            $('[name=volMonthlyLimit]').attr('readonly', false);
+            
+            if (wanMode == "Static" || wanMode == "DHCP") {
+                $('[name=volRoundUp]').attr('readonly', true);
+            }
+            else {
+                $('[name=volRoundUp]').attr('readonly', false);
+            }
+        }
+    }
+    
+    function onChange_restart_counter_button()
+    {
+        if (!confirm(window.top.mlang["ATMW01"])) {
+            return false;
+        }
+        
+        //post a data to cgi to do restart counter
+        var json_data = '{ "function": "tmResetCounter", "data": { "" : ""} }';
+        $.postData('cgi-bin/rex_cgi', json_data, 'after_postData_restart_counter');
+    }
+    
+    function after_postData_restart_counter()
+    {
+        show_EmbedProgressBar('SWP046', 1000, '/traffic_meter.html');
+    }
+
+    function onClick_refresh_button()
+    {
+        //post a data to cgi to refresh the traffic meter statistics info
+        var json_data = '{ "function": "tmUpdateStatistic", "data": { "" : ""} }';
+        $.postData('cgi-bin/rex_cgi', json_data, 'after_postData_handler');
+    }
+    
+    var trStatusWinVar = null;
+    
+    function onClick_traffic_status_button()
+    {
+        // open traffic status window
+        
+        var winoptions = "width=440,height=360,status=yes,resizable=yes";
+        
+        trStatusWinVar = window.open('traffic_status.html','trstatus_win',winoptions);
+        if (trStatusWinVar.focus) {
+            setTimeout('trStatusWinVar.focus()',200);
+        }
+    }
+    /* Onclick Callback Section --------> End */
+
+    function isNumStr(str)
+    {
+        var i;
+        if (str.length == 0) {
+            return false;
+        }
+        
+        for(i = 0; i < str.length; i++) {
+            var c = str.substring(i, i+1);
+            if("0" <= c && c <= "9") {
+                continue;
+            }
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function after_postData_handler(json)
+    {
+        //handle error
+        if (json.code == -1) {
+            alert("ajax error : " + json.message);
+            return false;
+        }
+        else if (json.status != "success") {
+            alert("cgi response error!");
+            document.location.reload();
+            return false;
+        }
+        //Read values from cms db and fillout to web elements for refresh statistics table info
+        fetchData('target', 'trafficMeter', '', '');
+		document.location.reload();
+    }
+    
+    $.postData = function(url, data , callback, time) {
+        //post data
+        $.ajax({
+            url: url + "?csrftoken=" + CSRF_TOKEN,
+            type: "POST",
+            data: data,
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(json) {
+                (callback != null) ? eval(callback + "(json)") : defaultHandler(json);
+            },
+            error: function(xhr) {
+                var json = {
+                    "code": "-1",
+                    "message": xhr.status + " " + xhr.statusText,
+                };
+                (callback != null) ? eval(callback + "(json)") : defaultHandler(json);
+            },
+            timeout: time ? time : 0,
+        });
+    };
+
+  </script>
+
+
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('traffic_meter','');" class="page-body" onResize="window.top.change_size($(this));">
+    <!-- main form -->
+    <form id="target"  name="formname" method="POST" >
+        <div class="page-header" style="position: relative;" mlang="LUP039">Traffic Meter</div>
+        <div id="main" class="form-group" style=height:410px;overflow:auto;scrolling:auto">
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('traffic_meter','internet')" tabindex="-1"><b mlang="ATM024" >Internet Traffic Meter</b></a>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="ATM022" >Enable Traffic Meter</span>
+                    <input type="checkbox" name="enable" id="check_traffic" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="form-row no_readonly_element">
+                <label class="checkbox-container" ><div mlang="ATM037">"Traffic volume control by</div>
+                <input type="radio" name="tm_type" id="tm_tvolume" value="volControl">
+                <span class="radio-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row no_readonly_element">
+            <select name="volControlType" id="traff_dir" size=1>
+                <option value="No limit" mlang="ATM026" selected="selected" >No limit</option>
+                <option value="Download only" mlang="ATM021">Download only</option>
+                <option value="Both directions" mlang="ATM020">Both directions</option>
+            </select>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM025" >Monthly limit</span>
+        </div>
+        <div class="form-row">
+            <input class="input1" type="text" name="volMonthlyLimit" id="volume_monthly_limit" size="10" maxlength="10"  >
+            (<span mlang="ATM044">Mbytes</span>)
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM030" >Round up data volume for each connection by</span>
+        </div>
+        <div class="form-row">
+            <input class="input1" type="text" name="volRoundUp" id="round_up_volume" size="10" maxlength="10"  >
+            (<span mlang="ATM044">Mbytes</span>)
+        </div>
+        
+        <div class="form-row no_readonly_element">
+            <label class="checkbox-container" ><div mlang="ATM034">Connection time control</div>
+                <input type="radio" name="tm_type" id="tm_conntime" value="timeControl">
+                <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        <input type="hidden" name="volControl" value="">
+        <input type="hidden" name="timeControl" value="">
+        
+        <div class="form-row">
+            <span mlang="ATM025" >Monthly limit</span>
+        </div>
+        <div class="form-row">
+            <input class="input1" type="text" name="timeControlLimit" id="conntime_monthly_limit" size="10" maxlength="10"  >
+            (<span mlang="ATM043">hours</span>)
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('traffic_meter','counter')" tabindex="-1"><b mlang="ATM015" >Traffic Counter</b></a>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM016" >Restart traffic counter at</span> 
+            <input type="text" class="num s_input"  name="counterHour" id="hour" size=2 maxlength=2>
+            :
+            <input type="text" class="num s_input" name="counterMin" id="minute" size=2 maxlength=2 >
+        </div>
+
+         <!--PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)-->
+         <div class="form-row no_readonly_element" style="display:none">
+            <select name="amPmSel" id="amPm" size=1>
+                <option value="false" mlang="ATM001">am</option>
+                <option value="true" mlang="ATM004">pm</option>
+            </select>
+        </div>
+        <div class="form-row no_readonly_element">
+            <select id="ampm" size=1>
+                <option value="0" mlang="ATM001">am</option>
+                <option value="1" mlang="ATM004">pm</option>
+            </select>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM027" >On the</span> 
+        </div>
+        <div class="form-row no_readonly_element">
+            <select name="counterDay" id="day" size=1>
+                <option value="1" mlang="ATM046">1st</option>
+                <option value="2" mlang="ATM047">2nd</option>
+                <option value="3" mlang="ATM048">3rd</option>
+                <option value="4" mlang="ATM049">4th</option>
+                <option value="5" mlang="ATM050">5th</option>
+                <option value="6" mlang="ATM051">6th</option>
+                <option value="7" mlang="ATM052">7th</option>
+                <option value="8" mlang="ATM053">8th</option>
+                <option value="9" mlang="ATM054">9th</option>
+                <option value="10" mlang="ATM055">10th</option>
+                <option value="11" mlang="ATM056">11th</option>
+                <option value="12" mlang="ATM057">12th</option>
+                <option value="13" mlang="ATM058">13th</option>
+                <option value="14" mlang="ATM059">14th</option>
+                <option value="15" mlang="ATM060">15th</option>
+                <option value="16" mlang="ATM061">16th</option>
+                <option value="17" mlang="ATM062">17th</option>
+                <option value="18" mlang="ATM063">18th</option>
+                <option value="19" mlang="ATM064">19th</option>
+                <option value="20" mlang="ATM065">20th</option>
+                <option value="21" mlang="ATM066">21st</option>
+                <option value="22" mlang="ATM067">22nd</option>
+                <option value="23" mlang="ATM068">23rd</option>
+                <option value="24" mlang="ATM069">24th</option>
+                <option value="25" mlang="ATM070">25th</option>
+                <option value="26" mlang="ATM071">26th</option>
+                <option value="27" mlang="ATM072">27th</option>
+                <option value="28" mlang="ATM073">28th</option>
+                <option value="31" mlang="ATM002">Last</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <span mlang="ATM019" >day of each month</span> 
+        </div>
+        
+        <!-- click Apply button will always reset traffice meter counter, so counterReset always = true -->
+        <input type="hidden" name="counterReset" value="true">
+        
+        <div class="form-row">
+            <button type="button" name="restart_counter" id="restart_counter" class="button-sty1" mlang="ATM014" >Restart Counter Now</button>
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('traffic_meter','reached')" tabindex="-1"><b mlang="ATM017" >Traffic Control</b></a>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM029" >Pop up a warning message</span> 
+        </div>
+        <div class="form-row">
+            <input class="input1" type="text" name="popMessage" id="water_mark" size="10" maxlength="10" >
+            <span mlang="ATM012" >Mbytes/Minutes before the monthly limit is reached</span> 
+        </div>
+
+        <div class="form-row">
+            <span mlang="ATM040" >"When the monthly limit is reached</span> 
+        </div>
+        
+        <div class="form-row no_readonly_element">
+            <label class="checkbox-container">
+                <span mlang="ATM035" >Turn the Internet LED to flashing green/amber</span>
+                    <input type="checkbox" name="turnLed" id="check_led" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="form-row no_readonly_element">
+            <label class="checkbox-container">
+                <span mlang="ATM013" >Disconnect and disable the Internet connectionr</span>
+                    <input type="checkbox" name="disableInternet" id="check_block" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+         
+        <div class="form-row">
+            <a href="javascript:loadhelp('traffic_meter','statistics')" tabindex="-1"><b mlang="ATM032" >Internet Traffic Statistics</b></a>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM031" >Start Date/Timed</span> 
+            :
+            <span name="start_time" id="start_time"></span>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM018" >Current Date/Time</span>
+            :            
+            <span name="current_time" id="current_time"></span>
+        </div>
+        
+        <div class="form-row">
+            <span mlang="ATM038" name="left_traffic_header">Traffic Volume Left</span> 
+            :
+            <span name="left_traffic" id="left_traffic"></span>
+        </div>
+        
+        <table class="tbWhite cmn-table-2" border="1" cellpadding="0" cellspacing="0" width="97%" id="traffic_statistics">
+            <tr class="table_header">
+                <td width="15%" align="center"><span class="thead" mlang="ATM028">Period</span></td>
+                <td width="23%" align="center"><span class="thead" mlang="SBS036">Connection Time</span></td>
+                <td width="60%" align="center" colspan=3><span class="thead" mlang="ATM039">Traffic Volume (Mbytes)</span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead"></span></td>
+                <td width="23%" align="center"><span class="thead" mlang="ATM023">(hh:mm)</span></td>
+                <td width="19%" align="center"><span class="thead" mlang="ATM011">Upload/Avg</span></td>
+                <td width="22%" align="center"><span class="thead" mlang="ATM009">Download/Avg</span></td>
+                <td width="19%" align="center"><span class="thead" mlang="ATM010">Total/Avg</span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead" mlang="ATM008">Today</span></td>
+                <td width="23%" align="center"><span class="thead" name="today_connect_time"></span></td>
+                <td width="19%" align="center"><span class="thead" name="today_upload"></span></td>
+                <td width="22%" align="center"><span class="thead" name="today_download"></span></td>
+                <td width="19%" align="center"><span class="thead" name="today_total"></span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead" mlang="ATM042">Yesterday</span></td>
+                <td width="23%" align="center"><span class="thead" name="yesterday_connect_time"></span></td>
+                <td width="19%" align="center"><span class="thead" name="yesterday_upload"></span></td>
+                <td width="22%" align="center"><span class="thead" name="yesterday_download"></span></td>
+                <td width="19%" align="center"><span class="thead" name="yesterday_total"></span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead" mlang="ATM007">This week</span></td>
+                <td width="23%" align="center"><span class="thead" name="thisweek_connect_time"></span></td>
+                <td width="19%" align="center"><span class="thead" name="thisweek_upload"></span></td>
+                <td width="22%" align="center"><span class="thead" name="thisweek_download"></span></td>
+                <td width="19%" align="center"><span class="thead" name="thisweek_total"></span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead" mlang="ATM006">This month</span></td>
+                <td width="23%" align="center"><span class="thead" name="thismonth_connect_time"></span></td>
+                <td width="19%" align="center"><span class="thead" name="thismonth_upload"></span></td>
+                <td width="22%" align="center"><span class="thead" name="thismonth_download"></span></td>
+                <td width="19%" align="center"><span class="thead" name="thismonth_total"></span></td>
+            </tr>
+            <tr>
+                <td width="15%" align="center"><span class="thead" mlang="ATM003">Last month</span></td>
+                <td width="23%" align="center"><span class="thead" name="lastmonth_connect_time"></span></td>
+                <td width="19%" align="center"><span class="thead" name="lastmonth_upload"></span></td>
+                <td width="22%" align="center"><span class="thead" name="lastmonth_download"></span></td>
+                <td width="19%" align="center"><span class="thead" name="lastmonth_total"></span></td>
+            </tr>
+        </table>
+        
+        <div class="form-row">
+            <td colspan="2" align="center">
+                <button type="button" value="refresh" id="refresh" name="refresh" class="button-sty1" mlang="UBS012">Refresh</button>
+                <button type="button" value="traffic_status" id="traffic_status" name="traffic_status" class="button-sty1" mlang="ATM033">Traffic Status</button>
+            </td>
+        </div>
+        </div> <!-- form-group end -->
+        
+        <div class="form-btn-row" id="form_btn_fwdrule">
+            <button type="button" value="BUTTON"  onClick="location.href='traffic_meter.html';" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+            <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+        </div>
+        
+        <!--The disabled inputs values is gotten from fetchData(), and the input name will not be included into post parameters -->
+        <input type="hidden" name="wanMode" disabled>
+    </form>
+    <!-- main form end -->
+
+  <? genHelpSection()?>
+  <? generate_EmbedProgressBar()?>
+</html>

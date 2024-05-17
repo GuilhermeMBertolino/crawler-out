@@ -1,0 +1,18 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local uci  = require "luci.model.uci".cursor()
+local interface = require "webGetFunc.interface"
+
+local data = { }
+
+data["staticWanIp"] = { value = interface.getWanEtherIpAddr(), type = 'spantext' }
+data["staticMask"] = { value = interface.getWanEtherIpMask(), type = 'spantext' }
+data["staticGateway"] = { value = interface.getWanEtherGateway(), type = 'spantext' }
+data["staticDnsPrimary"] = { value = interface.getDNSServerIpAddr(1), type = 'spantext' }
+data["staticDnsSlave"] = { value = interface.getDNSServerIpAddr(2), type = 'spantext' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

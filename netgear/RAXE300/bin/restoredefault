@@ -1,0 +1,52 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH='/lib:/lib/gpl:/lib64/gpl:/lib64:/usr/lib:/usr/lib64'
+export OPENSSL_CONF='/etc/ssl/openssl.cnf'
+export PATH='/home/bin:/home/scripts:/bin:/sbin:/usr/bin:/usr/local/jamvm/bin:/opt/scripts:/usr/sbin'
+
+
+rm -f /data/psi
+rm -f /data/.kernel_nvram.setting
+
+rm -rf /data/bitdefender
+rm -rf /data/dal
+rm -rf /data/lang
+rm -rf /data/rabin
+rm -rf /data/event_ra_flash
+rm -rf /data/fwLastChecked
+rm -rf /data/fwLastUpdate
+rm -rf /data/wizardRestoreConfigInProgress
+rm -rf /data/wizardFwUpgradeInProgress
+rm -rf /data/wizardWifiConfigured
+rm -rf /data/gw_*
+rm -rf /data/internet_*
+rm -rf /data/blkid_info
+rm -rf /data/installEvent
+rm -rf /data/iqos
+rm -rf /data/circle
+rm -rf /data/FinishAutoWan
+
+# Generate lighttpd pem for HTTPS on LAN
+rm -f /data/lighttpd.pem
+
+#time_sync=`getdb -g "Device.Time.Status"`
+key=`head -200 /dev/urandom | md5sum | cut -f1 -d "-"`
+
+if [ -f /tmp/ATS_ntpResult ]; then
+  echo "Time Synchronized,  generate new certificate"
+  openssl req -new -x509 -config /etc/lighttpd/openssl.conf -sha256 -newkey rsa:2048 -passin pass:$key -keyout /var/key.pem -out /var/cert.pem -days 3650 -nodes -passout pass:$key
+  cat /var/key.pem /var/cert.pem > /tmp/lighttpd.pem
+  interleave /tmp/lighttpd.pem /data/interleaved-lighttpd.pem
+
+  touch /data/facotryResetCertificateCheck
+else
+  echo "Time UnSynchronized, copy default certificate"
+  cp -a /etc/lighttpd/interleaved-lighttpd-default.pem /data/interleaved-lighttpd.pem
+fi
+
+sync;sync;sync
+
+if [ -z $1 ]; then
+  reboot
+fi
+

@@ -1,0 +1,112 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<script language='javascript' src='util.js'></script>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language='javascript' src='util.js'></script>
+<script language='javascript'>
+<!-- hide
+var TOD_URL_FILTER_MAX_ENTRY = 100;
+var entrynum = 0;
+var urlFilterType = '<%ejGetOther(urlFilterType)%>';
+var urlFilterStr = '<%ejGetOther(urlfilterStr)%>';
+var sessionKey = '<%ejGetOther(sessionKey)%>';
+function addClick() {
+   var loc = 'url_add.html';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+
+function modeClick() {
+   var loc = 'urlfilter.cmd?action=save';
+   with ( document.forms[0] ) {
+      if ( listtype[0].checked == true )
+         loc += '&listtype=Exclude';
+      else if ( listtype[1].checked == true )
+         loc += '&listtype=Include';
+   }
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+
+function frmLoad() {
+   with ( document.forms[0] ) {
+      if ( urlFilterType == 'Exclude' )
+         listtype[0].checked = true;
+      else if ( urlFilterType == 'Include' )
+         listtype[1].checked = true;
+   }
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if(rml=='undefined') return;
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ' ';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+   var loc = 'urlfilter.cmd?action=remove_url&rmLst=' + lst;
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+// done hiding -->
+</script>
+
+</head><body onLoad='frmLoad()'>
+<form>
+<script>tbl_head('URL Filter')</script>
+
+<div style="width:90%;text-align:left;">
+<b>Please select the list type first then configure the list entries. Maximum <script>document.write(TOD_URL_FILTER_MAX_ENTRY);</script> entries can be configured.</b><br><br>
+<font style="color:#ff0000">Exclude</font>: If 'Exclude' is selected, then all URLs except those that you have configured can be accessed.<br>
+<font style="color:#ff0000">Include</font>: If 'Include' is selected, then the URLs which you have configured can be accessed. <br><br>
+</div>
+
+<table border='0' cellpadding='0' cellspacing='0' width='90%'>
+   <tr>
+      <td>URL List Type:&nbsp;&nbsp;<input type='radio' name='listtype' onClick='modeClick()'>
+      &nbsp;&nbsp;Exclude<input type='radio' name='listtype' onClick='modeClick()'>
+      &nbsp;&nbsp;Include</td>
+   </tr>
+</table><br>
+
+<table border='1' cellpadding='0' cellspacing='0' width='90%'>
+   <tr>
+      <td class='hd'>Address</td>
+      <td class='hd'>Port</td>
+      <td class='hd'>Remove</td>
+   </tr>
+  <script>
+   	var htm;
+   	var rows;
+   	var cols;
+   	rows = urlFilterStr.split('~');
+   	entrynum =rows.length;
+   	if(urlFilterStr!='')
+	   	for(var i=0;i<rows.length;i++)
+	   	{
+	   			cols = rows[i].split(',');
+	   			if(cols.length!=3) continue;
+	   			htm = '<tr>';
+	   			htm += '<td>'+cols[0]+'</td>';
+	   			htm += '<td>'+cols[1]+'</td>';
+	   			htm += '<td align="center"><input type="checkbox" name="rml" class="button" value='+cols[2]+'></td>';
+	   			htm += '</tr>';
+	   			document.write(htm);
+	   	}
+ 	</script>
+</table><br>
+<script>
+  if(entrynum<TOD_URL_FILTER_MAX_ENTRY)
+		tbl_tail("<input type='button' class='button' onClick='addClick()' value='Add'>&nbsp;&nbsp;<input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");
+	else
+		tbl_tail("<input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");
+</script>
+</form>
+</body>
+</html>

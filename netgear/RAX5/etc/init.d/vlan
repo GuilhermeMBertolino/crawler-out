@@ -1,0 +1,99 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+SERVICE_USE_PID=1
+START=92
+
+vlan_state() {
+    local group_type
+    local enable_vlan
+
+    config_get group_type $1 groupType
+    config_get enable_vlan $1 enableVlan
+    if [ "$enable_vlan" == "true" ] && [ "$group_type" == "vid" ]; then
+        echo -e "\n\033[33mApply VLAN tag group mode\033[0m\n" > /dev/console
+        config_foreach vlan_priority "switch_vlan"
+    fi
+}
+
+vlan_priority() {
+    local vid
+    local priority
+    config_get vid  $1 vid
+    config_get name  $1 name
+    config_get ports  $1 ports
+    config_get priority  $1 priority
+    UPW_REG=44
+    UPW_val16=0000
+    PCR_REG8=04
+    PCR_CPU5=2504
+    PCR_val24=ff0803
+    PEM3_REG=50
+    PEM3_val=2DA824A0
+    
+    echo -e "\033[33mSet switch_vlan $name\033[0m" > /dev/console
+
+    # set TAG_PRI_5(bit[29-27]) of PEM3 register(0x0050)
+    switch reg w $PEM3_REG $PEM3_val
+
+    if [ "$name" == "EtherWan" ]; then
+        echo -e "\033[33mSkip\033[0m" > /dev/console
+    elif [ "$name" == "Bridge" ]; then
+        echo -e "\033[33mSkip\033[0m" > /dev/console
+    elif [ "$name" == "Internet" ]; then
+        echo -e "\033[33mApplying egress $priority to Internet\033[0m" > /dev/console
+        internet_vid=$(/sbin/uci get vlan.EtherWan.vid)
+        /usr/sbin/ip link set eth1.$internet_vid type vlan egress 0:$priority 1:$priority 2:$priority 3:$priority 4:$priority 5:$priority 6:$priority 7:$priority
+
+        switch reg w $UPW_REG 0$priority$UPW_val16
+        switch reg w $PCR_CPU5 $priority$PCR_val24
+    else
+        echo -e "\033[33mApplying egress priority: $priority to eth1.$vid\033[0m" > /dev/console
+        /usr/sbin/ip link set eth1.$vid type vlan egress 0:$priority 1:$priority 2:$priority 3:$priority 4:$priority 5:$priority 6:$priority 7:$priority
+        #/usr/sbin/ip -d link show eth1.$vid > /dev/console
+
+        # set PORT_UPW(bit[18:16]) of regiter 0x44
+        switch reg w $UPW_REG 0$priority$UPW_val16
+        # PCR register bit[23:0] of 0x2[P]04, P is port#
+        # filter "0t"
+        tports=$(echo ${ports/0t/''})
+        # fitler "5t"
+        lan_ports=$(echo ${tports/5t/''})
+        p1=$(echo $lan_ports | cut -d' ' -f1)
+        switch reg w 2$p1$PCR_REG8 $priority$PCR_val24
+        if [ ${#lan_ports} -eq 3 ]; then
+            p2=$(echo $lan_ports | cut -d' ' -f2)
+            switch reg w 2$p2$PCR_REG8 $priority$PCR_val24
+        elif [ ${#lan_ports} -eq 5 ]; then
+            p2=$(echo $lan_ports | cut -d' ' -f2)
+            p3=$(echo $lan_ports | cut -d' ' -f3)
+            switch reg w 2$p2$PCR_REG8 $priority$PCR_val24
+            switch reg w 2$p3$PCR_REG8 $priority$PCR_val24
+        elif [ ${#lan_ports} -eq 7 ]; then
+            p2=$(echo $lan_ports | cut -d' ' -f2)
+            p3=$(echo $lan_ports | cut -d' ' -f3)
+            p4=$(echo $lan_ports | cut -d' ' -f4)
+            switch reg w 2$p2$PCR_REG8 $priority$PCR_val24
+            switch reg w 2$p3$PCR_REG8 $priority$PCR_val24
+            switch reg w 2$p4$PCR_REG8 $priority$PCR_val24
+        fi
+    fi
+    echo -e "\033[33mSet switch_vlan $name DONE\033[0m\n" > /dev/console
+}
+
+start() {
+    echo "Check vlan state and set priority" > /dev/console
+    config_load "vlan"
+    config_foreach vlan_state "VlanCfg"
+    #config_foreach vlan_priority "switch_vlan"
+}
+
+stop() {
+    echo 'do nothing' > /dev/null
+}
+
+restart() {
+    stop
+    start
+}
+

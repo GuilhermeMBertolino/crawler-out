@@ -1,0 +1,312 @@
+<html>
+<head>
+    <meta http-equiv='Pragma' content='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+
+    <script language="javascript" src="util.js"></script>
+
+    <script language="javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var state = '<%ejGet(lanRefresh)%>';
+if ( state == '1' ) {
+   var loc = 'lancfg2.cgi?lanRefresh=0';
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+
+var ethIpAddress_before =  '<%ejGet(ethIpAddress)%>';
+var dhcpStart = '<%ejGet(dhcpEthStart)%>';
+var dhcpEnd = '<%ejGet(dhcpEthEnd)%>';
+var dhcpLease = '<%ejGet(dhcpLeasedTime)%>';
+var enblLanFirewall = '<%ejGet(enblLanFirewall)%>';
+var proto = '<%ejGetOther(sysInfo, noBrPrtcl)%>';
+var ipExt = '<%ejGetOther(sysInfo, pppIpExtension)%>';
+var dhcpEnbl = '<%ejGet(enblDhcpSrv)%>';
+var enblIgmpSnp = '<%ejGetOther(sysInfo, enblIgmpSnp)%>';
+var enblIgmpMode = '<%ejGetOther(sysInfo, enblIgmpMode)%>';
+var staticiplease_count = 0;
+var dhcpRelayServer = '<%ejGet(dhcpRelayServer)%>';
+var natEnbl = '<%ejGetOther(sysInfo, enblNat)%>';
+var buildDhcpRelay = '<%ejGetOther(sysInfo, buildDhcpRelay)%>';
+var url;
+
+function hideIgmpSnpInfo(hide) {
+   var status = 'block';
+
+   if ( hide == 1 )
+      status = 'none';
+   if (document.getElementById)  // DOM3 = IE5, NS6
+      document.getElementById('igmpSnpInfo').style.display = status;
+   else {
+      if (document.layers == false) // IE4
+         document.all.igmpSnpInfo.style.display = status;
+   }
+}
+
+function firewallClick() {
+}
+
+function igmpClick(cb) {
+   if (cb.checked == true)
+      hideIgmpSnpInfo(0)
+   else
+      hideIgmpSnpInfo(1);
+}
+
+
+
+
+
+/*function changeBrName() {
+   var loc = 'lancfg2get.cgi?';   
+   with ( document.forms[0] ) { 
+       loc += 'brName=' + brName.value;   
+   }
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+*/
+function frmLoad() {
+   with ( document.forms[0] ) {
+   //   brName.value = '<%ejGet(brName)%>';
+      ethIpAddress.value = '<%ejGet(ethIpAddress)%>';
+      ethSubnetMask.value = '<%ejGet(ethSubnetMask)%>';
+	  
+
+      if ( enblLanFirewall == '1' )
+        chkLanFirewallEnbl.checked = true;
+      else
+        chkLanFirewallEnbl.checked = false;
+
+      if ( enblIgmpSnp == '1' ) {
+        chkIgmpSnp.checked = true;
+        hideIgmpSnpInfo(0);
+      } else {
+        chkIgmpSnp.checked = false;
+        hideIgmpSnpInfo(1);
+      }
+
+      if ( enblIgmpMode == '1' ) {
+    	igmpMode[0].checked = false;
+    	igmpMode[1].checked = true;
+      } else {
+        igmpMode[0].checked = true;
+        igmpMode[1].checked = false;
+      }
+
+
+    }
+   
+}
+function isEndGTEStart(EndIp, StartIp)
+{
+   addrEnd = EndIp.split('.');
+   addrStart = StartIp.split('.');
+   E = parseInt(addrEnd[3]) + 1;
+   S = parseInt(addrStart[3]) + 1;
+   if (E < S) 
+      return false;
+   return true;
+}
+
+function btnSave(reboot) {addrEnd = EndIp.split('.');
+   addrStart = StartIp.split('.');
+   E = parseInt(addrEnd[3]) + 1;
+   S = parseInt(addrStart[3]) + 1;
+   if (E < S) 
+      return false;
+   return true;
+}
+
+function gourl()
+{
+	window.top.location.href ="http://"+document.forms[0].ethIpAddress.value;
+}
+
+function GetReqObj()
+{
+	var request = false;
+
+	try {
+		req = new XMLHttpRequest();
+	 } catch (trymicrosoft) 
+	 {
+		try {
+    		req = new ActiveXObject("Msxml2.XMLHTTP");
+		} catch (othermicrosoft) {
+    		try {
+				req = new ActiveXObject("Microsoft.XMLHTTP");
+			} catch (failed) {
+			req = false;
+			}
+  		}
+	 }
+	
+	if (! req)
+	{
+		alert("Error initializing HttpRequest!");
+		return false;
+	}
+
+	return req;
+}
+
+formReqObj = GetReqObj();
+function check_status()
+{
+	   if (window.confirm("Wait for some minutes, if this page does not reflash,please update your PC's network config,then use the new IP to login!"))
+	{
+		    formReqObj.open("GET",url,true);
+	           formReqObj.send(null);
+		    setTimeout("gourl()",2000);			
+	}else
+		return;	
+
+       
+}
+
+function btnSave(reboot) {
+   var loc = 'lancfg2.cgi?';
+   if (reboot)
+      loc = 'lancfg2Reset.cgi?';
+	
+	
+   with ( document.forms[0] ) {
+   var ipaddr = ethIpAddress.value.split('.');
+      if ( isValidIpAddress(ethIpAddress.value) == false ) {
+         alert('Address "' + ethIpAddress.value + '" is invalid IP address.');
+         return;
+      }
+  		  
+      if ( isValidNetMask(ethSubnetMask.value) == false ) {
+      	alert('Subnet mask "' + ethSubnetMask.value + '" has invalid IP address.');
+         return;
+      }
+      if(isbroadcassAddress(ethIpAddress.value,ethSubnetMask.value)==false){
+      alert("this is a broadcast IP");
+      return;
+      }
+      
+      loc += 'ethIpAddress=' + ethIpAddress.value;
+      loc += '&ethSubnetMask=' + ethSubnetMask.value;
+     // alert("2 ok!");
+     if ( chkLanFirewallEnbl.checked == true )
+        loc += '&enblLanFirewall=1';
+     else
+        loc += '&enblLanFirewall=0';
+
+     if ( chkIgmpSnp.checked == true )
+        loc += '&enblIgmpSnp=1';
+     else
+        loc += '&enblIgmpSnp=0';
+     if ( igmpMode[1].checked == true )
+        loc += '&enblIgmpMode=1';
+     else
+        loc += '&enblIgmpMode=0';
+	
+
+   }
+   url=loc;
+   url += '&sessionKey=' + sessionKey;
+   check_status();
+      
+    }
+
+   </script>
+
+</head>
+<body onload='frmLoad()'>
+
+    <script>tbl_head("Local Area Network (LAN)&nbsp;Setup");</script>
+
+    <form>
+    <div align="left" style="margin-left:33">
+    <table border="0" cellpadding="0" cellspacing="0" width="90%">
+        <tr>
+            <td colspan="2">
+                Configure the Broadband Router IP Address and Subnet Mask for LAN&nbsp;interface.&nbsp;
+                <br>
+            </td>
+        </tr>
+      <!--  <tr>
+            <td width="108">
+                GroupName:            </td>
+            <td width="408">
+                <select size="1" name="brName" onchange='changeBrName()'>
+                    <option value="Default">Default </option>
+                </select>
+          </td>
+        </tr>
+      -->
+    </table>
+    <br>
+    <table border="0" cellpadding="0" cellspacing="0" >
+        <tr>
+            <td width="150">
+                <div align="left">
+                    IP Address:</div>
+            </td>
+            <td width="543">
+                <input type='text' name='ethIpAddress' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div align="left">
+                    Subnet Mask:
+                </div>
+            </td>
+            <td>
+                <input type='text' name='ethSubnetMask' onchange='setDhcpAddresses()' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+            </td>
+        </tr>
+    </table>
+
+    <br>
+    <table border="0" cellpadding="0" cellspacing="0" width="90%">
+        <tr>
+            <td colspan="2">
+                <input type='checkbox' name='chkIgmpSnp' onclick='igmpClick(this)' >&nbsp;&nbsp;Enable
+                IGMP Snooping
+            </td>
+        </tr>
+    </table>
+    <div id='igmpSnpInfo' style="width:90%">
+        <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td colspan="2">
+                    <input type='radio' name='igmpMode'>&nbsp;&nbsp;Standard Mode
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type='radio' name='igmpMode'>&nbsp;&nbsp;Blocking Mode
+                </td>
+            </tr>
+        </table>
+    </div>
+    <br>
+    <div id='firewallEnbl' style="width:90%;display:none">
+        <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>
+                    <input type='checkbox' name='chkLanFirewallEnbl' onclick='firewallClick(this)'>&nbsp;&nbsp;Enable
+                    LAN side firewall
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+	
+    </div>
+
+    <script>tbl_tail("<input type='button' class='button'  onClick='btnSave(0)' value='Apply/Save'>");</script>
+
+    </form>
+</body>
+</html>

@@ -1,0 +1,41 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local openVpn = require "webGetFunc.openVpn"
+local ddns  = require "webGetFunc.ddns"
+local interface = require "webGetFunc.interface"
+
+local log = require("luci.log") --for debug
+
+local openvpnEnable = openVpn.getOpenVpnEnable()
+local openvpnTunModeType = openVpn.getOpenVpnTunType()
+local openvpnTunPort = openVpn.getOpenVpnTunPort()
+local openvpnTapModeType = openVpn.getOpenVpnTapType()
+local openvpnTapPort = openVpn.getOpenVpnTapPort()
+local clientAccessType = openVpn.getOpenVpnAccessType()
+local enableDdns = ddns.getCheckboxVal_enableDdns()
+local wanIsStatic = interface.checkWanIsStatic()
+local wanType = interface.getWanInstanceProtocol() --static, dhcp, pppoe, pptp, l2tp
+local pppoeMode = interface.getPppoeMode()
+
+local data = { }
+
+data["enable"] = { value = openvpnEnable, type = "checkbox" }
+data["tunModeType"] = { value = openvpnTunModeType, type = "radio" }
+data["tunModePort"] = { value = openvpnTunPort }
+data["tapModeType"] = { value = openvpnTapModeType, type = "radio" }
+data["tapModePort"] = { value = openvpnTapPort }
+data["clientAccessType"] = { value = clientAccessType, type = "radio" }
+data["openVpn_enable"] = { value = openvpnEnable }
+data["ddns_enable"] = { value = enableDdns }
+data["wanIsStatic"] = { value = wanIsStatic }
+data["wan_type"] = { value = wanType }
+data["oldTunModeType"] = { value = openvpnTunModeType }
+data["oldTunModePort"] = { value = openvpnTunPort }
+data["oldTapModeType"] = { value = openvpnTapModeType }
+data["oldTapModePort"] = { value = openvpnTapPort }
+data["oldClientAccessType"] = { value = clientAccessType }
+data["ppp_conn_type"] = { value = pppoeMode }
+
+return json.encode(data)
+

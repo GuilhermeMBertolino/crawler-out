@@ -1,0 +1,722 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+<title>Wireless Security</title>
+<script language="javascript" src="util.js"></script>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<script language="javascript">
+var valueTmp = '';
+var m_ssid = '<%ejGetWl(wlSsid_wl0v0)%>';
+var m_WscMode = '<%ejGetWl(wlWscMode)%>';
+var m_WscStaPin = '<%ejGetWl(wlWscStaPin)%>';
+var m_WscAPMode  = '<%ejGetWl(wlWscAPMode)%>';
+var m_WscDevPin = '<%ejGetWl(wlWscDevPin)%>';
+
+var wlRefresh = '<%ejGetWl(wlRefresh)%>';
+var varPreauth = '<%ejGetWl(wlPreauth)%>';
+var varNetReauth = '<%ejGetWl(wlNetReauth)%>';
+
+
+var m_mode = '<%ejGetWl(wlAuthMode)%>';//open,shared,psk,psk2,wpa,wpa2
+var m_nmode = '<%ejGetWl(wlNmode)%>'; 
+var m_gmode = '<%ejGetWl(wlgMode)%>';
+var m_enbl = '<%ejGetWl(wlEnbl_wl0v0)%>';
+var keyIdx = '<%ejGetWl(wlKeyIndex)%>';
+var keys = new Array( "<%ejGetWl(wlKey1)%>", "<%ejGetWl(wlKey2)%>",
+                      "<%ejGetWl(wlKey3)%>", "<%ejGetWl(wlKey4)%>" );
+var wpaPskKey = '<%ejGetWl(wlWpaPsk)%>';
+var wep = '<%ejGetWl(wlWep)%>';
+var wpa = '<%ejGetWl(wlWpa)%>';
+var bit = '<%ejGetWl(wlKeyBit)%>';
+
+var radiusPort = '<%ejGetWl(wlRadiusPort)%>';
+var radiusKey = '<%ejGetWl(wlRadiusKey)%>';
+var radiusServerIP = '<%ejGetWl(wlRadiusServerIP)%>';
+
+
+var sessionKey ='<%ejGetOther(sessionKey)%>';
+
+
+
+function setOldValue(e)
+{
+	valueTmp = e.value;
+}
+function checkChange(e)
+{
+	if(e.value==valueTmp)
+		return false;
+	else
+		return true;
+}
+function checkDigital(e)
+{
+	var m = /^[0-9]{0,}$/;
+	if(!m.test(e.value))
+		return false;
+	else
+		return true;
+}
+
+function showDivPinCode(show)
+{
+	var f = document.forms[0];
+	document.getElementById("divpincode").style.display=(f.clientconntype[1].checked?"block":"none");
+}
+
+function wlAuthChange(val)
+{
+	var selindex = parseInt(val);
+	document.getElementById("divradius").style.display="none";
+	document.getElementById("divwep").style.display="none";
+	document.getElementById("divwpa").style.display="none";
+	
+	document.getElementById("Preauth").style.display="none";
+	document.getElementById("NetReauth").style.display="none";
+
+	with(document.forms[0]){
+		wepEncry.disabled = false;
+		if(parseInt(m_enbl)==1) enablewps.disabled = false;
+		switch(selindex)
+		{
+			case 1:
+				wepEncry.selectedIndex = 0;
+				wepEncry.disabled = true;
+				if(parseInt(m_enbl)==1)enablewps.checked = false;
+				if(parseInt(m_enbl)==1)enablewps.disabled = true;
+			case 0:
+				document.getElementById("divwep").style.display="block";
+				wepEncryChange(wepEncry.selectedIndex);
+				if(selindex==0) enablewps.checked = (m_WscMode == 'enabled'?true:false);
+				break;
+			case 2:
+			case 4:
+			case 7:
+				document.getElementById("divwpa").style.display="block";
+				document.getElementById("Preauth").style.display="block";
+				document.getElementById("NetReauth").style.display="block";
+				break;
+		    case 3:	
+			case 5:
+			case 8:
+				document.getElementById("Preauth").style.display="block";
+				document.getElementById("NetReauth").style.display="block";
+				document.getElementById("divradius").style.display="block";			
+				document.getElementById("divwpa").style.display="block";
+				break;			
+			case 6:
+			    document.getElementById("divradius").style.display="block";
+				document.getElementById("divwep").style.display="block";
+				break;
+
+		}
+	}
+}
+function wepEncryChange(wepencrytype)
+{
+	if(0==parseInt(wepencrytype))
+		document.getElementById("divwepencry").style.display="block";
+	else 
+		document.getElementById("divwepencry").style.display="none";
+}
+function enwpsChange(ck)
+{
+	if(ck)
+	{
+		document.getElementById("divwps").style.display="block";
+		document.forms[0].addenrolee.disabled = false;
+	}
+	else
+	{
+		document.getElementById("divwps").style.display="none";
+		document.forms[0].addenrolee.disabled = true;
+	}
+}
+function encryStrengthChange()
+{
+	with(document.forms[0])
+	{
+		if(encryStrength.selectedIndex == 0)
+		{
+			wepkey1.maxLength = 26;
+			wepkey2.maxLength = 26;
+			wepkey3.maxLength = 26;
+			wepkey4.maxLength = 26;
+		}else
+		{
+			wepkey1.maxLength = 10;
+			wepkey2.maxLength = 10;
+			wepkey3.maxLength = 10;
+			wepkey4.maxLength = 10;
+		}
+	}
+}
+function ckWepKeyLength(obj,idx)
+{
+	with(document.forms[0])
+	{
+		var keylen = obj.value.length;
+		if(wepkeyidx.selectedIndex!=(idx-1)) return;
+		if(encryStrength.selectedIndex==0&&(keylen!=0||(keylen==0&&(wepkeyidx.selectedIndex==(idx-1))))&&(keylen!=13&&keylen!=26))
+		{
+			alert("Key \""+obj.value+"\" is invalid, Please Enter 13 ASCII characters or 26 hexadecimal digits for 128-bit encryption keys");
+			obj.focus();
+		}else if(encryStrength.selectedIndex==1&&(keylen!=0||(keylen==0&&(wepkeyidx.selectedIndex==(idx-1))))&&(keylen!=5&&keylen!=10))
+		{
+			alert("Key \""+obj.value+"\" is invalid, Please Enter 5 ASCII characters or 10 hexadecimal digits for 64-bit encryption keys");
+			obj.focus();
+		}
+	}
+}
+
+function checkWepKey(obj)
+{
+	var m1 = /^[0-9a-fA-F]{0,}$/;
+	with(document.forms[0])
+	{
+		if(checkChange(this))
+		{
+			if(encryStrength.selectedIndex==0)
+			{
+				if(m1.test(obj.value))
+					obj.maxLength = 26;
+				else
+				{
+					if(obj.value.length>13)
+					{
+						obj.value = obj.value.replace(/[^0-9a-fA-F]/g,'');
+						obj.maxLength = 26;
+					}else
+						obj.maxLength = 13;
+				}
+			}else
+			{
+				if(m1.test(obj.value))
+					obj.maxLength = 10;
+				else
+				{
+					if(obj.value.length>5){
+						obj.value = obj.value.replace(/[^0-9a-fA-F]/g,'');
+						obj.maxLength = 10;
+					}else
+						obj.maxLength = 5;
+				}
+			}
+		}
+	}
+}
+function isValidWPAPskKey(val) {
+	var ret = false;   
+	var len = val.length;
+	var m1 = /^[0-9a-fA-F]{0,}$/;
+	
+	if ( len >= 8 && len < 64 )
+		ret = true;
+	else if ( len == 64 && m1.test(val) ) 
+		ret = true;
+	return ret;
+}
+
+function init()
+{
+	with(document.forms[0])
+	{
+		if(parseInt(m_enbl)==0){
+			m_WscMode = 'disabled';
+			enablewps.disabled = true;
+		}
+		enablewps.checked = (m_WscMode == 'enabled'?true:false);
+		document.getElementById("devicewpspin").innerHTML = m_WscDevPin ;
+		document.getElementById("devicewpsstatus").innerHTML = (m_WscAPMode=='1'?"Configured":"Unconfigured") ;
+		enwpsChange(enablewps.checked);
+		showDivPinCode(m_WscMode);
+		if(m_WscStaPin!='') pincode.value = m_WscStaPin;
+		ssid.value = m_ssid;
+		if(m_mode=='open')
+			wlAuth.selectedIndex = 0;
+		else if(m_mode=='shared')
+			wlAuth.selectedIndex = 1;
+		else if(m_mode=='psk')
+			wlAuth.selectedIndex = 2;
+		else if(m_mode=='wpa')
+			wlAuth.selectedIndex = 3;
+		else if(m_mode=='psk2')
+			wlAuth.selectedIndex = 4;
+		else if(m_mode=='wpa2')
+			wlAuth.selectedIndex = 5;	
+		else if(m_mode=='radius')
+			wlAuth.selectedIndex = 6;
+		else if(m_mode=='psk psk2')
+			wlAuth.selectedIndex = 7;
+		else if(m_mode=='wpa wpa2')
+			wlAuth.selectedIndex = 8;	
+		wlAuthChange(wlAuth.selectedIndex);
+		//add radius
+		 wlRadiusIPAddr.value = radiusServerIP;
+         wlRadiusPort.value = radiusPort;
+         wlRadiusKey.value = radiusKey;
+		
+		encryStrengthChange();
+		wepkeyidx.selectedIndex = (parseInt(keyIdx)-1);
+		wepkey1.value = keys[0];
+		wepkey2.value = keys[1];
+		wepkey3.value = keys[2];
+		wepkey4.value = keys[3];
+		wpaPass.value = wpaPskKey;
+		if(wep == 'enabled') wepEncry.selectedIndex = 0;
+		else wepEncry.selectedIndex = 1;
+		wepEncryChange(wepEncry.selectedIndex);
+		if(wpa == 'aes') wpaEncry.selectedIndex = 0;
+		else wpaEncry.selectedIndex = 1;
+		encryStrength.selectedIndex = parseInt(bit);
+	}
+}
+function checkASCII(val)
+{
+	var i;
+	for (i = 0; i < val.length; i ++)
+	{
+		if (val.charCodeAt(i)>255)
+		{
+			return false;
+		}
+	}	
+	return true;
+}
+function isValidWepKey(val,idx,type)
+{
+	var ret = true;
+	var keylen = val.length;
+	with(document.forms[0]){
+		if(wepEncry.selectedIndex==1) return true;
+		if(wepkeyidx.selectedIndex!=(idx-1)) return true;
+		if(wepkeyidx.selectedIndex==(idx-1)&&keylen==0)
+			ret = false;
+		else
+		{
+			if(keylen==0)
+				ret = true;
+			else if((keylen==13&&type==0)||(keylen==5&&type==1))
+			{
+				ret = checkASCII(val);
+			}
+			else if((keylen==26&&type==0)||(keylen==10&&type==1))
+			{
+				var m1 = /^[0-9a-fA-F]{0,}$/;
+				if(!m1.test(val))
+					ret = false;
+				else
+					ret = true;
+			}
+			else
+				ret = false;
+		}
+	}
+	return ret;
+}
+function btnApply()
+{
+	var ret = true;
+	var loc = 'wlsecurity.wl?';
+	if(parseInt(m_enbl)==0)
+	{
+		alert("Wireless is closed now. you can't change wireless security config.");
+		return;
+	}
+	with(document.forms[0])
+	{
+		switch(wlAuth.selectedIndex)
+		{
+			case 0:
+			case 1:
+				if(wepEncry.selectedIndex==1) break;
+				if(!isValidWepKey(wepkey1.value,1,encryStrength.selectedIndex))
+				{
+					alert("Key 1 \""+wepkey1.value+"\" is invalid, Please Enter 5 ASCII characters or 10 hexadecimal digits for 64-bit encryption keys or 13 ASCII characters or 26 hexadecimal digits for 128-bit encryption keys");
+					wepkey1.focus();
+					return;
+				}
+				if(!isValidWepKey(wepkey2.value,2,encryStrength.selectedIndex))
+				{
+					alert("Key 2 \""+wepkey2.value+"\" is invalid, Please Enter 5 ASCII characters or 10 hexadecimal digits for 64-bit encryption keys or 13 ASCII characters or 26 hexadecimal digits for 128-bit encryption keys");
+					wepkey2.focus();
+					return;
+				}
+				if(!isValidWepKey(wepkey3.value,3,encryStrength.selectedIndex))
+				{
+					alert("Key 3 \""+wepkey3.value+"\" is invalid, Please Enter 5 ASCII characters or 10 hexadecimal digits for 64-bit encryption keys or 13 ASCII characters or 26 hexadecimal digits for 128-bit encryption keys");
+					wepkey3.focus();
+					return;
+				}
+				if(!isValidWepKey(wepkey4.value,4,encryStrength.selectedIndex))
+				{
+					alert("Key 4 \""+wepkey4.value+"\" is invalid, Please Enter 5 ASCII characters or 10 hexadecimal digits for 64-bit encryption keys or 13 ASCII characters or 26 hexadecimal digits for 128-bit encryption keys");
+					wepkey4.focus();
+					return;
+				}
+				break;
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 7:
+			case 8:
+				if(!isValidWPAPskKey(wpaPass.value)) 
+				{
+					alert("WPA Pre-Shared Key should be between 8 and 63 ASCII characters or 64 hexadecimal digits.");
+					wpaPass.focus();
+					return;
+				}
+			case 6:	
+			    if ( isValidIpAddress(wlRadiusIPAddr.value) == false ) {
+          			  alert('RADIUS Server IP Address "' + wlRadiusIPAddr.value + '" is invalid IP address.');
+         		   return;
+         		}
+				break;
+		}
+		
+		loc += 'wl_wsc_mode='+(enablewps.checked?'enabled':'disabled');
+		loc += '&wl_wsc_reg=enabled';
+		loc += '&wsc_config_state='+m_WscAPMode;
+		
+		var wlAuthArray = new Array('open','shared','psk','wpa','psk2','wpa2','radius','psk psk2','wpa wpa2');
+		loc += '&wlAuthMode=';
+		loc += wlAuthArray[wlAuth.selectedIndex];
+		
+		if (wlAuth.selectedIndex==1) {
+			loc += '&wlAuth=1';
+		}
+		else {
+			loc += '&wlAuth=0';
+		}
+
+		if (wlAuth.selectedIndex==2||wlAuth.selectedIndex==3||wlAuth.selectedIndex==5){
+			loc += '&wlWpaPsk=' + encodeUrl(wpaPass.value);
+			loc += '&wlWpaGtkRekey=0&wlNetReauth=36000';
+		}
+
+		if(wlAuth.selectedIndex==4){
+		 	loc += '&wlRadiusServerIP=' + wlRadiusIPAddr.value;
+        	 loc += '&wlRadiusPort=' + wlRadiusPort.value;
+         	loc += '&wlRadiusKey=' + encodeUrl(wlRadiusKey.value);
+		}
+
+		if(wlAuth.selectedIndex==2||wlAuth.selectedIndex==3||wlAuth.selectedIndex==5)
+			loc += '&wlWep=disabled';
+		else
+			loc += '&wlWep='+(wepEncry.selectedIndex==0?'enabled':'disabled');
+		loc += '&wlWpa='+(wpaEncry.selectedIndex==0?'aes':'tkip+aes');
+		loc += '&wlKeyBit='+encryStrength.selectedIndex;
+		loc += '&wlPreauth=0';
+
+      if(wepEncry.selectedIndex==0) {
+         loc += '&wlKeyIndex=' + (wepkeyidx.selectedIndex+1);
+         loc += '&wlKey1=' + encodeUrl(wepkey1.value);
+         loc += '&wlKey2=' + encodeUrl(wepkey2.value);
+         loc += '&wlKey3=' + encodeUrl(wepkey3.value);
+         loc += '&wlKey4=' + encodeUrl(wepkey4.value);
+      }
+
+      loc += '&wlSsidIdx=0';
+      loc += '&wlSyncNvram=1';
+	}
+	  
+	loc += '&sessionKey=' + sessionKey;
+	var code = 'location="' + loc + '"';
+	eval(code);
+}
+
+
+
+function btnWpsApply()
+{
+	if(parseInt(m_enbl)==0)
+	{
+		alert("Wireless is closed now. you can't change wireless security config.");
+		return;
+	}
+	var loc = '';
+	loc += 'wlsecurity.wl?';
+	with(document.forms[0])
+	{
+		if ( m_WscAPMode == "0" )   {  //WSC enabled and AP unconfigured
+			if (clientconntype[0].checked == true) {
+				loc += 'wlWscStaPin=';
+				loc += '&wlWscConfig=client-pbc-reset';
+			}
+			else {
+				if(pincode.value.length != 8)
+				{
+					alert("Please input invalid pin code.");
+					return;	
+				}
+				loc += 'wlWscStaPin=' + encodeUrl(pincode.value);
+				loc += '&wlWscConfig=client-pin-reset';
+			}
+			loc += '&wsc_force_restart=n';
+       }
+       else {
+            if (clientconntype[0].checked == true) {
+				loc += 'wlWscStaPin=';
+				loc += '&wlWscConfig=client-pbc';
+				loc += '&wsc_event=a';
+				loc += '&wsc_force_restart=n';
+				loc += '&wsc_method=2';
+				loc += '&wsc_config_command=1';
+            }
+            else {
+				if(pincode.value.length != 8)
+				{
+					alert("Please input invalid pin code.");
+					return;	
+				}
+				loc += 'wlWscStaPin=' + encodeUrl(pincode.value);
+				loc += '&wlWscConfig=client-pin';
+				loc += '&wsc_force_restart=n';
+				loc += '&wsc_proc_status=0';
+				loc += '&wsc_method=1';
+				loc += '&wsc_config_command=1';
+            }
+	   }
+	if(!enablewps.checked)
+		loc += '&wl_wsc_mode='+(enablewps.checked?'enabled':'disabled');
+	}
+	loc += '&sessionKey='+sessionKey;
+	var code = 'location="' + loc + '"';
+	eval(code);
+}
+function btnDeviceWpsApply()
+{
+	if(parseInt(m_enbl)==0)
+	{
+		alert("Wireless is closed now. you can't change wireless security config.");
+		return;
+	}
+	var loc = '';
+	loc += 'wlsecurity.wl?';
+	loc +='wlWscDevPin=' + m_WscDevPin;
+	loc +='&wlWscConfig=ap-pbc&wsc_proc_status=0&wsc_method=2&wsc_config_command=1&wsc_config_state=0&wsc_force_restart=n&wl_wsc_mode=enabled&wl_wsc_reg=enabled&wsc_config_state=0&wlAuthMode=open&wlAuth=0&wlWep=disabled&wlWpa=tkip+aes&wlKeyBit=0&wlPreauth=0&wlSsidIdx=0&wlSyncNvram=1';
+	loc += '&sessionKey='+sessionKey;
+	var code = 'location="' + loc + '"';
+	eval(code);
+		
+}
+</script>
+<style>
+span{
+display:inline-block;
+}
+</style>
+</head>
+<body onLoad="init()">
+<form>
+<script>tbl_head('Wireless Security Setting');</script>
+<div id="msg" style='text-align:left;width:90%'>
+	<div style="height:25px; font-weight:bold; font-size:16px; text-align:center">
+		 WPS Setup
+	</div>
+	<br>
+	<div style="height:25px; font-weight:bold;color:#ff0000; text-align:center">
+		This feature is available only when WPA-PSK, WPA2 PSK or OPEN(Disable) mode is 
+		configured
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Enable WPS</span>
+		 <span><input type="checkbox" name="enablewps" 
+			 onclick="enwpsChange(this.checked)">
+		 </span>
+	</div>
+<div id="divwps">
+
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Setup AP</span>
+
+		 <span><input type="radio" name="clientconntype" onClick="showDivPinCode(0)"> Push Button <input type="radio" name="clientconntype"  onClick="showDivPinCode(1)" checked="checked"> PIN
+		 </span>
+	</div>
+
+	<div style="height:25px; display:none;" id="divpincode"><span style="width:154px;display:-moz-inline-box;">Device PIN</span>
+
+		 <span><input type="text" class="text" name="pincode" 
+			 style="width:150px;" maxlength="8" onKeyDown="setOldValue(this)" 
+			 onKeyUp="if(checkChange(this)&&!checkDigital(this)) value=value.replace(/[^0-9]/g,'');">
+		 </span>
+	</div>
+		<div style="height:25px;"><span style="width:152px;display:-moz-inline-box;"> </span>
+		 <span>
+	<input class='button' type='button' name='addenrolee' value='Add enrolee' onClick='btnWpsApply()'>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:152px;display:-moz-inline-box;display:inline-block;">Device WPS Status</span>
+		 <span>
+			<label id="devicewpsstatus" ></label>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:152px;display:-moz-inline-box;display:inline-block;">Device PIN Code</span>
+		 <span>
+			<label id="devicewpspin" ></label>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:152px;display:-moz-inline-box;display:inline-block;"> </span>
+		 <span>
+			<input class='button' type='button' name='resetwps' value='Unconfigure WPS' onClick='btnDeviceWpsApply()'>
+		 </span>
+
+	</div>
+	
+	 <br>
+
+</div>	
+	<div style="height:25px; font-weight:bold; font-size:16px; text-align:center">
+		 Manual Setup AP Security
+	</div>
+	<br>
+	<div style="height:25px;display:none;"><span style="width:180px;display:-moz-inline-box;">SSID</span>
+		 <span><input type="text" class="text" id="ssid" name="ssid" style="width:180px;" style="background-color:#ffffee;" disabled='disabled'>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Authentication</span>
+		 <span>
+		 		<select name="wlAuth" style="width:180px;font-size:12px;" onChange="wlAuthChange(this.options[this.selectedIndex].value)">
+		 		<option value="0">Open</option>
+		 		<option value="1">Shared</option>
+		 		<script>
+					//if(m_gmode!='0'||m_nmode == 'auto'){
+				document.write('<option value="2">WPA-PSK</option>');
+				document.write('<option value="3">WPA-Enterprise</option>');				
+				document.write('<option value="4">WPA2-PSK</option>');
+				document.write('<option value="5">WPA2-Enterprise</option>');				
+				document.write('<option value="6">802.1X</option>');
+				document.write('<option value="7">Mixed WPA/WPA2-PSK</option>');
+				document.write('<option value="8">Mixed WPA/WAP2 passphrase</option>');
+				//	}
+				</script>
+		 		</select>
+		 </span>
+	</div>
+
+    
+    <div id="divradius">
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">RADIUS Server IP Address:</span>
+		 <span>
+               <input type='text' name='wlRadiusIPAddr' size='20' maxlength='15'>
+		 </span>
+	</div>
+    <div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">RADIUS Port:</span>
+		 <span>
+               <input type='text' name='wlRadiusPort' size='20' maxlength='15'>
+		 </span>
+	</div>
+        <div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">RADIUS Key:</span>
+		 <span>
+               <input type='text' name='wlRadiusKey' size='20' maxlength='15'>
+		 </span>
+	</div>
+    </div>
+
+
+     <div id="Preauth">
+      <div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">WPA2 Preauthentication:</span>
+		 <span>
+		 		<select name="wlPreauth" style="width:180px; font-size:12px;" >
+		 		<option value="off">Enable</option>
+		 		<option value="on">Disable</option>
+		 		</select>
+		 </span>
+		</div>
+    </div>
+
+    <div id="NetReauth">
+       <div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Re-auth Interval:</span>
+		 <span>
+               <input type='text' name='wlNetReauth' size='20' maxlength='15'>
+		 </span>
+	</div>
+   </div>   
+  </div>
+
+ 
+   <div id="divwep">
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">WEP Encryption</span>
+		 <span>
+		 		<select name="wepEncry" style="width:180px; font-size:12px;" onChange="wepEncryChange(this.selectedIndex)">
+		 		<option value="0">Enable</option>
+		 		<option value="1">Disable</option>
+		 		</select>
+		 </span>
+	</div>
+	<div id="divwepencry">
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Encryption Strength</span>
+		 <span>
+		 		<select name="encryStrength" style="width:180px; font-size:12px;" onChange="encryStrengthChange(this);">
+		 		<option value="0">128-bit</option>
+		 		<option value="1">64-bit</option>
+		 		</select>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Current Network Key</span>
+		 <span>
+		 		<select name="wepkeyidx" style="width:180px; font-size:12px;">
+		 		<option value="0">1</option>
+		 		<option value="1">2</option>
+		 		<option value="2">3</option>
+		 		<option value="3">4</option>
+		 		</select>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Key 1</span>
+		 <span><input type="text" class="text" name="wepkey1" 
+			 style="width:180px;" onChange="ckWepKeyLength(this,1)" 
+			 onKeyDown="setOldValue(this)" 
+			 onKeyUp="checkWepKey(this)">
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Key 2</span>
+		 <span><input type="text" class="text" name="wepkey2" 
+			 style="width:180px;" onChange="ckWepKeyLength(this,2)"
+			 onKeyDown="setOldValue(this)" 
+			 onKeyUp="checkWepKey(this)"></span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Key 3</span>
+		 <span><input type="text" class="text" name="wepkey3" 
+			 style="width:180px;" onChange="ckWepKeyLength(this,3)"
+			 onKeyDown="setOldValue(this)" 
+			 onKeyUp="checkWepKey(this)"></span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">Network Key 4</span>
+		 <span><input type="text" class="text" name="wepkey4" 
+			 style="width:180px;" onChange="ckWepKeyLength(this,4)"
+			 onKeyDown="setOldValue(this)" 
+			 onKeyUp="checkWepKey(this)"></span>
+	</div>
+	<div style="height:25px; color:#ff0000">
+		 <span style="display:block;">Enter 13 ASCII characters or 26 
+			   hexadecimal digits for 128-bit encryption keys<br> Enter 5 ASCII 
+			   characters or 10 hexadecimal digits for 64-bit	 encryption keys
+		 </span>
+	</div>
+		 </div>
+  </div>
+
+<div id="divwpa">
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">WPA Encryption</span>
+		 <span>
+		 		<select name="wpaEncry" style="width:180px; font-size:12px;">
+		 		<option value="0">AES</option>
+		 		<option value="1">TKIP+AES</option>
+		 		</select>
+		 </span>
+	</div>
+	<div style="height:25px;"><span style="width:180px;display:-moz-inline-box;">WPA passphrase</span>
+		 <span>
+		 		<input type="text" class="text" name="wpaPass" 
+				style="width:180px;" maxlength="64">
+		 </span>
+	</div>
+</div>
+</div>
+
+<script>tbl_tail("<input class='button' type='button' name='apply' value=' Apply ' onClick='btnApply()'>");</script>
+
+</form>
+</body>
+</html>

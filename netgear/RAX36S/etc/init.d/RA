@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+START=92
+
+start() {
+	if [ "x$(/bin/config get factory_mode)" = "x1" ]; then
+		return
+	fi
+
+    /usr/bin/dal_ra &
+}
+
+stop() {
+    killall dal_ra
+    kill -17 1
+    rm /tmp/dal_ra.log 
+}
+
+boot() {
+    start
+}
+
+restart() {
+    stop
+    start
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+uci -q get dhcp.odhcpd && exit 0
+touch /etc/config/dhcp
+
+#20190415, default NOT set A bit. It should be re-config before odhcpd restart.
+uci batch <<EOF
+set dhcp.odhcpd=odhcpd
+set dhcp.odhcpd.maindhcp=0
+set dhcp.odhcpd.leasefile=/tmp/hosts/odhcpd
+set dhcp.odhcpd.leasetrigger=/usr/sbin/odhcpd-update
+set dhcp.lan.dhcpv6=server
+set dhcp.lan.ra=server
+set dhcp.lan.ra_management=2
+commit dhcp
+EOF

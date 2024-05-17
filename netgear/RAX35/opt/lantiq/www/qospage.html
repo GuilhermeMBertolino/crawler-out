@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Intel</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+        $(document).ready(function () {
+        $('.dropdown-toggle').dropdown();
+        });
+        </script>
+    </head>
+    <body>
+        <div id="translation" class="hide">qospage</div>
+        <div ng-controller="qosController" ng-cloak>
+<!--Breadscrumbs starts here -->                                                                                                      
+    <div class="row ltq_breadcrumbs">                                                                                                     
+        <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+            <ng-switch on="$first">                                                                                                               
+                <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                    <div class="ltq_brd_home" >                                                                                                           
+                    <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                        <i class="fa fa-home"></i>                                                                                                            
+                            {{breadcrumb.name}}                                                                                                                   
+                    </a>                                                                                                                                  
+                    </div>                                                                                                                                
+                </div>                                                                                                                                
+
+                <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                    <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>                                                                                                                               
+                    <span ng-if ="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>                                                                                                                               
+                </div>                                                                                                                                 
+
+            </ng-switch>                                                                                                                            
+        </div>                                                                                                                                   
+    </div>                                                                                                                                  
+<!--Breadscrumbs ends here --> 
+            <div class="subheader">
+                <div>
+                    <img src="images/qos-1.png" alt="image" class="iconDetails">
+                </div>
+                <div><h4 ng-bind="'qospage.headername' | translate"></h4></div>
+                <p ng-bind="'qospage.headerdescription' | translate"></p>
+            </div>
+            <div class="row" ng-show="queuetablenamepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('queuetablenamepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="queuetablenamepopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="qossettingsnamepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('qossettingsnamepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="qossettingsnamepopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="qosclassifierstatus">
+                <div class="alert alert-info">
+                    <a class="close" aria-label="close" ng-click="popupclose('qosclassifierstatus')">&times;</a>
+                    <strong ng-bind="'Info!' | translate"></strong><span ng-bind="qosclassifiermessage"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertablepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertablepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertablepopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertabledslformpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertabledslformpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertabledslformpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertablelanpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertablelanpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertablelanpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertablelocalpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertablelocalpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertablelocalpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertablewlanpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertablewlanpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertablewlanpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="shapertableltepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('shapertableltepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="shapertableltepopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="queueformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('queueformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="queueformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="ethernetformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('ethernetformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="ethernetformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="dslformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('dslformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="dslformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="lanformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('lanformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="lanformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="localformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('localformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="localformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="wlanformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('wlanformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="wlanformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="lteformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('lteformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="lteformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="queueethernetformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('queueethernetformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="queueethernetformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="queuedslwanformdatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('queuedslwanformdatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="queuedslwanformdatapopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="queuedslpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('queuedslpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="queuedslpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="qosdeletepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('qosdeletepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="qosdeletepopupval"></span>
+                </div>
+            </div>
+            <div class="container-fluid">            
+                <div class="row ltq_breadcrumbs hide">                
+                    <div class="btn-group btn-breadcrumb1">
+                        <div class="ltq_brd_home">
+                            <a href="#" class="btn"><i class="glyphicon glyphicon-home"></i>&nbsp;Home</a>
+                        </div>                   
+                    </div>
+                    <div class="btn-group btn-breadcrumb">
+                        <a href="#" class="btn btn-default"><i class="fa fa-home"></i>Advanced Settings</a>
+                        <a href="#" class="btn btn-default"><i class="fa fa-sitemap"></i>Internet</a>
+                        <a href="#" class="btn btn-default"><i class="fa fa-warning"></i>Firewall</a>
+                        <a href="#" class="btn btn-default"><i class="fa fa-gear"></i>QOS</a>
+                    </div>
+                </div>
+            </div>
+            <!--QOS flow chart Form--> 
+            <div class="panel">
+                <div class="panel-heading"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span ng-bind="'qospage.QOS' | translate"></span></div>
+                <div class="panel-body">
+                     <div class="qoscontainer">
+                        <div class="box1" ng-click="Router()" ng-class="status == 6 ? 'onactive' : 'inactive'"><a href=""><img src="images/wifi_router_icon-wht.png" width="48" alt="img"/></a></div>
+                        <div class="line1">
+                            <div class="line-bar"></div>
+                        </div>
+                        <ul class="boxlistview">
+                            <li>
+                                <div class="boxlist">
+                                    <span></span>
+                                    <div class="devicelist">
+                                        <div class="qos_box">
+                                            <div class="ingr_ebl ingr_dbl hide">
+                                                <table>
+                                                    <tr><td>I</td></tr>
+                                                    <tr><td>N</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="cont">
+                                                <img src="images/icons/qos/qos-lan.png" alt="LAN" height="46" />
+                                                <div class="dropdown">
+                                                    <button class="btn chetwode_Blue dropdown-toggle qosbutton" type="button" data-toggle="dropdown" style="width:100%;border-radius:0px; ">
+                                                        <span class="cart"><span class="text-center">LAN</span><i class="fa fa-angle-down qosdropdownicon"></i></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li class="disabled"><a>Ingress</a></li>
+                                                        <li ng-click="Lan()"  ng-class="{true: 'onactive', false: 'inactive' }[status == 0]"><a>Egress</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="egr_ebl hide" ng-click="Lan()"  ng-class="{true: 'onactive', false: 'inactive' }[status == 0]">
+                                            <table>                                
+                                                <tr><td>E</td></tr>
+                                                <tr><td>G</td></tr>
+                                                <tr><td>R</td></tr>
+                                                <tr><td>E</td></tr>
+                                                <tr><td>S</td></tr>
+                                                <tr><td>S</td></tr>                               
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="boxlist">
+                                    <span></span>
+                                    <span></span>
+                                    <div class="devicelist">
+                                        <div class="qos_box">
+                                            <div class="ingr_ebl ingr_dbl hide">
+                                                <table>
+                                                    <tr><td>I</td></tr>
+                                                    <tr><td>N</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="cont">
+                                                <img src="images/icons/qos/qos-wlan.png" alt="wifi" height="44"/>
+                                                <!--<span>WLAN</span>-->
+                                                <div class="dropdown">
+                                                    <button class="btn blue dropdown-toggle qosbutton" type="button" data-toggle="dropdown" style="width:100%;border-radius:0px; ">
+                                                        <span class="cart"><span class="text-center">WLAN</span><i class="fa fa-angle-down qosdropdownicon"></i></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li class="disabled"><a>Ingress</a></li>
+                                                        <li ng-click="Wlan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 2]"><a>Egress</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="egr_ebl hide" ng-click="Wlan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 2]">
+                                                <table>                                
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>                               
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li ng-show = "$root.message">
+                                <div class="boxlist">
+                                    <span></span>
+                                    <span></span>
+                                    <div class="devicelist">
+                                        <div class="qos_box">
+                                            <div class="ingr_ebl ingr_dbl hide">
+                                                <table>
+                                                    <tr><td>I</td></tr>
+                                                    <tr><td>N</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="cont">
+                                                <img src="images/icons/qos/qos-dsl.png" alt="wifi" height="44"/>
+                                                <!--<span>DSL WAN</span>-->
+                                                <div class="dropdown">
+                                                    <button class="btn speechblue dropdown-toggle qosbutton" type="button" data-toggle="dropdown" style="width:100%;border-radius:0px; ">
+                                                        <span class="cart"><span class="text-center">DSL WAN</span><i class="fa fa-angle-down qosdropdownicon"></i></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li class="disabled"><a>Ingress</a></li>
+                                                        <li ng-click="DSLWan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 3]"><a>Egress</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="egr_ebl hide" ng-click="DSLWan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 3]">
+                                                <table>                                
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>                               
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="boxlist">
+                                    <span></span>
+                                    <div class="devicelist">
+                                        <div class="qos_box">
+                                            <div class="ingr_ebl ingr_dbl hide">
+                                                <table>
+                                                    <tr><td>I</td></tr>
+                                                    <tr><td>N</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                </table>
+                                            </div>
+                                            <div class="cont">
+                                                <img src="images/lan-port-gr.png" alt="wifi" height="44"/>
+                                                <!--<span> Eth WAN</span>-->
+                                                <div class="dropdown">
+                                                    <button class="btn iris_Blue dropdown-toggle qosbutton" type="button" data-toggle="dropdown" style="width:100%;border-radius:0px; ">
+                                                        <span class="cart"><span class="text-center">Eth WAN</span><i class="fa fa-angle-down qosdropdownicon"></i></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li class="disabled"><a>Ingress</a></li>
+                                                        <li ng-click="EthernetWan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 5]"><a>Egress</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="egr_ebl hide" ng-click="EthernetWan()" ng-class="{true: 'onactive', false: 'inactive' }[status == 5]">
+                                                <table>                                
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>G</td></tr>
+                                                    <tr><td>R</td></tr>
+                                                    <tr><td>E</td></tr>
+                                                    <tr><td>S</td></tr>
+                                                    <tr><td>S</td></tr>                               
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row qos_panelgroup">
+                <div class="col-lg-6 col-md-6 col-xs-12 col-sm-12">
+                    <div class="panel">
+                        <div class="panel-heading mrn_bg panel-heading-btn-align"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span>{{'qospage.Queue'| translate}}</span>
+                            <a class="btn btn-sm btn-info pull-right" id="Add" value="Add CL" ng-click="customFormToOpen('qosconfigform')">
+                                <i class="fa fa-plus icontxtgap"></i>
+                                <span ng-bind="'qospage.Add CL' | translate"></span>
+                            </a>
+                            <a class="btn btn-sm btn-info pull-right" id="Add" value="Add" ng-click="formToOpen('queueform')">
+                                <i class="fa fa-plus icontxtgap"></i>
+                                <span ng-bind="'AddQ' | translate"></span>
+                            </a> 
+                        </div>
+                        <div class="panel-body">
+                            <div class="qos_content">
+                                <div class="panel custom_panel" ng-repeat="item in qosobjects | startFrom:currentPage*pageSize | limitTo:pageSize" ng-init="parentIndex = $index">
+                                    <div class="panel-heading custom_heading" ng-class="activePosition == parentIndex ? 'acc-active' : 'acc-inactive'" >
+                                        <div class="panel-title" >                                    
+                                            <div class="col-md-9 col-sm-9">
+                                            <span class="queue_txt">
+		                             <i class="fa pull-left" ng-class="item.Enable=='true' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i>{{item.Alias}}</span>
+												<span ng-repeat="item1 in item.classifiers" class="clasifierbtn">{{item1.Alias}}</span>
+                                            </div>
+                                            <div class="col-md-3 col-sm-3">
+                                                <!--<i class="indicator glyphicon glyphicon-plus-sign  pull-right"></i>-->                                            
+                                                <button  class="btn btn-info pull-right" id="More{{$index}}" ng-click="toggleDetail(parentIndex)">                                                                                    
+                                                    {{activePosition == parentIndex ? 'Less' : 'More'| translate}}
+                                                    <i class="fa fa-angle-up" ng-class="activePosition == parentIndex ? 'fa-angle-up' : 'fa-angle-down'" ></i>
+                                                </button>
+                                                <!-- <button  class="btn btn-info pull-right addcl_btn" id="Add{{$index}}" value="Add" ng-click="customFormToOpen('qosconfigform')" ng-bind="'qospage.Add CL' | translate">                                       
+                                                </button> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body no-padding-vr">
+                                        <table class="table table-bordered custom_table theme_intel" ng-show="activePosition == $index">                
+                                            <thead>
+                                                <tr>
+                                                    <th ng-bind="'Device.QoS.Queue.*.Interface' | translate"></th>
+                                                    <th ng-bind="'Device.QoS.Queue.*.Precedence' | translate"></th>
+                                                    <th ng-bind="'Device.QoS.Queue.*.Scheduler Algorithm' | translate"></th>                                           
+                                                    <th ng-bind="'qospage.Actions' | translate"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{{item.X_LANTIQ_COM_LowerLayers}}</td>
+                                                    <td>{{item.Precedence}}</td>
+                                                    <td>{{item.SchedulerAlgorithm}}</td>                                            
+                                                    <td>                                        
+                                                        <button  class="btn btn-xs table-btn" name="{{item.objectname}}" id="editQueue{{$index}}" ng-click="edit($event, 'queueform_edit')">
+                                                            <span class="fa fa-edit btn_color_grn"></span>
+                                                        </button>
+                                                        <button class="btn btn-xs table-btn" name="{{item.objectname}}" id="deleteQueue{{$index}}" ng-disabled="item.classifiers.length > 0 ? true : false" ng-click="delete($event, item.Precedence)">
+                                                            <span class="fa fa-trash-o btn_color_red"></span>
+                                                        </button>
+                                                    </td>
+                                                </tr>                                        
+                                            </tbody>
+                                        </table>
+                                        <table class="table table-bordered custom_table theme_intel" ng-show="activePosition == $index">                
+                                            <thead>
+                                                <tr>                                                
+                                                    <th ng-bind="'Device.QoS.Classification.*.Classifier Name' | translate"></th>
+                                                    <th ng-bind="'Device.QoS.Classification.*.Enable' | translate"></th>
+                                                    <th ng-bind="'Device.QoS.Classification.*.Interface' | translate"></th>                                           
+                                                    <th ng-bind="'Device.QoS.Classification.*.Order' | translate"></th>
+                                                    <th ng-bind="'qospage.Actions' | translate"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="tableCellData in item.classifiers">  
+                                                    <td>{{tableCellData.Alias}}</td>
+		                             	    <td><i class="fa" ng-class="tableCellData.Enable=='true' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></td>
+                                                    <!-- <td>{{tableCellData.Enable}}</td> -->
+                                                    <td>{{tableCellData.X_LANTIQ_COM_LowerLayers}}</td>
+                                                    <td>{{tableCellData.Order}}</td>
+                                                    <td>                                        
+                                                        <button  class="btn btn-xs table-btn" name="{{tableCellData.objectname}}" ng-click="edittocustom($event, 'qosconfigform')" id="editClassifier{{parentIndex}}{{$index}}">
+                                                            <span class="fa fa-edit btn_color_grn"></span>
+                                                        </button>
+                                                        <button class="btn btn-xs table-btn" name="{{tableCellData.objectname}}" ng-click="delete($event)" id="deleteClassifier{{parentIndex}}{{$index}}">
+                                                            <span class="fa fa-trash-o btn_color_red"></span>
+                                                        </button>
+                                                    </td>
+                                                </tr>                                        
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>                                
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="pull-right">
+                        <button class="btn btn-sm btn-info" ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                                Previous
+                     </button>
+                            {{currentPage+1}}/{{numberOfPages()}}
+                    <button class="btn btn-sm btn-info" ng-disabled="currentPage >= qosobjects.length/pageSize - 1" ng-click="currentPage=currentPage+1">
+                                Next
+                    </button>
+                    </div>
+                     
+
+                </div>
+
+                <div class="col-lg-6 col-md-6 col-xs-12 col-sm-12">
+                    <div class="panel">
+                        <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span ng-bind="'qospage.Shaper' | translate"></span></div>
+                        <div class="panel-body" >
+                            <div class="qos_content table-responsive">
+                                <table class="table table-bordered custom_table theme_intel">                
+                                    <thead>
+                                        <tr>
+                                            <th ng-bind="'Device.QoS.Shaper.*.Shaper Enable' | translate">
+
+                                            </th>
+                                            <th ng-bind="'Device.QoS.Shaper.*.Shaping Rate' | translate">
+
+                                            </th>
+                                            <th ng-bind="'Device.QoS.Shaper.*.Interface' | translate">
+
+                                            </th>
+                                            <th>
+                                                <a class="btn btn-sm btn-info" id="AddShaper" value="Add" ng-click="formToOpen('qosshaperform')">
+                                                    <i class="fa fa-plus icontxtgap"></i>
+                                                    <span ng-bind="'Add' | translate"></span>
+
+                                                </a>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="tableCellData in tableArray1">
+		                            <td><i class="fa" ng-class="tableCellData.Enable=='true'? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></td>
+                                            <!-- <td>{{tableCellData.Enable}}</td>-->
+                                            <td>{{tableCellData.ShapingRate}}<i>kbps</i></td>
+                                            <td>{{tableCellData.X_LANTIQ_COM_LowerLayers}}</td>
+                                            <td>                                        
+                                                <button  class="btn btn-xs table-btn" name="{{tableCellData.objectname}}" ng-click="edit($event, 'qosshaperform_edit')" id="editShaper{{$index}}">
+                                                    <span class="fa fa-edit btn_color_grn"></span>
+                                                </button>
+                                                <button class="btn btn-xs table-btn" name="{{tableCellData.objectname}}" ng-click="delete($event)" id="deleteShaper{{$index}}">
+                                                    <span class="fa fa-trash-o btn_color_red"></span>
+                                                </button>
+                                            </td>
+                                        </tr>                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row qos_panelgroup">
+                <div class="col-lg-6 col-md-6 col-xs-12 col-sm-12">
+                    <div class="panel">
+                        <div class="panel-heading org_bg panel-heading-btn-align"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span ng-bind="'qospage.QoS Configuration' | translate"></span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="qos_content table-responsive">
+                                <table class="table table-bordered custom_table theme_intel">                
+                                    <thead>
+                                        <tr>
+                                            <th ng-bind="'Device.QoS.Traffic Class' | translate">
+
+                                            </th>
+                                            <th ng-bind="'Device.QoS.Default DSCP Mark' | translate">
+
+                                            </th>
+                                            <th ng-bind="'Device.QoS.Eth Priority Mark' | translate">
+
+                                            </th>
+                                            <th ng-bind="'Device.QoS.Enable' | translate">
+
+                                            </th>
+                                            <th ng-bind="'qospage.Actions' | translate">
+
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="qosconfigsettings in qossettingsArray">
+                                            <td>{{qosconfigsettings.DefaultTrafficClass}}</td>
+                                            <td>{{qosconfigsettings.DefaultDSCPMark}}</td>
+                                            <td>{{qosconfigsettings.DefaultEthernetPriorityMark}}</td>
+		                            <td><i class="fa" ng-class="qosconfigsettings.X_LANTIQ_COM_QoSEnable =='true'? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></td>
+                                            <!-- <td>{{qosconfigsettings.X_LANTIQ_COM_QoSEnable}}</td> -->
+                                            <td>                                        
+                                                <button  class="btn btn-xs table-btn" name="{{qosconfigsettings.objectname}}" ng-click="edit($event, 'qosform')" id="editConfiguration{{$index}}">
+                                                    <span class="fa fa-edit btn_color_grn"></span>
+                                                </button>
+                                            </td>
+                                        </tr>                                        
+                                    </tbody>
+                                </table>
+                            </div> 
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+

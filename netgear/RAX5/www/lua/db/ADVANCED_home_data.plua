@@ -1,0 +1,662 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local uci  = require "luci.model.uci".cursor()
+local uci_st = require "luci.model.uci".cursor(nil, "/var/state")
+local soap = require "soap"
+local interface  = require "webGetFunc.interface"
+local opmode = require "webGetFunc.opmode"
+local inetStatus = require "webGetFunc.inetStatus"
+local wifi = require "webGetFunc.wireless"
+local ipv6 = require "webGetFunc.ipv6"
+local statistics  = require "webGetFunc.statistics"
+local commonCfg = require "webGetFunc.commonCfg"
+local wps = require "commonFunc.wifiUtils_WPS"
+
+local log = require("luci.log") --for debug
+log.debug(0)
+
+local data = { }
+local queryOrder = { }
+
+local radioEnable_2g = wifi.getRadioOn("2.4G")
+local radioEnable_5g = wifi.getRadioOn("5G")
+local guestEnable_2g = wifi.getEnableGuestNetwork("2.4G")
+local guestEnable_5g = wifi.getEnableGuestNetwork("5G")
+local AXmode_status = wifi.getEnableAX()
+--Synced the definition from wireless.js--
+--/* 54 = g mode, 145 = n mode + 20MHz, 300 = n mode + 40MHz */
+local wifi2G_g_n_speed = {"54", "145", "300"};
+--/* 0 = hidden option,  230 = ax mode + 20MHz, 460 = ax mode + 40MHz *///RAX5 2.4G only 256 QAM
+local wifi2G_ax_speed = {"54", "230", "460"};
+--/* 173 = ac mode + 20MHz, 400 = ac mode + 40MHz, 867 = ac mode + 80MHz */
+local wifi5G_ac_speed_2x2 = {"173", "400", "866"}; --According to Home Router Sepc 16a, 5G without AX enable(ac mode), the 2x2 + 80MHz, max link rate should be 866Mbps.
+--/* 286 = ax mode + 20MHz, 600 = ax mode + 40MHz, 1200 = ax mode + 80MHz */
+local wifi5G_ax_speed_2x2 = {"286", "572", "1200"}; --According to Home Router Sepc 16a, 5G with AX enable, the 2x2 + 40MHz, max link rate should be 572Mbps.
+local wifi5G_bw80_channel_group = {
+    {"36", "40", "44", "48"},
+    {"52", "56", "60", "64"},
+    {"100", "104", "108", "112"},
+    {"116", "120", "124", "128"},
+    {"149", "153", "157", "161"},
+    {"165", "169", "173", "177"}
+}
+
+local v6SelectMode = {
+    ["disabled"] = "Disabled",
+    ["autoDetect"] = "Auto Detect",
+    ["6to4"] = "6to4 Tunnel",
+    ["bridge"] = "Pass Through",
+    ["fixed"] = "Fixed",
+    ["dhcp"] = "DHCP",
+    ["pppoe"] = "PPPoE",
+    ["autoConfig"] = "Auto Config",
+    ["6rd"]= "6rd Tunnel"
+}
+
+-- Router Information
+local notEmbed = 1
+local hwVer = commonCfg.getModelNameStr(notEmbed)
+local fwVer =  commonCfg.getFirmwareVer(notEmbed)
+local langVer = commonCfg.getLanguageVersion()
+local opMode = commonCfg.getOperationMode(1) -- for UI display
+
+local devMode = commonCfg.getOperationMode()
+local ipv6mode = ipv6.getSelectVal_v6Type()
+
+data["router_info__hwVer"] = { value = hwVer, type = "advTableRow", mlang = "MRS027" }
+table.insert(queryOrder, "router_info__hwVer")
+
+data["router_info__fwVer"] = { value = fwVer, type = "advTableRow", mlang = "MRS017" }
+table.insert(queryOrder, "router_info__fwVer")
+
+data["router_info__langVer"] = { value = langVer, type = "advTableRow", mlang = "MRS013" }
+table.insert(queryOrder, "router_info__langVer")
+
+data["router_info__operationMode"] = { value = opMode, type = "advTableRow", mlang = "MRS078" }
+table.insert(queryOrder, "router_info__operationMode")
+
+local cpuLoad = commonCfg.getCpuLoad()
+local memUsage = commonCfg.getmemoryUsage()
+local flashUsage = commonCfg.getflashUsage()
+local sysUptime = statistics.getSysUpTime()
+
+if devMode == "router" then
+    data["router_info__cpuLoad"] = { value = cpuLoad, type = "advTableRow", mlang = "PCVP_117", mlangText = "CPU Load" }
+    table.insert(queryOrder, "router_info__cpuLoad")
+
+    data["router_info__memoryUsage"] = { value = memUsage, type = "advTableRow", mlang = "PCVP_111", mlangText = "Memory Usage(Used/Total)" }
+    table.insert(queryOrder, "router_info__memoryUsage")
+
+    data["router_info__flashUsage"] = { value = flashUsage, type = "advTableRow", mlang = "PCVP_112", mlangText = "Flash Usage(Used/Total)" }
+    table.insert(queryOrder, "router_info__flashUsage")
+
+    data["router_info__sysUptime"] = { value = sysUptime, type = "advTableRow", mlang = "PCVP_113", mlangText = "System Uptime" }
+    table.insert(queryOrder, "router_info__sysUptime")
+end
+
+local lanMac = interface.getLanMacAddr()
+local lanIp = interface.getLanInstanceIpAddr()
+local lanDhcpV4Enable = interface.getLanDhcpv4EnableForAdv()
+local lanMask = interface.getLanInstanceIpMask()
+local v6LanPrefixAddr = ipv6.getIPv6LanPrefixAddr()
+
+if devMode == "router" then
+    data["router_info__lanMac"] = { value = lanMac, type = "advTableRow", mlang = "MRS015" }
+    table.insert(queryOrder, "router_info__lanMac")
+
+    data["router_info__lanIp"] = { value = lanIp, type = "advTableRow", mlang = "SWP030" }
+    table.insert(queryOrder, "router_info__lanIp")
+
+    data["router_info__lanDhcp"] = { value = lanDhcpV4Enable, type = "advTableRow", mlang = "MRS003" }
+    table.insert(queryOrder, "router_info__lanDhcp")
+
+    data["router_info__lanMask"] = { value = lanMask, type = "advTableRow", mlang = "SWP044" }
+    table.insert(queryOrder, "router_info__lanMask")
+
+    if ( ipv6mode ~= "disabled" ) then
+        data["router_info__prefixAddr"] = { value = v6LanPrefixAddr, type = "advTableRow", mlang = "", mlangText = "Prefix Address" }
+        table.insert(queryOrder, "router_info__prefixAddr")
+    end
+end
+
+-- Internet Port
+local wanMac = interface.getWanMacAddr()
+local wanIp,wanMask
+local wanType,wanDNS
+local dns1, dns2
+local wan_protocol
+
+if devMode == "router" then
+    wan_protocol = interface.get_wanMode()
+    wanType = interface.getWanConnectionType()
+    if ( wan_protocol == "DHCP" or wan_protocol == "Static" ) then
+        wanIp = interface.getWanEtherIpAddr()
+        wanMask = interface.getWanEtherIpMask()
+    else
+        wanIp = inetStatus.getInet_IpAddr()
+        wanMask = inetStatus.getInet_subnetMask()
+    end
+
+    dns1  = interface.getDNSServerIpAddr(1)
+    dns2  = interface.getDNSServerIpAddr(2)
+else
+    wanType = opmode.getIpType()
+    wanIp = opmode.getIpAddr()
+    wanMask = opmode.getIpMask()
+    dns1  = opmode.getDNSServer(1)
+    dns2  = opmode.getDNSServer(2)
+end
+
+if wanIp == "" then
+    wanIp = "0.0.0.0"
+end
+
+if wanMask == "" then
+    wanMask = "0.0.0.0"
+end
+
+if dns1 == "" then
+    wanDNS = "0.0.0.0"
+else
+    wanDNS = dns1.."<br>"..dns2
+end
+
+local v6Type = uci:get("network", "wan_v6", "proto")
+
+local ipv6Ip, ipv6Gateway, v6wanDNS
+ipv6Ip = ipv6.getSpanVal_AutoConfig_wan6Ip()
+ipv6Gateway = ipv6.getGatewayIpAddr_For_AdvancedHome()
+v6wanDNS = ipv6.getDnsServer_For_AdvancedHome()
+
+data["internet_info__wanMac"] = { value = wanMac, type = "advTableRow", mlang = "MRS015" }
+table.insert(queryOrder, "internet_info__wanMac")
+
+data["internet_info__wanIp"] = { value = wanIp, type = "advTableRow", mlang = "SWP030" }
+table.insert(queryOrder, "internet_info__wanIp")
+
+data["internet_info__wanType"] = { value = wanType, type = "advTableRow", mlang = "DG012" }
+table.insert(queryOrder, "internet_info__wanType")
+
+data["internet_info__wanMask"] = { value = wanMask, type = "advTableRow", mlang = "SWP044" }
+table.insert(queryOrder, "internet_info__wanMask")
+
+data["internet_info__wanDns"] = { value = wanDNS, type = "advTableRow", mlang = "MRS026" }
+table.insert(queryOrder, "internet_info__wanDns")
+
+if ( devMode == "router" and ipv6mode ~= "disabled" ) then
+    data["internet_info__ipv6Ip"] = { value = ipv6Ip, type = "advTableRow",  mlang = "", mlangText = "IP Address Ver 6" }
+    table.insert(queryOrder, "internet_info__ipv6Ip")
+
+    data["internet_info__ipv6DefaultGateway"] = { value = ipv6Gateway, type = "advTableRow",  mlang = "MRS045"}
+    table.insert(queryOrder, "internet_info__ipv6DefaultGateway")
+
+    data["internet_info__ipv6ConnectionType"] = { value = v6SelectMode[ipv6mode], type = "advTableRow",  mlang = "MRS076" }
+    table.insert(queryOrder, "internet_info__ipv6ConnectionType")
+
+    data["internet_info__ipv6Dns"] = { value = v6wanDNS, type = "advTableRow", mlang = "AIP034" }
+    table.insert(queryOrder, "internet_info__ipv6Dns")
+end
+
+if ( devMode == "ap"  or  devMode == "bridge" ) then
+local opmode_iptype, laninfo_dhcp
+opmode_iptype = opmode.getIpType(devMode)
+if ( opmode_iptype ==  "dynamic" ) then
+    opmode_dhcp = "On"
+else
+    opmode_dhcp = "Off"
+end
+
+local opmode_ipAddr = opmode.getIpAddr(devMode)
+local opmode_netmask = opmode.getIpMask(devMode)
+local opmode_gateway = opmode.getGateway(devMode)
+local opmode_dns1 = opmode.getDNSServer(devMode, 1)
+local opmode_dns2 = opmode.getDNSServer(devMode, 2)
+local opmode_dns
+if opmode_dns1 == "" then
+    opmode_dns = "::"
+else
+    opmode_dns = opmode_dns1.."<br>"..opmode_dns2
+end
+
+if ( devMode == "ap" ) then
+    data["lan_info__macAddr"] = { value = lanMac, type = "advTableRow", mlang = "MRS015" }
+    table.insert(queryOrder, "lan_info__macAddr")
+
+    data["lan_info__dhcp"] = { value = opmode_dhcp, type = "advTableRow", mlang = "MRS024" }
+    table.insert(queryOrder, "lan_info__dhcp")
+
+    data["lan_info__ipAddr"] = { value = opmode_ipAddr, type = "advTableRow", mlang = "SWP030" }
+    table.insert(queryOrder, "lan_info__ipAddr")
+
+    data["lan_info__mask"] = { value = opmode_netmask, type = "advTableRow", mlang = "SWP044" }
+    table.insert(queryOrder, "lan_info__mask")
+
+    data["lan_info__gateway"] = { value = opmode_gateway, type = "advTableRow", mlang = "SWP034" }
+    table.insert(queryOrder, "lan_info__gateway")
+
+    data["lan_info__dns"] = { value = opmode_dns,  type = "advTableRow", mlang = "MRS026" }
+    table.insert(queryOrder, "lan_info__dns")
+
+elseif ( devMode == "bridge" ) then
+    data["bridge_client_status__macAddr"] = { value = lanMac, type = "advTableRow", mlang = "MRS015" }
+    table.insert(queryOrder, "bridge_client_status__macAddr")
+
+    data["bridge_client_status__dhcp"] = { value = opmode_dhcp, type = "advTableRow", mlang = "MRS024" }
+    table.insert(queryOrder, "bridge_client_status__dhcp")
+
+    data["bridge_client_status__ipAddr"] = { value = opmode_ipAddr, type = "advTableRow", mlang = "SWP030" }
+    table.insert(queryOrder, "bridge_client_status__ipAddr")
+
+    data["bridge_client_status__mask"] = { value = opmode_netmask, type = "advTableRow", mlang = "SWP044" }
+    table.insert(queryOrder, "bridge_client_status__mask")
+
+    data["bridge_client_status__gateway"] = { value = opmode_gateway, type = "advTableRow", mlang = "SWP034" }
+    table.insert(queryOrder, "bridge_client_status__gateway")
+
+    data["bridge_client_status__dns"] = { value = opmode_dns,  type = "advTableRow", mlang = "MRS026" }
+    table.insert(queryOrder, "bridge_client_status__dns")
+end
+end
+
+local radio_bridgemode = opmode.getBridgeMode_wifiIF()
+local ssid_2g = soap.escape(wifi.getSsid("2.4G", "primary"))
+local bridgemode_ssid2G = soap.escape(wifi.getSsid("2.4G", "client"))
+local bridgemode_2GLinkRate = opmode.getBridgeMode_LinkRate()
+local bridgemode_2GConnectionStatus = opmode.getBridgeMode_ConnectionStatus()
+
+if (devMode ~= "bridge") then
+    data["wireless__ssid"] = { value = ssid_2g, type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "wireless__ssid")
+
+elseif (devMode == "bridge" and radio_bridgemode == "2G" ) then
+    data["wireless__ssid"] = { value = bridgemode_ssid2G, type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "wireless__ssid")
+
+    data["wireless__rate"] = { value = bridgemode_2GLinkRate, type = "advTableRow", mlang = "MRS021" }
+    table.insert(queryOrder, "wireless__rate")
+
+    data["wireless__connStatus"] = { value = bridgemode_2GConnectionStatus, type = "advTableRow", mlang = "MRS021" }
+    table.insert(queryOrder, "wireless__connStatus")
+end
+
+local nmrpSku = wifi.getNmrp_sku()
+local ipLocation_region = uci_st:get("ipLocation", "info", "country")
+local wireless_region = getWifiRegion_mLangTag_Mapping(ipLocation_region, nmrpSku)
+local wireless_channel = wifi.getWifiChannel("2.4G")
+local wireless_2G_runtime_cur_chan = wifi.get_runtime_current_channel(MTK_DEF_2G_PRIMARY_IFNAME)
+local wireless_2G_extenstion_channel_mode = wifi.get_extensionChannel_mode(MTK_DEF_2G_PRIMARY_IFNAME)
+local GUI_wifi_2G_channel_string = ""
+local bwMode_index = wifi.getWiFiMode("2.4G")
+
+if (devMode ~= "bridge") then
+    data["wireless__region"] = { value = wireless_region, type = "advTableRow", mlang = "SWS019" }
+    table.insert(queryOrder, "wireless__region")
+
+    if wireless_2G_extenstion_channel_mode == "ABOVE" then
+        GUI_wifi_2G_channel_string = wireless_2G_runtime_cur_chan.."(P) + "..(tonumber(wireless_2G_runtime_cur_chan)+4).."(S)"
+    elseif wireless_2G_extenstion_channel_mode == "BELOW" then
+        GUI_wifi_2G_channel_string = wireless_2G_runtime_cur_chan.."(P) + "..(tonumber(wireless_2G_runtime_cur_chan)-4).."(S)"
+    else
+        GUI_wifi_2G_channel_string = wireless_2G_runtime_cur_chan
+    end
+
+    if tonumber(wireless_channel) == 0 then
+        data["wireless__channel"] = { value = tostring(wireless_channel), type = "advTableRow", mlang = "SWS018" }
+    else
+        data["wireless__channel"] = { value = tostring(GUI_wifi_2G_channel_string), type = "advTableRow", mlang = "SWS018" }
+    end
+    table.insert(queryOrder, "wireless__channel")
+
+    if AXmode_status == "true" then
+        wireless_mode = wifi2G_ax_speed[tonumber(bwMode_index)]
+    else
+        wireless_mode = wifi2G_g_n_speed[tonumber(bwMode_index)]
+    end
+
+    data["wireless__mode"] = { value = wireless_mode, type = "advTableRow", mlang = "SWS037" }
+    table.insert(queryOrder, "wireless__mode")
+end
+
+local smartEnable = wifi.getSmartConnect()
+local radioOn_2g
+if (radioEnable_2g == "true") then
+    radioOn_2g = "ANM003"
+else
+    radioOn_2g = "ANM004"
+end
+
+local wireless_broadcast = wifi.getSSIDBroadcast("2.4G", "primary")
+if (wireless_broadcast == "true") then
+    wireless_broadcast = "ANM003"
+else
+    wireless_broadcast = "ANM004"
+end
+local wireless_wps_configured_setting_2g = wps.get_WPS_configured_setting_2g_forGUI()
+if ( wireless_wps_configured_setting_2g == "false" ) then
+    wps_configured_2g_mlang = "MRS073"
+else
+    wps_configured_2g_mlang = "MRS074"
+end
+local wireless_an_ssid = soap.escape(wifi.getSsid("5G", "primary"))
+local wireless_an_region = getWifiRegion_mLangTag_Mapping(ipLocation_region, nmrpSku)
+local bridgemode_ssid5G = soap.escape(wifi.getSsid("5G", "client"))
+local bridgemode_5GLinkRate = opmode.getBridgeMode_LinkRate()
+local bridgemode_5GConnectionStatus = opmode.getBridgeMode_ConnectionStatus()
+
+if ( smartEnable == "false" and devMode ~= "bridge" ) then
+    data["wireless__ap"] = { value = radioOn_2g,  type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "wireless__ap")
+
+    data["wireless__broadcast"] = { value = wireless_broadcast,  type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "wireless__broadcast")
+
+    data["wireless__wps"] = { value = wps_configured_2g_mlang,  type = "advTableRow", mlang = "MRS072" }
+    table.insert(queryOrder, "wireless__wps")
+
+    data["wireless_an__ssid"] = { value = wireless_an_ssid,  type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "wireless_an__ssid")
+
+    data["wireless_an__region"] = { value = wireless_an_region,  type = "advTableRow", mlang = "SWS019" }
+    table.insert(queryOrder, "wireless_an__region")
+
+elseif ( devMode == "bridge" and radio_bridgemode == "5G") then
+    data["wireless_an__ssid"] = { value = bridgemode_ssid5G,  type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "wireless_an__ssid")
+
+    data["wireless_an__rate"] = { value =  bridgemode_5GLinkRate, type = "advTableRow", mlang = "MRS021" }
+    table.insert(queryOrder, "wireless_an__rate")
+
+    data["wireless_an__connStatus"] = { value =  bridgemode_5GConnectionStatus, type = "advTableRow", mlang = "MRS006" }
+    table.insert(queryOrder, "wireless_an__connStatus")
+
+else
+    if ( devMode ~= "bridge" ) then
+        data["wireless_an__smartConnect"] = { value = "<span mlang=\"D-genie_283\">Enabled</span>",  type = "advTableRow",  mlang = "RS-Vault_053" }
+        table.insert(queryOrder, "wireless_an__smartConnect")
+    end
+end
+
+local wireless_an_channel = wifi.getWifiChannel("5G")
+local wireless_5G_VHT_bandwidth = wifi.get_vht_bw(MTK_DEF_5G_PRIMARY_IFNAME)
+local wireless_5G_HT_bandwidth = wifi.get_ht_bw(MTK_DEF_5G_PRIMARY_IFNAME)
+local wireless_5G_extenstion_channel_mode = wifi.get_extensionChannel_mode(MTK_DEF_5G_PRIMARY_IFNAME)
+local bwMode_index  = wifi.getWiFiMode("5G")
+
+if ( devMode ~= "bridge" ) then
+    local GUI_wifi_5G_channel_string = ""
+    if tonumber(wireless_5G_VHT_bandwidth) == 1 then
+        local numOfGroup = #wifi5G_bw80_channel_group --How many channel groups.
+        local channelsInOneGroup = 4
+        local whichGroup = 1
+        for i = 1, #wifi5G_bw80_channel_group do
+            for j = 1, channelsInOneGroup do
+                if tonumber(wireless_an_channel) == tonumber(wifi5G_bw80_channel_group[i][j]) then
+                    whichGroup = i
+                break
+                end
+            end
+        end
+        for j = 1, channelsInOneGroup do
+            GUI_wifi_5G_channel_string = GUI_wifi_5G_channel_string..wifi5G_bw80_channel_group[whichGroup][j]
+            if tonumber(wireless_an_channel) == tonumber(wifi5G_bw80_channel_group[whichGroup][j]) then
+                GUI_wifi_5G_channel_string = GUI_wifi_5G_channel_string.."(P)"
+            end
+            if j < channelsInOneGroup then
+                GUI_wifi_5G_channel_string = GUI_wifi_5G_channel_string.." + "
+            end
+        end
+    elseif tonumber(wireless_5G_HT_bandwidth) == 1 then
+        if wireless_5G_extenstion_channel_mode == "ABOVE" then
+            GUI_wifi_5G_channel_string = wireless_an_channel.."(P) + "..(tonumber(wireless_an_channel)+4).."(S)"
+        elseif wireless_2G_extenstion_channel_mode == "BELOW" then
+            GUI_wifi_5G_channel_string = wireless_an_channel.."(P) + "..(tonumber(wireless_an_channel)-4).."(S)"
+        else
+            GUI_wifi_5G_channel_string = tostring(wireless_an_channel)
+        end
+    else
+        GUI_wifi_5G_channel_string = tostring(wireless_an_channel)
+    end
+
+    data["wireless_an__channel"] = { value = tostring(GUI_wifi_5G_channel_string), type = "advTableRow", mlang = "SWS018" }
+    table.insert(queryOrder, "wireless_an__channel")
+
+    if AXmode_status == "true" then
+        wireless_an_mode = wifi5G_ax_speed_2x2[tonumber(bwMode_index)]
+    else
+        wireless_an_mode = wifi5G_ac_speed_2x2[tonumber(bwMode_index)]
+    end
+
+    data["wireless_an__mode"] = { value =  wireless_an_mode, type = "advTableRow", mlang = "SWS037" }
+    table.insert(queryOrder, "wireless_an__mode")
+end
+
+local radioOn_5g
+if (radioEnable_5g == "true") then
+    radioOn_5g = "ANM003"
+else
+    radioOn_5g = "ANM004"
+end
+
+local wireless_an_broadcast = wifi.getSSIDBroadcast("5G", "primary")
+if (wireless_an_broadcast == "true") then
+    wireless_an_broadcast = "ANM003"
+else
+    wireless_an_broadcast = "ANM004"
+end
+
+local wireless_wps_configured_setting_5g = wps.get_WPS_configured_setting_5g_forGUI()
+if ( wireless_wps_configured_setting_5g == "false" ) then
+    wps_configured_5g_mlang = "MRS073"
+else
+    wps_configured_5g_mlang = "MRS074"
+end
+
+if ( smartEnable == "false" and devMode ~= "bridge" ) then
+    data["wireless_an__ap"] = { value = radioOn_5g, type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "wireless_an__ap")
+
+    data["wireless_an__broadcast"] = { value = wireless_an_broadcast, type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "wireless_an__broadcast")
+
+    data["wireless_an__wps"] = { value = wps_configured_5g_mlang, type = "advTableRow", mlang = "MRS072" }
+    table.insert(queryOrder, "wireless_an__wps")
+end
+
+local guest_network_ssid = soap.escape(wifi.getSsid("2.4G", "guest"))
+local guest_network_ap
+if (guestEnable_2g == "true") then
+    guest_network_ap = "ANM003"
+else
+    guest_network_ap = "ANM004"
+end
+local guest_network_broadcast = wifi.getSSIDBroadcast("2.4G", "guest")
+if (guest_network_broadcast == "true") then
+    guest_network_broadcast = "ANM003"
+else
+    guest_network_broadcast = "ANM004"
+end
+local guest_network_allowTosee = wifi.getAllowAccessLocal("2.4G")
+if ( guest_network_allowTosee == "true" ) then
+    guest_network_allowTosee = "ANM003"
+else
+    guest_network_allowTosee = "ANM004"
+end
+local guest_network_an_ssid = soap.escape(wifi.getSsid("5G", "guest"))
+local guest_network_an_ap
+if (guestEnable_5g == "true") then
+    guest_network_an_ap = "ANM003"
+else
+    guest_network_an_ap = "ANM004"
+end
+
+local guest_network_an_broadcast = wifi.getSSIDBroadcast("5G", "guest")
+if (guest_network_an_broadcast == "true") then
+    guest_network_an_broadcast = "ANM003"
+else
+    guest_network_an_broadcast = "ANM004"
+end
+local guest_network_an_allowTosee = wifi.getAllowAccessLocal("5G")
+if ( guest_network_an_allowTosee == "true" ) then
+    guest_network_an_allowTosee = "ANM003"
+else
+    guest_network_an_allowTosee = "ANM004"
+end
+
+if ( devMode ~= "bridge" ) then
+    data["guest_network__ssid"] = { value = guest_network_ssid, type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "guest_network__ssid")
+
+    data["guest_network__ap"] = { value = guest_network_ap, type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "guest_network__ap")
+
+    data["guest_network__broadcast"] = { value = guest_network_broadcast, type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "guest_network__broadcast")
+
+    data["guest_network__allowTosee"] = { value = guest_network_allowTosee, type = "advTableRow", mlang = "SGN014" }
+    table.insert(queryOrder, "guest_network__allowTosee")
+
+    data["guest_network_an__ssid"] = { value = guest_network_an_ssid, type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "guest_network_an__ssid")
+
+    data["guest_network_an__ap"] = { value = guest_network_an_ap, type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "guest_network_an__ap")
+
+    data["guest_network_an__broadcast"] = { value = guest_network_an_broadcast, type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "guest_network_an__broadcast")
+
+    data["guest_network_an__allowTosee"] = { value = guest_network_an_allowTosee, type = "advTableRow", mlang = "SGN014" }
+    table.insert(queryOrder, "guest_network_an__allowTosee")
+end
+
+-- do not support 5G1 now
+local wireless_high_ssid = "5G1_SSID" -- getTextVal_5g1Ssid() -- TODO
+data["wireless_high__ssid"] = { value = wireless_high_ssid, type = "advTableRow", mlang = "SWS020" }
+table.insert(queryOrder, "wireless_high__ssid")
+
+local wireless_high_region = "SWS015" -- TODO
+local wireless_high_channel = "false" --getSelectVal_5g1Channel() --TODO
+local wireless_high_mode  = "" --getSelectVal_5g1ModeForAdv() --TODO
+local wireless_high_ap = "false" --getCheckboxVal_5G1RadioOn()--TODO
+if ( wireless_high_ap == "true" ) then
+    wireless_high_ap = "ANM003"
+else
+    wireless_high_ap = "ANM004"
+end
+local wireless_high_broadcast = "false" -- getCheckboxVal_5g1SsidBroadcast()  --TODO
+if ( wireless_high_broadcast == "true" ) then
+    wireless_high_broadcast = "ANM003"
+else
+    wireless_high_broadcast = "ANM004"
+end
+local wireless_high_wps = "false" -- getCheckboxVal_wpsKeepSetting5G1() --TODO
+if ( wireless_high_wps == "true" ) then
+    wireless_high_wps = "MRS074"
+else
+    wireless_high_wps = "MRS073"
+end
+
+if ( devMode ~= "bridge" ) then
+    data["wireless_high__region"] = { value = wireless_high_region, type = "advTableRow", mlang = "SWS019" }
+    table.insert(queryOrder, "wireless_high__region")
+
+    data["wireless_high__channel"] = { value = wireless_high_channel, type = "advTableRow", mlang = "SWS018" }
+    table.insert(queryOrder, "wireless_high__channel")
+
+    data["wireless_high__mode"] = { value = wireless_high_mode, type = "advTableRow", mlang = "SWS037" }
+    table.insert(queryOrder, "wireless_high__mode")
+
+    data["wireless_high__ap"] = { value = wireless_high_ap, type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "wireless_high__ap")
+
+    data["wireless_high__broadcast"] = { value = wireless_high_broadcast, type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "wireless_high__broadcast")
+
+    data["wireless_high__wps"] = { value = wireless_high_wps, type = "advTableRow", mlang = "MRS072" }
+    table.insert(queryOrder, "wireless_high__wps")
+end
+
+local guest_network_high_ssid = "5G1 Guest SSID" --getTextVal_5g1GuestSsid() --TODO
+local guest_network_high_ap = "false" --getCheckboxVal_5g1EnableGuest() -- TODO
+if ( guest_network_high_ap == "true" ) then
+    guest_network_high_ap = "ANM003"
+else
+    guest_network_high_ap = "ANM004"
+end
+local guest_network_high_broadcast = "false" --getCheckboxVal_5g1SsidBroadcast() --TODO
+if ( guest_network_high_broadcast == "true" ) then
+    guest_network_high_broadcast = "ANM003"
+else
+    guest_network_high_broadcast = "ANM004"
+end
+local guest_network_high_allowTosee = "false" --getCheckboxVal_5g1GuestAllowAccessLocal() --TODO
+if ( guest_network_high_allowTosee == "true" ) then
+    guest_network_high_allowTosee = "ANM003"
+else
+    guest_network_high_allowTosee = "ANM004"
+end
+
+if ( devMode ~= "bridge" ) then
+    data["guest_network_high__ssid"] = { value = guest_network_high_ssid, type = "advTableRow", mlang = "SWS020" }
+    table.insert(queryOrder, "guest_network_high__ssid")
+
+    data["guest_network_high__ap"] = { value = guest_network_high_ap, type = "advTableRow", mlang = "MRS052" }
+    table.insert(queryOrder, "guest_network_high__ap")
+
+    data["guest_network_high__broadcast"] = { value = guest_network_high_broadcast, type = "advTableRow", mlang = "MRS023" }
+    table.insert(queryOrder, "guest_network_high__broadcast")
+
+    data["guest_network_high__allowTosee"] = { value = guest_network_high_allowTosee, type = "advTableRow", mlang = "SGN014" }
+    table.insert(queryOrder, "guest_network_high__allowTosee")
+end
+
+local internet_status = uci_st:get("network", "inet", "up")
+if ( internet_status ~= nil and internet_status == "1" ) then internet_status = 0 else internet_status = 1 end
+
+data["wanType"] = { value =  wan_protocol }
+table.insert(queryOrder, "wanType")
+
+data["apMode"] = { value = devMode }
+table.insert(queryOrder, "apMode")
+
+data["bridgeRadio"] = { value = radio_bridgemode }
+table.insert(queryOrder, "bridgeRadio")
+
+if (devMode == "bridge" and radio_bridgemode == "2G" ) then
+    if (bridgemode_2GConnectionStatus == "Connected") then
+        radioEnable_2g = "true"
+    else
+        radioEnable_2g = "false"
+    end
+end
+data["2GRadioEnable"] = { value = radioEnable_2g }
+table.insert(queryOrder, "2GRadioEnable")
+
+if (devMode == "bridge" and radio_bridgemode == "5G" ) then
+    if (bridgemode_5GConnectionStatus == "Connected") then
+        radioEnable_5g = "true"
+    else
+        radioEnable_5g = "false"
+    end
+end
+data["5GRadioEnable"] = { value = radioEnable_5g }
+table.insert(queryOrder, "5GRadioEnable")
+
+data["2gGuestEnable"] = { value = guestEnable_2g }
+table.insert(queryOrder, "2gGuestEnable")
+
+data["5gGuestEnable"] = { value = guestEnable_5g }
+table.insert(queryOrder, "5gGuestEnable")
+
+data["internetStatus"] = { value = internet_status }
+table.insert(queryOrder, "internetStatus")
+
+data["GUI_wifi_2G_channel_string"] = { value = GUI_wifi_2G_channel_string }
+table.insert(queryOrder, "GUI_wifi_2G_channel_string")
+
+--log.console_r(data)
+--log.console_r(queryOrder)
+
+setmetatable(data, {__order = queryOrder})
+
+return json.encode(data)

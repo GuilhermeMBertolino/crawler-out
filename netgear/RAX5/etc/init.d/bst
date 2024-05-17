@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+#START=99
+#Pega: more early init, but still keep dal init order
+START=95
+
+start() {
+    d2 -c bstcfg[0].URL "https://netgearup-dev.s3-us-west-2.amazonaws.com/"
+    /usr/bin/bst_daemon &
+}
+
+stop() {
+    killall bst_daemon
+    #Pega, comment out to avoid reboot issue
+    #kill -17 1
+    rm /tmp/bst.log
+}
+
+boot() {
+    #++ Pega added
+    setlogLevelForDAL.sh bst LOG_DEBUG false true
+    #--
+    start
+}
+
+restart() {
+    stop
+    start
+}

@@ -1,0 +1,94 @@
+<? include 'php/commonCfg.php';?>
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <META http-equiv="Content-Style-Type" content="text/css">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script language="javascript" type="text/javascript">
+    $(document).ready(function(){
+      fetchData('target', 'index', '', 'loadnext');
+    });
+    
+    function loadnext() {
+      var hideit=(document.layers)?"hide":"none";
+      var el = "alltext";
+
+      //JYang, do auto language check and update
+      <? autoLang() ?>;
+
+      if (document.all)
+        document.all(el).style.display = hideit;
+      else if (document.getElementById)
+        document.getElementById(el).style.display = hideit;
+      else if (document.layers)
+        document.layers[el].visibility = hideit;
+
+      if($("[name='defaultState']").val() === "1")
+      {
+        //KKHunag: Redirect to www.routerlogin.com if it is from DNS Hijack
+        var hostname = window.location.hostname;
+        var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        var newHostname = "";
+
+        if (!hostname.match(ipformat))
+        {
+          if (['www.routerlogin.com', 'routerlogin.com',
+               'www.routerlogin.net', 'routerlogin.net',
+               'readyshare.routerlogin.com', 'readyshare.routerlogin.net'].indexOf(hostname) < 0)
+          {
+               newHostname = "http://www.routerlogin.com";
+          }
+        }
+
+        if($("[name='nightHawkAppSkip']").val() === "1")
+        {
+	  if (newHostname == "")
+	  {
+            top.location.href = "/genie_index.html";
+          }
+          else
+          {
+            top.location.replace(newHostname + "/genie_index.html");
+          }
+        }
+        else
+        {
+          if (newHostname == "")
+          {
+            top.location.href = "/APP_index.html";
+          }
+          else
+          {
+            top.location.replace(newHostname + "/APP_index.html");
+          }
+        }
+      }
+      else if ("0" == "1")
+        top.location.replace("http://www.routerlogin.net/start.html");
+      else
+        top.location.replace("start.html");
+    }
+  </script>
+</head>
+
+<body bgcolor="#ffffff" text="#666666" "> 
+  <div ID="alltext" STYLE="position:absolute;left:50px;top:200px;">
+    <font face="Arial,Helvetica">
+      <h4>Checking JavaScript Support</h4>
+      <p>To provide an enhanced user interface, this Router uses JavaScript extensively.</p>
+      <p>If this page is not quickly replaced, your Browser does NOT support JavaScript.</p>
+      <p>Please enable JavaScript in your Browser, or use a different Browser.</p>
+    </font>
+  </div>
+  <form id="target" name="formname" >
+    <input type="hidden" value="" name="defaultState" disabled>
+    <input type="hidden" value="" name="nightHawkAppSkip" disabled>
+  </form>
+</body>
+</html>

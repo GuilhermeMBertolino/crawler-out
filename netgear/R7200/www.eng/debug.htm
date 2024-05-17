@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><link rel="stylesheet" href="style/top.css@js_css_suffix#">
+<script language="javascript" type="text/javascript" src="funcs.js"></script>
+<script language="javascript" type="text/javascript" src="top.js"></script>
+<script language="javascript" type="text/javascript" src="string.js"></script>
+<script language="javascript" type="text/javascript" src="utility.js"></script>
+<script language="javascript" type="text/javascript" src="linux.js"></script>
+<link rel="stylesheet" href="style/form.css">
+<script language="javascript" type="text/javascript">
+//NOTE: set nvram "dbg_cpu_mirror=1" to let cpu-port mirror to lan0 
+//var telnet_status = "@dbg_telnet_stat#";
+var wan_mirror_status = "@dbg_wan_mirror_stat#";
+var dbg_store_location = "@dbg_storage_location#";
+var dbg_wifi_band = "@dbg_wifi_band#";
+var dbg_button_status = "@dbg_button_status#";
+var dbg_ipv6_ping_status = "@dbg_ipv6_ping_status#";
+var dbg_tcpdump_enable = "@dbg_tcpdump_enable#";
+function init()
+{
+	var cf = document.forms[0];
+//	if(telnet_status == "1")
+//		cf.enable_telnet.checked = true;
+	if(wan_mirror_status == "1")
+		cf.wan_lan_mirror.checked = true;
+	
+	if(dbg_store_location == "USB")
+		cf.store_location.value = "USB";
+		
+	if(dbg_wifi_band == "2G")
+		cf.wifi_band.value = "2G";
+	else if(dbg_wifi_band == "5G")
+		cf.wifi_band.value = "5G";
+	else
+		cf.wifi_band.value = "None";
+	
+	if(dbg_button_status == "0")
+		cf.start_capture.className = "common_gray_bt"
+	else
+		cf.start_capture.className = "common_bt"
+		
+	if(dbg_ipv6_ping_status == "1")
+		cf.ipv6_ping_enable.checked = true;
+		
+	if (dbg_tcpdump_enable == "1")
+		cf.Start_cap.checked = true;
+	else
+		cf.Start_cap.checked = false;
+	
+}
+
+function dbg_configure(id)
+{
+	var cf = document.forms[0];
+	var sendbuf = "setup.cgi?todo=dbg_configure&this_file=debug.htm&next_file=debug.htm";
+/*	
+	if(id == 'telnet')
+	{
+		if(document.getElementById("enable_telnet").checked == true)
+			sendbuf = sendbuf + "&telnet=1";
+		else
+			sendbuf = sendbuf + "&telnet=0";
+	}
+*/
+	if(id == 'wan_mirror')
+	{
+		if(document.getElementById("wan_lan_mirror").checked == true)
+			sendbuf = sendbuf + "&wan_mirror=1";
+		else
+			sendbuf = sendbuf + "&wan_mirror=0";
+	}
+	else if(id == 'start_capture')
+	{
+		sendbuf = sendbuf + "&capture_log=1" + "&store_location=" + cf.store_location.value + "&wifi_band=" + cf.wifi_band.value;
+		
+		if(document.getElementById("Start_cap").checked == true)
+			sendbuf = sendbuf + "&tcpdump_enable=1";
+		else
+			sendbuf = sendbuf + "&tcpdump_enable=0";
+		
+		cf.start_capture.className = "common_gray_bt"
+	}
+	else if(id == 'save_log')
+	{
+		sendbuf = sendbuf + "&capture_log=0" + "&store_location=" + cf.store_location.value;
+		cf.start_capture.className = "common_bt"
+	}
+	else if(id == 'ipv6_ping')
+	{
+		if(document.getElementById("ipv6_ping_enable").checked == true)
+			sendbuf = sendbuf + "&ipv6_ping=1";
+		else
+			sendbuf = sendbuf + "&ipv6_ping=0";
+	}
+	//alert(sendbuf);
+	location.href = sendbuf;
+}
+
+</script>
+<title>NETGEAR Router @model_name#</title>
+<meta http-equiv=content-type content='text/html; charset=UTF-8'>
+<meta content="MSHTML 6.00.2800.1141" name="GENERATOR">
+</head>
+
+<body onload="init();">
+
+<form method="GET" action="setup.cgi">
+<table width="100%" border="0" cellpadding="0" cellspacing="2">
+<div id="logo"></div>
+<div id="router-name">@model_name#</div>
+</table>
+<br><br><br><br><br>
+<div id="basic_info">
+<table width="100%" border="0" cellpadding="0" cellspacing="2">
+<tr><td colspan="4" background="liteblue.gif" height="12"></td></tr>
+</table>
+<table width="100%" border="0" cellpadding="0" cellspacing="2">
+	<tr><td colspan="4"><b languageCode="">Basic Information</b></td></tr>
+	<tr>
+		<td colspan="4" width="30%"><img src="spacer.gif" width="50" height="12" border="0"><b languageCode="">CPU Load</b></td>
+		<td colspan="4"><b>@dbg_cpu_load#</b></td>
+	</tr>
+	<tr>
+		<td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><b languageCode="">Memory Usage(Used/Total)</b></td>
+		<td colspan="4"><b>@dbg_mem_info#</b></td>		
+	</tr>
+	<tr>
+		<td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><b languageCode="">Flash Usage(Used/Total)</b></td>
+		<td colspan="4"><b>@dbg_flash_info#</b></td>
+	</tr>
+	<tr>
+		<td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><b languageCode="">Network Session(Active/Total)</b></td>
+		<td colspan="4"><b>@dbg_netsession_info#</b></td>
+	</tr>
+	<tr>
+		<td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><b languageCode="">System Uptime</b></td>
+		<td colspan="4"><b>@dbg_system_uptime_day# days @dbg_system_uptime_time#</b></td>
+	</tr>
+</table>
+</div>
+<div id="Log_Capture">
+<table width="100%" border="0" cellpadding="0" cellspacing="2">
+	<tr><td colspan="4"><b languageCode="">Debug Log Capture</b></td></tr>
+	<tr><td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><input type="checkbox" name="Log_on_boot" checked id="Log_on_boot" ><b languageCode="">Start Debug Log Capture when boot up</b></td></tr>
+	<tr><td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><input type="checkbox" name="Start_cap" checked id="Start_cap"><b languageCode="">Enable LAN/WAN Packet Capture</b></td></tr>
+
+	<tr><td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><input type="checkbox" name="debug_wifi" checked id="debug_wifi"><b languageCode="">Debug wifi (Debug=3)   </b><select name="wifi_band" ><option value="None" languageCode="">None</option><option value="2G" languageCode="">2G</option><option value="5G" languageCode="">5G</option></select></td></tr>
+	
+	<tr><td colspan="4"><img src="spacer.gif" width="60" height="12" border="0"><b languageCode="">Store location</b><img src="spacer.gif" width="20" height="12" border="0"><select name="store_location" ><option value="Memory" languageCode="">System Memory</option><option value="USB" languageCode="">USB Storage</option><!-- <option value="Network" languageCode="">Network Storage</option>--></select></td></tr>
+	<tr><td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><input class="common_bt" type="button" name="start_capture" value="Start Capture" onClick="return dbg_configure('start_capture')" languageCode=""></td></tr>
+	<tr><td colspan="4"><img src="spacer.gif" width="50" height="12" border="0"><input class="common_bt" type="button" name="save_log" value="Save Debug Log" onClick="return dbg_configure('save_log')" languageCode=""></td></tr>
+</table>
+</div>
+<div id="other">
+<table width="100%" border="0" cellpadding="0" cellspacing="2">
+<!--	<tr><td colspan="4"><input type="checkbox" name="enable_telnet" id="enable_telnet" onClick="return dbg_configure('telnet')"><b languageCode="">Enable Telnet</b></td></tr> -->
+	<tr><td colspan="4"><input type="checkbox" name="wan_lan_mirror" id="wan_lan_mirror" onClick="return dbg_configure('wan_mirror')"><b languageCode="">WAN Port mirror to LAN port1</b></td></tr>
+	<tr><td colspan="4"><input type="checkbox" name="ipv6_ping_enable" id="ipv6_ping_enable" onClick="return dbg_configure('ipv6_ping')"><b languageCode="">Allow external IPv6 hosts ping internal IPv6 hosts</b></td></tr>
+</table>
+</div>
+<!--<input type="hidden" name="todo" value="changelanguage">-->
+<input type="hidden" name="this_file" value="debug.htm">
+<input type="hidden" name="next_file" value="debug.htm">
+<input type="hidden" name="SID" value="@SID#">
+<input type="hidden" name="h_language" value="@h_language#">
+</form>
+
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+
+</body>
+</html>
+

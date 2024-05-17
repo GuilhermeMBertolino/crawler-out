@@ -1,0 +1,344 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+  
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+
+
+function checkRemoteMG()
+{
+	var cf = document.forms[0];
+
+  <%431%>
+	if(cf.local_https_check.checked)
+		cf.local_https_enable.value = 1;
+	else
+		cf.local_https_enable.value = 0;
+  <%434%>
+	
+<%1313%>
+	if(cf.remote_mg_enable.checked)
+		cf.http_rmenable.value = 1;
+	else
+		cf.http_rmenable.value = 0;
+
+	if(cf.rm_access[1].checked)
+	{
+		if (checkIP(cf.start_ip_1, cf.start_ip_2, cf.start_ip_3, cf.start_ip_4, 254))
+		{
+			alert("<%1314%>");
+			return false;
+		}
+		else if (checkIP(cf.fin_ip_1, cf.fin_ip_2, cf.fin_ip_3, cf.fin_ip_4, 254))
+		{
+			alert("<%1315%>");
+			return false;
+		}
+		else if (cp_ip(cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4))
+		{
+			alert("<%1316%>");
+			return false;
+		}
+		else
+		{
+			cf.start_ip_1.value = parseInt(cf.start_ip_1.value,10);
+			cf.start_ip_2.value = parseInt(cf.start_ip_2.value,10);
+			cf.start_ip_3.value = parseInt(cf.start_ip_3.value,10);
+			cf.start_ip_4.value = parseInt(cf.start_ip_4.value,10);
+			cf.fin_ip_1.value = parseInt(cf.fin_ip_1.value,10);
+			cf.fin_ip_2.value = parseInt(cf.fin_ip_2.value,10);
+			cf.fin_ip_3.value = parseInt(cf.fin_ip_3.value,10);
+			cf.fin_ip_4.value = parseInt(cf.fin_ip_4.value,10);
+			cf.http_rmstartip.value = cf.start_ip_1.value+'.'+cf.start_ip_2.value+'.'+cf.start_ip_3.value+'.'+cf.start_ip_4.value;
+			cf.http_rmendip.value = cf.fin_ip_1.value+'.'+cf.fin_ip_2.value+'.'+cf.fin_ip_3.value+'.'+cf.fin_ip_4.value;
+		}
+	}
+	else if(cf.rm_access[0].checked)
+	{
+		var local_ip = cf.local_ip_1.value+'.'+cf.local_ip_2.value+'.'+cf.local_ip_3.value+'.'+cf.local_ip_4.value;
+		if (checkIP(cf.local_ip_1, cf.local_ip_2, cf.local_ip_3, cf.local_ip_4, 254)||(parseInt(cf.local_ip_4.value,10) ==0)
+			|| (cf.http_wanipaddr.value == local_ip))
+		{
+			alert("<%12%>");
+			return false;
+		}
+		else
+		{
+			cf.local_ip_1.value = parseInt(cf.local_ip_1.value,10);
+			cf.local_ip_2.value = parseInt(cf.local_ip_2.value,10);
+			cf.local_ip_3.value = parseInt(cf.local_ip_3.value,10);
+			cf.local_ip_4.value = parseInt(cf.local_ip_4.value,10);
+			cf.http_rmstartip.value = local_ip;
+			cf.http_rmendip.value = cf.http_rmstartip.value;
+		}
+	}
+	else
+	{
+		cf.http_rmstartip.value = "0.0.0.0";
+		cf.http_rmendip.value = "255.255.255.255";
+	}
+	if(isNaN(cf.http_rmport.value) || !_isNumeric(cf.http_rmport.value)||
+	   parseInt(cf.http_rmport.value,10) < 1024 ||
+	   parseInt(cf.http_rmport.value,10) > 65534 ||
+	   cf.http_rmport.value.indexOf(".") != -1)
+	{
+	    alert("<%1317%>");
+	    cf.http_rmport.focus();
+	    return false;
+	}
+	else
+		cf.http_rmport.value = parseInt(cf.http_rmport.value,10);
+<%1318%>
+	return true;
+}
+
+
+
+function init()
+{
+    var cf = document.forms[0];
+    var dflag; 
+
+	
+  <%431%>
+	if (cf.local_https_enable.value == 1)
+		cf.local_https_check.checked = true;
+  <%434%>
+  
+<%1313%>
+	if (cf.http_rmenable.value == 1)
+		cf.remote_mg_enable.checked = true;
+	
+	if ((cf.http_rmstartip.value == "0.0.0.0") && (cf.http_rmendip.value == "255.255.255.255"))
+	{
+		cf.rm_access[2].checked = true;		
+		dflag = cf.rm_access[2].checked;
+		setDisabled(dflag,cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4);
+        setDisabled(dflag,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4);
+        setDisabled(dflag,cf.local_ip_1,cf.local_ip_2,cf.local_ip_3,cf.local_ip_4);
+        clearData1();
+	}
+	else if (cf.http_rmstartip.value == cf.http_rmendip.value)
+	{
+		var startip = cf.http_rmstartip.value.split(".");
+
+		cf.rm_access[0].checked = true;		
+		dflag = cf.rm_access[0].checked;
+		setDisabled(dflag,cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4);
+        setDisabled(dflag,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4);
+        
+		cf.local_ip_1.value = startip[0];
+		cf.local_ip_2.value = startip[1];
+		cf.local_ip_3.value = startip[2];
+    	cf.local_ip_4.value = startip[3];
+        clearData3();
+	}
+	else
+	{
+		var startip = cf.http_rmstartip.value.split(".");
+		var endip = cf.http_rmendip.value.split(".");
+
+		cf.rm_access[1].checked = true;
+		dflag = cf.rm_access[1].checked;
+		setDisabled(dflag,cf.local_ip_1,cf.local_ip_2,cf.local_ip_3,cf.local_ip_4);
+		
+    	cf.start_ip_1.value = startip[0];
+    	cf.start_ip_2.value = startip[1];
+    	cf.start_ip_3.value = startip[2];
+    	cf.start_ip_4.value = startip[3];
+    	cf.fin_ip_1.value = endip[0];
+    	cf.fin_ip_2.value = endip[1];
+    	cf.fin_ip_3.value = endip[2];
+    	cf.fin_ip_4.value = endip[3];
+        clearData2();
+	}
+<%1318%>
+}
+
+function clearData1()
+{
+	var cf = document.forms[0];
+	
+    var dflag = cf.rm_access[2].checked;
+    setDisabled(dflag,cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4);
+    setDisabled(dflag,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4);
+    setDisabled(dflag,cf.local_ip_1,cf.local_ip_2,cf.local_ip_3,cf.local_ip_4);
+    
+	cf.start_ip_1.value = "";
+	cf.start_ip_2.value = "";
+	cf.start_ip_3.value = "";
+	cf.start_ip_4.value = "";
+	cf.fin_ip_1.value = "";
+	cf.fin_ip_2.value = "";
+	cf.fin_ip_3.value = "";
+   	cf.fin_ip_4.value = "";
+	cf.local_ip_1.value = "";
+	cf.local_ip_2.value = "";
+	cf.local_ip_3.value = "";
+	cf.local_ip_4.value = "";
+}
+
+function clearData2()
+{
+	var cf = document.forms[0];
+	
+	var dflag = cf.rm_access[1].checked;
+    setDisabled(dflag,cf.local_ip_1,cf.local_ip_2,cf.local_ip_3,cf.local_ip_4);
+    dflag = false;
+    setDisabled(dflag,cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4);
+    setDisabled(dflag,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4);
+
+	cf.local_ip_1.value = "";
+	cf.local_ip_2.value = "";
+	cf.local_ip_3.value = "";
+	cf.local_ip_4.value = "";
+}
+
+function clearData3()
+{
+	var cf = document.forms[0];
+	
+    var dflag = cf.rm_access[0].checked;
+    setDisabled(dflag,cf.start_ip_1,cf.start_ip_2,cf.start_ip_3,cf.start_ip_4);
+    setDisabled(dflag,cf.fin_ip_1,cf.fin_ip_2,cf.fin_ip_3,cf.fin_ip_4);
+    dflag = false;
+    setDisabled(dflag,cf.local_ip_1,cf.local_ip_2,cf.local_ip_3,cf.local_ip_4);
+    
+	cf.start_ip_1.value = "";
+	cf.start_ip_2.value = "";
+	cf.start_ip_3.value = "";
+	cf.start_ip_4.value = "";
+	cf.fin_ip_1.value = "";
+	cf.fin_ip_2.value = "";
+	cf.fin_ip_3.value = "";
+   	cf.fin_ip_4.value = "";
+}
+
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body  onload="change_size(false);init();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="remotemg" action="fwRemote.cgi" method="post">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+	<img class="subtop-image" src="<%74%>">
+<div class="subhead2"> <%548%></div>
+<table border="0" style="height:370px;" class="subhead2-table main_bas">
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div id="main" class="scroll-pane"><table style="border-collapse:collapse;width:97%">
+		
+<!-- Security Enhancement start -->
+   <%1319%>
+        <tr><td nowrap colspan="2" style="font-size: 16px; color: #ADA7D7"><b><%1320%>:</b></td></tr>
+        <tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+        <tr><td nowrap colspan="2">
+           <label class="checkbox-container">
+                <input type="checkbox"  name="local_https_check" value="local_https_mg"><b><%1321%></b>
+	<span class="checkbox-checkmark"></span> 
+  </label>
+	    </td></tr>
+	<tr><td colspan="2" height="48" ></td></tr>
+	<%1322%>   
+        
+    </table></div></td></tr>
+
+<tr align="left" valign="middle">
+<td  colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="cancel" value="Cancel" onclick="buttonClick(this,'<%76%>');location.href='FW_remote.html'" type="submit" name="Cancel" class="button-cancel cancel_bt" ><%76%></button>
+<button id="apply" value="Apply"  onclick="buttonClick(this,'<%78%>');<%1323%>" type="submit" name="apply" class="button-apply apply_bt"><%78%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe"  src="FW_remote_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+<span id="help_space" class="help_ico"><img id="FW_remote_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text"  onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+    <%1319%>
+    <INPUT name=local_https_enable type=hidden value= "<%1324%>">
+    <%1322%>
+    <INPUT name=http_rmenable type=hidden value= "<%1325%>">
+    <INPUT name=http_rmstartip type=hidden value= "<%1326%>">
+    <INPUT name=http_rmendip type=hidden value= "<%1327%>">
+    <INPUT name=http_wanipaddr type=hidden value= "<%1328%>">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>
+
+

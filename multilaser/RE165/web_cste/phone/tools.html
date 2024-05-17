@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/style.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div class="toper">		
+	<phone-back :title="lang_t('menu.tools')" :url="homeHtml"></phone-back>
+  </div>  
+  <div class="content-pad">
+	<div class="main-pad">
+	  <div class="fun" @click="goUrlFun('mesh_config')">
+		<div class="fun-l">
+		  <img src="/static/images/phone/factory.png">
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.factory_bound') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="goUrlFun('changepwd')" v-if="globalConfig.masterMode == '1'">
+		<div class="fun-l">
+		  <img src="/static/images/phone/changepwd.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.changeadmpwd') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="goUrlFun('language')" v-show="languageShow">
+		<div class="fun-l">
+		  <img src="/static/images/phone/language.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.language') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="goUrlFun('time')" v-if="globalConfig.masterMode == '1'">
+		<div class="fun-l">
+		  <img src="/static/images/phone/time.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.time') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>  
+	  <div class="fun" @click="firmwareUpFun">
+		<div class="fun-l">
+		  <img src="/static/images/phone/firmware.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.firmware') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="goUrlFun('mesh_upload')">
+		<div class="fun-l">
+		  <img src="/static/images/phone/firmware.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.salv_upload') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="resetFun">
+		<div class="fun-l">
+		  <img src="/static/images/phone/reset.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.reset') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="restartFun">
+		<div class="fun-l">
+		  <img src="/static/images/phone/restart.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.restart') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	  <div class="fun" @click="exitFun">
+		<div class="fun-l">
+		  <img src="/static/images/phone/exit.png">	
+		</div>
+		<div class="fun-c">
+		  <span>{{ lang_t('menu.logout') }}</span>
+		</div>
+		<div class="fun-r">
+		  <img src="/static/images/phone/sign_right.png">
+		</div>
+	  </div>
+	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,languageShow:!1,homeHtml:"/phone/home.html?time="+(new Date).getTime()}},mounted:function(){var t=this;t.autoFun(),-1<String(t.globalConfig.showLanguage).indexOf(",")?t.languageShow=!0:t.languageShow=!1},methods:{goUrlFun:function(t){location.href="/phone/"+t+".html?time="+(new Date).getTime()},firmwareUpFun:function(){this.newCloudCheck()},restartFun:function(){var n=this;Cstool.Mark({content:n.lang_t("config.msg5"),ok:function(){uiPost.RebootSystem(function(t){Cstool.Flag({title:n.lang_t("menu.restart"),content:n.lang_t("config.msg9"),type:"wait"})})}})},resetFun:function(){var n=this;Cstool.Mark({content:n.lang_t("config.msg4"),ok:function(){uiPost.LoadDefSettings(function(t){Cstool.Flag({title:n.lang_t("menu.reset"),content:n.lang_t("config.msg10"),type:"wait"})})}})},aboutFun:function(){Cstool.Flag({title:"about"})},exitFun:function(){Cstool.Mark({content:this.lang_t("config.msg11"),ok:function(){uiPost.logout({},function(t){setTimeout(function(){var t=location.href;location.href="http://"+t.split("/")[2]},500)})}})},newCloudCheck:function(){var n=this;uiPost.CloudSrvVersionCheck(function(){Cstool.Mark({content:n.lang_t("firmware.newcloudUpdateing"),type:"load",time:30,loading:function(t){return"timeout"==t?(n.result=2,Cstool.Flag({title:n.lang_t("firmware.cloud_upgrade"),content:n.lang_t("firmware.check_if_newver"),btnText:n.lang_t("common.back")}),!1):uiPost.getCloudSrvCheckStatus(function(t){return"1"==t.cloudFwStatus?(n.result=1,Cstool.Flag({title:n.lang_t("firmware.cloud_upgrade"),content:n.lang_t("firmware.check_internet_result"),btnText:n.lang_t("common.back")}),"stop"):"2"==t.cloudFwStatus?(n.result=2,Cstool.Flag({title:n.lang_t("firmware.cloud_upgrade"),content:n.lang_t("firmware.check_if_newver"),btnText:n.lang_t("common.back")}),"stop"):"4"==t.cloudFwStatus?(n.newVersion=t.newVersion,n.result=4,Cstool.Flag({title:n.lang_t("firmware.cloud_upgrade"),content:n.lang_t("firmware.found_newfw")+": "+t.newVersion,btnText:n.lang_t("config.update"),ok:function(){uiPost.setUpgradeFW({flags:"0"},function(t){Cstool.Flag({title:n.lang_t("firmware.cloud_upgrade"),content:n.lang_t("config.msg8"),type:"wait"})})}}),"stop"):void(n.result=3)})}})})},autoFun:function(){$(window).height()<380?($(".white-layout-body").css("height",.78*window.innerHeight+"px"),$(".white-layout").css("height",.78*document.body.clientHeight+"px")):($(".white-layout-body").css("height",.86*window.innerHeight+"px"),$(".white-layout").css("height",.8*document.body.clientHeight+"px"))}}}</script><script src="/static/js/main.js"></script></body></html>

@@ -1,0 +1,1415 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script  type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+
+
+<script language="javascript" type="text/javascript">
+<!-- 
+var DisableFixedIP = false;
+var DisableFixedDNS = false;
+var DisableFixedMAC = false;
+var MacAddress;
+var DodDisable = false;
+var DodIndex = <%743%>;
+var SkipParentalControlCheck=1
+var CurrentDodIndex;
+
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+            
+
+        });
+
+    });
+
+    
+
+    function setHelpIframeVisible(){
+        $('.bas-help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".bas-help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".bas-help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        // if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+        //    (navigator.appVersion.indexOf("MSIE 9")==-1))
+        //      change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+    function selHelpFile(helpitem)
+    {
+        if(document.forms[0].loginreq[0].checked){
+            parent.loadhelp('BAS_ether',helpitem)
+        }
+        else{
+            parent.loadhelp('BAS_pppoe',helpitem)
+        }
+    }
+  
+function checkType(wan_proto) // called from basictop.htm
+{
+	if (1)
+//	if (basictop.document.forms[0])
+	{
+		if (wan_proto == "pppoe")
+		    window.location.href = "BAS_pppoe.htm";
+		else if (wan_proto == "pptp")
+		    window.location.href = "BAS_pptp.htm";
+		else if (wan_proto == "bpa")
+		    window.location.href = "BAS_bpa.htm";
+		else if (wan_proto == "l2tp")
+		    window.location.href = "BAS_l2tp.htm";
+		<%634%>
+		else if (wan_proto == "orange_pppoe")
+		    window.location.href = "BAS_orange_pppoe.htm";
+		else if (wan_proto == "orange_dhcp")
+		    window.location.href = "BAS_orange_dhcp.htm";
+		<%635%>
+		else
+		    window.location.href = "BAS_ether.htm";
+	}
+	else 
+	    window.setTimeout(checkType(),300);
+}
+
+
+ 
+//var autoconn_flag=((gui_region == "German" &&  (netgear_region == "" || netgear_region.toUpperCase() == "WW")) || netgear_region.toUpperCase() == "GR") ? 1 : 0;
+//var autoconn_flag=(document.forms[0].gui_language.value == "German") ? 1 : 0;
+var autoconn_flag=("<%9%>" == "German") ? 1 : 0;
+//var autoconn_flag=1;
+if(autoconn_flag == 1)
+{
+	var sSpan ; 
+	var sDiv ; 
+	var sUl ; 
+	var sLi ; 
+	var slt; 
+	var optLen ;
+	var tmp;  
+	var zQuery=function(ele,tagName,className){ //core object 
+    if ( window == this ) return new zQuery(ele,tagName,className); 
+    if(!arr){var arr=new Array;} 
+    if(ele){ 
+        if(ele.constructor!=zQuery){ 
+            var elem=typeof(ele)=="object"?ele:document.getElementById(ele); 
+            if(!tagName){ 
+                arr.push(elem); 
+            }else{ 
+                //var tags=elem.all&&(!(window.opera?(tagName=="*"?elem.all:elem.all.tags(tagName)):(elem.getElementsByTagName(tagName)))); 
+                var tags=elem.all&&!window.opera?tagName=="*"?elem.all:elem.all.tags(tagName):elem.getElementsByTagName(tagName); 
+                if(!className){ 
+                    for(var i=0, l=tags.length; i<l; i++){ 
+                        arr.push(tags[i]); 
+                    } 
+                }else{ 
+                    var reClassName=RegExp("(^|\\s+)"+className+"(|\\s+)"); 
+                    for(var i=0, l=tags.length; i<l; i++){ 
+                        if(reClassName.test(tags[i].className)){ 
+                            arr.push(tags[i]); 
+                        } 
+                    } 
+                } 
+            } 
+        }else{ 
+            for(var i=0, l=ele.length; i<l; i++){ 
+                arr=arr.concat(Array.prototype.slice.call(zQuery(ele[i],tagName,className))); 
+            } 
+        } 
+    } 
+    return this.setArray(arr);  
+} 
+zQuery.prototype.setArray = function( arr ) { 
+    this.length = 0; 
+    Array.prototype.push.apply( this, arr );  
+    return this; 
+} 
+zQuery.fn=zQuery.prototype; 
+//var =zQuery; 
+
+//obtain the absolute position of select 
+function Offset(obj){ 
+    var t = obj.offsetTop; 
+    var l = obj.offsetLeft; 
+    var w = obj.offsetWidth; 
+    var h = obj.offsetHeight-2; 
+    //var h=obj.style.height; 
+    while(obj=obj.offsetParent) 
+    { 
+        t+=obj.offsetTop; 
+        l+=obj.offsetLeft; 
+    } 
+    return { 
+        top : t, 
+        left : l, 
+        width : w, 
+        height : h 
+    } 
+}
+
+//simulation select 
+
+function getEvent(){ 
+     //compatible with ie and ff 
+     if(document.all)    return window.event; 
+     func=getEvent.caller; 
+     while(func!=null){ 
+         var arg0=func.arguments[0]; 
+         if(arg0){ 
+             if((arg0.constructor==Event || arg0.constructor ==MouseEvent) 
+                || (typeof(arg0)=="object" && arg0.preventDefault && arg0.stopPropagation)){     
+                return arg0; 
+              } 
+         } 
+          func=func.caller; 
+        } 
+        return null; 
+}
+//obtion the number of select, and execut the function
+function initSelect(){ 
+    //alert("InitSelect");
+    slt=zQuery(document,"select"); 
+    var sltLen=slt.length; 
+    for(var i=0;i<sltLen;i++){  
+     	if(slt[i].name == "auto_conn_time")
+        instSelect(slt[i]); 
+    } 
+} 
+}
+
+function goTestApply()
+{
+    var winoptions = "width=640,height=480,menubar=yes,toolbar=yes,status=yes,location=yes,resizable=yes";
+    if(document.forms[0].runtest.value == "yes")
+        window.open('BAS_wtest_l.htm','test_win',winoptions);
+<%744%>
+        else if(document.forms[0].runtest.value == "runppp2")
+                window.open('BAS_wtest_ppp2.htm','test_win',winoptions);
+<%745%>
+}
+
+function loadcheck()
+{
+    var cf = document.forms[0];
+    if(isIE()){
+        cf.pppoe_username.size="24";
+        cf.pppoe_passwd.size="24";
+    }
+<%746%>
+    MacAddress=document.formname.Spoofmac.value;
+<%747%>
+    // loadhelp('BAS_pppoe');
+    setIP();
+    setDNS();
+    setMAC();
+}
+function setIP()
+{
+    var cf = document.forms[0];
+    var dflag = cf.WANAssign[0].checked;
+    var region_gui = cf.gui_region.value;
+    setDisabled(dflag,cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4);
+    
+    DisableFixedIP = dflag;
+}
+
+function isParentalControlEnable()
+{
+	var cf = document.forms[0];
+    if(((cf.parental_control.value=='1')) && (SkipParentalControlCheck==0))
+        return true;
+    else
+        return false;
+}
+
+function isCircleControlEnable()
+{
+	var cf = document.forms[0];
+    if(( (cf.parental_circle.value=='1')) && (SkipParentalControlCheck==0))
+        return true;
+    else
+        return false;
+}
+
+function setDNS()
+{
+    var cf = document.forms[0];
+    var dflag = cf.DNSAssign[0].checked;
+
+  if(isParentalControlEnable() && cf.DNSAssign[0].checked)
+  {
+  	alert('<%664%>');
+		cf.DNSAssign[1].checked=true;
+    dflag=false;      
+  }
+
+    if(isCircleControlEnable() && cf.DNSAssign[1].checked)
+    {
+        alert('<%664%>');
+        cf.DNSAssign[0].checked=true;
+    }
+
+    setDisabled(dflag,cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4);
+    DisableFixedDNS = dflag;
+}
+function setMAC()
+{
+    var cf = document.forms[0];
+
+<%746%>
+    if (cf.MACAssign[0].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr_def.value;
+    else if(cf.MACAssign[1].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr_pc.value;
+    else if (cf.MACAssign[2].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr2.value;
+        
+    if (cf.MACAssign[2].checked)
+        cf.Spoofmac.disabled = false;
+    else
+        cf.Spoofmac.disabled = true;
+    DisableFixedMAC = cf.Spoofmac.disabled;
+<%747%>
+
+}
+
+function setServer()
+{
+    var cf = document.forms[0];
+    var stype = cf.login_type.selectedIndex;
+    if(stype==0) //pptp
+        window.location.href="BAS_pptp.htm";
+    else if(stype==2) //L2TP
+        window.location.href="BAS_l2tp.htm"
+	<%634%>
+    else if(stype==3) //Orange PPPoE
+        window.location.href="BAS_orange_pppoe.htm"
+    else if(stype==4) //Orange DHCP
+        window.location.href="BAS_orange_dhcp.htm"
+	<%635%>
+}
+
+function show_idleout(form,conn_mode)
+{
+    var cf = document.forms[0];
+    if(conn_mode == 1) // Dial on Demand
+    {
+        DodDisable = false;
+        if(cf.gui_language.value == "German")
+        {
+              
+            var List = document.getElementById('auto_conn_time_id');          
+            cf.auto_conn_24hr.disabled = true;
+			List.disabled = true;
+        }
+    }
+    else
+    {
+        DodDisable = true;
+        if(cf.gui_language.value == "German")
+        {
+            //sSpan.style.background="url(selects_disabled.gif) no-repeat right center"; 
+            var List = document.getElementById('auto_conn_time_id');           
+            cf.auto_conn_24hr.disabled = false;
+			List.disabled = false;
+
+
+        }
+    }
+}
+
+function setConnMode()
+{
+    var cf = document.forms[0];
+    var conn_mode = cf.pppoe_dod.selectedIndex;
+
+/*
+    if(conn_mode == 1) // Dial on Demand
+    {
+        DodDisable = false;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = true;
+            cf.auto_conn_time.disabled = true;
+        }
+    }
+    else
+    {
+        DodDisable = true;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = false;
+            cf.auto_conn_time.disabled = false;
+        }
+    }
+*/
+    show_idleout(cf, conn_mode);
+
+    var msg = "";
+    if((conn_mode != 1) && !_isNumeric(cf.pppoe_idletime.value))
+    {
+        cf.pppoe_dod.selectedIndex = DodIndex;
+        if(cf.pppoe_idletime.value.length<=0)
+            msg+= "<%748%>";
+        else if(!_isNumeric(cf.pppoe_idletime.value))
+            msg+= "<%749%>";
+        if (msg.length > 1)
+        {
+            alert(msg);
+            return false;
+        }
+    }
+    else
+    {
+        DodIndex = cf.pppoe_dod.selectedIndex;
+        setDisabled(DodDisable,cf.pppoe_idletime);
+    }
+    return true;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+    var region_gui = cf.gui_region.value;
+	var wan_ip  = "<%750%>";
+	var openvpnEnable = "<%665%>";
+    var conn_mode = cf.pppoe_dod.selectedIndex;
+    
+    var qos_enable = (parseInt(cf.qos_enable.value) == 1) ? true : false;
+    var WANAggr = $('input[name=WANAggr]:checked').val();
+    if(qos_enable && WANAggr == 'aggr'){
+        if (!confirm("<%666%>")){
+            return false;
+        }
+    }
+
+    if(cf.dial_on_demand_warning.value==1)
+    {
+
+    	        
+    	  {
+            if((conn_mode == 1 || conn_mode == 2) ) // Dial on Demand and manually
+            {
+                if(!confirm("<%751%>"))
+                {
+            	      cf.pppoe_dod.selectedIndex=CurrentDodIndex;
+                    return false;
+                }
+            }
+        }
+    }
+
+
+    msg+= checkBlank(cf.pppoe_username, "<%752%>");
+    if(cf.pppoe_idletime.value.length<=0)
+        msg+= "<%748%>";
+    else if(!_isNumeric(cf.pppoe_idletime.value))
+        msg+= "<%749%>";
+    
+    if (region_gui == "Russian")
+    {
+        if((cf.myip_1.value.length>0)||(cf.myip_2.value.length>0)||(cf.myip_3.value.length>0)||(cf.myip_4.value.length>0))
+        {
+            if(checkIP(cf.myip_1,cf.myip_2,cf.myip_3,cf.myip_4,254)||(parseInt(cf.myip_4.value,10)==0))
+                msg+= "<%753%>";
+            else if (checkIPMatchWithNetmask(cf.mymask_1,cf.mymask_2,cf.mymask_3,cf.mymask_4,cf.myip_1,cf.myip_2,cf.myip_3,cf.myip_4))
+                msg+= "<%753%>";
+            else if(checkIP(cf.mymask_1,cf.mymask_2,cf.mymask_3,cf.mymask_4,255))
+                msg += "<%670%>";
+            else
+            {
+                cf.myip_1.value = parseInt(cf.myip_1.value,10);
+                cf.myip_2.value = parseInt(cf.myip_2.value,10);
+                cf.myip_3.value = parseInt(cf.myip_3.value,10);
+                cf.myip_4.value = parseInt(cf.myip_4.value,10);
+            }
+            
+            var myIpAddr = (cf.myip_1.value << 24) | (cf.myip_2.value << 16) | (cf.myip_3.value << 8) | (cf.myip_4.value);
+            var netMask = (cf.mymask_1.value << 24) | (cf.mymask_2.value << 16) | (cf.mymask_3.value << 8) | (cf.mymask_4.value);
+            var dnsIpAddr1 = (cf.DAddr1.value << 24) | (cf.DAddr2.value << 16) | (cf.DAddr3.value << 8) | (cf.DAddr4.value);
+            var dnsIpAddr2 = (cf.PDAddr1.value << 24) | (cf.PDAddr2.value << 16) | (cf.PDAddr3.value << 8) | (cf.PDAddr4.value);
+            if(((myIpAddr&netMask) != (dnsIpAddr1&netMask)) && ((myIpAddr&netMask) != (dnsIpAddr2&netMask)))
+            {
+                //if(!((cf.mygw_1.value.length>0)||(cf.mygw_2.value.length>0)||(cf.mygw_3.value.length>0)||(cf.mygw_4.value.length>0)))
+                //{
+                //    msg+= "IP адрес шлюза должен быть указан.\n"; 
+                //}
+            }
+            
+            //static_pppoe_enable means the internal pppoe
+            cf.static_pppoe_enable.value = 1;
+        }
+        else
+            cf.static_pppoe_enable.value = 0;
+    
+        //if((cf.mygw_1.value.length>0)||(cf.mygw_2.value.length>0)||(cf.mygw_3.value.length>0)||(cf.mygw_4.value.length>0))
+        //{
+        //    var myIpAddr = (cf.myip_1.value << 24) | (cf.myip_2.value << 16) | (cf.myip_3.value << 8) | (cf.myip_4.value);
+        //    var netMask = (cf.mymask_1.value << 24) | (cf.mymask_2.value << 16) | (cf.mymask_3.value << 8) | (cf.mymask_4.value);
+        //    var myGateway = (cf.mygw_1.value << 24) | (cf.mygw_2.value << 16) | (cf.mygw_3.value << 8) | (cf.mygw_4.value);
+        //    var tmpip = cf.myip_1.value+'.'+cf.myip_2.value+'.'+cf.myip_3.value+'.'+cf.myip_4.value;
+        //    var tmpgateway = cf.mygw_1.value+'.'+cf.mygw_2.value+'.'+cf.mygw_3.value+'.'+cf.mygw_4.value;
+        //    if((myIpAddr&netMask) != (myGateway&netMask))
+        //    {
+        //        msg+= 'IP-адреса' +tmpip+ 'отличается от адреса шлюза'+ tmpgateway+'\n';
+        //    }
+        
+        //    if(checkIP(cf.mygw_1,cf.mygw_2,cf.mygw_3,cf.mygw_4,254)||(parseInt(cf.mygw_4.value,10)==0))
+        //        msg+= "<%671%>";
+        //    else
+        //    {
+        //        cf.mygw_1.value = parseInt(cf.mygw_1.value,10);
+        //        cf.mygw_2.value = parseInt(cf.mygw_2.value,10);
+        //        cf.mygw_3.value = parseInt(cf.mygw_3.value,10);
+        //        cf.mygw_4.value = parseInt(cf.mygw_4.value,10);
+        //    }
+        //}
+    }
+
+    if(cf.WANAssign[1].checked)
+    {
+        if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value,10)==0))
+            msg+= "<%754%>";
+        //else if (region_gui == "Russian")
+        //{
+        //    if (    (   (cf.WMask1.value.length>0)
+        //             || (cf.WMask2.value.length>0) 
+        //             || (cf.WMask3.value.length>0) 
+        //             || (cf.WMask4.value.length>0)
+        //            )
+        //         && checkIPMatchWithNetmask(cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4)
+        //       )
+        //        msg+= "Недопустимый статический IP-адрес.\n"; 
+        //}
+        else
+        {
+            cf.WPethr1.value = parseInt(cf.WPethr1.value,10);
+            cf.WPethr2.value = parseInt(cf.WPethr2.value,10);
+            cf.WPethr3.value = parseInt(cf.WPethr3.value,10);
+            cf.WPethr4.value = parseInt(cf.WPethr4.value,10);
+        }
+        cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+
+		if(openvpnEnable == "enable"){
+			if(wan_ip != cf.pppoe_localip.value){
+				alert("<%675%>");
+			}
+		}
+        
+        //if (region_gui == "Russian")
+        //{
+        //    if((cf.WMask1.value.length>0) || (cf.WMask2.value.length>0) || (cf.WMask3.value.length>0) || (cf.WMask4.value.length>0))
+        //    {
+        //        if(checkIP(cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,255))
+        //            msg+= "Недопустимая маска подсети, повторите попытку.\n"; 
+        //        else
+        //        {
+        //            cf.WMask1.value = parseInt(cf.WMask1.value,10);
+        //            cf.WMask2.value = parseInt(cf.WMask2.value,10);
+        //            cf.WMask3.value = parseInt(cf.WMask3.value,10);
+        //            cf.WMask4.value = parseInt(cf.WMask4.value,10);
+        //        }
+        //        cf.pppoe_localnetmask.value = cf.WMask1.value+'.'+cf.WMask2.value+'.'+cf.WMask3.value+'.'+cf.WMask4.value;
+        //    }
+        //}
+    }
+    else
+    {
+        cf.pppoe_localip.value = "0.0.0.0";
+        //cf.pppoe_localnetmask.value = "...";
+    }
+    if(cf.DNSAssign[1].checked)
+    {
+        if(checkIP(cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,254)||(parseInt(cf.DAddr4.value,10)==0))
+            msg+= "<%672%>";
+        else
+        {
+            cf.DAddr1.value = parseInt(cf.DAddr1.value,10);
+            cf.DAddr2.value = parseInt(cf.DAddr2.value,10);
+            cf.DAddr3.value = parseInt(cf.DAddr3.value,10);
+            cf.DAddr4.value = parseInt(cf.DAddr4.value,10);
+        }
+        if(cf.PDAddr1.value.length>0 || cf.PDAddr2.value.length>0 || cf.PDAddr3.value.length>0 || cf.PDAddr4.value.length>0)
+        {
+            if(checkIP(cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4,254)||(parseInt(cf.PDAddr4.value,10)==0))
+                msg+= "<%673%>";
+            else
+            {
+                cf.PDAddr1.value = parseInt(cf.PDAddr1.value,10);
+                cf.PDAddr2.value = parseInt(cf.PDAddr2.value,10);
+                cf.PDAddr3.value = parseInt(cf.PDAddr3.value,10);
+                cf.PDAddr4.value = parseInt(cf.PDAddr4.value,10);
+            }
+        }
+    }
+<%746%>
+    if( checkMacStr(cf.Spoofmac) || MacStrallf(cf.Spoofmac) )
+        msg+= "<%0%>";
+<%747%>
+    if (msg.length > 1)
+    {
+        alert(msg);
+        return false;
+    }
+    
+    //Check whether to enable static pppoe mode
+    //if (region_gui == "Russian")
+    //{
+    //    if((cf.WANAssign[1].checked) && (cf.WMask1.value.length>0) && (cf.WMask2.value.length>0) && (cf.WMask3.value.length>0) && (cf.WMask4.value.length>0))
+    //        cf.static_pppoe_enable.value = 1;
+    //    else
+    //        cf.static_pppoe_enable.value = 0;
+    //}
+
+    //Check whether to enable internet static pppoe mode
+    //pppoe_ip_sel means internet pppoe connection
+    if(cf.WANAssign[1].checked)
+        cf.pppoe_ip_sel.value = 1;
+    else
+        cf.pppoe_ip_sel.value = 0;
+
+    if (region_gui == "Russian") {
+        cf.pppoe_user_netmask.value = cf.mymask_1.value+'.'+cf.mymask_2.value+'.'+cf.mymask_3.value+'.'+cf.mymask_4.value;
+        cf.pppoe_user_ip.value = cf.myip_1.value+'.'+cf.myip_2.value+'.'+cf.myip_3.value+'.'+cf.myip_4.value;
+        //cf.pppoe_gateway.value = cf.mygw_1.value+'.'+cf.mygw_2.value+'.'+cf.mygw_3.value+'.'+cf.mygw_4.value;
+    }
+	cf.wan_dns1_pri.value = cf.DAddr1.value+'.'+cf.DAddr2.value+'.'+cf.DAddr3.value+'.'+cf.DAddr4.value;
+    cf.wan_dns1_sec.value = cf.PDAddr1.value+'.'+cf.PDAddr2.value+'.'+cf.PDAddr3.value+'.'+cf.PDAddr4.value;
+<%746%>
+    cf.wan_hwaddr2.value = cf.Spoofmac.value;
+<%747%>
+    if(cf.opendns_parental_ctrl.value == "1")
+    {
+        if(cf.DNSAssign[0].checked || (cf.wan_dns1_pri.value != "208.67.222.222") || (cf.wan_dns1_sec.value != "208.67.220.220"))
+        {
+            if (!confirm("<%755%>"))
+                return false;
+        }
+    }
+
+<%744%>
+        cf.pppoe_temp.value = "4";
+
+<%745%>
+    cf.wan_aggr.value = (cf.WANAggr[1].checked)? "1" : "0";
+    <%676%>
+    if(cf.WANAggr[2].checked) // aggr
+       cf.wan_aggr.value = "1";
+    else if(cf.WANAggr[1].checked)//multigiga
+        cf.wan_aggr.value = "2";
+    else //internet
+        cf.wan_aggr.value = "0";
+    <%677%>
+    
+    setDisabled(false,cf.pppoe_dod);
+	
+<%746%>
+    return sumvalue(cf);
+<%747%>
+
+<%744%>
+	return true;
+<%745%>	
+
+}
+
+function loadSettings()
+{
+    var cf = document.forms[0];
+    var pppoe_user_ip = cf.pppoe_user_ip.value.split(".");
+    var pppoe_user_netmask = cf.pppoe_user_netmask.value.split(".");
+    var pppoe_gateway = cf.pppoe_gateway.value.split(".");
+    var region_gui = cf.gui_region.value;
+
+    var wan_ipaddr = cf.wan_ipaddr.value.split(".");
+    var pppoe_localip = cf.pppoe_localip.value.split(".");
+    //var pppoe_localnetmask = cf.pppoe_localnetmask.value.split(".");
+    var wan_dns_sel = cf.wan_dns_sel.value;
+    var wan_dns1_pri = cf.wan_dns1_pri.value.split(".");
+    var wan_dns1_sec = cf.wan_dns1_sec.value.split(".");
+    var wan_hwaddr_sel = cf.wan_hwaddr_sel.value;
+
+    /*WAN port start*/
+    if (document.getElementById("wanaggr").value == "1") {
+<%680%>
+        document.forms[0].WANAggr[1].checked = true;
+<%681%>
+<%676%>
+        document.forms[0].WANAggr[2].checked = true;
+<%677%>
+        if (document.getElementById("wan_agg_status").value == "1") {
+            document.getElementById("wan_status").innerHTML = "<font color='blue'><%682%></font>";
+        }else if (document.getElementById("wan_agg_status").value == "0") {
+            document.getElementById("wan_status").innerHTML = "<font color='red'><%683%></font>";
+        }
+    }
+<%676%>
+    else if (document.getElementById("wan2dot5g").value == "1")
+    {
+        document.forms[0].WANAggr[1].checked = true;
+    }
+<%677%>
+    else
+        document.forms[0].WANAggr[0].checked = true;
+    /*WAN port end*/
+    
+    cf.pppoe_idletime.value = <%756%> / 60;
+	var wan_auto_dns_pri = cf.wan_auto_dns_pri.value.split(".");
+	var wan_auto_dns_sec = cf.wan_auto_dns_sec.value.split(".");
+    
+/*
+    if(autoconn_flag == 1)
+		initSelect();
+*/
+    // Get pppoe_dod (nvram)
+    cf.pppoe_dod.selectedIndex = <%743%>;
+    CurrentDodIndex=cf.pppoe_dod.selectedIndex;
+    if(cf.gui_language.value == "German")
+    {
+		var selectObj = document.getElementById("auto_conn_time_id");
+		
+        cf.auto_conn_time_default.value = parseInt(cf.auto_time.value, 10);
+        selectObj.value = parseInt(cf.auto_time.value, 10);
+    }
+    /*
+    if (cf.pppoe_dod.selectedIndex == 1)
+    {
+        DodDisable = false;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = true;
+            cf.auto_conn_time.disabled = true;
+        }
+    }
+    else
+    {
+        DodDisable = true;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = false;
+            cf.auto_conn_time.disabled = false;
+        }
+    }
+    */
+    show_idleout(cf, cf.pppoe_dod.selectedIndex);
+    
+    setDisabled(DodDisable,cf.pppoe_idletime);
+    if (cf.ipv6_proto.value == "6to4" || 
+        (cf.ipv6_proto.value == "auto" && cf.ipv6_proto_auto.value == "6to4"))
+    {
+        cf.pppoe_dod.selectedIndex = 0;
+        setDisabled(true,cf.pppoe_dod);
+        setDisabled(true,cf.pppoe_idletime);
+    }
+
+    if (cf.ipv6_proto.value == "pppoe" && cf.wan_proto.value == "pppoe")
+    {
+        //gray out conn_mode option, force to select Always_On
+        setDisabled(true,cf.pppoe_dod);
+    }
+
+    //Internal PPPoE interface
+    if( region_gui == "Russian")
+    {
+        if(cf.static_pppoe_enable.value == 1)
+        {
+            if (cf.pppoe_user_ip.value != "")
+            {
+                cf.myip_1.value = pppoe_user_ip[0];
+                cf.myip_2.value = pppoe_user_ip[1];
+                cf.myip_3.value = pppoe_user_ip[2];
+                cf.myip_4.value = pppoe_user_ip[3];
+            }
+            if (cf.pppoe_user_netmask.value != "")
+            {
+                cf.mymask_1.value = pppoe_user_netmask[0];
+                cf.mymask_2.value = pppoe_user_netmask[1];
+                cf.mymask_3.value = pppoe_user_netmask[2];
+                cf.mymask_4.value = pppoe_user_netmask[3];
+            }
+    
+            //if (cf.pppoe_gateway.value != "")
+            //{
+            //    cf.mygw_1.value = pppoe_gateway[0];
+            //    cf.mygw_2.value = pppoe_gateway[1];
+            //    cf.mygw_3.value = pppoe_gateway[2];
+            //    cf.mygw_4.value = pppoe_gateway[3];
+            //}                        
+        }
+        else
+        {
+            //setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+        }
+        if ( (cf.pppoe_user_ip.value == "...") || (cf.pppoe_user_ip.value == "") )
+        {
+            //setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+        }
+    }
+
+    //Internet PPPoE interface
+    if (cf.pppoe_localip.value == "0.0.0.0")
+    {
+      cf.WANAssign[0].checked = true;
+      cf.WPethr1.value = wan_ipaddr[0];
+      cf.WPethr2.value = wan_ipaddr[1];
+      cf.WPethr3.value = wan_ipaddr[2];
+      cf.WPethr4.value = wan_ipaddr[3];
+    }
+    else
+    {
+      cf.WANAssign[1].checked = true;
+      cf.WPethr1.value = pppoe_localip[0];
+      cf.WPethr2.value = pppoe_localip[1];
+      cf.WPethr3.value = pppoe_localip[2];
+      cf.WPethr4.value = pppoe_localip[3];
+    }
+    //if (region_gui == "Russian")
+    //{
+    //    cf.WMask1.value = pppoe_localnetmask[0];
+    //    cf.WMask2.value = pppoe_localnetmask[1];
+    //    cf.WMask3.value = pppoe_localnetmask[2];
+    //    cf.WMask4.value = pppoe_localnetmask[3];
+    //}
+    setIP();
+    cf.DNSAssign[wan_dns_sel].checked = true;
+    setDNS();
+	if(wan_dns_sel=="1")
+	{
+		if (cf.wan_dns1_pri.value != "")
+		{
+			cf.DAddr1.value = wan_dns1_pri[0];
+			cf.DAddr2.value = wan_dns1_pri[1];
+			cf.DAddr3.value = wan_dns1_pri[2];
+			cf.DAddr4.value = wan_dns1_pri[3];
+		}
+		if (cf.wan_dns1_sec.value != "")
+		{
+			cf.PDAddr1.value = wan_dns1_sec[0];
+			cf.PDAddr2.value = wan_dns1_sec[1];
+			cf.PDAddr3.value = wan_dns1_sec[2];
+			cf.PDAddr4.value = wan_dns1_sec[3];
+		}
+	} else
+	{
+		if (cf.wan_auto_dns_pri.value != "")
+		{
+			cf.DAddr1.value = wan_auto_dns_pri[0];
+			cf.DAddr2.value = wan_auto_dns_pri[1];
+			cf.DAddr3.value = wan_auto_dns_pri[2];
+			cf.DAddr4.value = wan_auto_dns_pri[3];
+		}
+		if (cf.wan_auto_dns_sec.value != "")
+		{
+			cf.PDAddr1.value = wan_auto_dns_sec[0];
+			cf.PDAddr2.value = wan_auto_dns_sec[1];
+			cf.PDAddr3.value = wan_auto_dns_sec[2];
+			cf.PDAddr4.value = wan_auto_dns_sec[3];
+		}
+	}
+
+<%746%>
+    if (wan_hwaddr_sel == 0)
+        cf.Spoofmac.value = cf.wan_hwaddr_def.value;
+    else if (wan_hwaddr_sel == 2)
+        cf.Spoofmac.value = cf.wan_hwaddr2.value;
+    cf.MACAssign[wan_hwaddr_sel].checked = true;
+<%747%>
+
+<%744%>
+    
+    if (cf.pppoe_temp.value == "4")
+    {
+        if (cf.pppoe_flet_sel.value == "fletenable")
+            cf.FletSel[1].checked = true;
+        else
+            cf.FletSel[0].checked = true;
+            
+        if ( cf.FletSel[1].checked == true )
+        {
+            if ( cf.pppoe_flet_type.value == "0" )
+                window.location.href = "BAS_pppoe_flet.htm";    
+            else if (cf.pppoe_flet_type.value == "1")
+                window.location.href = "BAS_pppoe_flet2.htm";
+            else
+                window.location.href = "BAS_pppoe_other.htm";       
+        }
+    }
+    else if (cf.pppoe_temp.value == "0")
+    {
+        cf.FletSel[0].checked = true;
+    }
+    else if (cf.pppoe_temp.value == "1") // NTT EAST
+    {
+        cf.FletSel[1].checked = true;
+        window.location.href = "BAS_pppoe_flet.htm";
+    }
+    else if (cf.pppoe_temp.value == "2") //NTT WEST
+    {
+        cf.FletSel[1].checked = true;
+        window.location.href = "BAS_pppoe_flet2.htm";
+    }
+    else if (cf.pppoe_temp.value == "3") // OTHER
+    {
+        cf.FletSel[1].checked = true;
+        window.location.href = "BAS_pppoe_other.htm";
+    }
+<%745%>
+}
+
+function myip_update()
+{
+    var cf = document.forms[0];
+
+    if((cf.myip_1.value.length>0)&&(cf.myip_2.value.length>0)&&(cf.myip_3.value.length>0)&&(cf.myip_4.value.length>0))
+    {
+        //setDisabled(false, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+    }
+    else
+    {
+        //setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+    } 
+}
+
+<%744%>
+function doFletChange( newIndex )
+{
+        var msg = "";
+    var cf = document.forms[0];
+
+    cf.wan_dns1_pri.value = cf.DAddr1.value+'.'+cf.DAddr2.value+'.'+cf.DAddr3.value+'.'+cf.DAddr4.value;
+    cf.wan_dns1_sec.value = cf.PDAddr1.value+'.'+cf.PDAddr2.value+'.'+cf.PDAddr3.value+'.'+cf.PDAddr4.value;
+
+
+    if (newIndex == 0)
+    {
+        if(cf.WANAssign[1].checked)
+        {
+            if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value)==0))
+                msg+= "<%754%>";
+            cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+        }
+        else    
+            cf.pppoe_localip.value = "0.0.0.0";
+
+            if (msg.length > 1)
+            {
+                alert(msg);
+                return false;
+            }
+        cf.pppoe_temp.value = "0";
+        cf.submit();
+        //window.location.href = "BAS_pppoe.htm";     
+    } 
+    else if (newIndex == 1)
+    {
+        if(cf.WANAssign[1].checked)
+        {
+            if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value)==0))
+                msg+= "<%754%>";
+            cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+        }
+        else    
+            cf.pppoe_localip.value = "0.0.0.0";
+
+            if (msg.length > 1)
+            {
+                alert(msg);
+                return false;
+            }
+        cf.pppoe_temp.value = "1";
+        cf.submit();
+        //window.location.href = "BAS_pppoe_flet.htm";
+    }
+}
+<%745%>
+
+function pw_onfocus()
+{
+    var cf = document.forms[0];
+    cf.pppoe_passwd.value = "";
+    
+    document.getElementById("passwdEnterStatus").innerHTML="<input id=\"pppoe_passwd\" class=\"input1\" type=\"text\" name=\"pppoe_passwd\" size=\"15\" style=\"width:180px\" maxlength=\"63\" value=\"\">";       
+    setTimeout("document.forms[0].pppoe_passwd.focus();", 50);
+    return true;
+}
+
+function doTypeChange( newIndex )
+{
+	var cf = document.forms[0];
+	var wan_proto = cf.wan_proto.value;
+
+	if (newIndex == 0)
+	{
+		window.location.href = "BAS_ether.htm";
+	} 
+	else if (newIndex == 1)
+	{
+		if (wan_proto == "pptp")
+			window.location.href = "BAS_pptp.htm";
+        else if (wan_proto == "l2tp")
+			window.location.href = "BAS_l2tp.htm";
+		else
+			window.location.href = "BAS_pppoe.htm";
+	}
+}
+function checkNetworkStatus() {
+    var iptv_status = "<%684%>";
+    var iptv_interface = "<%685%>";
+    var vlan_status = "<%686%>";
+    var br0_interface = "<%687%>";
+
+    if (((iptv_status == "1") && (iptv_interface == "0x1")) || ((vlan_status == "enable") && (br0_interface.search("eth1") == -1))) {
+        document.getElementById("wan_status").innerHTML = "<font color='red'><%688%></font>";
+    }
+
+}
+// Customized gui css for this html
+function resize_gui() {
+    resize_scroll(SCROLL_TYPE.LARGE);
+}
+//-->
+</script>
+<style type="text/css">
+SELECT {
+	WIDTH: 180px; HEIGHT: 22px
+}
+
+</style>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<body  onload="change_size(false);resize_gui();loadSettings();loadcheck();goTestApply();SkipParentalControlCheck=0" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="formname" method="POST" action="pppoe.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue"> 
+<img class="subtop-image" src="<%74%>">
+<div class="subhead2 page_title"> <%499%></div>
+<table border="0"     class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td align="center" colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="test" type="submit" value="SUBMIT" onClick="buttonClick(this,'<%689%>');return checkData()" name="Test" class="button-common common_bt"><%689%></button>
+<button id="cancel" type="button" value="BUTTON"  onClick="buttonClick(this,'<%76%>');reset();loadSettings();" name="Cancel" class="button-cancel cancel_bt"><%77%></button><button id="apply" type="submit" value="SUBMIT"  onClick="buttonClick(this,'<%78%>');return checkData()" name="apply" class=<%79%> ><%80%></button>
+</div>
+
+</td>
+</tr>
+<!-- 
+    <iframe id="formframe" style="width:100%;margin-top:5px" allowTransparency="true" src="BAS_basictop2.htm" frameborder="0" scrolling="no"></iframe></td></tr>
+-->
+<tr><td colspan="2" class="scrollpane-table-seperate-border">
+<div>
+    <div id="main" class="scroll-pane main_bas" style="height:260px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+<tr>
+    <td colspan="2">
+        <a href="javascript:selHelpFile('question')" tabindex="-1">
+            <b><%690%></b>
+        </a>
+    </td>
+</tr>
+<tr>
+    <td colspan="2">
+        <label class="checkbox-container">
+           <a href="javascript:selHelpFile('question')" tabindex="-1"><%691%></a>
+            <input type="radio" name="WANAggr" value="internet">
+            <span class="radio-checkmark"></span>
+        </label>
+    </td>
+</tr>
+ <%692%>
+<tr>
+    <td colspan="2" class="pt-0" style="display: flex;">
+        <label class="checkbox-container">
+            <a href="javascript:selHelpFile('question')" tabindex="-1"><%693%></a>
+            <input type="radio" name="WANAggr" value="multigiga">
+            <span class="radio-checkmark"></span>
+        </label>
+    </td>
+</tr>
+<%694%>
+<tr>
+    <td colspan="2" class="pt-0">
+        <label class="checkbox-container">
+            <a href="javascript:selHelpFile('question')" tabindex="-1"><%695%></a>
+            <input type="radio" name="WANAggr" value="aggr" onclick="checkNetworkStatus();">
+            <span class="radio-checkmark"></span>
+        </label>
+        <span id="wan_status" style="margin: 2px 0 0 20px"></span>
+    </td>
+</tr>
+<tr>
+    <td colspan="2" height="12">
+        <div style="background-image:url('seprator.gif');width:100%">&nbsp;</div>
+    </td>
+</tr>
+<tr>
+	<td colspan="2">
+	<a href="javascript:selHelpFile('question')" tabindex="-1"><b><%636%></b></a></td>
+</tr>
+<tr>
+<td colspan="2">
+<label class="checkbox-container">
+    <a href="javascript:selHelpFile('question')" tabindex="-1"><%630%></a>
+    <input id="loginreq" type="radio" name="loginreq" checked  value="pppoe" onClick="doTypeChange(1)">
+    <span class="radio-checkmark"></span>
+</label>
+</td>
+</tr>
+<tr>
+<td colspan="2" class="pt-0">
+<label class="checkbox-container">
+    <a href="javascript:selHelpFile('question')" tabindex="-1"><%631%></a>
+    <input id="no_loginreq" type="radio" name="loginreq" value="dhcp" onClick="doTypeChange(0)">
+    <span class="radio-checkmark"></span>
+</label>
+</td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+ <td width="50%"><a href="javascript:loadhelp('BAS_pppoe','isp')" tabindex="-1"><b><%757%></b></a></td>
+ <td width="50%" align="right">
+	<select id="login_type" name="login_type" onChange="setServer()">
+		<option><%758%></option>
+		<option selected><%759%></option>
+		<option><%760%></option>
+		<%639%>
+		<option>Orange France PPPoE</option>
+		<option>Orange France DHCP</option>
+		<%641%>
+	</select>
+ </td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+<%761%>
+<tr>
+ <td colspan="2" ><b><%762%></b></td>
+</tr>
+<%763%>
+<tr>
+    <td class="pb-0"><a href="javascript:loadhelp('BAS_pppoe','login')" tabindex="-1"><b><%764%></b></a></td>
+    <td align="right" class="pt-0"><input id="pppoe_username" type="text" class="input1" name="pppoe_username" size="15" style="width:180px" maxlength="63" value="<%765%>"></td>
+</tr>
+<tr>
+	<td class="pb-0" style="margin-top: -17px"><a href="javascript:loadhelp('BAS_pppoe','password')" tabindex="-1"><b><%352%></b></a></td>
+	<td class="pt-0" align="right">
+	<div id="passwdEnterStatus" style ="visibility:visible">
+	<input id="pppoe_passwd" type="password" class="input1" name="pppoe_passwd" size="15"  style="width:180px" maxlength="63" value="<%766%>" onfocus="pw_onfocus();">
+	</div>
+	</td>
+</tr>
+
+<tr>
+    <td nowrap class="pb-0" style="margin-top: -17px"><a href="javascript:loadhelp('BAS_pppoe','serv_name')" tabindex="-1"><%767%></a> &nbsp;</td>
+    <td align="right" class="pt-0"><input id="pppoe_servername" class="input1" type="text" name="pppoe_servicename" maxlength="63" size="15" value="<%768%>"></td>
+</tr>
+
+<tr>
+<td width="50%" nowrap><a href="javascript:loadhelp('BAS_pppoe','conn_mode')" tabindex="-1"><b><%769%></b></a></td>
+<td width="50%" align="right">
+    <select id="pppoe_dod" name="pppoe_dod" onChange="setConnMode()" size="1">
+        <option value=0><%770%></option>
+        <option value=1><%771%></option>
+        <option value=2><%772%></option>
+    </select></td>
+</tr>
+<tr>
+    <td nowrap><a href="javascript:loadhelp('BAS_pppoe','pppoe_idletime')" tabindex="-1"><%773%></a></td>
+    <td align="right"><input id="pppoe_idletime" class="input1" type="text" class="num" name="pppoe_idletime" size="3" maxlength="3"></td>
+</tr>
+
+<%774%>
+<tr>
+  <td colspan="2" background="seprator.gif" height="12"></td>
+</tr>
+
+<tr>
+ <td><a href="javascript:loadhelp('BAS_pppoe','myip')" tabindex="-1"><b><%775%></b></a></td>
+ <td align="right" class="num">
+ <input id="myip1" type="text" name="myip_1" class="num" size="4" maxlength="3" onBlur="myip_update()">.<input id="myip2" type="text" name="myip_2" class="num" size="4" maxlength="3" onBlur="myip_update()">.<input id="myip3" type="text" name="myip_3" class="num" size="4" maxlength="3" onBlur="myip_update()">.<input id="myip4" type="text" name="myip_4" class="num" size="4" maxlength="3" onBlur="myip_update()"></td>
+</tr>
+
+<tr>
+	<td nowrap><b><%776%></b></td>
+	<td align="right" class="num">
+	<input id="mymask1" type="text" name="mymask_1" class="num" size="4" maxlength="3">.<input id="mymask2" type="text" name="mymask_2" class="num" size="4" maxlength="3">.<input id="mymask3" type="text" name="mymask_3" class="num" size="4" maxlength="3">.<input id="mymask4" type="text" name="mymask_4" class="num" size="4" maxlength="3"></td>
+</tr>
+
+<%777%>
+
+<%778%>
+<tr>
+  <td nowrap>
+    <input type="checkbox"  <%779%> name="auto_conn_24hr" value="auto_conn_24hr"><%780%>
+	</td>
+	<td colspan="1">
+    <select id=auto_conn_time_id  name=auto_conn_time size="1">
+        <option value=0>00:00</option>
+        <option value=1>00:30</option>
+        <option value=2>01:00</option>
+        <option value=3>01:30</option>
+        <option value=4>02:00</option>
+        <option value=5>02:30</option>
+        <option value=6>03:00</option>
+        <option value=7>03:30</option>
+        <option value=8>04:00</option>
+        <option value=9>04:30</option>
+        <option value=10>05:00</option>
+        <option value=11>05:30</option>
+        <option value=12>06:00</option>
+        <option value=13>06:30</option>
+        <option value=14>07:00</option>	   
+        <option value=15>07:30</option>
+        <option value=16>08:00</option>
+        <option value=17>08:30</option>
+        <option value=18>09:00</option>
+        <option value=19>09:30</option>
+        <option value=20>10:00</option>
+        <option value=21>10:30</option>
+        <option value=22>11:00</option>
+        <option value=23>11:30</option>
+        <option value=24>12:00</option>
+        <option value=25>12:30</option>
+        <option value=26>13:00</option>
+        <option value=27>13:30</option>
+        <option value=28>14:00</option>
+        <option value=29>14:30</option>
+        <option value=30>15:00</option>
+        <option value=31>15:30</option>
+        <option value=32>16:00</option>
+        <option value=33>16:30</option>
+        <option value=34>17:00</option>
+        <option value=35>17:30</option>
+        <option value=36>18:00</option>
+        <option value=37>18:30</option>
+        <option value=38>19:00</option>
+        <option value=39>19:30</option>
+        <option value=40>20:00</option>
+        <option value=41>20:30</option>
+        <option value=42>21:00</option>
+        <option value=43>21:30</option>
+        <option value=44>22:00</option>
+        <option value=45>22:30</option>
+        <option value=46>23:00</option>
+        <option value=47>23:30</option>
+    </select>	
+	</td> 
+
+</tr>
+<%781%>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+    <td colspan="2"><a href="javascript:loadhelp('BAS_pppoe','InternetIP')" tabindex="-1"><b><%701%></b></a></td>
+</tr>
+<tr id="internet_ip_tr1">
+    <td colspan="2">
+        <label class="checkbox-container"><%702%>
+            <input id="wan_assign_dynamic" type="radio" name="WANAssign" value="Dynamic" onClick="setIP()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>
+<tr id="internet_ip_tr2">
+    <td nowrap>
+        <label class="checkbox-container"><%703%>
+            <input id="wan_assign_fixed" type="radio" name="WANAssign" value="Fixed" onClick="setIP()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+    <td align="right" class="num ip-input-row">
+    <input id="wpethr1" type="text" name="WPethr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input id="wpethr2" type="text" name="WPethr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input id="wpethr3" type="text" name="WPethr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input id="wpethr4" type="text" name="WPethr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+<tr>
+    <td colspan="2"><a href="javascript:loadhelp('BAS_pppoe','DNSaddress')" tabindex="-1"><b><%707%></b></a></td>
+</tr>
+
+<tr id="internet_dns_tr1">
+    <td colspan="2">
+        <label class="checkbox-container"><%708%>
+            <input id="dns_assign_auto" type="radio" name="DNSAssign" value="0" onClick="setDNS()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>
+
+<tr id="internet_dns_tr2">
+    <td colspan="2" class="pt-0">
+        <label class="checkbox-container"><%709%>
+            <input id="dns_assign_static" type="radio" name="DNSAssign" value="1" onClick="setDNS()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>
+
+<tr id="internet_dns_tr3">
+        <td><%710%></td>
+        <td align="right" class="num ip-input-row"><input id="daddr1" type="text" name="DAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,1)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="daddr2" type="text" name="DAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="daddr3" type="text" name="DAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="daddr4" type="text" name="DAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,1)"></td>
+</tr>
+<tr id="internet_dns_tr4">
+        <td><%711%></td>
+        <td align="right" class="num ip-input-row"><input id="pdaddr1" type="text" name="PDAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,1)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="pdaddr2" type="text" name="PDAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="pdaddr3" type="text" name="PDAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,0)">.
+                                      <input id="pdaddr4" type="text" name="PDAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="if(isParentalControlEnable()) return false;bscheck(event,this,0)" onkeyup="if(isParentalControlEnable()){ alert('<%664%>');return false;} jumpcheck(this,1)"></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+<%782%>
+<tr id="mac_head">
+    <td nowrap colspan="2"><a href="javascript:loadhelp('BAS_pppoe','localaddress')" tabindex="-1"><b><%712%></b></a></td>
+</tr>
+<tr id="mac_default">
+    <td colspan="2" nowrap>
+        <label class="checkbox-container"><%713%>
+            <input id="mac_assign_default" type="radio" name="MACAssign" value="0" onClick="setMAC()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>
+<tr id="mac_comp">
+    <td nowrap colspan="2">
+        <label class="checkbox-container"><%714%>
+            <input id="mac_assign_computer" type="radio" name="MACAssign" value="1" onClick="setMAC()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+</tr>
+<tr id="mac_this">
+    <td nowrap align="left">
+        <label class="checkbox-container"><%715%>
+            <input id="mac_assign_define" type="radio" name="MACAssign" value="2" onClick="setMAC()">
+            <span class="radio-checkmark"></span>
+		</label>
+    </td>
+    <td align="right" class="num"><input id="spoof_mac" type="text" class="num input1" name="Spoofmac" size="17" maxlength="17" onFocus="if(DisableFixedMAC) this.blur()"></td>
+</tr>
+
+<%783%>
+
+<%761%>
+<tr>
+ <td colspan="2" ><b><%784%></b></td>
+</tr>
+<tr>
+    <td colspan="2"><input id="FletSel1" type="radio" name="FletSel" value="fletdisable" onClick="doFletChange(0)"><a tabindex="-1"><%785%></a></td>
+</tr>
+<tr>
+    <td colspan="2"><input id="FletSel2" type="radio" name="FletSel" value="fletenable" onClick="doFletChange(1)"><a tabindex="-1"><%786%></a></td>
+</tr>
+<%763%>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+
+</table></div>
+</div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="bas-help-frame-div" > <iframe id="helpframe"  name=helpframe src="BAS_pppoe_h.htm" scrolling="no" class="help-iframe"  frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img id="help-button" src="img/helparrowdown-icon.png" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+
+<input type="hidden" name="runtest" value="<%721%>">
+<INPUT name=wan_ipaddr type=hidden value= "<%238%>">
+<INPUT name=pppoe_localip type=hidden value= "<%750%>">
+<INPUT name=pppoe_user_ip type=hidden value= "<%787%>">
+  <INPUT name=wan_dns_sel type=hidden value= "<%723%>">
+  <INPUT name=wan_dns1_pri type=hidden value= "<%724%>">
+  <INPUT name=wan_dns1_sec type=hidden value= "<%725%>">
+<INPUT name=wan_hwaddr_sel type=hidden value= "<%726%>">
+<INPUT name=wan_hwaddr_def type=hidden value= "<%727%>">
+<INPUT name=wan_hwaddr2 type=hidden value= "<%728%>">
+<INPUT name=wan_hwaddr_pc type=hidden value= "<%729%>">
+  <INPUT name=opendns_parental_ctrl type=hidden value= "<%733%>">
+<INPUT name=pppoe_flet_sel type=hidden value= "<%788%>">
+<INPUT name=pppoe_flet_type type=hidden value= "<%789%>">
+<INPUT name=pppoe_temp type=hidden value= "<%790%>">
+<INPUT name=pppoe_gateway type=hidden value="<%791%>">
+<INPUT name=gui_region type=hidden value="<%792%>">
+<INPUT name=pppoe_user_netmask type=hidden value="<%793%>">
+<!--<INPUT name=pppoe_localnetmask type=hidden value= "<%793%>">-->
+<INPUT name=static_pppoe_enable type=hidden value= "<%794%>">
+<INPUT name=pppoe_ip_sel type=hidden value= "<%795%>">
+<INPUT name=gui_language type=hidden value= "<%9%>">
+<INPUT name=auto_time type=hidden value= "<%796%>">
+<INPUT name=ipv6_proto type=hidden value= "<%735%>">
+<INPUT name=ipv6_proto_auto type=hidden value= "<%797%>">
+<input name=auto_conn_time_default type=hidden value= "0">
+<input name=dial_on_demand_warning type=hidden value= "<%798%>">
+<INPUT name=parental_control type=hidden value= "<%733%>">
+<INPUT name=parental_circle type=hidden value= "<%734%>">
+<INPUT name=wan_auto_dns_pri type=hidden value= "<%736%>">
+<INPUT name=wan_auto_dns_sec type=hidden value= "<%737%>">
+<INPUT id="wanaggr" name="wan_aggr" type=hidden value="<%738%>">
+<INPUT id="wan2dot5g" name="wan2dot5g" type=hidden value="<%739%>">
+<input id="wan_agg_status" type="hidden" name="wan_agg_status" value="<%740%>">
+<INPUT name=wan_proto type=hidden value= "<%638%>">
+<input id="qos_enable" type="hidden" name="qos_enable" value="<%741%>">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+
+
+</html>

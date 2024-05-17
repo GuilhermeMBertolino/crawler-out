@@ -1,0 +1,194 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+
+function selHelpFile(helpitem)
+{
+var wanForLoadHelp = "BAS_"+document.forms[0].wan_proto.value;
+	if(!document.forms[0].loginreq[0].checked)
+		parent.loadhelp('BAS_ether',helpitem)
+	else
+		parent.loadhelp(wanForLoadHelp,helpitem)
+}
+function doTypeChange( newIndex )
+{
+	var cf = document.forms[0];
+	var wan_proto = cf.wan_proto.value;
+
+	if (newIndex == 0)
+	{
+		<%632%>
+		parent.location.href = "BAS_ether.htm";
+        <%633%>
+		<%442%>
+		parent.location.href = "BAS_ether_dsl.htm";
+        <%444%>
+	} 
+	else if (newIndex == 1)
+	{
+		if (wan_proto == "pptp")
+			parent.location.href = "BAS_pptp.htm";
+		else if (wan_proto == "bpa")
+			parent.location.href = "BAS_bpa.htm";
+		
+        else if (wan_proto == "l2tp")
+			parent.location.href = "BAS_l2tp.htm";
+		
+
+<%632%>        
+		else
+			parent.location.href = "BAS_pppoe.htm";
+<%633%>	
+	}
+}
+
+function loadSettings()
+{
+	/*var cf = document.forms[0];
+		cf.loginreq[1].checked = true;*/
+	if (document.getElementById("wanaggr").value == "1") {
+<%680%>
+		document.forms[0].WANAggr[1].checked = true;
+<%681%>
+<%676%>
+		document.forms[0].WANAggr[2].checked = true;
+<%677%>
+		if (document.getElementById("wan_agg_status").value == "1") {
+			document.getElementById("wan_status").innerHTML = "<font color='blue'><%682%></font>";
+		}else if (document.getElementById("wan_agg_status").value == "0") {
+			document.getElementById("wan_status").innerHTML = "<font color='red'><%683%></font>";
+		}
+	}
+<%676%>
+	else if (document.getElementById("wan2dot5g").value == "1")
+	{
+		document.forms[0].WANAggr[1].checked = true;
+	}
+<%677%>
+	else
+		document.forms[0].WANAggr[0].checked = true;
+
+	
+}
+
+function checkNetworkStatus() {
+	var iptv_status = "<%684%>";
+	var iptv_interface = "<%685%>";
+	var vlan_status = "<%686%>";
+	var br0_interface = "<%687%>";
+
+	if (((iptv_status == "1") && (iptv_interface == "0x1")) || ((vlan_status == "enable") && (br0_interface.search("eth1") == -1))) {
+		document.getElementById("wan_status").innerHTML = "<font color='red'><%688%></font>";
+	}
+
+}
+//-->
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body style="padding-left:8px;background-color:transparent" onload="loadSettings()">
+<form name="basic" method="POST" action="basictop.cgi">
+<div id="bas_top">
+	<table border="0" style="width:97%" >
+		<tr>
+			<td colspan="2">
+				<a href="javascript:selHelpFile('question')" tabindex="-1">
+					<b><%690%></b>
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+		        <label class="checkbox-container">
+		           <a href="javascript:selHelpFile('question')" tabindex="-1"><%3950%></a>
+		            <input type="radio" name="WANAggr" value="internet">
+		            <span class="radio-checkmark"></span>
+		        </label>
+			</td>
+		</tr>
+		 <%692%>
+		<tr>
+			<td colspan="2" class="pt-0" style="display: flex;">
+		        <label class="checkbox-container">
+		            <a href="javascript:selHelpFile('question')" tabindex="-1"><%693%></a>
+		            <input type="radio" name="WANAggr" value="multigiga">
+		            <span class="radio-checkmark"></span>
+			    </label>
+			</td>
+		</tr>
+		<%694%>
+		<tr>
+			<td colspan="2" class="pt-0">
+		        <label class="checkbox-container">
+		            <a href="javascript:selHelpFile('question')" tabindex="-1"><%695%></a>
+		            <input type="radio" name="WANAggr" value="aggr" onclick="checkNetworkStatus();">
+		            <span class="radio-checkmark"></span>
+			    </label>
+			    <span id="wan_status" style="margin: 2px 0 0 20px"></span>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" height="12">
+				<div style="background-image:url('seprator.gif');width:100%">&nbsp;</div>
+			</td>
+		</tr>
+	</table>
+	<table border="0" style="width:97%" >
+	<tr>
+		<td colspan="2">
+		<a href="javascript:selHelpFile('question')" tabindex="-1"><b><%636%></b></a></td>
+	</tr>
+	<tr>
+		<td colspan="2">
+	        <label class="checkbox-container">
+	           <a href="javascript:selHelpFile('question')" tabindex="-1"><%630%></a>
+	            <input id="loginreq" type="radio" name="loginreq" value="pppoe" onClick="doTypeChange(1)">
+	            <span class="radio-checkmark"></span>
+	        </label>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" class="pt-0">
+	        <label class="checkbox-container">
+	            <a href="javascript:selHelpFile('question')" tabindex="-1"><%631%></a>
+	            <input id="no_loginreq" type="radio"  checked name="loginreq" value="dhcp" onClick="doTypeChange(0)">
+	            <span class="radio-checkmark"></span>
+		    </label>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" height="12">
+			<div style="background-image:url('seprator.gif');width:100%">&nbsp;</div>
+		</td>
+	</tr>
+	</table>
+</div>
+<%488%>
+<INPUT name=wan_proto type=hidden value= "<%637%>">
+<%491%> 
+<%492%>
+  <INPUT name=wan_proto type=hidden value= "<%638%>">
+<%493%>
+<INPUT id="wanaggr" name="wanaggr" type=hidden value="<%738%>">
+<INPUT id="wan2dot5g" name="wan2dot5g" type=hidden value="<%739%>">
+<input id="qos_enable" type="hidden" name="qos_enable" value="<%741%>">
+<input id="wan_agg_status" type="hidden" name="wan_agg_status" value="<%740%>">
+</form>
+
+</body>
+</html>

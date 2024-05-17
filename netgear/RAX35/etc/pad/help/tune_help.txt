@@ -1,0 +1,63 @@
+--------------------------------------------------------------------------------------
+Kernel space:
+--------------------------------------------------------------------------------------
+Parameter     	: /proc/sys/vm/min_free_bytes
+Platform	: ALL
+Description   	: Depending on the load conditions,kernel may have little memory 
+                  left for ex: GFP_ATOMIC may fail resulting in kernel panic.
+Typical usecase	: Under loaded conditions Increase min_kfree_bytes for
+                  better out of memory (OOM) , resistance.
+Default Value 	: 4096
+Recomended values: 4096 or higher (could be set to higher if large RAM is available)
+Limitations/Risk : 
+
+-------------------
+Parameter     	: MAX_SOFTIRQ_RESTART
+Platform	: ALL
+Description   	: file: linux-xxx/kernel/softirq.c 
+                  Restart softirq routine N number of times as defined in above file
+Typical usecase	: To reduce softirq from hogging the CPU and
+                  make way for other processes in the system to get chance to run
+Default Value 	: 10
+Recomended values: Could be tuned in the range 2 - 10 depending on the requirement
+Limitations/Risk : Lower values (ex: 2) may impact system peak performance
+
+-------------------
+
+Parameter     	: PPE flexible queue descriptors
+Platform	: Except 350
+Description   	: There are default 8 queues in the PPE FW. By default all traffic is routed 
+                  through queue #7 (last descriptor).Burst traffic can be handled by allocating 
+                  more descriptors to the default queue #7
+Typical usecase	: Example-1:
+                    - "ltqmips_ppe_drv wanqos_en=4"
+                    - "ltqmips_vrx318_e1 qos_queue_len=64,64,128,256”
+                  Example-2:
+                    - "ltqmips_ppe_drv wanqos_en=8"
+                    - "ltqmips_vrx318_e1 qos_queue_len=32,32,32,32,32,32,64,256”
+Default Value 	: 32 per queue
+Recomended values: Refer to the example
+Limitations/Risk : None
+
+--------------------------------------------------------------------------------------
+User space:
+--------------------------------------------------------------------------------------
+Parameter     	: chrt
+Type 	      	: Command
+Platform	: ALL
+Description   	: To manipulate real-time attributes of a user process
+Typical usecase	: Under loaded conditions  
+                  a) improve web UI response time.
+                  b) improve time to send Multicast (IGMP/MLD) Join/Leave to WAN
+                  c) WLAN AP connectivity
+                  d) VoIP signalling traffic
+Default Value 	: Scheduling policy: SCHED_OTHER
+                  Scheduling priority: 0
+Recomended values: Command to increase priority of a userspace process to 1 (highest prio)
+                   $ chrt -p 1 <pid>
+                       Ex: chrt -p 1 1996
+                     scheduling policy: SCHED_RR
+                     scheduling priority: 1
+Limitations/Risk : None
+
+

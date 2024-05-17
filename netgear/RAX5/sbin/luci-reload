@@ -1,0 +1,77 @@
+#!/bin/sh
+. /lib/functions.sh
+
+apply_config() {
+	config_get init "$1" init
+	config_get exec "$1" exec
+	config_get test "$1" test
+
+	echo "$2" > "/var/run/luci-reload-status"
+
+	[ -n "$init" ] && reload_init "$2" "$init" "$test"
+	[ -n "$exec" ] && reload_exec "$2" "$exec" "$test"
+}
+
+reload_exec() {
+	local service="$1"
+	local ok="$3"
+	set -- $2
+	local cmd="$1"; shift
+	
+	[ -x "$cmd" ] && {
+		echo "Reloading $service... "
+		( $cmd "$@" ) 2>/dev/null 1>&2
+		[ -n "$ok" -a "$?" != "$ok" ] && echo '!!! Failed to reload' $service '!!!'
+	}
+}
+
+reload_init() {
+	[ -x /etc/init.d/$2 ] && /etc/init.d/$2 enabled && {
+		echo "Reloading $1... "
+		/etc/init.d/$2 reload >/dev/null 2>&1
+		[ -n "$3" -a "$?" != "$3" ] && echo '!!! Failed to reload' $1 '!!!'
+	}
+}
+
+delay_execute() {
+	#echo -e "\033[095m\$1=$1\033[0m" > /dev/console #For Debug.
+	#echo -e "\033[095m\$2=$2\033[0m" > /dev/console #For Debug.
+	sleep $1;
+	$2;
+}
+
+lock "/var/run/luci-reload"
+
+config_load ucitrack
+
+#echo -e "\033[095mluci-reload \$*=$*\033[0m" > /dev/console #For debug.
+needLANPort_linkDownUp="false"
+need_delayTime="0s"
+for i in $*; do
+	#PeguBU6, YochengLian, 2022.08.05, Fix RAX5-IR006 and only do the link down/up once when the related service(/etc/init.d/xxxx) be put in the reload sequence.
+	if [ "$i" == "dhcp" ] || [ "$i" == "odhcpd" ] || [ "$i" == "vlan" ]; then
+		needLANPort_linkDownUp="true"
+		if [ "$i" == "odhcpd" ]; then
+			need_delayTime="10s"; #wait for odhcpd re-configed.
+		fi
+	fi
+	#End of PeguBU6, YochengLian, 2022.08.05.
+	config_foreach apply_config $i $i
+done
+
+#PeguBU6, YochengLian, 2022.08.05, Fix RAX5-IR006 and set different delay time for different service reloading.
+linkDownUp_cmd="/usr/sbin/lan_linkdownup.sh"
+#echo -e "\033[095m\$needLANPort_linkDownUp=$needLANPort_linkDownUp\033[0m" > /dev/console #For Debug.
+if [ "$needLANPort_linkDownUp" == "true" ]; then
+    wan_proto=$(uci get network.wan.proto)
+    if [ "$wan_proto" == "static" ]; then
+        #MattLin 20220907. Workaround for the default route disappear after LAN IP changed when DUT is WAN static IP mode.
+        #The final solution should be redesign the UCI config of MAC clone.
+        delay_execute 0 "ifup wan"
+    fi
+	delay_execute $need_delayTime $linkDownUp_cmd &
+fi
+#End of PeguBU6, YochengLian, 2022.08.05.
+
+rm -f "/var/run/luci-reload-status"
+lock -u "/var/run/luci-reload"

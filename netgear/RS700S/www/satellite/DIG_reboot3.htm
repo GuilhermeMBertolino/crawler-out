@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%18%>
+<title>NETGEAR Router <%19%></title>
+
+<script type="text/javascript">
+<!--
+<%2081%>
+var pchar = "||"; // progress char
+<%2082%>
+<%1025%>
+var maxchars = 45;
+<%1026%>
+<%1027%>
+var maxchars = 50; 
+<%1028%>
+var delay_time = <%1029%>; // msecs
+var charcount = 0; 
+var barbuffer = "";
+function makeStr(strSize, fillChar)
+{
+	var temp = "";
+	for (i=0; i < strSize ; i ++)
+		temp = temp + fillChar;
+	return temp;
+}
+function makeStr1(strSize1, fillChar1)
+{
+	barbuffer = fillChar1 + barbuffer;	
+	return barbuffer;
+}
+function redirect()
+{
+    var cf = document.forms[0];
+    top.location.href=cf.next_file.value;
+}
+function updateProgress()
+{
+	var cf = document.forms[0];       
+      
+	if (charcount < maxchars)
+	{
+	<%2083%>
+		if( charcount < 6 )
+			var pchar = "||"; // progress char
+		else
+			var pchar = "|"; // progress char
+		charcount ++;
+		cf.progress.value = makeStr1(charcount,pchar);
+	<%2084%>
+	<%2081%>
+		charcount ++;
+		cf.progress.value = makeStr(charcount,pchar);
+	<%2082%>
+		setTimeout("updateProgress()",delay_time);
+	}
+	else
+	{
+                setTimeout("redirect()",1000);
+	}
+}
+//-->
+</script>
+<style type="text/css">
+TD {
+	FONT-SIZE: 12px; FONT-FAMILY: Arial, Helvetica, Geneva, Swiss, SunSans-Regular, sans-serif
+}
+H1 {
+	FONT-WEIGHT: bold; FONT-SIZE: 16px;  COLOR: #000; FONT-FAMILY: Arial, Helvetica, Geneva, Swiss, SunSans-Regular, sans-serif
+}
+.prgbar { font-family:Arial; padding:0px; height: 20px; width: 200px; font-weight: bolder; font-size: 10pt; color: #0000FF}
+</style>
+</head>
+<body  leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onLoad="updateProgress()" style="margin:0px;background-color:#FFFFFF">
+<form id="target"  name="update" action="update.cgi" method="post" onSubmit="return false">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+
+<table border="0"   width="100%">
+
+<tr>
+</tr>
+<tr>
+	<td align="left">
+	 <h1><%1023%></h1>
+ </td>
+ <td nowrap align="left"> &nbsp; </td>
+ <td nowrap><input type="text" name="progress" class="prgbar" style="pointer-events: none;" value=""></td>
+ <td nowrap align="left"> &nbsp; </td>
+</tr>
+<tr> 
+ 
+ <td colspan="4" class="pt-20"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td>
+</tr>
+</table>
+<input type="hidden" name="next_file" value="<%1024%>">
+</form>
+</BODY>
+</html>

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+dos_protection_proc() {
+	min="3"
+	disabled=`uci -q get firewall.@defaults[0].dos_protection_disabled`
+	ack="-p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG ACK -m conntrack --ctstate NEW"
+	syn="-p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG SYN -m conntrack --ctstate NEW"
+	chain="dos_protection"
+
+	iptables -F $chain
+	if [ "0" == "$disabled" ]
+	then
+		iptables -w -A $chain $ack -m limit --limit $min/min --limit-burst 1 -j LOG --log-prefix "[attack]NAME=ACK_Scan " --log-level 4 --log-macdecode 2>/dev/null
+		iptables -w -A $chain $ack -j DROP 2>/dev/null
+		iptables -w -A $chain $syn -m limit --limit 100/sec --limit-burst 100 -j RETURN 2>/dev/null
+		iptables -w -A $chain $syn -m limit --limit $min/min --limit-burst 1 -j LOG --log-prefix "[attack]NAME=SYN_flood " --log-level 4 --log-macdecode 2>/dev/null
+		iptables -w -A $chain $syn -j DROP 2>/dev/null
+	fi
+}
+
+dos_protection_proc

@@ -1,0 +1,130 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/wizard.css"><link rel="stylesheet" href="/static/css/loading.css"></head><style>.opmode-menu table tr td{width:135px;text-align:center}.opmode-menu img{cursor:pointer;margin-bottom:6px}.table-title th{text-align:left;border-bottom:none}.table-title img{margin-right:6px}.table-title1 th{border-top:none}.table-foot tr td{background:#c6eeff;text-align:right}.t_table3 .table-foot tr:hover td{background:#c6eeff}.table-foot button{width:85px;height:35px}.modefy-content tr td{border:none}.img-invert{-webkit-filter:invert(25%);filter:invert(25%)}</style><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div style="overflow-y: auto;" ref="content">
+	  	<div class="opmode-menu" v-show="modeShow">
+		    <table style="border-collapse:separate; border-spacing:0px 50px;">
+				<tr>
+					<td v-for="mode in opmodeMenu">
+						<div class="hover-to-big">
+							<img :src="mode.src" @click="modeFun(mode.name)" :title="lang_t('opmode.'+mode.name)" :class="[mode.class]">
+							<p>{{ lang_t('opmode.'+mode.name) }}</p>
+						</div>
+					</td>
+				</tr>
+		    </table>
+		</div>
+	    <div  v-show="!modeShow">
+			<table class="t_table3 table-bordered table-striped" id="ap_wifi" v-show ="!meshShow">
+				<thead>
+					<tr class="table-title">
+						<th colspan="12">
+							<img :src="imgSel" style="width: 40px;height: 40px;">
+							<span>{{ opTitle }}</span>
+							<span style="float:right;cursor: pointer;">
+								<x-icon type="error" color="#43425D" :title="lang_t('common.off')" @click="closeFun"></x-icon>
+							</span>
+						</th>
+					</tr>
+					<tr class="table-title1" v-show="!isEdit">
+						<th>{{ lang_t('wifi.channel') }}</th>
+						<th>{{ lang_t('wifi.ssid') }}</th>
+						<th>{{ lang_t('rule.mac') }}</th>
+						<th>{{ lang_t('wifi.encryption') }}</th>
+						<th>{{ lang_t('opmode.signal') }}</th>
+					</tr>
+				</thead>
+				<tbody v-show="!isEdit">
+					<tr v-for="(list,v) in apScanList" style="cursor: pointer;" @click="editFun(list)" v-if="dataTotal>0">
+						<td>{{ list.channel }}</td>
+						<td style="white-space:pre">{{ list.ssid }}</td>
+						<td>{{ list.bssid }}</td>
+						<td><img :src="encryptImg(list.encrypt)"></td>
+						<td><img :src="signalImg(list.signal)"></td>
+					</tr>
+					<tr v-if="dataTotal==0">
+						<td colspan="12">{{ lang_t('common.scaning') }}</td>
+					</tr>
+				</tbody>
+				<tbody v-if="isEdit">
+					<tr>
+						<td colspan="12">
+							<table class="modefy-content" >
+								<tr>
+									<td width="300">{{ lang_t('wifi.ssid') }}</td>
+									<td><span>{{ ssid }}</span></td>
+								</tr>
+								<tr v-if="passDisable">
+									<td>{{ lang_t('wifi.pass') }}</td>
+									<td><input type="text" v-model="pass" v-verify="formRules" data-name="pass" maxlength="64"></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</tbody>
+				<tbody class="table-foot">
+					<tr>
+						<td colspan="12">
+							<button class="btn" @click="scanFun" style="margin-right: 12px;" :disabled="scan_enable">{{ isEdit ? lang_t('common.back') : lang_t('common.scan') }}</button>
+							<button class="btn" @click="applyFun" v-if="isEdit" style="margin-right: 12px;">{{ lang_t('common.apply') }}</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<table class="t_table3 table-bordered table-striped" v-show ="0">
+				<tr class="table-title">
+					<th colspan="12">
+						<img :src="imgSel" style="width: 40px;height: 40px;">
+						<span>{{ opTitle }}</span>
+						<span style="float:right;cursor: pointer;">
+							<x-icon type="error" color="#43425D" :title="lang_t('common.off')" @click="closeFun"></x-icon>
+						</span>
+					</th>
+				</tr>
+				<tbody>
+					<tr>
+						<td colspan="12">
+							<table class="modefy-content" >
+								<tr>
+									<td width="300">{{ lang_t('opmode.mesh_set') }}</td>
+									<td>
+										<x-switch v-model="meshOff" @change="updateState(0)"></x-switch>
+									</td>
+								</tr>
+								<tr>
+									<td>{{ lang_t('opmode.add_mesh') }}</td>
+									<td><button class="btn" @click="updateState(1)">{{ lang_t('opmode.enable') }}</button>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</tbody>
+				<tr>
+					<td colspan="12" style="text-align: left">
+						{{lang_t('opmode.crrent_device')}}
+					</td>
+				</tr>
+				<tbody v-show="this.meshState == '1'">
+					<tr class="table-title1">
+						<th>ID</th>
+						<th>{{ lang_t('opmode.device_name') }}</th>
+						<th>IP</th>
+						<th>MAC</th>
+					</tr>
+					<tr v-for="(list,v) in this.device" >
+						<td>{{list.idx}}</td>
+						<td>{{ list.device_name }}</td>
+						<td style="cursor: pointer;color:blue" @click="gotoSlave(list.ip)" >{{ list.ip }}</td>
+						<td>{{ list.mac }}</td>
+					</tr>
+				</tbody>
+				<tr v-if="this.meshState == '0'">
+					<td colspan="12">{{ lang_t('opmode.msg2') }}</td>
+				</tr>			
+			</table>
+
+			<div :style="{'padding-right': padValue}" v-show="!isEdit">
+				<x-page :total="dataTotal" @on-page="pageChange" :data="data"></x-page>
+			</div>
+	    </div>
+  	</div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,opmode:"",currentMode:"gw",modeShow:!0,meshShow:!1,meshOff:!1,apScanList:[],dataTotal:0,data:[],padValue:"",opmodeArr:[],isEdit:!1,ssid:"",pass:"",passDisable:!1,tempData:{},wifiOff:"",wifiOff5g:"",aplist:[],device:[],meshEnabled:"",meshState:"",meshInfo:"",scan_enable:!1}},computed:{opmodeMenu:function(){var t=temp=tempArr=[];temp=this.opmodeArr;var i=this.currentMode;for(var e in temp)t[e]={},t[e].name=temp[e],t[e].src="/static/images/opmode/"+temp[e]+"_on.png",i==temp[e]?t[e].class="":t[e].class="img-invert";return t},imgSel:function(){return"/static/images/opmode/"+this.currentMode+"_on.png"},opTitle:function(){return this.lang_t("opmode."+this.currentMode)},formRules:function(){var n=this;return{pass:function(t,i){var e=cs.string(t);0==e?i(n.lang_t("wifi.pass")+n.lang_t("wifi.msg6")):1==e?i(n.lang_t("wifi.msg5")):t.length<8||63<t.length?i(n.lang_t("wifi.msg4")):i()}}}},created:function(){var i=this;uiPost.getOpModeCfg(function(t){i.opmode=t.opmode,i.currentMode=t.opmode,i.opmodeArr=t.opModeSupport.split(";"),i.wifiOff=t.wifiOff,i.wifiOff5g=t.wifiOff5g,i.meshOff="1"==t.meshEnabled,"mesh"==i.opmode&&i.updateMeshState()})},mounted:function(){this.$refs.content.style.height=window.innerHeight-101-34+"px"},methods:{updateMeshState:function(){var i=this;"1"==i.wifiOff||"1"==i.wifiOff5g?i.meshOff=!1:uiPost.getWiFiMeshConfig(function(t){i.meshState=t.meshState,i.device=t.meshInfo})},gotoSlave:function(t){window.open("http://"+t+"/basic/slave_status.html")},modeFun:function(i){if("rpt"==i||"wisp"==i)this.currentMode=i,this.modeShow=!1,this.meshShow=!1,this.scanFun();else if("mesh"==i)this.currentMode=i,this.modeShow=!1,this.meshShow=!0;else{if(i==this.opmode)return;this.currentMode=i,Cstool.Msg({type:"confirm",content:this.lang_t("opmode.msg1",[this.lang_t("opmode."+i)]),ok:function(){var t={opmode:i};uiPost.setOpModeCfg(t,function(t){var i=15;null!=t.wtime&&0!=t.wtime&&(i=t.wtime),Cstool.Count(i,"js",function(){location.href=location.href})})}})}},encryptImg:function(t){var i="static/images/lock.png";return"NONE"==t&&(i="static/images/unlock.png"),i},signalImg:function(t){var i="static/images/signal_weak.png";return 40<=(t=Number(t))&&t<80?i="static/images/signal_medium.png":80<=t&&(i="static/images/signal_good.png"),i},editFun:function(t){this.ssid=t.ssid,"NONE"==(this.tempData=t).encrypt?this.passDisable=!1:this.passDisable=!0,this.isEdit=!0},closeFun:function(){this.modeShow=!0,this.isEdit=!1,this.apScanList=[]},applyFun:function(){var e=this;Cstool.Verify(this.formRules,function(t){if(t){var i={};(i=e.tempData).opmode=e.currentMode,"NONE"!=e.tempData.encrypt&&(i.password=e.pass),uiPost.setWiFiRepeaterCfg(i,function(t){var i=15;null!=t.wtime&&0!=t.wtime&&(i=t.wtime),Cstool.Count(i,"js",function(){location.href=location.href})})}})},updateState:function(t){var n=this,i={};if("1"==n.wifiOff5g)return Cstool.Msg({content:n.lang_t("opmode.msg4")}),!1;0==t?(i.meshEnabled=n.meshOff?"1":"0",uiPost.setWiFiMeshConfig(i,function(t){var i=t.lan_ip,e=15;null!=t.wtime&&0!=t.wtime&&(e=t.wtime),n.meshEnabled?Cstool.Count(e,"js",function(){location.href="http://"+i+"/login.html"}):Cstool.Count(e,"js",function(){location.href=location.href})})):1==t&&(i.meshEnabled="1",uiPost.setWiFiMeshConfig(i,function(t){t.lan_ip;var i=15;null!=t.wtime&&0!=t.wtime&&(i=t.wtime),Cstool.Count(i,"js",function(){location.href=location.href})}))},scanFun:function(){var i=this;this.isEdit?this.isEdit=!1:(this.apScanList=[],uiPost.getWiFiApcliScan(function(t){i.apScanList=t,i.data=t,i.dataTotal=t.length,0==i.dataTotal?i.scan_enable=!0:i.scan_enable=!1,i.sinalSort("refre"),i.pagePad()}))},sinalSort:function(t){var n=this,i=n.apScanList.sort(function(t,i){var e="signal";return n.rank(t[e],i[e],"desc","num")});n.apScanList=i},rank:function(t,i,e,n){var o=m=k=l=0;if("ip"==n?(o=Number(t.split(".")[2]),m=Number(i.split(".")[2]),k=Number(t.split(".")[3]),l=Number(i.split(".")[3])):"num"==n?(o=Number(t),m=Number(i)):(o=t,m=i),"asc"==e){if(o>m)return 1;if(o==m&&"ip"==n)return k>l?1:-1;if(o<m)return-1}else{if(o>m)return-1;if(o==m&&"ip"==n)return k>l?-1:1;if(o<m)return 1}},pageChange:function(t,i){this.apScanList=i},pagePad:function(){this.padValue=document.getElementById("ap_wifi").offsetLeft+"px"}}}</script><script src="/static/js/main.js"></script></body></html>

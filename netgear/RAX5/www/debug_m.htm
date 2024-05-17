@@ -1,0 +1,669 @@
+<!DOCTYPE HTML>
+<%
+      local commonCfg = require "webDebug.commonCfg"
+%>
+<html>
+<head>
+<META name="description" content="<? commonCfg.getModelNameStr()?>">
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<META http-equiv="Content-Style-Type" content="text/css">
+<META http-equiv="Pragma" content="no-cache">
+<META HTTP-equiv="Cache-Control" content="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+
+<title>NETGEAR Router <? commonCfg.getModelNameStr() ?></title>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css" type="text/css">
+<? commonCfg.getDebugConfigurefile() ?>
+<script language="javascript" type="text/javascript">
+<!--
+function init(errmsg)
+{
+  if(errmsg != "")
+	   alert(errmsg);
+	var cf2 = document.forms['cf1'];
+	if (cf2.capture_in_process.value != "")	
+	{
+	   cf2.action_Start_Capture.style.backgroundColor = "#c0c0c0";
+	   cf2.action_Start_Capture.outerHTML='<button type="SUBMIT" value="Start_Capture" name=action_Start_Capture class="button-apply apply_bt" disabled="disabled">Start Capture</button> \
+	                                      <b> <span name="capture_status" id="capture_log_status" style="color: black">Debug Log capturing in progress</span></b>';
+	}
+}
+
+function isChecked()
+{
+	var cf1 = document.forms['cf1'];
+	var cf3 = document.forms['cf3'];
+	var cf8 = document.forms['cf8'];
+	if (cf1.Start_When_Boot_Up.value == "On")
+		cf1.action_Start_When_Boot_Up.checked=true;
+	else 
+		cf1.action_Start_When_Boot_Up.checked=false;
+
+	if (cf1.dump_LAN_WAN_pkt.value == "On")
+		cf1.action_Capture_Packets.checked=true;
+	else 
+		cf1.action_Capture_Packets.checked=false;
+
+	if (cf1.dal_logs.value == "On")
+		cf1.action_dal_logs.checked=true;
+	else 
+		cf1.action_dal_logs.checked=false;
+
+/*
+	if (cf3.Enable_Telnet.value == "On")
+		cf3.action_Enable_Telnet.checked=true;
+	else 
+		cf3.action_Enable_Telnet.checked=false;		
+		*/
+	if (cf3.WAN_port_mirror_to_LAN_port.value == "On")
+		cf3.action_Mirror_Port.checked=true;
+	else 
+		cf3.action_Mirror_Port.checked=false;	
+
+    /*var cf4 = document.forms['cf4'];
+    if( cf4.stageDev.value == "1" )
+    {
+        cf4.stageDev.checked = true;
+    }
+    else
+    {
+        cf4.stageDev.checked = false;
+    }
+    if( cf4.stageProd.value == "1" )
+    {
+        cf4.stageProd.checked = true;
+    }
+    else
+    {
+        cf4.stageProd.checked = false;
+    }*/
+
+    if ("qa" == "<? commonCfg.getRAStage() ?>")
+    {
+        document.getElementById("RAstage_qa").checked = true;
+    }
+    else if ("dev" == "<? commonCfg.getRAStage() ?>")
+    {
+        document.getElementById("RAstage_dev").checked = true;
+    }
+    else
+    {
+        document.getElementById("RAstage_prod").checked = true;
+    }
+
+    if ("On" == "<? commonCfg.GetPageCfg('ra_log') ?>")
+    {
+        document.getElementById("enable_ra_log").checked = true;
+    }
+    else
+    {
+        document.getElementById("enable_ra_log").checked = false;
+    }
+
+    if ("On" == "<? commonCfg.getRADebugPrint() ?>")
+    {
+        document.getElementById("action_ra_debug").checked = true;
+    }
+    else
+    {
+        document.getElementById("action_ra_debug").checked = false;
+    }
+
+    if ("On" == "<? commonCfg.getRAEDefault() ?>")
+    {
+        document.getElementById("action_rae_default").checked = true;
+        document.getElementById("RAstage_qa").disabled = true;
+        document.getElementById("RAstage_dev").disabled = true;
+        document.getElementById("RAstage_prod").disabled = true;
+    }
+    else
+    {
+        document.getElementById("action_rae_default").checked = false;
+        document.getElementById("RAstage_qa").disabled = false;
+        document.getElementById("RAstage_dev").disabled = false;
+        document.getElementById("RAstage_prod").disabled = false;
+    }
+
+    var cf5 = document.forms['cf5'];
+    if( cf5.ReadyCloudTestServer.value == "On" )
+    {
+        cf5.action_ReadyCloudTestServer.checked = true;
+    }
+    else
+    {
+        cf5.action_ReadyCloudTestServer.checked = false;
+    }
+
+    var cf8 = document.forms['cf8'];
+    if( cf8.xagent.value == "On" )
+    {
+        cf8.action_xagent.checked = true;
+    }
+    else
+    {
+        cf8.action_xagent.checked = false;
+    }
+
+    var cf7 = document.forms['cf7'];
+    if(cf7.IPv6Ping_External_to_Internal.value == "On")
+    {
+        cf7.allow_ipv6_ping.checked = true;
+    }
+    else
+    {
+        cf7.allow_ipv6_ping.checked = false;
+    }
+}
+
+function clickStartCaptureButton()
+{
+    var cf1 = document.forms['cf1'];
+    cf1.submit();
+}
+
+function clickSaveButton()
+{
+	var cf1 = document.forms['cf1'];
+
+        cf1.submit();
+}
+
+function applyRASettings()
+{
+   console.log("submit cf4!");
+   document.getElementById("cf4").submit();
+}
+
+function raEnabled()
+{
+	//document.getElementById('raBtnLeft').className = "roundleft_button";
+	//document.getElementById('raBtnRight').className = "roundright_button";
+	document.getElementById('raParamSetting').disabled = "";
+}
+
+function raDisabled()
+{
+	//document.getElementById('raBtnLeft').className = "roundleft_grey";
+	//document.getElementById('raBtnRight').className = "roundright_grey";
+	document.getElementById('raParamSetting').disabled = "disabled";
+}
+
+function checkRAData()
+{
+	var enabled = 0;
+    var cf4 = document.forms['cf4'];
+	if (cf4.stageDev.value != cf4.raStageDev.value)
+		enabled=1;
+	if (cf4.stageProd.value != cf4.raStageProd.value)
+		enabled=1;
+/*	if (cf4.serverIP.value != cf4.raServerIP.value)
+		enabled=1;*/
+	if (cf4.HTTPserverIP.value != cf4.raHTTPServerIP.value)
+		enabled=1;
+	if (cf4.serverPath.value != cf4.raServerPath.value)
+		enabled=1;
+	if (cf4.initStartTime.value != cf4.raInitStartTime.value)
+		enabled=1;
+
+	if (enabled ==1)
+		raEnabled();
+	else
+		raDisabled();
+}
+
+/*function stageDevChange()
+{
+    var cf4 = document.forms['cf4'];
+	if (cf4.stageDev.value == "0")
+	{
+		cf4.stageDev.value = "1";
+		cf4.stageDev.checked=true;
+		cf4.stageProd.value = "0";
+		cf4.stageProd.checked=false;
+	}
+	else
+	{
+		cf4.stageProd.value = "1";
+		cf4.stageProd.checked=true;
+		cf4.stageDev.value = "0";
+		cf4.stageDev.checked=false;
+	}
+	checkRAData();
+}
+
+function stageProdChange()
+{
+    var cf4 = document.forms['cf4'];
+	if (cf4.stageProd.value == "1")
+	{
+		cf4.stageDev.value = "1";
+		cf4.stageDev.checked=true;
+		cf4.stageProd.value = "0";
+		cf4.stageProd.checked=false;
+	}
+	else
+	{
+		cf4.stageProd.value = "1";
+		cf4.stageProd.checked=true;
+		cf4.stageDev.value = "0";
+		cf4.stageDev.checked=false;
+	}
+	checkRAData();
+}*/
+
+function serverIPChange()
+{
+	checkRAData();
+}
+
+function serverPathChange()
+{
+	checkRAData();
+}
+
+function initStartTimeChange()
+{
+	checkRAData();
+}
+
+function CheckDebuglogData()
+{
+	var cf1 = document.forms['cf1'];
+	if (cf1.action_Start_When_Boot_Up.checked == true)
+	{
+		cf1.Start_When_Boot_Up.value = "On";
+	}
+	else
+	{
+		cf1.Start_When_Boot_Up.value = "Off";
+	}
+	cf1.submit();
+}
+
+function CheckDalLogData()
+{
+	var cf1 = document.forms['cf1'];
+	if (cf1.action_dal_logs.checked == true)
+	{
+		cf1.dal_logs.value = "On";
+	}
+	else
+	{
+		cf1.dal_logs.value = "Off";
+	}
+	cf1.submit();
+}
+
+function CheckRALogData()
+{
+    var cf1 = document.forms['cf1'];
+    if (cf1.enable_ra_log.checked == true)
+    {
+        cf1.ra_log.value = "On";
+    }
+    else
+    {
+      cf1.ra_log.value = "Off";
+    }
+    cf1.submit();
+}
+
+function CheckCapturePacket()
+{
+	var cf1 = document.forms['cf1'];
+
+	if (cf1.action_Capture_Packets.checked == true)
+	{
+		cf1.dump_LAN_WAN_pkt.value = "On";
+	}
+	else
+	{
+		cf1.dump_LAN_WAN_pkt.value = "Off";
+	}
+	cf1.submit();
+}
+
+
+function CheckXagent()
+{
+    var cf8 = document.forms['cf8'];
+
+    if (cf8.action_xagent.checked == true)
+    {
+        cf8.xagent.value = "On";
+    }
+    else
+    {
+        cf8.xagent.value = "Off";
+    }
+
+    cf8.submit();
+}
+
+function CheckReadyCloudTestServer()
+{
+    var cf5 = document.forms['cf5'];
+
+    if (cf5.action_ReadyCloudTestServer.checked == true)
+    {
+        cf5.ReadyCloudTestServer.value = "On";
+    }
+    else
+    {
+        cf5.ReadyCloudTestServer.value = "Off";
+    }
+
+    cf5.submit();
+}
+
+function CheckPortMirror()
+{
+    var cf3 = document.forms['cf3'];
+
+    if (cf3.action_Mirror_Port.checked == true)
+    {
+        cf3.WAN_port_mirror_to_LAN_port.value = "On";
+    }
+    else
+    {
+        cf3.WAN_port_mirror_to_LAN_port.value = "Off";
+    }
+
+    cf3.submit();
+}
+
+
+
+function CheckIPv6PingData()
+{
+    var cf7 = document.forms['cf7'];
+
+    if (cf7.allow_ipv6_ping.checked == true)
+    {
+        cf7.IPv6Ping_External_to_Internal.value = "On";
+    }
+    else
+    {
+        cf7.IPv6Ping_External_to_Internal.value = "Off";
+    }
+
+    cf7.submit();
+}
+
+function CheckRaDebugData()
+{
+    var cf4 = document.forms['cf4'];
+    if (cf4.action_ra_debug.checked == true)
+    {
+        cf4.ra_debug.value = "On";
+    }
+    else
+    {
+      cf4.ra_debug.value = "Off";
+    }
+
+}
+
+function CheckRaeDefault()
+{
+    var cf4 = document.forms['cf4'];
+    if (cf4.action_rae_default.checked == true)
+    {
+        cf4.rae_default.value = "On";
+        document.getElementById("RAstage_qa").disabled = true;
+        document.getElementById("RAstage_dev").disabled = true;
+        document.getElementById("RAstage_prod").disabled = true;
+    }
+    else
+    {
+        cf4.rae_default.value = "Off";
+        document.getElementById("RAstage_qa").disabled = false;
+        document.getElementById("RAstage_dev").disabled = false;
+        document.getElementById("RAstage_prod").disabled = false;
+    }
+
+}
+
+//-->
+</script>
+<link rel="stylesheet" type="text/css" href="css/mainpage.css">
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+
+</head>
+<body onload="init('<? commonCfg.GetPageCfg('debugresult') ?>');isChecked();">
+  <form id="cf" name="cf" action=cgi-bin/debug.plua method="POST">
+<input type="hidden" name="function" value="CF">    
+<div class="pl-10"><b>Basic Information</b></div>
+<table width="100%">
+<tr>
+<td width="22%"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU Load</b><br><br></td>
+<td width="78%"><b>CPU1: <? commonCfg.GetPageCfg("cpu1Usage") ?>% CPU2: <? commonCfg.GetPageCfg("cpu2Usage") ?>% CPU3: <? commonCfg.GetPageCfg("cpu3Usage") ?>% CPU4: <? commonCfg.GetPageCfg("cpu4Usage") ?>%</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Memory Usage (Used/Total)</b><br><br></td>
+<td><b><? commonCfg.GetPageCfg("memUsed") ?>MB/<? commonCfg.GetPageCfg("memTotal") ?>MB</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flash Usage (Used/Total)</b><br><br></td>
+<td><b><? commonCfg.GetPageCfg("flashUsed") ?>MB/<? commonCfg.GetPageCfg("flashTotal") ?>MB</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network Session (Active/Total)</b><br><br></td>
+<td><b><? commonCfg.GetPageCfg("activatedSessions") ?>/<? commonCfg.GetPageCfg("totalSessions") ?></b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System Uptime</b><br><br></td>
+<td><b> <? commonCfg.GetPageCfg("sysUptime") ?></b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SKU Name</b><br><br></td>
+<td><b> <? commonCfg.GetPageCfg("skuName") ?></b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NMRP Region</b><br><br></td>
+<td><b> <? commonCfg.GetPageCfg("nmrpRegion") ?></b><br><br></td>
+</tr>
+<tr>
+  <td>
+    <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WLAN Driver Version</b><br><br>
+  </td>
+  <td>
+    <b> <? commonCfg.GetPageCfg("wlanDriverVersion") ?></b><br><br>
+  </td>
+</tr>
+</table>
+</form>
+    <tr><td colspan="2" height="12"><div style="background-image:url('/images/seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp; </div></td></tr>
+    <form id="cf1" name="cf1" action=cgi-bin/debug.plua method="POST">
+      <input type="hidden" name="function" value="CF1">
+&nbsp;&nbsp;
+<b>Debug Log Capture</b>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="checkbox" id="log_capture_st" name="action_Start_When_Boot_Up" value="Start_When_Boot_Up" onclick=CheckDebuglogData();><b> Start Debug Log Capture when boot up</b>
+<br><br>
+<input type="hidden" name="Start_When_Boot_Up" value="<? commonCfg.GetPageCfg("Start_When_Boot_Up") ?>">
+<input type="hidden" name="form" value="1" >
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="checkbox" id="wanlan_capture_en" name="action_Capture_Packets" value="Capture_Packet" onclick=CheckCapturePacket()><b> Enable LAN/WAN Packet Capture</b>
+<input type="hidden" name="dump_LAN_WAN_pkt" value="<? commonCfg.GetPageCfg("dump_LAN_WAN_pkt") ?>">
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="checkbox" id="dal_log_en" name="action_dal_logs" value="DAL_Log" onclick=CheckDalLogData();><b> Enable DAL Log</b>
+<input type="hidden" name="dal_logs" value="<? commonCfg.GetPageCfg("dal_logs") ?>">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="checkbox" id="enable_ra_log" name="enable_ra_log" value="ra_log" onclick="CheckRALogData();" ><b> Collect Router Analytic Log </b>
+<input type="hidden" name="ra_log" value="<? commonCfg.GetPageCfg('ra_log') ?>" >
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Store location</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<select name="store_location" id="store_location" disabled>
+<option value="System Memory" <? commonCfg.GetPageCfg("select_systemMemory") ?>>System Memory&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
+<option value="USB Device" <? commonCfg.GetPageCfg("select_USBStorage") ?>>USB Storage</option>
+</select>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<button type="SUBMIT" value="Start_Capture" name="action_Start_Capture" id="start_capture" onclick="clickStartCaptureButton();" class="button-apply apply_bt" >
+Start Capture
+</button>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button type="SUBMIT" value="DebugLog" id="save_log" name="DebugLog" onclick="clickSaveButton();" class="button-apply apply_bt">
+Save Debug Log
+</button> 
+
+<!--
+<button type="button" value="Start_Capture" name="action_Start_Capture" id="start_capture" onclick="clickStartCaptureButton();" class="button-apply apply_bt" >
+Start Capture
+</button>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button type="button" value="DebugLog" id="save_log" name="DebugLog" onclick="clickSaveButton();" class="button-apply apply_bt">
+Save Debug Log
+</button>
+!-->
+<br><br>
+<input type="hidden" name="capture_in_process" value="<? commonCfg.GetPageCfg("capture_in_process") ?>">
+<input type="hidden" name="form" value="2" >
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+    <form id="cf2" name="cf2" action=cgi-bin/debug.plua method="POST">
+      <input type="hidden" name="function" value="CF2">
+</form>
+    <form id="cf3" name="cf3" action=cgi-bin/debug.plua method="POST">
+      <input type="hidden" name="function" value="CF3">
+&nbsp;&nbsp;
+<!--
+<input type="checkbox" name="action_Enable_Telnet" value="Telnet_Enable" onclick="document.forms[3].submit();"><b> Enable Telnet</b>
+<input type="hidden" name="Enable_Telnet" value="Off">
+<br><br>-->
+&nbsp;&nbsp;
+<input type="checkbox" id="mirrortolan_wan" name="action_Mirror_Port" value="Port_mirror" onclick="CheckPortMirror()"><b> WAN Port mirror to LAN port 1</b>
+<input type="hidden" name="WAN_port_mirror_to_LAN_port" value="<? commonCfg.GetPageCfg("WAN_port_mirror_to_LAN_port") ?>">
+<input type="hidden" name="form" value="3" >
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+
+<br>
+<form id="cf7" name="cf7" action=cgi-bin/debug.plua method="POST">
+  <input type="hidden" name="function" value="CF7">
+&nbsp;&nbsp;
+&nbsp;&nbsp;
+<input type="checkbox" id="allow_ipv6_ping_ch" name="allow_ipv6_ping" value="ipv6_ping" onclick="CheckIPv6PingData();"><b> Allow external IPv6 hosts ping internal IPv6 hosts </b>
+<input type="hidden" name="IPv6Ping_External_to_Internal" id="IPv6Ping_External_to_Internal" value="<? commonCfg.GetPageCfg("IPv6Ping_External_to_Internal") ?>">
+<input type="hidden" name="form" value="7" >
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+    <tr><td colspan="2" height="12"><div style="background-image:url('images/seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp; </div></td></tr>
+<?php GetRAX35Str("CommentStart") ?>
+<form id="cf5" name="cf5" action=cgi-bin/debug.plua method="POST">
+  <input type="hidden" name="function" value="CF5">
+<input type="checkbox" name="action_ReadyCloudTestServer" style="display:none" onclick="CheckReadyCloudTestServer();" >
+<input type="hidden" name="form" value="5" >
+<input type="hidden" name="ReadyCloudTestServer" value="<? commonCfg.GetPageCfg("ReadyCloudTestServer") ?>" >
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+<form id="cf8" name="cf8" action=cgi-bin/debug.plua method="POST">
+<input type="hidden" name="function" value="CF8">  
+&nbsp;&nbsp;
+&nbsp;&nbsp;
+<input type="checkbox" name="action_xagent"  onclick="CheckXagent();" ><b> Enable xagent</b>
+<input type="hidden" name="form" value="8">
+<input type="hidden" name="xagent" value="<? commonCfg.GetPageCfg("xagentEn") ?>"  >
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+    <tr><td colspan="2" height="12"><div style="background-image:url('images/seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp; </div></td></tr>
+    <form id="cf4" name="cf4" action=cgi-bin/debug.plua method="POST">
+      <input type="hidden" name="function" value="CF4">  
+&nbsp;&nbsp;
+<b>RA Stage Management</b>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b> RA Stage: </b>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="radio" id="RAstage_qa" name="RAstage" value="QA" onclick="" ><b> QA </b>
+&nbsp;&nbsp;
+<input type="radio" id="RAstage_dev" name="RAstage" value="Dev" onclick="" ><b> Dev </b>
+&nbsp;&nbsp;
+<input type="radio" id="RAstage_prod" name="RAstage" value="Prod" onclick="" ><b> Prod </b>
+&nbsp;&nbsp;
+<br><br>
+<table width="45%">
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https server:</b><br><br></td>
+<td nowrap width="20%" align="left"><input type="text" name="HTTPserverIP" value="<? commonCfg.GetPageCfg("HTTPServerIP") ?>" onchange="serverIPChange();" size="18" maxlength="33"></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Directory path:</b><br><br></td>
+<td nowrap width="50%" align="left"><input type="text" name="serverPath" value="<? commonCfg.GetPageCfg("ServerPath") ?>" onchange="serverPathChange();" size="18" maxlength="33"></td>
+</tr>
+<tr style="display:none">
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Initial start time:</b><br><br></td>
+<td nowrap width="50%" align="left"><input type="text" name="initStartTime" value="<? commonCfg.GetPageCfg("InitStartTime") ?>" onchange="initStartTimeChange();" size="18" maxlength="33"></td>
+</tr>
+<tr>
+   <td>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debugging Interval:</b><br><br>
+   </td>
+   <td nowrap width="50%" align="left">
+      <input type="text" name="debugInterval" value="<? commonCfg.getDebugInterval() ?>" size="18" maxlength="33">(mins)
+   </td>
+</tr>
+<tr>
+   <td>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update Interval:</b><br><br>
+   </td>
+   <td nowrap width="50%" align="left">
+      <input type="text" name="updateInterval" value="<? commonCfg.getUpdateInterval() ?>" size="18" maxlength="33">(mins)
+   </td>
+</tr>
+<tr>
+   <td>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
+      <input type="checkbox" id="action_ra_debug" name="action_ra_debug" value="ra_debug" onclick=CheckRaDebugData();><b> Enable RA debug</b>
+      <br><br>
+   </td>
+</tr>
+<tr>
+   <td>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
+      <input type="checkbox" id="action_rae_default" name="action_rae_default" value="rae_default" onclick=CheckRaeDefault();><b> RAE Default</b>
+      <br><br>
+   </td>
+</tr>
+
+<tr>
+   <td>&nbsp;&nbsp;&nbsp;&nbsp;
+      <button type="SUBMIT" value="raChange" id="raParamSetting" class="button-apply apply_bt" onclick="applyRASettings();" >
+         Apply RA Settings
+      </button>
+   </td>
+</tr>
+</table>
+<input type="hidden" name="form" value="4" >
+<input type="hidden" name="raStageDev" value="<? commonCfg.GetPageCfg("raStageDev") ?>" >
+<input type="hidden" name="raStageProd" value="<? commonCfg.GetPageCfg("raStageProd") ?>" >
+<input type="hidden" name="raServerIP" value="<? commonCfg.GetPageCfg("raServerIP") ?>" >
+<input type="hidden" name="raHTTPServerIP" value="<? commonCfg.GetPageCfg("raHTTPServerIP") ?>" >
+<input type="hidden" name="raServerPath" value="<? commonCfg.GetPageCfg("raServerPath") ?>" >
+<input type="hidden" name="raInitStartTime" value="<? commonCfg.GetPageCfg("raInitStartTime") ?>" >
+<input type="hidden" name="ra_debug" value="<? commonCfg.getRADebugPrint() ?>">
+<input type="hidden" name="rae_default" value="<? commonCfg.getRAEDefault() ?>">
+<INPUT type="hidden" name="USER_SET_TOKEN" value="">
+</form>
+</body>
+</html>

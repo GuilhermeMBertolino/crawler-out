@@ -1,0 +1,45 @@
+#!/bin/sh
+
+DIR="/opt/bitdefender"
+LOCK_FILE="/tmp/bitdefender/bdi_watcher.lock"
+
+die() {
+    echo "$*" 1>&2
+    exit 1
+}
+
+start_services() {
+    cd $DIR || die "Failed to open $DIR"
+
+    sh $DIR/iptables.sh init -6 >/dev/null 2>&1 ||
+            die "Failed to initialize iptables"
+
+    ulimit -s 64
+    $DIR/bdi_watcher -c $DIR/config.json -n /tmp/bitdefender/bdi_ipc -e /tmp/bitdefender/log -l $LOCK_FILE >/dev/null 2>&1 ||
+            die "Failed to start watcher"
+}
+
+stop_services() {
+    cd $DIR || die "Failed to open $DIR"
+
+    $DIR/bdi_watcher -q -l $LOCK_FILE >/dev/null 2>&1 ||
+            die "Failed to stop watcher"
+
+    sh $DIR/iptables.sh uninit -6 >/dev/null 2>&1 ||
+            die "Failed to uninitialize iptables"
+}
+
+case "$1" in
+    start)
+        start_services
+    ;;
+    stop)
+        stop_services
+    ;;
+    *)
+        echo "Usage: $0 <start|stop>"
+        exit 1
+    ;;
+esac
+
+exit 0

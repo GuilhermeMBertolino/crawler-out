@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+    <name>Local Network Settings | IPV4 | IPV6</name>
+        <description>Local Area Network(LAN) provides networking capability to clients connected on the LAN Side of the CPE. Supports DHCP Server, DHCP Relay configuration for IPv4 and Stateless Autoconfiguration, Stateless DHCPv6 and Stateful DHCPv6 for IPv6</description>
+    </header>
+    <object   viewtype="form" Type="string">
+        <!-- <object   viewtype="form" Type="string" name="Device.IP.Interface.IPv4Address.1,Device.DHCPv4.Server.Pool.1,Device.DHCPv4.Relay.Forwarding.1"> -->
+        <object name="Device.IP.Interface.1.IPv4Address.1">
+            <parameter  name="IPAddress"  type="string" webname="Device IP Address" ></parameter>
+            <parameter   name="SubnetMask"  type="string" Display="Yes" webname="Subnet Mask" ></parameter>
+            <!--<parameter  name="DeviceMacAddress"  type="string" webname="Device Mac Address"></parameter>-->
+        </object>
+        <object name="temp" > 
+            <parameter  name="DHCPMode"  type="dropdown" validvalues="Server,Relay,Disable" webname="DHCP Mode" changefun="true" ></parameter>
+        </object>
+        <object name="Device.DHCPv4.Server.Pool.1" parent="'Server'" parentname="temp" depends="DHCPMode">
+            <parameter   name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+            <parameter   name="MinAddress"  type="string" Display="Yes" webname="Begin Address" ></parameter>
+            <parameter   name="MaxAddress"  type="string" Display="Yes" webname="End Address" ></parameter>
+            <parameter   name="LeaseTime"  type="dropdown" Display="Yes" url="DHCPLeaseTime" webname="Lease Time" ></parameter>
+        </object>
+        <object name="Device.DHCPv4.Relay.Forwarding.1" parent="'Relay'" parentname="temp" depends="DHCPMode">
+            <parameter   name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+            <parameter   name="DHCPServerIPAddress"  type="string" webname="Relay IP Address" ></parameter>
+        </object>
+        <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+        <parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+    </object>
+   <object   viewtype="form" Type="string">
+
+	<object name="Device.IP">
+	      <!-- <parameter  name="ULAPrefix"  type="string"  Display="Yes" webname="LAN IPv6 Address" ></parameter>-->
+	</object>
+	                       	
+	<object name="Device.IPv6" >
+	            <parameter  name="X_LANTIQ_COM_IPv6_LANMode"  type="dropdown" validvalues="Stateless Address Autoconfiguration,Stateless Address Autoconfiguration + Stateless DHCPv6,Stateful DHCPv6" webname="Auto Configuration Mode" changefun="true" ></parameter>
+	</object>
+	                     
+	<object name="Device.RouterAdvertisement.InterfaceSetting.1" parent="'Stateless Address Autoconfiguration'" parentname="Device.IPv6" depends="X_LANTIQ_COM_IPv6_LANMode">
+	  <parameter   name="Prefixes"  type="string" Display="Yes" webname="Prefix" ></parameter>
+	</object>
+	<object name="Device.RouterAdvertisement.InterfaceSetting.1" parent="'Stateless Address Autoconfiguration + Stateless DHCPv6'" parentname="Device.IPv6" depends="X_LANTIQ_COM_IPv6_LANMode">
+	  <parameter   name="Prefixes"  type="string" Display="Yes" webname="Prefix" ></parameter>
+	</object>
+	<object name="Device.IPv6" parent="'Stateless Address Autoconfiguration + Stateless DHCPv6'" parentname="Device.IPv6" depends="X_LANTIQ_COM_IPv6_LANMode">
+	          <parameter   name="X_LANTIQ_COM_PRI_DNSv6"  type="string" Display="Yes" webname="Primary DNSv6" ></parameter>
+	          <parameter   name="X_LANTIQ_COM_SEC_DNSv6"  type="string" Display="Yes" webname="Secondary DNSv6" ></parameter>
+	          <parameter   name="X_LANTIQ_COM_V6_DOMAIN_NAME"  type="string" Display="Yes" webname="Domain Name" ></parameter>
+	</object>
+	
+	<object name="Device.DHCPv6.Server.Pool.1" parent="'Stateful DHCPv6'" parentname="Device.IPv6" depends="X_LANTIQ_COM_IPv6_LANMode">
+	         <!-- <parameter   name="IANAPrefixes"  type="string" Display="Yes" webname="Start Address" ></parameter>-->
+	         <!-- <parameter   name="IANAManualPrefixes"  type="string" Display="Yes" webname="End Address" ></parameter>-->
+	</object>
+	                                    		                                                                    
+         <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+         <parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+   </object>
+            	                                                                                 
+</view>

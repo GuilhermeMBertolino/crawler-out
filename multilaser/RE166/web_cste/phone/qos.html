@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/style.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div class="toper">
+	<phone-back type="custom" :title="lang_t('menu.application')" @on-click="backFun"></phone-back>
+  </div>
+  <div class="nav">
+	<div style="float:left;width:83%;">{{ lang_t('menu.qos') }}</div>
+	<div class="nav-sw" v-show="listType == 'main'">
+	  <x-switch v-model="qosState" @change="changeQosState"></x-switch>
+	</div>
+  </div>  
+  <div class="content-tab" v-if="qosState">
+	<div class="tab" @click="pageChange(1)" v-show="listType == 'main' || listType == 'set'">
+	  <div class="tab-l" style="padding:18px 0 0 5%;"><img src="/static/images/phone/open.png" v-show="listType == 'main'"></div>
+	  <div class="tab-c">{{ lang_t('rule.qos_bandwidth') }}</div>
+	</div>
+	<div class="tab" @click="addBtn" v-show="listType == 'main' || listType == 'list'">
+	  <div class="tab-l" style="padding:18px 0 0 5%;"><img src="/static/images/phone/open.png" v-show="listType == 'main'"></div>
+	  <div class="tab-c">{{ lang_t('common.add_rules') }}</div>
+	</div>
+  </div>
+  <div v-if="qosState">
+    <div class="content" v-if="listType == 'set'">
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('qos.up') }}<br>(Mbps)</div>
+	    <div class="item-r">
+		  <input type="text" v-model="qos_up_bw" :maxlength="maxLoadLen">
+	    </div>
+	  </div>
+	  <div class="space"></div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('qos.down') }}<br>(Mbps)</div>
+	    <div class="item-r">
+		  <input type="text" v-model="qos_down_bw" :maxlength="maxLoadLen">
+	    </div>
+	  </div>
+	  <div class="group"></div>
+	  <div class="footer">
+	    <button class="btn" @click="applyFun(0)">{{ lang_t('common.apply') }}</button>
+	  </div>
+    </div>
+	<div class="content-list" v-show="listType != 'set'&&homepage" :style="{height: listHeight,'overflow-y':'auto'}">
+	  <div class="list2" v-for="(data,v) in dataList" @click="showBtn(data,v)">
+	    <div class="list2-l">
+		  <img src="/static/images/phone/pc.png">
+		</div>
+		<div class="list2-c">
+		  <p v-if="data.ip">IP: {{ data.ip }}</p>
+		  <p v-if="data.mac">MAC: {{ data.mac }}</p>
+		  <p>
+		    <b style="font-size:14px;color:#f60;">&uarr;</b>
+		    {{ data.maxUpload/1000 }} Mbps&nbsp;
+		    <b style="font-size:14px;color:#6fc969">&darr;</b>
+		    {{ data.maxDownload/1000 }} Mbps
+		  </p>
+	    </div>
+	    <div class="list2-r">
+		  <img src="/static/images/phone/sign_right.png">
+	    </div>
+	  </div>
+	</div>
+    <div class="content" v-show="!homepage">
+	  <div class="group" v-if="globalConfig.addFlag=='1'">
+		<div class="item-l">{{ lang_t('rule.addrType') }}</div>
+		<div class="item-r">
+		  <select v-model="type" @change="ip=''">
+			<option value="0">{{ lang_t('rule.ip') }}</option>
+			<option value="1" v-if="globalConfig.qosMacSupport">{{ lang_t('rule.mac') }}</option>
+		  </select>
+		</div>			
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ type=='0'?lang_t('rule.ip'):"MAC" }}</div>
+	    <div class="item-r">
+		  <input type="text" v-model="ip" maxlength="17" @input="ipFun">
+	    </div>
+	  </div>
+	  <div class="group">
+	    <div class="item-sw">{{ lang_t('qos.msg7') }}</div>
+	    <div class="item-r">
+		  <x-switch v-model="qosip"></x-switch>
+	    </div>
+	  </div>
+	  <div class="group" v-show="qosip">
+	    <div class="item-l">{{ lang_t('qos.msg8') }}</div>
+	    <div class="item-r">
+		  <select v-model="selectqos" @change="userFun">
+		    <option value="0">{{ lang_t('wan.none') }}</option>
+		    <option :value="type=='0'?option.ip:option.mac" v-for="(option,v) in options" :key="v">{{ (type=='0'? option.ip : option.mac) +' '+ option.name }}</option>
+		  </select>
+	    </div>			
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('rule.max_up_speed') }}<br>(Mbps)</div>
+	    <div class="item-r">
+		  <input type="text" v-model="up" :maxlength="maxLoadLen">
+	    </div>
+	  </div>
+	  <div class="space"></div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('rule.max_down_speed') }}<br>(Mbps)</div>
+	    <div class="item-r">
+		  <input type="text" v-model="down" :maxlength="maxLoadLen">
+	    </div>
+	  </div>
+	  <div class="group"></div>
+	  <div class="footer">  
+		<button class="btn" v-show="!append" @click="applyFun(1)">{{ lang_t('common.apply') }}</button>
+	    <button class="btn" v-show="append"  @click="applyFun(2)">{{ lang_t('common.apply') }}</button><br>&nbsp;<br>
+	    <button class="btn btn-red" v-show="append" @click="deleteBtn">{{ lang_t('common.delete') }}</button>
+	  </div>	
+	  <div class="space"></div>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,data:[],homepage:!0,tempIdx:0,append:!1,listType:"main",editState:"add",selectType:"0",qosState:!1,dataList:[],listHeight:"300px",modify:!1,modefy:!1,flag:"add",ip:"",qos_up_bw:"200",qos_down_bw:"200",up:"",down:"",lanNetmask:"",lanIp:"",selectqos:"0",options:[],qosip:!1,maxLoadVal:1e3,maxLoadLen:4,type:"0"}},computed:{backTitle:function(){return this.modify&&!this.homepage?this.lang_t("menu.qos"):""}},created:function(){var a=this;location.host;a.listHeight=window.innerHeight-168+"px",uiPost.getSmartQosCfg(function(t){a.qosState="1"==t.enable,a.qos_up_bw=t.totalUp/1e3,a.qos_down_bw=t.totalDown/1e3,a.lanNetmask=t.lanNetmask,a.lanIp=t.lanIp,"100"==t.bandWidth&&(a.maxLoadVal=100,a.maxLoadLen=3),t.rule&&(a.dataList=t.rule,a.dataTotal=a.dataList.length,a.data=t.rule)}),a.scanFun()},methods:{backFun:function(){"main"==this.listType?location.href="/phone/application.html":location.href="/phone/qos.html"},scanFun:function(){var a=this;uiPost.getDeviceInfo(function(t){a.options=t.rule})},ipFun:function(){var t=!1;for(var a in this.options)if(this.ip==this.options[a].ip){this.selectqos=this.ip,t=!0;break}t||(this.selectqos="0")},userFun:function(){"0"!=this.selectqos?this.ip=this.selectqos:this.ip=""},applyFun:function(t){var a=this,i={};if(0<this.dataTotal){for(var s=this.dataList[0].maxUpload/1e3,n=this.dataList[0].maxDownload/1e3,o=0;o<this.dataTotal;o++){var e=this.dataList[o].maxUpload/1e3;s<e&&(s=e);var l=this.dataList[o].maxDownload/1e3;n<l&&(n=l)}if(a.qos_up_bw<s)return Cstool.Mark({content:a.lang_t("qos.up")+a.lang_t("rule.msg56",[s,a.maxLoadVal])}),!1;if(a.qos_down_bw<n)return Cstool.Mark({content:a.lang_t("qos.down")+a.lang_t("rule.msg56",[n,a.maxLoadVal])}),!1}if(0==t){if(0==this.verifyAdd())return;i.enable=1==a.qosState?"1":"0",i.totalUp=1e3*a.qos_up_bw,i.totalDown=1e3*a.qos_down_bw,i.addEffect="3",this.postFun(i)}else if(1==t){if(10<=a.dataTotal)return this.errorData(this.lang_t("rule.msg30",[10])),!1;for(o=0;o<a.dataTotal;o++)if(a.ip==a.data[o].ip)return this.errorData(this.lang_t("rule.msg11")),!1;if(0==this.verifyData())return;i.ip=a.ip,i.maxUpload=1e3*a.up,i.maxDownload=1e3*a.down,i.addEffect="1",this.postFun(i)}else if(2==t){if(0==this.verifyData())return;i.ip=a.ip,i.maxUpload=1e3*a.up,i.maxDownload=1e3*a.down,i.idx=String(a.flag+1),i.addEffect="2",this.postFun(i)}},deleteBtn:function(){var a=this,t={};t[this.dataList[this.flag].delRuleName]=String(this.flag),uiPost.delSmartQosCfg(t,function(t){Cstool.Mark({type:"load",time:2,content:a.lang_t("common.effective"),success:function(){Cstool.Flag({content:a.lang_t("common.set_success"),btnText:a.lang_t("common.back"),ok:function(){location.href=location.href}})}})})},showBtn:function(t,a){this.listType="list",this.editState="edit",this.homepage=!1,t.ip?(this.ip=t.ip,this.type="0"):(this.ip=t.mac,this.type="1"),this.up=t.maxUpload/1e3,this.down=t.maxDownload/1e3,this.flag=a,this.tempIdx=a,this.append=!0},addBtn:function(){this.listType="list",this.editState="add",this.homepage=!1,this.append=!1,this.ip="",this.up="",this.down="",this.tempIdx=""},backFun:function(){"main"==this.listType?location.href="/phone/application.html":location.href="/phone/qos.html"},modefyFun:function(t,a){this.ip=t.ip,this.up=t.maxUpload/1e3,this.down=t.maxDownload/1e3,this.flag=a,this.modify=!0},addFun:function(t){this.ip="","rule"==t?this.flag="modify":(this.homepage=!0,this.flag="add",this.up="",this.down=""),this.modify=!0},pageChange:function(t){this.listType="set"},verifyAdd:function(){var t;return 0==(t=cs.num_range(this.qos_up_bw,1,this.maxLoadVal))?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg12")),!1):1==t?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg24")),!1):2==t?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg56",[1,this.maxLoadVal])),!1):0==(t=cs.num_range(this.qos_down_bw,1,this.maxLoadVal))?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg12")),!1):1==t?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg24")),!1):2==t?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg56",[1,this.maxLoadVal])),!1):void 0},verifyData:function(){var t;return 0==(t=cs.ip(this.ip))?(this.errorData("IP"+this.lang_t("network.msg1")),!1):1==t?(this.errorData("IP"+this.lang_t("network.msg2")),!1):2==t||3==t||4==t?(this.errorData("IP"+this.lang_t("network.msg6")),!1):this.lanIp==this.ip?(this.errorData("IP"+this.lang_t("rule.msg2")),!1):0==cs.ip_subnet(this.ip,this.lanNetmask,this.lanIp)?(this.errorData("IP"+this.lang_t("rule.msg3")),!1):0==(t=cs.num_range(this.up,1,this.qos_up_bw))?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg12")),!1):1==t?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg24")),!1):2==t?(this.errorData(this.lang_t("rule.up")+this.lang_t("rule.msg56",[1,this.qos_up_bw])),!1):0==(t=cs.num_range(this.down,1,this.qos_down_bw))?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg12")),!1):1==t?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg24")),!1):2==t?(this.errorData(this.lang_t("rule.down")+this.lang_t("rule.msg56",[1,this.qos_down_bw])),!1):void 0},errorData:function(t){Cstool.Mark({content:t,l_text:this.lang_t("common.back")})},changeQosState:function(t){var a={};a.enable=t?"1":"0",a.addEffect="0",this.postFun(a)},postFun:function(t){var a=this;$("button").attr("disabled",!0),uiPost.setSmartQosCfg(t,function(t){$("button").attr("disabled",!1),Cstool.Mark({type:"load",time:2,content:a.lang_t("common.effective"),success:function(){Cstool.Flag({content:a.lang_t("common.set_success"),btnText:a.lang_t("common.back"),ok:function(){a.modify=!1,location.href=location.href}})}})})}}}</script><script src="/static/js/main.js"></script></body></html>

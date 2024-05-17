@@ -1,0 +1,249 @@
+<html>
+<head>
+<META name="description" content="@model_name#">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="Pragma" content="no-cache">
+<META HTTP-equiv="Cache-Control" content="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+<title>Readyshare Remote</title>
+<script language="javascript" type="text/javascript" src="string.js"></script>
+<link rel="stylesheet" href="style/form.css">
+<link rel="stylesheet" href="style/usb.css">
+<script language="javascript" type="text/javascript" src="utility.js"></script>
+<script language="javascript" type="text/javascript" src="linux.js"></script>
+<script language="javascript" type="text/javascript" src="funcs.js"></script>
+<script type="text/javascript">
+<!-- hide script from old browsers
+
+var status = "@remoteshare_status#";
+var pppoa_dod = "@h_pppoa_dod#";
+var pppoe_dod = "@h_pppoe_dod#";
+var wan_mode = "@h_wan_mode#";
+var wan_up = "@h_wan_up#";
+
+function checkData(is_unregister)
+{
+	if (is_unregister == 1)
+	{
+		document.forms[0].is_unregister.value = 1;
+	}
+	if((pppoa_dod=="manually" && wan_mode=="pppoa") || (pppoe_dod=="manually" && wan_mode=="pppoe"))
+	{
+		if(wan_up=="0")
+		{
+			alert("Your router or gateway is not connected to the Internet. You need an Internet connection in order to register your router or gateway with ReadyCLOUD. Connect your router or gateway to the Internet and try again.");
+			return false;
+		}else{
+			alert("If you register your router with ReadyCLOUD, you need to change your router's Internet connection mode from Manually Connection to Always On in order for ReadyCLOUD to remotely access the connected USB storage device. Go to the Internet Setup page to make this change.");
+			document.forms[0].submit();
+			return true;
+		}
+	}
+	if((pppoa_dod=="dial" && wan_mode=="pppoa") || (pppoe_dod=="dial" && wan_mode=="pppoe"))
+	{
+		if(confirm("If you register your router with ReadyCLOUD, your router's Internet connection mode will change from Dial on Demand to Always On. This change is required for ReadyCLOUD to remotely access the connected USB storage device. Do you want to continue?"))
+		{
+			document.forms[0].need_change_wan_to_always.value = 1;
+			//dataToHidden(document.forms[0]);
+			document.forms[0].submit();
+			return true;
+		}else
+		{
+			return false;
+		}
+	}
+	document.forms[0].submit();
+	return true;
+}
+function goto_func(page)
+{
+	self.location.href = page;
+}
+function init()
+{
+	document.getElementById("div1").style.display="none";
+	document.getElementById("div2").style.display="none";
+	
+	if (status == "registered"||status == "bootup_reg"||status == "unregisterfail")
+	{
+		document.getElementById("div2").style.display = "block";
+	} else if (status == "registering")
+	{
+		// keep two div hidden
+	} else
+	{
+		document.getElementById("div1").style.display = "block";
+	}
+}
+
+// -->
+</script>
+</head>
+
+<body bgcolor="#ffffff" leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" onLoad="init();">
+<form name="wsw_summary" action="setup.cgi@post_par#" method="post">
+<div id="usb_labels" style="position:static;">
+	<table width="100%" border="0" cellpadding="0" cellspacing="2"><tr><td nowrap colspan="2" align="center">
+	<div id="space_label"></div>
+	<div class="label_unclick">
+		<a id="ReadyShare" onclick="goto_func('usb_adv.htm')">ReadySHARE</a>
+	</div>
+	<div id="space_label"></div>
+	<div class="label_unclick">
+		<a id="MediaServer" onclick="goto_func('USB_media.htm')">Media Server</a>
+	</div>
+	<div id="space_label"></div>
+	<div class="label_click">
+		<a id="ReadyCloud" onclick="goto_func('Readyshare_remote.htm')">ReadyCLOUD</a>
+	</div>
+	</td></tr></table>
+</div><br>
+<div class="page_title" languageCode="99999">ReadyCLOUD</div>
+<div id="main" style="top:102px">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+<td colspan="2" background="liteblue.gif" height="12"></td>
+</tr>
+<tr>
+<td>
+<span languagecode="10692">The ReadyCLOUD feature gives you remote access over the Internet to a USB storage device that is connected to your router's USB port.</span>
+</td>
+</tr>
+
+<tr>
+<td>
+<strong><span languagecode="10693"><b>How to Set Up ReadyCLOUD</b></span></strong>
+</td>
+</tr>
+
+<tr>
+	<td>
+	<span languagecode="10694">Step 1:You need a ReadyCLOUD account. If you do not have one, </span>
+	<a class="style1" style="color: #0000FF;text-decoration: underline" href="http://readycloud.netgear.com/client/index.htm#page=manage" target="_blank"><span languagecode="3935">click here</span></a>
+	<span languagecode="10695"> to create an account and select "Create Account".</span>
+	</td>
+</tr>
+
+<tr>
+	<td>
+	<span languagecode="10696">Step 2:Go to router GUI </span>
+	<a class="style1" style="color: #0000FF;text-decoration: underline" href="http://routerlogin.net" target="_blank">http://routerlogin.net</a>
+	<span languagecode="10697"> ReadySHARE page, select ReadyCLOUD option, and enter your ReadyCLOUD user name and password to register your router with ReadyCLOUD.</span>
+	</td>
+</tr>
+
+<tr>
+	<td>
+	<span languagecode="10698">Step 3:Log back into </span>
+	<a class="style1" style="color: #0000FF;text-decoration: underline" href="http://readycloud.netgear.com" target="_blank">http://readycloud.netgear.com</a>
+	<span languagecode="10699"> with your ReadyCLOUD account. The USB device that is connected to your router displays.</span>
+	</td>
+</tr>
+
+<tr>
+	<td>
+	<strong><span languagecode="10711"><b>Note:</b></span></strong>	
+	<span languagecode="10700">You can use a supplementary remote application to make a secure connection from your computer or mobile device to the router's USB device.</span>
+	</td>
+</tr>
+
+<tr>
+	<td>
+	<span languagecode="10701">Log in to this remote application and you can access the USB device from anywhere. </span>
+	<a class="style1" style="color: #0000FF;text-decoration: underline" href="http://readycloud.netgear.com" target="_blank"><span languagecode="3935">click here</span></a>
+	<span languagecode="10702">to get the remote application.</span>
+</td>
+</tr>
+
+ <tr>
+	<td colspan="2" background="liteblue.gif" height="12"></td>
+ </tr>
+</table><br>
+
+<div id="div1" >
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+<td><strong><span languagecode="223">User Name</span>&nbsp;&nbsp;:</strong>
+<input type="text" name="readyshare_remote_login_gui" size="20" maxlength="64" value="@readyshare_remote_login_gui#"></td>
+</tr>
+<tr>
+<td><strong><span languagecode="3113">Password</span>&nbsp;&nbsp;&nbsp;:</strong> 
+<input type="password" autocomplete="off" name="readyshare_remote_password_gui" size="20" maxlength="64" value="@readyshare_remote_password_gui#"></td>
+</tr>
+<tr>
+<td>
+<input class="common_bt" type="button" name="actionbutton" value="Register" languagecode="3930" onClick="checkData(0);">
+<span languagecode="10712">(<b>Note:</b> Your router keeps a continuous connection to ReadyCLOUD until you unregister.)</span>
+</td>
+</tr>
+<tr>
+	<td colspan="2" background="liteblue.gif" height="12"></td>
+  </tr>
+  
+</table>
+</div>	
+
+
+<div id="div2" >
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+<td>
+<strong><span languagecode="10708">ReadyCLOUD is registered with user:</span> @readyshare_remote_login_gui# </strong>
+</td>
+</tr>
+<tr>
+<td>
+<span languagecode="10709">
+Click <strong>Unregister</strong> to register ReadyCLOUD with a different user.
+</span>
+</td>
+</tr> 
+<tr>
+<td>
+<input class="common_bt" type="button" name="actionbutton" value="Unregister" languagecode="10710" onClick="checkData(1);">
+</td>
+</tr>
+<tr>
+	<td colspan="2" background="liteblue.gif" height="12"></td>
+</tr>
+</table>
+</div>	
+
+<input type="hidden" name="is_unregister" value="0">
+<input type="hidden" name="todo" value="save">
+<input type="hidden" name="this_file" value="Readyshare_remote.htm">
+<input type="hidden" name="next_file" value="Readyshare_remote_answer.htm">
+<input type="hidden" name="need_change_wan_to_always" value="0">
+</div>
+</form>
+<div id="help" style="display: none">
+		<iframe name="help_iframe" id="helpframe" src="Readyshare_remote_h.htm" allowtransparency="true" width="100%" frameborder="0">
+		</iframe>
+</div>
+<div id="help_switch" class="close_help">
+	 <img class="help_switch_img" src="image/help/help-bar.gif"><script>
+var help_flag=0;
+if(isIE()){
+	show_hidden_help_top_button(1);
+	var frame_div = top.document.getElementById("formframe_div");
+	frame_div.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+if(get_browser() == "Opera"){
+	window.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+</script><div id="help_space" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_center"><span languageCode="3058">Help Center</span></div>
+<div id="help_button" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_show_hidden"><a href="javascript:void(0)" onClick="show_hidden_help_top_button(help_flag); help_flag++;"><span languageCode="3148">Show/Hide Help Center</span></a></div>
+</div>
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+</BODY>
+
+</HTML>
+
+

@@ -1,0 +1,80 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<script language="javascript" src="util.js"></script>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>  
+<script language='javascript'>
+<!-- hide
+var MAX_DDNS_ENTRY = 16;
+var entrynum = 0;
+var ddnsmngrStr = '<%ejGetOther(ddnsmngrStr)%>';
+function addClick() {
+   var loc = 'ddnsadd.html';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ', ';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+                                                                                
+   var loc = 'ddnsmngr.cmd?action=remove&rmLst=' + lst;
+   loc += '&sessionKey=<%ejGetOther(sessionKey)%>';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}
+// done hiding -->
+</script>
+</head><body><script>tbl_head("Dynamic DNS");</script><form>
+        <div style="width:90%;text-align:left">
+The Dynamic DNS service allows you to alias a dynamic IP address to 
+a static hostname in any of the many domains, allowing your Broadband Router 
+to be more easily accessed from various locations on the Internet.<br><br>
+Choose Add or Remove to configure Dynamic DNS.<br><br>
+   </div> 
+<table border='1' cellpadding='4' cellspacing='0' width='90%'>
+
+   <tr>
+      <td class='hd'>Hostname</td>
+      <td class='hd'>Username</td>
+      <td class='hd'>Service</td>
+      <td class='hd'>Interface</td>
+      <td class='hd'>Remove</td>
+   </tr>
+  <script>
+   	var htm;
+   	var rows;
+   	var cols;
+   	rows = ddnsmngrStr.split('~');
+   	entrynum =rows.length;
+   	if(ddnsmngrStr!='')
+	   	for(var i=0;i<rows.length;i++)
+	   	{
+	   			cols = rows[i].split(',');
+	   			if(cols.length!=5) continue;
+	   			htm = '<tr>';
+	   			htm += '<td>'+cols[0]+'</td>';
+	   			htm += '<td>'+cols[1]+'</td>';
+	   			htm += '<td>'+cols[2]+'</td>';
+	   			htm += '<td>'+cols[3]+'</td>';
+	   			htm += '<td align="center"><input type="checkbox" name="rml" value='+cols[4]+'></td>';
+	   			htm += '</tr>';
+	   			document.write(htm);
+	   	}
+ 	</script>
+</table><br>
+<script>
+  if(entrynum<MAX_DDNS_ENTRY)
+		tbl_tail("<input type='button' class='button' onClick='addClick()' value='Add'>&nbsp;&nbsp;<input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");
+	else
+		tbl_tail("<input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");
+</script>
+</form>
+</body>
+</html>

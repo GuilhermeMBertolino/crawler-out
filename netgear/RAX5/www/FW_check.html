@@ -1,0 +1,367 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/utils.js<?= commonCfg.getVer() ?>"></script>
+  <script src="js/embedProgressBar.js<?= commonCfg.getVer() ?>"></script>
+
+
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css<?= commonCfg.getVer() ?>">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css"  type="text/css">
+  <script language="javascript" type="text/javascript">
+  CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+  var stopUpgrade = false;
+  var nextURL = "";
+
+  function finishChecking()
+  {
+      var needUpgrade = $("input[name='check_status']").val();
+      var hasNewLangVer = $("input[name='lang_status']").val();
+      var forceUpdate = $("input[name='forceUpdate_status']").val();
+
+      if(needUpgrade == "0" || needUpgrade == "")
+      {
+          if(parentPath == "/start.html")
+          {
+            window.top.frames[0].$("[name='firmware-update']").hide();
+          }
+          $("#checking_div").hide();
+          $("#result2_div").show();
+      }
+      else if(needUpgrade == "1")
+      {
+          //SPEC change: Always force update at CDLess and Setup Wizard
+          if(parentPath != "/start.html" || document.referrer.indexOf("WIZ_sel.html") != -1)
+          {
+              forceUpdate = 1;
+          }
+          if(forceUpdate == "1")
+          {
+              $("#no").hide();
+              $("#new_ver_skip").hide();
+          }
+          else
+          {
+              $("#no").show();
+              $("#new_ver_skip").show();
+          }
+          $("#checking_div").hide();
+          $("#result1_div").show();
+          $("#cur_subject").append(":");
+          $("#new_subject").append(":");
+          $("#cur_lang_subject").append(":");
+          $("#new_lang_subject").append(":");
+          if(parentPath == "/start.html")
+          {
+             window.top.frames[0].$("[name='firmware-update']").show();
+          }
+      }
+      
+      if(hasNewLangVer == "0")
+      {
+          $("#lang_section").hide();
+      }
+  }
+
+  function doRedirect()
+  {
+      if($("input[name='internet_status']").val() == "up")
+      {
+          var model = "<?= commonCfg.getModelNameStr() ?>";
+          window.top.location.href = "https://www.netgear.com/success/" + model.toLowerCase() + "/?sn=" + $("input[name='sn']").val();
+          //JYang, for NPI model, use generic first
+          //window.top.location.href = "https://www.netgear.com/success/generic/?sn=" + $("input[name='sn']").val();
+      }
+      else
+      {
+          window.top.location.href = "/start.html";
+      }  
+  }
+
+  function beforeRedirect()
+  {
+      $.postForm("wizDone", $('#target'), 'cgi-bin/netgear.plua', '');
+      setTimeout( "doRedirect()",1000);
+  }
+
+  var parentPath = parent.window.location.pathname;
+  function cancelRedirect()
+  {
+      skipOrNext();
+  }
+  
+  function checkInternet()
+  {
+      fetchData('target', 'fwCheckNoNew', '', 'beforeRedirect');
+  }
+  
+  function skipOrNext()
+  {
+      if(parentPath == "/start.html")
+      {
+          if(document.referrer.indexOf("WIZ_sel.html") != -1)
+          {
+              //For GUI automation, redirect to netgear if Internet is connected
+              //window.top.location.href = "/start.html";
+              checkInternet();
+          }
+          else
+              window.location.href = "/UPG_upgrade.html";
+      }
+      else if(parentPath == "/genie_index.html")
+      {
+          checkInternet();
+      }
+  }
+
+  function afterDownload()
+  {
+      if($("input[name='upgrade_status']").val() != "3")
+      {
+          if(!stopUpgrade)
+          {
+              skipOrNext();
+          }      
+      }
+      else
+      {
+          if(parentPath == "/start.html")
+          {
+          fetchData('target', 'fwUpgradeNew', '', '');
+          setTimeout("redirectProgressBar('MRU035', 2800, 180000, nextURL )",2000);  
+      }
+          else
+          {
+              fetchData('target', 'fwUpgradeNew', 'beforeUpgrading', '');
+          }
+          
+      }
+  }
+
+  function updateProgressInWizard()
+  {
+      var delay_time = duration / (maxchars+2);// msecs
+      var delta = (new Date()).valueOf() - startTime;
+
+      if(delta > duration)
+      {
+          afterUpgrading();
+          return ;
+      }
+   
+      if (charcount < maxchars)
+      {
+          charcount ++;
+      }
+  
+      $("input[name='progress']").val(makeStr(charcount));
+      setTimeout("updateProgressInWizard()",delay_time);  
+  }
+
+  function beforeUpgrading()
+  {
+      $("#downloading_div").hide();
+      $("#pgbar-div").show();
+      $("[name=waiting_msg]").attr("id", "");
+      $("[name=barTitle]").attr("id", "wait_text");
+      duration = 180000;
+      startTime = (new Date()).valueOf();
+      updateProgressInWizard();
+  }
+
+  function afterUpgrading()
+  {
+      fetchData('target', 'fwUpgradeFinished', '', 'checkUpgradeFinished');
+  }
+
+  function checkUpgradeFinished()
+  {
+      if($("input[name='new_csrf_token']").val() !== "")
+      {
+          CSRF_TOKEN = $("input[name='new_csrf_token']").val();
+      }
+
+      if($("input[name='upgrade_finished']").val() === "true")
+      {
+          checkInternet();
+      }
+  }
+
+  function setNextURL()
+  {
+      if(parentPath == "/genie_index.html")
+      {
+          nextURL = "/WIZ_sel.html";
+      }
+      else
+      {
+          nextURL = "";
+      }
+  }
+  
+  $(document).ready(function() {
+  
+      if(parentPath == "/start.html")
+      {
+          $("button[name='cancel']").css("display", "inline-block");
+          $("button[name='no']").css("display", "inline-block");
+          $("button[name='cancel2']").css("display", "inline-block");
+      }
+      
+      $("[mlang]").each(function(idx, obj) {
+          obj.innerHTML = window.top.mlang[obj.attributes.mlang.value];
+      });
+      
+      if(document.referrer.indexOf("WIZ_sel.html") != -1)
+      {
+          fetchData('target', 'fwCheckonWizard', '', 'finishChecking');
+          window.top.mlangInit($('#target'));
+          // Update ID
+          $("span[name='cur_firm']").attr("id", "cur_ver");
+          $("span[name='new_firm']").attr("id", "new_ver");
+          $("span[name='release_note']").attr("id", "upg_msg");
+          $("button[name='yes']").attr("id", "new_ver_next");
+          $("button[name='no']").attr("id", "new_ver_skip");
+      }
+      else
+      {
+          fetchData('target', 'fwCheck', '', 'finishChecking');
+      }
+      
+
+      $("button[name='cancel']").on("click", function(){
+          cancelRedirect();
+      });
+      
+      $("button[name='cancel2']").on("click", function(){
+          stopUpgrade = true;
+          fetchData('target', 'fwUpgradeCancel', '', 'cancelRedirect');
+      });
+      
+      $("#no_new_next").on("click", function(){
+          $("[name=loading2]").show();
+          skipOrNext();
+      });
+      
+      $("button[name='yes']").on("click", function(){
+          $("#result1_div").hide();
+          $("#downloading_div").show();
+          fetchData('target', 'fwDownloadNew', '', 'afterDownload');
+          fetchData('target', 'fwCheckNoNew', '', 'setNextURL');
+      });
+      
+      $("button[name='no']").on("click", function(){
+          skipOrNext();
+      });
+      
+  });
+  </script>  
+</head>
+
+<body class="page-body" >
+  <form id="target"  name="formname" method="POST" >
+    <div id="checking_div">
+      <div class="page-header" style="position: relative;" mlang="genie_946">Firmware Update Assistant</div>
+      <div class="form-group" style="margin: auto;height:365px;overflow:auto;scrolling:auto;">
+        <div class="rowCenter" style="line-height: 30px; vertical-align: middle; display: inline-flex;">
+          <b mlang="MRU015" name="waiting_msg" id="wait_text">Attempting to connect to Netgear Server. Please Wait...</b>
+          <img id="card-checking-for-updates" style="padding-left: 35px;" frameborder="0" border="0" src="/images/wait.gif" >
+        </div>
+        <div class="divider">&nbsp;</div>
+        <div class="form-row" style="text-align: center;">
+          <button type="button" value="Cancel" name="cancel" id="cancel" class="button-sty1" style=" display:none;" mlang="UAS021">Cancel</button>
+        </div>
+      </div><!--form-group-->
+    </div><!--checking_div-->
+
+    <div id="result1_div" style="display: none;">
+      <div class="page-header" style="position: relative;" mlang="genie_946">Firmware Update Assistant</div>
+      <div class="form-group" style="margin: auto;height:365px;overflow:auto;scrolling:auto;">
+        <div class="rowCenter">
+          <b mlang="genie_948">New firmware is found. Do you want to update the firmware?</b>
+        </div>
+        <div class="rowCenter">
+          <b id="cur_subject" style="width: 250px; display: inline-block;" mlang="MRU007">Current Firmware Version</b><span name="cur_firm" id="cur_firm"></span>
+        </div>
+        <div class="rowCenter">
+          <b id="new_subject" style="width: 250px; display: inline-block;" mlang="MRU023">New Firmware Version</b><span name="new_firm" id="new_firm"></span>
+        </div>
+        <div class="space-divider">&nbsp;</div>
+        
+        <div id="lang_section">
+        <div class="rowCenter">
+          <b id="cur_lang_subject" style="width: 250px; display: inline-block;" mlang="MRU008">Current GUI Language Version</b><span name="cur_lang" id="cur_lang"></span>
+        </div>
+        <div class="rowCenter">
+          <b id="new_lang_subject" style="width: 250px; display: inline-block;" mlang="MRU022">New GUI Language Version</b><span name="new_lang" id="new_lang"></span>
+        </div>
+        <div class="space-divider">&nbsp;</div>
+        </div>
+        <div class="rowCenter">
+          <b mlang="MRU026">Release Notes</b>
+        </div>
+        <div class="rowCenter">
+          <span id="release_note" name="release_note"></span>
+        </div>
+        <div class="form-row" style="text-align: left;">
+          <button type="button" value="Yes" name="yes" id="yes" class="button-sty1" mlang="SWP003">Yes</button>
+          <button type="button" value="No" name="no" id="no" class="button-sty1" style="display:none;" mlang="SWP009">No</button>
+        </div>
+      </div>
+    </div><!--result1_div-->
+
+    <div id="result2_div" style="display: none;">
+      <div class="page-header" style="position: relative;" mlang="MRU011">Firmware Version Check</div>
+      <div class="form-group" style="margin: auto;height:365px;overflow:auto;scrolling:auto;">
+        <div class="rowCenter" style="line-height: 30px; vertical-align: middle; display: inline-flex;">
+          <b mlang="MRU024">No new firmware version available.</b>
+          <img id="pls_wait_div" name="loading2" style="padding-left: 35px;display: none;" frameborder="0" border="0" src="/images/wait.gif" >
+        </div>
+        <div class="divider">&nbsp;</div>
+        <div class="form-row" style="text-align: center;">
+          <button type="button" value="OK" name="back" id="no_new_next" class="button-sty1" mlang="UAS020">OK</button>
+        </div>
+      </div>
+    </div><!--result2_div-->
+    
+    <div id="downloading_div" style="display: none;">
+      <div class="page-header" style="position: relative;" mlang="genie_946">Firmware Update Assistant</div>
+      <div class="form-group" style="margin: auto;height:365px;overflow:auto;scrolling:auto;">
+        <div class="rowCenter" style="line-height: 30px; vertical-align: middle; display: inline-flex;">
+          <b mlang="MRU009">The router is downloading the new version now. Please wait...</b>
+          <img id="pls_wait_div" style="padding-left: 35px;" frameborder="0" border="0" src="/images/wait.gif" >
+        </div>
+        <div class="divider">&nbsp;</div>
+        <div class="form-row" style="text-align: center;">
+          <button type="button" value="Cancel" name="cancel2" id="cancel" class="button-sty1" style="display:none;" mlang="UAS021" >Cancel</button>
+        </div>
+      </div><!--form-group-->
+    </div><!--downloading_div-->
+    <?= commonCfg.generate_EmbedProgressBar() ?>
+    <input type="hidden" value="" name="check_status" disabled>
+    <input type="hidden" value="" name="lang_status" disabled>
+    <input type="hidden" value="" name="forceUpdate_status" disabled>
+    <input type="hidden" value="" name="sn" disabled>
+    <input type="hidden" value="" name="internet_status" disabled>
+    <input type="hidden" value="" name="upgrade_status" disabled>
+    <input type="hidden" value="" name="upgrade_finished" disabled>
+    <input type="hidden" value="" name="new_csrf_token" disabled>
+</form>
+</body>
+</html>

@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Defaults
+CONFIG=/etc/ppp/3g.conf
+
+if [ ! -f "$CONFIG" -o ! -r "$CONFIG" ] ; then
+    echo "$0: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+
+. $CONFIG
+. /usr/bin/scriptlib
+
+PIDFILE_START="$PIDFILE.start"
+PIDFILE_CONNECT="$PIDFILE.connect"
+PIDFILE_PPPD="/var/run/ppp-3g.pid"
+
+if [ "$DEMAND" != "no" ] ; then
+    echo "Note: You have enabled demand-connection; 3g-status may be inaccurate."
+fi
+
+# If no PIDFILE_PPPD, something fishy!
+if [ ! -r "$PIDFILE_PPPD" ] ; then
+    echo "3g-status: Link is down (can't read pppd PID file $PIDFILE_PPPD)"
+    exit 1
+fi
+
+sl_get_ppp_PID_IFname $PIDFILE_PPPD PPP_PID PPP_IF
+if [ $? = 0 ] ; then
+
+    # check the cnt status is CONNECT, 2 is CONNECT and 7 is BACKUP
+    CNTSTATUS=`rdcsman 0x801e0700 u16`
+    CNT_IP=`rdcsman 0x801e0200 ipv4`
+    CNT_GW=`rdcsman 0x801e0400 ipv4`
+    CNT_DNS1=`rdcsman 0x801e0500 ipv4`
+    CNT_DNS2=`rdcsman 0x801e0600 ipv4`
+    [ $CNTSTATUS -ne 2 ] && [ $CNTSTATUS -ne 7 ] && echo "CNTSTATUS=$CNTSTATUS" && exit 1
+    echo "$0: IF=$PPP_IF  PID=$PPP_PID"
+    echo "3g-status: Link is up and running on interface $PPP_IF"
+	logger -t "O3G/3g-status" "3G is connected and running on interface $PPP_IF"
+	logger -t "O3G/3g-status" "IP address :$CNT_IP"
+	logger -t "O3G/3g-status" "default gateway :$CNT_GW"
+	logger -t "O3G/3g-status" "primary   DNS address :$CNT_DNS1"
+	logger -t "O3G/3g-status" "secondary DNS address :$CNT_DNS2"
+    exit 0
+fi
+
+
+echo "3g-status: Link is down -- could not find interface corresponding to"
+exit 1
+

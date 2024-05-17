@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<HTML><HEAD><TITLE>NETGEAR Router @model_name#</TITLE>
+<meta http-equiv="Pragma" CONTENT="no-cache">
+<meta http-equiv="Cache-Control" CONTENT="no-cache">
+<meta http-equiv="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+<META http-equiv=content-type content="text/html; charset=UTF-8">
+<LINK href="style/hijack_style.css" type=text/css rel=stylesheet>
+<LINK href="style/hijack_02_genieHelp.css" type=text/css rel=stylesheet>
+<LINK rel="stylesheet" href="style/form.css">
+
+<SCRIPT language=javascript src="script/brs_hijack.js" type=text/javascript></SCRIPT>
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+<script language="javascript" type="text/javascript" src="string.js"></script>
+<SCRIPT language=javascript type=text/javascript>
+var router_timezone_offset="@time_zone_offset#";
+var router_timezone_state="@time_zone_state#";
+var atd_support="@atd_support#";
+function isDST()
+{
+	var current_offset= new Date().getTimezoneOffset();
+	var d1=new Date(2009,0,1);
+	var d2=new Date(2009,6,1);
+	var d3;
+	if(d1.getTimezoneOffset()>d2.getTimezoneOffset())
+		d3=d1;
+	else
+		d3=d2;
+	if(current_offset < d3.getTimezoneOffset())
+		return 1;
+	else
+		return 0;
+}
+function load_set()
+{
+	var cf = document.forms[0];
+	var ifm = document.getElementById("content_frame").contentWindow;
+	var get_btn = ifm.document.getElementById("tc_button");
+	get_btn.style.display="none";
+	if(atd_support==1 && router_timezone_state !="2")
+	{
+		var local_timezone_offset= new Date().getTimezoneOffset();
+		var dst=isDST();
+		if(dst == 1)
+			local_timezone_offset=local_timezone_offset+60;
+		if(local_timezone_offset != router_timezone_offset)
+		{
+			cf.time_zone_state.value=1;//autoconfigred:1;
+			cf.time_zone_offset.value=local_timezone_offset;
+		}
+	}
+}
+
+</SCRIPT>
+</HEAD>
+<body bgcolor="#ffffff" onLoad = "load_set();" >
+<form action="setup.cgi@post_par#" method="POST">
+
+<DIV class=wizard_content_div>
+
+<DIV class=wizard_words_div id=choices_div style="margin: 2% 10% 0px 10%;">
+<div class="wizard_body_container" style="width:100%;height:330px;">
+	<iframe id="content_frame" allowtransparency="true" height="100%" width="100%" scrolling="yes" frameborder="0" class="body_frame" src="setup.cgi?todo=print_page&next_file=BRS_full_tcn.htm"></iframe>
+</div>
+</DIV></DIV>
+<p align = "center" languageCode="11024">To complete the installation process,you must agree to the Terms of Services.&lt;br&gt; If you do not accept these Terms of Services , you must return Your NETGEAR decice.
+</p>
+<table width="100%" border="0" cellpadding="0" cellspacing="2"><tr><td nowrap colspan="2" align="center">
+<tr><td colspan="2" background="liteblue.gif" height="12"></td></tr>
+<tr><td colspan="2" align="center" height="35">
+<input class="common_bt" type="submit" name="Apply"  value=" I Agree " languageCode="11018">
+</td></tr>
+</table>
+<br>
+<br>
+
+<input type="hidden" name="SID" value="@SID#">
+<input type="hidden" name="todo" value="save">
+<input type="hidden" name="tc_auto_update_enable_2" value="Yes">
+<input type="hidden" name="tc_ra_enable_2" value="Yes">
+<input type="hidden" name="this_file" value="BRS_new_purchase1.html">
+<input type="hidden" name="next_file" value="@tc_nextpage_aftertc#">
+<input type="hidden" name="time_zone_state" value="@time_zone_state#">
+<input type="hidden" name="time_zone_offset" value="@time_zone_offset#">
+</form>  
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+</body>
+</html>

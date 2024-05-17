@@ -1,0 +1,111 @@
+#!/bin/sh
+
+xcloud_region_file="/tmp/xcloud_region_get"
+if [ -f "$xcloud_region_file" ];then
+	echo "[$0]the $xcloud_region_file exist!" >/dev/console
+	exit 0
+fi
+artmtd_region="$(artmtd -r region | grep REGION | awk '{print $2}')"
+if [ "$artmtd_region" != "PA" -a "$artmtd_region" != "NA" -a "$artmtd_region" != "CA" ];then
+	echo "[$0]Only region PA/NA/CA need run this script!" >/dev/console
+	echo "" >$xcloud_region_file
+	exit 0
+fi
+
+capath="/etc/ssl/certs"
+xagent_claim_code="$(d2 -s xagentcfg[0].x_agent_claim_code)"
+xagent_id="$(d2 -s xagentcfg[0].x_agent_id)"
+
+resolve_path_prod="https://devicelocation.ngxcld.com/device-location/resolve"
+resolve_path_qa="https://devicelocation.qa.ngxcld.com/device-location/resolve"
+resolve_path_dev="https://devicelocation.dev.ngxcld.com/device-location/resolve"
+case $xagent_id in
+	DEV-*) resolve_path="$resolve_path_dev" ;;
+	QA-*) resolve_path="$resolve_path_qa" ;;
+	*) resolve_path="$resolve_path_prod" ;;
+esac
+
+if [ -z "$xagent_claim_code" -o -z "$xagent_id" ];then
+	echo "[$0]some of the xagent info(xagent_id:$xagent_id, xagent_claim_code:$xagent_claim_code) is null!" >/dev/console
+	exit 0
+else
+	curl --capath $capath -X GET $resolve_path -H "content-type: application/json" -H "Authorization:$xagent_id:$xagent_claim_code" -o $xcloud_region_file
+	sleep 3
+fi
+
+if [ -n "$(config get xcloud_region_debug)" ]; then
+	xcloud_country="$(config get xcloud_region_debug)"
+else
+	xcloud_country="$(cat $xcloud_region_file | grep country | awk -F'"' '{print $4}')"
+fi
+if [ -z "$xcloud_country" ];then
+	echo "[$0]get xcloud country info in file $xcloud_region_file error!" >/dev/console
+	echo "$(date)" >>/tmp/xcloud_retry_times
+	if [ "$(cat /tmp/xcloud_retry_times | wc -l)" -ge 3 ];then
+		/bin/config set xcloud_region_set_done=0
+		echo "[$0 $(date)]xcloud retry 3 times, cannot get country info, stop retry and will retry again when internet reconnect!" >> /tmp/xcloud_region_set_file
+	fi
+	rm -f $xcloud_region_file
+	exit 0
+fi
+rm -rf /tmp/xcloud_retry_times
+
+fixed_region=$(config get xcloud_region_fixed)
+if [ -n "$fixed_region" ]; then
+	echo "[$0 $(date)]xcloud region fixed as $fixed_region" >> /tmp/xcloud_region_set_file
+	/bin/config set xcloud_region_set_done=1
+	exit 0	
+fi
+
+echo "[$0 $(date)]xcloud get country $xcloud_country and setup!" >> /tmp/xcloud_region_set_file
+old_country="$(/bin/config get wl_country)"
+case $xcloud_country in
+	US|NA)
+		/bin/config set wla_country="10"
+		/bin/config set wl_country="10"
+		/bin/config set wla_2nd_country="10"
+		/bin/config set region_flag="DISABLED"
+		if [ "$(/bin/config get schedule_apply_flag)" != "1"  ]; then
+			echo "[$0 $(date)]xcloud setup time zone as $xcloud_country(GMT+8)!" >> /tmp/xcloud_region_set_file
+			/bin/config set ntp_server="GMT+8"
+			/bin/config set ntpserver_select="GMT+8"
+			/bin/config set ntp_hidden_select="4"
+			/bin/config set time_zone="GMT+8"
+			/bin/config set email_ntpserver="GMT+8"
+		fi
+		/bin/config set xcloud_region_set_done=2
+		;;
+	TW)
+		/bin/config set wla_country="21"
+		/bin/config set wl_country="21"
+		/bin/config set wla_2nd_country="21"
+		/bin/config set region_flag="DISABLED"
+		if [ "$(/bin/config get schedule_apply_flag)" != "1"  ]; then
+			echo "[$0 $(date)]xcloud setup time zone as $xcloud_country(GMT-8)!" >> /tmp/xcloud_region_set_file
+			/bin/config set ntp_server="GMT-8"
+			/bin/config set ntpserver_select="GMT-8"
+			/bin/config set ntp_hidden_select="33"
+			/bin/config set time_zone="GMT-8"
+			/bin/config set email_ntpserver="GMT-8"
+		fi
+		/bin/config set xcloud_region_set_done=2
+		;;
+	
+	*)
+		/bin/config set wla_country="3"
+		/bin/config set wl_country="3"
+		/bin/config set wla_2nd_country="3"
+		/bin/config set xcloud_region_set_done=1
+		;;
+esac
+config commit
+
+new_country="$(/bin/config get wl_country)"
+install_state=$(/bin/config get hijack_config_status)
+if [ "$old_country" != "$new_country" -a $install_state -gt 3 ] || [ "$old_country" != "$new_country" -a "$(config get hijack_process)" = "3" ]; then
+	echo "[$0 $(date)]xcloud get country $new_country and different with old:$old_country, wireless installation is done, run wlan restart!" >> /tmp/xcloud_region_set_file
+	wlan updateconf
+	wlan down
+	wlan up 
+fi
+

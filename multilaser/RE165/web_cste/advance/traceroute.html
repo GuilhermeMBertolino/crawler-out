@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+	<adv-child-menu childType="tools"></adv-child-menu>
+	<div class="advance-box">
+		<x-help :text="lang_t('traceroute.help')"></x-help>
+		<br><br>
+		<div class="fun-box">
+			<table class="table">
+				<tbody>
+				<tr>
+					<td class="fun-left">{{ lang_t('traceroute.trace_command') }}</td>
+					<td>
+						<input type="text" v-model="command" maxlength="32" v-verify="fromRule" data-name="routeCommand" :placeholder="lang_t('traceroute.msg2')">
+					</td>
+				</tr>
+				<tr>
+					<td class="fun-left">{{ lang_t('traceroute.trace_num') }}</td>
+					<td>
+						<input type="text" v-model="num" maxlength="2" v-verify="fromRule" data-name="routeNum" :placeholder="lang_t('traceroute.msg4')">
+						<small>(1~60)</small>
+					</td>
+				</tr>
+				<tr>
+				<tr><td colspan="2"></td></tr>
+				<tr>
+					<td class="fun-left"></td>
+					<td>
+						<button type="button" class="btn" @click="handleSubmit" :disabled="applyBtnStatu">{{lang_t('traceroute.apply')}}</button>
+						<span style="margin-left:20px;">
+							<button type="button" class="btn" @click="clearSubmit">{{ lang_t('traceroute.clear') }}</button>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="3">
+						<textarea style="width:600px; height:300px;"  v-model="log" readonly></textarea>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,applyBtnStatu:!1,command:"",num:"4",log:"",timeout:null}},computed:{fromRule:function(){var e=this;return{routeCommand:function(t,n){if(null==t||""==t)n(e.lang_t("traceroute.msg1"));else if(t){if(4==t.split(".").length)99!=cs.ip(t)?n(e.lang_t("traceroute.msg3")):n();else cs.isUrl(t)?n():n(e.lang_t("traceroute.msg3"))}else n()},routeNum:function(t,n){var a=cs.num_range(t,1,60);null==t||""==t?n(e.lang_t("traceroute.msg5")):1==a||2==a?n(e.lang_t("traceroute.msg5")):n()}}}},created:function(){var n=this;uiPost.getTracerouteCfg(function(t){n.log=t.log,"1"==t.status&&(n.applyBtnStatu=!0,n.interval())})},methods:{getDataAction:function(){var n=this;uiPost.getTracerouteCfg(function(t){n.log=t.log,"0"==t.status&&(n.applyBtnStatu=!1,clearInterval(n.timeout))})},interval:function(){var t=this;t.timeout=setInterval(function(){t.getDataAction()},3e3)},handleSubmit:function(){var a=this;Cstool.Verify(this.fromRule,function(t){if(t){var n={};a.applyBtnStatu=!0,n.command=a.command,n.num=a.num,uiPost.setTracerouteCfg(n),a.log="",a.interval()}})},clearSubmit:function(){uiPost.clearTracerouteLog(function(t){var n=1;t&&(t.wtime&&"0"!=t.wtime&&(n=t.wtime),Cstool.applyLoad(n,function(){location.href=location.href}))})}}}</script><script src="/static/js/main.js"></script></body></html>

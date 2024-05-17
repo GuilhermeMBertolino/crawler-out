@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<? include 'php/interface.php';?>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="../js/mlang.js<? getVer(); ?>"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/button.css">
+   <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+ 
+  <script>
+
+  function getValue(varname)
+  {
+    var value = "";
+    var url = window.location.href;
+    if(url.indexOf('?')!=-1)
+    {
+      var qparts = url.split("?");
+      if (qparts.length == 0){return "";}
+
+      var query = qparts[1];
+      if (typeof query === 'string') {
+        var vars = query.split("&amp;");
+
+        for (i=0; i<vars.length; i++)
+        {
+          var parts = vars[i].split("=");
+          if (parts[0] == varname)
+          {
+            value = parts[1];
+            break;
+          }
+        }
+        value = unescape(value);
+        value.replace(/\+/g," ");
+        }
+    }
+    return value;
+  }
+
+  $(document).ready(function()
+  {
+    <? removeWanLanConflictFile() ?>
+
+    $('#continue').on('click', function() {
+      var para = getValue("Page");
+
+      if (para == "remain" || para == "genie_optRA")
+        document.location.href = "/genie_welcome.html";
+      else
+        document.location.href = "/start.html";
+
+      return true;
+    });
+  });
+
+function mlangInit(content) {
+  if (content != undefined) {
+      content.find('[mlang]').each(function(idx, obj) {
+      obj.innerHTML = mlang[obj.attributes.mlang.value];    
+    });
+    return content;
+  } else {
+    $("[mlang]").each(function(idx, obj) {
+      obj.innerHTML = mlang[obj.attributes.mlang.value];
+    });
+  }
+}
+
+</script>
+  
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="mlangInit($('#target'));" class="page-body" onResize="window.top.change_size($(this));">
+	<!-- target_qos form start-->
+	<form id="target"  name="formname" >
+	    <div id="card-important-udpate" class="form-group install-card">
+
+			<div class="form-row"  style="padding-bottom:24px;">
+				<img class="netgear-logo" src="images/netgear.svg">
+						<span style="font-size:30px;color:black; margin-right:8px;">Nighthawk® <?= getModelNameStr()?></span>
+			</div>
+
+			<div class="form-row"  style="font-size:22px; padding-bottom: 20px;">
+				<span mlang="OTH004">Important Update</span>
+			</div>
+
+			<div class="form-row" style="font-size:14px; padding-bottom: 20px;">
+				<span mlang="OTH009">To avoid a conflict with your Internet Service Provider, your router's IP address has been updated to </span> <span><b><?=getLanInstanceIpAddr() ?></b>.</span>
+			</div>
+
+			<div  class="form-row">
+				<button type="button" value="BUTTON"  name="Continue" id="continue" class="button-cancel cancel_bt" mlang="OTH021">Continue</button>
+			</div>
+			
+	  </div>  <!--form-group-->
+
+    </form>
+
+
+
+</html>

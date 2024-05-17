@@ -1,0 +1,414 @@
+<html>
+<head>
+    <meta http-equiv='Pragma' content='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+
+    <script language="javascript" src="util.js"></script>
+
+    <script language="javascript">
+<!-- hide
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var state = '<%ejGet(sntpRefresh)%>';
+if ( state == '1' ) {
+   var loc = 'sntpcfg.cgi?sntpRefresh=0';
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+var ntpServers = new Array();
+
+ntpServers[0] = 'a.st1.ntp.br';
+ntpServers[1] = 'b.st1.ntp.br';
+ntpServers[2] = 'c.st1.ntp.br';
+ntpServers[3] = 'd.st1.ntp.br';
+ntpServers[4] = 'a.ntp.br';
+ntpServers[5] = 'b.ntp.br';
+ntpServers[6] = 'c.ntp.br';
+
+var timeZones = new Array();
+
+timeZones[0] = '(GMT-02:00) Fernando de Noronha, Brazil(Horario verao)';
+timeZones[1] = '(GMT-03:00) Brasilia';
+timeZones[2] = '(GMT-04:00) Roraima, Rondonia';
+timeZones[3] = '(GMT-05:00) Acre';
+
+function getTimeZoneIndex(timeZoneName) {
+  var i = 0, ret = 0;  // default to Pacific time
+
+  for ( var i = 0; i < timeZones.length; i++ ) {
+    if ( timeZones[i].search(timeZoneName) != -1 )
+      break;
+  }
+
+  if ( i < timeZones.length )
+    ret = i;
+
+  return ret;
+}
+
+function getTimeZoneName(idx) {
+  var str = timeZones[idx];
+  var ret = '';
+
+  ret = str.substr(12);
+
+  return ret;
+}
+
+function getTimeZoneOffset(idx) {
+  var str = timeZones[idx];
+  var ret = '';
+
+  if ( idx != 25 && idx != 26 )
+    ret = str.substr(4, 6);
+
+  return ret;
+}
+
+function writeTimeZoneList() {
+  for( var i = 0; i < timeZones.length; i++ )
+    document.writeln("<option value=" + getTimeZoneOffset(i) + ">" + timeZones[i] + "</option>");
+}
+
+function ntpChange(optionlist,textbox) {
+  if( optionlist[optionlist.selectedIndex].value == "Other" )
+    textbox.disabled = false;
+  else {
+    textbox.value = "";
+    textbox.disabled = true;
+  }
+}
+
+function btnApply() {
+  var loc = 'sntpcfg.cgi?ntp_enabled=';
+
+  with( document.forms[0] ) {
+    if( ntpEnabled.checked ) {
+      loc += '1&ntpServer1=';
+      if( ntpServer1.selectedIndex == ntpServers.length ) {
+        if( ntpServerOther1.value.length == 0 ) { // == Other
+          alert('First time server is other, but Other field is blank');
+          return;
+        } else {
+          loc += ntpServerOther1.value;
+        }
+      } else {
+        loc += ntpServer1[ntpServer1.selectedIndex].value;
+      }
+
+      loc += '&ntpServer2=';
+      if( ntpServer2.selectedIndex == ntpServers.length+1 ) {
+        if( ntpServerOther2.value.length == 0 ) { // == Other
+          alert('Second time server is other, but Other field is blank');
+          return;
+        } else {
+          loc += ntpServerOther2.value;
+        }
+      } else {
+        if( ntpServer2.selectedIndex > 0 )
+          loc += ntpServer2[ntpServer2.selectedIndex].value;
+      }
+
+      loc += '&ntpServer3=';
+      if( ntpServer3.selectedIndex == ntpServers.length+1 ) {
+        if( ntpServerOther3.value.length == 0 ) { // == Other
+          alert('Third time server is other, but Other field is blank');
+          return;
+        } else {
+          loc += ntpServerOther3.value;
+        }
+      } else {
+        if( ntpServer3.selectedIndex > 0 )
+          loc += ntpServer3[ntpServer3.selectedIndex].value;
+      }
+      loc += '&ntpServer4=';
+      if( ntpServer4.selectedIndex == ntpServers.length+1 ) {
+        if( ntpServerOther4.value.length == 0 ) { // == Other
+          alert('Fourth time server is other, but Other field is blank');
+          return;
+        } else {
+          loc += ntpServerOther4.value;
+        }
+      } else {
+        if( ntpServer4.selectedIndex > 0 )
+          loc += ntpServer4[ntpServer4.selectedIndex].value;
+      }
+      loc += '&ntpServer5=';
+      if( ntpServer5.selectedIndex == ntpServers.length+1 ) {
+        if( ntpServerOther5.value.length == 0 ) { // == Other
+          alert('Fifth time server is other, but Other field is blank');
+          return;
+        } else {
+          loc += ntpServerOther5.value;
+        }
+      } else {
+        if( ntpServer5.selectedIndex > 0 )
+          loc += ntpServer5[ntpServer5.selectedIndex].value;
+      }
+
+      loc += '&timezone_offset=' + cboTimeZone[cboTimeZone.selectedIndex].value;
+      loc += '&timezone=' + getTimeZoneName(cboTimeZone.selectedIndex);
+
+      loc += '&use_dst=0';
+    } else {
+      loc += '0';
+    }
+  }
+  loc += '&sessionKey=' + sessionKey;
+  var code = 'location="' + loc + '"';
+  eval(code);
+}
+
+function frmLoad() {
+  var i = 0;
+  var ntp1 = "<%ejGet(ntpServer1)%>";
+  var ntp2 = "<%ejGet(ntpServer2)%>";
+  var ntp3 = "<%ejGet(ntpServer3)%>";
+  var ntp4 = "<%ejGet(ntpServer4)%>";
+  var ntp5 = "<%ejGet(ntpServer5)%>";
+  var ntp_enabled = "1";
+  var tz_name = "<%ejGet(timezone)%>";
+
+  with (document.forms[0]) {
+    if( ntp_enabled == "1" ) {
+      ntpEnabled.checked = true;
+    } else {
+      ntpEnabled.checked = false;
+    }
+
+    if( ntp1.length ) {
+      for( i = 0; i < ntpServers.length; i++ ) {
+        if( ntp1 == ntpServers[i] ) {
+          ntpServer1.selectedIndex = i;
+          break;
+        }
+      }
+      if( i == ntpServers.length ) {
+        ntpServer1.selectedIndex = i; // Set to 'Other'
+        ntpServerOther1.value = ntp1;
+      }
+    }
+    ntpChange(ntpServer1,ntpServerOther1);
+
+    if( ntp2.length ) {
+      for( i = 0; i < ntpServers.length; i++ ) {
+        if( ntp2 == ntpServers[i] ) {
+          ntpServer2.selectedIndex = i+1;
+          break;
+        }
+      }
+      if( i == ntpServers.length ) {
+        ntpServer2.selectedIndex = i+1; // Set to 'Other'
+        ntpServerOther2.value = ntp2;
+      }
+    }
+    ntpChange(ntpServer2,ntpServerOther2);
+
+    if( ntp3.length ) {
+      for( i = 0; i < ntpServers.length; i++ ) {
+        if( ntp3 == ntpServers[i] ) {
+          ntpServer3.selectedIndex = i+1;
+          break;
+        }
+      }
+      if( i == ntpServers.length ) {
+        ntpServer3.selectedIndex = i+1; // Set to 'Other'
+        ntpServerOther3.value = ntp3;
+      }
+    }
+    ntpChange(ntpServer3,ntpServerOther3);
+
+    if( ntp4.length ) {
+      for( i = 0; i < ntpServers.length; i++ ) {
+        if( ntp4 == ntpServers[i] ) {
+          ntpServer4.selectedIndex = i+1;
+          break;
+        }
+      }
+      if( i == ntpServers.length ) {
+        ntpServer4.selectedIndex = i+1; // Set to 'Other'
+        ntpServerOther4.value = ntp4;
+      }
+    }
+    ntpChange(ntpServer4,ntpServerOther4);
+
+    if( ntp5.length ) {
+      for( i = 0; i < ntpServers.length; i++ ) {
+        if( ntp5 == ntpServers[i] ) {
+          ntpServer5.selectedIndex = i+1;
+          break;
+        }
+      }
+      if( i == ntpServers.length ) {
+        ntpServer5.selectedIndex = i+1; // Set to 'Other'
+        ntpServerOther5.value = ntp5;
+      }
+    }
+    ntpChange(ntpServer5,ntpServerOther5);
+
+    cboTimeZone.selectedIndex = getTimeZoneIndex(tz_name);
+
+    ntpEnblChange();
+  }
+}
+
+function hideNtpConfig(hide) {
+  var status = 'block';
+
+  if(hide)
+    status = 'none';
+
+  if( document.getElementById )
+    document.getElementById('ntpConfig').style.display = status;
+  else
+    if(!document.layers)
+      document.all.ntpConfig.style.display = status;
+}
+
+function ntpEnblChange() {
+  if( document.forms[0].ntpEnabled.checked )
+    hideNtpConfig(0);
+  else
+    hideNtpConfig(1);
+}
+
+function writeNtpList(needed) {
+  if(!needed)
+    document.writeln("<option value=None>None</option>");
+  for( var i = 0; i < ntpServers.length; i++ )
+    document.writeln("<option value=" + ntpServers[i] + ">" + ntpServers[i] + "</option>");
+  document.writeln("<option value=Other>Other</option>");
+}
+
+// done hiding -->
+    </script>
+
+</head>
+<body onload='frmLoad()'>
+
+    <script>tbl_head('Time settings');</script>
+
+    <form>
+    <p align="left" style="width:90%">
+        This page allows you to the modem's time configuration.
+        <br><br>
+        <input type='checkbox' name='ntpEnabled' onclick='ntpEnblChange()' checked disabled>
+    Automatically synchronize with Internet time servers
+        <br>
+    </p>
+    <div id='ntpConfig' style="width:90%;text-align:left">
+        <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td width='150'>
+                    First NTP time server:
+                </td>
+                <td>
+                    <select name='ntpServer1' size="1" onchange='ntpChange(this.form.ntpServer1,this.form.ntpServerOther1)'>
+
+                        <script language="javascript">
+                      writeNtpList(true);
+                        </script>
+
+                    </select>
+                </td>
+                <td>
+                    <input type='text' name='ntpServerOther1'>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Second NTP time server:
+                </td>
+                <td>
+                    <select name='ntpServer2' size="1" onchange='ntpChange(this.form.ntpServer2,this.form.ntpServerOther2)'>
+
+                        <script language="javascript">
+                      writeNtpList(false);
+                        </script>
+
+                    </select>
+                </td>
+                <td>
+                    <input type='text' name='ntpServerOther2'>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Third NTP time server:
+                </td>
+                <td>
+                    <select name='ntpServer3' size="1" onchange='ntpChange(this.form.ntpServer3,this.form.ntpServerOther3)'>
+
+                        <script language="javascript">
+                      writeNtpList(false);
+                        </script>
+
+                    </select>
+                </td>
+                <td>
+                    <input type='text' name='ntpServerOther3'>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Fourth NTP time server:
+                </td>
+                <td>
+                    <select name='ntpServer4' size="1" onchange='ntpChange(this.form.ntpServer4,this.form.ntpServerOther4)'>
+
+                        <script language="javascript">
+                      writeNtpList(false);
+                        </script>
+
+                    </select>
+                </td>
+                <td>
+                    <input type='text' name='ntpServerOther4'>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Fifth NTP time server:
+                </td>
+                <td>
+                    <select name='ntpServer5' size="1" onchange='ntpChange(this.form.ntpServer5,this.form.ntpServerOther5)'>
+
+                        <script language="javascript">
+                      writeNtpList(false);
+                        </script>
+
+                    </select>
+                </td>
+                <td>
+                    <input type='text' name='ntpServerOther5'>
+                </td>
+            </tr>
+        </table>
+        <br>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td width='150'>
+                    Time zone offset:
+                </td>
+                <td>
+                    <select name='cboTimeZone' size="1">
+                        <script language="javascript">
+                      writeTimeZoneList();
+                        </script>
+
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <br>
+        <br>
+    </div>
+
+    <script>tbl_tail("<input type='button' class='button' value=\"Apply/Save\" onclick='btnApply()'>");</script>
+
+    </form>
+</body>
+</html>

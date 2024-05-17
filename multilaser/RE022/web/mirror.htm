@@ -1,0 +1,103 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+<meta http-equiv="Content-Type" content="text/html">
+<% getIndex("no-cache"); %>
+<title>Mirror</title>
+<% getInfo("include_css"); %>
+<% language=javascript %>
+<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+<SCRIPT>
+    parent.hideWaitDiv();
+    function saveChange() {
+        var value = document.saveMirror.portMirrorEnable.value
+        if (value == "on") {
+            var mirrorPortValue = document.saveMirror.mirrorPort.value
+            var monitorPortValue = document.saveMirror.monitorPort.value
+            if (mirrorPortValue == '' || monitorPortValue == '') {
+                alert(selectEmpty);
+                return false
+            }
+        }
+        parent.showWaitDiv();
+        return true
+    }
+
+    function enableSelect() {
+        document.getElementById("mirrorPortId").disabled = false
+        document.getElementById("monitorPortId").disabled = false
+    }
+    
+    function disableSelect() {
+        document.getElementById("mirrorPortId").disabled = true
+        document.getElementById("monitorPortId").disabled = true
+    }
+
+    function init() {
+        var portMirrorEnableArr = document.getElementsByName("portMirrorEnable");
+        portMirrorEnableArr[0].onclick=function(){
+            enableSelect()
+        };
+        portMirrorEnableArr[1].onclick=function(){
+            disableSelect()
+        };
+        var portMirrorEnable = <% getIndex("portMirrorEnable");%> 
+        if (portMirrorEnable == 'on') {
+            portMirrorEnableArr[0].checked = "checked"
+            enableSelect()
+        } else {
+            portMirrorEnableArr[1].checked = "checked"
+            disableSelect()
+        }
+        document.getElementById("mirrorPortId").value = <% getIndex("mirrorPort");%> 
+        document.getElementById("monitorPortId").value = <% getIndex("monitorPort");%> 
+    }
+</SCRIPT>
+</head>
+
+<BODY onload="init()">
+<blockquote>
+    <h2><script>dw(menu_mirror)</script></h2>
+    <form action=/boafrm/formPortMirrorSetup method=POST name="saveMirror" style="height: 450px;">
+        <table border="0" width="500">
+            <tr><font size=2>
+            <script>dw(menu_mirror)</script>
+            </tr>
+            <tr><hr size=1 noshade align=top></tr>
+            <tr>
+                <td width="30%"><b><script>dw(menu_mirror)</script></b></td>
+                <td width="70%">
+                    <input type="radio" name="portMirrorEnable" value="on" id="mirror-allow" checked> <label
+                        for="mirror-allow"><script>dw(on)</script></label>
+                    <input type="radio" name="portMirrorEnable" value="off" id="mirror-deny"> <label
+                        for="mirror-deny"><script>dw(off)</script></label>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%"><font size=2 /><b><script>dw(source)</script></b></td>
+                <td width="70%"><font size=2 />
+                    <select name="mirrorPort" id="mirrorPortId" style="width: 150px;">
+                        <option value="4">WAN</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%"><font size=2 /><b><script>dw(destination)</script></b></td>
+                <td width="70%"><font size=2 />
+                    <select name="monitorPort" id="monitorPortId" style="width: 150px;">
+                        <option value="1">LAN1</option>
+                        <option value="2">LAN2</option>
+                        <option value="3">LAN3</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="/mirror.htm" name="submit-url">
+        <p><input type="submit" value="Apply Changes" name="save" onClick="return saveChange()">&nbsp;&nbsp;
+        <script>document.saveMirror.save.value = super_password_apply;</script>
+        <input type="reset" value="  Reset  " name="reset"></p>
+        <script>document.saveMirror.reset.value = super_password_reset;</script>
+    </form>
+<blockquote>
+</body>
+</html>

@@ -1,0 +1,22 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local commonCfg  = require "webGetFunc.commonCfg"
+local fw = require "commonFunc.fwUtils"
+
+local checkResult = fw.getFwCheckResult(0)
+
+local data = { }
+
+data["check_status"] = { value = checkResult["updateRequired"]}
+data["lang_status"] = { value = checkResult["isNewLanguage"]}
+data["forceUpdate_status"] = { value = checkResult["isForceUpdate"]}
+data["cur_firm"] = { value = commonCfg.getFirmwareVer(1), type = "spantext"}
+data["new_firm"] = { value = checkResult["newFWVersion"], type = "spantext"}
+data["cur_lang"] = { value = commonCfg.getLanguageVersion(), type = "spantext"}
+if checkResult["ServerLanguageVer"] ~= nil then
+    data["new_lang"] = { value = "V"..checkResult["ServerLanguageVer"], type = "spantext"}
+end
+data["release_note"] = { value = checkResult["note"], type = "spantext"}
+
+return json.encode(data)

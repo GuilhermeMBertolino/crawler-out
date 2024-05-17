@@ -1,0 +1,17 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local trafficMeter_warning = require "webGetFunc.trafficMeter_warning"
+local log = require("luci.log") --for debug
+
+log.print("[trafficMeter_warning] plua in '/www/tm_block/lua/db' ")
+
+local data = { }
+
+data["monthlyWarning"] = { value = trafficMeter_warning.getTextVal_popMessage() }
+data["limitUnit"] = { value = trafficMeter_warning.getMlangVal_limitUnit() }
+data["current_time"] = { value = trafficMeter_warning.getSpanVal_current_time() }
+data["limitReachStatus"] = { value = trafficMeter_warning.getTextVal_limitReachStatus() }
+data["warning_reached_time"] = { value = trafficMeter_warning.getSpanVal_messageWarningTime() }
+  
+return json.encode(data)

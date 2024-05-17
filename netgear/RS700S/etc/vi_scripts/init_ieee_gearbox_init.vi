@@ -1,0 +1,776 @@
+########################################
+# call_msg: ..\..\ONU\BCM6813\MSG\init_ieee_gearbox_init
+########################################
+# Input Arguments:                            
+###############################################
+# __ARG0 : IEEE/AE mode Select(Ref.Clock = 50MHz)
+#     0  = EPON 10/10                         
+#     1  = EPON 10/1                          
+#     2  = EPON 2/1                           
+#     3  = EPON 1/1                           
+ 
+#     4  = AE 10g                             
+#     5  = AE 5g                              
+#     6  = AE 2.5g (3.125)                    
+#     7  = AE 1g                              
+ 
+#     8  = MPCS 10g                           
+#     9  = MPCS 5g                            
+#     10 = MPCS 2.5g                          
+#     11 = MPCS 1g                            
+###############################################
+ 
+# Script constants  :                
+#################################### 
+MOV __ARG0,ieee_mode
+ 
+MOV 0,enum_epon_10g10g
+MOV 1,enum_epon_10g1g
+MOV 2,enum_epon_2g1g
+MOV 3,enum_epon_1g1g
+MOV 4,enum_ae_10g10g
+MOV 5,enum_ae_5g5g
+MOV 6,enum_ae_2g2g
+MOV 7,enum_ae_1g1g
+MOV 8,enum_mpcs_10g10g
+MOV 9,enum_mpcs_5g5g
+MOV 10,enum_mpcs_2g2g
+MOV 11,enum_mpcs_1g1g
+ 
+# START : 
+#################################### 
+ 
+# Fixed Address for cfgEponTxClk125   :                 
+# 1/1:      cfgEponTxClk125 = 1  
+# 10/1:     cfgEponTxClk125 = 3  
+# 10/10:    cfgEponTxClk125 = 0  
+# 2.5/2.5:  cfgEponTxClk125 = 2  
+MOV 0x828C0010{0x3}<<3, EPON_TOP_CONTROL.cfgEponTxClk125
+MOV 0x828C0010{0x1}<<1, EPON_TOP_CONTROL.cfgTenGigPonUp
+# FIXME: set cfgEponTxClk125 manualy 
+MOV 0x0, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+CMP ieee_mode,enum_epon_10g10g
+JNE _L_ifelse_0_0_else
+    #########        EPON 10g10g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:epon_10_10
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x1,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828cc054{0x1}<<5)
+    MOV 0x0,@(0x828cc054{0x1}<<4)
+    MOV 0x1,@(0x828cc054{0x1}<<1)
+    MOV 0x0,@(0x828cc054{0x1})
+    MOV @(0x828cc054{0x33}),rd_reg
+    MOV 0x1,@(0x828cc054{0x1})
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_10g10g_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8074{0x1}<<6)
+    MOV @(0x828c8078{0xf}),rd_reg
+    MOV 0x0,@(0x828c807c{0x1}<<8)
+    MOV 0x8,@(0x828c807c{0xf})
+    MOV 0x0,@(0x828c8070{0x1}<<3)
+    MOV 0x0,@(0x828c8070{0x1}<<2)
+    MOV 0x0,@(0x828c8070{0x1}<<1)
+    MOV 0x0,@(0x828c8070{0x1})
+    MOV @(0x828c8070{0xf}),rd_reg
+    MOV 0x1,@(0x828c8070{0x1}<<3)
+    MOV 0x1,@(0x828c8070{0x1}<<2)
+    MOV 0x1,@(0x828c8070{0x1}<<1)
+    MOV 0x1,@(0x828c8070{0x1})
+    MOV 0x0,@(0x828c8068{0x1})
+    MOV @(0x828c8068{0x1}),rd_reg
+    MOV 0x1,@(0x828c8068{0x1})
+    MOV 0x0,@(0x828c806c{0x1}<<1)
+    MOV 0x0,@(0x828c806c{0x1})
+    MOV @(0x828c806c{0xf}),rd_reg
+    MOV 0x1,@(0x828c806c{0x1}<<1)
+    MOV 0x1,@(0x828c806c{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_10g10g_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x0, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_0_else:
+CMP ieee_mode,enum_epon_10g1g
+JNE _L_ifelse_0_1_else
+    #########        EPON 10g1g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:epon_10_1
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x0,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x0,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828cc054{0x1}<<5)
+    MOV 0x0,@(0x828cc054{0x1}<<4)
+    MOV 0x1,@(0x828cc054{0x1}<<1)
+    MOV 0x0,@(0x828cc054{0x1})
+    MOV @(0x828cc054{0x33}),rd_reg
+    MOV 0x1,@(0x828cc054{0x1})
+    MOV 0x1,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_1g10g_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV 0x4,@(0x828c8060{0x7})
+    MOV @(0x828c8064{0x7}),rd_reg
+    MOV 0x0,@(0x828c8070{0x1}<<3)
+    MOV 0x0,@(0x828c8070{0x1}<<2)
+    MOV 0x0,@(0x828c8070{0x1}<<1)
+    MOV 0x0,@(0x828c8070{0x1})
+    MOV @(0x828c8070{0xf}),rd_reg
+    MOV 0x1,@(0x828c8070{0x1}<<3)
+    MOV 0x1,@(0x828c8070{0x1}<<2)
+    MOV 0x0,@(0x828c8070{0x1}<<1)
+    MOV 0x1,@(0x828c8070{0x1})
+    MOV 0x0,@(0x828c8050{0x1})
+    MOV @(0x828c8050{0x1}),rd_reg
+    MOV 0x1,@(0x828c8050{0x1})
+    MOV 0x0,@(0x828c8068{0x1})
+    MOV @(0x828c8068{0x1}),rd_reg
+    MOV 0x1,@(0x828c8068{0x1})
+    MOV 0x0,@(0x828c8054{0x1}<<5)
+    MOV 0x0,@(0x828c8054{0x1}<<4)
+    MOV 0x0,@(0x828c8054{0x1}<<2)
+    MOV 0x0,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV @(0x828c8054{0x3f}),rd_reg
+    MOV 0x1,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV 0x0,@(0x828c806c{0x1}<<1)
+    MOV 0x0,@(0x828c806c{0x1})
+    MOV @(0x828c806c{0xf}),rd_reg
+    MOV 0x0,@(0x828c806c{0x1}<<1)
+    MOV 0x1,@(0x828c806c{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_1g10g_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_1_else:
+CMP ieee_mode,enum_epon_2g1g
+JNE _L_ifelse_0_2_else
+    #########        EPON 2g1g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:epon_2_1
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x0,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x0,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x1,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8058{0x1}<<8)
+    MOV 0x8,@(0x828c8058{0xf})
+    MOV @(0x828c805c{0x7}),rd_reg
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV 0x4,@(0x828c8060{0x7})
+    MOV 0x0,@(0x828c8050{0x1})
+    MOV @(0x828c8050{0x1}),rd_Reg
+    MOV 0x1,@(0x828c8050{0x1})
+    MOV 0x0,@(0x828c8054{0x1}<<5)
+    MOV 0x0,@(0x828c8054{0x1}<<4)
+    MOV 0x1,@(0x828c8054{0x1}<<2)
+    MOV 0x0,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV @(0x828c8054{0x3f}),rd_reg
+    MOV 0x1,@(0x828c8054{0x1}<<1)
+    MOV 0x1,@(0x828c8054{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_2_else:
+CMP ieee_mode,enum_epon_1g1g
+JNE _L_ifelse_0_3_else
+    #########        EPON 1g1g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:epon_1_1
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x0,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x0,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x1,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8058{0x1}<<8)
+    MOV 0x8,@(0x828c8058{0xf})
+    MOV @(0x828c805c{0x7}),rd_reg
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV 0x4,@(0x828c8060{0x7})
+    MOV 0x0,@(0x828c8050{0x1})
+    MOV @(0x828c8050{0x1}),rd_Reg
+    MOV 0x1,@(0x828c8050{0x1})
+    MOV 0x0,@(0x828c8054{0x1}<<5)
+    MOV 0x0,@(0x828c8054{0x1}<<4)
+    MOV 0x0,@(0x828c8054{0x1}<<2)
+    MOV 0x0,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV @(0x828c8054{0x3f}),rd_reg
+    MOV 0x1,@(0x828c8054{0x1}<<1)
+    MOV 0x1,@(0x828c8054{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_3_else:
+CMP ieee_mode,enum_ae_10g10g
+JNE _L_ifelse_0_4_else
+    #########        AE 10g10g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:ae_10_10
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x1,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828cc054{0x1}<<5)
+    MOV 0x0,@(0x828cc054{0x1}<<4)
+    MOV 0x1,@(0x828cc054{0x1}<<1)
+    MOV 0x0,@(0x828cc054{0x1})
+    MOV @(0x828cc054{0x33}),rd_reg
+    MOV 0x1,@(0x828cc054{0x1})
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_10g10g_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8074{0x1}<<6)
+    MOV @(0x828c8078{0xf}),rd_reg
+    MOV 0x0,@(0x828c807c{0x1}<<8)
+    MOV 0x8,@(0x828c807c{0xf})
+    MOV 0x0,@(0x828c8070{0x1}<<3)
+    MOV 0x0,@(0x828c8070{0x1}<<2)
+    MOV 0x0,@(0x828c8070{0x1}<<1)
+    MOV 0x0,@(0x828c8070{0x1})
+    MOV @(0x828c8070{0xf}),rd_reg
+    MOV 0x1,@(0x828c8070{0x1}<<3)
+    MOV 0x1,@(0x828c8070{0x1}<<2)
+    MOV 0x1,@(0x828c8070{0x1}<<1)
+    MOV 0x1,@(0x828c8070{0x1})
+    MOV 0x0,@(0x828c8068{0x1})
+    MOV @(0x828c8068{0x1}),rd_reg
+    MOV 0x1,@(0x828c8068{0x1})
+    MOV 0x0,@(0x828c806c{0x1}<<1)
+    MOV 0x0,@(0x828c806c{0x1})
+    MOV @(0x828c806c{0xf}),rd_reg
+    MOV 0x1,@(0x828c806c{0x1}<<1)
+    MOV 0x1,@(0x828c806c{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_10g10g_init
+    ########################################
+    # FIXME: set cfgTenGigPonUp manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgTenGigPonUp)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_4_else:
+CMP ieee_mode,enum_ae_5g5g
+JNE _L_ifelse_0_5_else
+    #########        AE 5g5g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:ae_5_5
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x1,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828cc054{0x1}<<5)
+    MOV 0x0,@(0x828cc054{0x1}<<4)
+    MOV 0x1,@(0x828cc054{0x1}<<1)
+    MOV 0x0,@(0x828cc054{0x1})
+    MOV @(0x828cc054{0x33}),rd_reg
+    MOV 0x1,@(0x828cc054{0x1})
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_10g10g_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8074{0x1}<<6)
+    MOV @(0x828c8078{0xf}),rd_reg
+    MOV 0x0,@(0x828c807c{0x1}<<8)
+    MOV 0x8,@(0x828c807c{0xf})
+    MOV 0x0,@(0x828c8070{0x1}<<3)
+    MOV 0x0,@(0x828c8070{0x1}<<2)
+    MOV 0x0,@(0x828c8070{0x1}<<1)
+    MOV 0x0,@(0x828c8070{0x1})
+    MOV @(0x828c8070{0xf}),rd_reg
+    MOV 0x1,@(0x828c8070{0x1}<<3)
+    MOV 0x1,@(0x828c8070{0x1}<<2)
+    MOV 0x1,@(0x828c8070{0x1}<<1)
+    MOV 0x1,@(0x828c8070{0x1})
+    MOV 0x0,@(0x828c8068{0x1})
+    MOV @(0x828c8068{0x1}),rd_reg
+    MOV 0x1,@(0x828c8068{0x1})
+    MOV 0x0,@(0x828c806c{0x1}<<1)
+    MOV 0x0,@(0x828c806c{0x1})
+    MOV @(0x828c806c{0xf}),rd_reg
+    MOV 0x1,@(0x828c806c{0x1}<<1)
+    MOV 0x1,@(0x828c806c{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_10g10g_init
+    ########################################
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    # FIXME: set cfgTenGigPonUp manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgTenGigPonUp)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_5_else:
+CMP ieee_mode,enum_ae_2g2g
+JNE _L_ifelse_0_6_else
+    #########        AE 2.5g2.5g (3.125G)   #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:ae_2_2
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x0,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x0,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x2,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8058{0x1}<<8)
+    MOV 0x8,@(0x828c8058{0xf})
+    MOV @(0x828c805c{0x7}),rd_reg
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV 0x4,@(0x828c8060{0x7})
+    MOV 0x0,@(0x828c8050{0x1})
+    MOV @(0x828c8050{0x1}),rd_Reg
+    MOV 0x1,@(0x828c8050{0x1})
+    MOV 0x1,@(0x828c8054{0x1}<<5)
+    MOV 0x1,@(0x828c8054{0x1}<<4)
+    MOV 0x0,@(0x828c8054{0x1}<<2)
+    MOV 0x0,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV @(0x828c8054{0x3f}),rd_reg
+    MOV 0x1,@(0x828c8054{0x1}<<1)
+    MOV 0x1,@(0x828c8054{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x2, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_6_else:
+CMP ieee_mode,enum_ae_1g1g
+JNE _L_ifelse_0_7_else
+    #########        AE 1g1g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:epon_1_1
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x0,@(0x828c404c{0x1}<<31)
+    MOV 0x0,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x0,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x1,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_epon_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c8058{0x1}<<8)
+    MOV 0x8,@(0x828c8058{0xf})
+    MOV @(0x828c805c{0x7}),rd_reg
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV 0x4,@(0x828c8060{0x7})
+    MOV 0x0,@(0x828c8050{0x1})
+    MOV @(0x828c8050{0x1}),rd_Reg
+    MOV 0x1,@(0x828c8050{0x1})
+    MOV 0x0,@(0x828c8054{0x1}<<5)
+    MOV 0x0,@(0x828c8054{0x1}<<4)
+    MOV 0x0,@(0x828c8054{0x1}<<2)
+    MOV 0x0,@(0x828c8054{0x1}<<1)
+    MOV 0x0,@(0x828c8054{0x1})
+    MOV @(0x828c8054{0x3f}),rd_reg
+    MOV 0x1,@(0x828c8054{0x1}<<1)
+    MOV 0x1,@(0x828c8054{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_epon_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x1, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_7_else:
+CMP ieee_mode,enum_mpcs_10g10g
+JNE _L_ifelse_0_8_else
+    #########        MPCS 10g10g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:mpcs_10_10
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x1,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x5,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_mpcs_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c80a8{0x1}<<19)
+    MOV 0x8,@(0x828c80a8{0xf}<<20)
+    MOV 0x2,@(0x828c80a8{0x3}<<1)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV 0x8,@(0x828c80b0{0xf}<<20)
+    MOV 0x4,@(0x828c80b0{0x7}<<1)
+    MOV 0x1,@(0x828c80a4{0x1}<<9)
+    MOV 0x1,@(0x828c80a4{0x1}<<8)
+    MOV 0x2,@(0x828c80a4{0x7}<<5)
+    MOV 0x2,@(0x828c80a4{0x7}<<2)
+    MOV 0x0,@(0x828c80a4{0x1}<<1)
+    MOV 0x0,@(0x828c80a4{0x1})
+    MOV @(0x828c80a4{0x3ff}),rd_reg
+    MOV 0x1,@(0x828c80a4{0x1}<<1)
+    MOV 0x1,@(0x828c80a4{0x1})
+    MOV 0x0,@(0x828c809c{0x1})
+    MOV @(0x828c809c{0x1}),rd_reg
+    MOV 0x1,@(0x828c809c{0x1})
+    MOV 0x0,@(0x828c80a0{0x1}<<2)
+    MOV 0x0,@(0x828c80a0{0x1}<<1)
+    MOV 0x0,@(0x828c80a0{0x1})
+    MOV @(0x828c80a0{0xf}),rd_reg
+    MOV 0x1,@(0x828c80a0{0x1}<<2)
+    MOV 0x1,@(0x828c80a0{0x1}<<1)
+    MOV 0x1,@(0x828c80a0{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c40f8{0x1}<<4)
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_mpcs_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x0, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_8_else:
+CMP ieee_mode,enum_mpcs_5g5g
+JNE _L_ifelse_0_9_else
+    #########        MPCS 5g5g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:mpcs_5_5
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x1,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x5,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_mpcs_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c80a8{0x1}<<19)
+    MOV 0x8,@(0x828c80a8{0xf}<<20)
+    MOV 0x2,@(0x828c80a8{0x3}<<1)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV 0x8,@(0x828c80b0{0xf}<<20)
+    MOV 0x4,@(0x828c80b0{0x7}<<1)
+    MOV 0x0,@(0x828c80a4{0x1}<<9)
+    MOV 0x0,@(0x828c80a4{0x1}<<8)
+    MOV 0x2,@(0x828c80a4{0x7}<<5)
+    MOV 0x2,@(0x828c80a4{0x7}<<2)
+    MOV 0x0,@(0x828c80a4{0x1}<<1)
+    MOV 0x0,@(0x828c80a4{0x1})
+    MOV @(0x828c80a4{0x3ff}),rd_reg
+    MOV 0x1,@(0x828c80a4{0x1}<<1)
+    MOV 0x1,@(0x828c80a4{0x1})
+    MOV 0x0,@(0x828c809c{0x1})
+    MOV @(0x828c809c{0x1}),rd_reg
+    MOV 0x1,@(0x828c809c{0x1})
+    MOV 0x0,@(0x828c80a0{0x1}<<2)
+    MOV 0x0,@(0x828c80a0{0x1}<<1)
+    MOV 0x0,@(0x828c80a0{0x1})
+    MOV @(0x828c80a0{0xf}),rd_reg
+    MOV 0x1,@(0x828c80a0{0x1}<<2)
+    MOV 0x1,@(0x828c80a0{0x1}<<1)
+    MOV 0x1,@(0x828c80a0{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c40f8{0x1}<<4)
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_mpcs_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x0, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_9_else:
+CMP ieee_mode,enum_mpcs_2g2g
+JNE _L_ifelse_0_10_else
+    #########        MPCS 2.5g2.5g (3.125G)   #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:mpcs_2_2
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x1,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x5,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x2,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_mpcs_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c80a8{0x1}<<19)
+    MOV 0x8,@(0x828c80a8{0xf}<<20)
+    MOV 0x1,@(0x828c80a8{0x3}<<1)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV 0x8,@(0x828c80b0{0xf}<<20)
+    MOV 0x1,@(0x828c80b0{0x7}<<1)
+    MOV 0x0,@(0x828c80a4{0x1}<<9)
+    MOV 0x1,@(0x828c80a4{0x1}<<8)
+    MOV 0x3,@(0x828c80a4{0x7}<<5)
+    MOV 0x3,@(0x828c80a4{0x7}<<2)
+    MOV 0x0,@(0x828c80a4{0x1}<<1)
+    MOV 0x0,@(0x828c80a4{0x1})
+    MOV @(0x828c80a4{0x3ff}),rd_reg
+    MOV 0x1,@(0x828c80a4{0x1}<<1)
+    MOV 0x1,@(0x828c80a4{0x1})
+    MOV 0x0,@(0x828c809c{0x1})
+    MOV @(0x828c809c{0x1}),rd_reg
+    MOV 0x1,@(0x828c809c{0x1})
+    MOV 0x0,@(0x828c80a0{0x1}<<2)
+    MOV 0x0,@(0x828c80a0{0x1}<<1)
+    MOV 0x0,@(0x828c80a0{0x1})
+    MOV @(0x828c80a0{0xf}),rd_reg
+    MOV 0x1,@(0x828c80a0{0x1}<<2)
+    MOV 0x1,@(0x828c80a0{0x1}<<1)
+    MOV 0x1,@(0x828c80a0{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c40f8{0x1}<<4)
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_mpcs_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x2, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_10_else:
+CMP ieee_mode,enum_mpcs_1g1g
+JNE _L_ifelse_0_11_else
+    #########        MPCS 1g1g        #########    
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__Gearbox_Init.csv, val_select:mpcs_1_1
+    ########################################
+    # cfg_class: gearbox_init_general
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c404c{0x1}<<1)
+    MOV 0x1,@(0x828c404c{0x1}<<31)
+    MOV 0x1,@(0x828c404c{0x3}<<5)
+    MOV 0x0,@(0x828c404c{0x1}<<7)
+    MOV 0x5,@(0x828c404c{0x7}<<2)
+    MOV 0x1,@(0x828c4048{0x1}<<24)
+    MOV 0x0,@(0x828c40dc{0xff})
+    MOV 0x0,@(0x828c4030{0x1}<<26)
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gearbox_init_general
+    ########################################
+    ########################################
+    # cfg_class: gearbox_mpcs_init
+    ########################################
+    # pre_order
+    MOV 0x0,@(0x828c80a8{0x1}<<19)
+    MOV 0x8,@(0x828c80a8{0xf}<<20)
+    MOV 0x0,@(0x828c80a8{0x3}<<1)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV 0x8,@(0x828c80b0{0xf}<<20)
+    MOV 0x3,@(0x828c80b0{0x7}<<1)
+    MOV 0x0,@(0x828c80a4{0x1}<<9)
+    MOV 0x0,@(0x828c80a4{0x1}<<8)
+    MOV 0x4,@(0x828c80a4{0x7}<<5)
+    MOV 0x4,@(0x828c80a4{0x7}<<2)
+    MOV 0x0,@(0x828c80a4{0x1}<<1)
+    MOV 0x0,@(0x828c80a4{0x1})
+    MOV @(0x828c80a4{0x3ff}),rd_reg
+    MOV 0x1,@(0x828c80a4{0x1}<<1)
+    MOV 0x1,@(0x828c80a4{0x1})
+    MOV 0x0,@(0x828c809c{0x1})
+    MOV @(0x828c809c{0x1}),rd_reg
+    MOV 0x1,@(0x828c809c{0x1})
+    MOV 0x0,@(0x828c80a0{0x1}<<2)
+    MOV 0x0,@(0x828c80a0{0x1}<<1)
+    MOV 0x0,@(0x828c80a0{0x1})
+    MOV @(0x828c80a0{0xf}),rd_reg
+    MOV 0x1,@(0x828c80a0{0x1}<<2)
+    MOV 0x1,@(0x828c80a0{0x1}<<1)
+    MOV 0x1,@(0x828c80a0{0x1})
+    # unorder
+    # post_order
+    MOV 0x1,@(0x828c40f8{0x1}<<4)
+    MOV 0x1,@(0x828c404c{0x1}<<7)
+    ########################################
+    # end of cfg_class: gearbox_mpcs_init
+    ########################################
+     
+    # FIXME: set cfgEponTxClk125 manualy 
+    MOV 0x0, @(EPON_TOP_CONTROL.cfgEponTxClk125)
+    JMP _L_ifelse_0_end
+_L_ifelse_0_11_else:
+    HALT -1
+_L_ifelse_0_end:
+ 
+HALT 0
+########################################
+# end of call_msg: init_ieee_gearbox_init
+########################################

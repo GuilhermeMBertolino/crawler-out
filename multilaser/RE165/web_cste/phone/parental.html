@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/style.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div class="toper">
+	<phone-back type="custom" :title="lang_t('menu.application')" @on-click="backFun"></phone-back>	
+  </div>
+  <div class="nav">
+	<div style="float:left;width:83%;">{{ lang_t('menu.parental') }}</div>
+	<div class="nav-sw" v-show="editState == 'list'">
+		<x-switch v-model="parentalState" @change="changeParentalState"></x-switch>
+	</div>
+  </div>
+  <div class="nav" v-show="homepage&&parentalState" style="color: #000;font-weight:normal;" @click="addBtn">
+	<img src="/static/images/phone/open.png">
+	&nbsp;&nbsp;{{ lang_t('common.add_rules') }}
+  </div>
+  <div v-show="parentalState">
+    <div class="content-list" v-show="homepage" :style="{height: listHeight,'overflow-y':'auto'}">
+	  <div class="list" v-for="(data,v) in data" @click="showBtn(data,v)">
+	    <div class="list-l" style="padding-top: 9%;">
+		  <img src="/static/images/phone/phone.png" v-if="data.deviceType == 'mobile'">
+		  <img src="/static/images/phone/pc.png" v-else>			
+	    </div>
+	    <div class="list-c">
+		  <p>{{ data.desc }}</p>
+		  <p>{{ timeConver('week',data.time) }} ({{ timeConver('time',data.time) }})</p>
+		  <p >{{ lang_t('rule.online_time') }}: {{ data.link=='0' ? lang_t('rule.offline') : reTime(data.linkTime) }}</p>
+		  <!--<p v-if="globalConfig.pageOptimize =='1'">{{ lang_t('rule.internet_access') }}:{{ data.state=='0' ? lang_t('rule.deny') : lang_t('rule.allow') }}</p>-->
+		  <p>MAC: {{ data.mac }}</p>
+	    </div>
+	    <div class="list-r-img" style="padding-top:12%;">
+			<x-icon :type="data.state == '1'?'tick':'dis'" ></x-icon>
+	    </div>
+	    <div class="list-r"  style="padding-top:12%;">
+		  <img src="/static/images/phone/sign_right.png">
+	    </div>
+	  </div>
+    </div>
+    <div class="content" v-show="!homepage">
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('rule.description') }}</div>
+	    <div class="item-r">
+		  <input type="text" v-model="name" :maxlength="descLen">
+	    </div>	  	  
+	  </div>
+	  <div class="group">
+	    <div class="item-l">MAC</div>
+	    <div class="item-r">
+		  <input type="text" v-model="mac" :maxlength="17">
+	    </div>	  	  
+	  </div>
+	  <div class="group" v-show="listData.length!=0">
+	    <div class="item-l">{{ lang_t('rule.user_list') }}</div>
+	    <div class="item-r">
+		  <select id="link_id" v-model="listIndex" @change="userListChange">
+						<option v-for="(user,v) in listData" :value="v">
+							<div>{{ user.mac }}</div>&nbsp;&nbsp;
+							<div>{{ user.name ? user.name : lang_t('common.aonymous_user') | filling }}</div>
+						</option>
+				  	</select>
+		  	</div>
+		</div>
+	  <div class="group" v-show="listData.length!=0">
+	    <div class="item-l">{{ lang_t('rule.internet_access') }}</div>
+	    <div class="item-r">
+		  <select v-model="status">
+		    <option value="0">{{ lang_t('rule.deny') }}</option>
+		    <option value="1">{{ lang_t('rule.allow') }}</option>
+		  </select>
+	    </div>
+	  </div>
+	  <div class="group">
+	    <div style="float:left;font-size:14px;">
+		  {{ lang_t('rule.schedule') }}:
+	      <x-checkbox style="margin:14px;" v-model="selectall" @change="selectAllBtn" k_class="default">
+		    {{ lang_t('rule.every') }}
+		  </x-checkbox>
+	    </div>
+		<br>&nbsp;</br>
+	    <div v-for="(week,index) in 7">
+	      <div style="float:left;font-size:12px;">
+	  	    <x-checkbox style="margin:12px;padding-left:45px;" v-model="select[index]" @change="selectClick(index)" k_class="default">
+		      {{ lang_t('rule.'+weekArr[index]) }}
+		    </x-checkbox>
+		  </div>
+	    </div>		  
+	  </div>
+	  <div class="group"></div>
+	  <div class="group" style="height: 36px;"></div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('schedule.start_time') }}</div>
+	    <div class="item-r">
+		  <select v-model="stime1" style="width:86px;">
+		    <option v-for="(m,t) in 24" :value="t">{{t < 10 ? '0'+t : t}}</option>
+		  </select> :
+		  <select v-model="stime2" style="width:86px;">
+		    <option v-for="(m,t) in 60" :value="t">{{t < 10 ? '0'+t : t}}</option>
+		  </select>		
+	    </div>	  	  
+	  </div>
+	  <div class="group">
+	    <div class="item-l">{{ lang_t('schedule.end_time') }}</div>
+	    <div class="item-r">
+		  <select v-model="etime1" style="width:86px;">
+		    <option v-for="(m,t) in 24" :value="t">{{t < 10 ? '0'+t : t}}</option>
+		  </select> :
+		  <select v-model="etime2" style="width:86px;">
+		    <option v-for="(m,t) in 60" :value="t">{{t < 10 ? '0'+t : t}}</option>
+		  </select>
+	    </div>	  	  
+	  </div>
+	  <div class="group"></div>
+	  <div class="space"></div>
+	  <div class="footer">
+	    <button class="btn" :disabled="addbtn" @click="applyBtn">{{ lang_t('common.apply') }}</button><br>&nbsp;<br>
+	    <button class="btn btn-red" v-show="this.tempIdx !== ''" @click="deleteBtn">{{ lang_t('common.delete') }}</button>
+	  </div>
+	  <div class="space"></div>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,listHeight:"300px",data:[],homepage:!0,editState:"list",parentalState:!1,select:[],selectall:!1,name:"",mac:"",stime1:"0",stime2:"0",etime1:"0",etime2:"0",state:"",tempIdx:0,listIndex:null,status:"",listData:[],weekEdit:[],editLinks:[],editsHour:[],editsMin:[],editeHour:[],editeMin:[],weekArr:["mon","tue","wed","thu","fri","sat","sun"],descLen:globalConfig.descLen,appbtn:!1,addbtn:!1}},computed:{phoneTitle:function(){return this.homepage?"":this.lang_t("menu.parental")}},created:function(){var a=this;a.listHeight=window.innerHeight-152+"px",uiPost.getParentalRules(function(t){var e,i,n;for(var s in a.maxRule=t.maxRule||32,a.parentalState="1"==t.enable,a.data=t.rule,a.ruleList=t.rule,a.dataTotal=a.ruleList.length,a.data)e=a.data[s].time.split(","),a.weekEdit[s]=e[0],i=e[1].split(":"),n=e[2].split(":"),a.editsHour[s]=String(Number(i[0])),a.editsMin[s]=String(Number(i[1])),a.editeHour[s]=String(Number(n[0])),a.editeMin[s]=String(Number(n[1]))}),this.scanFun()},mounted:function(){var n=this;if(this.autoFun(),/iphone|ipod|ipad/i.test(navigator.appVersion))for(var t=document.querySelectorAll("select"),e=0;e<t.length;e++)t[e].addEventListener("blur",function(t){for(var e=!1,i=0;i<this.options.length;i++)if(this.selectedIndex==this.options[i].value){e=!0;break}e||($(this).val(this.options[0].value),"link_id"==this.id&&(n.listIndex=this.options[0].value,n.userListChange()))})},methods:{backFun:function(){this.homepage?location.href="/phone/application.html":(this.homepage=!0,this.editState="list")},changeParentalState:function(t){this.applyBtn("switch")},userListChange:function(){var t=this.listData[this.listIndex];this.name=t.name.slice(0,20),this.mac=t.mac},scanFun:function(){var e=this;uiPost.getDeviceInfo(function(t){e.listData=t.rule})},addBtn:function(){if(this.homepage){this.listIndex="",this.editState="add",this.homepage=!1,this.name="",this.mac="";for(var t=0;t<7;t++)this.select[t]=!1;this.selectall=!1,this.stime1="0",this.stime2="0",this.etime1="0",this.etime2="0",this.tempIdx=""}},showBtn:function(t,e){if(this.parentalState){var i=this;if(this.homepage){for(var n in this.listIndex="",this.listData)if(this.listData[n].mac==t.mac){this.listIndex=n;break}this.tempIdx=e,this.editState="edit",this.homepage=!1,this.name=t.desc,this.mac=t.mac,this.status=t.state;var s=t.time.split(","),a=s[0].split(";");7<=a.length&&(a=["0"]),i.select=[!1,!1,!1,!1,!1,!1,!1];for(var l=0;l<8;l++)for(var o in a)"0"==a[o]?i.selectall=!0:i.selectall=!1,"0"!=l&&a[o]==l&&(i.select[l-1]=!0);1==i.selectall&&(i.select=[!0,!0,!0,!0,!0,!0,!0]);var r=s[1].split(":"),h=s[2].split(":");this.stime1=r[0],this.stime2=r[1],this.etime1=h[0],this.etime2=h[1]}}},timeConver:function(t,e){var i="",n=(e=e.split(","))[0].split(";");for(var s in 7<=n.length&&(n=["0"]),n)"1"==n[s]?i+=this.lang_t("rule.mon")+" ":"2"==n[s]?i+=this.lang_t("rule.tue")+" ":"3"==n[s]?i+=this.lang_t("rule.wed")+" ":"4"==n[s]?i+=this.lang_t("rule.thu")+" ":"5"==n[s]?i+=this.lang_t("rule.fri")+" ":"6"==n[s]?i+=this.lang_t("rule.sat")+" ":"7"==n[s]?i+=this.lang_t("rule.sun")+" ":"0"==n[s]&&(i+=this.lang_t("rule.every")+" ");return"time"==t?cs.checkTime(e[1])+"   --   "+cs.checkTime(e[2]):i},reTime:function(t){var e=t.split(";"),i="";return 0<e[0]&&(i+=e[0]+" "+this.lang_t("index.day")+", "),(0<e[0]||0<e[1])&&(i+=e[1]+" "+this.lang_t("index.hour")+", "),(0<e[0]||e[1]||0<e[2])&&(i+=e[2]+" "+this.lang_t("index.min")+", "),0<e[3]&&(i+=e[3]+" "+this.lang_t("index.sec")),i},selectClick:function(t){var e=0;for(var i in this.select)this.select[i]&&e++;this.selectall=7==e},selectAllBtn:function(t){for(var e=0;e<7;e++)this.select[e]=t},applyBtn:function(t){var e=this,n={};if("switch"==t)this.parentalState?n.enable="1":n.enable="0",n.addEffect="1";else{var s=cs.commentstr(this.name);if(1==s||2==s)return Cstool.Mark({content:this.lang_t("rule.msg4"),l_text:this.lang_t("common.back")}),!1;if(20<this.name.length)return Cstool.Mark({content:this.lang_t("rule.msg5"),l_text:this.lang_t("common.back")}),!1;if(!e.mac||""==e.mac)return Cstool.Mark({content:this.lang_t("rule.mac")+e.lang_t("rule.msg12"),l_text:this.lang_t("common.back")}),!1;var a=cs.mac(e.mac);if(1==a)return Cstool.Mark({content:e.lang_t("rule.msg17"),l_text:this.lang_t("common.back")}),!1;if(2==a)return Cstool.Mark({content:e.lang_t("rule.msg18"),l_text:this.lang_t("common.back")}),!1;if(3==a)return Cstool.Mark({content:e.lang_t("rule.msg19"),l_text:this.lang_t("common.back")}),!1;if(Number(e.stime1)>Number(e.etime1))return Cstool.Mark({content:this.lang_t("rule.msg28"),l_text:this.lang_t("common.back")}),!1;if(Number(e.stime1)==Number(e.etime1)&&Number(e.stime2)>=Number(e.etime2))return Cstool.Mark({content:this.lang_t("rule.msg28"),l_text:this.lang_t("common.back")}),!1;if("add"==this.editState){if(16<=this.data.length)return Cstool.Mark({content:this.lang_t("rule.msg30",[16]),l_text:this.lang_t("common.back")}),!1;n.addEffect="0"}else n.idx=String(this.tempIdx+1),n.enable="1",n.addEffect="2";n.mac=this.mac,n.desc=this.name,n.state=this.status;var l,o,r="";if(this.selectall)r="0";else for(var h in this.select){var c=String(Number(h)+1);this.select[h]&&(r+=""==r?c:";"+c)}for(i=0;i<e.data.length;i++)if(e.mac.toUpperCase()==e.data[i].mac.toUpperCase()&&"edit"==e.editState&&e.tempIdx+1!=e.data[i].idx||e.mac.toUpperCase()==e.data[i].mac.toUpperCase()&&"add"==e.editState){if((l="0"==String(r)?"1;2;3;4;5;6;7":String(r))==(o="0"==String(e.weekEdit[i])?"1;2;3;4;5;6;7":String(e.weekEdit[i]))&&String(e.stime1)==e.editsHour[i]&&String(e.stime2)==e.editsMin[i]&&String(e.etime1)==e.editeHour[i]&&String(e.etime2)==e.editeMin[i])return Cstool.Mark({content:this.lang_t("rule.time_conflict"),l_text:this.lang_t("common.back")}),!1;var m=!1;if(l.length<=o.length)for(var u=0;u<=o.length-1&&(";"==l.substr(g,1)||!(m=-1!=o.indexOf(l.substr(u,1))));u++);else for(var g=0;g<=l.length-1&&(";"==o.substr(g,1)||!(m=-1!=l.indexOf(o.substr(g,1))));g++);var d=3600*e.stime1+60*e.stime2,f=3600*e.etime1+60*e.etime2,p=3600*parseInt(e.editsHour[i])+60*parseInt(e.editsMin[i]),_=3600*parseInt(e.editeHour[i])+60*parseInt(e.editeMin[i]);if(1==m&&(p<=d&&d<=_||p<=f&&f<=_||d<=p&&_<=f))return Cstool.Mark({content:this.lang_t("rule.time_conflict2"),l_text:this.lang_t("common.back")}),!1}if(""==r)return Cstool.Mark({content:this.lang_t("rule.msg41"),l_text:this.lang_t("common.back")}),!1;n.week=r,n.sTime=this.stime1+":"+this.stime2,n.eTime=this.etime1+":"+this.etime2}this.addbtn=!0,uiPost.setParentalRules(n,function(t){this.addbtn=!1,Cstool.Mark({type:"load",time:2,content:e.lang_t("common.effective"),success:function(){Cstool.Flag({content:e.lang_t("common.set_success"),btnText:e.lang_t("common.back"),ok:function(){location.href=location.href}})}})})},deleteBtn:function(){var i=this,t={};t["delRule"+this.tempIdx]=String(this.tempIdx),Cstool.Mark({content:i.lang_t("vpn.msg8"),ok:function(){uiPost.delParentalRules(t,function(t){var e=2;t&&t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.Mark({type:"load",time:e,content:i.lang_t("common.deletion"),success:function(){location.href=location.href}})})}})},autoFun:function(){$(window).height()<380?($(".white-layout-body").css("height",.78*window.innerHeight+"px"),$(".white-layout").css("minHeight",.78*document.body.clientHeight+"px")):($(".white-layout-body").css("height",.86*window.innerHeight+"px"),$(".white-layout").css("minHeight",.8*document.body.clientHeight+"px"))}},filters:{filling:function(t){for(var e=t,i=0,n=0;n<t.length;n++)255<t.charCodeAt(n)?i+=2:i+=1;for(var s=i;s<21;s++)e+="  ";return e}}}</script><script src="/static/js/main.js"></script></body></html>

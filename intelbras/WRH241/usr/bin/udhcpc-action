@@ -1,0 +1,180 @@
+#!/bin/sh
+
+. /usr/bin/scriptlib
+
+UDHCPC="udhcpc"
+FAILOVER=`rdcsman 0x80430600 u32`
+LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`
+LOADSHARING_WANTYPE=`rdcsman 0x0043000b u32`
+FIRST_CNT_STATUS=`rdcsman 0x80010007 u16`
+UDHCPC_PID_FILE="/var/run/udhcpc.pid"
+PIDFILE_CONNECT="/var/run/udhcpc.pid.connect"
+UDHCPC_DEFAULT_SCRIPT="/usr/bin/default.script"
+#UDHCPC_DEFAULT_SCRIPT="/tmp/default.script"
+ETH=`rdcsman 0x8000F231 str`
+CNTTYPE=`rdcsman 0x0003500a u32`
+HOSTNAME=`rdcsman 0x00035002 str`
+WANTYPE=`rdcsman 0x00010003 u32`
+CNTFORCE=`rdcsman 0x8001000e u32`
+
+chk_hostname()
+{
+    [ "$HOSTNAME" != "" ] && return
+
+    HOSTNAME="`rdcsman 0x00010001 str`"
+    [ "$HOSTNAME" != "" ] && return;
+
+    if [ -f /etc/hostname ]; then
+        HOSTNAME="`cat /etc/hostname`"
+        logger -t "udhcpc" "Warning: No specify Hostname, using default Hostname ($HOSTNAME) for DHCP connection"
+        echo "Warning: No specify Hostname, using default Hostname ($HOSTNAME) for DHCP connection"
+    else
+        logger -t "udhcpc" "Warning: No specify Hostname"
+        echo "Warning: No specify Hostname"
+    fi
+}
+
+udhcpc_status()
+{
+	TIME=0
+	TIMEOUT=10
+	while [ true ] ; do	
+		sl_get_IP_NM_GW_in_ifconfig $ETH IF_IP IF_NM IF_GW
+		#echo "$0 : IF_IP=$IF_IP IF_NM=$IF_NM IF_GW=$IF_GW"	
+
+		# Does not check IF_GW.
+		if [ "${IF_IP}x" != "x" -a "${IF_NM}x" != "x" ] ; then	
+			return 0		
+		else			
+			sleep 1
+			TIME=$((TIME+1))
+			if [ $TIME -gt $TIMEOUT ] ; then
+				return 1	
+			fi			
+		fi
+	done		
+}
+
+udhcpc_start()
+{
+    if [ -e "$UDHCPC_PID_FILE" ] ; then 
+        echo "Found previous udhcpc, stop it in advance ..."
+        udhcpc_stop
+	fi  
+
+    chk_hostname
+	if [ $CNTFORCE -eq 1 ] ; then
+        $UDHCPC -n -i $ETH -p $UDHCPC_PID_FILE -s $UDHCPC_DEFAULT_SCRIPT --hostname="$HOSTNAME"
+        wrcsman "0x8001000e 0x00"
+	elif [ $LOADSHARING_ENABLE -eq 1 -a $LOADSHARING_WANTYPE -eq 5 ] ; then
+        $UDHCPC -n -i $ETH -p $UDHCPC_PID_FILE -s $UDHCPC_DEFAULT_SCRIPT --hostname="$HOSTNAME"
+		if [ $FIRST_CNT_STATUS -eq 2 ] ; then
+			wrcsman "0x8001000e 0x01"
+		fi
+	else
+        $UDHCPC -n -i $ETH -p $UDHCPC_PID_FILE -s $UDHCPC_DEFAULT_SCRIPT --hostname="$HOSTNAME"
+	fi
+	return $?
+}
+
+udhcpc_stop()
+{
+	if [ -f "$PIDFILE_CONNECT" ]; then
+		kill `cat $PIDFILE_CONNECT` > /dev/null 2>&1
+		rm -f $PIDFILE_CONNECT > /dev/null 2>&1	
+	fi		
+			
+	if [ -e "$UDHCPC_PID_FILE" ] ; then 
+		kill `cat $UDHCPC_PID_FILE` > /dev/null 2>&1 
+		rm -f $UDHCPC_PID_FILE
+	fi
+			
+	ifconfig $ETH 0.0.0.0 				 		
+    interface=$ETH $UDHCPC_DEFAULT_SCRIPT deconfig
+	return 0
+}
+
+udhcpc_showinfo()
+{
+    echo "AUTOBAK_ENABLE=`rdcsman 0x001E000d u16`"
+    echo "AUTOBAK_STATUS=`rdcsman 0x801E1200 u16`"
+    echo "RS232_AUTOBAK_STATUS=`rdcsman 0x80420500 u32`"
+    echo "FAILOVER_ENABLE=`rdcsman 0x00430001 u32`" 
+    echo "FAILOVER_MODE=`rdcsman 0x001E0080 u16`"			
+    echo "FAILOVER_WANTYPE=`rdcsman 0x0043000b u32`" 
+    echo "FAILOVER_STATUS=`rdcsman 0x80430600 u32`" 
+    echo "LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`"
+    echo "LOADSHARING_WANTYPE=`rdcsman 0x0043000b u32`"
+    echo "LOADSHARING_LAST_WANTYPE=`rdcsman 0x80432b20 u32`"
+
+    echo "CSID_S_LOCAL_WAN_IP       : `rdcsman 0x80010002 ipv4`"
+    echo "CSID_S_LOCAL_WAN_NM       : `rdcsman 0x80010003 ipv4`"
+    echo "CSID_S_LOCAL_WAN_GW       : `rdcsman 0x80010004 ipv4`"
+    echo "CSID_S_LOCAL_WAN_PRIDNS   : `rdcsman 0x80010005 ipv4`"
+    echo "CSID_S_LOCAL_WAN_SECDNS   : `rdcsman 0x80010006 ipv4`"
+    echo "CSID_S_LOCAL_WAN_STATUS   : `rdcsman 0x80010007 u32`"
+    echo "CSID_S_LOCAL_WAN_IF_NAME  : `rdcsman 0x8001000B str`"
+
+    echo "CSID_S_DHCP_CLI_PID 	      : `rdcsman 0x80035001 u16  `"
+    echo "CSID_S_DHCP_CLI_IF_IP 	  : `rdcsman 0x80035002 ipv4 `"
+    echo "CSID_S_DHCP_CLI_IF_NM 	  : `rdcsman 0x80035003 ipv4 `"
+    echo "CSID_S_DHCP_CLI_IF_GW 	  : `rdcsman 0x80035004 ipv4 `"
+    echo "CSID_S_DHCP_CLI_IF_PRIDNS   : `rdcsman 0x80035005 ipv4 `"
+    echo "CSID_S_DHCP_CLI_IF_SECDNS   : `rdcsman 0x80035006 ipv4 `"
+    echo "CSID_S_DHCP_CLI_CNT_STATUS  : `rdcsman 0x80035007 u32  `"
+    echo "CSID_S_DHCP_CLI_ALTERED 	  : `rdcsman 0x80035008 u32  `"
+    echo "CSID_S_DHCP_CLI_LEASE_TIME  : `rdcsman 0x80035009 u32  `"
+    echo "CSID_S_DHCP_CLI_UP_TIME 	  : `rdcsman 0x80035010 u32  `"
+
+    echo "CSID_C_DHCP_CLI_ENABLE 	  : `rdcsman 0x00035001 u8   `"
+    echo "CSID_C_DHCP_CLI_HOSTNAME    : `rdcsman 0x00035002 str  `"
+    echo "CSID_C_DHCP_CLI_IF_IP 	  : `rdcsman 0x00035004 ipv4 `"
+    echo "CSID_C_DHCP_CLI_IF_NM 	  : `rdcsman 0x00035005 ipv4 `"
+    echo "CSID_C_DHCP_CLI_IF_GW 	  : `rdcsman 0x00035006 ipv4 `"
+    echo "CSID_C_DHCP_CLI_IF_PRIDNS   : `rdcsman 0x00035007 ipv4 `"
+    echo "CSID_C_DHCP_CLI_IF_SECDNS   : `rdcsman 0x00035008 ipv4 `"
+    echo "CSID_C_DHCP_CLI_MTU 	      : `rdcsman 0x00035009 u32  `"
+    echo "CSID_C_DHCP_CLI_IDLETIME    : `rdcsman 0x0003500d u16  `"
+    echo "CSID_C_DHCP_CLI_CNT_TYPE    : `rdcsman 0x0003500a u8   `"
+    echo "CSID_C_DHCP_CLI_CNT_TYPE_UI : `rdcsman 0x0003500e u8   `"
+    echo "CSID_C_DHCP_CLI_NAT_DISABLE : `rdcsman 0x0003500f u32  `"
+}
+
+# main ##########################################################
+case "$1" in
+	start)
+		udhcpc_start		
+        [ $? = 1 ] && wrcsman "0x80035007 0x03" 
+		;;
+		
+	release|stop)
+		if [ -e "$UDHCPC_PID_FILE" ] ; then 
+            echo "DHCP Client $1, found udhcpc, send signal USR1 for udhcpc ..."
+			kill -USR2 `cat $UDHCPC_PID_FILE` > /dev/null 2>&1
+		fi		
+        udhcpc_stop 
+		;;
+ 
+	renew)
+		if [ -e "$UDHCPC_PID_FILE" ] ; then 
+            echo "Found udhcpc, send signal USR1 for udhcpc ..."
+			kill -USR1 `cat $UDHCPC_PID_FILE` > /dev/null 2>&1
+			udhcpc_status; ret="$?"  		 			 
+		    [ $? = 1 ] && wrcsman "0x80035007 0x03" 
+		else
+            echo "Restart udhcpc since cannot found udhcpc ..."
+            udhcpc_start 
+		    [ $? = 1 ] && wrcsman "0x80035007 0x03" 
+		fi
+		;;
+        
+	status) 
+        udhcpc_showinfo 
+        ;;
+
+	*)      
+        exit 1 
+        ;;
+esac
+exit 0		
+			

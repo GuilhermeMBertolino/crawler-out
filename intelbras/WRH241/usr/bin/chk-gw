@@ -1,0 +1,107 @@
+#!/bin/sh
+
+if [ "$1" = "" ] ; then
+	echo "Usage: $0 ip_addr subnet_addr gateway_addr"
+	exit 0;
+fi
+
+ip1=`echo $1 |cut -d "." -f 1`
+ip2=`echo $1 |cut -d "." -f 2`
+ip3=`echo $1 |cut -d "." -f 3`
+ip4=`echo $1 |cut -d "." -f 4`
+
+nm1=`echo $2 |cut -d "." -f 1`
+nm2=`echo $2 |cut -d "." -f 2`
+nm3=`echo $2 |cut -d "." -f 3`
+nm4=`echo $2 |cut -d "." -f 4`
+
+gw1=`echo $3 |cut -d "." -f 1`
+gw2=`echo $3 |cut -d "." -f 2`
+gw3=`echo $3 |cut -d "." -f 3`
+gw4=`echo $3 |cut -d "." -f 4`
+
+ip_to_netmask()
+{
+	m=0
+	i=8
+	chk1=$nm1
+	chk2=$nm2
+	chk3=$nm3
+	chk4=$nm4
+
+	while [ "$i" -le "8" ]
+	do
+		tmp=$((1 << i))
+		i=$((i-1))
+		cho=$((chk1&tmp))
+		if [ "$cho" -ne "0" ] ; then
+			m=$((m+1))
+		fi
+		cho=$((chk2&tmp))
+		if [ "$cho" -ne "0" ] ; then
+			m=$((m+1))
+		fi
+		cho=$((chk2&tmp))
+		if [ "$cho" -ne "0" ] ; then
+			m=$((m+1))
+		fi
+		cho=$((chk4&tmp))
+		if [ "$cho" -ne "0" ] ; then
+			m=$((m+1))
+		fi
+		
+		if [ $i = -1 ] ; then
+			break
+		fi
+	done
+}
+
+network1=$((gw1 & nm1))
+network2=$((gw2 & nm2))
+network3=$((gw3 & nm3))
+network4=$((gw4 & nm4))
+
+bacst1=$((gw1 | $(( 256 + $((~nm1)) )) ))
+bacst2=$((gw2 | $(( 256 + $((~nm2)) )) ))
+bacst3=$((gw3 | $(( 256 + $((~nm3)) )) ))
+bacst4=$((gw4 | $(( 256 + $((~nm4)) )) ))
+
+hostMin1=$network1
+hostMin2=$network2
+hostMin3=$network3
+hostMin4=$((network4+1))
+
+hostMax1=$bacst1
+hostMax2=$bacst2
+hostMax3=$bacst3
+hostMax4=$((bacst4-1))
+
+ip_to_netmask
+
+printf "ip:      %03d.%03d.%03d.%03d\n" $ip1 $ip2 $ip3 $ip4
+printf "mask:    %03d.%03d.%03d.%03d\n" $nm1 $nm2 $nm3 $nm4
+printf "gw:      %03d.%03d.%03d.%03d\n" $gw1 $gw2 $gw3 $gw4
+printf "nwtwork: %03d.%03d.%03d.%03d\n" $network1 $network2 $network3 $network4
+printf "HostMin: %03d.%03d.%03d.%03d\n" $hostMin1 $hostMin2 $hostMin3 $hostMin4
+printf "HostMax: %03d.%03d.%03d.%03d\n" $hostMax1 $hostMax2 $hostMax3 $hostMax4
+printf "bacst:   %03d.%03d.%03d.%03d\n" $bacst1 $bacst2 $bacst3 $bacst4
+
+err=0
+if [ $ip1 -lt $hostMin1 ] || [ $ip1 -gt $hostMax1  ] ; then
+	err=$((err+1))
+fi
+if [ $ip2 -lt $hostMin2 ] || [ $ip2 -gt $hostMax2  ] ; then
+	err=$((err+1))
+fi
+if [ $ip3 -lt $hostMin3 ] || [ $ip3 -gt $hostMax3  ] ; then
+	err=$((err+1))
+fi
+if [ $ip4 -lt $hostMin4 ] || [ $ip4 -gt $hostMax4  ] ; then
+	err=$((err+1))
+fi
+
+if [ $err -gt 0 ] ; then
+	echo 2
+else
+	echo 1
+fi

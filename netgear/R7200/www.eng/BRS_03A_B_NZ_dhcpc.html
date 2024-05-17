@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><HEAD><TITLE>NETGEAR Router @model_name#</TITLE>
+<meta http-equiv="Pragma" CONTENT="no-cache">
+<meta http-equiv="Cache-Control" CONTENT="no-cache">
+<meta http-equiv="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+<META http-equiv=content-type content="text/html; charset=UTF-8"><LINK href="style/hijack_style.css" type=text/css rel=stylesheet><LINK href="style/hijack_03A_wanInput.css" type=text/css rel=stylesheet>
+<SCRIPT language=javascript src="utility.js" type=text/javascript></SCRIPT>
+<SCRIPT language=javascript src="script/brs_hijack.js" type=text/javascript></SCRIPT>
+<script language="javascript" type="text/javascript" src="string.js"></script><link rel="stylesheet" href="style/form.css"><script language="javascript" type="text/javascript" src="funcs.js"></script>
+<script language="javascript" type="text/javascript" src="linux.js"></script>
+<SCRIPT language=javascript src="language/English.js" type=text/javascript></script>
+<SCRIPT language=javascript src="script/country_isp.js" type=text/javascript></script>
+<SCRIPT language=javascript type=text/javascript>
+var country = "@country#";
+var isp = "@h_isp#";
+//var country_isp_list = new Array(4);
+//country_isp_list[0] = new Array("Switzerland", "Other");        //countries have 60 option
+//country_isp_list[1] = new Array("Swisscom", "Telfort", "Other");//isp have 60 option
+//country_isp_list[2] = new Array("UK", "Other");                 //countries have 61 option
+//country_isp_list[3] = new Array("BT", "Sky", "Other");                //isp have 61 option
+function init_option()
+{
+    for(var i = 0; i < country_isp_list[0].length; i++)
+     {
+         if(country == country_isp_list[0][i]){
+              for(var j = 0; j < country_isp_list[1].length; j++)
+                {
+                  if(isp == country_isp_list[1][j])
+                      document.getElementById("dis_60").style.display = "block";
+                }
+           }
+     }
+
+    for(var i = 0; i < country_isp_list[2].length; i++)
+     {
+         if(country == country_isp_list[2][i]){
+              for(var j = 0; j < country_isp_list[3].length; j++)
+                {
+                  if(isp == country_isp_list[3][j])
+                      document.getElementById("dis_61").style.display = "block";
+                }
+           }
+     }
+
+}
+function init_iptv()
+{
+	var iptv_str = isp+" tv";
+     for(var i = 0; i < iptv_country_isp_list[0].length; i++)
+     {
+         if(country == iptv_country_isp_list[0][i]){
+              for(var j = 0; j < iptv_country_isp_list[1].length; j++)
+                {
+                  if(isp == iptv_country_isp_list[1][j]){
+                      //if(isp == "TalkTalk")
+                          document.getElementById("dis_isp_iptv").style.display = "block";
+						  document.getElementById("isp_tv_str").value = iptv_str;
+                      //else
+                      //    document.getElementById("dis_iptv").style.display = "block";
+                      if(country != "nz"){
+					      document.getElementById("tv_en").checked = "checked";
+					      document.getElementById("isp_tv_en").checked = "checked";
+	              }
+                      for(var k = 0; k < bridge_country_isp_list[0].length; k++)
+                      {
+						  if(isp == bridge_country_isp_list[0][k]){
+							  document.getElementById("dis_br").style.display = "block";
+							  document.getElementById("iptv_on_lan4").checked = "checked";
+						  }
+					  }
+                   }
+                }
+           }
+     }
+}
+function check_vlan()
+{
+    var cf = document.forms[0];
+    if(!cf.vlan_enable.checked)
+       	cf.h_vlan_id.disabled=true;
+    else
+        cf.h_vlan_id.disabled=false;
+}
+function init_mac()
+{
+    var cf = document.forms[0];
+    if(country == "UK" && isp == "Sky")
+    {
+		cf.vlan_enable.checked = "checked";
+		cf.h_vlan_id.value = "101";
+        document.getElementById("mac_cl").style.display="block";
+		if(cf.h_MACAssign.value == "fixed")
+            cf.mac_clone.checked = "checked";
+		if(!cf.mac_clone.checked){
+			cf.Spoofmac.disabled=true;
+			cf.Spoofmac.value = cf.default_wan_mac.value;
+		}else{
+			cf.Spoofmac.disabled=false;
+			cf.Spoofmac.value = cf.current_wan_mac.value;
+		}
+    }
+}
+function check_mac()
+{
+	var cf = document.forms[0];
+	if(!cf.mac_clone.checked){
+			cf.Spoofmac.disabled=true;
+			cf.Spoofmac.value = cf.default_wan_mac.value;
+	}else{
+			cf.Spoofmac.disabled=false;
+			cf.Spoofmac.value = cf.current_wan_mac.value;
+	}
+}
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+
+    if(cf.mac_clone.checked)
+        cf.h_MACAssign.value = "fixed";
+    else
+        cf.h_MACAssign.value = "default";
+
+    if(cf.vlan_enable.checked && checkInt(cf.h_vlan_id,"",1,4094,true).length > 0)
+        msg += "VLAN ID " + getErrorMsgByVar("gsm_must_tag_range") + "\n";
+    if (msg.length > 1)	{
+	alert(msg);
+        return false;
+    }
+    dataToHidden(cf);
+    cf.submit();
+    return true;
+}
+
+</SCRIPT>
+</HEAD>
+<BODY bgcolor="#ffffff" onLoad="dataToVisible(document.forms[0]);init_mac();check_vlan();init_option();init_iptv();">
+<FORM action="setup.cgi@post_par#" method=post>
+<DIV class=wizard_content_div>
+<DIV class=wizard_words_div>
+<H1><span languageCode = "">Dynamic IP (DHCP) detected</span></H1>
+<P><span languageCode = "">Click "Next" to continue.</span></P>
+<DIV class=wanInput_content_div>
+
+<DIV class=wanInput_left_div id=vlanid align=right><input type="checkbox" name="vlan_enable" onClick="check_vlan()" disabled="disabled"><span languageCode = "">Use VLANID</span></DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=inputVlanID maxLength=4 align=right value="@h_vlan_id#" name="h_vlan_id" readonly="readonly"></DIV>
+
+<DIV id=dis_60 style="display:none">
+@h_option_hide_s#
+<DIV class=wanInput_left_div id=h_60_option align=right>DHCP 60 Option</DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=input60option maxLength=64 align=right value="@h_60_option#" name="h_60_option"></DIV>
+@h_option_hide_e#
+</DIV>
+
+<DIV id=dis_61 style="display:none">
+@h_option_hide_s#
+<DIV class=wanInput_left_div id=h_61_option align=right>DHCP 61 Option</DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=input61option maxLength=64 align=right value="@h_61_option#" name="h_61_option"></DIV>
+@h_option_hide_e#
+</DIV>
+
+<DIV id=mac_cl style="display:none">
+<DIV class=wanInput_left_div id=h_mac_clone_option align=right><input type="checkbox" name="mac_clone" onClick="check_mac()">MAC Clone (xx:xx:xx:xx:xx:xx)</DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=input_mac_clone_option class="num" name="Spoofmac" size="17" maxLength=17 align=right value="00:C0:02:5E:11:32"></DIV>
+</DIV>
+
+<DIV id=dis_iptv style="display:none">
+<!--DIV class=wanInput_left1_div id=spt_iptv align=right -->
+<br><input type="checkbox" name="brs_iptv_enable" id="tv_en"><span languageCode = "">Enable IPTV support</span>
+<!--/DIV -->
+</DIV>
+
+<DIV id=dis_isp_iptv style="display:none">
+<br><input type="checkbox" name="brs_isp_enable" id="isp_tv_en"><span languageCode = "">Enable </span><input type="text" name="brs_isp_tv" id="isp_tv_str" style="border:0px">
+</DIV>
+
+<DIV id=dis_br style="display:none">
+<br><span languageCode = ""><font color="blue">Bridge Mode<br>&nbsp;&nbsp;(If select Bridge Mode, the LAN4 port will be configured as IPTV port, you can <br>&nbsp;&nbsp;select max.3 LAN ports for 3 IPTV devices to connect to . LAN1 is reserved for<br>&nbsp;&nbsp; wired internet)</font></span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id=iptv_on_lan4 name="iptv_on_lan4" readonly="readonly">Enable IPTV on LAN4
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="iptv_on_lan3">Enable IPTV on LAN3
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="iptv_on_lan2">Enable IPTV on LAN2
+</DIV>
+
+<DIV style="CLEAR: both"></DIV></DIV></DIV>
+<DIV class=wizard_buttons_div id=allBtns_div align=right>
+<DIV class=buttons_img_div id=btnsContainer_div onclick="checkData();"><IMG src="image/ca-little-purple-button.gif"> 
+<DIV class=buttons_words_div id=btn_text_div align=center><span languageCode = "">Next</span></DIV></DIV></DIV></DIV>
+<input type="hidden" name="h_MACAssign" value="@h_MACAssign#">	
+<input type="hidden" name="current_wan_mac" value="@Spoofmac#">
+<input type="hidden" name="default_wan_mac" value="@default_wan_mac#">
+<input type="hidden" name="todo" value="brs_reset_save">
+<INPUT type="hidden" name="WANAssign" value="dynamic" > 
+<INPUT type="hidden" name="h_vlan_enable" value="@h_vlan_enable#"> 
+<INPUT type="hidden" name="h_DSL_type" value="@h_DSL_type#">
+<INPUT type="hidden" name="h_wiz_country" value="@country#">
+<INPUT type="hidden" name="h_wiz_isp" value="@h_isp#">
+<INPUT type="hidden" name="h_brs_iptv_enable" value="@h_brs_iptv_enable#">
+<input type="hidden" name="h_iptv_on_lan4" value="@h_iptv_on_lan4#">
+<input type="hidden" name="h_iptv_on_lan3" value="@h_iptv_on_lan3#">
+<input type="hidden" name="h_iptv_on_lan2" value="@h_iptv_on_lan2#">
+<input type="hidden" name="this_file" value="BRS_03A_B_NZ_dhcpc.html">
+<input type="hidden" name="next_file" value="BRS_04_applySettings.html">
+</FORM>
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+</BODY></HTML>

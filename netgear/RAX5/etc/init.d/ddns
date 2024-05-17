@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+START=80
+STOP=10
+
+opmode=''
+
+get_dut_opmode() {
+    local section=$1
+    config_get opmode "$section" "mode"
+}
+
+config_load network
+config_foreach get_dut_opmode "opmode"
+
+config_load ddns
+
+restart() {
+    if [ $opmode != "bridge" ]; then
+        /usr/lib/ddns/dynamic_dns_updater.sh -- stop
+        sleep 1 # give time to shutdown
+        /usr/lib/ddns/dynamic_dns_updater.sh -- start
+        echo "Enable DDNS" > /dev/console
+    else
+
+        echo "Disable DDNS" > /dev/console
+    fi
+}
+
+start() {
+
+    if [ $opmode != "bridge" ]; then
+        /usr/lib/ddns/dynamic_dns_updater.sh -- start
+        echo "Enable DDNS" > /dev/console
+    else
+        echo "Disable DDNS" > /dev/console
+    fi
+}
+
+stop() {
+    /usr/lib/ddns/dynamic_dns_updater.sh -- stop
+    return 0
+}
+
+ntgrddns_stop() {
+    local ddnsPid
+    ddnsPid=`pidof ntgrddnsd`
+
+    if [ "$ddnsPid" != "" ]; then
+        `kill $ddnsPid`
+    fi
+}
+
+reload_ntgrDdns() {
+    local ddnsEnable
+    local ddnsPid
+    config_get ddnsEnable myddns_ipv4 enabled
+    ddnsPid=`pidof ntgrddnsd`
+
+    if [ "$ddnsEnable" == "1" -a "$ddnsPid" == "" ]; then
+        ntgrddnsd -m 0 &
+    else # DDNS disabled or Reset case
+        `kill $ddnsPid`
+    fi
+}
+
+reload() {
+    local ddnsProvider
+    config_get ddnsProvider myddns_ipv4 service_name
+
+    if [ $ddnsProvider == "netgear" ]; then
+        # stop no-ip/dyndns script file
+        stop
+        # launch or kill netgear ddns daemon
+        reload_ntgrDdns
+    else
+        # kill netgear ddns daemon
+        ntgrddns_stop
+        # restart no-ip/dyndns script file
+        restart
+    fi
+}

@@ -1,0 +1,31 @@
+!
+! Zebra configuration saved from vty
+!   2003/11/28 00:49:49
+!
+hostname ospf6d
+password zebra
+log stdout
+service advanced-vty
+!
+!
+!
+!
+!
+!access-list access4 permit 127.0.0.1/32
+!
+!ipv6 access-list access6 permit 3ffe:501::/32
+!ipv6 access-list access6 permit 2001:200::/48
+!ipv6 access-list access6 permit ::1/128
+!
+!ipv6 prefix-list test-prefix seq 1000 deny any
+!
+route-map static-ospf6 permit 10
+ match ipv6 address prefix-list test-prefix
+ set metric-type type-2
+ set metric 2000
+!
+line vty
+ access-class access4
+ ipv6 access-class access6
+ exec-timeout 0 0
+!

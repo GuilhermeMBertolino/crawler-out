@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="nat"></adv-child-menu>  
+  <div class="advance-box">
+	<x-help :text="lang_t('dmz.help')"></x-help>
+    <br><br>
+	<div class="fun-box">
+      <table class="table">
+	    <tbody>
+	  	<tr>
+	  	  <td class="fun-left">{{ lang_t('dmz.state') }}</td>
+	  	  <td>
+	  	  	<x-switch v-model="status"  @change="dmz_enable"></x-switch>
+	  	  </td>
+		</tr>
+  		</tbody>
+	  	<tbody v-show="status">
+		<tr>
+		  <td class="fun-left">{{ lang_t('dmz.ip') }}</td>
+		  <td>
+			<input type="text" v-model="ip" v-verify="formRules" data-name="ip" maxlength="15">
+			&nbsp;&nbsp;
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left"></td>
+		  <td>
+		  	<x-checkbox v-model="checkLocalIp" @change="check_localip">{{ lang_t('dmz.local_ip')+this.stationIp }} </x-checkbox> 
+		  </td>
+		</tr>
+		<tr><td colspan="2"></td></tr>
+		<tr>
+		  <td class="fun-left"></td>
+		  <td>
+			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  </td>
+		</tr>
+	  	</tbody> 
+	  </table>
+  	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,lanip:"",lanNetmask:"",checkLocalIp:!1,status:!1,ip:"",_ip:""}},computed:{formRules:function(){var a=this;return{ip:function(t,n){var i=cs.ip(t);0==i?n(a.lang_t("dmz.ip")+a.lang_t("network.msg1")):1==i?n(a.lang_t("dmz.ip")+a.lang_t("network.msg2")):2==i||3==i||4==i?n(a.lang_t("dmz.ip")+a.lang_t("network.msg6")):n()}}}},created:function(){var n=this;window.location.href;uiPost.getDmzCfg({},function(t){n.status=1==t.enable,n.lanIp=t.lanIp,n.lanNetmask=t.lanNetmask,n.stationIp=t.stationIp,n.ip=t.ip,n._ip=t.ip})},methods:{dmz_enable:function(t){if(!t){var n={enable:"0"};uiPost.setDmzCfg(n,function(t){var n=1;t&&(t.wtime&&"0"!=t.wtime&&(n=t.wtime),Cstool.applyLoad(n,function(){location.href=location.href}))})}},check_localip:function(t){this.ip=0==t?this._ip:this.stationIp},handleSubmit:function(){var n=this;if(n.ip==n.lanIp)return Cstool.Msg({content:this.lang_t("dmz.msg4")}),!1;if(0==cs.ip_subnet(n.ip,n.lanNetmask,n.lanIp))return Cstool.Msg({content:this.lang_t("dmz.msg3")}),!1;var i={};Cstool.Verify(this.formRules,function(t){t&&(i.enable="1",i.ip=n.ip,uiPost.setDmzCfg(i,function(t){var n=1;t&&(t.wtime&&"0"!=t.wtime&&(n=t.wtime),Cstool.applyLoad(n,function(){location.href=location.href}))}))})}}}</script><script src="/static/js/main.js"></script></body></html>

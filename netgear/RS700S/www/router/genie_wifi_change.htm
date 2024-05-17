@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="<%296%>">	
+<title>NETGEAR Genie</title>
+
+<script src="jquery.js"></script>
+<script src="script/script.js"></script>
+<link rel="stylesheet" type="text/css" href="css/mainpage.css">	
+<link rel="stylesheet" type="text/css" href="css/tabs.css">
+<link rel="stylesheet" type="text/css" href="css/button.css">
+<link rel="stylesheet" type="text/css" href="css/menu.css">
+<link rel="stylesheet" href="<%296%>">
+<%16%>
+<script language="javascript" type="text/javascript">
+
+  var band_steering = '<%235%>';  
+  $(function(){
+    if(band_steering == '1'){
+      $('#5g_wifi_area,#6g_wifi_area,.2g_text').hide();
+    }
+	$('#setup_wifi_next').click(function(){
+		$('input[name=submit_type]').val('next');
+		applyDialog('msgDiv',
+			"<%341%>", 
+			function(){
+			nextClick();
+		});
+		$('#msgDiv').find('#ok_bt').text("<%340%>");
+	});
+	$('#skip').click(function(){
+		$('input[name=submit_type]').val('skip');
+		applyDialog('msgDiv',
+			"<%341%>", 
+			function(){
+			nextClick();
+		});
+		$('#msgDiv').find('#ok_bt').text("<%340%>");
+	});
+  });
+
+  function nextClick(){
+    cf=document.forms[0];
+
+    if (cf.wifi_ssid.value == "")
+    {
+		  alert("<%342%>");
+      return false;
+    }
+
+    if (cf.wifi_pass.value == "")
+    {
+	    alert("<%343%>");
+      return false;
+    }
+
+    if(cf.wifi_pass.value.length < 8)
+    {
+      alert("<%59%>");
+      return false;    
+    }
+
+    if(cf.wifi_pass.value.length > 63){
+      if(!checkSetPassword(cf.wifi_pass.value)){
+        alert("<%59%>");
+        cf.wifi_pass.value = "";
+        return false;
+      }
+    }
+
+    if(band_steering != '1'){
+      if (cf.wifi_5g_ssid.value == "")
+      {
+  	    alert("<%342%>");
+        return false;
+      }
+
+      if (cf.wifi_5g_pass.value == "")
+      { 
+  	    alert("<%343%>");
+          return false;
+      }
+
+      if(cf.wifi_5g_pass.value.length < 8)
+      {
+        alert("<%59%>");
+        return false;    
+      }
+
+      if (cf.wifi_6g_ssid.value == "")
+      {
+  	    alert("<%342%>");
+        return false;
+      }
+
+      if (cf.wifi_6g_pass.value == "")
+      { 
+  	    alert("<%343%>");
+          return false;
+      }
+
+      if(cf.wifi_6g_pass.value.length < 8)
+      {
+        alert("<%59%>");
+        return false;    
+      }  
+
+      if(cf.wifi_5g_pass.value.length > 63){
+        if(!checkSetPassword(cf.wifi_5g_pass.value)){
+          alert("<%59%>");
+          cf.wifi_5g_pass.value = "";
+          return false;
+        }
+      }
+
+      if(cf.wifi_6g_pass.value.length > 63){
+        if(!checkSetPassword(cf.wifi_6g_pass.value)){
+          alert("<%59%>");
+          cf.wifi_6g_pass.value = "";
+          return false;
+        }
+      }
+    }else{
+      cf.wifi_5g_ssid.value = cf.wifi_ssid.value;
+      cf.wifi_5g_pass.value = cf.wifi_pass.value;
+
+      cf.wifi_6g_ssid.value = cf.wifi_ssid.value;
+      cf.wifi_6g_pass.value = cf.wifi_pass.value;
+    }
+	
+    //document.forms[0].submit();
+    $("#card-orbi-setup-wifi").css("display","none");
+    $("#progress").css("display","block");
+	checkBackendStatus();
+  }
+
+    function redirectClick()
+    {
+        window.location.href = "Congratulations.htm";
+    }
+
+  /* When the debug is complete, move this script to www_router_ax/script/script.js */
+  function change_genie_size()
+  {
+    var width = document.documentElement.clientWidth > 620 ? document.documentElement.clientWidth : 620;
+    var height = document.documentElement.clientHeight;
+
+    $('.subtop-image').css("width", width);
+    $('.subtop-image').css("height", "0px");
+    
+    $('.subhead2-table').css("position", "relative");
+    
+    if(get_browser()=="Netscape") 
+        $('.subhead2-table').css("left", 1);
+
+    $('.subhead2-table').css("width", width - 48);
+    $('.scroll-pane').css("width", width - 48);
+
+    $('.subhead2-table').css("height", height - 32);
+    $('.scroll-pane').css("height", height - 32);
+  }
+  /* When the debug is complete, move this script to www_router_ax/script/script.js */
+  
+	function checkBackendStatus(){
+		let url = location.origin;
+		openWait();
+		$.ajax({
+			url: url+'/ajax/cdlCgiWifiChange_DoSetting',
+			type: 'post',
+			data: $(document.forms[0]).serializeArray(),
+			timeout: 10*1000
+		});
+		setTimeout(()=>{
+			getNextPage();
+		}, 2*1000);
+	}
+
+	function openWait(toOpen){
+		toOpen = (typeof toOpen == 'undefined') ? true:toOpen;
+		if(toOpen){
+			$('.wait-background').css('display', 'flex');
+		}else{
+			$('.wait-background').css('display', 'none');
+		}
+	}
+	
+	function getNextPage(){
+		let url = location.origin;
+		$.ajax({
+			url: url+'/ajax/cdlCgiWifiChange_NextPage',
+			type: 'get',
+			timeout: 5*1000,
+			dataType: 'json',
+			success: function(rs){
+				let page = rs.html.split('/');
+				page = page[page.length - 1];
+				location.replace(page);
+			},
+			error: function(){
+				setTimeout(()=>{
+					getNextPage();
+				}, 5*1000);
+			}
+		});
+	}
+</script>
+
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+  .scroll-pane
+  {
+    padding: 16px 24px;
+  }
+
+  .scrollpane-table-seperate-border {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .modal-setup {
+    padding: 0 24px 24px 24px;
+  }
+
+  .d-flex-space {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  body .page_title, body .qospage_title, .subhead2 {
+    padding: 18px 23px;
+  }
+  
+  .wait-background{
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		z-index: 999;
+		background: rgba(251,252,252,0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.wait-background {
+		display: none;
+	}
+</style>
+</head>
+
+<body class="page-body" onload="change_genie_size()" onResize="change_genie_size()">
+<div class="wait-background">
+	<img src="img/wait.gif">
+</div>
+<form name="SSOAPI" method="POST" action="genie_wifi_change.cgi">
+<table border=0 class="subhead2-table">
+<tr>
+  <td class="scrollpane-table-seperate-border" colspan="2">
+    <div id="main" class="scroll-pane">
+      <div id="card-orbi-setup-wifi" class="modal-setup">
+        <div class="modal-header" style="display: none;">
+          <div class="modalBox-title"><img src="img/NewNetgeargenie.png"></div>
+        </div>
+        <div class="modal-header">
+           <div class="subhead2 pl-0" style="margin-left:3px;"><%344%></div>
+        </div>
+       
+        <div class="modal-body">
+
+       <!--AP sku support-START-->
+       <%345%>
+       <table align="left" border="0" width="100%">
+       <tr><td class="pb-0"><a><b><%346%></b></a></td></tr>
+       <tr>
+       <td align="left" class="pt-0">
+       <div style="width:300px;height:20px;margin:20px 0px 20px 0px;padding-bottom:20px">  
+              <select id="wireless_region" name="wifi_region">
+              <option selected value="3">Australia and New Zealand</option>
+              <option value="26">Hong Kong</option>
+              <option value="22">Middle East(United Arab Emirates)</option>
+              <option value="23">Singapore</option>
+         	  </select>
+       </div>
+       </td>
+       </tr>
+	   <tr><td><div style="height:20px">&nbsp;</div></td></tr>
+	   </table>
+	   <BR>
+       <%347%>
+       <BR>
+       <!--AP sku support-END-->
+
+        <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+  	     <%348%>
+        </div>
+        <BR>
+        <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+  	     <span class="2g_text">2.4GHz </span><%349%>
+        </div>
+        <div class="input-wrapper">
+  	      <input id="wl_ssid" type="text" class="input1" name="wifi_ssid" maxlength="32" placeholder="Network Name(SSID)" value="<%350%>" style="margin-left:3px;">
+        </div>
+        <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+  	     <span class="2g_text">2.4GHz </span><%351%>
+        </div>
+        <table align="left" class="mb-20" border="0" width="100%">
+          <tr>
+            <td nowrap="nowrap" colspan="2" class="pt-0">
+              <input id="wl_password" type="password" class="input1" name="wifi_pass" maxLength=64 placeholder="<%352%>" value="<%353%>">
+              <img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('wl_password');">
+              <div id="wl_passwordSlash" class="pwdEyeSlash"></div>
+              <div id="wl_passwordSlashText" style="display: inline;"><%28%></div>
+              </td>
+          </tr>
+        </table>
+         <BR>
+        <div id="5g_wifi_area">
+          <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+    	     5GHz <%349%>
+          </div>
+          <div class="input-wrapper">
+    	      <input id="wla_ssid" type="text" class="input1" name="wifi_5g_ssid" maxlength="32" placeholder="Network Name(SSID)" value="<%354%>" style="margin-left:3px;">
+          </div>
+          <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+    	     5GHz <%351%>
+          </div>
+          <table align="left" border="0" width="100%">
+            <tr>
+              <td nowrap="nowrap" colspan="2" class="pt-0">
+                <input id="wla_password" type="password" class="input1" name="wifi_5g_pass" maxLength=64 placeholder="<%352%>" value="<%355%>">
+                <img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('wla_password');">
+                <div id="wla_passwordSlash" class="pwdEyeSlash"></div>
+                <div id="wla_passwordSlashText" style="display: inline;"><%28%></div>
+                </td>
+            </tr>
+          </table>
+        </div>
+         <BR>
+        <div id="6g_wifi_area">
+          <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+    	     6GHz <%349%>
+          </div>
+          <div class="input-wrapper">
+    	      <input id="wlh_ssid" type="text" class="input1" name="wifi_6g_ssid" maxlength="32" placeholder="Network Name(SSID)" value="<%356%>" style="margin-left:3px;">
+          </div>
+          <div style="color: #333;font-size: 14px;margin-top:20px;margin-left:3px;">
+    	     6GHz <%351%>
+          </div>
+          <table align="left" border="0" width="100%">
+            <tr>
+              <td nowrap="nowrap" colspan="2" class="pt-0">
+                <input id="wlh_password" type="password" class="input1" name="wifi_6g_pass" maxLength=64 placeholder="<%352%>" value="<%357%>">
+                <img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('wlh_password');">
+                <div id="wlh_passwordSlash" class="pwdEyeSlash"></div>
+                <div id="wlh_passwordSlashText" style="display: inline;"><%28%></div>
+                </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="height:8px">
+    	    <span style="font-size:8px">&nbsp;</span>
+   	    </div>
+        <BR>
+  		  <table border="0" cellpadding="0" cellspacing="3" width="100%">
+  	     <tr>
+  	        <td class="pt-20 d-flex-space">
+              <button type="button" id="setup_wifi_next" class="button-sty1"><span><%340%></span></button>
+			<!--AP sku support-START-->
+			<%358%>
+            <button type="button" id="skip" class="button-sty1"><span><%359%></span></button>
+			<%360%>
+			<!--AP sku support-END-->
+			<input type="hidden" name="submit_type" value="">
+    			</td>
+  			</tr>
+  		</table>
+      </div>
+      </div>
+      <!--<div id="progress" style="display:none">
+      	<div style="padding-top:200px;text-align:center">
+         <img id="progress" src="loading.gif" frameborder="0" border="0" style="margin:auto">
+        </div>
+      </div>-->
+    </div>
+  </td>
+</tr>
+</form>
+</table>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\onu_d6s_prbs_status
+########################################
+# D6S PRBS Status  - script returns the results value of prbs_checker requested status 
+##############################################################################         
+# __RV0 = DP_PGC_INSYNCREG = PRBS InSync status (PRBS pattern lock)                    
+# __RV1 = DP_PGC_PCRDERRREG = Number of PRBS Bit Errors                                
+# __RV2 = DP_PGC_SYNCLOSSREG = PRBS LossSync status.                                   
+# __RV3 = DP_PCRDWORDREG_47_32 = most-significant 16 bits of the 48-bit word counter.  
+# __RV4 = DP_PCRDWORDREG_31_16 = middle 16 bits of the 48-bit word counter.            
+# __RV5 = DP_PCRDWORDREG_15_0  = least-significant 16 bits of the 48-bit word counter. 
+# __RV6 = DP_PGC_RO_0 reg      = 16 bit status register (conains InSync & LossSyn)     
+##############################################################################         
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__PRBS.csv, val_select:general
+########################################
+# cfg_class: onu_d6s_prbs_status
+########################################
+# pre_order
+ ##  Pause PRBS Checker and Release all forced RX setttings
+MOV 0x1,@(0x828d0d2c{0x1}<<2)
+ ##  Read PRBS Checker Status
+MOV @(0x828d0d7c{0x1}<<1),DP_PGC_INSYNCREG
+MOV @(0x828d0d8c{0xffff}),DP_PGC_PCRDERRREG
+MOV @(0x828d0d7c{0x1}<<2),DP_PGC_SYNCLOSSREG
+MOV @(0x828d0d88{0xffff}),DP_PGC_PCRDWORDREG_47_32
+MOV @(0x828d0d84{0xffff}),DP_PGC_PCRDWORDREG_31_16
+MOV @(0x828d0d80{0xffff}),DP_PGC_PCRDWORDREG_15_0
+MOV @(0x828d0d7c{0x3ff}),DP_PGC_RO_0_REG
+# unorder
+# post_order
+########################################
+# end of cfg_class: onu_d6s_prbs_status
+########################################
+# List of Return values
+MOV 7,__RETC
+ 
+MOV DP_PGC_INSYNCREG,__RV0
+MOV DP_PGC_PCRDERRREG,__RV1
+MOV DP_PGC_SYNCLOSSREG,__RV2
+MOV DP_PGC_PCRDWORDREG_47_32,__RV3
+MOV DP_PGC_PCRDWORDREG_31_16,__RV4
+MOV DP_PGC_PCRDWORDREG_15_0,__RV5
+MOV DP_PGC_RO_0_REG,__RV6
+ 
+HALT 0
+########################################
+# end of call_msg: onu_d6s_prbs_status
+########################################

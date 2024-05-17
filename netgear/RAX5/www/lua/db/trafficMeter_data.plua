@@ -1,0 +1,60 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local trafficMeter = require "webGetFunc.trafficMeter"
+local log = require("luci.log") --for debug
+
+
+local data = { }
+data["enable"] = { value = trafficMeter.getTrafficMeterEnable(), type = "checkbox" }
+-- Need Check tm_type
+data["tm_type"] = { value = trafficMeter.getTmType(), type = "radio" }
+data["volControlType"] = { value = trafficMeter.getControlType(), type = "select" }
+data["volMonthlyLimit"] = { value = trafficMeter.getVolMonthlyLimit(), type = "input" }
+data["volRoundUp"] = { value = trafficMeter.getVolRoundUp(), type = "input" }
+data["timeControlLimit"] = { value = trafficMeter.getTimeControlLimit(), type = "input" }
+data["counterDay"] = { value = trafficMeter.getCounterDay(), type = "select" }
+data["counterHour"] = { value = trafficMeter.getCounterHour(), type = "input" }
+data["counterMin"] = { value = trafficMeter.getCounterMin(), type = "input" }
+data["amPmSel"] = { value = trafficMeter.getAmPmSel(), type = "select" }
+data["popMessage"] = { value = trafficMeter.getPopMessage(), type = "input" }
+data["turnLed"] = { value = trafficMeter.getTurnLed(), type = "checkbox" }
+data["disableInternet"] = { value = trafficMeter.getDisableInternet(), type = "checkbox" }
+
+data["start_time"] = { value = trafficMeter.getStartTime(), type="spantext" }
+data["current_time"] = { value = trafficMeter.getCurrentTime(), type="spantext" }
+data["left_traffic"] = { value = trafficMeter.getLeftTraffic(), type = "spantext" }
+
+data["today_connect_time"] = { value = trafficMeter.getTodayConnectTime(), type = "spantext" }
+data["today_upload"] = { value = trafficMeter.getTodayUpload(), type = "spantext" }
+data["today_download"] = { value = trafficMeter.getTodayDownload(), type = "spantext" }
+data["today_total"] = { value = trafficMeter.getTodayTotal(), type = "spantext" }
+
+data["yesterday_connect_time"] = { value = trafficMeter.getYesterdayConnectTime(), type = "spantext" }
+data["yesterday_upload"] = { value = trafficMeter.getYesterdayUpload(), type = "spantext" }
+data["yesterday_download"] = { value = trafficMeter.getYesterdayDownload(), type = "spantext" }
+data["yesterday_total"] = { value = trafficMeter.getYesterdayTotal(), type = "spantext" }
+
+data["thisweek_connect_time"] = { value = trafficMeter.getThisweekConnectTime(), type = "spantext" }
+data["thisweek_upload"] = { value = trafficMeter.getThisweekUpload(), type = "spantext" }
+data["thisweek_download"] = { value = trafficMeter.getThisweekDownload(), type = "spantext" }
+data["thisweek_total"] = { value = trafficMeter.getThisweekTotal(), type = "spantext" }
+
+data["thismonth_connect_time"] = { value = trafficMeter.getThismonthConnectTime(), type = "spantext" }
+data["thismonth_upload"] = { value = trafficMeter.getThismonthUpload(), type = "spantext" }
+data["thismonth_download"] = { value = trafficMeter.getThismonthDownload(), type = "spantext" }
+data["thismonth_total"] = { value = trafficMeter.getThismonthTotal(), type = "spantext" }
+
+data["lastmonth_connect_time"] = { value = trafficMeter.getLastmonthConnectTime(), type = "spantext" }
+data["lastmonth_upload"] = { value = trafficMeter.getLastmonthUpload(), type = "spantext" }
+data["lastmonth_download"] = { value = trafficMeter.getLastmonthDownload(), type = "spantext" }
+data["lastmonth_total"] = { value = trafficMeter.getLastmonthTotal(), type = "spantext" }
+
+data["wanMode"] = { value = trafficMeter.getWanMode(), type = "input" }
+
+-- RAX30 www/tm_block/php/db/trafficMeter_limited_data.php
+data["monthlyLimit"] = { value = trafficMeter.getSpanVal_monthlyLimit(), type = "spantext" }
+data["limitUnit"] = { value = trafficMeter.getMlangVal_limitUnit(), type = "spantext" }
+data["limitReachStatus"] = { value = trafficMeter.getTextVal_limitReachStatus(), type = "spantext" }
+
+return json.encode(data)

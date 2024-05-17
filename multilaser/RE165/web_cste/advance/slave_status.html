@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/wizard.css"><link rel="stylesheet" href="/static/css/loading.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><style>.map-info-box{white-space:pre-wrap;word-wrap:break-word;word-break:break-all}.font{font-size:16px}.basic-box{padding:2% 2% 2% 16%}.box{width:80%;margin-left:0}float：left .info_class{width:90%;height:180px}.btn_up{width:80px;height:18px;color:#fff;font-size:14px;border:0;cursor:pointer;outline:0;background:#2ea8dc}.link_up{color:#2ea8dc;text-decoration:underline;font-weight:18}</style><body><div id="app"></div><script type="text/x-template" id="main"><div class="advance-box" align="center">
+	<span style="font-size:24px; color:#707070">{{ lang_t('index.device_info') }} &nbsp;&nbsp;&nbsp; {{slaveIp}}</span>
+	<div class="map-basic-box"> 
+	  <table align="center">
+		<tr>
+		  <td><table class="table">
+		    <tbody>
+				<!-- <tr>
+					<td>{{lang_t('index.op_mode')}}:</td>
+					<td>{{lang_t('index.mesh_mode')}}</td>
+				</tr> -->
+				<tr>
+					<td>{{ lang_t('index.version') }}:</td>
+					<td>{{ fmVersion }}</td>
+				</tr>
+			</tbody>
+		  </table></td>
+		  <td width="100"></td>
+		  <td><table class="table">
+  			<tbody>
+  				<tr>
+				  <td>{{ lang_t('index.up_time') }}:</td>
+				  <td>{{ upTime }}</td>
+				</tr>
+  				<tr>
+					<td>{{ lang_t('index.build_time') }}:</td>
+					<td>{{ buildTime }}</td>
+				</tr>
+  			</tbody>
+		  </table></td>
+		</tr>
+		<tr>
+		  <td><table class="table">
+			<tbody>
+			<!-- <tr>
+			  <td>{{ lang_t('index.radio') }} <b>2.4G</b>:</td>
+			  <td>{{ wifiOff == '0' ? lang_t('common.on') : lang_t('common.off')}}</td>
+			</tr> -->
+			<tr>
+			  <td>{{ lang_t('index.ssid') }}:</td>
+			  <td>{{ ssid }}</td>
+			</tr>
+			</tbody>
+		  </table></td>
+		  <td width="100"></td>
+		  <td v-if="wifiDualband != '0'"><table class="table">
+			<tbody>
+			<!-- <tr>
+			  <td v-if="wifiDualband == '1'">{{ lang_t('index.radio') }} <b>5G</b>:</td>
+			  <td>{{ wifiOff5g == '0'? lang_t('common.on') : lang_t('common.off')}}</td>
+			</tr> -->
+			<tr>
+			  <td>{{ lang_t('index.ssid') }}:</td>
+			  <td>{{ ssid5g }}</td>
+			</tr>
+			</tbody>
+		  </table></td>
+		</tr>
+	  </table>
+	</div>  
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,meshInfo:"",bssid:"",fmVersion:"",bssid5g:"",wifiOff:"",wifiOff5g:"",ssid:"",ssid5g:"",channel:"",channel5g:"",upTime:"",textShow:!1,buildTime:"",loaddef:!1,showUpdateBtn:!1,wifiDualband:"",upgradeAction:"/cgi-bin/cstecgi.cgi?action=upload",slaveIp:""}},computed:{},created:function(){var n=this;uiPost.getSysStatusCfg(function(i){n.slaveIp=location.host,n.fmVersion=i.system.fmVersion,n.upTime=n.reTime(i.system.upTime),n.buildTime=i.system.buildTime,n.bssid=i.wifi2.ap.bssid,n.wifiOff=i.wifi2.ap.wifiOff,n.ssid=i.wifi2.ap.ssid,"0"==i.wifi2.ap.channel?n.channel=n.lang_t("index.auto")+" ("+i.wifi2.ap.autoChannel+")":n.channel=i.wifi2.ap.channel,n.wifiDualband=i.wifiDualband,"0"!=i.wifiDualband&&(n.bssid5g=i.wifi5.ap.bssid,n.wifiOff5g=i.wifi5.ap.wifiOff,n.ssid5g=i.wifi5.ap.ssid,"0"==i.wifi5.ap.channel?n.channel5g=n.lang_t("index.auto")+" ("+i.wifi5.ap.autoChannel+")":n.channel5g=i.wifi5.ap.channel)})},methods:{submit_save:function(){this.textShow=!0},reTime:function(i){var n=i.split(";"),t="";return t+=n[0]+" "+this.lang_t("index.day")+", ",t+=n[1]+" "+this.lang_t("index.hour")+", ",t+=n[2]+" "+this.lang_t("index.min")+", ",t+=n[3]+" "+this.lang_t("index.sec")},filechange:function(){var i=document.getElementById("f_upload"),n=i.files[0].name,t=i.files[0];if(n.indexOf(".web")<0&&n.indexOf(".bin")<0)return Cstool.Msg({content:this.lang_t("firmware.msg2")}),i.value="",!1;this.upload(t,"")},upload:function(i){var n=this;Cstool.Msg({type:"no",content:this.lang_t("firmware.uploading")}),upload.fileUpload({data:i,url:n.upgradeAction,success:function(i){"1"==i.upgradeStatus?(Cstool.Msg({content:n.lang_t("firmware.upload_success"),type:"no",time:2}),n.showUpdateBtn=!0):(n.showUpdateBtn=!1,Cstool.Msg({content:n.lang_t('firmware["'+i.upgradeERR+'"]')}))},error:function(i){n.showUpdateBtn=!1,Cstool.Msg({content:n.lang_t("firmware.MM_fwupload_error")})}})},submit_upgrade:function(){var i={};if(""==$("#f_upload").val())return Cstool.Msg({content:this.lang_t("firmware.msg1")}),!1;var n=document.getElementById("f_upload").files[0],t=n.size;if(1<=t/(1024*this.flashSize*1024))return Cstool.Msg({content:this.lang_t("firmware.msg3")}),!1;this.loaddef?i.resetFlags="1":i.resetFlags="0",i.FileName=n.name,i.ContentLength=t,uiPost.setUpgradeFW(i,function(i){var n=240;null!=i.wtime&&""!=i.wtime&&(n=i.wtime),Cstool.Count(n,"up",function(){parent.location.href=location.origin+"/login.html"})})}}}</script><script src="/static/js/main.js"></script></body></html>

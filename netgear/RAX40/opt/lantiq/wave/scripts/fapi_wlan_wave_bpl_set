@@ -1,0 +1,688 @@
+#!/bin/sh
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+ppacmd_exists=`which ppacmd`
+
+execute_runner()
+{
+	local radio_name interface_name interface_type
+
+	radio_name=$1
+	interface_name=$2
+	interface_type=$3
+
+	# Execute the runner (if exists)
+	if [ -e ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ]
+	then
+		echo "exit 0" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		chmod +x ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		# If runner execution failed, return failure
+		if [ $? -gt 0 ]
+		then
+			# Create the output configuration file
+			cat /dev/null > ${OUT_CONF}
+			update_conf_out "wlan_configuration_status" "FAILURE"
+			up_clean_and_restore $radio_name
+			exit 1
+		fi
+	fi
+
+	# Delete the restart flag
+	rm -f ${CONF_DIR}/${RESTART_FLAG}_${interface_name} ${CONF_DIR}/${RESTART_DRVHLPR_FLAG}_${radio_name}
+	up_clean_and_restore $radio_name
+	# DEBUG: set debug_save_runner in fapi_wlan_wave_lib_common.sh to save the runner script
+	[ "$debug_save_runner" ] && [ -e ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ] && cp ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ${CONF_DIR}/runner_up_${interface_name}.sh
+
+	# Create the output configuration file
+	cat /dev/null > ${OUT_CONF}
+
+	update_interfaces_status $interface_name $interface_type $radio_name
+
+	# Configuration is completed successfully
+	update_conf_out "wlan_configuration_status" "success"
+	# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the out conf file
+	[ "$debug_save_conf" ] && cp ${OUT_CONF} ${TEMP_DIR}/up_out_conf_${interface_name}
+}
+
+wlan_wave_ap_start()
+{
+	# ref : fapi_wlan_wave_up
+
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Define local parameters
+	local radio_name function_name vap_name interface_type interface_index interface_name \
+	hostapd_log_level hostapd_log_output start_hostapd_conf interface hostapd_log_str path
+
+	function_name="wlan_wave_ap_start"
+	vap_name=$1
+	interface_type=`check_interface_type $vap_name`
+	radio_name=${vap_name%%.*}
+	[ "$radio_name" != "$vap_name" ] && interface_type="$VAP"
+	radio_index=`find_index_from_interface_name $radio_name`
+	interface_index="$radio_index"
+	interface_name="$radio_name"
+
+	local_db_source RADIO
+	hostapd_log_level=`db2fapi_convert regular WaveHostapdLoglevel $interface_index`
+	hostapd_log_output=`db2fapi_convert regular WaveHostapdLogOutput $interface_index`
+
+	timestamp $radio_index "$script_name:$function_name:$interface_name:begin"
+	print2log $radio_index DEBUG "$script_name:$function_name $*"
+
+	if [ -e ${CONF_IN_PROGRESS}_${radio_name} ]; then
+		# The conf file indicating configuration is in progress has the pid of the current configuration flow in it
+		. ${CONF_IN_PROGRESS}_${radio_name}
+
+		# Rename temporary conf files to remove pid suffix.
+		update_conf_files $pid
+
+		atf_ena=`db2fapi_convert boolean WaveAtfEnabled $interface_index`
+		vap_ena=`db2fapi_convert boolean WaveAtfVapEnabled $interface_index`
+		up_merge_hostapd_confs $radio_name $atf_ena $vap_ena
+	fi
+	start_hostapd_conf=${TEMP_DIR}/start_hostapd_conf_${radio_name}
+
+	cat /dev/null > $start_hostapd_conf
+	echo -ne "\n" >> $start_hostapd_conf
+	# start hostapd
+	if [ -n "$hostapd_log_output" ]
+	then
+		if [ "$hostapd_log_output" = "usb" ]
+		then
+			hostapd_debug_get_usb_path path
+		elif [ "$hostapd_log_output" != "syslog" ]
+		then
+			path="$hostapd_log_output"
+		fi
+	fi
+
+	echo "### Start hostapd ###" >> $start_hostapd_conf
+	echo "cp -s ${BINDIR}/hostapd /tmp/hostapd_${radio_name}" >> $start_hostapd_conf
+
+	if [ -n "$hostapd_log_level" ] && [ $hostapd_log_level -le 1 ]
+	then
+		if [ $hostapd_log_level -eq 1 ]
+		then
+			hostapd_log_str="d"
+		else
+			hostapd_log_str="dd"
+		fi
+
+		if [ -n "$hostapd_log_output" ] && [ "$hostapd_log_output" = "syslog" ]
+		then
+			cat >> $start_hostapd_conf <<-EOL
+			echo \"$script_name:$function_name Start hostapd_${radio_name} in ${hostapd_log_str} debug mode to syslog (/var/log/hostapd_${radio_name})\" > /dev/console
+			/tmp/hostapd_${radio_name} -${hostapd_log_str}t ${CONF_DIR}/hostapd_${radio_name}.conf -e /tmp/hostapd_ent_${radio_name} 2>&1 | logger -t hostapd_${radio_name} &
+			sleep 4
+			EOL
+		else
+			cat >> $start_hostapd_conf <<-EOL
+			echo \"$script_name:$function_name Start hostapd_${radio_name} in -${hostapd_log_str}t debug mode to ${path}/hostapd_${radio_name}.log\" > /dev/console
+			/tmp/hostapd_${radio_name} -${hostapd_log_str}t -e /tmp/hostapd_ent_${radio_name} ${CONF_DIR}/hostapd_${radio_name}.conf > ${path}/hostapd_${radio_name}.log &
+			sleep 4
+			EOL
+		fi
+	else
+		cat >> $start_hostapd_conf <<-EOL
+		echo \"$script_name:$function_name: Start hostapd_${radio_name}\" > /dev/console
+		/tmp/hostapd_${radio_name} -B -e /tmp/hostapd_ent_${radio_name} ${CONF_DIR}/hostapd_${radio_name}.conf > ${TEMP_DIR}/hostapd_${radio_name}.log
+		sleep 1
+		EOL
+	fi
+
+	local_db_source WIFI
+	fapi_daemon_enabled=`db2fapi_convert boolean WaveFapiDaemonEnable 0`
+	if [ "$fapi_daemon_enabled" = "1" ]
+	then
+		echo "echo \"$script_name:$function_name: ${radio_name}; Start fapi_wlan_daemon (hostapd) listener\" > /dev/console" >> $start_hostapd_conf
+		echo "killall -SIGUSR1 fapi_wlan_daemon" >> $start_hostapd_conf
+	fi
+	# Start hostapd_cli to listen to events
+	echo "cp -s ${BINDIR}/hostapd_cli /tmp/hostapd_cli_${radio_name}" >> $start_hostapd_conf
+	echo "/tmp/hostapd_cli_${radio_name} -i${radio_name} -a${HOSTAPD_EVENTS_SCRIPT} -B" >> $start_hostapd_conf
+
+	# Copy the commands to another conf to be used on the next reboot
+	cp $start_hostapd_conf ${RADIO_UP_CONF}_${radio_name}.conf
+	cat $start_hostapd_conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# TODO invoke up_add_ap_post_up_to_runner only for radio
+	cat ${CONF_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${radio_name}.conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	execute_runner $radio_name $interface_name $interface_type
+
+	if [ -n "`grep wlan_configuration_status=success ${TEMP_DIR}/up_out_conf_${radio_name}`" ]; then
+		/usr/sbin/fapi_wlan_cli ifconfigPostUp -n ${radio_name}
+	fi
+	print2log $radio_index DEBUG "$script_name:$function_name done"
+	timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+}
+
+wlan_wave_ap_postinit()
+{
+	local function_name radio_name radio_index interface interface_type conf_updated \
+	disabled_interfaces endpoint_name interface_name atf_ena vap_ena
+	function_name="wlan_wave_vap_init"
+
+	radio_name=$1
+	interface_type=`check_interface_type $radio_name`
+	radio_index=`find_index_from_interface_name $radio_name`
+	interface_name="$radio_name"
+	endpoint_name=`find_sta_name $radio_name`
+
+	timestamp $radio_index "$script_name:$function_name:$interface_name:begin"
+	print2log $radio_index DEBUG "$script_name:$function_name $*"
+
+	# Check if VAPs exist for this radio
+	if [ `grep -c ${radio_name} ${VAPS_LIST}_${radio_name}` -eq 1 ]
+	then
+		print2log $radio_index DEBUG "$script_name:$function_name done"
+		timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+		exit 0
+	fi
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	disabled_interfaces=`up_check_and_handle_enable_disable $radio_name $interface_type $endpoint_name`
+	accesspoint_disabled=`echo $disabled_interfaces | awk '{print $1}'`
+	local_db_source RADIO
+	local_db_source SSID
+
+	atf_ena=`db2fapi_convert boolean WaveAtfEnabled $interface_index`
+	vap_ena=`db2fapi_convert boolean WaveAtfVapEnabled $interface_index`
+	up_merge_hostapd_confs $radio_name $atf_ena $vap_ena
+
+	echo "### Reconfigure hostapd for add/del VAPs ###" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "/tmp/hostapd_cli_${radio_name} -i${radio_name} reconf" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	up_add_wait_for_hostapd_to_runner $radio_name
+
+	echo -ne "\n" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	# Copy post-up driver commands to the runner (otf commands)
+	cat ${TEMP_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${radio_name}.*.conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	execute_runner $radio_name $interface_name $interface_type
+	up_clean_and_restore $radio_name
+
+	print2log $radio_index DEBUG "$script_name:$function_name done"
+	timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+}
+
+wlan_wave_ap_stop()
+{
+	# ref : fapi_wlan_wave_down
+	# 1. PPA, HS, VAP configuration is part of stop only and so
+	# not consistent with wlan_wave_ap_start.
+	# 2. this is taken from block which is assumed to be called from another script.
+	# 3. endpoint configuration is not taken.
+	# check with Assaf.
+
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Define local parameters
+	local radio_name function_name vap_name interface_type interface_index interface_name \
+	endpoint_suffix endpoint_name vaps_ppa current_vap interface
+
+	function_name="wlan_wave_ap_stop"
+	# Script is called by other script
+	vap_name=$1
+	radio_name=${vap_name%%.*}
+	interface_type=`check_interface_type $vap_name`
+	[ "$radio_name" != "$vap_name" ] && interface_type="$VAP"
+	radio_index=`find_index_from_interface_name $radio_name`
+	interface_index="$radio_index"
+	interface_name="$radio_name"
+	endpoint_suffix=${radio_name##wlan}
+	endpoint_suffix=$((endpoint_suffix+1))
+	endpoint_name="wlan${endpoint_suffix}"
+
+	timestamp $radio_index "$script_name:$function_name:$interface_name:begin"
+	print2log $radio_index DEBUG "$script_name:$function_name $*"
+
+	echo "##### fapi_wlan_wave_down commands #####" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	local_db_source WIFI
+
+	# Stop HS2.0 related components on all VAPs of the current radio
+	while read interface
+	do
+		[ "$interface" = "$endpoint_name" ] && continue
+		# Unconditionaly disable of the parp - no API to know the status:
+		echo "hs_cli PARP -O DISABLE -I $interface" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+		# Disable dgaf and l2f if they are enabled
+		echo "hs_cli HS -O DISABLE -I $interface" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		if [ -e /proc/net/wave_wifi_l2f/ ]
+		then
+			echo "hs_cli L2F -O DISABLE -I $interface" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+			echo "hs_cli L2F -O DGAF_ENABLE -I $interface" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		fi
+	done < ${VAPS_LIST}_${radio_name}
+
+	# Remove all related VAPs from PPA if PPA exists, check if ppacmd exists.
+	# The set_ppa_commands function writes the ppa commands for removal to the runner script.
+	vaps_ppa=""
+	[ -n "$ppacmd_exists" ] && vaps_ppa=`ppacmd getlan | grep -o "\].*" | grep "\<$radio_name\>" | awk '{print $2}'`
+	current_vap=""
+	for current_vap in $vaps_ppa
+	do
+		set_ppa_commands $current_vap "remove" ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	done
+
+	# Remove RDKB-OS radio configuration before stop hostapd
+	[ ! -f ${INIT_FLAG} ] && [ -f ${RDKBOS_WIFI_UTIL} ] && echo "${RDKBOS_WIFI_UTIL} radio_config_down ${radio_name} > /dev/null" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	cat >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} <<-EOL
+	# Stop hostapd_cli and hostapd
+	killall hostapd_cli_${radio_name} 2>/dev/null
+	hostapd_cli_running=\`is_process_running hostapd_cli_${radio_name}\`
+	hostapd_cli_down_timeout=0
+	while [ "\$hostapd_cli_running" -eq 1 ] && [ "\$hostapd_cli_down_timeout" -lt 15 ]; do
+		sleep 1
+		hostapd_cli_running=\`is_process_running hostapd_cli_$radio_name\`
+		hostapd_cli_down_timeout=\$((hostapd_cli_down_timeout+1))
+	done
+	if [ "\$hostapd_cli_down_timeout" -eq 15 ]
+	then
+		echo fapi_wlan_wave_down ERROR: HOSTAPD_CLI WAS KILLED BUT DID NOT DIE ON TIME, using kill -9 > /dev/console
+		pid_to_kill=\`pgrep hostapd_cli_$radio_name\`
+		kill -9 \$pid_to_kill
+	fi
+
+	killall hostapd_$radio_name 2>/dev/null
+	hostapd_running=\`is_process_running hostapd_$radio_name\`
+	down_timeout=0
+	while [ "\$hostapd_running" -eq 1 ] && [ "\$down_timeout" -lt 15 ]; do sleep 1; hostapd_running=\`is_process_running hostapd_$radio_name\`; down_timeout=\$((down_timeout+1)); done
+	if [ "\$down_timeout" -eq 15 ]
+	then
+		echo $script_name:$function_name ERROR: HOSTAPD WAS KILLED BUT DID NOT DIE ON TIME, using kill -9 > /dev/console
+		pid_to_kill=\`pgrep hostapd_$radio_name\`
+		kill -9 \$pid_to_kill
+	fi
+
+	# Verify all VAPs of the radio are down
+	if_timeout=0
+	if_count=\`ifconfig | grep $radio_name -c\`
+	while [ "\$if_count" -gt 0 ] && [ "\$if_timeout" -lt 15 ]; do
+	sleep 1
+	echo $script_name:$function_name WARNING: INTERFACES ARE UP AFTER HOSTAPD WAS KILLED > /dev/console
+	if_count=\`ifconfig | grep $radio_name -c\`
+	if_timeout=\$((if_timeout+1))
+	done
+	if [ "\$if_timeout" -eq 15 ]
+	then
+		echo $script_name:$function_name ERROR: INTERFACES ARE UP AFTER HOSTAPD WAS KILLED, using ifconfig down > /dev/console
+		current_vap=\"\"
+		while read current_vap
+		do
+			[ \"\$current_vap\" = \"$endpoint_name\" ] && continue
+			ifconfig \$current_vap down
+		done < ${VAPS_LIST}_${radio_name}
+	fi
+
+	# Remove interface related hostapd softlinks
+	rm -f /tmp/hostapd_${radio_name}
+	rm -f /tmp/hostapd_cli_${radio_name}
+	rm -f /var/run/hostapd/${radio_name}
+	
+	local_db_source WIFI
+	fapi_daemon_enabled=`db2fapi_convert boolean WaveFapiDaemonEnable 0`
+	if [ "$fapi_daemon_enabled" = "1" ]
+	then
+		echo "$script_name:$function_name: ${radio_name}; Stop fapi_wlan_daemon (hostapd) listener" > /dev/console
+		killall -SIGUSR2 fapi_wlan_daemon
+	fi
+	EOL
+
+	execute_runner $radio_name $interface_name $interface_type
+
+	print2log $radio_index DEBUG "$script_name:$function_name done"
+	timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+}
+
+wlan_wave_sta_start()
+{
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Define local parameters
+	local endpoint_name endpoint_mac function_name interface_name interface_type \
+	radio_name radio_index endpoint_index radio_mac endpoint_bridge wds fastpath_enabled \
+	supplicant_log_level supplicant_log_output start_supplicant_conf path
+
+	local_db_source RADIO
+	local_db_source SSID
+	local_db_source ENDPOINT
+	function_name="wlan_wave_sta_start"
+	endpoint_name=$1
+	interface_name="$endpoint_name"
+	interface_type=`check_interface_type $endpoint_name`
+	radio_name=`get_radio_name_from_endpoint $endpoint_name`
+	radio_index=`find_index_from_interface_name $radio_name`
+	endpoint_index=`find_index_from_interface_name $endpoint_name`
+	endpoint_mac=`db2fapi_convert regular MACAddress $endpoint_index`
+	radio_mac=`db2fapi_convert regular MACAddress $radio_index`
+	endpoint_bridge=`db2fapi_convert regular X_LANTIQ_COM_Vendor_BridgeName $endpoint_index`
+	wds=`db2fapi_convert boolean X_LANTIQ_COM_Vendor_WaveEndPointWDS $endpoint_index`
+	fastpath_enabled=`db2fapi_convert boolean WaveFastpathEnabled $radio_index`
+	supplicant_log_level=`db2fapi_convert regular X_LANTIQ_COM_Vendor_SupplicantLoglevel $endpoint_index`
+	supplicant_log_output=`db2fapi_convert regular X_LANTIQ_COM_Vendor_SupplicantLogOutput $endpoint_index`
+	start_supplicant_conf=${TEMP_DIR}/start_supplicant_conf_${endpoint_name}
+
+	timestamp $radio_index "$script_name:$function_name:$interface_name:begin"
+	print2log $radio_index DEBUG "$script_name:$function_name $*"
+
+	if [ -n "$supplicant_log_output" ]
+	then
+		if [ "$supplicant_log_output" = "usb" ]
+		then
+			hostapd_debug_get_usb_path path
+		elif [ "$supplicant_log_output" != "syslog" ]
+		then
+			path="$supplicant_log_output"
+		fi
+	fi
+
+	cat /dev/null > $start_supplicant_conf
+	echo -ne "\n" >> $start_supplicant_conf
+	echo "### Bring up the Endpoint ###" >> $start_supplicant_conf
+
+	echo "cp -s ${BINDIR}/wpa_supplicant /tmp/wpa_supplicant_${endpoint_name}" >> $start_supplicant_conf
+
+	echo "ip link set dev $endpoint_name address $endpoint_mac" >> $start_supplicant_conf
+	echo "ip link set dev $radio_name address $radio_mac" >> $start_supplicant_conf
+
+	if [ -n "$supplicant_log_level" ] && [ $supplicant_log_level -le 1 ]
+	then
+		if [ $supplicant_log_level -eq 1 ]
+		then
+			supplicant_log_str="d"
+		else
+			supplicant_log_str="dd"
+		fi
+
+		if [ -n "$supplicant_log_output" ] && [ "$supplicant_log_output" = "syslog" ]
+		then
+			echo "echo \"$script_name:$function_name: Start wpa_supplicant_${endpoint_name} in -${supplicant_log_str}t debug mode to syslog (/var/log/wpa_supplicant_${endpoint_name})\" > /dev/console" >> $start_supplicant_conf
+			echo "/tmp/wpa_supplicant_${endpoint_name} -${supplicant_log_str}t -Dnl80211 -i${endpoint_name} -c${CONF_DIR}/wpa_supplicant_${endpoint_name}.conf -e/tmp/wpa_supplicant_ent_${endpoint_name} 2>&1 | logger -t wpa_supplicant_${endpoint_name} &" >> $start_supplicant_conf
+			echo "sleep 4" >> $start_supplicant_conf
+		else
+			echo "echo \"$script_name:$function_name: Start wpa_supplicant_${endpoint_name} in -${supplicant_log_str}t debug mode to ${path}/wpa_supplicant_${endpoint_name}.log\" > /dev/console" >> $start_supplicant_conf
+			echo "/tmp/wpa_supplicant_${endpoint_name} -${supplicant_log_str}t -Dnl80211 -i${endpoint_name} -c${CONF_DIR}/wpa_supplicant_${endpoint_name}.conf -e/tmp/wpa_supplicant_ent_${endpoint_name} > ${path}/wpa_supplicant_${endpoint_name}.log &" >> $start_supplicant_conf
+			echo "sleep 4" >> $start_supplicant_conf
+		fi
+	else
+		echo "echo \"$script_name:$function_name: Start wpa_supplicant_${endpoint_name}\" > /dev/console" >> $start_supplicant_conf
+		echo "/tmp/wpa_supplicant_${endpoint_name} -Dnl80211 -i${endpoint_name} -c${CONF_DIR}/wpa_supplicant_${endpoint_name}.conf -e/tmp/wpa_supplicant_ent_${endpoint_name} -B" >> $start_supplicant_conf
+	fi
+
+	local_db_source WIFI
+	fapi_daemon_enabled=`db2fapi_convert boolean WaveFapiDaemonEnable 0`
+	if [ "$fapi_daemon_enabled" = "1" ]
+	then
+		echo "echo \"$script_name:$function_name: ${endpoint_name}; Start fapi_wlan_daemon (supplicant) listener\" > /dev/console" >> $start_supplicant_conf
+		echo "killall -SIGUSR1 fapi_wlan_daemon" >> $start_supplicant_conf
+	fi
+	# Verify that supplicant is up. May need to wait if AP performs scan at this time
+	cat >> $start_supplicant_conf <<-EOL
+	supplicant_running=\`is_process_running wpa_supplicant_${endpoint_name}\`
+	up_timeout=0
+	while [ \$supplicant_running -eq 0 ] && [ \$up_timeout -lt 90 ]
+	do
+		sleep 1
+		echo "$script_name:$function_name: Start wpa_supplicant_${endpoint_name}" > /dev/console
+		/tmp/wpa_supplicant_${endpoint_name} -Dnl80211 -i${endpoint_name} -c${CONF_DIR}/wpa_supplicant_${endpoint_name}.conf -e/tmp/wpa_supplicant_ent_${endpoint_name} -B
+		supplicant_running=\`is_process_running wpa_supplicant_${endpoint_name}\`
+		up_timeout=\$((up_timeout+1))
+	done
+	[ "\$up_timeout" -eq 90 ] && echo $script_name:$function_name ERROR: WPA SUPPLICANT FAILED to load within 90 seconds > /dev/console && exit 1
+
+	# Wait for the interface to be up
+	up_timeout=0
+	while [ \`wpa_cli -i${endpoint_name} status 2>/dev/null | grep wpa_state -c\` -eq 0 ] && [ \$up_timeout -lt 30 ]
+	do sleep 1; up_timeout=\$((up_timeout+1)); done
+	# Start wpa_cli to listen to events.
+	cp -s ${BINDIR}/wpa_cli /tmp/wpa_cli_${endpoint_name}
+	/tmp/wpa_cli_${endpoint_name} -i${endpoint_name} -a${SUPPLICANT_EVENTS_SCRIPT} -B
+
+	# Add the EndPoint to the bridge, unless bridge name is None
+	[ "$endpoint_bridge" != "None" ] && brctl addif ${endpoint_bridge} ${endpoint_name}
+	# Execute network related commands during init flow when WDS is disabled
+	if [ $wds -eq 0 ]
+	then
+		if [ -e /proc/l2nat/dev ]
+		then
+			[ \`cat /proc/l2nat/dev | grep $endpoint_name -c\` -eq 0 ] && echo add $endpoint_name > /proc/l2nat/dev
+		else
+			echo "/proc/l2nat/dev was not found. L2NAT is not insmoded?" > /dev/console
+		fi
+		if [ -e /proc/ppa/api/bridged_flow_learning ]
+		then
+			[ \`cat /proc/ppa/api/bridged_flow_learning | grep Enabled -c\` -eq 0 ] && echo enable > /proc/ppa/api/bridged_flow_learning
+		fi
+		ppacmd setbr -f 0
+	fi
+
+	# Copy post-up driver commands to the runner (otf commands).
+	echo -ne "\n
+	### EndPoint post-up commands ###
+	# For WISP, remove any ppa commands from post_up and add EndPoint to ppa wan
+	if [ -n "$ppacmd_exists" ] && [ "$fastpath_enabled" = "1" ] && [ "$endpoint_bridge" = "None" ]
+	then
+		sed -i '/ppacmd/d' ${CONF_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${endpoint_name}.conf
+		echo "ppacmd addwan -i ${endpoint_name}" >> ${CONF_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${endpoint_name}.conf
+	fi
+	cat ${CONF_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${endpoint_name}.conf
+	cat ${CONF_DIR}/${DRIVER_SINGLE_CALL_CONFIG_FILE}_${interface_name}.conf
+	EOL
+
+	rm -f ${CONF_DIR}/${DRIVER_SINGLE_CALL_CONFIG_FILE}_${endpoint_name}.conf
+	# Copy the commands to another conf to be used on the next reboot
+	cp $start_supplicant_conf ${ENDPOINT_UP_CONF}_${endpoint_name}.conf
+	cat $start_supplicant_conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	execute_runner $radio_name $interface_name $interface_type
+
+	print2log $radio_index DEBUG "$script_name:$function_name done"
+	timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+}
+
+wlan_wave_sta_stop()
+{
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Define local parameters
+	local endpoint_name function_name interface_name interface_type radio_name radio_index \
+	endpoint_bridge disabled_interfaces accesspoint_disabled endpoint_disabled
+
+	local_db_source RADIO
+	local_db_source ENDPOINT
+	function_name="wlan_wave_sta_stop"
+	endpoint_name=$1
+	interface_name="$endpoint_name"
+	interface_type=`check_interface_type $endpoint_name`
+	radio_name=`get_radio_name_from_endpoint $endpoint_name`
+	radio_index=`find_index_from_interface_name $radio_name`
+	endpoint_index=`find_index_from_interface_name $endpoint_name`
+
+	timestamp $radio_index "$script_name:$function_name:$interface_name:begin"
+	print2log $radio_index DEBUG "$script_name:$function_name $*"
+
+	disabled_interfaces=`up_check_and_handle_enable_disable $radio_name $interface_type $endpoint_name`
+	accesspoint_disabled=`echo $disabled_interfaces | awk '{print $1}'`
+	endpoint_disabled=`echo $disabled_interfaces | awk '{print $2}'`
+	if [ "$endpoint_disabled" = "1" ]
+	then
+		# Remove the EndPoint from PPA
+		[ -n "$ppacmd_exists" ] && set_ppa_commands $endpoint_name "remove" ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+		# Remove the EndPoint from the bridge
+		local_db_source SSID
+		endpoint_bridge=`db2fapi_convert regular X_LANTIQ_COM_Vendor_BridgeName $endpoint_index`
+		cat >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} <<-EOL
+		brctl delif ${endpoint_bridge} ${endpoint_name} 2>/dev/null
+		killall wpa_cli_${endpoint_name} 2>/dev/null
+		wpa_cli_running=\`is_process_running wpa_cli_${endpoint_name}\`
+		wpa_cli_down_timeout=0
+		while [ "\$wpa_cli_running" -eq 1 ] && [ "\$wpa_cli_down_timeout" -lt 15 ]; do
+			sleep 1
+			wpa_cli_running=\`is_process_running wpa_cli_$endpoint_name\`
+			wpa_cli_down_timeout=\$((wpa_cli_down_timeout+1))
+		done
+		if [ "\$wpa_cli_down_timeout" -eq 15 ]
+		then
+			echo fapi_wlan_wave_down ERROR: WPA_CLI WAS KILLED BUT DID NOT DIE ON TIME, using kill -9 > /dev/console
+			pid_to_kill=\`ps | grep wpa_cli_${endpoint_name} | grep -v grep | awk '{print \$1}'\`
+			kill -9 \$pid_to_kill
+		fi
+
+		wpa_cli -i${endpoint_name} terminate 2>/dev/null
+		wpa_supplicant_running=\`is_process_running wpa_supplicant_$endpoint_name\`
+		down_timeout=0
+		while [ "\$wpa_supplicant_running" -eq 1 ] && [ "\$down_timeout" -lt 15 ]; do sleep 1; wpa_supplicant_running=\`is_process_running wpa_supplicant_$endpoint_name\`; down_timeout=\$((down_timeout+1)); done
+		if [ "\$down_timeout" -eq 15 ]"  >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		then
+			echo WPA_SUPPLICANT WAS KILLED BUT DID NOT DIE ON TIME, using kill -9 > /dev/console
+			pid_to_kill=\`ps | grep wpa_supplicant_$endpoint_name | grep -v grep | awk '{print \$1}'\`
+			kill -9 \$pid_to_kill
+		fi
+
+		# Verify the Endpoint is down
+		if_timeout=0
+		if_count=\`ifconfig | grep $endpoint_name -c\`
+		while [ "\$if_count" -gt 0 ] && [ "\$if_timeout" -lt 15 ]; do
+			sleep 1
+			echo $script_name:$function_name WARNING: INTERFACES ARE UP AFTER SUPPLICANT WAS KILLED > /dev/console
+			if_count=\`ifconfig | grep $endpoint_name -c\`
+			if_timeout=\$((if_timeout+1))
+		done
+
+		if [ "\$if_timeout" -eq 15 ]
+		then
+			echo $script_name:$function_name ERROR: INTERFACES ARE UP AFTER SUPPLICANT WAS KILLED, using ifconfig down > /dev/console
+			ifconfig $endpoint_name down
+		fi
+
+		# Remove post up commands
+		cat /dev/null > ${CONF_DIR}/${DRIVER_POST_UP_CONF_PREFIX}_${endpoint_name}.conf
+
+		# Remove ENDPOINT_UP_CONF
+		rm -f ${ENDPOINT_UP_CONF}_${endpoint_name}.conf
+		# Remove interface related supplicant softlinks
+		rm -f /tmp/wpa_supplicant_${endpoint_name}
+		rm -f /tmp/wpa_cli_${endpoint_name}
+		rm -f /var/run/wpa_supplicant/${radio_name}
+
+		local_db_source WIFI
+		fapi_daemon_enabled=`db2fapi_convert boolean WaveFapiDaemonEnable 0`
+		if [ "$fapi_daemon_enabled" = "1" ]
+		then
+			echo "$script_name:$function_name: ${endpoint_name}; Stop fapi_wlan_daemon (supplicant) listener" > /dev/console
+			killall -SIGUSR2 fapi_wlan_daemon
+		fi
+		EOL
+	fi
+	execute_runner $radio_name $interface_name $interface_type
+
+	print2log $radio_index DEBUG "$script_name:$function_name done"
+	timestamp $radio_index "$script_name:$function_name:$interface_name:done"
+}
+
+wlan_wave_sta_acs()
+{
+	# Define local parameters
+	local endpoint_name radio_name
+
+	endpoint_name=$1
+	radio_name=`get_radio_name_from_endpoint $endpoint_name`
+	# Check EndPoint status using wpa_cli
+	connection_status=`wpa_cli -i${endpoint_name} status 2>/dev/null | grep "wpa_state=COMPLETED" -c`
+	wlan_wave_ap_stop $radio_name
+	if [ $connection_status -gt 0 ]
+	then
+		sed -i -e 's/^channel=.*/channel=acs_sta_mode/' ${CONF_DIR}/hostapd_${radio_name}.conf
+	else
+		sed -i -e 's/^channel=.*/channel=acs_smart/' ${CONF_DIR}/hostapd_${radio_name}.conf
+	fi
+	wlan_wave_ap_start $radio_name
+	update_conf_out "wlan_configuration_status" "success"
+}
+
+wlan_ready()
+{
+	if [ ! -e ${INIT_FLAG} ]; then
+		exit 0
+	else
+		exit 1
+	fi
+}
+
+wlan_wave_recovery()
+{
+	local radio_name
+
+	radio_name=$1
+	if [ -n "${radio_name}" ]; then
+		if [ "${radio_name}" = "wlan0" ]; then
+			rm -f ${TEMP_DIR}/*wlan0* ${TEMP_DIR}/*wlan1* ${CONF_DIR}/*wlan0* ${CONF_DIR}/*wlan1*
+		elif [ "$radio_name" = "wlan2" ]; then
+			rm -f ${TEMP_DIR}/*wlan2* ${TEMP_DIR}/*wlan3* ${CONF_DIR}/*wlan2* ${CONF_DIR}/*wlan3*
+		else
+			return
+		fi
+		wlan_wave_ap_stop $1
+		if [ -n "`grep -i FAILURE ${OUT_CONF}`" ]; then
+			echo "Recovery on $1 failed: hostapd running on $1 could not be stopped."
+		else
+			build_wlan_notification "servd" "NOTIFY_WIFI_WLAN_INIT" "Name:${radio_name}"
+		fi
+	else
+		. ${ETC_PATH}/fapi_wlan_wave_complete_recovery "wlan0"
+	fi
+}
+
+script_name=`basename $0`
+case $1 in
+"ap_start")
+	vap_name=$2	
+	radio_name=${vap_name%%.*}                                    
+                                                                                                                                                                                   
+        hostapd_cli_running=`is_process_running hostapd_cli_${radio_name}`
+        hostapd_running=`is_process_running hostapd_$radio_name`
+
+	#if hostapd is already running fail the operation and return error
+	if [ $hostapd_cli_running -eq 1 ] || [ $hostapd_running -eq 1 ]; then
+		print2log $radio_name DEBUG "$script_name: hostapd/hostapd_cli is already running for iface=$*"
+		exit 1
+	else
+		wlan_wave_ap_start $2
+	fi
+	;;
+"ap_stop")
+	wlan_wave_ap_stop $2
+	;;
+"ap_postinit")
+	wlan_wave_ap_postinit $2
+	;;
+"sta_start")
+	wlan_wave_sta_start $2
+	;;
+"sta_stop")
+	wlan_wave_sta_stop $2
+	;;
+"sta_acs")
+	wlan_wave_sta_acs $2 # blocking TODO
+	;;
+"ready")
+	wlan_ready
+	;;
+"restore")
+	wlan_wave_recovery $2
+	;;
+*)
+	echo "Option not supported $1" > /dev/console
+	;;
+esac

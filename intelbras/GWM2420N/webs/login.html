@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Roteador ADSL 2+ Wireless N 150 Mbps</title>
+
+<script language="javascript" src="translate.js"></script>
+<SCRIPT language=JavaScript>
+TranslateDictionary.XmlLoc("wizard");
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function keydown(evt)
+{
+	var keyCode = evt.keyCode ? evt.keyCode : evt.which ? evt.which : evt.charCode;
+	if (keyCode==13)
+	{
+		PreSummit(document.forms[0])
+	}
+}
+function PreSummit(f)
+{	
+	var loc = "login.cgi?";
+	if(f.Username.value=="")
+	{
+		alert(_("Login user name can not be empty!")); 
+		f.Username.focus();
+		return false;
+	}
+	if(f.Username.value.length>13)
+	{
+	    alert(_("Overlong login username!")); 
+		f.Username.focus();
+		return false;
+	}
+	
+	loc += "username="+ f.Username.value;
+	
+	/*
+	if(f.Password.value=="")
+	{
+		alert(_("Login Password can't be empty!")); 
+		f.Password.focus();
+		return false;
+	}
+	*/
+	if(f.Password.value.length>16)
+	{
+	    alert(_("Max length of login password is 16!!")); 
+		f.Password.focus();
+		return false;
+	}
+	loc += "&password=" + f.Password.value;
+	loc += '&sessionKey=' + sessionKey;
+	
+	var code = 'parent.location="' + loc + '"';
+	//alert("code="+code);
+	
+	eval(code);	
+}
+function init()
+{
+	if(top.window!=window)
+		top.window.location = window.location.toString();
+	document.title=_("Roteador ADSL 2+ Wireless N 150 Mbps");
+    	document.getElementById('Login').value=_('Acesso');
+		document.forms[0].Username.focus();
+	/*	var loc = window.location.toString();
+	if(loc.indexOf("192.168.2.1") != -1)
+		document.Loginform.Username.value = "support"
+	else 
+		document.Loginform.Username.value = "admin"
+	//document.forms[0].Password.focus();
+	var loc = window.location.toString();
+	if(loc.indexOf('<%ejGet(ethIpAddress)%>')==-1);
+	window.location = 'http://'+'<%ejGet(ethIpAddress)%>';*/
+	var loc = window.location.toString();
+	
+	strparts = loc.split('?');
+	if(strparts.length == 2){
+		if(strparts[1] == '0'){
+				document.getElementById('warnnote').innerHTML=_("Wrong user password!  Please try again!");
+		}
+	}
+	
+	var wanItfList=new Array(<%ejGetOther(DeviceInfo,wan_info)%>);
+	var i=0,j = 0;
+	
+	for (var i=0; i<wanItfList.length;i++){
+		var wanIp=wanItfList[i].split("|");	
+		if((loc.indexOf(wanIp[7]) == -1) || wanIp[7] == "" ){
+			j = 1;
+			break;
+		}
+	}
+	
+	if(loc.indexOf('<%ejGet(ethIpAddress)%>')==-1 && 1 == j){
+		window.location = 'http://'+'<%ejGet(ethIpAddress)%>';
+	}
+}
+
+</script>
+
+<style type="text/css">
+TR{
+   FONT-SIZE: 13px;font-family:Tahoma, sans-serif;BACKGROUND-COLOR: #F6F6F6
+}
+.login{FONT-FAMILY: Tahoma, sans-serif; font-size:12px;line-height:30px; margin-top:100px}
+.idxbtnomal
+{ width:70px; height:25px; FONT-FAMILY: Tahoma, sans-serif}
+.idxbtover
+{ width:70px; height:25px; FONT-FAMILY: Tahoma, sans-serif}
+</style>
+</head>
+ 
+<body onKeyDown="keydown(event)" onload='init()'>
+<form name="Loginform" method="get" onSubmit="return false">
+	<table width="317" border="0" align="center"   cellpadding="0" cellspacing="0" class="login" >
+		<tr><td height="152" background="login.gif" width="317"></td></tr> 
+	<tr>
+		<td align="center" height="10px" colspan="2">&nbsp;</td>    
+	  </tr>
+	  <tr height="40" >
+		<td ><div  style="text-align:right; color:#36424a; width:80px; float:left;"><script>document.write(_("Usuário"));</script>:
+			</div><div style="float:left"><input type="text" name="Username" maxlength="8" style="width:200px;" /></div> </td>
+	  </tr>
+	  <tr height="40">
+		<td ><div style="text-align:right; color:#36424a; width:80px; float:left;"><script>document.write(_("Senha"));</script>:
+            
+			</div><div style="float:left"><input type="password" name="Password" maxlength="8" style="width:200px;"/></div> </td>
+	  </tr>
+      <tr>
+		<td width=" " align="center" colspan="2">&nbsp;</td>    
+	  </tr>
+	  <tr>
+		<td colspan="2"><div style="text-align:left; margin-left:210px;">
+                <input type="button" name='Login' id='Login' value="Acesso" class="idxbtnomal" onMouseOver="this.className='idxbtover'" onMouseOut="this.className='idxbtnomal'" onClick="PreSummit(document.Loginform)">
+			</div> </td>
+	  </tr>
+	  <tr>
+		<td colspan="2" align="center">&nbsp;</td>
+	  </tr>
+     <tr ><td style="background-color:#8cca45; height:3; width:317;"></td></tr>
+    </table>
+</form>
+</body>
+</html>

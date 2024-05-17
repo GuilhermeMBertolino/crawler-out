@@ -1,0 +1,35 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local interface = require "webGetFunc.interface"
+local openVpn = require "webGetFunc.openVpn"
+local ddns  = require "webGetFunc.ddns"
+
+local data = { }
+
+data["login_type"] = { value = interface.getLoginType(),  type = 'input' }
+data["deviceName"] = { value = interface.getDeviceName(),  type = 'spantext' }
+data["domain"] = { value = interface.getDhcpv4DomainName(),  type = 'input' }
+data["ipType"] = { value = interface.getWanEtherIpType(),  type = 'radio' }
+data["ipAddr"] = { value = interface.getWanEtherIpAddr(),  type = 'ip',  idStr_prefix = 'wpethr' }
+data["netmask"] = { value = interface.getWanEtherIpMask(),  type = 'ip',  idStr_prefix = 'wmask' }
+data["gateway"] = { value = interface.getWanEtherGateway(),  type = 'ip',  idStr_prefix = 'wgateway' }
+data["dnsType"] = { value = interface.getDNStype(),  type = 'radio' }
+data["dns1"] = { value = interface.getDNSServerIpAddr(1),  type = 'ip',  idStr_prefix = 'daddr' }
+data["dns2"] = { value = interface.getDNSServerIpAddr(2),  type = 'ip',  idStr_prefix = 'pdaddr' }
+data["macClone"] = { value = interface.getWANMacSelect(),  type = 'radio' }
+data["cloneMac"] = { value = interface.getWANCloneMac() }
+data["wan_hwaddr_default"] = { value = interface.getWANMacDefault() }
+data["wan_hwaddr_client"] = { value = interface.getClientMac() }
+data["wan_hwaddr_user"] = { value = interface.getWANMacUser() }
+data["circleActivationStatus"] = { value = interface.getCircleActivationStatus() }
+data["hidOpenvpnEnable"] = { value = openVpn.getOpenVpnEnable(), type = "input" }
+data["hidDdnsEnable"] = { value = ddns.getCheckboxVal_enableDdns(), type = "input" }
+data["runningIpType"] = { value = interface.getWanIpType(), type = "input" }
+data["runningStaticIp"] = { value = interface.getWanIpAddr(), type = "input" }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)
+

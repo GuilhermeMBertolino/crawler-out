@@ -1,0 +1,67 @@
+#!/bin/sh
+SCRIPT=$0
+
+MODULE_PATH=/lib/
+SPAP_MODULE=ipt_SPAP.ko
+SPAP_EXEC=/usr/sbin/spapd
+SPAP_PIDFILE=/var/run/spap.pid
+SPAP_PROCFILE=/proc/spap/spap_pid
+
+# routines ######################################################
+start() 
+{
+	local err; err=0
+	
+	insmod $MODULE_PATH$SPAP_MODULE
+	$SPAP_EXEC &
+	sleep 1
+	cat $SPAP_PIDFILE > $SPAP_PROCFILE 
+	return $err
+}
+
+
+stop() 
+{
+	local err; err=0
+	if [ -e "$SPAP_PIDFILE" ] ; then
+		SPAP_PID=`cat "$SPAP_PIDFILE"`
+		echo "Killing spapd ($SPAP_PID)"
+		kill $SPAP_PID > /dev/null 2>&1
+	else
+		echo "$SPAP_PIDFILE not exit!"
+		err=1
+	fi
+	sleep 1
+	rmmod $SPAP_MODULE
+	return $err
+}
+
+usage() 
+{
+	echo "$0 [start|stop|restart|reload|config]"
+	exit 1
+}
+
+# main ##########################################################
+[ -z "$1" ] && usage;
+
+err=0
+
+for action in $*; do
+	case $action in
+		config)		;;
+		start)		start;;
+		stop)		stop;;
+		reload)		;;
+		restart)	stop; start;;
+		*)			usage;;
+	esac
+	if [ $? = "0" ] ; then
+		echo $SCRIPT $action ok
+	else
+		echo $SCRIPT $action error
+		err=1
+	fi
+done
+
+exit $err

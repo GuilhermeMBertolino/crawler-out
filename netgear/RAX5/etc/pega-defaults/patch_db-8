@@ -1,0 +1,55 @@
+echo "[pega-defaults] patch_db-8 running ..." > /dev/console
+
+#PeguBU6, YochengLian, 2022.08.05, Fix RAX5-IR006 and No more restart need to execute link down/up by this ucitrack dhcp/vlan section.
+#We centralize it to post actoion of luci-reload.
+uci set ucitrack.@dhcp[0].exec=""
+uci set ucitrack.@vlan[0].exec=""
+uci add ucitrack telnet
+#PeguBU6, YochengLian, 2022.08.05, Add related ucitrack to instead of reloading sequence of check_ipconflict.sh.
+uci set ucitrack.@telnet[0].init="telnet"
+uci add_list ucitrack.@network[0].affects='dropbear'
+uci add_list ucitrack.@network[0].affects='telnet'
+
+#Update the network.lan.ifname to reasonable value after we changed mt7615e.lua, add_vif_into_lan() behavior.
+isVlanEnable=$(uci get vlan.@VlanCfg[0].enableVlan)
+vlanGroupType=$(uci get vlan.@VlanCfg[0].groupType)
+opMode=$(uci get network.@opmode[0].mode)
+BridgeGP_wifi2g=$(uci get vlan.BridgeGP.wifi2g)
+BridgeGP_wifi5g=$(uci get vlan.BridgeGP.wifi5g)
+vlanGP_wifi2g=$(uci get vlan.VlanGP.wifi2g)
+vlanGP_wifi5g=$(uci get vlan.VlanGP.wifi5g)
+
+#When vlan function is disable, we can update the default br-lan brige group to whole LAN interfaces.
+if [ "$opMode" == "router" ]; then
+    if [ "$isVlanEnable" == "false" ]; then
+        uci set network.lan.ifname="eth0 ra0 rax0 ra1 rax1"
+    else #$isVlanEnable == true
+        #uci set network.lan.ifname="eth0 ra0 rax0 ra1 rax1"
+	if [ $vlanGroupType == "port" ]; then
+           if [ $BridgeGP_wifi2g == "true" ] && [ $BridgeGP_wifi5g == "true" ]; then
+              uci set network.lan.ifname="eth0 ra1 rax1"
+           elif [ $BridgeGP_wifi2g == "false" ] && [ $BridgeGP_wifi5g == "true" ]; then
+              uci set network.lan.ifname="eth0 ra0 ra1 rax1"
+           elif [ $BridgeGP_wifi2g == "true" ] && [ $BridgeGP_wifi5g == "false" ]; then
+              uci set network.lan.ifname="eth0 rax0 ra1 rax1"
+           else
+              uci set network.lan.ifname="eth0 ra0 rax0 ra1 rax1"
+           fi
+        else # vlanGroupType=vid
+           if [ $vlanGP_wifi2g == "false" ] && [ $vlanGP_wifi5g == "false" ]; then
+              uci set network.lan.ifname="eth0 ra1 rax1"
+           elif [ $vlanGP_wifi2g == "false" ] && [ $vlanGP_wifi5g == "true" ]; then
+              uci set network.lan.ifname="eth0 rax0 ra1 rax1"
+           elif [ $vlanGP_wifi2g == "true" ] && [ $vlanGP_wifi5g == "false" ]; then
+              uci set network.lan.ifname="eth0 ra0 ra1 rax1"
+           elif [ $vlanGP_wifi2g == "true" ] && [ $vlanGP_wifi5g == "true" ]; then
+              uci set network.lan.ifname="eth0 ra0 rax0 ra1 rax1"
+           fi
+	fi
+    fi
+elif [ "$opMode" == "ap" ]; then
+    uci set network.lan.ifname="eth0 eth1 ra0 rax0 ra1 rax1"
+fi
+
+exit 0
+

@@ -1,0 +1,30 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local commonCfg  = require "webGetFunc.commonCfg"
+local wizard  = require "webGetFunc.wizard"
+local interface  = require "webGetFunc.interface"
+local wifi = require "webGetFunc.wireless"
+local soap = require "soap"
+
+local data = { }
+
+data["defaultState"]                  = { value = commonCfg.getDefaultState()}
+data["wanConnectionStatus"]           = { value = interface.getWANPortStatus()}
+data["wl_ssid"]                       = { value = wifi.getSsid("2.4G", "primary")}
+data["ssid_2g"]                       = { value = soap.escape(wifi.getSsid("2.4G", "primary")), type = "spantext"}
+data["wl_password"]                   = { value = wifi.getWPAPassphrase("2.4G", "primary")}
+data["wla_ssid"]                      = { value = wifi.getSsid("5G", "primary")}
+data["wla_password"]                  = { value = wifi.getWPAPassphrase("5G", "primary")}
+data["key_2g"]                        = { value = soap.escape(wifi.getWPAPassphrase("2.4G", "primary")), type = "spantext"}
+data["ssid_5g"]                       = { value = soap.escape(wifi.getSsid("5G", "primary")), type = "spantext"}
+data["key_5g"]                        = { value = soap.escape(wifi.getWPAPassphrase("5G", "primary")), type = "spantext"}
+data["currentFwVer"]                  = { value = commonCfg.getFirmwareVer(1), type = "spantext"}
+data["wanMac"]                        = { value = interface.getWANMacDefault()}
+data["clientMac"]                     = { value = interface.getClientMac()}
+data["wizardRestoreConfigInProgress"] = { value = wizard.getWizardRestoreConfigInProgress()}
+data["wizardFwUpgradeInProgress"]     = { value = wizard.getWizardFwUpgradeInProgress()}
+data["wizardWifiConfigured"]          = { value = wizard.getWizardWifiConfigured()}
+
+return json.encode(data)
+

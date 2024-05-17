@@ -1,0 +1,35 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local uci  = require "luci.model.uci".cursor()
+local interface = require "webGetFunc.interface"
+local inetStatus = require "webGetFunc.inetStatus"
+
+local data = { }
+
+data["connetionUpTime"] = { value = inetStatus.getTextVal_wanPortConnectTime(), type = 'spantext' }
+if(inetStatus.getTextVal_wanPortConnectStatus() == "connected") then
+	data["connetionStatus"] = { value = "", mlang = "AWR009", type = 'spantext' }
+else
+	data["connetionStatus"] = { value = "", mlang = "AWR008", type = 'spantext' }
+end
+
+if(inetStatus.getTextVal_negotiationStatus() == "Success") then
+	data["negotiation"] = { value = "", mlang = "AWC007", type = 'spantext' }
+else
+	data["negotiation"] = { value = "", mlang = "NA_001", type = 'spantext' }
+end
+
+if(inetStatus.getTextVal_authStatus() == "Success") then
+	data["authentication"] = { value = "", mlang = "AWC007", type = 'spantext' }
+else
+	data["authentication"] = { value = "", mlang = "NA_001", type = 'spantext' }
+end
+
+data["ipAddr"] = { value = inetStatus.getInet_IpAddr(), type = 'spantext' }
+data["subnetMask"] = { value = inetStatus.getInet_subnetMask(), type = 'spantext' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

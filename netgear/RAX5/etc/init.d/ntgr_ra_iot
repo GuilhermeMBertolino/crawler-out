@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+PROG="/etc/rabin/ntgr_ra_iot -m 0 -M 0 -C"
+
+#start_service used to start and recovery ntgr_ra_iot module for openWRT 
+start_service() {
+    echo "start_service *************"
+    [ ! -d "/tmp/ra" ] && mkdir -p /tmp/ra
+    procd_open_instance
+    procd_set_param command $PROG
+    procd_set_param respawn
+    procd_close_instance
+}
+

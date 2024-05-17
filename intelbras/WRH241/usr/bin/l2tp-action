@@ -1,0 +1,471 @@
+#!/bin/sh
+
+. /usr/bin/l2tpc-customer
+#. /tmp/l2tpc-customer
+. /usr/bin/scriptlib
+
+L2TP_PHASE1_TYPE=`rdcsman 0x00060E00 u8`
+ETH=`rdcsman 0x8000F231 str`
+L2TP_CLR="/var/run/l2tp.clr"
+L2TP_CLR_PHASE1="/var/run/l2tp-phase1.clr"
+L2TP_RESULT_FILE="/var/run/l2tp-result"
+PIDFILE_PPPD="/var/run/ppp-l2tp.pid"
+RESOLV_CONF="/etc/resolv.conf"
+L2TP_LNSSERVER="`rdcsman 0x00060600 str`"
+L2TP_LNSPORT=1701  
+MAX_TIMEOUT=30
+DISABLE_RUSSIAN_MODE=`rdcsman 0x0001002B u32`
+
+l2tp_start_pre()
+{
+    # HW NAT may affect VPN throughput
+    [ "`lsmod | grep hw_nat`" != "" ] && rmmod hw_nat  
+                    
+    #clear last ppp auth fail temp file
+    [ -e $L2TP_CLR_PHASE1 ] && sh $L2TP_CLR_PHASE1
+    [ -e $L2TP_CLR ] && sh $L2TP_CLR 
+    rm -rf /var/run/ppp_auth* $L2TP_CLR $L2TP_CLR_PHASE1
+    wrcsman "0x8001000E 0x00"
+}
+
+russian_l2tp_phase1_start()
+{
+    local IF_DNS1="0.0.0.0"
+    local IF_DNS2="0.0.0.0"
+    local IF_GW=""
+
+    if [ "$L2TP_PHASE1_TYPE" = "0" ] ; then # DHCP
+       local phase1_cnt=`rdcsman 0x80035007 u32`
+       [ "$phase1_cnt" != "2" ] && l2tp_ip_down "Phase 1 connect isn't ready !" # Phase 1 connection does not completed.
+
+       IF_GW="`rdcsman 0x80035004 ipv4`"
+       IF_DNS1="`rdcsman 0x80035005 ipv4`"
+       IF_DNS2="`rdcsman 0x80035006 ipv4`"
+    elif [ "$L2TP_PHASE1_TYPE" = "1" ] ; then # static
+       local phase1_cnt=`rdcsman 0x80110004 u32`
+       [ "$phase1_cnt" != "2" ] && l2tp_ip_down "Phase 1 connect isn't ready !" # Phase 1 connection does not completed.
+
+       IF_GW="`rdcsman 0x00060500 ipv4`"
+       IF_DNS1="`rdcsman 0x00060700 ipv4`"
+       IF_DNS2="`rdcsman 0x00060800 ipv4`"
+    fi
+
+    if [ "$IF_DNS1" != "0.0.0.0" ]; then
+       sl_append_dns_file "$RESOLV_CONF" $IF_DNS1
+       route add -host $IF_DNS1 gw $IF_GW dev $ETH
+       echo "route delete -host $IF_DNS1 gw $IF_GW dev $ETH" >> $L2TP_CLR_PHASE1
+    fi
+
+    if [ "$IF_DNS2" != "0.0.0.0" ]; then
+       sl_append_dns_file "$RESOLV_CONF" $IF_DNS2
+       route add -host $IF_DNS2 gw $IF_GW dev $ETH
+       echo "route delete -host $IF_DNS2 gw $IF_GW dev $ETH" >> $L2TP_CLR_PHASE1
+    fi
+} 
+
+l2tp_phase1_start()
+{
+    local IF_DNS1="0.0.0.0"
+    local IF_DNS2="0.0.0.0"
+    local IF_GW=""
+
+    if [ "$L2TP_PHASE1_TYPE" = 0 ] ; then
+        udhcpc-action start
+        [ $? != 0 ] && l2tp_ip_down "Can't get LAN IP/DHCP Server response for L2TP "
+        echo "udhcpc-action stop" >> $L2TP_CLR
+        
+        IF_GW="`rdcsman 0x80035004 ipv4`"        
+        IF_DNS1="`rdcsman 0x80035005 ipv4`"
+        IF_DNS2="`rdcsman 0x80035006 ipv4`"
+    elif [ "$L2TP_PHASE1_TYPE" = 1 ] ; then 
+        IF_IP=`rdcsman 0x00060300 ipv4`
+        IF_NM=`rdcsman 0x00060400 ipv4`
+        IF_GW=`rdcsman 0x00060500 ipv4`
+
+        ifconfig $ETH $IF_IP netmask $IF_NM
+        echo "ifconfig $ETH 0.0.0.0" >> $L2TP_CLR
+        
+        IF_DNS1="`rdcsman 0x00060700 ipv4`"
+        IF_DNS2="`rdcsman 0x00060800 ipv4`"
+    fi
+
+    if [ "$IF_DNS1" != "0.0.0.0" ]; then
+        sl_append_dns_file "$RESOLV_CONF" $IF_DNS1
+        route add -host $IF_DNS1 gw $IF_GW dev $ETH
+        echo "route delete -host $IF_DNS1 gw $IF_GW dev $ETH" >> $L2TP_CLR_PHASE1
+    fi
+
+    if [ "$IF_DNS2" != "0.0.0.0" ]; then
+        sl_append_dns_file "$RESOLV_CONF" $IF_DNS2
+        route add -host $IF_DNS2 gw $IF_GW dev $ETH
+        echo "route delete -host $IF_DNS2 gw $IF_GW dev $ETH" >> $L2TP_CLR_PHASE1  
+    fi
+}
+
+set_l2tpserv_routing()
+{
+    local p1wan_ip="`ifconfig $ETH |grep 'inet addr:'|cut -f2 -d:|awk '{print $1}'`"
+    local p1wan_nm="`ifconfig $ETH |grep 'inet addr:'|cut -f4 -d:`"
+    #echo "p1wan_ip: $p1wan_ip" 
+    #echo "p1wan_nm: $p1wan_nm" 
+
+    # Get Domain name IP
+    if [ -e "/usr/bin/getHostIP" ]; then
+       L2TP_LNSSERVER="`getHostIP $L2TP_LNSSERVER`"
+       [ "$L2TP_LNSSERVER" = "" ] && l2tp_ip_down "Connect fail!"
+    fi
+
+    # Check if string is empty (Avoid Syntax error)
+    if [ "`echo $p1wan_ip | cut -d "." -f1`" = "" ] || [ "`echo $p1wan_ip | cut -d "." -f2`" = "" ] ||
+       [ "`echo $p1wan_ip | cut -d "." -f3`" = "" ] || [ "`echo $p1wan_ip | cut -d "." -f4`" = "" ] ||
+       [ "`echo $p1wan_nm | cut -d "." -f1`" = "" ] || [ "`echo $p1wan_nm | cut -d "." -f2`" = "" ] ||
+       [ "`echo $p1wan_nm | cut -d "." -f3`" = "" ] || [ "`echo $p1wan_nm | cut -d "." -f4`" = "" ] ||
+       [ "`echo $L2TP_LNSSERVER | cut -d "." -f1`" = "" ] || [ "`echo $L2TP_LNSSERVER | cut -d "." -f2`" = "" ] ||
+       [ "`echo $L2TP_LNSSERVER | cut -d "." -f3`" = "" ] || [ "`echo $L2TP_LNSSERVER | cut -d "." -f4`" = "" ]; then
+       l2tp_ip_down "Connect fail!"
+    fi
+
+    local ip1_1=$((`echo $p1wan_ip| cut -d "." -f1` & `echo $p1wan_nm| cut -d "." -f1`))
+    local ip1_2=$((`echo $p1wan_ip| cut -d "." -f2` & `echo $p1wan_nm| cut -d "." -f2`))
+    local ip1_3=$((`echo $p1wan_ip| cut -d "." -f3` & `echo $p1wan_nm| cut -d "." -f3`))
+    local ip1_4=$((`echo $p1wan_ip| cut -d "." -f4` & `echo $p1wan_nm| cut -d "." -f4`))
+
+    local ip2_1=$((`echo $L2TP_LNSSERVER | cut -d "." -f1` & `echo $p1wan_nm | cut -d "." -f1`))
+    local ip2_2=$((`echo $L2TP_LNSSERVER | cut -d "." -f2` & `echo $p1wan_nm | cut -d "." -f2`))
+    local ip2_3=$((`echo $L2TP_LNSSERVER | cut -d "." -f3` & `echo $p1wan_nm | cut -d "." -f3`))
+    local ip2_4=$((`echo $L2TP_LNSSERVER | cut -d "." -f4` & `echo $p1wan_nm | cut -d "." -f4`))
+
+    if [ "$ip1_1" = "$ip2_1" ] && [ "$ip1_2" = "$ip2_2" ] &&
+       [ "$ip1_3" = "$ip2_3" ] && [ "$ip1_4" = "$ip2_4" ]; then
+        echo "Sever is in the same subnet, don't set routing "
+    else 
+        local IF_GW=""
+        if [ "$L2TP_PHASE1_TYPE" = 0 ] ; then
+            IF_GW="`rdcsman 0x80035004 ipv4`"        
+        elif [ "$L2TP_PHASE1_TYPE" = 1 ] ; then 
+            IF_GW=`rdcsman 0x00060500 ipv4`
+        fi
+
+        echo "Sever is in the different subnet, set routing for the server"
+        route add -host $L2TP_LNSSERVER gw $IF_GW dev $ETH
+        echo "route delete -host $L2TP_LNSSERVER gw $IF_GW dev $ETH" >> $L2TP_CLR
+    fi  
+}
+
+l2tp_start()
+{
+    if [ -e $PIDFILE_PPPD ] ; then
+        echo "L2TP Tunnel already running "
+        return;
+    fi
+
+    if [ "$L2TP_LNSSERVER" = "" ]; then
+        l2tp_ip_down "No Peer IP/Domain for L2TP client !"
+    fi   
+
+    # Startup L2TP     
+    l2tp_start_pre
+    if [ "$DISABLE_RUSSIAN_MODE" = "0" ] ; then        
+        russian_l2tp_phase1_start
+    else
+        l2tp_phase1_start
+    fi  
+
+    echo "Start L2TP session to $L2TP_LNSSERVER ... "
+    set_l2tpserv_routing
+    gen_l2tpd_conf
+    touch /var/run/l2tpc-reconf # force l2tpd reload config
+    [ -z "`ps | grep l2tpd | grep -v xl2tpd |grep -v grep`" ] && l2tpd -d 65535  
+    l2tp-control "start-session $L2TP_LNSSERVER" > $L2TP_RESULT_FILE
+    sleep 2
+
+    local l2tp_st="`awk '{print $1}' $L2TP_RESULT_FILE`"
+    if [ "$l2tp_st" != "OK" ]; then
+        l2tp_ip_down "Fail to setup L2TP tunnel (`cat $L2TP_RESULT_FILE`)" 
+    fi
+
+    # Monitor connection
+    local retry=0
+    local l2tp_status=0
+    while [ true ]; do
+        if [ -e $PIDFILE_PPPD ] ; then
+            sl_get_ppp_PID_IFname $PIDFILE_PPPD PPP_PID PPP_IF
+            [ $? = 0 ] && l2tp_status="`rdcsman 0x80060700 u16`" 
+        fi 	 
+                    
+        if [ "$l2tp_status" = "2" ]; then
+            logger -t "l2tp" "Link is up and running on interface $PPP_IF (PID: $PPP_PID)"
+            echo "l2tp-status: Link is up and running on interface $PPP_IF"
+            break;
+        elif [ -e /var/run/ppp_auth_fail ] ; then
+            wrcsman "0x80010007 0x06 && \
+                     0x80060700 0x06"
+            
+            l2tp_ip_down "Authentication fail!"
+        else 
+            if [ "$PPP_PID" != ""  ]; then
+                kill -0 $PPP_PID 2>/dev/null
+                [ "$?" != "0" ] && l2tp_ip_down "Connect fail!"
+            fi
+
+            if [ $retry -gt $MAX_TIMEOUT ] ; then
+                l2tp_ip_down "Connect L2TP tunnel Timeout !"
+            else
+                echo "L2TP connecting ... (Retry: $retry, Status: $l2tp_status)"                
+                retry=$(($retry+1))
+            fi	            
+        fi
+        sleep 1
+    done      
+}
+
+# $1 interface-name   e.g. ppp0, ppp1 ...etc
+# $2 tty-device       e.g. /dev/modem ...
+# $3 speed 
+# $4 local-IP-address 
+# $5 remote-IP-address 
+# $6 ipparam          e.g. extra parameters   
+l2tp_ip_up()
+{
+    logger -t "ip-up-l2tp" "$*"
+    echo "ip-up-l2tp: $*"   
+    [ -e $L2TP_CLR_PHASE1 ] && sh $L2TP_CLR_PHASE1
+    rm -rf /var/run/ppp_auth* $L2TP_CLR_PHASE1  
+
+    #L2TP DNS info.
+    IF_DNS1="`rdcsman 0x00064100 ipv4`"
+    IF_DNS2="`rdcsman 0x00064200 ipv4`"
+    if [ "$IF_DNS1" = "0.0.0.0" -a "$IF_DNS2" = "0.0.0.0" ] ; then
+        sl_get_DNS_in_resolv_conf IF_DNS1 IF_DNS2
+    fi        
+
+    #L2TP interface info.
+    IFNAME="$2"
+    sl_get_IP_NM_GW_in_ifconfig $IFNAME IF_IP IF_NM IF_GW
+    sl_get_uptime CNTTIME
+	wrcsman "0x80060100 $CNTTIME && \
+		 	 0x80060200 {$IF_IP} && \
+			 0x80060300 {$IF_NM} && \
+			 0x80060400 {$IF_GW} && \
+			 0x80060500 {$IF_DNS1} && \
+			 0x80060600 {$IF_DNS2} && \
+			 0x80063000  \"$IFNAME && \
+			 0x80060700 0x02"      
+ 
+    LOADSHARING=`rdcsman 0x004301c0 u32`
+    SEAMLESS_MODE=`rdcsman 0x001e0080 u32`
+    if [ -e /var/run/multiwan_enable ]    || 
+       [ "$LOADSHARING" = "1" ]           || 
+       [ "$SEAMLESS_MODE" = "1" ]         || 
+       [ -e /var/run/dont_update_wantype ]; then
+        logger -p 8.7 -t "ip-up-l2tp" "Exit ip-up directly (Under LoadSharing, Seamless, MultiWAN)! "
+        rm -f /var/run/dont_update_wantype  
+        exit 0 # may pptp/l2tp/pppoe client -> do nothing
+    fi        
+
+	#for failover status, do not set dns info and do not set default gw
+    AUTOBAK_MODE=`rdcsman 0x801e4000 u32`
+	if [ "$AUTOBAK_MODE" = "1" ] ; then			
+        logger -p 8.7 -t "ip-up-l2tp" "Under Autoback mode, dont write to local "
+		route delete default gw $IF_GW dev $IFNAME
+        exit 0
+	fi     
+
+    FAILOVER_MODE=`rdcsman 0x80430600 u32`     
+    if [ "$FAILOVER_MODE" = "1" ]; then
+        FAILOVER_WANTYPE=`rdcsman 0x0043000b u32`
+        if [ $FAILOVER_WANTYPE -eq 8 ]; then  # L2TP is the backup wan
+            wrcsman "0x8043000c $CNTTIME && \
+                     0x80430002 {$IF_IP} && \
+                     0x80430003 {$IF_NM} && \
+                     0x80430004 {$IF_GW} && \
+                     0x80430005 {$IF_DNS1} && \
+                     0x80430006 {$IF_DNS2} && \
+                     0x80430600 0x02 && \
+                     0x8043000b \"$IFNAME"
+        else  # L2TP is the main wan, and try to failback 
+            logger -p 8.7 -t "l2tp ip-up" "Under Failover mode, dont write to local \""
+            route delete default gw $IF_GW dev $IFNAME
+            exit 0
+        fi
+    fi     
+
+    # Write original DNS info to clr file on Russian mode
+    if [ "$DISABLE_RUSSIAN_MODE" = "0" ] ; then
+        echo "echo \"`cat $RESOLV_CONF`\" > $RESOLV_CONF" >> $L2TP_CLR
+    fi
+
+    # Set DNS info. the the head of resolv.conf !
+    sl_insert_dns_file /etc/resolv.conf $IF_DNS1 $IF_DNS2
+
+    # Remove all default gateway ! 
+    route delete default
+
+    # Set WAN L2TP as defaul gateway !
+    route add default gw $IF_GW 
+
+    # Write to Local WAN
+    wrcsman	"0x80010002 {$IF_IP} && \
+             0x80010003 {$IF_NM} && \
+             0x80010004 {$IF_GW} && \
+             0x80010005 {$IF_DNS1} && \
+             0x80010006 {$IF_DNS2} && \
+             0x8001000B \"$IFNAME && \
+             0x80010007 0x02"        
+    exit 0
+}
+
+l2tp_ip_down()
+{
+    logger -t "ip-down-l2tp" "$*"
+    echo "ip-down-l2tp: $*"
+    l2tp_stop
+    exit 0
+}
+
+l2tp_stop()
+{
+    # Kill l2tp tunnel 
+    if [ -e $L2TP_RESULT_FILE ] ; then
+        l2tp_st=`awk '{print $1}' $L2TP_RESULT_FILE`
+        l2tp_tun_id=`awk '{print $2}' $L2TP_RESULT_FILE`
+        l2tp_lac_id=`awk '{print $3}' $L2TP_RESULT_FILE`
+        if [ "$l2tp_st" = "OK" ]; then
+            l2tp-control "stop-session $l2tp_tun_id $l2tp_lac_id"
+            #l2tp-control "exit"	
+            echo "$0: stop session $l2tp_tun_id $l2tp_lac_id" 
+        fi                
+    fi                 
+
+    # Clear L2TP status 
+    [ -e $L2TP_CLR_PHASE1 ] && sh $L2TP_CLR_PHASE1
+    [ -e $L2TP_CLR ] && sh $L2TP_CLR 
+    rm -rf /var/run/ppp_auth* $L2TP_CLR $L2TP_CLR_PHASE1 $PIDFILE_PPPD
+
+	wrcsman "0x80060100 0x00 && \
+		     0x80060200 0x00 && \
+		     0x80060300 0x00 && \
+		     0x80060400 0x00 && \
+		     0x80060500 0x00 && \
+		     0x80060600 0x00 && \
+		     0x80060700 0x00 && \
+             0x80063000 0x00"
+     
+    LOADSHARING=`rdcsman 0x004301c0 u32`    
+    SEAMLESS_MODE=`rdcsman 0x001e0080 u32`
+    if [ -e /var/run/multiwan_enable ]   ||
+       [ "$LOADSHARING"   = "1" ]        || 
+       [ "$SEAMLESS_MODE" = "1" ]        ||
+       [ -e /var/run/dont_update_wantype ]; then
+        logger -p 8.7 -t "ip-down-l2tp" "Exit ip-down directly (Under LoadSharing, Seamless, MultiWAN)!\""
+        rm -f /var/run/dont_update_wantype  
+        exit 0 # may pppoe/l2tp/pppoe client -> do nothing
+    fi  
+ 
+    # For failover status, do not set dns info and do not set default gw
+    AUTOBAK_MODE=`rdcsman 0x801e4000 u32`
+	if [ "$AUTOBAK_MODE" = "1" ] ; then			        
+        logger -p 8.7 -t "ip-down-l2tp" "Under failover mode, dont write to local \""
+        exit 0
+	fi 
+
+    # Failover
+    FAILOVER_MODE=`rdcsman 0x80430600 u32` 	   
+    if [ "$FAILOVER_MODE" = "1" ]; then
+        FAILOVER_WANTYPE=`rdcsman 0x0043000b u32`
+        if [ $FAILOVER_WANTYPE -eq 8 ]; then  # l2tp is the backup wan
+            wrcsman "0x8043000c 0x00 && \
+                     0x80430002 0x00 && \
+                     0x80430003 0x00 && \
+                     0x80430004 0x00 && \
+                     0x80430005 0x00 && \
+                     0x80430006 0x00 && \
+                     0x80430600 0x00 && \
+                     0x8043000b 0x00"
+        else  # l2tp is the main wan, and try to failback 
+            logger -p 8.7 -t "l2tp ip-down" "Under failover mode, dont write to local \""
+            exit 0
+        fi
+    fi      
+       
+    # Recover wan interface default gateway on Russian mode
+    if [ "$DISABLE_RUSSIAN_MODE" = "0" ] ; then
+       local IF_GW=""
+       if [ "$L2TP_PHASE1_TYPE" = "0" ] ; then
+          IF_GW="`rdcsman 0x80035004 ipv4`"
+       elif [ "$L2TP_PHASE1_TYPE" = "1" ] ; then
+          IF_GW="`rdcsman 0x00060500 ipv4`"
+       fi
+
+       # TODO: Need consider autoback/failover/loadsharing !?
+       if [ "$IF_GW" != "" ] ; then
+          route delete default > /dev/null 2>&1
+          route add default gw $IF_GW > /dev/null 2>&1
+       fi
+    fi
+
+    # Clear Local WAN CSID
+    wrcsman "0x80010002 0x00 && \
+             0x80010003 0x00 && \
+             0x80010004 0x00 && \
+             0x80010005 0x00 && \
+             0x80010006 0x00 && \
+             0x80010007 0x00 && \
+             0x8001000B 0x00"     
+}
+
+l2tp_status() 
+{
+    echo "L2TP Server: $L2TP_LNSSERVER"    
+    echo "L2TP Phase: $L2TP_PHASE1_TYPE"    
+    echo "Autoback Mode: `rdcsman 0x801e4000 u32`"
+    echo "Failover :`rdcsman 0x80430600 u32`"
+
+    echo "CSID_S_LOCAL_WAN_IP       : `rdcsman 0x80010002 ipv4`"
+    echo "CSID_S_LOCAL_WAN_NM       : `rdcsman 0x80010003 ipv4`"
+    echo "CSID_S_LOCAL_WAN_GW       : `rdcsman 0x80010004 ipv4`"
+    echo "CSID_S_LOCAL_WAN_PRIDNS   : `rdcsman 0x80010005 ipv4`"
+    echo "CSID_S_LOCAL_WAN_SECDNS   : `rdcsman 0x80010006 ipv4`"
+    echo "CSID_S_LOCAL_WAN_STATUS   : `rdcsman 0x80010007 u32`"
+    echo "CSID_S_LOCAL_WAN_IF_NAME  : `rdcsman 0x8001000b str`"
+
+    echo "CSID_S_L2TP_CNT_TIME  : `rdcsman 0x80060100 u32`"
+    echo "CSID_S_L2TP_IF_NAME   : `rdcsman 0x80063000 str`"
+    echo "CSID_S_L2TP_IF_IP     : `rdcsman 0x80060200 ipv4`"
+    echo "CSID_S_L2TP_IF_NM     : `rdcsman 0x80060300 ipv4`"
+    echo "CSID_S_L2TP_IF_GW     : `rdcsman 0x80060400 ipv4`"
+    echo "CSID_S_L2TP_IF_PRIDNS : `rdcsman 0x80060500 ipv4`"
+    echo "CSID_S_L2TP_IF_PRIDNS : `rdcsman 0x80060600 ipv4`"
+    echo "CSID_S_L2TP_CNT_STATUS: `rdcsman 0x80060700 u32`"
+
+    echo "CSID_C_L2TP_CNT_TYPE_UI : `rdcsman 0x00060002 u32`"
+    echo "CSID_C_L2TP_CNT_TYPE    : `rdcsman 0x00060900 u32`"
+    echo "CSID_C_L2TP_NAT_DISABLE : `rdcsman 0x00060003 u32`"
+    echo "CSID_C_L2TP_USER        : `rdcsman 0x00060100 str`"
+    echo "CSID_C_L2TP_PASSWORD    : `rdcsman 0x00060200 str`"
+    echo "CSID_C_L2TP_MTU         : `rdcsman 0x00060a00 u32`"
+    echo "CSID_C_L2TP_IDLETIME    : `rdcsman 0x00060b00 u32`"
+    echo "CSID_C_L2TP_PORT        : `rdcsman 0x00060f00 u32`"
+    echo "CSID_C_L2TP_PRIDNS      : `rdcsman 0x00064100 u32`"
+    echo "CSID_C_L2TP_SECDNS      : `rdcsman 0x00064200 u32`"
+}
+
+usage() {
+    echo "Usage:"
+    echo "  $0: start/stop/restart"
+}
+
+# main ##########################################################
+case "$1" in
+	start)   l2tp_start;            ;;
+	restart) l2tp_stop; l2tp_start; ;;
+    stop)    l2tp_stop;             ;;	
+    status)  l2tp_status;           ;;	
+    ip-up)   l2tp_ip_up    $1 $2 $3 $4 $5 $6; ;;       
+    ip-down) l2tp_ip_down  $1 $2 $3 $4 $5 $6; ;;       
+	*)       usage; exit 1;         ;;
+esac
+
+exit 0		
+			
+			

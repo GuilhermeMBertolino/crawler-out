@@ -1,0 +1,115 @@
+#!/bin/sh
+
+. /etc/wlan/wifi_conf
+
+bridge_mode=$(/bin/config get bridge_mode) 
+
+radio_stainfo() {
+	radio_name=$1
+	if [ "x$2" = "xGuest" ]; then
+		case $radio_name in
+			2*) radio_ifname="${guest2G_ifname_list}" ;;
+			5G1) radio_ifname="${guest5G_ifname_list}" ;;
+			5G2) radio_ifname="${guestifname_5GH}" ;;
+		esac
+	elif [ "x$2" = "x" ]; then
+		case $radio_name in
+			2*) radio_ifname="${mainifname_2G}" ;;
+			5G1) radio_ifname="${mainifname_5GL}" ;;
+			5G2) radio_ifname="${mainifname_5GH}" ;;
+		esac
+	fi
+
+	if [ "x$is_single_ssid" = "x1" -a "x$2" = "xGuest" ]; then
+		sta_unm=0
+		sta_unm_t=0
+		for wlx in ${radio_ifname}
+		do
+			sta_unm_t=$(wl -i $wlx assoclist 2>/dev/null | wc -l)
+			sta_unm=$(expr $sta_unm + $sta_unm_t)
+		done
+	else
+		sta_unm=$(wl -i ${radio_ifname} assoclist 2>/dev/null | wc -l)
+	fi
+
+	echo "###$*###"
+	if [ "x${sta_unm}" != "x0" ]; then 
+		sta_unm_t=0
+		for sta in ${radio_ifname}
+		do
+			sta_unm_t=$(wl -i $sta assoclist 2>/dev/null | wc -l)
+			[ $sta_unm_t -eq 0 ] && continue
+			for n in `seq $sta_unm_t`
+			do
+				client_mac=$(wl -i $sta assoclist 2>/dev/null | awk '{print $2}' | eval sed -n '"$n"p')
+				radio_rate_kbps=$(wl -i $sta sta_info ${client_mac} 2>/dev/null | grep "rate of last" | awk '{print $6}' | sort -n | sed -n '$p')
+				radio_rssi_minus=$(wl -i $sta sta_info ${client_mac} 2>/dev/null | grep "smoothed rssi:" | awk '{print $3}')
+				radio_rate=$(echo "${radio_rate_kbps}/1024" | bc)
+				radio_rssi=$(echo "${radio_rssi_minus}+95" | bc)
+				echo -e "${client_mac}\t${radio_rate}Mbps\t${radio_rssi}"
+			done
+		done
+		echo ""
+	else
+		echo ""
+	fi
+}
+
+
+date=`date`
+if [ "x$bridge_mode" != "x1" ]; then
+	eval echo "[wlan]===time:$date   command:wlan stainfo=============="
+	radio_stainfo "2.4G"
+	radio_stainfo "2.4G" "Guest"
+	radio_stainfo "5G1"
+	radio_stainfo "5G1" "Guest"
+	if [ "$is_dual_band" = "0" ]; then
+		radio_stainfo "5G2"
+		radio_stainfo "5G2" "Guest"
+	fi
+else
+	wl0_assoclist=`wl -i wl0 assoclist |awk '{print $2}'`
+	wl1_assoclist=`wl -i wl1 assoclist |awk '{print $2}'`
+	wl2_assoclist=`wl -i wl2 assoclist |awk '{print $2}'`
+	rate=0
+	rssi=0
+	if [ "x$wl0_assoclist" != "x" ]; then
+		rate=`wl -i wl0 rate`
+		rssi_t=`wl -i wl0 rssi`
+	elif [ "x$wl1_assoclist" != "x" ]; then
+		rate=`wl -i wl1 rate`
+		rssi_t=`wl -i wl1 rssi`
+	else
+		rate=`wl -i wl2 rate`
+		rssi_t=`wl -i wl2 rssi`
+	fi
+	rssi=`echo "${rssi_t}+95" | bc`
+
+	echo "[wlan]===time:$date  command:wlan stainfo==============" 
+	if [ "$is_dual_band" = "0" ]; then
+		if [ "x$wl1_assoclist" != "x" ]; then
+			echo "###2.4G###"
+			echo -e "$wl1_assoclist\t$rate\t$rssi"
+			echo ""
+		elif [ "x$wl0_assoclist" != "x" ]; then
+			echo "###5G###"
+			echo -e "$wl0_assoclist\t$rate\t$rssi"
+			echo ""
+		elif [ "x$wl2_assoclist" != "x" ]; then
+			echo "###5G###"
+			echo -e "$wl2_assoclist\t$rate\t$rssi"
+			echo ""
+		fi
+	else
+		if [ "x$wl0_assoclist" != "x" ]; then
+			echo "###2.4G###"
+			echo -e "$wl0_assoclist\t$rate\t$rssi"
+			echo ""
+		elif [ "x$wl1_assoclist" != "x" ]; then
+			echo "###5G###"
+			echo -e "$wl1_assoclist\t$rate\t$rssi"
+			echo ""
+		fi
+	fi
+fi
+

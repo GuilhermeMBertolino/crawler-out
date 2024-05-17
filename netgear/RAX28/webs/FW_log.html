@@ -1,0 +1,316 @@
+<!DOCTYPE HTML>
+<? include 'php/commonCfg.php';?>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+  <script src="js/embedProgressBar.js"></script>
+  
+  <script language="javascript" type="text/javascript">
+
+    CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+
+    function formSubmit(btn) {
+        if (validation(document.forms[0])) {
+            $.postForm('logs', $('#target'), 'cgi-bin/rex_cgi');
+        }
+    }
+    
+    function dataSubmit(action) {
+        var json_data;
+        
+        if (action == "refresh") {
+            json_data = '{ "function": "logCtrl", "data": { "control" : "refresh"} }';
+        }
+        else if (action == "clean") {
+            json_data = '{ "function": "logCtrl", "data": { "control" : "clean"} }';
+        }
+        else if (action == "send") {
+            json_data = '{ "function": "logCtrl", "data": { "control" : "send"} }';
+        }
+        
+        $.postData('cgi-bin/rex_cgi', json_data,afterpostData);
+    }
+
+    function afterpostData(json){
+
+        if(json.message.includes('send log'))
+            setTimeout("redirectProgressBar('SWP011', '', '5000', 'FW_log.html')", 10);
+        else
+            defaultHandler(json);
+    }
+
+    function validation(f) { 
+        return true;
+    }
+    
+    function post_fillout_init() 
+    {
+        /* init elements */
+        init_log_detail();
+        init_currentTime_span();
+        
+        /* register onClick/onChange callback function */
+        $('#target [name=refresh_log]').on('click', function() {
+            dataSubmit("refresh");
+        });
+        $('#target [name=clear_log]').on('click', function() {
+            dataSubmit("clean");
+        });
+        $('#target [name=send_log]').on('click', function() {
+            dataSubmit("send");
+        });
+        
+        /* sync checkbox value to be same with its check status */
+        $('#target [name=allowedSite]').on('change', function() {
+            $('[name=allowedSite]').val($('[name=allowedSite]').prop("checked"));
+        });
+        $('#target [name=blockedSite]').on('change', function() {
+            $('[name=blockedSite]').val($('[name=blockedSite]').prop("checked"));
+        });
+        $('#target [name=webAccess]').on('change', function() {
+            $('[name=webAccess]').val($('[name=webAccess]').prop("checked"));
+        });
+        $('#target [name=routerOp]').on('change', function() {
+            $('[name=routerOp]').val($('[name=routerOp]').prop("checked"));
+        });
+        $('#target [name=knownAttack]').on('change', function() {
+            $('[name=knownAttack]').val($('[name=knownAttack]').prop("checked"));
+        });
+        $('#target [name=portForwarding]').on('change', function() {
+            $('[name=portForwarding]').val($('[name=portForwarding]').prop("checked"));
+        });
+        $('#target [name=wlan]').on('change', function() {
+            $('[name=wlan]').val($('[name=wlan]').prop("checked"));
+        });
+/*
+        $('#target [name=internet]').on('change', function() {
+            $('[name=internet]').val($('[name=internet]').prop("checked"));
+        });
+*/
+        $('#target [name=wlanSchedule]').on('change', function() {
+            $('[name=wlanSchedule]').val($('[name=wlanSchedule]').prop("checked"));
+        });
+        $('#target [name=readyShare]').on('change', function() {
+            $('[name=readyShare]').val($('[name=readyShare]').prop("checked"));
+        });
+        $('#target [name=vpn]').on('change', function() {
+            $('[name=vpn]').val($('[name=vpn]').prop("checked"));
+        });
+    }
+    
+    function init_currentTime_span()
+    {
+        /* ori_fmt_date = Tue Feb  2 23:13:59 2021 */
+        var ori_fmt_date = $('#target span[name=currentTime]').text();
+        var date_array = ori_fmt_date.toString().split(/\s+/);
+        
+        var year = date_array[4];
+        var month_abbr = date_array[1];
+        var month = month_to_mlang(month_abbr);
+        var week_abbr = date_array[0];
+        var week = week_to_mlang(week_abbr);
+        var day = date_array[2];
+        var time = date_array[3];
+        
+        /* new_fmt_date = Wednesday, 1 Jul 2020 13:59:23 */
+        var new_fmt_date = week + ", " + month + " " + day + ", " + year + " " + time;
+
+        $('#target span[name=currentTime]').text(new_fmt_date);
+    }
+    
+    function init_log_detail()
+    {
+        /* send refresh command for cgi to generate/refresh log file. */
+        var json_data = '{ "function": "logCtrl", "data": { "control" : "refresh"} }';
+        $.postData('cgi-bin/rex_cgi', json_data, not_defaultHandler);
+    }
+    
+    function not_defaultHandler()
+    {
+        /* default handler would refresh the page. 
+           for not refreshing the page, add this callback function to do nothing. */
+        /* read log file and show on log_detail textarea in rex_cgi callback */
+        var fp = new XMLHttpRequest();
+        fp.open("GET", "files/rex.log", false);
+        fp.onreadystatechange = function ()
+        {
+            if (fp.readyState == 4)
+            {
+                if (fp.status == 200 || fp.status == 0)
+                {
+                    /* The lastest log shall be at the top */
+                    var logText = fp.responseText.split('\n').reverse().splice(1).join('\n');
+                    /* show file content on log_detail textarea. */
+                    $('#log_detail').val(logText);
+                }
+            }
+        }
+        fp.send(null);
+    }
+    
+    $.postData = function(url, data , callback, time) {
+        //post data
+        $.ajax({
+            url: url + "?csrftoken=" + CSRF_TOKEN,
+            type: "POST",
+            data: data,
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(json) {
+                (callback != null) ? callback(json) : defaultHandler(json);
+            },
+            error: function(xhr) {
+                var json = {
+                    "code": "-1",
+                    "message": xhr.status + " " + xhr.statusText,
+                };
+                (callback != null) ? callback(json) : defaultHandler(json);
+            },
+            timeout: time ? time : 0,
+        });
+    };
+    
+  </script>
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<? bodyBegin('log', 'FW_log', 'RS-Vault_085', 'Logs', '', 'post_fillout_init') ?>
+    <div id="main" class="form-group" style="overflow:auto;scrolling:auto">
+
+        <div class="form-row">
+            <b mlang="CLO002" >Current Time</b><b>: </b><b><span name="currentTime" id="current_time"></span></b>
+        </div>
+    
+        <div class="form-row">
+            <TEXTAREA id="log_detail" class="smallfix" ROWS="15" cols="60" WRAP="vitural" READONLY tabindex="-1"></textarea>
+        </div>
+    
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <b mlang="CLO010" >Include in Log</b>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO004" >Attempted access to allowed sites</span>
+                <input type="checkbox" name="allowedSite" id="log_asites" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO005" >Attempted access to blocked sites and services</span>
+                <input type="checkbox" name="blockedSite" id="log_block" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+    
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO006" >Connections to the Web-based interface of this Router</span>
+                <input type="checkbox" name="webAccess" id="log_conn" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO007" >Router operation (startup, get time etc)</span>
+                <input type="checkbox" name="routerOp" id="log_router" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO008" >Known DoS attacks and Port Scans</span>
+                <input type="checkbox" name="knownAttack" id="log_dosport" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="LUP030" >Port Forwarding / Port Triggering</span>
+                <input type="checkbox" name="portForwarding" id="log_fwd" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="CLO009" >Wireless access</span>
+                <input type="checkbox" name="wlan" id="log_wlan" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+<!--
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="SBS041" >Automatic Internet connection reset</span>
+                <input type="checkbox" name="internet" id="log_conn_reset_ch" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+-->
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="AAW020" >Turn off wireless signal by schedule</span>
+                <input type="checkbox" name="wlanSchedule" id="log_wire_sched_ch" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="genie_811" >ReadySHARE</span>
+                <input type="checkbox" name="readyShare" id="log_readyshare_ch" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="vpn172" >VPN Service</span>
+                <input type="checkbox" name="vpn" id="log_vpn_head_ch" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="space-divider">&nbsp;</div>
+        <input type="hidden" name="internet" value="false">
+        <input type="hidden" name="readyShareMobile" value="false">
+    </div> <!-- form-group end -->
+
+    <div class="form-btn-row" id="form_btn_div">
+        <button type="button" value="refresh" id="action_refresh" name="refresh_log" class="button-sty1" mlang="UBS012">"Refresh</button>
+        <button type="button" value="clear" id="action_clear" name="clear_log" class="button-sty1" mlang="CLO001">Clear Log</button>
+        <button type="button" value="send" id="action_send" name="send_log" class="button-sty1"  mlang="CLO003">Send Log</button>
+        <button type="button" value="BUTTON"  onClick=""location.href='FW_log.html' name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+        <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+    </div>
+    
+    <? genHelpSection()?>
+
+</html>

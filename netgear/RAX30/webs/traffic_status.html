@@ -1,0 +1,391 @@
+<!DOCTYPE HTML>
+<!-- include PHP to use php functions -->
+<? include 'php/commonCfg.php';?>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+
+  <script language="javascript" type="text/javascript">
+    CSRF_TOKEN_SUB = <?= genCsrfTokenSubFilePhp('tokenNumber')?>;
+
+    var g_intervalId = -1;
+    var g_refresh_interval = 10;
+    
+    $(document).ready(function()
+    {
+        fetchData('target', 'trafficStatus', '', 'post_fillout_init');
+    });
+
+    
+    function post_fillout_init()
+    {   
+        $("[mlang]").each(function(idx, obj) {
+              obj.innerHTML = window.opener.top.mlang[obj.attributes.mlang.value];
+        });
+        
+        init_count_period_bar();
+        init_counting_period_text();
+        
+        init_amount_used_bar();
+        init_amount_used_text();
+       
+        
+        loop_refresh_page();
+        
+        openWindowLimitPage();
+    }
+    
+    
+    /* init function Section --------> Begin */
+    function init_count_period_bar()
+    {
+        var max_bar_height = 120;
+        var passed_day = parseInt($("[name=passedDay]").val(), 10);
+        var period_day = parseInt($("[name=periodDay]").val(), 10);
+        var days_left_height;
+        var days_passed_height;
+        
+        days_passed_height = max_bar_height * passed_day/period_day;
+            days_left_height = max_bar_height - days_passed_height;
+        
+        $("#count_period_white_bar").height(days_left_height);
+        $("#count_period_blue_bar").height(days_passed_height);
+        
+    }
+    
+    function init_counting_period_text()
+    {
+        var counting_period_text;
+        var passed_day = parseInt($("[name=passedDay]").val(), 10);
+        var period_day = parseInt($("[name=periodDay]").val(), 10);
+        
+        counting_period_text = passed_day.toString() + "/" + period_day + " " + window.opener.top.mlang["RS-Vault_329"];
+        
+        $("[name=counting_period_text]").html(counting_period_text);
+    }
+    
+    function init_amount_used_bar()
+    {
+		var tm_type = $("[name=tm_type]").val();
+        var max_bar_height = 120;
+
+		if(tm_type == "volControl")
+		{
+	        var volControlType = $("[name=volControlType]").val();
+	        var month_limit = parseInt($("[name=volMonthlyLimit]").val(), 10);
+	        var month_used_download = parseInt($("[name=thismonth_download]").val(), 10);
+	        var month_used_bothDirection = parseInt($("[name=thismonth_total]").val(), 10);
+	        var used_bar_height;
+	        var left_bar_height;
+	        
+	        if (volControlType == "No limit") {
+	            used_bar_height = 0;
+	            left_bar_height = max_bar_height;
+	        }
+	        else if (volControlType == "Download only") {
+	            used_bar_height = max_bar_height * (month_used_download / month_limit);
+	            left_bar_height = max_bar_height - used_bar_height;
+	        }
+	        else if (volControlType == "Both directions") {
+	            used_bar_height = max_bar_height * (month_used_bothDirection / month_limit);
+	            left_bar_height = max_bar_height - used_bar_height;
+	        }
+	        
+	        //avoiding the used_bar may become too long 
+	        if (used_bar_height >= max_bar_height) {
+	            used_bar_height = max_bar_height;
+	            left_bar_height = 0;
+	        }
+	
+			
+	        $("#amount_left_bar").height(left_bar_height);
+	        $("#amount_used_bar").height(used_bar_height);
+	        
+	        if(used_bar_height >= (max_bar_height * 0.9) )
+	        {
+	            $("#amount_used_bar")[0].style.backgroundColor = "#FF0000";
+	        }
+	        else
+	        {
+	            $("#amount_used_bar")[0].style.backgroundColor = "#00FF00";
+	        }
+		}
+		else
+		{
+			//alert($("[name=thismonth_HourLimited]").val());
+			//alert($("[name=thismonth_HourUsed]").val());
+			var month_limit_time = parseInt($("[name=thismonth_HourLimited]").val(),10)*60;
+			var usedTimeList=$("[name=thismonth_HourUsed]").val().split(':');
+			var month_used_time = parseInt(usedTimeList[0],10)*60+parseInt(usedTimeList[1],10);
+			//alert(month_limit_time);
+			//alert(month_used_time);
+			used_bar_height = max_bar_height * (month_used_time / month_limit_time);
+			left_bar_height = max_bar_height - used_bar_height;
+
+	        //avoiding the used_bar may become too long 
+	        if (used_bar_height >= max_bar_height) {
+	            used_bar_height = max_bar_height;
+	            left_bar_height = 0;
+	        }
+
+
+
+	        $("#amount_left_bar").height(left_bar_height);
+	        $("#amount_used_bar").height(used_bar_height);			
+			
+	        if(used_bar_height >= (max_bar_height * 0.9) )
+	        {
+	            $("#amount_used_bar")[0].style.backgroundColor = "#FF0000";
+	        }
+	        else
+	        {
+	            $("#amount_used_bar")[0].style.backgroundColor = "#00FF00";
+	        }
+			
+		}
+    }
+    
+    function init_amount_used_text()
+    {
+		var tm_type = $("[name=tm_type]").val();
+
+		if(tm_type == "volControl")
+		{		
+	        var volControlType = $("[name=volControlType]").val();
+	        var month_limit = parseInt($("[name=volMonthlyLimit]").val(), 10);
+	        var month_used_download = parseInt($("[name=thismonth_download]").val(), 10);
+	        var month_used_bothDirection = parseInt($("[name=thismonth_total]").val(), 10);
+	        var amount_used_text;
+	        
+	        if (volControlType == "No limit") {
+	            amount_used_text = window.opener.top.mlang["ATM026"];
+	        }
+	        else if (volControlType == "Download only") {
+	            amount_used_text = month_used_download.toString() + "/" +  month_limit.toString() + " " + window.opener.top.mlang["ATM044"];
+	            //amount_used_text = month_used_download.toString() + "/" +  month_limit.toString() + "Mbytes";
+	        }
+	        else if (volControlType == "Both directions") {
+	            amount_used_text = month_used_bothDirection.toString() + "/" +  month_limit.toString()+ " " + window.opener.top.mlang["ATM044"];
+	            //amount_used_text = month_used_bothDirection.toString() + "/" +  month_limit.toString() + "Mbytes";
+	        }
+	        
+	        $("[name=amount_used_text]").html(amount_used_text);
+		}
+        else //timeControl
+        {
+        	var time_used_text;
+			time_used_text = $("[name=thismonth_HourUsed]").val() + "/" + $("[name=thismonth_HourLimited]").val() + " " + window.opener.top.mlang["ATM043"];
+			$("[name=amount_used_text]").html(time_used_text);
+        }
+    }
+    /* init function Section --------> End */
+    
+
+    function WinCloseCheck()
+    {
+        var trafficMeterEnable = $('[name=trafficMeterEnable]').val();
+    
+        if (trafficMeterEnable == "false")
+        {
+            top.window.opener=null;
+            top.window.close();
+        }
+    }
+
+    function re_fetchData()
+    {
+        //post a data to cgi to refresh the traffic meter statistics info
+        var json_data = '{ "function": "tmUpdateStatistic", "data": { "" : ""} }';
+        $.postData('cgi-bin/rex_cgi', json_data, 'after_postData_handler');
+        //fetchData('target', 'trafficStatus', '', 'post_fillout_init');
+    }
+
+    function after_postData_handler(json)
+    {
+        //handle error
+        if (json.code == -1) {
+            alert("ajax error : " + json.message);
+            return false;
+        }
+        else if (json.status != "success") {
+            alert("cgi response error!");
+            document.location.reload();
+            return false;
+        }
+        
+        //Read values from cms db and fillout to web elements for refresh statistics table info
+        fetchData('target', 'trafficStatus', '', '');
+		//document.location.reload();
+        init_amount_used_bar();
+        init_amount_used_text();
+    }
+
+
+	
+    function set_refresh_interval()
+    {
+        g_refresh_interval = parseInt($('[name=interval]').val(), 10);
+        
+        if (g_intervalId != -1) {
+            clearInterval(g_intervalId);
+        }
+        
+        g_intervalId = setInterval("re_fetchData()", g_refresh_interval * 1000);
+    }
+    
+    function loop_refresh_page()
+    {
+        if (g_intervalId != -1) {
+            clearInterval(g_intervalId);
+        }
+        
+        g_intervalId = setInterval("re_fetchData()", g_refresh_interval * 1000);
+    }
+    
+    function openWindowLimitPage()
+    {
+        var limitReachStatus = $('[name=limitReachStatus]').val();
+        var winoptions = "width=650,height=160,status=yes,resizable=yes";
+        var winVar;
+        
+        if (limitReachStatus == "reach_limit") {
+            winVar = window.open('tm_limited.html', 'tm_limited', winoptions);
+            winVar.focus();
+        }
+        else if (limitReachStatus == "approach_limit") {
+            winVar = window.open('tm_warning.html', 'tm_warning', winoptions);
+            winVar.focus();
+        }
+    }
+
+
+    $.postData = function(url, data , callback, time) {
+        //post data
+        $.ajax({
+            url: url + "?csrftoken_sub=" + CSRF_TOKEN_SUB,
+            type: "POST",
+            data: data,
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(json) {
+                (callback != null) ? eval(callback + "(json)") : defaultHandler(json);
+            },
+            error: function(xhr) {
+                var json = {
+                    "code": "-1",
+                    "message": xhr.status + " " + xhr.statusText,
+                };
+                (callback != null) ? eval(callback + "(json)") : defaultHandler(json);
+            },
+            timeout: time ? time : 0,
+        });
+    };
+
+
+	
+    
+  </script>
+
+
+</head>
+
+<body bgcolor="#ffffff" onload="WinCloseCheck();">
+    <form id="target"  name="formname">
+        <table border="0" id="traffic_status_table">
+            <tr>
+                <td colspan="7"><b mlang="ATM033">Traffic Status</b></td>
+            </tr>
+            <tr>
+                <td colspan="7">&nbsp;&nbsp;&nbsp;</td>
+            </tr>
+            <tr>
+                <td width="30"></td>
+                <td width="120" align="left" colspan="2"><span class="thead" mlang="PCVP_114">Counting Period</span></td>
+                <td width="30"></td>
+                <td width="120" align="left" colspan="2"><span class="thead" mlang="ATM036">Amount Used</span></td>
+                <td width="30"></td>
+            </tr>
+            <tr>
+                <td colspan="7">&nbsp;&nbsp;&nbsp;</td>
+            </tr>
+            <tr>
+                <td width="30"></td>
+                <td width="35">
+                    <table border="1" bordercolor=#000000 width="100%" id="table8" style="border-collapse: collapse">
+                        <tr>
+                            <td id="count_period_white_bar"style="border-left-style:solid; border-left-width:1px; border-right-style:solid; border-right-width:1px; border-top-style:solid; border-top-width:1px; border-bottom-style:none; border-bottom-width:medium" height=""></td>
+                        </tr>
+                        <tr>
+                            <td id="count_period_blue_bar" bgcolor="#0000FF" style="border-left-style:solid; border-left-width:1px; border-right-style:solid; border-right-width:1px; border-top-style:none; border-top-width:medium; border-bottom-style:solid; border-bottom-width:1px" height=""></td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="85"><span name="counting_period_text">4/30 days</span></td>
+                <td width="30"></td>
+                <td width="35">
+                    <table border="1" bordercolor=#000000 width="100%" id="table9" style="border-collapse: collapse">
+                        <tr>
+                            <td id="amount_left_bar" style="border-left-style:solid; border-left-width:1px; border-right-style:solid; border-right-width:1px; border-top-style:solid; border-top-width:1px; border-bottom-style:none; border-bottom-width:medium" height=""></td>
+                        </tr>
+                        <tr>
+                            <td id="amount_used_bar" style="border-left-style:solid; border-left-width:1px; border-right-style:solid; border-right-width:1px; border-top-style:none; border-top-width:medium; border-bottom-style:solid; border-bottom-width:1px" height=""></td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="85"><span name="amount_used_text">103/1000 Mbytes</span></td>
+                <td width="30"></td>
+            </tr>
+        </table>
+        <table border=0 width=400 height=34 valign=top>
+            <tr>
+                <td colspan="7">&nbsp;&nbsp;&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="7">&nbsp;&nbsp;&nbsp;</td>
+            </tr>
+            <tr>
+                <td>
+                    <b mlang="MRS033">Poll Interval</b><b>:</b>
+                    <input class="input1"  type="text" name="interval" id="interval" size="4" maxlength="4" value="10"> 
+                    <span mlang="MRS044">(secs)</span>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;
+                    <button type="button" value="Set Interval" name="SetIntvl" id="set_intvl" class="button-sty1" onClick="set_refresh_interval();" mlang="MRS036">Set Interval</button>
+                </td>
+            </tr>
+        </table>
+        <!--The disabled inputs values is gotten from fetchData(), and the input name will not be included into post parameters -->
+        <input type="hidden" name="trafficMeterEnable" disabled>
+        <input type="hidden" name="thismonth_total" disabled>
+        <input type="hidden" name="thismonth_download" disabled>
+        <input type="hidden" name="volMonthlyLimit" disabled>
+        <input type="hidden" name="volControlType" disabled>
+        <input type="hidden" name="passedDay" disabled>
+        <input type="hidden" name="periodDay" disabled>
+        <input type="hidden" name="limitReachStatus" disabled>
+        <input type="hidden" name="tm_type" disabled>      
+        <input type="hidden" name="thismonth_HourLimited" disabled>
+        <input type="hidden" name="thismonth_HourUsed" disabled>        
+    </form>
+</html>

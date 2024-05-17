@@ -1,0 +1,29 @@
+#! /bin/sh
+
+opmode=$(config get i_opmode)
+if [ "$opmode" = "apmode" -o "$opmode" = "brmode" ]; then
+	return
+fi
+
+bd_running=$(ps | grep bdexchanged | grep -v grep)
+
+case $1 in
+        "start")
+                iptables -w -N BD_FILTER
+		#BD_FILTER chain should insert after TCPMSS chain
+		TCPMASS=`iptables -w -nvL FORWARD | grep -n "TCPMSS"  | cut -d  ":"  -f  1`
+		if [ "x$TCPMASS" = "x" ];then
+                	iptables -w -I FORWARD -j BD_FILTER
+		else
+			line=`expr $TCPMASS - 1`
+			iptables -w -I FORWARD $line -j BD_FILTER
+		fi
+                [ -n "$bd_running" ] && /opt/bitdefender/share/scripts/bd_init_fw.sh
+                ;;
+        "stop")
+                iptables -w -F BD_FILTER
+                iptables -w -X BD_FILTER
+                ;;
+        *)
+        ;;
+esac

@@ -1,0 +1,36 @@
+#!/bin/sh
+START=96
+
+start() {
+    /usr/bin/dal_ash &
+}
+
+stop() {
+    killall dal_ash
+    kill -17 1
+    rm /tmp/dal_ash.log
+}
+
+boot() {
+    start
+}
+
+restart() {
+    stop
+    start
+}
+
+case $1 in
+	"start" )
+		start
+		;;
+	"stop" )
+		stop
+		;;
+	"boot" )
+		boot
+		;;
+	"restart" )
+		restart
+		;;
+esac

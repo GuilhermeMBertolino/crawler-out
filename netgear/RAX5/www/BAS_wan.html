@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/validations.js"></script>
+  <script src="js/internet.js"></script>
+
+  <script language="javascript" type="text/javascript">
+    CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+    $(document).ready(function()
+    {
+        fetchData('target', 'internet_basic', '', 'post_fillout_init');
+    });
+    
+    /* post_fillout_init() function Section --------> Begin */
+    function post_fillout_init() 
+    {
+        /* jump to wan mode page */
+        init_wanMode();
+    }
+    
+    function init_wanMode()
+    {
+        var wanMode = $('[name=wanMode]').val();
+        
+        if(wanMode == "Static" || wanMode == "DHCP") {
+            window.location.href = "BAS_ether.html";
+        }
+        else if (wanMode == "PPPoE") {
+            window.location.href = "BAS_pppoe.html";
+        }
+        else if (wanMode == "L2TP") {
+            window.location.href = "BAS_l2tp.html";
+        }
+        else if (wanMode == "PPTP") {
+            window.location.href = "BAS_pptp.html";
+        }
+    }
+    
+  </script>
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('BAS_ether','');" class="page-body" onResize="window.top.change_size($(this));">
+    <div class="page-header" style="position: relative;" mlang="genie_68">Internet Setup</div>
+    <div class="form-group" style=height:365px;overflow:auto;scrolling:auto">
+        <form id="target"  name="formname" >
+           <input name="wanMode" type=hidden>
+        </form>
+    </div><!-- form-group end -->
+
+   <? commonCfg.genHelpSection() ?>
+</html>

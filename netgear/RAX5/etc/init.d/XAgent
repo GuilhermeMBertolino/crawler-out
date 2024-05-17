@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+START=90
+
+# Add $2 to value of symbol $1 as csv 
+csv_add() {
+ local SEP=""
+ local VAL=$(d2 -s "${1}")
+ for item in ${VAL//,/ }; do
+    [ "${item}" = "${2}" ] && return 0
+    SEP="," 
+ done
+ d2 -c "${1}" "${VAL}${SEP}${2}"
+}
+
+upgrade_cfg() {
+
+    XAGENT_ID=$(d2 -s xagentcfg[0].x_agent_id)
+    if [ "${XAGENT_ID}empty" == "empty" ]; then
+
+        d2 -c xagentcfg[0].x_agent_id         "$(nvram get x_agent_id)"
+        d2 -c xagentcfg[0].x_agent_claim_code "$(nvram get x_agent_claim_code)"
+        d2 -c xagentcfg[0].x_agent_registered "$(nvram get x_agent_registered)"
+        d2 -c xagentcfg[0].x_agent_claimed    "$(nvram get x_agent_claimed)"
+
+        nvram unset x_agent_id
+        nvram unset x_agent_claim_code
+        nvram unset x_agent_registered
+        nvram unset x_agent_claimed
+        nvram commit
+    fi
+}
+
+start() {
+    #Set x_force_connection, So xAgent can reach xCloud
+    d2 -c xagentcfg[0].x_force_connection 1
+
+    # add status handler, if needed
+    csv_add xagentcfg[0].x_handler_event_sink /usr/bin/evsinkd2
+
+    # Pega: Modify genie soap port to 5000
+    d2 -c xagentcfg[0].genie_soap_port 5000
+
+    SN=`d2 -s general.FSN`
+    MODEL=`d2 -s general.DeviceModel`
+    #Pega: Sync RAX30 xagent parameters
+    /opt/xagent/xagent --log_debug --log_file /tmp/xagent.log --log_file_cnt 2 --log_file_size 512K -w -d --ca_file /opt/xagent/certs/ca-bundle-mega.crt \
+            --connectivity_log_file /tmp/xagent_connection_events.log --hardware_id ${SN} --model_id ${MODEL} --agent_keepalive 20,3,20
+    
+    pidof xcenvsw.sh || (cd /etc/xagent; ./xcenvsw.sh) &  
+}
+
+stop() {
+    killall xagent
+    d2 -c xagentcfg.x_agent_connected 0
+    d2 -c xagentcfg.x_agent_pid 0
+}
+
+boot() {
+    [ "`cat /tmp/orbi_type`" = "Satellite" ] && return
+    upgrade_cfg
+    start
+}
+
+restart() {
+    stop
+    start
+}

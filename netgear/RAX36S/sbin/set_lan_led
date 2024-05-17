@@ -1,0 +1,74 @@
+#! /bin/sh
+
+module_name=$(cat /module_name)
+if [ "${module_name}" = "RAX10" ] || [ "${module_name}" = "R6700AXv2" ] || [ "${module_name}" = "RAX10v2" ] || [ "${module_name}" = "RAX36S" ] ; then
+	return
+fi
+
+port_num="0 1 2 3"
+option_blink(){
+ethswctl -c pmdioaccess -x 0x0018 -l 2 -d 0x01ff
+ethswctl -c pmdioaccess -x 0x001a -l 2 -d 0x01ff
+}
+
+option_on(){
+	option_blink
+}
+
+option_off(){
+ethswctl -c pmdioaccess -x 0x0018 -l 2 -d 0
+ethswctl -c pmdioaccess -x 0x001a -l 2 -d 0
+}
+
+amber_on(){
+option_blink
+ethswctl -c pmdioaccess -x 0x0012 -l 2 -d 0x0381
+ethswctl -c pmdioaccess -x 0x0058 -l 1 -d 0x47
+ethswctl -c pmdioaccess -x 0x0059 -l 1 -d 0x47
+ethswctl -c pmdioaccess -x 0x005a -l 1 -d 0x47
+ethswctl -c pmdioaccess -x 0x005b -l 1 -d 0x47
+}
+
+amber_off(){
+	option_off
+}
+
+white_on(){
+option_blink
+ethswctl -c pmdioaccess -x 0x0012 -l 2 -d 0x0381
+ethswctl -c pmdioaccess -x 0x0058 -l 1 -d 0x4b
+ethswctl -c pmdioaccess -x 0x0059 -l 1 -d 0x4b
+ethswctl -c pmdioaccess -x 0x005a -l 1 -d 0x4b
+ethswctl -c pmdioaccess -x 0x005b -l 1 -d 0x4b
+}
+
+white_off(){
+	option_off
+}
+
+case "$1" in 
+	option_blink)
+		option_blink
+		;;
+	option_on)
+		option_on
+		;;
+	option_off)
+		option_off
+		;;
+	amber_on)
+		amber_on
+		;;
+	amber_off)
+		amber_off
+		;;
+	white_on)
+		white_on
+		;;
+	white_off)
+		white_off
+		;;
+	*)
+		echo "Parameters Error!\n" > /dev/console
+		;;
+esac

@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="tools"></adv-child-menu>   
+  <div class="advance-box">
+    <x-help :text="lang_t('schedule.help')"></x-help>
+    <br><br>
+	<div class="fun-box">
+	  <table class="table">
+	  	<tbody>
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.mode') }}</td>
+		  <td>
+			<x-radio v-model="mode" :name="modeName" pos="col"></x-radio>
+		  </td>
+		</tr>
+	  	</tbody>
+	  	<tbody class="spec" v-show="mode == '1'">
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.week') }}</td>
+		  <td>
+			<select  v-model="week">
+				<option value="255">{{ lang_t('schedule.every') }}</option>
+				<option value="2">{{ lang_t('schedule.mon') }}</option>
+				<option value="4">{{ lang_t('schedule.tue') }}</option>
+				<option value="8">{{ lang_t('schedule.wed') }}</option>
+				<option value="16">{{ lang_t('schedule.thu') }}</option>
+				<option value="32">{{ lang_t('schedule.fri') }}</option>
+				<option value="64">{{ lang_t('schedule.sat') }}</option>
+				<option value="128">{{ lang_t('schedule.sun') }}</option>
+			</select>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.start_time') }}</td>
+		  <td>
+			<select v-model="hour" class="time-select">
+				<option v-for="(i,v) in 24" :key="i" :value="v">{{ stringConver(v) }}</option>
+			</select>
+			 : 
+			<select v-model="minute" class="time-select">
+			  <option v-for="(i,v) in 60" :key="i" :value="v">{{ stringConver(v) }}</option>
+			</select>
+		  </td>
+		</tr>
+		</tbody>
+		<tbody class="countdown" v-show="mode == '2'">
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.countdown') }}</td>
+		  <td>
+			<input type="text" v-model="recHour" v-verify="formRules" data-name="recHour" maxlength="3">
+			&nbsp;&nbsp;
+			<small>({{ lang_t('schedule.range') }}:1~240{{ lang_t('schedule.hour') }})</small>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.uptime') }}</td>
+		  <td>{{ sysTime[0] }}&nbsp;{{ lang_t('schedule.day_min') }},&nbsp;{{ sysTime[1] }}&nbsp;{{ lang_t('schedule.hour') }},&nbsp;{{ sysTime[2] }}&nbsp;{{ lang_t('schedule.min') }},&nbsp;{{ sysTime[3] }}&nbsp;{{ lang_t('schedule.sec') }}</td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('schedule.rebootsch_countdown') }}</td>
+		  <td>{{ countDownTime[0] }}&nbsp;{{ lang_t('schedule.day_min') }},&nbsp;{{ countDownTime[1] }}&nbsp;{{ lang_t('schedule.hour') }},&nbsp;{{ countDownTime[2] }}&nbsp;{{ lang_t('schedule.min') }},&nbsp;{{ countDownTime[3] }}&nbsp;{{ lang_t('schedule.sec') }}</td>
+		</tr>
+		</tbody>
+	  	<tbody class="button">
+		<tr><td colspan="2"></td></tr>
+		<tr>
+		  <td class="fun-left"></td>
+		  <td>
+			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  </td>
+		</tr>
+	  	</tbody> 
+	  </table>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,ntpEnabled:"",progress:0,mode:"0",week:"",hour:"",minute:"",recHour:"",countDownTime:[],sysTime:[]}},computed:{modeName:function(){return["schedule.disable","schedule.spec_time","schedule.countdown"]},formRules:function(){var o=this;return{recHour:function(e,t){var n=cs.num_range(e,1,240);1==cs.num(e)?t(o.lang_t("schedule.countdown")+o.lang_t("wifi.msg7")):0==n?t(o.lang_t("schedule.msg1")):1==n?t(o.lang_t("schedule.msg2")):2==n?t(o.lang_t("schedule.msg3")):t()}}}},created:function(){var t=this;uiPost.getScheduleCfg({},function(e){t.mode=e.mode,t.week=e.week,t.hour=e.hour,t.minute=e.minute,t.recHour=e.recHour,t.sysTime=e.sysTime.split(";"),t.countDownTime=e.countDownTime.split(";"),t.ntpEnabled=e.ntpEnabled})},methods:{stringConver:function(e){return e<10?"0"+e:e},handleSubmit:function(){var t=this,n=120,o={};if("0"==t.mode)o.mode=t.mode,o.hour=String(t.hour),o.minute=String(t.minute),o.week=t.week,o.recHour=t.recHour,uiPost.setScheduleCfg(o,function(){location.href=location.href});else if("1"==t.mode){if(0==t.ntpEnabled)return Cstool.Msg({content:this.lang_t("schedule.msg5")}),!1;o.mode=t.mode,o.hour=String(t.hour),o.minute=String(t.minute),o.week=t.week,o.recHour=t.recHour,uiPost.setScheduleCfg(o,function(e){var t=1;e&&(e.wtime&&"0"!=e.wtime&&(t=e.wtime),Cstool.applyLoad(t,function(){location.href=location.href}))})}else if("2"==t.mode){var i=60*(60*(24*parseInt(t.sysTime[0])+parseInt(t.sysTime[1]))+parseInt(t.sysTime[2]))+parseInt(t.sysTime[3]),u=3600*parseInt(t.recHour),r=location.host;Cstool.Verify(this.formRules,function(e){e&&(u<=i?Cstool.Msg({content:this.lang_t("schedule.msg4"),type:"confirm",ok:function(){o.mode=t.mode,o.hour=String(t.hour),o.minute=String(t.minute),o.week=t.week,o.recHour=t.recHour,uiPost.setScheduleCfg(o,function(e){null!=e.wtime&&""!=e.wtime&&(n=e.wtime),Cstool.Count(n,"js",function(){location.href="http://"+r+"/login.html"})})}}):(o.mode=t.mode,o.hour=String(t.hour),o.minute=String(t.minute),o.week=t.week,o.recHour=t.recHour,uiPost.setScheduleCfg(o,function(e){var t=1;e&&(e.wtime&&"0"!=e.wtime&&(t=e.wtime),Cstool.applyLoad(t,function(){location.href=location.href}))})))})}}}}</script><script src="/static/js/main.js"></script></body></html>

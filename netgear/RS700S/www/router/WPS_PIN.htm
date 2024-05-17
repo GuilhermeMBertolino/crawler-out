@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel=Stylesheet href=form.css>
+<%16%>
+
+<script language="javascript" type="text/javascript">
+<!--
+
+var isNextButton=0;
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+      	    if(isNextButton){
+                buttonFilter();
+            }
+        });
+    
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+function getPressEnt(event)
+{
+    if(event.keyCode == 13)
+        return check_pin();
+    else
+        return true;
+}
+
+
+
+
+
+function check_pin()
+{
+	var cf = document.forms[0];
+	var lpin = cf.PIN.value;
+	var accum = 0;
+	//Foxconn added start, Wins, 06/22/2011, @WPS v2.0
+	var wps_version = "<%47%>";
+	var tmplpin;
+	//Foxconn added end, Wins, 06/22/2011, @WPS v2.0
+
+	if ((wps_version == "2.0") && (lpin.length == 9))
+	{
+		if (lpin.charAt(4) == '-')
+		{
+			//WPS v2.0 Format: (nnnn-nnnn)
+			tmplpin = cf.PIN.value.split('-');
+			cf.PIN.value = tmplpin[0] + tmplpin[1];
+			lpin = cf.PIN.value;
+		}
+		else
+		if (lpin.charAt(4) == ' ')
+		{
+			//WPS v2.0 Format: (nnnn nnnn)
+			tmplpin = cf.PIN.value.split(' ');
+			cf.PIN.value = tmplpin[0] + tmplpin[1];
+			lpin = cf.PIN.value;
+		}
+		else
+		{
+			alert("<%3197%>");
+			return false;
+		}
+	}
+	else
+	if (lpin.length != 4 && lpin.length != 8) {
+		alert("<%3197%>");
+		return false;
+	}
+	
+	if (parseInt(cf.PIN.value, 10) != cf.PIN.value) {
+		alert("<%3197%>");
+		return false;
+	}
+	
+	if (lpin.length == 8) {
+		lpin = parseFloat(cf.PIN.value);
+		accum += 3 * (parseInt(lpin / 10000000) % 10);
+		accum += 1 * (parseInt(lpin / 1000000) % 10);
+		accum += 3 * (parseInt(lpin / 100000) % 10);
+		accum += 1 * (parseInt(lpin / 10000) % 10);
+		accum += 3 * (parseInt(lpin / 1000) % 10);
+		accum += 1 * (parseInt(lpin / 100) % 10);
+		accum += 3 * (parseInt(lpin / 10) % 10);
+		accum += 1 * (parseInt(lpin / 1) % 10);
+
+		if (0 != (accum % 10)) {
+			alert("<%3198%>");
+			return false;
+		}
+	}
+
+	cf.Next.disabled = true;
+	cf.WPS_type[0].disabled = true;
+	cf.WPS_type[1].disabled = true;
+	//top.contents.location.href="MNU_menu_no_link.htm";
+	cf.submit();
+}
+//-->
+</script>
+<link rel="stylesheet" type="text/css" href="css/custom.css">
+</head>
+
+<body  class="page-body" onload="change_size(false);" style="margin:0px;background-color:#e5e5e5" onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+<div class=Section1>
+<form id="target"  method=post action="wps_pin.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+
+<img class="subtop-image" src="<%74%>">
+<div class="subhead2"><%1414%></div>
+<div class="pt-20"></div>
+<table  border=0    style="height:370px"  class="subhead2-table main_bas">
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:410px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+
+
+
+
+<tr></tr>
+<tr>
+
+<td colspan=3 class="pt-10"><b><%3199%>:</b></td>
+</tr>
+
+<tr>
+<td colspan="3">
+    <label class="checkbox-container">
+        <input id="wps_type" type="radio" name="WPS_type" value="Push Button" onClick="location.href='WPS.htm'"><%3193%>
+        <span class="radio-checkmark"></span>
+    </label>
+</td></tr>
+<tr>
+<td colspan="3">
+    <label class="checkbox-container">
+        <input id="pin_num" type="radio" name="WPS_type" value="PIN Number" checked><%3196%>
+        <span class="radio-checkmark"></span>
+    </label>
+</td></tr>
+<tr>
+<td colspan="3"><b><%3200%></b></td></tr>
+<TR>
+<TD class="pb-0"><b><%3201%>:</b></TD>
+<%3202%>
+<TD nowrap class="pt-0"><INPUT id="wps_pin" class="input1" TYPE="TEXT" NAME="PIN" SIZE="8" MAXLENGTH="9" VALUE="" align="left" onkeydown="return getPressEnt(event);"></TD>
+<%3203%>
+<TD nowrap><INPUT id="wps_pin2" TYPE="TEXT" NAME="PIN" SIZE="8" MAXLENGTH="8" VALUE="" align="left"></TD>
+<%3204%>
+<TD>
+<p class=MsoNormal>
+<button id="next" TYPE="submit" value="<%1900%>" NAME="Next" class="button-sty1" onclick="buttonClick(this,'<%1900%>');isNextButton=1;return check_pin();" ><%1900%></button>
+</p></TD>
+</TR>
+
+<tr><td colspan="3" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr></tr>
+
+</table></div></td></tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe"  src="WPS_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+
+
+</table>
+
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img id="WPS_PIN_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();">  <%208%>  </span>
+
+      </div>
+
+
+</form>
+</div>
+</div>
+</body>
+</html>

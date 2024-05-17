@@ -1,0 +1,31 @@
+#!/bin/ash
+
+case "$1" in
+
+	start)
+		if [ -z "$2" ] ; then
+            if [ -e "/usr/bin/syncdateNTP.sh" ] ; then
+                syncdateNTP.sh > /var/run/syncdateNTP_result &
+            else
+                syncdate.sh > /var/run/syncdateNTP_result &
+            fi
+		else
+            if [ -e "/usr/bin/syncdateNTP.sh" ] ; then
+                syncdateNTP.sh $2 > /var/run/syncdateNTP_result &
+            else
+                syncdate.sh $2 > /var/run/syncdateNTP_result &
+            fi
+		fi
+		;;	
+	
+	show)	
+		cat /var/run/syncdateNTP_result
+		;;
+	
+	*)
+		exit 1
+		;;
+esac
+
+exit 0
+

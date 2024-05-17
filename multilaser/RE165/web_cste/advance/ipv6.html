@@ -1,0 +1,421 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu :childType="globalConfig.ipv6MenuSupport?'ipv6':'network'"></adv-child-menu>   
+  <div class="advance-box">
+	<x-help :text="lang_t('ipv6.help')"></x-help>
+    <br><br>
+	<div class="fun-box">
+	  <table class="table">
+		<tr>
+		  <td class="btn-tab-m">
+			<a :class="[btn_tab ,active_wan]" @click="Ipv6Wan">WAN</a>
+			<a :class="[btn_tab ,active_lan]" @click="Ipv6Lan">LAN</a>
+			<a :class="[btn_tab ,active_rad]" @click="Ipv6Rad">Radvd</a>
+		  </td>
+		</tr> 
+	  </table> 
+      <br>
+      <table class="table">                   
+        <tbody v-show="ipv6_wan_show">  
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.state') }}</td>
+		  <td>
+		  	<x-switch v-model="wan_status" @change="change_status('ipv6wan')"></x-switch>
+		  </td>
+		</tr>
+	    </tbody>
+	    <tbody v-show="ipv6_wan_show&&wan_status">
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.connect_type') }}</td>
+		  <td>
+			<select v-model="connectionType">
+			  <option value="0">{{ lang_t('ipv6.dynamic_ip') }}</option>
+			  <option value="1">{{ lang_t('ipv6.static_ip') }}</option>
+			</select>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.link_type') }}</td>
+		  <td>
+			<select v-model="wanType">
+			  <option value="0">{{ lang_t('ipv6.pppoe') }}</option>
+			  <option value="1">{{ lang_t('ipv6.ethernet') }}</option>
+			</select>
+		  </td>
+		</tr>
+		<tr v-show="wanType==0">
+		  <td class="fun-left">{{ lang_t('ipv6.user') }}</td>
+		  <td>
+		    <input type="text" v-model="pppoeUser" v-verify="fromRule_wan" data-name="pppoeUser" :maxlength="32" />
+		  </td>
+		</tr>
+		<tr v-show="wanType==0">
+		  <td class="fun-left">{{ lang_t('ipv6.pass') }}</td>
+		  <td>
+		    <input type="text" v-model="pppoePass" v-verify="fromRule_wan" data-name="pppoePass" :type="pwdType" @focus="pwdFocus" @blur="pwdBlur" :maxlength="32" />
+		  </td>
+		</tr>
+		<tr v-show="connectionType==1">
+		  <td class="fun-left">{{ lang_t('ipv6.address_prefix') }}</td>
+		  <td>
+			<input class="text2" v-model="wan_ip_0" maxlength="4">:
+			<input class="text2" v-model="wan_ip_1" maxlength="4">:
+			<input class="text2" v-model="wan_ip_2" maxlength="4">:
+			<input class="text2" v-model="wan_ip_3" maxlength="4">:
+			<input class="text2" v-model="wan_ip_4" maxlength="4">:
+			<input class="text2" v-model="wan_ip_5" maxlength="4">:
+			<input class="text2" v-model="wan_ip_6" maxlength="4">:
+			<input class="text2" v-model="wan_ip_7" maxlength="4">/
+			<input class="text2" v-model="prefix_len_ip" maxlength="3">
+		  </td>
+		</tr>
+		<tr v-show="connectionType==1">
+		  <td class="fun-left">{{ lang_t('ipv6.gateway') }}</td>
+		  <td>
+			<input class="text2" v-model="wan_gw_0" maxlength="4">:
+			<input class="text2" v-model="wan_gw_1" maxlength="4">:
+			<input class="text2" v-model="wan_gw_2" maxlength="4">:
+			<input class="text2" v-model="wan_gw_3" maxlength="4">:
+			<input class="text2" v-model="wan_gw_4" maxlength="4">:
+			<input class="text2" v-model="wan_gw_5" maxlength="4">:
+			<input class="text2" v-model="wan_gw_6" maxlength="4">:
+			<input class="text2" v-model="wan_gw_7" maxlength="4">/
+			<input class="text2" v-model="prefix_len_gw" maxlength="4">
+		  </td>
+		</tr>
+		<tr v-show="connectionType==0">
+		  <td class="fun-left">DUID</td>
+		  <td>
+		  	{{wan_duid}}
+		  </td>
+		</tr>
+		<tr v-show="connectionType==0">
+		  <td class="fun-left"></td>
+		  <td>
+		  	<x-radio :name="dhcpModeName" v-model="dhcpMode" ></x-radio>
+		  </td>
+	  	</tr>
+		<tr v-show="connectionType==0">
+		  <td class="fun-left">{{ lang_t('ipv6.pd_state') }}</td>
+		  <td>
+			<x-checkbox v-model="pd_enable"></x-checkbox>
+		  </td>
+		</tr>
+		<tr v-show="connectionType==0">
+		  <td class="fun-left">{{ lang_t('ipv6.pd_rapid') }}</td>
+		  <td>
+		  	<x-checkbox v-model="pd_rapid"></x-checkbox>
+		  </td>
+		</tr>
+		<tr v-show="connectionType==0">
+		  <td class="fun-left"></td>
+		  <td>
+		  	<x-radio :name="dnsModeName" v-model="dnsMode" ></x-radio>
+		  </td>
+		</tr>
+		<tr v-show="connectionType==1||(connectionType==0&&dnsMode==1)">
+		  <td class="fun-left">{{ lang_t('ipv6.dns_server') }}/{{ lang_t('ipv6.prefix') }}</td>
+		  <td>
+			<input class="text2" v-model="wan_dns1_0" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_1" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_2" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_3" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_4" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_5" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_6" maxlength="4">:
+			<input class="text2" v-model="wan_dns1_7" maxlength="4">/
+			<input class="text2" v-model="prefix_len_dns1" maxlength="3">
+		  </td>
+		</tr>
+		<tr v-show="softType != 'MTK'">
+		  <td class="fun-left">{{ lang_t('ipv6.mld_proxy_state') }}</td>
+		  <td>
+		  	<x-checkbox v-model="mld_proxy_state"></x-checkbox>
+		  </td>
+		</tr>
+		<tr v-show="connectionType ==0 && softType != 'MTK'">
+			<td class="fun-left">{{ lang_t('ipv6.napt66_state') }}</td>
+			<td>
+				<x-checkbox v-model="napt66_enable"></x-checkbox>
+			</td>
+		</tr>
+	    </tbody>
+	    <tbody v-show="ipv6_lan_show">
+		<tr v-if="softType == 'MTK'">
+		  <td class="fun-left">{{ lang_t('ipv6.dhcpv6_server') }}</td>
+		  <td>
+			<x-switch v-model="dhcpserver"></x-switch>
+		  </td>
+		</tr>
+		<tr v-show="softType != 'MTK' || (softType == 'MTK' && dhcpserver)">
+		  <td class="fun-left">{{ lang_t('ipv6.ip') }}</td>
+		  <td>
+			<input class="text2" v-model="lan_ip_0" maxlength="4">:
+			<input class="text2" v-model="lan_ip_1" maxlength="4">:
+			<input class="text2" v-model="lan_ip_2" maxlength="4">:
+			<input class="text2" v-model="lan_ip_3" maxlength="4">:
+			<input class="text2" v-model="lan_ip_4" maxlength="4">:
+			<input class="text2" v-model="lan_ip_5" maxlength="4">:
+			<input class="text2" v-model="lan_ip_6" maxlength="4">:
+			<input class="text2" v-model="lan_ip_7" maxlength="4">/
+			<input class="text2" v-model="prefix_len_lan" maxlength="3">
+		  </td>
+		</tr>
+	    </tbody>
+	    <tbody v-show="ipv6_lan_show && softType!='MTK'">  
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.dhcpv6_server') }}</td>
+		  <td>
+			<x-switch v-model="dhcpserver"></x-switch>
+		  </td>
+		</tr>
+	    </tbody>
+	    <tbody v-show="ipv6_lan_show && dhcpserver && softType!='MTK'">  
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.dns_server') }}</td>
+		  <td>
+			<input type="text" v-model="dnsAddr" v-verify="fromRule_lan" data-name="dnsAddr" maxlength="48">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.interface') }}</td>
+		  <td>
+		   {{potrName}}
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.start_ip') }}</td>
+		  <td>
+			<input type="text"  v-model="addrPoolStart" v-verify="fromRule_lan" data-name="addrPoolStart" maxlength="48">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.end_ip') }}</td>
+		  <td>
+			<input type="text" v-model="addrPoolEnd" v-verify="fromRule_lan" data-name="addrPoolEnd" maxlength="48">
+		  </td>
+		</tr>
+	    </tbody>  
+	    <tbody v-show="ipv6_rad_show">  
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.radvd_state') }}</td>
+		  <td>
+		  	<x-switch v-model="rad_status" @change="change_status('radvd')"></x-switch>
+		  </td>
+		</tr>
+	    </tbody> 
+	    <tbody v-if="ipv6_rad_show && rad_status">
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.radvdInterfaceName') }}</td>
+		  <td>
+			<input type="text" v-model="radvdinterfacename" maxlength="15">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.maxRtrAdvInterval') }}</td>
+		  <td>
+			<input type="text" v-model="maxRtrAdvInterval" maxlength="15">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.minRtrAdvInterval') }}</td>
+		  <td>
+			<input type="text" v-model="minRtrAdvInterval" maxlength="15">
+		  </td>
+		</tr>
+		<tr v-show="softType != 'MTK'">
+		  <td class="fun-left">{{ lang_t('ipv6.minDelayBetweenRAs') }}</td>
+		  <td>
+			<input type="text" v-model="minDelayBetweenRAs" maxlength="15">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advManagedFlag') }}</td>
+		  <td>
+		  	<x-checkbox v-model="advManagedFlag"></x-checkbox>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advOtherConfigFlag') }}</td>
+		  <td>
+		  	<x-checkbox v-model="advOtherConfigFlag"></x-checkbox>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advReachableTime') }}</td>
+		  <td>
+			<input type="text" v-model="advReachableTime" maxlength="15">
+		  </td>
+	  	</tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advRetransTimer') }}</td>
+		  <td>
+		  	<input type="text" v-model="advRetransTimer" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advCurHopLimit') }}</td>
+		  <td>
+		  	<input type="text" v-model="advCurHopLimit" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advDefaultLifetime') }}</td>
+		  <td>
+		    <input type="text" v-model="advDefaultLifetime" maxlength="15">
+		  </td>
+	  	</tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advDefaultPreference') }}</td>
+		  <td>
+		  	<select v-model="advDefaultPreference">
+			  <option value="0">{{ lang_t('ipv6.high') }}</option>
+			  <option value="1">{{ lang_t('ipv6.medium') }}</option>
+			  <option value="2">{{ lang_t('ipv6.low') }}</option>
+		  	</select>
+		  </td>
+	  	</tr>
+	  	<tr>
+	      <td class="fun-left">{{ lang_t('ipv6.advSourceLLAddress') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advSourceLLAddress"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.unicastOnly') }}</td>
+	      <td>
+	      	<x-checkbox v-model="unicastOnly"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.prefix1Enabled') }}</td>
+		  <td>
+		  	<x-checkbox v-model="prefixEnabled1"></x-checkbox>
+		  </td>
+	  	</tr>
+	  	</tbody> 
+	  	<tbody v-show="ipv6_rad_show && prefixEnabled1 && rad_status">
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.address_prefix') }}</td>
+		  <td>
+		  	<input class="text2" v-model="radvdprefix0_0" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_1" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_2" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_3" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_4" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_5" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_6" maxlength="4">:
+		    <input class="text2" v-model="radvdprefix0_7" maxlength="4">/
+		    <input class="text2" v-model="radvdprefix0_len" maxlength="3">
+		  </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.advOnLinkFlag') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advOnLinkFlag0"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.advAutonomousFlag') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advAutonomousFlag0"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advValidLifetime') }}</td>
+		  <td>
+		    <input type="text" v-model="advValidLifetime_0" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advPreferredLifetime') }}</td>
+		  <td>
+		  	<input type="text" v-model="advPreferredLifetime_0" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.advAutonomousFlag') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advRouterAddr0"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">if6to4</td>
+		  <td>
+		  	<input type="text" v-model="if6to4_0" maxlength="15">
+		  </td>
+	  	</tr> 
+		</tbody>
+		<tbody v-show="ipv6_rad_show && ipv6_rad_show&&rad_status && rad_status">
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.prefix2Enabled') }}</td>
+		  <td>
+		  	<x-checkbox v-model="prefixEnabled2"></x-checkbox>
+		  </td>
+		</tr>
+		</tbody>
+		<tbody v-show="ipv6_rad_show && prefixEnabled2 && rad_status">
+		<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.address_prefix') }}</td>
+		  <td>
+		    <input class="text2" v-model="radvdprefix1_0" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_1" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_2" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_3" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_4" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_5" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_6" maxlength="4">:
+		  	<input class="text2" v-model="radvdprefix1_7" maxlength="4">/
+		  	<input class="text2" v-model="radvdprefix1_len" maxlength="3">
+		  </td>
+	  	</tr>
+	  	<tr>
+	     <td class="fun-left">{{ lang_t('ipv6.advOnLinkFlag') }}</td>
+	   	 <td>
+	   	 	<x-checkbox v-model="advOnLinkFlag1"></x-checkbox>
+	     </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.advAutonomousFlag') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advAutonomousFlag1"></x-checkbox>
+	   	  </td>
+	  	</tr>
+	    <tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advValidLifetime') }}</td>
+		  <td>
+		    <input type="text" v-model="advValidLifetime_1" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">{{ lang_t('ipv6.advPreferredLifetime') }}</td>
+		  <td>
+		    <input type="text" v-model="advPreferredLifetime_1" maxlength="15">
+		  </td>
+	  	</tr>
+	  	<tr>
+	   	  <td class="fun-left">{{ lang_t('ipv6.advAutonomousFlag') }}</td>
+	   	  <td>
+	   	  	<x-checkbox v-model="advRouterAddr1"></x-checkbox>
+	      </td>
+	  	</tr>
+	  	<tr>
+		  <td class="fun-left">if6to4</td>
+		  <td>
+		    <input type="text" v-model="if6to4_1" maxlength="15">
+		  </td>
+	  	</tr> 
+		</tbody>
+		<tbody>
+		<tr><td colspan="2"></td></tr>
+		<tr>
+		  <td class="fun-left"></td>
+		  <td>
+			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  </td>
+	    </tr>
+		</tbody>
+	  </table>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,ipv6_wan_show:!0,ipv6_lan_show:!1,ipv6_rad_show:!1,active_wan:"btn-tab-active",active_lan:"",active_rad:"",btn_tab:"btn-tab",pwdType:"password",softType:"",wan_status:!1,InitialStatusVal:!1,connectionType:"0",wanType:"1",wan_ip_0:"3333",wan_ip_1:"3333",wan_ip_2:"3333",wan_ip_3:"3333",wan_ip_4:"3333",wan_ip_5:"3333",wan_ip_6:"3333",wan_ip_7:"3333",prefix_len_ip:"22",wan_gw_0:"5555",wan_gw_1:"6666",wan_gw_2:"8888",wan_gw_3:"9999",wan_gw_4:"2222",wan_gw_5:"1111",wan_gw_6:"4444",wan_gw_7:"3333",prefix_len_gw:"16",wan_dns1_0:"5555",wan_dns1_1:"6666",wan_dns1_2:"8888",wan_dns1_3:"9999",wan_dns1_4:"2222",wan_dns1_5:"1111",wan_dns1_6:"4444",wan_dns1_7:"3333",prefix_len_dns1:"88",pppoeUser:"",pppoePass:"",pppoeDnsMode:"1",dhcpMode:"0",dnsMode:"0",wan_duid:"",pd_enable:!1,pd_rapid:!1,mld_proxy_state:!1,napt66_enable:!1,dhcpserver:!0,lan_ip_0:"3333",lan_ip_1:"3333",lan_ip_2:"3333",lan_ip_3:"3333",lan_ip_4:"3333",lan_ip_5:"3333",lan_ip_6:"3333",lan_ip_7:"3333",prefix_len_lan:"88",potrName:"br0",dnsAddr:"2001:db8::35",addrPoolStart:"2001:db8:1:2::1000",addrPoolEnd:"2001:db8:1:2::2000",rad_status:!1,radvdinterfacename:"br0",maxRtrAdvInterval:"6",minRtrAdvInterval:"3",minDelayBetweenRAs:"3",advManagedFlag:!1,advOtherConfigFlag:!1,advReachableTime:"0",advRetransTimer:"0",advCurHopLimit:"64",advDefaultLifetime:"180",advDefaultPreference:"2",advSourceLLAddress:!1,unicastOnly:!1,prefixEnabled1:!1,prefixEnabled2:!1,radvdprefix0_0:"",radvdprefix0_1:"",radvdprefix0_2:"",radvdprefix0_3:"",radvdprefix0_4:"",radvdprefix0_5:"",radvdprefix0_6:"",radvdprefix0_7:"",radvdprefix0_len:"",advOnLinkFlag0:!1,advAutonomousFlag0:!1,advValidLifetime_0:"3333",advPreferredLifetime_0:"3333",advRouterAddr0:!1,if6to4_0:"",radvdprefix1_0:"",radvdprefix1_1:"",radvdprefix1_2:"",radvdprefix1_3:"",radvdprefix1_4:"",radvdprefix1_5:"",radvdprefix1_6:"",radvdprefix1_7:"",radvdprefix1_len:"",advOnLinkFlag1:!1,advAutonomousFlag1:!1,advValidLifetime_1:"3333",advPreferredLifetime_1:"3333",advRouterAddr1:!1,if6to4_1:"3333"}},computed:{dnsModeName:function(){return["ipv6.dns_type1","ipv6.dns_type2"]},dhcpModeName:function(){return["ipv6.stateless","ipv6.stateful"]},fromRule_wan:function(){var e=this;return{pppoeUser:function(a,n){0==a.length?n(e.lang_t("ipv6.user")+e.lang_t("ipv6.msg1")):n()},pppoePass:function(a,n){0==a.length?n(e.lang_t("ipv6.pass")+e.lang_t("ipv6.msg1")):n()}}},fromRule_lan:function(){var e=this;return{dnsAddr:function(a,n){0==cs.isIpv6(a)?n(e.lang_t("ipv6.dns_server")+e.lang_t("ipv6.msg2")):n()},addrPoolStart:function(a,n){0==cs.isIpv6(a)?n(e.lang_t("ipv6.start_ip")+e.lang_t("ipv6.msg2")):n()},addrPoolEnd:function(a,n){0==cs.isIpv6(a)?n(e.lang_t("ipv6.end_ip")+e.lang_t("ipv6.msg2")):n()}}}},mounted:function(){this.getIpv6_Wan(),this.getIpv6_Lan(),this.getIpv6_Radvd()},methods:{getIpv6_Wan:function(){var n=this;uiPost.getIpv6WanCfg(function(a){n.softType=a.softType,n.wan_status="1"==a.ipv6WanEnabled,n.connectionType=a.ipv6Origin,n.wanType=a.ipv6LinkType,n.wan_duid=a.wan_duid,n.wan_ip_0=a.wan_ipv6Addr_0,n.wan_ip_1=a.wan_ipv6Addr_1,n.wan_ip_2=a.wan_ipv6Addr_2,n.wan_ip_3=a.wan_ipv6Addr_3,n.wan_ip_4=a.wan_ipv6Addr_4,n.wan_ip_5=a.wan_ipv6Addr_5,n.wan_ip_6=a.wan_ipv6Addr_6,n.wan_ip_7=a.wan_ipv6Addr_7,n.prefix_len_ip=a.wan_ipv6Addr_prefixLen,n.wan_gw_0=a.wan_ipv6Gw_0,n.wan_gw_1=a.wan_ipv6Gw_1,n.wan_gw_2=a.wan_ipv6Gw_2,n.wan_gw_3=a.wan_ipv6Gw_3,n.wan_gw_4=a.wan_ipv6Gw_4,n.wan_gw_5=a.wan_ipv6Gw_5,n.wan_gw_6=a.wan_ipv6Gw_6,n.wan_gw_7=a.wan_ipv6Gw_7,n.prefix_len_gw=a.wan_ipv6Gw_prefixLen,n.wan_dns1_0=a.wan_ipv6Dns1_0,n.wan_dns1_1=a.wan_ipv6Dns1_1,n.wan_dns1_2=a.wan_ipv6Dns1_2,n.wan_dns1_3=a.wan_ipv6Dns1_3,n.wan_dns1_4=a.wan_ipv6Dns1_4,n.wan_dns1_5=a.wan_ipv6Dns1_5,n.wan_dns1_6=a.wan_ipv6Dns1_6,n.wan_dns1_7=a.wan_ipv6Dns1_7,n.prefix_len_dns1=a.wan_ipv6Dns1_prefixLen,n.pppoeUser=a.pppoe_user,n.pppoePass=a.pppoe_pass,n.dnsMode=a.wan_ipv6DnsMode,n.dhcpMode=a.wan_ipv6DhcpMode,n.pd_enable="1"==a.enable_dhcpv6pd,n.pd_rapid="1"==a.enable_dhcpv6RapidCommit,n.mld_proxy_state="1"==a.mldproxyEnabled,n.napt66_enable="1"==a.enableNapt66})},getIpv6_Lan:function(a){var n=this;uiPost.getIpv6LanCfg(function(a){n.dhcpserver="1"==a.enableDhcpv6,n.potrName=a.potrName,n.lan_ip_0=a.addr0,n.lan_ip_1=a.addr1,n.lan_ip_2=a.addr2,n.lan_ip_3=a.addr3,n.lan_ip_4=a.addr4,n.lan_ip_5=a.addr5,n.lan_ip_6=a.addr6,n.lan_ip_7=a.addr7,n.prefix_len_lan=a.addrPrefixLen,n.dnsAddr=a.dnsAddr,n.addrPoolStart=a.addrPoolStart,n.addrPoolEnd=a.addrPoolEnd})},getIpv6_Radvd:function(a){var n=this;uiPost.getRadvdCfg(function(a){n.rad_status="1"==a.enable_Radvd,n.radvdinterfacename=a.radvdPotrName,n.maxRtrAdvInterval=a.maxRtrAdvInterval,n.minRtrAdvInterval=a.minRtrAdvInterval,n.minDelayBetweenRAs=a.minDelayBetweenRAs,n.advManagedFlag="1"==a.advManagedFlag,n.advOtherConfigFlag="1"==a.advOtherConfigFlag,n.advReachableTime=a.advReachableTime,n.advRetransTimer=a.advRetransTimer,n.advCurHopLimit=a.advCurHopLimit,n.advDefaultLifetime=a.advDefaultLifetime,n.advDefaultPreference=a.advDefaultPreference,n.advSourceLLAddress="1"==a.advSourceLLAddress,n.unicastOnly="1"==a.unicastOnly,n.prefixEnabled1="1"==a.prefixEnabled1,n.prefixEnabled2="1"==a.prefixEnabled2,n.advOnLinkFlag0="1"==a.advOnLinkFlag0,n.advAutonomousFlag0="1"==a.advAutonomousFlag0,n.advRouterAddr0="1"==a.advRouterAddr0,n.advOnLinkFlag1="1"==a.advOnLinkFlag1,n.advAutonomousFlag1="1"==a.advAutonomousFlag1,n.advRouterAddr1="1"==a.advRouterAddr1,n.radvdprefix0_0=a.radvdprefix0_0,n.radvdprefix0_1=a.radvdprefix0_1,n.radvdprefix0_2=a.radvdprefix0_2,n.radvdprefix0_3=a.radvdprefix0_3,n.radvdprefix0_4=a.radvdprefix0_4,n.radvdprefix0_5=a.radvdprefix0_5,n.radvdprefix0_6=a.radvdprefix0_6,n.radvdprefix0_7=a.radvdprefix0_7,n.radvdprefix0_len=a.radvdprefix0_len,n.radvdprefix1_0=a.radvdprefix1_0,n.radvdprefix1_1=a.radvdprefix1_1,n.radvdprefix1_2=a.radvdprefix1_2,n.radvdprefix1_3=a.radvdprefix1_3,n.radvdprefix1_4=a.radvdprefix1_4,n.radvdprefix1_5=a.radvdprefix1_5,n.radvdprefix1_6=a.radvdprefix1_6,n.radvdprefix1_7=a.radvdprefix1_7,n.radvdprefix1_len=a.radvdprefix1_len,n.advValidLifetime_0=a.advValidLifetime_0,n.advPreferredLifetime_0=a.advPreferredLifetime_0,n.if6to4_0=a.if6to4_0,n.advValidLifetime_1=a.advValidLifetime_1,n.advPreferredLifetime_1=a.advPreferredLifetime_1,n.if6to4_1=a.if6to4_1})},handleSubmit:function(){var n=this,e={};if(n.ipv6_wan_show){if("1"==n.connectionType){if(0==cs.checkIpv6Addr(n.wan_ip_0,n.wan_ip_1,n.wan_ip_2,n.wan_ip_3,n.wan_ip_4,n.wan_ip_5,n.wan_ip_6,n.wan_ip_7))return Cstool.Msg({content:n.lang_t("ipv6.msg5")}),!1;if(0==(i=cs.num_range(n.prefix_len_ip,0,128)))return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1;if(0==cs.checkIpv6Addr(n.wan_gw_0,n.wan_gw_1,n.wan_gw_2,n.wan_gw_3,n.wan_gw_4,n.wan_gw_5,n.wan_gw_6,n.wan_gw_7))return Cstool.Msg({content:n.lang_t("ipv6.msg6")}),!1;var a=cs.num_range(n.prefix_len_gw,0,128);if(0==a)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==a)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==a)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1}if("1"==n.connectionType||"0"==n.connectionType&&"1"==n.dnsMode){if(0==cs.checkIpv6Addr(n.wan_dns1_0,n.wan_dns1_1,n.wan_dns1_2,n.wan_dns1_3,n.wan_dns1_4,n.wan_dns1_5,n.wan_dns1_6,n.wan_dns1_7))return Cstool.Msg({content:n.lang_t("ipv6.msg7")}),!1;var _=cs.num_range(n.prefix_len_dns1,0,128);if(0==_)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==_)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==_)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1}e.ipv6WanEnabled=n.wan_status?"1":"0",e.ipv6Origin=n.connectionType,e.ipv6LinkType=n.wanType,e.wan_duid=n.wan_duid,e.wan_ipv6Addr_0=n.wan_ip_0,e.wan_ipv6Addr_1=n.wan_ip_1,e.wan_ipv6Addr_2=n.wan_ip_2,e.wan_ipv6Addr_3=n.wan_ip_3,e.wan_ipv6Addr_4=n.wan_ip_4,e.wan_ipv6Addr_5=n.wan_ip_5,e.wan_ipv6Addr_6=n.wan_ip_6,e.wan_ipv6Addr_7=n.wan_ip_7,e.wan_ipv6Addr_prefixLen=n.prefix_len_ip,e.wan_ipv6Gw_0=n.wan_gw_0,e.wan_ipv6Gw_1=n.wan_gw_1,e.wan_ipv6Gw_2=n.wan_gw_2,e.wan_ipv6Gw_3=n.wan_gw_3,e.wan_ipv6Gw_4=n.wan_gw_4,e.wan_ipv6Gw_5=n.wan_gw_5,e.wan_ipv6Gw_6=n.wan_gw_6,e.wan_ipv6Gw_7=n.wan_gw_7,e.wan_ipv6Gw_prefixLen=n.prefix_len_gw,e.wan_ipv6Dns1_0=n.wan_dns1_0,e.wan_ipv6Dns1_1=n.wan_dns1_1,e.wan_ipv6Dns1_2=n.wan_dns1_2,e.wan_ipv6Dns1_3=n.wan_dns1_3,e.wan_ipv6Dns1_4=n.wan_dns1_4,e.wan_ipv6Dns1_5=n.wan_dns1_5,e.wan_ipv6Dns1_6=n.wan_dns1_6,e.wan_ipv6Dns1_7=n.wan_dns1_7,e.wan_ipv6Dns1_prefixLen=n.prefix_len_dns1,"1"==n.connectionType?e.wan_ipv6DnsMode="1":e.wan_ipv6DnsMode=n.dnsMode,e.wan_ipv6DhcpMode=n.dhcpMode,e.enable_dhcpv6pd=n.pd_enable?"1":"0",e.enable_dhcpv6RapidCommit=n.pd_rapid?"1":"0",e.mldproxyEnabled=n.mld_proxy_state?"1":"0",e.enableNapt66=n.napt66_enable?"1":"0",0==n.wanType?Cstool.Verify(this.fromRule_wan,function(a){a&&(e.pppoe_user=n.pppoeUser,e.pppoe_pass=n.pppoePass,uiPost.setIpv6WanCfg(e,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})}))}):(e.pppoe_user=n.pppoeUser,e.pppoe_pass=n.pppoePass,uiPost.setIpv6WanCfg(e,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})}))}else if(n.ipv6_lan_show){if("MTK"!=n.softType||"MTK"==n.softType&&n.dhcpserver){if(0==cs.checkIpv6Addr(n.lan_ip_0,n.lan_ip_1,n.lan_ip_2,n.lan_ip_3,n.lan_ip_4,n.lan_ip_5,n.lan_ip_6,n.lan_ip_7))return Cstool.Msg({content:n.lang_t("ipv6.msg5")}),!1;if(0==(i=cs.num_range(n.prefix_len_lan,0,128)))return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1;e.addr0=n.lan_ip_0,e.addr1=n.lan_ip_1,e.addr2=n.lan_ip_2,e.addr3=n.lan_ip_3,e.addr4=n.lan_ip_4,e.addr5=n.lan_ip_5,e.addr6=n.lan_ip_6,e.addr7=n.lan_ip_7,e.addrPrefixLen=n.prefix_len_lan}e.enableDhcpv6=n.dhcpserver?"1":"0",n.dhcpserver?Cstool.Verify(this.fromRule_lan,function(a){(a||"MTK"==n.softType)&&("MTK"!=n.softType&&(e.dnsAddr=n.dnsAddr,e.addrPoolStart=n.addrPoolStart,e.addrPoolEnd=n.addrPoolEnd),uiPost.setIpv6LanCfg(e,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})}))}):(e.dnsAddr=n.dnsAddr,e.addrPoolStart=n.addrPoolStart,e.addrPoolEnd=n.addrPoolEnd,uiPost.setIpv6LanCfg(e,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})}))}else if(n.ipv6_rad_show){if(n.prefixEnabled1){if(0==cs.checkIpv6Addr(n.radvdprefix0_0,n.radvdprefix0_1,n.radvdprefix0_2,n.radvdprefix0_3,n.radvdprefix0_4,n.radvdprefix0_5,n.radvdprefix0_6,n.radvdprefix0_7))return Cstool.Msg({content:n.lang_t("ipv6.msg5")}),!1;if(0==(i=cs.num_range(n.radvdprefix0_len,0,128)))return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1}if(n.prefixEnabled2){var i;if(0==cs.checkIpv6Addr(n.radvdprefix1_0,n.radvdprefix1_1,n.radvdprefix1_2,n.radvdprefix1_3,n.radvdprefix1_4,n.radvdprefix1_5,n.radvdprefix1_6,n.radvdprefix1_7))return Cstool.Msg({content:n.lang_t("ipv6.msg5")}),!1;if(0==(i=cs.num_range(n.radvdprefix1_len,0,128)))return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg1")}),!1;if(1==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg3")}),!1;if(2==i)return Cstool.Msg({content:n.lang_t("ipv6.prefix")+n.lang_t("ipv6.msg8")}),!1}e.enable_Radvd=n.rad_status?"1":"0",e.radvdPotrName=n.radvdinterfacename,e.maxRtrAdvInterval=n.maxRtrAdvInterval,e.minRtrAdvInterval=n.minRtrAdvInterval,e.minDelayBetweenRAs=n.minDelayBetweenRAs,e.advManagedFlag=n.advManagedFlag?"1":"0",e.advOtherConfigFlag=n.advOtherConfigFlag?"1":"0",e.advReachableTime=n.advReachableTime,e.advRetransTimer=n.advRetransTimer,e.advCurHopLimit=n.advCurHopLimit,e.advDefaultLifetime=n.advDefaultLifetime,e.advDefaultPreference=n.advDefaultPreference,e.advSourceLLAddress=n.advSourceLLAddress?"1":"0",e.unicastOnly=n.unicastOnly?"1":"0",e.prefixEnabled1=n.prefixEnabled1?"1":"0",e.prefixEnabled2=n.prefixEnabled2?"1":"0",e.advOnLinkFlag0=n.advOnLinkFlag0?"1":"0",e.advAutonomousFlag0=n.advAutonomousFlag0?"1":"0",e.advRouterAddr0=n.advRouterAddr0?"1":"0",e.advOnLinkFlag1=n.advOnLinkFlag1?"1":"0",e.advAutonomousFlag1=n.advAutonomousFlag1?"1":"0",e.advRouterAddr1=n.advRouterAddr1?"1":"0",e.radvdprefix0_0=n.radvdprefix0_0,e.radvdprefix0_1=n.radvdprefix0_1,e.radvdprefix0_2=n.radvdprefix0_2,e.radvdprefix0_3=n.radvdprefix0_3,e.radvdprefix0_4=n.radvdprefix0_4,e.radvdprefix0_5=n.radvdprefix0_5,e.radvdprefix0_6=n.radvdprefix0_6,e.radvdprefix0_7=n.radvdprefix0_7,e.radvdprefix0_len=n.radvdprefix0_len,e.radvdprefix1_0=n.radvdprefix1_0,e.radvdprefix1_1=n.radvdprefix1_1,e.radvdprefix1_2=n.radvdprefix1_2,e.radvdprefix1_3=n.radvdprefix1_3,e.radvdprefix1_4=n.radvdprefix1_4,e.radvdprefix1_5=n.radvdprefix1_5,e.radvdprefix1_6=n.radvdprefix1_6,e.radvdprefix1_7=n.radvdprefix1_7,e.radvdprefix1_len=n.radvdprefix1_len,e.advValidLifetime_0=n.advValidLifetime_0,e.advPreferredLifetime_0=n.advPreferredLifetime_0,e.if6to4_0=n.if6to4_0,e.advValidLifetime_1=n.advValidLifetime_1,e.advPreferredLifetime_1=n.advPreferredLifetime_1,e.if6to4_1=n.if6to4_1,uiPost.setRadvdCfg(e,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})})}},change_status:function(a){if("ipv6wan"==a){if(!this.wan_status){var n={ipv6WanEnabled:"0"};uiPost.setIpv6WanCfg(n,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})})}}else if("radvd"==a&&!this.rad_status){n={enable_Radvd:"0"};uiPost.setRadvdCfg(n,function(a){var n=0;n=a.wtime||"0"==a.wtime?a.wtime:35,Cstool.Count(n,"js",function(){location.href=location.href})})}},Ipv6Wan:function(){this.active_wan="btn-tab-active",this.active_lan="",this.active_rad="",this.ipv6_wan_show=!0,this.ipv6_lan_show=!1,this.ipv6_rad_show=!1},Ipv6Lan:function(){this.active_lan="btn-tab-active",this.active_wan="",this.active_rad="",this.ipv6_wan_show=!1,this.ipv6_lan_show=!0,this.ipv6_rad_show=!1},Ipv6Rad:function(){this.active_rad="btn-tab-active",this.active_lan="",this.active_wan="",this.ipv6_wan_show=!1,this.ipv6_lan_show=!1,this.ipv6_rad_show=!0},pwdFocus:function(){this.pwdType="text"},pwdBlur:function(){this.pwdType="password"}}}</script><script src="/static/js/main.js"></script></body></html>

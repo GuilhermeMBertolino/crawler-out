@@ -1,0 +1,420 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+    <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/validations.js"></script>
+  <script src="js/ipv6.js"></script>
+  <script src="js/embedProgressBar.js"></script>
+
+  <script language="javascript" type="text/javascript">
+
+    CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+    $(document).ready(function()
+    {
+        fetchData('target', 'ipv6_Pppoe', '', 'post_fillout_init');
+    });
+    
+    function post_fillout_init()
+    {   
+        /* register a onClick/onChange funtion */
+        $('#target [name=v6Type]').on('change', function() {
+            onChange_v6Type();
+        });
+        
+        post_fillout_init_Pppoe();
+
+        //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+        $('#pppoe_dod')[0].selectedIndex = $('#pppoeDod').prop('selectedIndex');
+        $('#pppoe_dod').on('click', function() {
+            $('#pppoeDod')[0].selectedIndex = $('#pppoe_dod').prop('selectedIndex');
+        });
+    }
+    
+    function post_fillout_init_Pppoe()
+    {
+        /* apply the mlang tag */
+        $("[mlang]").each(function(idx, obj) {
+            obj.innerHTML = window.top.mlang[obj.attributes.mlang.value];
+        });
+
+        /* init dns filed to hide/show */
+        init_Pppoe_dnsType();
+        /* init interface id field to hide/show */
+        init_Pppoe_enableInterfaceId();
+        /* init login fields to hide/show */
+        init_usePPPoEv4();
+        
+        /* register a onClick/onChange funtion */
+        $('#target [name=dnsType]').on('change', function() {
+            onChange_Pppoe_dnsType();
+        });
+        $('#target [name=enableInterfaceId]').on('change', function() {
+            $('[name=enableInterfaceId]').val($('[name=enableInterfaceId]').prop("checked"));
+            onChange_Pppoe_enableInterfaceId();
+        });
+        $('#target [name=usePPPoEv4]').on('change', function() {
+        $('[name=usePPPoEv4]').val($('[name=usePPPoEv4]').prop("checked"));
+            onChange_Pppoe_usePPPoEv4();
+        });
+    }
+    
+    function formSubmit() {
+        formSubmit_pppoe();
+    }
+    
+    function formSubmit_pppoe()
+    {
+        //sync the ip data to hidden input
+        $('#dns1').val($('#dns1-ipv6').getIpv6());
+        $('#dns2').val($('#dns2-ipv6').getIpv6());
+        $('#lanInterfaceId').val($('#lanInterfaceId-ipv6id').getIpv6Id());
+        
+        if (validation_pppoe()) {
+            /* after validation each Ipv6 address fields, complement each non-4-digit field with 0. */
+            $('#dns1').val(complement_ipv6_empty_field($('#dns1').val()));
+            $('#dns2').val(complement_ipv6_empty_field($('#dns2').val()));
+            
+            $.postForm('ipv6PPPoE', $('#target'), 'cgi-bin/netgear.plua', 'postForm_callback');
+
+            // Need more time to configure IPv4 PPPoE always on
+            if ($("input[name=v4WanMode]").val() == "PPPoE" && $("input[name=v4PppoeConnMode]").val() == "onDemand")
+            {
+                show_EmbedProgressBar('SWP046', 30000, '/IPV6_basic.html');
+            }
+            else
+            {
+                show_EmbedProgressBar('SWP046', 20000, '/IPV6_basic.html');
+            }
+        }
+    }
+
+    function postForm_callback()
+    {
+        /* Refreshing page is already done by progress bar, the callback function do nothing here is
+        to avoid the postForm defaultHandler() refreshing page may interrupt the execution of progress bar
+        */
+    }
+    
+    function formRefresh()
+    {
+        parent.loadPage("IPV6_basic.html");
+    }
+    
+    /* init function Section --------> Begin */
+    function init_Pppoe_dnsType()
+    {
+        onChange_Pppoe_dnsType();
+    }
+    
+    function init_Pppoe_enableInterfaceId()
+    {
+        onChange_Pppoe_enableInterfaceId();
+    }
+    
+    function init_usePPPoEv4()
+    {
+        onChange_Pppoe_usePPPoEv4();
+    }
+    /* init function Section --------> End */
+
+    /* Onclick Callback Section --------> Begin */
+    
+    function onChange_v6Type()
+    {
+        var v6Type = $("select[name=v6Type]").val();
+
+        /* show the select form */
+        if (v6Type == "disabled") {
+            window.location.href = "IPV6_disabled.html";
+        }
+        else if (v6Type == "autoDetect") {
+            window.location.href = "IPV6_AutoDetect.html";
+        }
+        else if (v6Type == "6to4") {
+            window.location.href = "IPV6_6to4.html";
+        }
+        else if (v6Type == "bridge") {
+            window.location.href = "IPV6_PassThrough.html";
+        }
+        else if (v6Type == "fixed") {
+            window.location.href = "IPV6_fixed.html";
+        }
+        else if (v6Type == "dhcp") {
+            window.location.href = "IPV6_dhcp.html";
+        }
+        else if (v6Type == "pppoe") {
+            window.location.href = "IPV6_pppoe.html";
+        }
+        else if (v6Type == "autoConfig") {
+            window.location.href = "IPV6_AutoConfig.html";
+        }
+        else if (v6Type == "6rd") {
+            window.location.href = "IPV6_6rd.html";
+        }
+    }
+    
+    function onChange_Pppoe_usePPPoEv4()
+    {
+        if ($('[name=usePPPoEv4]').val() == "true") {
+            $("#usePPPoEv4_hide").hide();
+        }
+        else {
+            $("#usePPPoEv4_hide").show();
+        }
+    }
+    /* Onclick Callback Section --------> End */
+  </script>
+
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('IPV6_pppoe','');" class="page-body" onResize="window.top.change_size($(this));">
+    <div class="page-header" style="position: relative;" mlang="AIP001">IPv6</div>
+    <div id="main" class="form-group" style=height:365px;overflow:auto;scrolling:auto">
+    <!-- form start-->
+    <form id="target"  name="formname" > 
+    
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6','internet')" tabindex="-1"><b mlang="AIP002" >"Internet Connection Type</b></a>
+        </div>
+        
+        <div class="form-row">
+            <select name="v6Type" id="login_type" size=1>
+                <option value="disabled" mlang="SWP043">Disabled</option>
+                <option value="autoDetect" mlang="AIP003">Auto Detect</option>
+                <option value="6to4" mlang="AIP004">6to4 Tunnel</option>
+                <option value="bridge" mlang="AIP005">Pass Through</option>
+                <option value="fixed" mlang="AIP006">Fixed</option>
+                <option value="dhcp" mlang="MRS024">DHCP</option>
+                <option value="pppoe" selected mlang="SWP016">PPPoE</option>
+                <option value="autoConfig" mlang="AIP014">Auto Config</option>
+                <option value="6rd" mlang="AIP028">6rd Tunnel</option>
+            </select>
+        </div>
+        <div class="space-divider">&nbsp;</div>
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="AIP035" >Use the same login information as IPv4 PPPoE</span>
+                    <input type="checkbox" name="usePPPoEv4" id="ipv6_same_infopp" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+    
+        <div id="usePPPoEv4_hide">
+            <div class="form-row">
+                <a href="javascript:loadhelp('IPV6_pppoe','login')" tabindex="-1">
+                    <b mlang="D-genie_341">Login</b>
+                </a>
+            </div>
+        
+            <div class="form-row">
+                <input type="text" name="login" class="input1" id="pppoe_username" size="15" maxlength="63">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('IPV6_pppoe','passwd')" tabindex="-1">
+                    <b mlang="SWP027">Password</b>
+                </a>
+            </div>
+
+            <div class="form-row">
+                <input type="password" name="password" class="input1" id="pppoe_passwd" size="15" maxlength="63">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('IPV6_pppoe','serv_name')" tabindex="-1">
+                    <b mlang="SWP039">Service Name (If Required)</b>
+                </a>
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="serviceName" class="input1" id="pppoe_servername" maxlength="63" size="15">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('IPV6_pppoe','connection_mode')" tabindex="-1">
+                    <b mlang="SBS004">Connection Mode</b>
+                </a>
+            </div>
+
+            <!--PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)-->
+            <div class="form-row" style="display:none">
+                <select name="mode" id="pppoeDod" size=1>
+                    <option value="always" selected mlang="SBS008">Always On</option>
+                    <option value="onDemand" mlang="SBS009">Dial on Demand</option>
+                    <option value="manually" mlang="SBS010">Manually Connect</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <select id="pppoe_dod" size=1 style="pointer-events: none; opacity: 0.5">
+                    <option value="Always On" selected mlang="SBS008">Always On</option>
+                    <option value="Dial on Demand" mlang="SBS009">Dial on Demand</option>
+                    <option value="Manually Connect" mlang="SBS010">Manually Connect</option>
+                </select>
+            </div>
+        </div> <!-- id="usePPPoEv4_hide" -->
+
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6_pppoe','wan_ipaddr')" tabindex="-1">
+                <b mlang="AIP010">Router's IPv6 Address On WAN</b>
+            </a>
+        </div>
+
+        <div class="form-row">
+            <span name="wan6Ip" id="wan6Ip">return wan ipv6 addr or AIP023</span>
+        </div>
+
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <b mlang="AIP034">IPv6 Domain Name Server (DNS) Address</b>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container" ><div mlang="SWP018">Get Automatically from ISP</div>
+            <input type="radio" name="dnsType" id="dnsassign_auto" value="dynamic">
+            <span class="radio-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <label class="checkbox-container" ><div mlang="SWP025">Use These DNS Servers</div>
+            <input type="radio" name="dnsType" id="dnsassign_fixed" value="fixed">
+            <span class="radio-checkmark"></span>
+            </label>
+        </div>
+
+        <div class="form-row">
+            <span mlang="SWP022">Primary DNS</span>
+        </div>
+
+        <div class="pppoe_dns">
+            <div id="dns1-ipv6"></div>
+            <input type="hidden" id="dns1" name="dns1">
+        </div>
+
+        <div class="form-row">
+            <span mlang="SWP023">Secondary DNS</span>
+        </div>
+
+        <div class="pppoe_dns">
+            <div id="dns2-ipv6"></div>
+            <input type="hidden" id="dns2" name="dns2">
+        </div>
+
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6_pppoe','lan_ipaddr')" tabindex="-1">
+                <b mlang="LUP032">LAN Setup</b>
+            </a>
+        </div>
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6_pppoe','lan_ipaddr')" tabindex="-1">
+                <b mlang="AIP011">Router's IPv6 Address On LAN</b>
+            </a>
+        </div>
+
+        <div class="form-row">
+            <span name="lan6Ip" id="lan6Ip">return lan ipv6 addr or AIP023</span>
+        </div>
+
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6_pppoe','lan_ip_assign')" tabindex="-1">
+                <b mlang="AIP012">IP Address Assignment</b>
+            </a>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container" ><div mlang="AIP013">Use DHCP Server</div>
+            <input type="radio" name="lanIpAddr" id="ipassign_dhcp" value="dhcp">
+            <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="form-row">
+            <label class="checkbox-container" ><div mlang="AIP014">Auto Config</div>
+            <input type="radio" name="lanIpAddr" id="ipassign_auto" value="auto">
+            <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <label class="checkbox-container">
+                <span mlang="AIP015" >Use This Interface ID</span>
+                    <input type="checkbox" name="enableInterfaceId" id="useInterfaceId" value="true">
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="pppoe_interfaceId">
+            <div id="lanInterfaceId-ipv6id"></div>
+            <input type="hidden" id="lanInterfaceId" name="lanInterfaceId">
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+        
+        <div class="form-row">
+            <a href="javascript:loadhelp('IPV6_pppoe','')" tabindex="-1">
+                <b mlang="AIP022">IPv6 Filtering</b>
+            </a>
+        </div>
+        
+        <div class="form-row" style="display: inline-flex;">
+            <label class="checkbox-container" ><div mlang="AWN006">Secured</div>
+            <input type="radio" name="filter" id="IPv6Filtering_so" value="secured">
+            <span class="radio-checkmark"></span>
+            </label>
+            
+            <label class="checkbox-container" style="margin-left:30px;"><div mlang="AWN005">Open</div>
+            <input type="radio" name="filter" id="IPv6Filtering_op" value="open">
+            <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        
+        <div class="divider">&nbsp;</div>
+        
+        <input type="hidden" name="v4WanMode" disabled>
+        <input type="hidden" name="v4PppoeConnMode" disabled>
+    </form> 
+    <!-- form end -->
+ 
+    </div><!-- form-group end -->
+    
+    <div class="form-btn-row" id="form_btn_div">
+        <button type="button" value="BUTTON"  onClick="location.href='IPV6_basic.html';" name="Refresh" id="refresh" class="button-common common_bt" mlang="AIP016">Status Refresh</button>
+        <button type="button" value="BUTTON"  onClick="formRefresh();" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+        <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+    </div>
+    
+    <? commonCfg.genHelpSection() ?>
+    <? commonCfg.generate_EmbedProgressBar()?>
+</html>

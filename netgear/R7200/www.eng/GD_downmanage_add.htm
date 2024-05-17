@@ -1,0 +1,373 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="Expires" content="Mon, 06 Jan 1990 00:00:01 GMT"><meta name="description" content="WNR2500_multilangual"><title>NETGEAR Router @model_name#</title><script language="javascript" type="text/javascript" src="string.js"></script><link rel="stylesheet" href="style/form.css"><script language="javascript" type="text/javascript" src="funcs.js"></script><style type="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style><script language="javascript" type="text/javascript" src="utility.js"></script><script language="javascript" type="text/javascript" src="linux.js"></script><script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+
+function init()
+{
+	var cf = document.forms[0];
+	ChangeDownloadType();
+
+	/* Then check the whether USB plus */
+	if(parent.gd_enable=='0')
+	{	 
+	    cf.gd_proto.disabled=true;
+	    cf.bt_torrent_path[0].disabled=true;
+	    cf.bt_torrent_path[1].disabled=true;
+	    cf.upfilename.disabled=true;
+	    buttonToDisabled(cf);
+	}
+	if(cf.errCode.value =="13415")
+	{
+	    if(confirm(getErrorMsgByCode(cf.errCode.value))==true)
+        {
+            cf.todo.value = "readd_task";
+            cf.submit();
+        }
+        else
+        {
+            cf.todo.value = "remove_reAddtask";
+            cf.submit();
+        }
+	}
+	else if(cf.errCode.value =="13413")
+	{
+	    if(confirm(getErrorMsgByCode(cf.errCode.value))==true)
+        {
+            cf.todo.value = "remove_file";
+            cf.submit();
+        }
+        else
+        {
+            cf.todo.value = "remove_file_task";
+            cf.submit();
+        }
+	}
+	else if(cf.errCode.value =="13419")
+	{
+	    if(confirm(getErrorMsgByCode(cf.errCode.value))==true)
+        {
+            cf.todo.value = "recheck_size";
+            cf.submit();
+        }
+        else
+        {
+            cf.todo.value = "remove_task";
+            cf.submit();
+        }
+	}
+	cf.bt_url.value = getTagMsgByCode(3719)?getTagMsgByCode(3719):"";
+}
+function add_dl_task()
+{
+	var cf = document.forms[0];
+	var savepath;
+
+	//HTTP/FTP
+	if(cf.gd_proto.value == '0')
+	{
+		var str_down_url = cf.ftp_http_url.value;
+		var str_low_1 = str_down_url.substr(0,4).toLowerCase();
+		var str_low_2 = str_down_url.substr(0,5).toLowerCase();
+		var str_low_3 = str_down_url.substr(0,6).toLowerCase();
+		if( str_low_3 == "https:")
+		{
+			alert(getErrorMsgByVar("gsm_msg_gd_https"));
+			return false;
+		}
+		if( (str_low_1 != "ftp:" && str_low_2 != "http:") ||
+			cf.ftp_http_url.value == "" )
+		{
+			alert(getErrorMsgByVar("gsm_msg_gd_ftp_valid_add"));
+			return false;
+		}
+	}
+    //BT
+    else if(cf.gd_proto.value == '1')
+    {
+		if(cf.bt_torrent_path[0].checked)//from PC
+		{
+			var filestr = cf.upfilename.value;
+			if( filestr == "" )
+			{
+				alert(getErrorMsgByVar("gsm_msg_gd_bt_file_sel"));
+				return false;
+			}
+			var file_format=filestr.substr(filestr.lastIndexOf(".")+1);
+			if(file_format.toUpperCase()!="TORRENT")
+			{
+				alert(getErrorMsgByCode("13417"));
+				return false;
+			}
+		}
+		else if(cf.bt_torrent_path[1].checked)// from USB
+		{
+			var filestr = cf.bt_usb_path.value;
+
+		    if( filestr == ""){
+		        alert(getErrorMsgByVar("gsm_msg_gd_bt_file_sel"));
+		        return false;
+			}
+			var file_format = filestr.substr(filestr.lastIndexOf(".")+1);
+			if(file_format.toUpperCase()!="TORRENT")
+			{
+				alert(getErrorMsgByCode("13417"));
+				return false;
+			}
+		}
+		else // from BT torrent link
+		{
+            var bt_url = cf.bt_url.value;
+    		var str_low_1 = bt_url.substr(0,4).toLowerCase();
+    		var str_low_2 = bt_url.substr(0,5).toLowerCase();
+    		var str_low_3 = bt_url.substr(0,6).toLowerCase();
+    		var str_low_4 = bt_url.substr(0,8).toLowerCase();
+    		if( str_low_3 == "https:")
+    		{
+    			alert(getErrorMsgByVar("gsm_msg_gd_https"));
+    			return false;
+    		}
+    		if( (str_low_1 != "ftp:" && str_low_2 != "http:" && str_low_4 != "magnet:?") 
+    		    || (cf.bt_url.value == "") )
+    		{
+    			alert(getErrorMsgByVar("13454"));
+    			return false;
+    		}
+		}
+    }
+	if(parent.document.forms[0].task_num.value >=20)
+	{
+		alert(getErrorMsgByCode("13416"));
+		return false;
+	}
+	dataToHidden(cf);
+	if(cf.bt_usb_path.value.length > 0)
+	{
+		savepath = cf.bt_usb_path.value;
+		savepath = savepath.replace(/:/g,"");
+		savepath = savepath.replace(/\x5c/g,"/");
+		cf.h_bt_usb_path.value = savepath;
+	}
+
+	savepath = cf.h_gd_save_path.value;
+	savepath = savepath.replace(/:/g,"");
+	savepath = savepath.replace(/\x5c/g,"/");
+	cf.h_gd_save_path.value = savepath;
+
+    cf.todo.value="add_dl_task";
+    cf.submit();
+    return true;
+
+}
+function change_file_path(type)
+{
+	var cf = document.forms[0];
+	if( type == "1" )
+	{
+		show_hide("bt_fromPC", true);
+		show_hide("bt_fromUSB", false);
+		//show_hide("bt_fromURL", false);
+		cf.bt_url.disabled=true;
+	}
+	else if( type == "2" )
+	{
+		show_hide("bt_fromPC", false);
+		show_hide("bt_fromUSB", true);
+		//show_hide("bt_fromURL", false);
+		cf.bt_url.disabled=true;
+	}
+	else
+	{
+		show_hide("bt_fromPC", false);
+		show_hide("bt_fromUSB", false);
+		//show_hide("bt_fromURL", true);
+		cf.bt_url.disabled=false;
+	}
+}
+
+function browseDisk_BT()
+{
+	window.open('GD_usb_file_tree.htm','browse','resizable=0,scrollbars=yes,width=400,height=400,left=400,top=300').focus();
+}
+function show_hide_gui(el)
+{
+	var cf = document.forms[0];
+	var el_h;
+	var el_s;
+	if(el==0)
+	{
+		el_h="bt_settings";
+		el_s="http_ftp_settings";
+	}
+	else
+	{
+		el_s="bt_settings";
+		el_h="http_ftp_settings";
+		if(cf.bt_torrent_path[0].checked)
+		change_file_path(1);
+		else if(cf.bt_torrent_path[1].checked)
+            change_file_path(2);
+		else
+		    change_file_path(3);
+	}
+
+	show_hide(el_s, true);
+	show_hide(el_h, false);
+}
+
+function setDisable()
+{
+	var cf = document.forms[0];
+
+	if(cf.gd_proto.selectedIndex==1)
+	{
+		cf.ftp_http_url.disabled=true;
+		cf.bt_usb_path.disabled=false;
+		cf.ftp_http_account.disabled=true;
+		cf.ftp_http_pwd.disabled=true;
+		if(cf.bt_torrent_path[0].checked)
+		{
+			cf.upfilename.disabled=false;
+			cf.bt_usb_path.disabled=true;
+			cf.bt_url.disabled=true;
+		}
+		else if(cf.bt_torrent_path[1].checked)
+		{
+			cf.upfilename.disabled=true;
+			cf.bt_usb_path.disabled=false;
+			cf.bt_url.disabled=true;
+		}
+		else
+		{
+		    cf.upfilename.disabled=true;
+			cf.bt_usb_path.disabled=true;
+			cf.bt_url.disabled=false;
+		}
+	}
+	else
+	{
+		cf.ftp_http_url.disabled=false;
+		cf.upfilename.disabled=true;
+		cf.bt_usb_path.disabled=true;
+		cf.ftp_http_account.disabled=false;
+		cf.ftp_http_pwd.disabled=false;
+	}
+}
+
+function ChangeDownloadType()
+{
+	var cf = document.forms[0];
+	//setDisable();
+	if(cf.gd_proto.value == '1')
+	{
+		show_hide_gui(1);
+	}
+	else
+	{
+		show_hide_gui(0);
+	}
+
+}
+
+// -->
+</script></head><body bgcolor="#ffffff" onload="dataToVisible(document.forms[0]);init();">
+<form method="POST" action="download_job.cgi" enctype="multipart/form-data" onsubmit="buttonToDisabled(document.forms[0])">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+	<tr>
+	    <td colspan="4" background="liteblue.gif" height="12"></td>
+	</tr>
+	 <tr>
+        <td><b languageCode="2029">Download Type</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<select name="gd_proto" id="gd_proto" onChange="ChangeDownloadType();">
+            <option value="0">HTTP/FTP</option>
+            <option value="1">BT</option>
+          </select></td>
+        <td width="400" height="23">&nbsp;</td>
+        <td width="1">&nbsp;</td>
+      </tr>
+	  <tr>
+        <td colspan="3"> <div id="bt_settings" >
+            <table  width="100%" align = "center" border="0" cellspacing="0">
+              <tr>
+                <td height="10" colspan="2" nowrap><b languageCode="2032">BitTorrent File Location</b>&nbsp;&nbsp;&nbsp;
+    			<input type="radio" name="bt_torrent_path" value=1 onclick ="change_file_path(1)">&nbsp;<span languageCode="2041">PC</span>&nbsp;&nbsp;&nbsp;
+    			<input type="radio" name="bt_torrent_path" value=2 onclick ="change_file_path(2)">&nbsp;<span languageCode="2042">USB Storage Device</span>
+    			<input type="radio" name="bt_torrent_path" value=3 onclick ="change_file_path(3)">&nbsp;<span languageCode="3337">BitTorrent Link</span>    			
+		    	&nbsp;&nbsp;&nbsp;<input type="text" name="bt_url" value="" size="50" >
+				</td>
+              </tr>
+			  	<tr height="4" >
+    			<td colspan="2">&nbsp;</td>
+    			</tr>
+              <tr id='bt_fromPC'>
+				<td nowrap>
+		    	<input type="file" name="upfilename" value="@upfilename#" size="50 maxlength="200">
+                </td>
+			  </tr>
+			  <tr id='bt_fromUSB'>
+				<td nowrap>
+		    	<input type="text" name="bt_usb_path" value="@bt_usb_path#" size="50" maxlength="200">
+				<input type="button" name="Browse" value="Browse" onclick="browseDisk_BT();" languageCode="804">
+				</td>
+			  </tr>
+              <!--tr id='bt_fromURL'>
+				<td nowrap>
+		    	<input type="text" name="bt_url" value="" size="50" >
+				</td>
+			  </tr-->
+	    </tr>
+            </table>
+          </div></td>
+        <td rowspan="3">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="3"><div id="http_ftp_settings">
+            <table width="100%" border="0" cellspacing="0">
+              <tr>
+                <td nowrap><b languageCode="2030">FTP / HTTP download path</b></td>
+              	<td nowrap> <input name="ftp_http_url" type="text" size="50" maxlength="240" value="@ftp_http_url#">
+                </td>
+              </tr>
+	      </tr>
+	      <tr>
+	        <td><b languageCode="3720">User Name</b></td>
+	        <td nowrap>	<input name="ftp_http_account" type="text" value="@ftp_http_account#" size="32" maxlength="64">
+	        </td>
+	      </tr>
+	      <tr>
+	        <td><b languageCode="3721">Password</b></td>
+	        <td nowrap>	<input name="ftp_http_pwd" type="text" size="32" value="@ftp_http_pwd#" maxlength="64">
+	        </td>
+	      </tr>
+            </table>
+          </div></td>
+      </tr>
+
+	<table width="100%" border="0" cellpadding="0" cellspacing="2"><tr><td nowrap colspan="2" align="center">
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 <input class="common_bt" type="button" name="Add" value="Add" onclick="add_dl_task();" languageCode="146">
+	 &nbsp;&nbsp;&nbsp;
+	 <input class="common_bt" type="reset" name="Reset" value="Reset" onclick='location.href="GD_downmanage_add.htm";' languageCode="2052"></td>
+	</td></tr>
+		<tr><td colspan="4" background="liteblue.gif" height="12"></td>
+	</tr>
+	</table>
+
+
+    <!-- RULE --></table>
+	<!-- ServerEnd -->
+	<input type="hidden" name="h_gd_save_path" value="@gd_save_path#">
+	<input type="hidden" name="h_bt_usb_path" value="">
+	<input type="hidden" name="h_bt_torrent_path" value="1">
+	<input type="hidden" name="h_gd_proto" value="@h_gd_proto#">
+	<input type="hidden" name="save_only" value="sss">
+	<input type="hidden" name="errCode" value="@gd_err#">
+	<input type="hidden" name="todo" value="save">
+	<input type="hidden" name="this_file" value="GD_downmanage_add.htm">
+	<input type="hidden" name="next_file" value="GD_downmanage_add.htm">
+	<input type="hidden" name="SID" value="@SID#">
+	<input type="hidden" name="finish" value="">
+	</form>
+<p></p>
+<script language="javascript" type="text/javascript" src="langs.js"></script></body></html>

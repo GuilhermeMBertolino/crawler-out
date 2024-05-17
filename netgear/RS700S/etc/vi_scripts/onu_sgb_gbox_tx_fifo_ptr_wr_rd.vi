@@ -1,0 +1,255 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_sgb_gbox_tx_fifo_ptr_wr_rd
+########################################
+###################################################                         
+# ONU SGB Gearbox TX FIFO pointers Write/Read                            
+###################################################                      
+# __ARG0: Standard Select : 0 = ITUT modes / 1= IEEE,AE,MPCS modes       
+#                                                                        
+# __ARG1 : pon_type_select = "itut_mode_select" or  "ieee_mode_select"   
+#       itut_mode_select                                                 
+#                   0 = XGS                                              
+#                   1 = XGPON                                            
+#                   2 = GPON                                             
+##                                                                       
+#       ieee_mode_select                                                 
+#               0 = EPON 10/10  | 4 = AE 10g    | 8  = MPCS 10g          
+#               1 = EPON 10/1   | 5 = AE 5g     | 9  = MPCS 5g           
+#               2 = EPON 2/1    | 6 = AE 2.5g   | 10 = MPCS 2.5g         
+#               3 = EPON 1/1    | 7 = AE 1g     | 11 = MPCS 1g           
+################################################                         
+# __ARG2 : load_pointers                                                 
+#      0 = Read only , 1= Load pointers and Read the delta               
+#                                                                        
+# __ARG3 : tx_fifo_offset_val                                            
+#          FIFO pointers delta value                                     
+#################################################                        
+ 
+SLEEP 0x989680   # sleep 10mSec
+ 
+#Input arguments and variables used in ATM file 
+MOV __ARG0,itut_or_ieee_sel
+MOV __ARG1,pon_type_select
+MOV __ARG2,load_pointers
+MOV __ARG3,tx_fifo_offset_val
+#enum defines for atm/msg/vi_script 
+MOV 0,enum_itut
+MOV 1,enum_ieee
+#ITUT enum modes defines for atm/msg/vi_script 
+MOV 0,enum_xgs
+MOV 1,enum_xgpon
+MOV 2,enum_gpon
+#IEEE enum modes defines for atm/msg/vi_script 
+MOV 0,enum_epon_10g10g
+MOV 1,enum_epon_10g1g
+MOV 2,enum_epon_2g1g
+MOV 3,enum_epon_1g1g
+MOV 4,enum_ae_10g10g
+MOV 5,enum_ae_5g5g
+MOV 6,enum_ae_2g2g
+MOV 7,enum_ae_1g1g
+MOV 8,enum_mpcs_10g10g
+MOV 9,enum_mpcs_5g5g
+MOV 10,enum_mpcs_2g2g
+MOV 11,enum_mpcs_1g1g
+################################################# 
+MOV 0,enum_ah_gb
+MOV 1,enum_av_gb
+MOV 2,enum_ae_gb
+MOV 3,enum_gpon_gb
+MOV 4,enum_ngpon_gb
+################################################# 
+ 
+# Select required TX Gearbox based on pon_type   
+################################################ 
+CMP itut_or_ieee_sel,enum_itut
+JNE _L_ifelse_0_1_else
+    CMP pon_type_select,enum_xgs
+    JNE _L_ifelse_0_0_0_else
+        MOV enum_ngpon_gb,tx_gearbox_select
+        JMP _L_ifelse_0_0_end
+    _L_ifelse_0_0_0_else:
+    CMP pon_type_select,enum_xgpon
+    JNE _L_ifelse_0_0_1_else
+        MOV enum_ngpon_gb,tx_gearbox_select
+        JMP _L_ifelse_0_0_end
+    _L_ifelse_0_0_1_else:
+    CMP pon_type_select,enum_gpon
+    JNE _L_ifelse_0_0_2_else
+        MOV enum_gpon_gb,tx_gearbox_select
+        JMP _L_ifelse_0_0_end
+    _L_ifelse_0_0_2_else:
+        HALT 1
+    _L_ifelse_0_0_end:
+    JMP _L_ifelse_0_end
+_L_ifelse_0_1_else:
+CMP itut_or_ieee_sel,enum_ieee
+JNE _L_ifelse_0_3_else
+    CMP pon_type_select,enum_epon_10g10g
+    JNE _L_ifelse_0_2_0_else
+        MOV enum_av_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_0_else:
+    CMP pon_type_select,enum_epon_10g1g
+    JNE _L_ifelse_0_2_1_else
+        MOV enum_ah_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_1_else:
+    CMP pon_type_select,enum_epon_2g1g
+    JNE _L_ifelse_0_2_2_else
+        MOV enum_ah_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_2_else:
+    CMP pon_type_select,enum_epon_1g1g
+    JNE _L_ifelse_0_2_3_else
+        MOV enum_ah_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_3_else:
+    CMP pon_type_select,enum_ae_10g10g
+    JNE _L_ifelse_0_2_4_else
+        MOV enum_av_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_4_else:
+    CMP pon_type_select,enum_ae_5g5g
+    JNE _L_ifelse_0_2_5_else
+        MOV enum_av_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_5_else:
+    CMP pon_type_select,enum_ae_2g2g
+    JNE _L_ifelse_0_2_6_else
+        MOV enum_ah_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_6_else:
+    CMP pon_type_select,enum_ae_1g1g
+    JNE _L_ifelse_0_2_7_else
+        MOV enum_ah_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_7_else:
+    CMP pon_type_select,enum_mpcs_10g10g
+    JNE _L_ifelse_0_2_8_else
+        MOV enum_ae_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_8_else:
+    CMP pon_type_select,enum_mpcs_5g5g
+    JNE _L_ifelse_0_2_9_else
+        MOV enum_ae_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_9_else:
+    CMP pon_type_select,enum_mpcs_2g2g
+    JNE _L_ifelse_0_2_10_else
+        MOV enum_ae_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_10_else:
+    CMP pon_type_select,enum_mpcs_1g1g
+    JNE _L_ifelse_0_2_11_else
+        MOV enum_ae_gb,tx_gearbox_select
+        JMP _L_ifelse_0_2_end
+    _L_ifelse_0_2_11_else:
+        HALT 2
+    _L_ifelse_0_2_end:
+    JMP _L_ifelse_0_end
+_L_ifelse_0_3_else:
+    HALT 3
+_L_ifelse_0_end:
+ 
+ 
+################################################ 
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_general.csv, val_select:val
+CMP tx_gearbox_select,enum_ah_gb
+JNE _L_ifelse_1_0_else
+    ########################################
+    # cfg_class: ah_tx
+    ########################################
+    # pre_order
+    MOV tx_fifo_offset_val,@(0x828c8060{0x7})
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV load_pointers,@(0x828c8060{0x1}<<8)
+    MOV 0x0,@(0x828c8060{0x1}<<8)
+    MOV @(0x828c8064{0x7}),rd_tx_ptr_delta
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: ah_tx
+    ########################################
+    JMP _L_ifelse_1_end
+_L_ifelse_1_0_else:
+CMP tx_gearbox_select,enum_av_gb
+JNE _L_ifelse_1_1_else
+    ########################################
+    # cfg_class: av_tx
+    ########################################
+    # pre_order
+    MOV tx_fifo_offset_val,@(0x828c807c{0xf})
+    MOV 0x0,@(0x828c807c{0x1}<<8)
+    MOV load_pointers,@(0x828c807c{0x1}<<8)
+    MOV 0x0,@(0x828c807c{0x1}<<8)
+    MOV @(0x828c8080{0x7}),rd_tx_ptr_delta
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: av_tx
+    ########################################
+    JMP _L_ifelse_1_end
+_L_ifelse_1_1_else:
+CMP tx_gearbox_select,enum_ae_gb
+JNE _L_ifelse_1_2_else
+    ########################################
+    # cfg_class: ae_tx
+    ########################################
+    # pre_order
+    MOV tx_fifo_offset_val,@(0x828c80b0{0xf}<<20)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV load_pointers,@(0x828c80b0{0x1}<<19)
+    MOV 0x0,@(0x828c80b0{0x1}<<19)
+    MOV @(0x828c80b4{0xf}),rd_tx_ptr_delta
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: ae_tx
+    ########################################
+    JMP _L_ifelse_1_end
+_L_ifelse_1_2_else:
+CMP tx_gearbox_select,enum_gpon_gb
+JNE _L_ifelse_1_3_else
+    ########################################
+    # cfg_class: gpon_tx
+    ########################################
+    # pre_order
+    MOV tx_fifo_offset_val,@(0x828c80cc{0x1f})
+    MOV 0x0,@(0x828c80cc{0x1}<<5)
+    MOV load_pointers,@(0x828c80cc{0x1}<<5)
+    MOV 0x0,@(0x828c80cc{0x1}<<5)
+    MOV @(0x828c80d0{0xf}),rd_tx_ptr_delta
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: gpon_tx
+    ########################################
+    JMP _L_ifelse_1_end
+_L_ifelse_1_3_else:
+CMP tx_gearbox_select,enum_ngpon_gb
+JNE _L_ifelse_1_4_else
+    ########################################
+    # cfg_class: ngpon_tx
+    ########################################
+    # pre_order
+    MOV tx_fifo_offset_val,@(0x828c80e8{0x1f})
+    MOV 0x0,@(0x828c80e8{0x1}<<5)
+    MOV load_pointers,@(0x828c80e8{0x1}<<5)
+    MOV 0x0,@(0x828c80e8{0x1}<<5)
+    MOV @(0x828c80ec{0xf}),rd_tx_ptr_delta
+    # unorder
+    # post_order
+    ########################################
+    # end of cfg_class: ngpon_tx
+    ########################################
+    JMP _L_ifelse_1_end
+_L_ifelse_1_4_else:
+    HALT 4
+_L_ifelse_1_end:
+MOV 1,__RETC
+MOV rd_tx_ptr_delta,__RV0
+HALT 0
+########################################
+# end of call_msg: onu_sgb_gbox_tx_fifo_ptr_wr_rd
+########################################

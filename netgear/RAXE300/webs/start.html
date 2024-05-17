@@ -1,0 +1,1095 @@
+<!DOCTYPE HTML>
+<? include_once 'php/commonCfg.php';?>
+<? include_once 'php/wifi.php';?>
+<? include_once 'php/armor.php';?>
+<? include_once 'php/apmode.php';?>
+<? include_once 'php/interface.php';?>
+<? include_once 'php/blocksiteSchedule.php';?>
+<? autoLang() ?>
+<html>
+<head>
+  <META name="description" content="<?= getModelNameStr()?>">
+  <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <META http-equiv="Content-Style-Type" content="text/css">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+  <link rel="stylesheet" type="text/css" href="css/mainpage.css">
+  <link rel="stylesheet" type="text/css" href="css/tabs.css">
+  <link rel="stylesheet" type="text/css" href="css/button.css">
+  <link rel="stylesheet" type="text/css" href="css/menu.css">
+  <link rel="shortcut icon" href="favicon.ico">
+  <!--script src="js/jquery.js"></script-->
+  <script src="js/jquery.min.js"></script>
+  <script src="js/resize.js<? getVer(); ?>"></script>
+  <script src="js/mlang.js<? getVer(); ?>"></script>
+  <script src="js/menu.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+  <script type="text/javascript">
+    CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+    var is_loading_page = 0;
+    var adjustPageHeight = 0;
+    var num_nosubLarge = 0;
+    var num_submenuLarge = 0;
+    var errorStr = "";
+    var backUrl = "";
+    var g_portFwdTgr_goToPage = "forward-page";
+
+    function mlangInit(content) {
+      if (content != undefined) {
+          content.find('[mlang]').each(function(idx, obj) {
+          obj.innerHTML = mlang[obj.attributes.mlang.value] != undefined ? mlang[obj.attributes.mlang.value]:$(obj).text();    
+        });
+        return content;
+      } else {
+        $("[mlang]").each(function(idx, obj) {
+          obj.innerHTML = mlang[obj.attributes.mlang.value];    
+        });
+      }
+    }
+    
+    $(window).on("load",function()
+    {
+      change_size_all();
+      if(sessionStorage.getItem("barTitle"))
+        sessionStorage.removeItem("barTitle");
+      if(sessionStorage.getItem("delay"))
+        sessionStorage.removeItem("delay");
+      if(sessionStorage.getItem("duration"))
+        sessionStorage.removeItem("duration");
+      if(sessionStorage.getItem("nextURL"))
+        sessionStorage.removeItem("nextURL");
+      if(sessionStorage.getItem("guiId"))
+        sessionStorage.removeItem("guiId");
+      if(sessionStorage.getItem("contentURL"))
+      {
+        var contentURL = sessionStorage.getItem("contentURL");
+        sessionStorage.removeItem("contentURL");
+        loadPage(contentURL);
+          
+      }
+      else
+      loadPage("DashBoard.html");
+      mlangInit();
+      try {
+        document.execCommand("BackgroundImageCache", false, true);
+      } catch (e){}
+    });
+
+    function getMobileOperatingSystem() {
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+          // Windows Phone must come first because its UA also contains "Android"
+        if (/windows phone/i.test(userAgent)) {
+            return "Windows Phone";
+        }
+    
+        if (/android/i.test(userAgent)) {
+            return "Android";
+        }
+    
+        // iOS detection from: http://stackoverflow.com/a/9039885/177710
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            return "iOS";
+        }
+    
+        return "unknown";
+    }
+
+    function toggleNightHawkCard()
+    {
+        var isMobile = getMobileOperatingSystem();
+        if(isMobile== "Android")
+        { 
+            $(".app").show();
+            $(".store").hide();
+            $(".desktop").hide();
+        }
+        if(isMobile== "iOS")
+        { 
+            $(".app").hide();
+            $(".store").show();
+            $(".desktop").hide();
+        }
+    }
+	
+    function isInteger(obj)
+    {
+        return (obj | 0) === obj
+    }
+
+    function TimeZonePost(SetTzVal)
+    {
+        var wrapObj = {};
+        wrapObj.function = "ntp";
+        wrapObj.data = SetTzVal;
+	
+        $.ajax({
+            url: "/cgi-bin/rex_cgi?csrftoken=" + CSRF_TOKEN,
+            type: "POST",
+            data: JSON.stringify(wrapObj),
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(json) {
+              console.log(json.status);
+              document.location.reload();
+            },
+            error: function(json) {
+              console.log(json.status);
+            }
+        });
+    }
+	
+    function AutoTimeZone()
+    {
+        var str_lan_ip = "<?= getLanInstanceIpAddr() ?>";
+        var str_lan_netmask = "<?= getLanInstanceIpMask() ?>";
+        var lan_ipaddr = ip2int(str_lan_ip);
+        var lan_netmaskaddr = ip2int(str_lan_netmask);
+        var str_client_ip = "<?= getClientIpAddress() ?>";
+        var client_ipaddr = ip2int(str_client_ip);
+        var TzState = "<?= getTextVal_timeZonestate() ?>";
+        var TimeZoneStr = "<?= getSelectVal_timeZone() ?>";
+        var ActiveTZstatus = "<?= getVal_ActiveTimeZoneState() ?>";
+		
+        var time_zone = {
+            "International_Date_Line_West" : -12,
+            "Midway_Island" : -11,
+            "Hawaii" : -10,
+            "Alaska" : -9,
+            "Pacific_Time" : -8,
+            "Arizona" :  -7,
+            "Mountain_Time" : -7,
+            "Central_Time" : -6,
+            "Monterrey" : -6,
+            "Bogota" : -5,
+            "Eastern_Time" : -5,
+            "Indiana" : -5,
+            "Atlantic_Time" : -4,
+            "Newfoundland" : -3.5,
+            "Brasilia" : -3,
+            "Noronha" : -2,
+            "Azores" : -1,
+            "Casablanca" : 0,
+            "GMT" : 0,
+            "Amsterdam" : 1,
+            "Belgrade" : 1,
+            "Brussels" : 1,
+            "Sarajevo" : 1,
+            "Athens" : 2,
+            "Bucharest" : 2,
+            "Helsinki" : 2,
+            "Baghdad" : 3,
+            "Baku" : 4,
+            "Moscow" :  4,
+            "Karachi" : 5,
+            "Kolkata" : 5.5,
+            "Almaty" : 6,
+            "Bangkok" : 7,
+            "Beijing" : 8,
+            "Taipei" : 8,
+            "Tokyo" : 9,
+            "Darwin" : 9.5,
+            "Sydney" : 10,
+            "Yakutsk" : 10,
+            "Guam" : 10,
+            "Vladivostok" : 11,
+            "Magadan" : 11,
+            "Fiji" : 12,
+            "Kamchatka" : 12,
+            "Tongatapu" :13,
+        };
+
+        //add multiple timezone entry and check again
+        var time_zone_cities = {
+            "International_Date_Line_West" : "International_Date_Line_West",
+            "Midway_Island" : "Midway_Island, Samoa",
+            "Hawaii" : "Hawaii",
+            "Alaska" : "Alaska",
+            "Pacific_Time" : "Pacific_Time, Tijuana",
+            "Arizona" : "Arizona, Chihuahua, La_Paz, Mazatlan",
+            "Mountain_Time" : "Mountain_Time",
+            "Central_Time" : "Central_America, Central_Time",
+            "Monterrey" : "Guadalajara, Mexico_City, Monterrey, Saskatchewan",
+            "Bogota" : "Bogota, Lima, Quito", 
+            "Eastern_Time" : "Eastern_Time",
+            "Indiana" : "Indiana",
+            "Atlantic_Time" : "Atlantic_Time, Caracas, La_Paz, Santiago",
+            "Newfoundland" : "Newfoundland",
+            "Brasilia" : "Brasilia, Buenos Aires, Georgetown, Greenland",
+            "Noronha" : "Mid-Atlantic",
+            "Azores" : "Azores, Cape_Verde_Is",
+            "Casablanca" : "Casablanca, Monrovia", //GMT
+            "GMT" : "Dublin, Edinburgh, Lisbon, London", //GMT
+            "Amsterdam" : "Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna", //+1
+            "Belgrade" : "Belgrade, Bratislava, Budapest, Ljubljana, Prague", //+1
+            "Brussels" : "Brussels, Copenhagen, Madrid, Paris", //+1
+            "Sarajevo" : "Sarajevo, Skopje, Warsaw, Zagreb, West_Central_Africa", //+1
+            "Athens" : "Athens, Beirut, Istanbul, Minsk", //+2
+            "Bucharest" : "Bucharest, Cairo, Harare, Pretoria", //+2
+            "Helsinki" : "Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius, Jerusalem", //+2
+            "Baghdad" : "Baghdad, Kuwait, Nairobi, Riyadh, Tehran",
+            "Baku" : "Abu_Dhabi, Muscat, Baku, Tbilisi, Yerevan, Kabul", //+4
+            "Moscow" : "Moscow, St_Petersburg, Volgograd", //+4
+            "Karachi" : "Ekaterinburg, Islamabad, Karachi, Tashkent",
+            "Kolkata" : "Chennai, Kolkata, Mumbai, New_Delhi",
+            "Almaty" : "Almaty, Ekaterinburg, Astana, Dhaka, Sri Jayawardenepura, Rangoon",
+            "Bangkok" : "Bangkok, Jakarta, Hanoi, Novosibirsk",
+            "Beijing" : "Beijing, Chongqing, Hong_Kong, Urumqi", //+8
+            "Taipei" : "Krasnoyarsk, Ulaanbataar, Kuala_Lumpur, Singapore, Perth, Taipei", //+8
+            "Tokyo" : "Tokyo, Osaka, Sapporo, Seoul, Irkutsk", //+9
+            "Darwin" : "Adelaide, Darwin", //+9.5
+            "Sydney" : "Brisbane, Canberra, Melbourne, Sydney", //+10
+            "Yakutsk" : "Yakutsk", //+10
+            "Guam" : "Guam, Port_Moresby, Hobart", //+10
+            "Vladivostok" : "Vladivostok", //+11
+            "Magadan" : "Magadan, Solomon_Is, New Caledonia", //+11
+            "Fiji" : "Fiji, Auckland, Wellington, Marshall_Is", //+12
+            "Kamchatka" : "Kamchatka, Magadan", //+12
+            "Tongatapu" : "Nukualofa",
+        };
+
+        if( (client_ipaddr & lan_netmaskaddr) == (lan_ipaddr & lan_netmaskaddr) ) {
+            if( TzState != 2 && ActiveTZstatus == false) {
+                var d = new Date();
+                var getTimeZoneOffsetInHours = d.getTimezoneOffset()/-60;
+                var timeCity = ""; //currentTimeZone[1];
+                var currentTimeZoneOffsetInHours = "";
+                var TimeZoneVal = "";
+
+                //IE is not support Intl.DateTimeFormat().resolvedOptions().timeZone,
+                //Need check timeZone object before use it
+                if (Intl.DateTimeFormat().resolvedOptions().timeZone){
+                     currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
+                     timeCity = currentTimeZone[1];
+                }
+
+                for (key in time_zone) {
+                    //console.log(key, time_zone[key]);
+                    if (key == TimeZoneStr) {
+                        TimeZoneVal = time_zone[key];
+                        break;
+                    }
+                }
+
+                if(isInteger(getTimeZoneOffsetInHours) == false ) {
+                    currentTimeZoneOffsetInHours = getTimeZoneOffsetInHours.toFixed(1);
+                }
+                else {
+                    currentTimeZoneOffsetInHours = getTimeZoneOffsetInHours;
+                }
+                //alert("getTimeZone:"+TimeZoneVal+"currentTimeZone:"+currentTimeZoneOffsetInHours);
+
+
+                if( TimeZoneVal != currentTimeZoneOffsetInHours) {
+
+                    var DaylightSaving = <?= getCheckboxVal_autoDaylightSaving() ?>;
+                    var prefer_NtpServer = <?= getCheckboxVal_preferNtpServer() ?>;
+                    var ATZval ={};
+                    var miniDiff = 1;
+                    var TimeDiff = 0;
+                    var bFound = false;
+                    var CurrTz = "";
+
+                    //update daylight saving
+                    var jan_time = new Date(d.getFullYear(), 0, 1);
+                    var jul_time = new Date(d.getFullYear(), 6, 1);
+                    if (jan_time.getTimezoneOffset() != jul_time.getTimezoneOffset()) {
+                        DaylightSaving = "true";
+
+                        // For daylight saving time zone,
+                        // if current time zone offset > normal time zone offset, it is in daylight saving time
+                        // we need set currentTimeZoneOffsetInHours = currentTimeZoneOffsetInHours - 1
+                        if ((d.getTimezoneOffset()/-60 > jan_time.getTimezoneOffset()/-60) ||
+                            (d.getTimezoneOffset()/-60 > jul_time.getTimezoneOffset()/-60)) {
+                            currentTimeZoneOffsetInHours--;
+                        }
+                    }
+                    else {
+                        DaylightSaving = "false";
+                    }
+
+                    for (key in time_zone) {
+                        console.log(key, time_zone[key], timeCity);
+                        if (time_zone[key] == currentTimeZoneOffsetInHours) {
+                            CurrTz = key;
+                            bFound = true;
+                            if (time_zone_cities[key].indexOf(timeCity) > 0)
+                                break;
+                        }
+                    }
+
+                    if (bFound == false) {
+                        for (key in time_zone) {
+                            //we will compare the current time zone offset + 1, Ex currentTimeZoneOffsetInHours=5.5, check upto timezone=6
+                            if (currentTimeZoneOffsetInHours > (time_zone[key] - 1)) {
+                                TimeDiff = Math.abs(currentTimeZoneOffsetInHours - time_zone[key]);
+                                if (TimeDiff < miniDiff) {
+                                    miniDiff = TimeDiff;
+                                    CurrTz = key;
+                                }
+                            }
+                        }
+                    }
+
+                    //alert("Currect TimeZone : "+CurrTz+"get TimeZone : "+TimeZoneStr);
+                    if (CurrTz != TimeZoneStr) {
+                        if (confirm(window.top.mlang["CEM060"])) {
+                            //alert("Currect TimeZone :"+CurrTz);
+                            ATZval["timeZone"] = CurrTz;
+                            ATZval["autoDaylightSaving"] = DaylightSaving;
+                            ATZval["preferNtpServer"] =  prefer_NtpServer;
+                            ATZval["ntpServer"] = $("[name='StrNtpServer']").val();
+                            ATZval["timeZonestate"] = 1;
+                            TimeZonePost(ATZval);
+                        }
+                    }
+                }
+            } //TzState != 2
+        }
+    }
+    
+    $(document).ready(function(){
+      toggleNightHawkCard();
+      advanceMenu();
+	  
+      $('.subHeader').hide();
+      
+      $('#formframe').on("load", function (){
+        $('#formframe').contents().find(".form-btn-row").addClass("form-btn-row2");
+        $("[mlang]",$('#formframe').contents()).each (function () {
+          var str = $(this).attr('mlang');
+          var html_str = "";
+          if($(this)[0].children.length > 0)
+          {
+             html_str = $(this)[0].innerHTML.replace($(this)[0].innerText.trim(), "")
+            
+          }
+          if (window.top.mlang[str])
+          {
+              $(this)[0].innerHTML = window.top.mlang[str].toString();
+              //$(this)[0].innerHTML = $(this)[0].innerHTML.replace(/[^<]*/, window.top.mlang[str]);
+          }
+          else
+          {
+              console.log("No mlang for id=" + str);
+          }
+        });
+      });
+
+      if  (<?= getWanLanConflictFile() ?>)
+      {
+          document.location.href = "BRS_wanlan_conflict.html";
+      }
+
+      post_fillout_init();
+
+    });
+
+    function post_fillout_init ()
+    {
+        //greyout/un-greyout submenu based on ap mode enabled/disabled
+        init_apmode();
+        AutoTimeZone();
+        
+        //show armor advertisement while armor is disabled
+        if($("[name=apmode]").val() == "router")
+        {
+            // Disable Armor at PR SKU
+            var sku = "<?= getNmrpSKU() ?>";
+            if (sku != "PR")
+            {
+                init_armor_advertisement();
+            }
+        }
+        
+        
+        //close armor AD while clicking the close icon
+        $('#armor_close').click(function() {
+            $("#modalBox_armor").hide();
+        });
+        
+        //save user input of not showing the Armor AD anymore
+        $('#armor_nvrm').click(function() {
+            //send post to save AdDisable value as true
+            var json_data = '{ "function": "armor", "data": { "AdDisable" : "true"} }';
+            $.postData('cgi-bin/rex_cgi', json_data);
+            
+            //show "Preference updated" msg and icon
+            $('#armor_nvrm').hide();
+            $('#armor_done').show();
+        });
+        
+    }
+
+    function waitLoading()
+    {
+        $("#main_screen").addClass("main_screen_mask");
+        $("#formframe").addClass("page-gray");
+            $("[name=page_contain]").addClass("page-loading");
+        }
+
+    function finishLoading()
+    {
+        $("#main_screen").removeClass("main_screen_mask");
+        $("#formframe").removeClass("page-gray");
+            $("[name=page_contain]").removeClass("page-loading");
+        }
+
+    function init_startMenu()
+    {
+        //Steven add, when 2gSsidBroad is false or 5gSsidBroadcast is false, greyout "WPS Wizard"
+        $2gSSidBroadCast = <?= getCheckboxVal_2gSsidBroadcast() ?>;
+        $5gSSidBroadCast = <?= getCheckboxVal_5gSsidBroadcast() ?>;
+
+        if ( ($("[name=wps2GEnabled]").val() == "0" && $("[name=wps5GEnabled]").val() == "0") ||
+             ($2gSSidBroadCast == false || $5gSSidBroadCast == false) ||
+             ($("input[name='2GSecurity']").val() == 4 || $("input[name='5GSecurity']").val() == 4) ||
+             ($("[name=2GRadioOn]").val() == "false" && $("[name=5GRadioOn]").val() == "false")) 
+        {
+            document.getElementById("wps-wizard").style["pointer-events"] = "none";
+            document.getElementById("wps-wizard").style["opacity"] = "0.5";
+            document.getElementById("wps-wizard").classList.add("auto_grey");
+        }
+    }
+    
+    function init_apmode() {
+        var apmode = $("[name=apmode]").val();
+        
+        if (apmode == "ap") {
+            //greyout ApMode-ReadOnly submenus when DUT is in ap mode
+            $(".ApMode-ReadOnly").css("pointer-events", "none");
+            $(".ApMode-ReadOnly").css("opacity", "0.5");
+            $(".ApMode-ReadOnly").addClass("auto_grey");
+        }
+        else if (apmode == "bridge") {
+            //greyout BridgeMode-ReadOnly submenus when DUT is in bridge mode
+            $(".BridgeMode-ReadOnly").css("pointer-events", "none");
+            $(".BridgeMode-ReadOnly").css("opacity", "0.5");
+            $(".BridgeMode-ReadOnly").addClass("auto_grey");
+        }
+        else if (apmode == "router") {
+            //un-greyout ApMode-ReadOnly/BridgeMode-ReadOnly submenus when DUT leave ap/bridge mode
+            $(".ApMode-ReadOnly").css("pointer-events", "");
+            $(".ApMode-ReadOnly").css("opacity", "");
+            $(".ApMode-ReadOnly").removeClass("auto_grey");
+            $(".BridgeMode-ReadOnly").css("pointer-events", "");
+            $(".BridgeMode-ReadOnly").css("opacity", "");
+            $(".BridgeMode-ReadOnly").removeClass("auto_grey");
+        }
+    }    
+
+    function init_armor_advertisement()
+    {
+        var armor_enable = $("[name=armor_enable]").val();
+        var armorAd_disable = $("[name=armorAd_disable]").val();
+        var showedArmorAd = sessionStorage.getItem("showedArmorAd");
+
+        //armor AD show at condition :
+        //1. Armor is not activate
+        //2. The AD is not yet showed in this time web access
+        //3. armor AD is not diabled by user
+        if (armor_enable == "false" && showedArmorAd != "true" && armorAd_disable == "false") {
+            sessionStorage.setItem("showedArmorAd", "true");
+            $("#modalBox_armor").show();
+        }
+    }
+    
+    function check_oncontextmenu()
+    {
+      //TODO: 
+      //if ("<% GetPageCfg("start_menu_2G_wps") %>" == "Disable" && "<% GetPageCfg("start_menu_5G_wps") %>" == "Disable")
+      if ("" == "Disable" && "" == "Disable") {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    $.postData = function(url, data , callback, time) {
+        //post data
+        $.ajax({
+            url: url + "?csrftoken=" + CSRF_TOKEN,
+            type: "POST",
+            data: data,
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(json) {
+                
+            },
+            error: function(xhr) {
+                var json = {
+                    "code": "-1",
+                    "message": xhr.status + " " + xhr.statusText,
+                };
+                
+            },
+            timeout: time ? time : 0,
+        });
+    };
+  </script>
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+  <style>
+.modal{display:none;position:fixed;z-index:10000;padding-top:100px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:#000;background-color:rgba(0,0,0,.4)}.modal-content{position:relative;background-color:#fefefe;margin:auto;padding:0;border:1px solid #888;width:40%;box-shadow:0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.19);-webkit-animation-name:animatetop;-webkit-animation-duration:.4s;animation-name:animatetop;animation-duration:.4s}@-webkit-keyframes animatetop{from{top:-300px;opacity:0}to{top:0;opacity:1}}@keyframes animatetop{from{top:-300px;opacity:0}to{top:0;opacity:1}}.close{color:#9e9e9e;float:right;font-size:28px;font-weight:700}.close:focus,.close:hover{color:#000;text-decoration:none;cursor:pointer}.modal-header{padding:2px 16px;color:#fff}.modal-body{padding:2px 16px}.modal-footer{padding:2px 16px;color:#fff}.modalButton{width:60%;background-color:#97c453;border-radius:5px;color:#fff;height:50px;text-align:center;margin-left:auto;margin-right:auto;line-height:51px;margin-top:70px;margin-bottom:40px;cursor:pointer}#modalBox div{FONT-FAMILY:Arial,Helvetica,Geneva,Swiss,SunSans-Regular,sans-serif}.modalBox-title{color:#333;font-size:22px;text-align:center;margin-top:20px}.modal-body p{text-align:center;margin-left:16%;margin-right:16%;font-size:13px}#modalBox .learn-more-link{width:100%;text-align:center;float:left;color:#09c;margin-top:5px;text-decoration:none}.modal-body-bottom-left,.modal-body-bottom-left div,.modal-body-bottom-left input,.modal-body-bottom-right,.modal-body-bottom-right div,.modal-body-bottom-right input{float:left}.modal-body-bottom-left{margin-left:32%}#modalBox .modal-content{min-height:445px;min-width:480px}.modal-body-bottom-left div{font-size:12px;line-height:18px}.modal-body-bottom-right{margin-left:20px;font-size:14px;line-height:19px;color:#97c453;cursor:pointer}.modal-body-bottom-left input{cursor:pointer}.circle-disney-logo img{height:115px;margin-top:20px;margin-bottom:5px}.modal-body-armor{padding:2px 16px}.modalBox-title_armor{color:#fff;font-size:21px;text-align:center;font-family:Avenir-Book;margin-top:45px}.modal-body-armor p{text-align:center;margin-left:10%;margin-right:10%;font-size:13px}#modalBox_armor .learn-more-link{width:100%;text-align:center;float:left;color:#09c;margin-top:5px;text-decoration:none}.modal-body-bottom-left{margin-left:32%}#modalBox_armor .modal-content{min-height:524px;min-width:576px;background:url(../images/armor_Background.png) no-repeat;background-size:cover}.modal-body-bottom-left div{font-size:12px;line-height:18px}.modal-body-bottom-right{margin-left:20px;font-size:14px;line-height:19px;color:#97c453;cursor:pointer}.modal-body-bottom-left input{cursor:pointer}.modalButton-armor-QR{font-family:Avenir-Medium;font-size:12px;color:#fff;letter-spacing:-.4px;text-align:center}.modalButton-armor{width:60%;border-radius:5px;height:50px;text-align:center;margin-left:auto;margin-right:auto;line-height:51px;margin-top:10px;margin-bottom:40px;cursor:pointer;font-family:Avenir-Book;font-size:14px;color:#94c2d9;letter-spacing:-.47px}.modalButton-armor:focus,.modalButton-armor:hover{background:rgba(255,255,255,.09) none repeat scroll!important;background:#fff;filter:Alpha(opacity=9);color:#81b5d0;border-radius:2px;font-family:Avenir-Book;font-size:14px;letter-spacing:-.47px}.modalButton-armor-done{width:60%;border-radius:5px;height:50px;margin-left:auto;margin-right:auto;line-height:51px;margin-top:10px;margin-bottom:40px;font-family:Avenir-Book;font-size:14px;color:#fff;letter-spacing:-.47px;text-align:center}.armor-close{width:25px;height:25px;border:1px;float:right}.armor-close:focus,.armor-close:hover{background:rgba(255,255,255,.09) none repeat scroll!important;background:#fff;filter:Alpha(opacity=9);border-radius:2px;width:25px;height:25px}.modalButton-armor-white:focus,.modalButton-armor-white:hover{background:#fff;font-weight:700}
+
+
+  </style>
+</head>
+
+<body style="padding:0;margin:0;overflow:none" onload="init_startMenu();" onResize="change_size_all();">
+<div id="main_screen" style="z-index:9999;">
+  <div id="top_div">
+    <iframe id="topframe" name="topframe" src="top.html" height="100%" width="100%" frameborder="0" border="0" cellspacing="0" scrolling="no"></iframe>
+  </div><!-- id=top_div -->
+  <div id="container" class="container_center">
+    <table width="100%" CELLPADDING="0" CELLSPACING="0" style="padding:0;margin:0;">
+                      <tr>
+                        <td style="background-color:#FFFFFF;width:200px;font-size:12px;font-family:Arial;">
+          <div class="pane" id="basic-pane" style="min-height: 600px;">
+                          <div class="basic-menu basic-menu-custom">
+                            <div class="basic-menu-div" id="basic-home">
+                              <a href="DashBoard.html">
+                                <span id="basic_home" mlang="genie_52" >
+                                  Home
+                                </span>
+                              </a>
+                            </div>
+                            <div class="basic-menu-div ApMode-ReadOnly BridgeMode-ReadOnly" id="basic-int">
+                              <a href="BAS_wan.html" id="INT_menu">
+                                <span id="basic_internet" mlang="genie_69" >
+                                  Internet
+                                </span>
+                              </a>
+                            </div>
+                            <div class="basic-menu-div BridgeMode-ReadOnly" id="basic-wls">
+                              <a href="WLG_wireless.html" SubMenu id="WLS_menu">
+                                <span id="basic_wireless" mlang="genie_154" >
+                                  Wireless
+                                </span>
+                              </a>
+                            </div>
+                            <div class="basic-menu-div" id="basic-atd">
+                              <a href="DEV_device.html">
+                                <span id="basic_attached" mlang="LUP023" >
+                                  Attached Devices
+                                </span>
+                              </a>
+                            </div>
+                            <div class="basic-menu-div ApMode-ReadOnly BridgeMode-ReadOnly" id="basic-qos">
+                              <a href="QOS_down_streaming_iqos_basic.html">
+                                <span id="basic_qos" mlang="PCVP_118">
+                                Quality of Service
+                                </span>
+                              </a>
+                            </div>
+                            
+            <div class="basic-menu-div" id="basic-rea">
+              <a href="USB_basic.html">
+                                <span id="basic_ready" mlang="genie_811" >
+                                  ReadySHARE.
+                                </span>
+                              </a>
+            </div>
+                            
+                            <div class="basic-menu-div BridgeMode-ReadOnly" id="basic-gst">
+                              <a href="WLG_wireless_guest.html" SubMenu>
+                                <span id="basic_guest" mlang="LUP010" >
+                                  Guest Network
+                                </span>
+                              </a>
+                            </div>
+                          </div>
+            <div class="card-nighthawk-app" id="nighthawk_app" style="">
+            <div class="card-nighthawk-app-header"> <img src="images/nighthawk-logo.svg" alt="">
+              <p mlang="PCVP_076"> Fast and easy control from anywhere.</p>
+              <span class="desktop"> <a href="https://www.netgear.com/home/apps-services/nighthawk-app/" target="_blank" mlang="PCVP_077">Download the app now.</a></span>
+              <span class="store"> <a href="https://itunes.apple.com/us/app/netgear-up/id1124666597" target="_blank" mlang="PCVP_077">Download the app now.</a></span>
+              <span class="app"> <a href="https://play.google.com/store/apps/details?id=com.netgear.netgearup" target="_blank" mlang="PCVP_077">Download the app now.</a></span> </div>
+                  
+              <div class="device-content">
+                <div class="disp-cell"><img src="images/device-nighthawk.svg" alt=""> </div>
+                <div class="disp-cell"><div class="app-icon-nighthawk"><img src="images/nighthawk-app-icon.svg" class="" alt=""></div> <a href="http://nighthawk-app.com" class="mb app-store" target="_blank"><img src="images/app-store-badge-us-black.svg" alt=""></a> <a href="http://nighthawk-app.com" class="google-store" target="_blank"><img src="images/google-play-badge-us.svg" alt=""></a></div>
+              </div>
+              <div class="card-nighthawk-app-footer"><img src="images/logo-netgear.svg" alt=""></div>
+            </div>
+                          </div>
+          <div class="pane" id="adv-pane" style="display:none; min-height: 600px;">
+                          <div class="advance_menu_section">
+                            <ul class="advance-menu">
+                              <li class="noSub" id="adv-home">
+                                <a href="ADVANCED_home.html">
+                                  <span class="nosub_text" id="home" mlang="genie_12" >
+                                    ADVANCED Home
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="noSub ApMode-ReadOnly BridgeMode-ReadOnly" id="wizard">
+                                <a href="WIZ_sel.html"SubMenu onClick="return false">
+                                  <span class="nosub_text" id="setup_wizard" mlang="LUP005" >
+                                    Setup Wizard
+                                  </span>
+                                </a>
+                              </li>
+                              <li oncontextmenu="return check_oncontextmenu();" class="noSubLarge BridgeMode-ReadOnly" id="wps-wizard">
+                                <a href="Add_WPS_Client.html">
+                                  <span id="wps" mlang="add_wps_client_title" >
+                                    WPS Wizard
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="Sub" id="setup_header">
+                                <a href="#">
+                                  <span id="setup" mlang="LUP007" >
+                                    Setup
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="subHeader" id="set_hdr">
+                                <ul style="width:100%;height:148px">
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="int_set">
+                                    <a href="BAS_wan.html" SubMenu onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="internet_setup" mlang="genie_68" >
+                                        Internet Setup
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS BridgeMode-ReadOnly" id="wireless_set" SubMenu>
+                                    <a href="WLG_wireless.html" onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="wireless_setup" mlang="genie_153" >
+                                        Wireless Setup
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="wan_set">
+                                    <a href="WAN_wan.html" SubMenu onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="wan_setup" mlang="LUP031" >
+                                        WAN Setup
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="LAN_set">
+                                    <a href="LAN_lan.html" SubMenu onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="lan_setup" mlang="LUP032" >
+                                        LAN Setup
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS SubMenuEXT ApMode-ReadOnly BridgeMode-ReadOnly" id="Qos_set" SubMenu>
+                                    <a href="QOS_down_streaming.html" onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="qos_setup" mlang="LUP033" >
+                                        QoS Setup
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS BridgeMode-ReadOnly" id="guest_set" SubMenu>
+                                    <a href="WLG_wireless_guest.html" onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="guest_network_setup" mlang="LUP010" >
+                                        Guest Network
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS" id="device_name">
+                                    <a href="DEV_name.html" SubMenu onClick="return false">
+                                      <span style="padding-left:13px;width:150px" id="advanced_devname" mlang="MAD001" >
+                                        Device Name
+                                      </span>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </li>
+                              
+              <li class="Sub" id="USBStorage_header">
+                                <a href="#">
+                                  <span id="usb" mlang="genie_811" >
+                                    USB Functions
+                                  </span>
+                                </a>
+              </li>
+              <li class="subHeader">
+                                <ul style="width:100%;height:100%">
+                  <li class="SubMenuLarge SubMenu Large SubMenuWDS" style="cursor: default;">
+                    <a style="cursor: default;">
+                                      <span style="border:0;" id="usb_readyshare_storage" mlang="UBS155" >
+                                        ReadySHARE Storage
+                                      </span>
+                                    </a>
+                                  </li>
+                  <div style="margin-left: 15px; display: block;">
+                    <li class="SubMenuLarge SubMenu Large SubMenuWDS">
+                      <a href="USB_basic.html" SubMenu onClick="return false">
+                        <span style="border:0;width: auto;" id="usb_basic" mlang="LUP008" >
+                          Basic Settings
+                        </span>
+                      </a>
+                    </li>
+                    <li class="SubMenuLarge SubMenu Large SubMenuWDS">
+                      <a href="USB_advanced.html" SubMenu onClick="return false">
+                        <span style="border:0;width: auto;" id="usb_advanced" mlang="LUP014" >
+                          Advanced Settings
+                        </span>
+                      </a>
+                    </li>
+                                  <li class="SubMenuLarge SubMenu Large SubMenuWDS">
+                      <a href="USB_media.html" SubMenu onClick="return false">
+                        <span style="border:0;width: auto;" id="usb_media" mlang="UMS001" >
+                          Media Server
+                        </span>
+                      </a>
+                    </li>
+                  </div>
+                  <!--
+                  <li class="SubMenuLarge SubMenu Large SubMenuWDS">
+                    <a href="USB_remote.html" SubMenu onClick="return false">
+                      <span style="border:0;" id="usb_readycloud" >
+                        ReadyCLOUD
+                      </span>
+                    </a>
+                  </li>
+                  -->
+                  <!--li class="SubMenuLarge SubMenu Large SubMenuWDS">
+                    <a href="USB_vault.html" SubMenu onClick="return false">
+                                      <span style="border:0;" id="usb_readyshare_vault" mlang="genie_226" >
+                                        Netgear ReadySHARE Vault
+                                      </span>
+                                    </a>
+                              </li-->
+                </ul>
+              </li>
+                              
+                              <li class="Sub" id="security_header">
+                                <a href="#">
+                                  <span id="security" mlang="SGN009" >
+                                    Security
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="subHeader">
+                                <ul id="security_settings_header" style="width:100%;height:100%">
+                                  <li class="SubMenu SubMenuWDS BridgeMode-ReadOnly" id="access_control">
+                                    <a href="DEV_control.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="security_access_control" mlang="D-genie_418" >
+                                        Access Control
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="blk_site">
+                                    <a href="BKS_keyword.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="security_block_site" mlang="LUP017" >
+                                        Block Sites
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="blk_serv">
+                                    <a href="BKS_service.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="security_block_service" mlang="LUP018" >
+                                        Block Services
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS SubMenuEXT BridgeMode-ReadOnly" id="sche" SubMenu>
+                                    <a href="BKS_schedule.html" onClick="return false">
+                                      <span class="subMenu_text" id="security_schedule" mlang="LUP019" >
+                                        Schedule
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS SubMenuEXT BridgeMode-ReadOnly" id="email" SubMenu>
+                                    <a href="FW_email.html" onClick="return false">
+                                      <span class="subMenu_text" id="security_email" mlang="LUP020" >
+                                        E-mail
+                                      </span>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </li>
+                              <li class="Sub" id="administration">
+                                <a href="#">
+                                  <span id="admin" mlang="genie_11" >
+                                    Administration
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="subHeader">
+                                <ul style="width:100%;height:100%">
+                                  <li class="SubMenu" id="router_status">
+                                    <a href="ADVANCED_home.html" onClick="return false">
+                                      <span style="border:0;" class="subMenu_text" id="admin_status" mlang="LUP022" >
+                                        Router Status
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS SubMenuEXT" id="logs">
+                                    <a href="FW_log.html" onClick="return false">
+                                      <span class="subMenu_text" id="admin_logs" mlang="LUP016" >
+                                        Logs
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu" id="adv_attached">
+                                    <a href="DEV_device.html" onClick="return false">
+                                      <span class="subMenu_text" id="admin_attached" mlang="LUP023" >
+                                        Attached Devices
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu">
+                                    <a href="BAK_backup.html" onClick="return false">
+                                      <span class="subMenu_text" id="admin_bakup" mlang="LUP024" >
+                                        Backup Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu">
+                                    <a href="PWD_password.html" onClick="return false">
+                                      <span class="subMenu_text" id="admin_setpassword" mlang="LUP025" >
+                                        Set Password
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu">
+                                    <a href="NTP_Settings.html" onClick="return false">
+                                      <span class="subMenu_text" id="ntp_debug" mlang="ACB_094" >
+                                        NTP Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu">
+                                    <a href="UPG_upgrade.html" onClick="return false">
+                                      <span class="subMenu_text" id="admin_upgrade" mlang="D-genie_311" >
+                                        Router Update
+                                      </span>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </li>
+                              <li class="Sub" id="advset_header">
+                                <a id="advanced_bt" href="#">
+                                  <span id="advanced" mlang="genie_13" >
+                                    Advanced Setup
+                                  </span>
+                                </a>
+                              </li>
+                              <li class="subHeader">
+                                <ul id="adv_settings_header" style="width:100%;height:100%;display:block;">
+                                  <li class="SubMenu" id="adv_wireless_set">
+                                    <a href="WLG_wireless_adv.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_wireless" mlang="LUP009" >
+                                        Wireless Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li id="opmode_head" class="SubMenu">
+                                    <a href="WLG_ap_basic.html" onClick="return false">
+                                      <span class="subMenu_text" id="advanced_rae" mlang="ACB_110" >
+                                        Router / AP / Bridge Mode
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li id="pf_head" class="SubMenuLarge SubMenu Large SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly">
+                                    <a href="FW_port_forward.html" onClick="return false">
+                                      <span class="subMenu_text" id="advanced_pf_pt" mlang="LUP030" >
+                                        Port Forwarding / Port Triggering
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS BridgeMode-ReadOnly" id="ddns">
+                                    <a href="DNS_ddns.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_ddns" mlang="LUP034" >
+                                        Dynamic DNS
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="openvpn">
+                                    <a href="OPENVPN.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="Advanced_vpnservice" mlang="vpn172" >
+                                        VPN Service
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS SubMenuEXT BridgeMode-ReadOnly" id="sta_rout">
+                                    <a href="STR_static_route.html" onClick="return false">
+                                      <span class="subMenu_text" id="advanced_static" mlang="LUP035" >
+                                        Static Routes
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <!-- Netgear does not support remote management for security reason
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly" id="remote">
+                                    <a href="FW_remote.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_remote" mlang="LUP036" >
+                                        Remote Management
+                                      </span>
+                                    </a>
+                                  </li>
+                                  -->
+
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly" id="remote">
+                                    <a href="WSM_webservice.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_remote" mlang="WSM001" >
+                                        Web Service Management
+                                      </span>
+                                    </a>
+                                  </li>
+
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" id="upnp">
+                                    <a href="UPNP_upnp.html"  SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_upnp" mlang="LUP038" >
+                                        UPnP
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly">
+                                    <a href="IPV6_basic.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_ipv6" mlang="AIP001" >
+                                        IPv6
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly">
+                                    <a href="traffic_meter.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_traffic" mlang="LUP039" >
+                                        Traffic Meter
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu" style="height:auto;">
+                                    <a href="LED_settings.html" onClick="return false">
+                                      <span class="subMenu_text" id="advanced_led" mlang="LEDS001" >
+                                        LED Control Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <!--
+                                  <li class="SubMenu" style="height:auto;">
+                                    <a href="LACP_setting.html" onClick="return false">
+                                      <span class="subMenu_text" id="advanced_lacp" mlang="Eth_Aggr_001" >
+                                        Ethernet Port Aggregation
+                                      </span>
+                                    </a>
+                                  </li>
+                                  -->
+                                  <li class="SubMenu SubMenuWDS ApMode-ReadOnly BridgeMode-ReadOnly" style="height:auto;" id="vlan_set">
+                                    <a href="VLAN_IPTV.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="advanced_vlan" mlang="genie_1075" >
+                                        VLAN / Bridge Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                  <li class="SubMenu SubMenuWDS BridgeMode-ReadOnly" style="height:auto;" id="vlan_set">
+                                    <a href="Ethernet_setting.html" SubMenu onClick="return false">
+                                      <span class="subMenu_text" id="ethernet_settings" mlang="Eth_Aggr_008" >
+                                        Ethernet Settings
+                                      </span>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </div>
+                          </div>
+                        </td>
+        <td style="background-color:#FFFFFF;width:760px;height:100%;font-family:Arial;min-height: 600px;">
+          <div name="page_contain" style="min-height: 600px;height:100%;">
+            <iframe id="formframe" style="margin-left:30px;min-height: 600px;position: absolute;overflow: hidden;" name="page"  frameborder="0" border="0" cellspacing="0" scrolling="no" onFocus="this.blur()" src=""></iframe>
+                  </div>
+                </td>
+              </tr>
+            </table>
+  </div><!-- id=container --> 
+  <div id="footer" class="footer" style="display: none !important; z-index:9999;">
+      <img class="footer_img" src="images/footer.gif">
+      <div id="support">
+        <b mlang="genie_50" > Help &amp; Support</b> &nbsp;
+        <a target="_blank" href="http://downloadcenter.netgear.com/" mlang="LUP042" >
+          Documentation
+        </a>
+        |
+        <a target="_blank" href="http://support.netgear.com" mlang="LUP044" >
+          Online Support
+        </a>
+        |
+        <a target="_blank" href="http://support.netgear.com/app/answers/detail/a_id/12923" mlang="genie_111" >
+          Router FAQ
+        </a>
+        |
+        <a target="_blank" href="OpenSourceLicense.html">
+          Open Source
+        </a>
+      </div>
+      <div id="search" align=right>
+        <b mlang="genie_115" > SEARCH HELP </b>
+        <input type="text" id="search_text" name="search" value="Enter Search Item" onkeypress="detectEnter('num',event);" onFocus="this.select();" >
+        <input id="search_button" class="search_button" type="button" name="dosearch" value="GO" onClick="do_search();">
+      </div>
+  </div><!-- id=footer --> 
+  <input type="hidden" name="apmode" value="<?=getRadioVal_mode(); ?>" disabled>
+  <input type="hidden" name="wps2GEnabled" value="<?=getWps2GEnabled(); ?>" disabled>
+  <input type="hidden" name="wps5GEnabled" value="<?=getWps5GEnabled(); ?>" disabled>
+  <input type="hidden" name="wps6gEnabled" value="<?=getWps6gEnabled(); ?>" disabled>
+  <input type="hidden" name="2GSecurity" value="<?=getRadioVal_2gSecurity(); ?>" disabled>
+  <input type="hidden" name="5GSecurity" value="<?=getRadioVal_5gSecurity(); ?>" disabled>
+  <input type="hidden" name="6gSecurity" value="<?=getRadioVal_6gSecurity(); ?>" disabled>
+  <input type="hidden" name="2GRadioOn" value="<?=getCheckboxVal_2GRadioOn(); ?>" disabled>
+  <input type="hidden" name="5GRadioOn" value="<?=getCheckboxVal_5GRadioOn(); ?>" disabled>
+  <input type="hidden" name="6gRadioOn" value="<?=getCheckboxVal_6gRadioOn(); ?>" disabled>
+</div> <!-- id=main_screen -->  
+
+<div id="modalBox_armor" name="modalBox_armor" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header" style="padding-top:16px">
+            <span class="armor-close" id="armor_close" name="armor_close" style="cursor:pointer;">
+                <img src="images/armor_close.png" style="width:13px;height:13px;margin:6px;">
+            </span>
+            <div class="modalBox-title_armor">NETGEAR Armor</div>
+            <div class="circle-disney-logo" style="text-align:center">
+                <img src="images/armor_white.png" style="width:90px;height:101px">
+            </div>
+        </div>
+        <div class="modal-body-armor">
+            <p style="color:#fff; font-family: Avenir-Medium; font-size: 16px; letter-spacing: -0.53px;">Armor security on your router provides advanced cyber threat<br> protection to better safeguard your network and your<br> connected devices.</p>
+            <p style="color:#fff; font-family: Avenir-Medium; font-size: 11px; letter-spacing: -0.37px; text-align: center;">To activate your FREE trial of NETGEAR Armor, please download the Nighthawk app TODAY at <a href='http://nighthawk-app.com' target='_blank' style="color:#fff"><u>nighthawk-app.com</u></a> on your mobile device.</p>
+            
+            <div class="modalButton-armor-QR" id="armor_app" name="armor_app">
+                <img src="images/armor_QR.png" style="width:62px;height:62.76px">
+                <p>Scan to download the Nighthawk app</p>
+            </div>
+            
+            <div class="modalButton-armor" id="armor_nvrm" name="armor_nvrm">Never remind me again.</div>
+            
+            <div class="modalButton-armor-done" id="armor_done" style="display:none">
+                <img src="images/armor_updated.png" style="width:16px; height: 16px; color: #FFFFFF;"> &nbsp;&nbsp;Preference updated
+            </div>
+		</div>
+    </div>
+    <input type="hidden" name="armor_enable" value="<?=getVal_armor_enable(); ?>" disabled>
+    <input type="hidden" name="armorAd_disable" value="<?=getVal_armorAd_disable(); ?>" disabled>
+	<input type="hidden" name="StrNtpServer" value="getTextVal_ntpServer();" disabled> 
+
+</div>
+
+<div id="preloaded-images">
+    <img src="images/basic-white-button.gif" width="1" height="1" alt="">
+    <img src="images/firmware-hint-background.gif" width="1" height="1" alt="">
+    <img src="images/barrow.jpg" width="1" height="1" alt="">
+    <img src="images/subMenuActive.png" width="1" height="1" alt="">
+    <img src="images/subMenuActiveLarge.png" width="1" height="1" alt="">
+    <img src="images/barrow_down.jpg" width="1" height="1" alt="">
+    <img src="images/basic-purple-button.gif" width="1" height="1" alt="">
+    <img src="images/roundedcornr_637010.gif" width="1" height="1" alt="">
+    <img src="images/warrow.jpg" width="1" height="1" alt="">
+    <img src="images/ajax-loader.gif" width="1" height="1" alt="">
+    <img src="images/main-page-bottom.gif" width="1" height="1" alt="">
+    <img src="images/gray-button.gif" width="1" height="1" alt="">
+</div>
+
+<!-- This JavaScript snippet activates those tabs -->
+<script>
+    // perform JavaScript after the document is scriptable.
+
+    $(".noSub").first().addClass("noSubActive");
+    $('.basic-menu-div').first().addClass('menuActive');
+</script>
+</body>
+</html>

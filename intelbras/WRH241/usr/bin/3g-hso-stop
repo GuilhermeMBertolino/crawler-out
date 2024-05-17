@@ -1,0 +1,104 @@
+#!/bin/sh
+
+CONFIG=/etc/ppp/3g.conf
+
+if [ ! -f "$CONFIG" -o ! -r "$CONFIG" ] ; then
+    echo "$0: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+export CONFIG
+. $CONFIG
+
+. /usr/bin/scriptlib
+
+PIDFILE_START="$PIDFILE.start"
+PIDFILE_CONNECT="$PIDFILE.connect"
+PIDFILE_PPPD="/var/run/hso-3g.pid"
+
+# Backward config file compatibility
+if test "$DEMAND" = "" ; then
+	DEMAND=no
+fi
+
+# Ignore SIGTERM
+trap "" 15
+
+# Check for pidfile
+#if [ -r "$PIDFILE_CONNECT" ] ; then
+#    PID=`cat $PIDFILE_CONNECT`
+#    # Check if still running
+#    kill -0 $PID > /dev/null 2>&1
+#    if [ $? != 0 ] ; then
+#		echo "$0: The 3g-connect script (PID $PID) appears to have died" >& 2
+#	else
+#		# Kill 3g-connect
+#		echo "Killing 3g-connect ($PID)"
+#		kill $PID > /dev/null 2>&1
+#    fi
+#fi
+
+# Kill pppd, which should in turn kill 3g
+#if [ -r "$PIDFILE_PPPD" ] ; then
+#	sl_get_ppp_PID_IFname $PIDFILE_PPPD PPPD_PID PPPD_IF
+#
+#	echo "Killing pppd ($PPPD_PID)"
+#	kill $PPPD_PID > /dev/null 2>&1 || exit 1
+#fi
+
+# Kill 3g-connect
+#if [ -r "$PIDFILE_CONNECT" ] ; then
+#	PID=`cat $PIDFILE_CONNECT`
+#    echo "Killing 3g-connect ($PID)"
+#   	kill -9 $PID > /dev/null 2>&1
+#fi
+
+# Kill 3g-start
+#if [ -r $PIDFILE_START ] ; then
+#   	PIDS=`cat $PIDFILE_START`
+#   	kill -0 $PIDS > /dev/null 2>&1
+#   	if [ $? = 0 ] ; then
+#		kill $PIDS > /dev/null 2>&1
+#   	fi
+#fi
+
+# Kill pppd again, in case it's still hanging around
+#if [ -r "$PIDFILE_PPPD" ] ; then
+#	sl_get_ppp_PID_IFname $PIDFILE_PPPD PPPD_PID PPPD_IF
+#	kill -9 $PPPD_PID > /dev/null 2>&1 
+#fi
+
+
+# echo disconnecting
+
+atcmd /dev/modem ATZ
+atcmd /dev/modem AT_OWANCALL=1,0,0
+#echo  0 > /var/run/3g_link_status
+sleep 1
+ifconfig hso0 down
+#if [ -f /var/run/backup_status ]; then
+#	rm /var/run/backup_status
+#fi
+wrcsman "0x801e0100 0x00 && \
+	0x801e0200 0x00 && \
+	0x801e0300 0x00 && \
+	0x801e0400 0x00 && \
+	0x801e0500 0x00 && \
+	0x801e0600 0x00 && \
+	0x801e0700 0x00 && \
+	0x801e0800 0x00 && \
+	0x801e0900 0x00 && \
+	0x80010002 0x00 && \
+	0x80010003 0x00 && \
+	0x80010004 0x00 && \
+	0x80010005 0x00 && \
+	0x80010006 0x00 && \
+	0x80010007 0x00"
+
+CNTTYPE=`rdcsman 0x001e000a u16`
+if [ $CNTTYPE -ne 2 ] ; then
+	wrcsman "0x801e0700 0x03 && 0x80010007 0x03"
+fi
+
+rm -f "$PIDFILE_START" "$PIDFILE_CONNECT" "$PIDFILE_PPPD"
+
+exit 0

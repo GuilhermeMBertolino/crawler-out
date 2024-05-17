@@ -1,0 +1,40 @@
+#!/bin/sh
+PROGRAM="/usr/sbin/rt2860apd"
+PIDFILE="/var/run/rt2860apd.pid"
+
+usage () {
+        echo "$0 [start|stop|restart]"
+        exit 1
+}
+# main ##########################################################
+
+
+[ -z "$1" ] && usage 
+
+case "$1" in
+    start)
+    	WANSTATUS=`rdcsman 0x80010007 u8`
+    	if [ $WANSTATUS -eq 2 ] ; then
+    	   	$PROGRAM 
+	       	echo "$0: start $PROGRAM "	    
+	    fi	
+    	;;
+    stop)    
+    	if [ -r $PIDFILE ] ; then
+    		PID=`cat $PIDFILE`
+    		kill $PID
+    		rm $PIDFILE
+    	fi    	
+    	echo "$0: stop $PROGRAM PID=$PID"
+    	;;
+    restart)
+		$0 stop
+		$0 start
+		;;
+    *)
+        usage
+        ;;
+esac
+
+exit 0
+

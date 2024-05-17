@@ -1,0 +1,66 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_tx_looptiming_ena
+########################################
+CMP __ARG0,1
+JNE _L_ifelse_0_0_else
+    MOV 1,pi_ena
+    MOV 1,jtf_ena
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_tx_looptiming_ena.csv, val_select:val
+    ########################################
+    # cfg_class: read
+    ########################################
+    # pre_order
+    # unorder
+    MOV @(0x828d0f98{0xf}<<2),pi_ctrl_read
+    # post_order
+    ########################################
+    # end of cfg_class: read
+    ########################################
+    MOV pi_ctrl_read,pi_ctrl_assign
+    AND 5,pi_ctrl_assign
+    ########################################
+    # cfg_class: assign
+    ########################################
+    # pre_order
+    # unorder
+    MOV pi_ctrl_assign,@(0x828d0f98{0xf}<<2)
+    MOV pi_ena,@(0x828d0f8c{0x1})
+    MOV jtf_ena,@(0x828d0f8c{0x1}<<1)
+    # post_order
+    ########################################
+    # end of cfg_class: assign
+    ########################################
+    JMP _L_ifelse_0_end
+_L_ifelse_0_0_else:
+    MOV 0,pi_ena
+    MOV 0,jtf_ena
+    # load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_tx_looptiming_ena.csv, val_select:val
+    ########################################
+    # cfg_class: read
+    ########################################
+    # pre_order
+    # unorder
+    MOV @(0x828d0f98{0xf}<<2),pi_ctrl_read
+    # post_order
+    ########################################
+    # end of cfg_class: read
+    ########################################
+    MOV pi_ctrl_read,pi_ctrl_assign
+    OR 2,pi_ctrl_assign
+    ########################################
+    # cfg_class: assign
+    ########################################
+    # pre_order
+    # unorder
+    MOV pi_ctrl_assign,@(0x828d0f98{0xf}<<2)
+    MOV pi_ena,@(0x828d0f8c{0x1})
+    MOV jtf_ena,@(0x828d0f8c{0x1}<<1)
+    # post_order
+    ########################################
+    # end of cfg_class: assign
+    ########################################
+_L_ifelse_0_end:
+HALT 0
+########################################
+# end of call_msg: onu_tx_looptiming_ena
+########################################

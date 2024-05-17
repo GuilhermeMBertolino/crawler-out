@@ -1,0 +1,52 @@
+var isp_list = new Array(34);
+isp_list[0] = new Array("Soul", "Exetel", "Engin", "People Telcom", "Adam", "Telstra", "Internode", "Optus", "Primus", "TPG", "iiNet", "Dodo", "Telstra Bigpond", "TransACT", "Foxtel", "Clubtelco", "Other");//Australia
+isp_list[1] = new Array("A1 Telekom", "UPC Austria", "UTA2", "Comteam.at", "Other");//Austria
+isp_list[2] = new Array("Proximus(Belgacom)", "Other");//Belgium
+isp_list[3] = new Array("Gvt-Global Village Telecom", "Telemar Oi Velox", "Oi", "Other");//Brazil
+isp_list[4] = new Array("SaskTel", "TekSavvy", "Other");//Canada
+isp_list[5] = new Array("China Telecom", "Other");//China
+isp_list[6] = new Array("O2", "Tiscali", "T-Mobile", "Other");//Czech Republic
+isp_list[7] = new Array("Telenor", "TDC", "Other");//Denmark
+isp_list[8] = new Array("Teliasonera", "Elisa Oyj", "DNA Welho", "Other");//Finland
+isp_list[9] = new Array("SFR", "Orange", "OVH", "Free", "Nordnet", "Other");//France
+isp_list[10] = new Array("1 & 1", "Deutsche Telekom", "Telefonica O2", "m-net", "Vodafone", "Netcologne", "Other");//Germany
+isp_list[11] = new Array("PCCW", "Other");//HongKong 
+isp_list[12] = new Array("Actel", "GTS Datanet", "Invitel", "T-Home", "Other");//Hungary
+isp_list[13] = new Array("MTNL", "TataIndicom", "BSNL", "Inedit", "AIRTEL", "Other");//India
+isp_list[14] = new Array("Telkom Speedy", "Speedy", "Other");//Indonesia
+isp_list[15] = new Array("Telecom Italia", "Infostrada", "Aruba", "Tiscali", "Twt", "Acantho", "Fastweb", "Wind(Infostrada)", "TELE2", "KPN Qwest Italia", "Intred", "MC-link", "Other");//Italy
+isp_list[16] = new Array("Streamyx", "Other");//Malaysia 
+isp_list[17] = new Array("Online-nl", "Vodafonevast", "Telfort", "Other");//Netherlands
+isp_list[18] = new Array("IHug", "Kiwi Online(KOL)", "Orcon", "Paradise", "Slingshot", "Sanp", "Spark", "Telstra Clear", "Xnet(World Exchange)", "Bigpipe", "Vodafone", "Trust power", "Snap", "Other");//New Zealand
+isp_list[19] = new Array("PLDT", "TelPlus", "Other");//Philippine 
+isp_list[20] = new Array("Multimo", "Tele2", "Netia", "Orange", "Other");//Poland
+isp_list[21] = new Array("PT", "Vodafone", "Zon", "Other");//Portugal
+isp_list[22] = new Array("Beltelecom", "Domolink CentrTelekom", "Avangard-DSL", "MTS Stream", "MGTS", "Jdsl Volgatelekom", "Combellga", "Rostelecom", "Other");//Russia
+isp_list[23] = new Array("STC", "Other");//Saudi Arabia
+isp_list[24] = new Array("PacificNet", "SingTel", "Singnet", "Other");//Singapore
+isp_list[25] = new Array("Orange", "Telefonica Movistar", "Jazztel", "Vodafone", "Pepephone", "Other");//Spain
+isp_list[26] = new Array("Telia", "Ljusnet", "Bahnhof AB", "Bredbandsbolaget", "Other");//Sweden
+isp_list[27] = new Array("Swisscom", "Swisscom All IP (with phone)", "Sunrise", "Monzoon Networks", "Telfort", "Other");//Switzerland
+isp_list[28] = new Array("TT&T", "3BB", "CAT-Telecom", "CS-Loxinfo", "Samart", "TRUE Internet", "TOT", "Other");//Thailand
+isp_list[29] = new Array("Other");//Turkey
+isp_list[30] = new Array("BT", "Sky", "TalkTalk", "PlusNet", "Virgin", "EE(Orange)", "Be", "ZEN Internet", "Other");//UK
+isp_list[31] = new Array("AT&T", "BEVCOMM", "Earthlink", "Verizon", "Windstream", "Frontier Communications", "Rivercity Internet Group", "CenturyLink", "Bigriver.net DSL", "Qwest", "cox communications", "Other");//US
+isp_list[32] = new Array("FPT", "NATNAM", "SPT", "VNN(in Hanoi)", "Viettel", "VNN(in HAM)", "Other");//Vietnam
+isp_list[33] = new Array("Other");//Other
+
+var NA_CountryList="US";
+var GR_CountryList="Germany,Other";
+var WW_CountryList="Australia,Austria,Belgium,Brazil,Canada,China,Czech Republic,Denmark,Finland,France,Germany,Hongkong,Hungary,India,Indonesia,Italy,Malaysia,Netherlands,nz,Philippine,Poland,Portugal,Russia,Saudi Arabia,Singapore,Spain,Sweden,Switzerland,Thailand,Turkey,UK,US,Vietnam,Other";
+
+var country_isp_list = new Array(4);
+country_isp_list[0] = new Array("Switzerland", "Other");        //countries have 60 option
+country_isp_list[1] = new Array("Telfort", "Other");//isp have 60 option
+country_isp_list[2] = new Array("UK", "Other");                 //countries have 61 option
+country_isp_list[3] = new Array("BT", "Sky", "Other");                //isp have 61 option
+
+var iptv_country_isp_list = new Array(2);		//ISP who supports IPTV
+iptv_country_isp_list[0] = new Array("Austria", "Belgium", "France", "Germany", "nz", "Singapore", "Switzerland" ,"UK", "Sweden", "Australia");
+iptv_country_isp_list[1] = new Array("A1 Telekom", "Proximus(Belgacom)", "Free", "Orange", "Deutsche Telekom", "Spark", "Slingshot", "SingTel", "Swisscom", "BT", "PlusNet", "TalkTalk", "Telia", "TPG", "Swisscom All IP (with phone)", "IHug", "Kiwi Online(KOL)", "Orcon", "Paradise", "Telstra Clear", "Xnet(World Exchange)", "Bigpipe", "Vodafone", "Trust power", "Snap");
+
+var bridge_country_isp_list = new Array(1);
+bridge_country_isp_list[0] = new Array("A1 Telekom", "Proximus(Belgacom)", /*"TalkTalk",*/ "Telia", "Orange");

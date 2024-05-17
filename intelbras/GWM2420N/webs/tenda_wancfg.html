@@ -1,0 +1,165 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<script language='javascript' src='util.js'></script>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language='javascript'>
+<!-- hide
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+//'interfaceStr, serviceStr, protocalStr,vlanPr, vlanId,IGMPEnabled,NATEnabled,FirewallEnabled,ntwkPrtcl','0':add button is disable '1':add button is enable.
+var wanItfList=new Array(<%ejGetOther(tenda,wanCfgList)%>);
+var wanL2ItfEthList=new Array(<%ejGetOther(tenda,wanEthItfList)%>);
+var wanL2ItfDslList=new Array(<%ejGetOther(tenda,wanDslItfList)%>);
+var wanmode='<%ejGet(wanmode)%>';		
+//var wanItfList=new Array('interfaceStr, serviceStr, protocalStr,vlanPr, vlanId,IGMPEnabled,NATEnabled,FirewallEnabled,ntwkPrtcl','0');
+
+//var wanItfList=new Array('ppp0,pppoe_0_0_35,PPPoE,N/A,N/A,0,1,1,0','1');
+
+var add = 1;
+var disableadd = 0;
+function showRTE()
+{
+	for (var i=0; i<wanItfList.length;i++)
+	{
+		var s=wanItfList[i].split(",");	
+		//alert("length:"+s.length);	
+		if ((s.length==9) || (s.length==1)) {
+			//alert("test");			
+		}else{
+			break;
+		}
+		if(s.length == 9){
+			var  m='<tr align=center>';
+			if(s[0]==""){
+				m+='<td>&nbsp;</td>';
+			}else{
+				m+='<td>'+s[0]+'</td>';
+				if(s[0].charAt(0)=='e'&&s[0].charAt(1)=='t'&&s[0].charAt(2)=='h')
+					disableadd = 1;
+			}	
+			if(s[1]==""){
+				m+='<td>&nbsp;</td>';
+			}else{
+				m+='<td>'+s[1]+'</td>';
+			}	
+			if(s[2]==""){
+				m+='<td>&nbsp;</td>';
+			}else{
+				m+='<td>'+s[2]+'</td>';
+			}		
+			      
+			if(s[3]==""){
+				m+='<td>&nbsp;</td>';
+			}else{
+				m+='<td>'+s[3]+'</td>';
+			}	
+			
+			if(s[4]==""){
+				m+='<td>&nbsp;</td>';
+			}else{
+				m+='<td>'+s[4]+'</td>';
+			}	
+			
+			if(s[5]=="0" || s[5] == ""){
+				m+='<td>Disabled</td>';
+			}else {
+				m+='<td>Enabled</td>';
+			}	
+			
+			if(s[6]=="0" || s[6] == ""){
+				m+='<td>Disabled</td>';
+			}else {
+				m+='<td>Enabled</td>';
+			}	
+			
+			if(s[7]=="0" || s[7] == ""){
+				m+='<td>Disabled</td>';
+			}else {
+				m+='<td>Enabled</td>';
+			}	
+			
+			m += '<td align=center><input type=checkbox name=rml value=' +s[0]+ '></td>';
+			if(s[8] == '3'){//Bridge mode can't to edit.
+				m += '<td align=center><input type=button disabled=1 onClick=editClick("'+s[0] +'","'+ s[8]+'") value=&nbsp;Edit&nbsp></td>'
+			}else{
+				m += '<td align=center><input type=button onClick=editClick("'+s[0] +'","'+ s[8]+'") value=&nbsp;Edit&nbsp></td>'
+			}
+			
+			m+='</tr>';
+			document.write(m);
+		
+		}	
+	}
+
+}
+
+function addClick() {
+   var loc = 'wanifc.cmd?serviceId=0';
+
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function editClick(ifName, ntwkPrtcl) {
+	//alert("ifname:"+ifName+".ntwkPrtcl:"+ntwkPrtcl);
+   var loc = 'wanL3Edit.cmd?serviceId=1&wanIfName=' + ifName + '&ntwkPrtcl=' + ntwkPrtcl;
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ', ';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+   var loc = 'wancfg.cmd?action=remove&rmLst=' + lst;
+
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+// done hiding -->
+</script>
+</head>
+<body><script>tbl_head('Wide Area Network (WAN) Service Setup')</script>
+<form>
+Choose Add, Remove or Edit to configure a WAN service over a selected interface.<br><br>
+<table border='1' cellpadding='4' cellspacing='0' width='90%'>
+   <tr align='center'>
+      <td class='hd'>Interface</td>
+      <td class='hd'>Description</td>
+      <td class='hd'>Type</td>
+      <td class='hd'>Vlan8021p</td>
+      <td class='hd'>VlanMuxId</td>
+      <td class='hd'>Igmp</td>
+      <td class='hd'>NAT</td>
+      <td class='hd'>Firewall</td>
+      <td class='hd'>Remove</td>
+      <td class='hd'>Edit</td>
+   </tr>
+   <script>
+   		showRTE();
+   </script>
+   
+</table>
+<script>
+
+	tbl_tail("<input type='button' class='button' onClick='addClick()' id='btnadd' value=' Add '>&nbsp;&nbsp;<input type='button' id='rmbtn' class='button' onClick='removeClick(this.form.rml)' value='Remove'>")
+
+	if((wanmode=='1'&&wanL2ItfEthList=='')||(wanmode=='1'&&wanItfList.length==2&&wanItfList[1]=='1')||(wanmode=='0'&&wanL2ItfDslList.length==(wanItfList.length-1)))
+		document.getElementById("btnadd").style.display = "none";
+	if(wanL2ItfEthList.length==0&&wanL2ItfDslList.length==0)
+		document.getElementById("rmbtn").disabled = true;
+		
+</script>
+</form>
+</body>
+</html>

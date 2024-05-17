@@ -1,0 +1,1072 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+
+var changeMsg = "<%17%>";
+var initialized = false;
+var show_alert_wpapsk = false;
+    var api;
+
+    $(document).ready(function()
+    {
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+        $('.scroll-pane').each(function()
+        {
+/*
+            $(this).jScrollPane(
+            {
+                showArrows: $(this).is('.arrow')
+            });
+*/                        
+            var throttleTimeout;
+            api = $(this).data('jsp');
+            $('.scroll-pane').bind('change',function()
+            {
+                if ($.browser.msie) 
+                {
+                     // IE fires multiple resize events while you are dragging the browser window which
+                     // causes it to crash if you try to update the scrollpane on every one. So we need
+                     // to throttle it to fire a maximum of once every 50 milliseconds...
+                     if (!throttleTimeout) 
+                     {
+                         throttleTimeout = setTimeout(function()
+                         {
+//                             api.reinitialise();
+                             throttleTimeout = null;
+                         },0);
+                     }
+                } 
+                else 
+                {
+//                     api.reinitialise();
+                }
+            });
+
+        })
+    }); // document ready
+
+
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+
+    });
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+function initScrn()
+{
+    var defaultKey;
+    var fm=document.forms[0];
+    var i;
+    var sec_type_2G = fm.security_type_2G.value;
+    var sec_type_5G = fm.security_type_5G.value;
+    <%2889%>  
+    var sec_type_6G = fm.security_type_6G.value;
+
+    if (fm.support_bridge_6g_owe.value != "1")
+    {
+        sec_type_6G = "WPA3-SAE";
+        fm.security_type_an_2[1].checked = true;
+        document.getElementById("wlh_secu_type_owe").style.display="none";
+    }
+
+	<%2890%>  
+    if (sec_type_2G == "WEP")
+	{
+		fm.security_type[1].checked = true;
+		for (i=0; i<fm.authAlgm.length; i++)
+		{
+			if (fm.authAlgm[i].value == fm.initAuthType.value)
+			{
+				fm.authAlgm[i].selected = true;
+				break;
+			}
+		}
+    
+		defaultKey = parseInt(fm.initDefaultKey.value);
+		if ( defaultKey >= 0 && defaultKey <= 3)
+			document.forms[0].wep_key_no[defaultKey].checked = true;
+		else
+			document.forms[0].wep_key_no[0].checked = true;
+	}
+	else if(sec_type_2G == "WPA-PSK" || sec_type_2G == "WPA2-PSK" || sec_type_2G == "WPA-AUTO-PSK" || sec_type_2G == "WPA3-SAE")
+	{
+		if (sec_type_2G == "WPA2-PSK")
+		{
+			fm.security_type[2].checked = true;
+		}
+		else if (sec_type_2G == "WPA-AUTO-PSK")
+		{
+			fm.security_type[3].checked = true;
+		}
+		else if (sec_type_2G == "WPA3-SAE")
+        {
+            document.getElementById("passphrase").maxlength=64;
+            document.getElementById("passphraseSlashText").innerHTML="<%28%>";
+            fm.security_type[4].checked = true;
+        }
+	}
+	else
+	{
+		fm.security_type[0].checked = true;
+	}
+
+
+	if(sec_type_5G == "WPA2-PSK" || sec_type_5G == "WPA-AUTO-PSK" || sec_type_5G == "WPA3-SAE")
+	{
+		if (sec_type_5G == "WPA2-PSK")
+		{
+			fm.security_type_an[1].checked = true;
+		}
+		else if (sec_type_5G == "WPA-AUTO-PSK")
+		{
+			fm.security_type_an[2].checked = true;
+		}
+		else if (sec_type_5G == "WPA3-SAE")
+        {
+            document.getElementById("passphrase_an").maxlength=64;
+            document.getElementById("passphrase_anSlashText").innerHTML="<%28%>";
+            fm.security_type_an[3].checked = true;
+        }
+	}
+	else
+	{
+		fm.security_type_an[0].checked = true;
+	}
+
+    <%2889%>  
+    if(sec_type_6G == "WPA3-SAE")
+    {
+        document.getElementById("passphrase_6g").maxlength=64;
+        document.getElementById("passphrase_6gSlashText").innerHTML="<%28%>";
+        fm.security_type_an_2[1].checked = true;
+    }
+    else if(sec_type_6G == "OWE")
+    {
+        document.getElementById("wpa_6G").style.display="none";
+        fm.security_type_an_2[0].checked = true;
+    }
+    <%2890%>  
+
+	if(fm.wireless_interface.value == "0"){
+		document.getElementById("setting_2G").style.display="block";
+		document.getElementById("setting_5G").style.display="none";
+        <%2889%> 
+        document.getElementById("setting_6G").style.display="none";
+        <%2890%> 
+
+		if (sec_type_2G == "WEP")
+			document.getElementById("wep_2G").style.display="block";
+		else if (sec_type_2G == "WPA-PSK" || sec_type_2G == "WPA2-PSK" || sec_type_2G == "WPA-AUTO-PSK" || sec_type_2G == "WPA3-SAE")
+			document.getElementById("wpa_2G").style.display="block";
+	}
+    <%2889%> 
+    else
+    if(fm.wireless_interface.value == "2"){
+        document.getElementById("setting_6G").style.display="block";
+        document.getElementById("setting_2G").style.display="none";
+        document.getElementById("setting_5G").style.display="none";
+        if (sec_type_6G == "WPA3-SAE")
+            document.getElementById("wpa_6G").style.display="block";
+        else
+            document.getElementById("wpa_6G").style.display="none";
+    }
+    <%2890%> 
+    else{
+		document.getElementById("setting_2G").style.display="none";
+		document.getElementById("setting_5G").style.display="block";
+        <%2889%>
+        document.getElementById("setting_6G").style.display="none";
+        <%2890%> 
+		if(sec_type_5G == "WPA2-PSK" || sec_type_5G == "WPA-AUTO-PSK" || sec_type_5G == "WPA3-SAE")
+			document.getElementById("wpa_5G").style.display="block";
+	}
+
+    initialized=true; 
+}
+
+function setKeys()
+{
+    var cf = document.forms[0];
+    cf.KEY1.disabled = cf.KEY2.disabled = cf.KEY3.disabled = cf.KEY4.disabled = false;
+    
+    if (cf.wepenc.selectedIndex == 0)
+    {
+        keysize = 10;
+        cf.KEY1.size = cf.KEY2.size = cf.KEY3.size = cf.KEY4.size = keysize + 2 ; // extra for Mac
+        if (cf.KEY1.value.length>10)
+            cf.KEY1.value = cf.KEY1.value.substring(0,10);
+        if (cf.KEY2.value.length>10)
+            cf.KEY2.value = cf.KEY2.value.substring(0,10);
+        if (cf.KEY3.value.length>10)
+            cf.KEY3.value = cf.KEY3.value.substring(0,10);
+        if (cf.KEY4.value.length>10)
+            cf.KEY4.value = cf.KEY4.value.substring(0,10);
+    }
+    else if(cf.wepenc.selectedIndex == 1)
+    {
+        keysize = 26;
+        cf.KEY1.size = cf.KEY2.size = cf.KEY3.size = cf.KEY4.size = keysize + 2; // extra for Mac
+        if (cf.KEY1.value.length>26)
+            cf.KEY1.value = cf.KEY1.value.substring(0,26);
+        if (cf.KEY2.value.length>26)
+            cf.KEY2.value = cf.KEY2.value.substring(0,26);
+        if (cf.KEY3.value.length>26)
+            cf.KEY3.value = cf.KEY3.value.substring(0,26);
+        if (cf.KEY4.value.length>26)
+            cf.KEY4.value = cf.KEY4.value.substring(0,26);
+    }
+    else if(cf.wepenc.selectedIndex == 2)
+    {
+        keysize = 32;
+        cf.KEY1.size = cf.KEY2.size = cf.KEY3.size = cf.KEY4.size = keysize + 2; // extra for Mac
+    }
+}
+
+function securityCheck(band)
+{
+    var cf = document.forms[0];
+    if (band == 0)
+    {
+        if(cf.security_type[0].checked)
+        {
+            //no thing to show
+            document.getElementById("wep_2G").style.display="none";
+            document.getElementById("wpa_2G").style.display="none";
+            cf.security_type_2G.value="None";
+        }
+
+        if(cf.security_type[1].checked)
+        {
+            document.getElementById("wep_2G").style.display="block";
+            document.getElementById("wpa_2G").style.display="none";
+            cf.security_type_2G.value="WEP";
+        }
+        if(cf.security_type[2].checked)
+        {
+            document.getElementById("wpa_2G").style.display="block";
+            document.getElementById("wep_2G").style.display="none";
+            document.getElementById("passphrase").maxlength=64;
+            document.getElementById("passphraseSlashText").innerHTML="<%28%>"
+            cf.security_type_2G.value="WPA2-PSK";
+        }
+        if(cf.security_type[3].checked)
+        {
+            if (!show_alert_wpapsk)
+            {
+                show_alert_wpapsk = true;
+                setTimeout(function(){
+                alert("<%43%>");
+                },10);
+            }
+
+            document.getElementById("wpa_2G").style.display="block";
+            document.getElementById("wep_2G").style.display="none";
+            document.getElementById("passphrase").maxlength=64;
+            document.getElementById("passphraseSlashText").innerHTML="<%28%>"
+            cf.security_type_2G.value="WPA-AUTO-PSK";
+        }
+        if(cf.security_type[4].checked)
+        {
+            document.getElementById("wpa_2G").style.display="block";
+            document.getElementById("wep_2G").style.display="none";
+            document.getElementById("passphrase").maxlength=64;
+            document.getElementById("passphraseSlashText").innerHTML="<%28%>"
+            cf.security_type_2G.value="WPA3-Personal";
+        }
+    }
+    <%2889%>
+    else if (band == 2)
+    {
+        if(cf.security_type_an_2[0].checked)
+        {
+            //no thing to show
+            document.getElementById("wpa_6G").style.display="none";
+            cf.security_type_6G.value="OWE";
+        }
+        if(cf.security_type_an_2[1].checked)
+        {
+            document.getElementById("wpa_6G").style.display="block";
+            document.getElementById("passphrase_6g").maxlength=64;
+            document.getElementById("passphrase_6gSlashText").innerHTML="<%28%>"
+            cf.security_type_6G.value="WPA3-Personal";
+        }
+    }
+    <%2890%>
+    else
+    {
+        if(cf.security_type_an[0].checked)
+        {
+            document.getElementById("wpa_5G").style.display="none";
+            cf.security_type_5G.value="None";
+        }
+		if(cf.security_type_an[1].checked)
+        {
+            document.getElementById("wpa_5G").style.display="block";
+            document.getElementById("passphrase_an").maxlength=64;
+            document.getElementById("passphrase_anSlashText").innerHTML="<%28%>"
+            cf.security_type_5G.value="WPA2-PSK";
+        }
+        if(cf.security_type_an[2].checked)
+        {
+            if (!show_alert_wpapsk)
+            {
+                show_alert_wpapsk = true;
+                setTimeout(function(){
+                alert("<%43%>");
+                },10);
+            }
+            
+            document.getElementById("wpa_5G").style.display="block";
+            document.getElementById("passphrase_an").maxlength=64;
+            document.getElementById("passphrase_anSlashText").innerHTML="<%28%>"
+            cf.security_type_5G.value="WPA-AUTO-PSK";
+        }
+        if(cf.security_type_an[3].checked)
+        {
+            document.getElementById("wpa_5G").style.display="block";
+            document.getElementById("passphrase_an").maxlength=64;
+            document.getElementById("passphrase_anSlashText").innerHTML="<%28%>"
+            cf.security_type_5G.value="WPA3-Personal";
+        }
+    }
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg_key64_type = "<%45%>" ;
+    var msg_key128_type = "<%46%>";
+	var show_tkip_or_wps_v20_msg = false;
+	/* Foxconn modified start, Kent Huang, 05/22/2012, replace wep_or_wps_v20 with tkip_or_wps_v20 */
+	//var show_wep_or_wps_v20_msg = false;
+	/* Foxconn modified end, Kent Huang, 05/22/2012 */	
+
+    var msg = ""; var blankFlag = false; var sizeOK = false; var i;
+    var len = (cf.wepenc.selectedIndex==0)?10:((cf.wepenc.selectedIndex==1)?26:32);
+
+    if(cf.wireless_interface.value==0)
+    {
+		if (cf.ssid.value == "")
+		{
+			alert("<%52%>");
+			return false;
+		}
+        if (cf.ssid.value.match( /[^\x20-\x7E]/ ))
+		{
+			alert("<%53%>");
+			return false;
+		}
+		
+		if (cf.security_type_2G.value == "WEP")
+		{
+			for (i = 1; i < 5; i++ )
+			{
+				msg = "";
+				blankFlag = ! (eval("(cf.wep_key_no[" + (i-1) + "].checked)")); // default key
+				if( (blankFlag) && (eval("(cf.KEY" + i + ".value.length == 0)")) )
+					continue; 
+				sizeOK = (((eval("isHex(cf.KEY" + i +".value)")) && (eval("(cf.KEY" + i + ".value.length == len)"))) || (eval("(cf.KEY" + i + ".value.length == len/2)")));
+				if (!sizeOK)
+				{
+					msg += (len == 10)?msg_key64_type:msg_key128_type;
+					alertR(msg);
+					if (i==1)
+						cf.KEY1.focus();
+					else if (i==2)
+						cf.KEY2.focus();
+					else if (i==3)
+						cf.KEY3.focus();
+					else if (i==4)
+						cf.KEY4.focus();
+					return false;
+					}
+			}
+			/* Foxconn modified start, Kent Huang, 05/22/2012, replace wep_or_wps_v20 with tkip_or_wps_v20 */	
+			if (!confirm("<%2074%>")){
+				return false;
+			}
+			show_tkip_or_wps_v20_msg = true;
+			needGrayOutWPS = 1;
+			/* Foxconn modified end, Kent Huang, 05/22/2012 */
+          
+			if(cf.wep_key_no[0].checked == true)
+			{
+				cf.wep_key_no.value = "1";
+			}
+			else if(cf.wep_key_no[1].checked == true)
+			{
+				cf.wep_key_no.value = "2";
+			}
+			else if(cf.wep_key_no[2].checked == true)
+			{
+				cf.wep_key_no.value = "3";
+			}
+			else if(cf.wep_key_no[3].checked == true)
+			{
+				cf.wep_key_no.value = "4";
+			}
+		}
+		
+		if (cf.security_type_2G.value == "WPA-PSK" || cf.security_type_2G.value == "WPA2-PSK" 
+			|| cf.security_type_2G.value == "WPA-AUTO-PSK" || cf.security_type_2G.value == "WPA3-Personal")
+		{
+/*			
+			if (cf.security_type_2G.value == "WPA-PSK")
+			{
+				if (!show_tkip_or_wps_v20_msg) {
+					if (!confirm("<%2074%>")){
+						return false;
+					}
+				}
+				show_tkip_or_wps_v20_msg = true;
+				needGrayOutWPS = 1;
+			}
+*/		
+			if(cf.passphrase.value.length < 8)
+			{
+				alert("<%57%>");
+				return false;    
+			}
+
+			if(cf.security_type_2G.value == "WPA3-Personal")
+	        {
+	            if(cf.passphrase.value.length > 63)
+	            {
+	                if ( isHex(cf.passphrase.value) == false)
+	                {
+	                    alert("<%1951%>");
+	                    cf.passphrase.value = "";
+	                    return false;
+	               }
+	            }    
+	        } 
+	        else if(cf.passphrase.value.length > 63)
+			{
+				if ( isHex(cf.passphrase.value) == false)
+				{
+					alert("<%1951%>");
+					cf.passphrase.value = "";
+					return false;
+				}    
+			}
+        
+			if (cf.passphrase.value.match( /[^\x20-\x7E]/ ))
+			{
+				alert("<%60%>");
+				cf.passphrase.focus();
+				return false;
+			}
+/*
+			if("<%1952%>" == "checked")
+			{
+				cf.security_type.value = "WPA-PSK";
+			}
+			else 
+*/
+            if(cf.security_type[2].checked)
+			{
+				cf.security_type.value = "WPA2-PSK";
+			}
+            else if(cf.security_type[3].checked)
+			{
+				cf.security_type.value = "AUTO-PSK";
+			}else if(cf.security_type[4].checked)
+			{
+				cf.security_type.value = "WPA3-Personal";
+			}
+		}
+    }
+    <%2889%>
+    else if(cf.wireless_interface.value==2)
+        {
+        
+        if (cf.ssid_an_2.value == "")
+        {
+            alert("<%52%>");
+            return false;
+        }
+
+        if (cf.ssid_an_2.value.match( /[^\x20-\x7E]/ ))
+        {
+            alert("<%53%>");
+            return false;
+        }
+    
+        if (cf.security_type_6G.value == "WPA2-PSK" || cf.security_type_6G.value == "WPA-AUTO-PSK" || cf.security_type_6G.value == "WPA3-Personal")
+        {
+        
+            if(cf.passphrase_an_2.value.length < 8)
+            {
+                alert("<%57%>");
+                return false;    
+            }
+            
+            if(cf.security_type_6G.value == "WPA3-Personal")
+            {
+                if(cf.passphrase_an_2.value.length > 63)
+                {
+                    if ( isHex(cf.passphrase_an_2.value) == false)
+                    {
+                        alert("<%1951%>");
+                        cf.passphrase_an_2.value = "";
+                        return false;
+                   }
+                }    
+            } 
+            else if(cf.passphrase_an_2.value.length > 63)
+            {
+                if ( isHex(cf.passphrase_an_2.value) == false)
+                {
+                    alert("<%1951%>");
+                    cf.passphrase_an_2.value = "";
+                    return false;
+                }    
+            }
+        
+            if (cf.passphrase_an_2.value.match( /[^\x20-\x7E]/ ))
+            {
+                alert("<%60%>");
+                cf.passphrase_an_2.focus();
+                return false;
+            }
+            
+            if(cf.security_type_an_2[1].checked)
+            {
+                cf.security_type_an_2.value = "WPA3-Personal";
+            }
+        }
+    }
+    <%2890%>
+    else{
+		
+		if (cf.ssid_an.value == "")
+		{
+			alert("<%52%>");
+			return false;
+		}
+
+		if (cf.ssid_an.value.match( /[^\x20-\x7E]/ ))
+		{
+			alert("<%53%>");
+			return false;
+		}
+	
+		if (cf.security_type_5G.value == "WPA2-PSK" || cf.security_type_5G.value == "WPA-AUTO-PSK" || cf.security_type_5G.value == "WPA3-Personal")
+		{
+		
+			if(cf.passphrase_an.value.length < 8)
+			{
+				alert("<%57%>");
+				return false;    
+			}
+			
+			if(cf.security_type_5G.value == "WPA3-Personal")
+	        {
+	            if(cf.passphrase_an.value.length > 63)
+	            {
+	                if ( isHex(cf.passphrase_an.value) == false)
+	                {
+	                    alert("<%1951%>");
+	                    cf.passphrase_an.value = "";
+	                    return false;
+	               }
+	            }    
+	        } 
+	        else if(cf.passphrase_an.value.length > 63)
+			{
+				if ( isHex(cf.passphrase_an.value) == false)
+				{
+					alert("<%1951%>");
+					cf.passphrase_an.value = "";
+					return false;
+				}    
+			}
+        
+			if (cf.passphrase_an.value.match( /[^\x20-\x7E]/ ))
+			{
+				alert("<%60%>");
+				cf.passphrase_an.focus();
+				return false;
+			}
+			
+            if(cf.security_type_an[1].checked)
+			{
+				cf.security_type_an.value = "WPA2-PSK";
+			} 
+			else if(cf.security_type_an[2].checked)
+			{
+				cf.security_type_an.value = "AUTO-PSK";
+			} 
+			else if(cf.security_type_an[3].checked)
+			{
+				cf.security_type_an.value = "WPA3-Personal";
+			}
+		}
+    }
+    
+    return true;
+}
+
+function showWpsAlert()
+{
+    var cf = document.forms[0];
+    if(cf.show_wps_alert.value == "1")
+        alert("<%63%>");
+}
+function chginterface()
+{	
+	var cf = document.forms[0];
+	if(cf.interface.selectedIndex==0){
+		cf.wireless_interface.value="0";
+		document.getElementById("setting_2G").style.display="block";
+		if(cf.security_type_2G.value == "WPA-PSK" || cf.security_type_2G.value == "WPA2-PSK" || cf.security_type_2G.value == "WPA-AUTO-PSK" 
+			|| cf.security_type_2G.value == "WPA3-Personal")
+			document.getElementById("wpa_2G").style.display="block";
+		else if(cf.security_type_2G.value == "WEP")
+			document.getElementById("wep_2G").style.display="block";
+			
+		document.getElementById("setting_5G").style.display="none";
+		document.getElementById("wpa_5G").style.display="none";
+        <%2889%>   
+        document.getElementById("setting_6G").style.display="none";
+        document.getElementById("wpa_6G").style.display="none";
+        <%2890%>   
+	}
+    <%2889%>   
+    else if(cf.interface.selectedIndex==2){
+        cf.wireless_interface.value="2";
+        document.getElementById("setting_6G").style.display="block";        
+        document.getElementById("setting_2G").style.display="none";
+        document.getElementById("wpa_2G").style.display="none";
+        document.getElementById("setting_5G").style.display="none";
+        document.getElementById("wpa_5G").style.display="none";
+        if(cf.security_type_6G.value == "WPA3-SAE")
+            document.getElementById("wpa_6G").style.display="block";    
+    }
+    <%2890%>   
+    else{
+		cf.wireless_interface.value="1";
+		document.getElementById("setting_2G").style.display="none";
+        <%2889%>  
+         document.getElementById("setting_6G").style.display="none";
+         document.getElementById("wpa_6G").style.display="none";
+        <%2890%>   
+		document.getElementById("wep_2G").style.display="none";
+		document.getElementById("wpa_2G").style.display="none";
+		document.getElementById("setting_5G").style.display="block";
+		if(cf.security_type_5G.value == "WPA2-PSK" || cf.security_type_5G.value == "WPA-AUTO-PSK" || cf.security_type_5G.value == "WPA3-Personal")
+			document.getElementById("wpa_5G").style.display="block";
+	}
+}
+// -->
+</script>
+<link rel="stylesheet" type="text/css" href="css/custom.css">
+</head>
+<body  onload="change_size(false);initScrn();setKeys();showWpsAlert();highLightMenu('setup', 'wireless-setup');" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  method="POST" action="bridge_wireless_main.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+  <img class="subtop-image" src="<%74%>">
+<div class="subhead2">Wireless Settings</div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="cancel" value="<%76%>" onclick="buttonClick(this,'<%76%>');" type="SUBMIT" name="Cancel" class="button-cancel cancel_bt" ><%77%></button>
+<button id="apply" value="<%78%>"  onclick="buttonClick(this,'<%78%>');return checkData();" type="SUBMIT" name="Apply" class=<%79%> ><%80%></button>
+
+</div>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div id="main" class="scroll-pane main_bas" style="height:365px;width:620px;overflow:auto;scrolling:auto;margin-top: -79px"><table style="border-collapse:collapse;width:97%">
+    
+    
+    <tr>
+      <td nowrap>Choose a Wireless Networks:</td>
+      <td nowrap>
+          <select id="bridge_sec_type" name="interface" size="1" onchange="chginterface()">
+            <option <%2891%>>Wireless Networks (2.4Ghz b/g/n/ax)</option>
+            <option <%2892%>>Wireless Networks (5Ghz a/n/ac/ax)</option>
+            <%2893%>  
+            <option <%2894%>>Wireless Networks (6Ghz a/n/ac/ax)</option>
+            <%2895%> 
+          </select>
+      </td>
+    </tr>
+
+<tr>
+<td colspan="2" >        
+    <div id="setting_2G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+      <td width="50%" align="left"><%176%>:</td>
+      <td width="50%">
+        <input id="ssid" class="input1" type="text" name="ssid" value="<%177%>" size="20" maxlength="32"></td></tr>
+    
+    <tr>
+      <td colspan="2"><a href="javascript:loadhelp('WLG_wireless','security')" tabindex="-1"><b><%182%></b></a></td></tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_disable" type="radio" name="security_type" value="Disable" <%2896%> onClick="securityCheck(0);"><%183%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+    <tr style="display: none;">
+        <td colspan="2">
+            <div id="wep_radio_2G">
+               <label class="checkbox-container">
+                    <input id="security_wep" type="radio" name="security_type" value="WEP" <%2897%> onClick="securityCheck(0);"><%381%>
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+        </td>
+    </tr>    
+<!--
+    <tr>
+        <td colspan="2"><input type="radio" name="security_type" value="WPA-PSK" <%2898%> onClick="securityCheck(0);" ><%382%></td></tr>
+-->
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_wpa2" type="radio" name="security_type" value="WPA2-PSK" <%2899%> onClick="securityCheck(0);"><%184%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_auto" type="radio" name="security_type" value="AUTO-PSK" <%2900%> onClick="securityCheck(0);" ><%186%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="WLG_bridge_wireless_setting_security_type5" type="radio" name="security_type" value="WPA3-Personal" <%2901%> onClick="securityCheck(0);" ><%187%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+	<tr>
+		<td colspan="2" height="12" >
+			<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div>
+		</td>
+	</tr>
+    </table>
+    </div>
+</td>
+</tr>
+<tr>
+<td colspan="2" >
+    <div id="wep_2G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+      <td nowrap="nowrap" colspan="2"><a href="javascript:loadhelp('WLG_wireless','wep')" tabindex="-1"><b><%383%></b></a></td></tr>
+    <tr>
+      <td nowrap><%384%>:</td>
+      <td nowrap="nowrap"><select id="wep_auth_type" name="authAlgm" size=1><option value="automatic"><%385%></option><option value="sharedkey"><%386%></option></select></td></tr>
+    <tr>
+      <td nowrap><%387%>:</td>
+      <td nowrap="nowrap"><select id="wep_enc_strength" name="wepenc" size=1 onchange="setKeys();"><option <%388%> value="1"><%389%></option><option <%390%> value="2"><%391%>
+      </option>
+      </select>
+      </td>
+    </tr>
+
+    <tr>
+      <td nowrap="nowrap" colspan="2"><a href="javascript:loadhelp('WLG_wireless','wepkey')" tabindex="-1"><b><%392%></b></a></td></tr>
+    <tr>
+      <td nowrap="nowrap" colspan="2">
+          <tr>
+              <td nowrap="nowrap"><%393%> :</td>
+              <td>
+                 <label class="checkbox-container">
+                      <input id="wep_key_no1" type="radio"  checked name="wep_key_no" value="1">
+                      <span class="radio-checkmark"></span>
+                  </label>
+                  <input id="key1" class="input1" type="text" name="KEY1" maxLength=32 size=34 value="<%394%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no[0].checked=true;" style="margin:-20px 0 0 40px">
+              </td>
+          </tr>
+          <tr>
+              <td nowrap="nowrap"><%395%> :</td>
+              <td>
+                  <label class="checkbox-container">
+                      <input id="wep_key_no2" type="radio" name="wep_key_no" value="2">
+                      <span class="radio-checkmark"></span>
+                  </label>
+                  <input id="key2" class="input1" type="text" name="KEY2" maxLength=32 size=34 value="<%396%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no[1].checked=true;" style="margin:-20px 0 0 40px">
+              </td>
+          </tr>
+          <tr>
+              <td nowrap="nowrap"><%397%> :</td>
+              <td>
+                  <label class="checkbox-container">
+                      <input id="wep_key_no3" type="radio" name="wep_key_no" value="3">
+                      <span class="radio-checkmark"></span>
+                  </label>
+                  <input id="key3" class="input1" type="text" name="KEY3" maxLength=32 size=34 value="<%398%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no[2].checked=true;" style="margin:-20px 0 0 40px">
+              </td>
+          </tr>
+          <tr>
+              <td nowrap="nowrap"><%399%> :</td>
+              <td>
+                  <label class="checkbox-container">
+                      <input id="wep_key_no4" type="radio" name="wep_key_no" value="4">
+                      <span class="radio-checkmark"></span>
+                  </label>
+                  <input id="key4" class="input1" type="text" name="KEY4" maxLength=32 size=34 value="<%400%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no[3].checked=true;" style="margin:-20px 0 0 40px">
+              </td>
+          </tr>
+       </td>
+    </tr>
+    <tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+    </table>
+    </div>
+</td>
+</tr>
+<tr>
+<td colspan="2">    
+    <div id="wpa_2G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    	<td nowrap="nowrap" colspan="2" style="margin-top: -27px"><%189%>: </td>
+    	<td nowrap="nowrap" colspan="2">
+    		<input id="passphrase" class="input1" type="password" name="passphrase" size=20 maxLength=64 value="<%190%>">
+    		<img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('passphrase');">
+    		<div id="passphraseSlash" class="pwdEyeSlash"></div>
+        	<div id="passphraseSlashText" style="display: inline;"><%28%></div>
+    	</td>
+    </tr>
+    </table>
+    </div>
+</td>
+</tr>
+<tr>
+<td colspan="2" style="margin-top: -42px">        
+    <div id="setting_5G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+      <td width="50%" align="left"><%176%>:</td>
+      <td width="50%">
+        <input id="ssid_an" class="input1" type="text" name="ssid_an" value="<%194%>" size="20" maxlength="32"></td></tr>
+
+    <tr>
+      <td colspan="2"><a href="javascript:loadhelp('WLG_wireless','security')" tabindex="-1"><b><%182%></b></a></td></tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_an_disable" type="radio" name="security_type_an" value="Disable" <%2902%> onClick="securityCheck(1);"><%183%>
+                <span class="radio-checkmark"></span>
+             </label>
+         </td>
+     </tr>
+	<tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_an_wpa2" type="radio" name="security_type_an" value="WPA2-PSK" <%2903%> onClick="securityCheck(1);"><%184%>
+                <span class="radio-checkmark"></span>
+             </label>
+         </td>
+     </tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="WLG_bridge_wireless_setting_security_type_an3" type="radio" name="security_type_an" value="AUTO-PSK" <%2904%> onClick="securityCheck(1);" ><%186%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="WLG_bridge_wireless_setting_security_type_an4" type="radio" name="security_type_an" value="WPA3-Personal" <%2905%> onClick="securityCheck(1);" ><%187%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+        <td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+    </table>
+    </div>
+</td>
+</tr>
+<tr>
+<td colspan="2">    
+    <div id="wpa_5G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+    	<td nowrap="nowrap" colspan="2" style="margin-top: -13px"><%189%>: </td>
+    	<td nowrap="nowrap" colspan="2">
+    		<input id="passphrase_an" class="input1" type="password" name="passphrase_an" size=20 maxLength=64 value="<%198%>">
+    		<img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('passphrase_an');">
+    		<div id="passphrase_anSlash" class="pwdEyeSlash"></div>
+        	<div id="passphrase_anSlashText" style="display: inline;"><%28%></div>
+    	</td>
+    </tr>
+    </table>
+    </div>
+</td>
+</tr>
+
+<%2893%>    
+<tr>
+<td colspan="2" style="margin-top: -42px">        
+    <div id="setting_6G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+      <td width="50%" align="left"><%176%>:</td>
+      <td width="50%">
+        <input id="ssid_6g" class="input1" type="text" name="ssid_an_2" value="<%202%>" size="20" maxlength="32"></td></tr>
+
+    <tr>
+      <td colspan="2"><a href="javascript:loadhelp('WLG_wireless','security')" tabindex="-1"><b><%182%></b></a></td></tr>
+    <tr>
+        <td colspan="2">
+        <div id="wlh_secu_type_owe">
+            <label class="checkbox-container">
+                <input id="security_an_2_disable" type="radio" name="security_type_an_2" value="OWE" <%2906%> onClick="securityCheck(2);"><%204%>
+                <span class="radio-checkmark"></span>
+             </label>
+         </td>
+     </tr>
+    <tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="security_6g_wpa3" type="radio" name="security_type_an_2" value="WPA3-Personal" <%2907%> onClick="securityCheck(2);" ><%187%>
+                <span class="radio-checkmark"></span>
+            </label>
+        </td>
+    </tr>
+        <td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+    </table>
+    </div>
+</td>
+</tr>
+<tr>
+<td colspan="2">    
+    <div id="wpa_6G" style="display: none;">
+    <table align="left" border="0" width="100%">
+    <tr>
+        <td nowrap="nowrap" colspan="2" style="margin-top: -13px"><%189%>: </td>
+        <td nowrap="nowrap" colspan="2">
+            <input id="passphrase_6g" class="input1" type="password" name="passphrase_an_2" size=20 maxLength=64 value="<%206%>">
+            <img src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('passphrase_6g');">
+            <div id="passphrase_6gSlash" class="pwdEyeSlash"></div>
+            <div id="passphrase_6gSlashText" style="display: inline;"><%28%></div>
+        </td>
+    </tr>
+    </table>
+    </div>
+</td>
+</tr>
+<%2895%>    
+  </table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe"  src="WLG_wireless_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div class="subhead2-bottom" >
+    <span id="help_space" style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+  <input type="hidden" name="tempSetting" value="<%209%>">
+  <input type="hidden" name="wds_enable" value="<%211%>">    
+  <input type="hidden" name="wds_enable_an" value="<%212%>">    
+  <input type="hidden" name="wds_enable_an_2" value="<%2908%>">   
+  <input type="hidden" name="only_mode" value="0">
+  <input type="hidden" name="show_wps_alert" value="<%214%>">
+  <input type="hidden" name="security_type_2G" value="<%215%>">
+  <input type="hidden" name="security_type_5G" value="<%48%>">
+<%2893%>
+  <input type="hidden" name="security_type_6G" value="<%49%>">
+<%2895%>
+  <input type="hidden" name="initAuthType" value="<%221%>">
+  <input type="hidden" name="initDefaultKey" value="<%222%>">
+  <input type="hidden" name="initAuthType_an" value="<%223%>">
+  <input type="hidden" name="initDefaultKey_an" value="<%224%>">
+  <input type="hidden" name="telec_dfs_ch_enable" value="<%227%>">  
+  <input type="hidden" name="enable_stamode" value="<%575%>">  
+  <input type="hidden" name="wireless_interface" value="<%2909%>">  
+  <input type="hidden" name="support_bridge_6g_owe" value="<%2910%>">
+  <%1943%>
+  <input type="hidden" name="fw_sku" value="SKU_WW">
+  <%1944%>
+  <%139%>
+  <input type="hidden" name="fw_sku" value="SKU_NA">
+  <%140%>
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+ <head>
+  <%13%>
+</head>
+
+</html>
+

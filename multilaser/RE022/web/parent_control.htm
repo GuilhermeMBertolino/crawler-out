@@ -1,0 +1,585 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <% getIndex("no-cache"); %>
+    <title>Parent Control Settings</title>
+    <script type="text/javascript" src="util_gw.js"> </script>
+    <SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+    <% getInfo("include_css"); %>
+    <style>
+    .on {display:on}
+    .off {display:none}
+    #tableParent td {
+        word-break: break-word;
+    }
+    #tableParent a {
+        cursor:pointer;
+    }
+    </style>
+    <SCRIPT>
+    parent.hideWaitDiv();
+    var num = 0
+    var delNum = 0
+    var list = []
+
+    function hidedocument (field) {
+        if (field){
+            field.style.display = "none";
+        }
+    }
+    function show_url()
+    {
+        if (document.formParentAdd.blockingtype[2].checked || document.formParentAdd.blockingtype[3].checked){
+            enableTextField(document.formParentAdd.url0);
+            enableTextField(document.formParentAdd.url1);
+            enableTextField(document.formParentAdd.url2);
+            enableTextField(document.formParentAdd.url3);
+            enableTextField(document.formParentAdd.url4);
+            enableTextField(document.formParentAdd.url5);
+            enableTextField(document.formParentAdd.url6);
+            enableTextField(document.formParentAdd.url7);
+        }else{
+            disableTextField(document.formParentAdd.url0);
+            disableTextField(document.formParentAdd.url1);
+            disableTextField(document.formParentAdd.url2);
+            disableTextField(document.formParentAdd.url3);
+            disableTextField(document.formParentAdd.url4);
+            disableTextField(document.formParentAdd.url5);
+            disableTextField(document.formParentAdd.url6);
+            disableTextField(document.formParentAdd.url7);
+
+            for (let i = 0; i < 8; i++) {
+                hidedocument(document.getElementById("url" + i))
+            }
+        }
+    }
+    function deleteClick()
+    {
+        delNum = 0 ;
+        var index;
+        for(i=0 ; i < num ; i++){
+            index=i+1;
+            if(document.formParentEdit.elements['select'+index].checked)
+                delNum ++ ;
+        }
+        if(delNum == 0){
+            alert(urlfilter_select_to_delete);
+            return false;
+        }else if ( !confirm(urlfilter_delete_confirm) ) {
+            return false;
+        }else {
+            parent.showWaitDiv();
+            return true;
+        }
+    }
+
+    function deleteAllClick()
+    {
+        if ( !confirm(urlfilter_delete_all_confirm) ) {
+            return false;
+        }
+        else {
+            parent.showWaitDiv();
+            return true;
+        }
+    }
+    function disableDelButton()
+    {
+        disableButton(document.formParentEdit.deleteSelParentCtr);
+        disableButton(document.formParentEdit.deleteAllParentCtr);
+    }
+    var times=[]
+    var urls=[]
+    var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    var mac_list;
+    var mac_num;
+    function editClick(index) {
+        document.formParentAdd.index.value = list[index].index;
+        document.formParentAdd.rulename.value = list[index].rulename;
+        if(list[index].mac && list[index].mac.length>0){
+            document.formParentAdd.macgroup.value = 'singlemac';
+            document.formParentAdd.mac.value = list[index].mac;
+        }else{
+            document.formParentAdd.macgroup.value = list[index].macgroup;
+            document.formParentAdd.mac.value = '';
+        }
+        macGroupChanged();
+        for(var i=0;i<7;i++){
+            document.formParentAdd.elements['day'+i].checked = false
+        }
+        if(list[index].weekdays){
+            for(var i=0;i<8;i++){
+                if(list[index].weekdays.indexOf(days[i])>-1){
+                    document.formParentAdd.elements['day'+i].checked = true
+                }
+            }
+        }
+        document.formParentAdd.starttime.value = '';
+        document.formParentAdd.endtime.value = '';
+        if(list[index].time){
+            times=list[index].time.split('-');
+            if(times[0]){
+                document.formParentAdd.starttime.value = times[0];
+            }
+            if(times.length == 2 && times[1]){
+                document.formParentAdd.endtime.value = times[1];
+            }
+        }
+        for(var d=0;d<4;d++){
+            document.formParentAdd.blockingtype[d].checked = false;
+        }
+        switch (list[index].blockingtype) {
+            case 'Allow All':
+                document.formParentAdd.blockingtype[0].checked = true;
+                break;
+            case 'Deny All':
+                document.formParentAdd.blockingtype[1].checked = true;
+                break;
+            case 'Allow Url':
+                document.formParentAdd.blockingtype[2].checked = true;
+                break;
+            case 'Deny Url':
+                document.formParentAdd.blockingtype[3].checked = true;
+                break;
+        }
+        show_url();
+        for(var i=0;i<8;i++){
+            document.formParentAdd.elements['url'+i].value = '';
+        }
+        if(list[index].url){
+            urls=list[index].url.split(';');
+            for(var i=0; i<urls.length && i<8; i++){
+                document.formParentAdd.elements['url'+i].value = urls[i];
+            }
+        }
+        if(list[index].enable == 'ON'){
+            document.formParentAdd.enable.checked = true
+        }else{
+            document.formParentAdd.enable.checked = false
+        }
+    }
+    function addSaveClick() {
+        //mac
+        if(document.formParentAdd.macgroup.value == 'singlemac'){
+            var str = document.formParentAdd.mac.value;
+            if(!str){
+                alert(util_gw_mac_empty)
+                document.formParentAdd.mac.focus();
+                return false;
+            }
+            // add for "All MAC Address field can't reject 00:00:00:00:00:00/ff:ff:ff:ff:ff:ff MAC Address" issue
+            with(document.formParentAdd)
+            {
+                if(!checkMacAddr(mac,macfilter_macaddr_invalid))
+                    return false;
+            }
+        }
+        //day
+        var dayNum = 0;
+        for(var i=0;i<7;i++){
+            if(document.formParentAdd.elements['day'+i].checked){
+                dayNum++
+            }
+        }
+        if(dayNum == 0){
+            alert(parent_weekday_not_select)
+            return false;
+        }
+        //time
+        var starttime=document.formParentAdd.starttime.value;
+        var endtime=document.formParentAdd.endtime.value;
+        if(!starttime || !endtime){
+            alert(parent_start_end_time_null)
+            document.formParentAdd.starttime.focus();
+            return false;
+        }
+		var starttimes=starttime.split(":");
+        var endtimes=endtime.split(":");
+        if(!/^\d{2}:\d{2}$/.test(starttime) || parseInt(starttimes[0])>=24 || parseInt(starttimes[1])>59){
+            alert(parent_start_time_wrong)
+            document.formParentAdd.starttime.focus();
+            return false;
+        }
+        if(!/^\d{2}:\d{2}$/.test(endtime) || parseInt(endtimes[0])>24 || (parseInt(endtimes[0])<24 && parseInt(endtimes[1])>59) || (parseInt(endtimes[0])==24 && parseInt(endtimes[1])!=0)){
+            alert(parent_end_time_wrong)
+            document.formParentAdd.endtime.focus();
+            return false;
+        }
+        
+        if(parseInt(starttimes[0])>parseInt(endtimes[0]) || (parseInt(starttimes[0])==parseInt(endtimes[0]) && parseInt(starttimes[1])>=parseInt(endtimes[1]))){
+            alert(parent_start_greater_than_end_time)
+            document.formParentAdd.starttime.focus();
+            return false;
+        }
+        //url
+        if ((document.formParentAdd.blockingtype[2].checked || document.formParentAdd.blockingtype[3].checked)) {
+            var urlNum = 0;
+            for (var m=0;m<8;m++) {
+                if (document.formParentAdd.elements['url'+m].value.trim()) {
+                    urlNum++;
+                }
+            }
+            if (urlNum == 0) {
+                alert(parent_blocking_url_null);
+                document.formParentAdd.elements['url0'].focus();
+                return false;
+            }
+        }
+        for(var j=0;j<8;j++){
+            if(document.formParentAdd.elements['url'+j].value.trim() && document.formParentAdd.elements['url'+j].value.trim().indexOf(';') >= 0){
+                alert(parent_blocking_url_invalid);
+                document.formParentAdd.elements['url'+j].focus();
+                return false;
+            }
+        }
+        if(document.formParentAdd.macgroup.value == 'singlemac') {
+            document.formParentAdd.mac.value = str.replace(new RegExp(":", "gm"), "").replace(new RegExp("-", "gm"), "")
+        }
+        parent.showWaitDiv();
+        return true;
+    }
+    function saveClick() {
+        parent.showWaitDiv();
+        return true;
+    }
+    function macGroupChanged() {
+        if(document.formParentAdd.macgroup.value == "singlemac"){
+            enableTextField(document.formParentAdd.mac);
+        }else{
+            disableTextField(document.formParentAdd.mac);
+        }
+    }
+    function LoadSetting() {
+        if ( <% getInfo("parentctl_enabled"); %>==1) {
+            document.formEnable.enabled.checked=true;
+        }
+        var defPolicyValue = '<% getInfo("parentctl_policy"); %>'
+        var def_policy_dom = document.getElementsByName("policy")
+        if (defPolicyValue == 1) {
+            def_policy_dom[0].checked = true
+        } else {
+            def_policy_dom[1].checked = true
+        }
+        enabledChange()
+        macGroupChanged();
+        show_url();
+    }
+
+    function enabledChange() {
+        var defPolicytrDom = document.getElementById("def_policy_id")
+        if (document.formEnable.enabled.checked) {
+            defPolicytrDom.style.display = ''
+        } else {
+            defPolicytrDom.style.display = 'none'
+        }
+    }
+
+    </SCRIPT>
+</head>
+<body onload="LoadSetting();">
+<blockquote>
+    <h2>
+        <script>dw(parent_control_explain)</script>
+    </h2>
+    <hr size=1 noshade align=top>
+    <form action=/boafrm/formParentCtrEnable method=POST name="formEnable">
+        <table border=0 width="500" cellspacing=4>
+            <tr>
+                <td width="30%"><script>dw(parent_enable)</script></td>
+                <td width="70%" colspan=2> <input type="checkbox" name="enabled" value="ON" onclick="enabledChange()"></td>
+            </tr>
+            <tr id="def_policy_id">
+                <td width="30%"><script>dw(parentCtr_def_policy)</script></td>
+                <td width="70%" colspan=2>
+                    <input type="radio" name="policy" value="1" checked><script>dw(parent_allow_all)</script>&nbsp;&nbsp;
+                    <input type="radio" name="policy" value="0" ><script>dw(parent_deny_all)</script>&nbsp;&nbsp;
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="/parent_control.htm" name="submit-url">
+        <p><input type="submit" value="Save" name="save" onClick="return saveClick()">
+            <script>document.formEnable.save.value = parent_save;</script>
+        </p>
+    </form>
+    <br>
+    <form action=/boafrm/formParentCtrAdd method=POST name="formParentAdd">
+        <INPUT type=hidden name=index value=''>
+        <table border=0 width="500" cellspacing=4>
+            <tr>
+                <td width="30%">
+                    <font size=2>
+                        <b><script>dw(parent_rule_name)</script>:</b>
+                    </font>
+                </td>
+                <td width="70%">
+                    <font size=2>
+                        <input type="text" name="rulename" size="33" maxlength="21" value="">
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%"><font size=2><b><script>dw(parent_group)</script></b></font></td>
+                <td width="70%">
+                    <select name="macgroup" onclick="macGroupChanged()">
+                        <option value='singlemac'><script>dw(parent_single_mac)</script></option>
+                        <script>
+                            var mac_string_json = '<% getInfo("macgroup_list"); %>';
+                            if (mac_string_json == '') {
+                                mac_string_json = '{}'
+                            }
+                            mac_list = JSON.parse(mac_string_json);
+                            //mac_list=[{"groupname":"children"},{"groupname":"TV"}]
+                            mac_num = mac_list.length
+                            if ( mac_num > 0 ) {
+                                for (var i = 0; i < mac_num; i++) {
+                                    document.write("<option value='"+mac_list[i].groupname+"'>"+mac_list[i].groupname+"</option>")
+                                }
+                            }
+                        </script>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%"><font size="2"><b><script>dw(parent_mac_address)</script>:</b></font></td>
+                <td width="70%" >
+                    <font size="2">
+                        <input type="text" name="mac" size="33" value="">
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%">
+                    <font size=2>
+                        <b><script>dw(parent_day)</script>:</b>
+                    </font>
+                </td>
+                <td width="70%">
+                    <font size=2>
+                        <input type="checkbox" name="day0" value="ON">&nbsp;&nbsp;<script>dw(parent_day0)</script>&nbsp;&nbsp;
+                        <input type="checkbox" name="day1" value="ON">&nbsp;&nbsp;<script>dw(parent_day1)</script>&nbsp;&nbsp;
+                        <input type="checkbox" name="day2" value="ON">&nbsp;&nbsp;<script>dw(parent_day2)</script>&nbsp;&nbsp;
+                        <input type="checkbox" name="day3" value="ON">&nbsp;&nbsp;<script>dw(parent_day3)</script>&nbsp;&nbsp;
+                    <br/>
+                        <input type="checkbox" name="day4" value="ON">&nbsp;&nbsp;<script>dw(parent_day4)</script>&nbsp;&nbsp;
+                        <input type="checkbox" name="day5" value="ON">&nbsp;&nbsp;<script>dw(parent_day5)</script>&nbsp;&nbsp;
+                        <input type="checkbox" name="day6" value="ON">&nbsp;&nbsp;<script>dw(parent_day6)</script>&nbsp;&nbsp;
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%">
+                    <font size=2>
+                        <b><script>dw(parent_time)</script>:</b>
+                    </font>
+                </td>
+                <td width="70%">
+                    <font size=2>
+                        <input type="text" name="starttime" size="15" style="width: 94px" value="">
+                        -
+                        <input type="text" name="endtime" size="15" style="width: 94px" value="">
+                        <b>(XX:XX)</b>
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td width="30%">
+                    <font size=2>
+                        <b><script>dw(parent_blocking_type)</script>:</b>
+                    </font>
+                </td>
+                <td width="70%">
+                    <font size=2>
+                        <input type="radio" name="blockingtype" value="Allow All" onclick="show_url()" checked><script>dw(parent_allow_all)</script>&nbsp;&nbsp;
+                        <input type="radio" name="blockingtype" value="Deny All" onclick="show_url()"><script>dw(parent_deny_all)</script>&nbsp;&nbsp;
+                        <input type="radio" style="display: none;" name="blockingtype" value="Allow Url" onclick="show_url()"><script></script>&nbsp;&nbsp;
+                        <input type="radio" style="display: none;" name="blockingtype" value="Deny Url" onclick="show_url()"><script></script>
+                    </font>
+                </td>
+            </tr>
+            <tr id="url0">
+                <td width="30%">
+                    <font size=2>
+                        <b><script>dw(parent_url)</script>:</b>
+                    </font>
+                </td>
+                <td width="70%">
+                    <font size=2>
+                        <input type="text" name="url0" size="33" value="">
+                    </font>
+                </td>
+            </tr>
+            <script>
+                for(var i=1;i<8;i++){
+                    document.write('<tr id="url'+i+'"><td width="30%"></td><td width="70%"><font size=2>');
+                    document.write('<input type="text" name="url'+i+'" size="33" value=""');
+                    document.write('</font></td></tr>');
+                }
+            </script>
+            <tr>
+                <td width="30%"><font size="2"><b><script>dw(parent_enable_rule)</script>:</b></font></td>
+                <td width="70%" ><font size="2">
+                    <input type="checkbox" name="enable" value="ON" checked></font>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="/parent_control.htm" name="submit-url">
+        <p>
+            <input type="submit" value="Save" name="save" onClick="return addSaveClick()">
+            <script>document.formParentAdd.save.value = parent_save;</script>
+        </p>
+    </form>
+    <form action=/boafrm/formParentCtrEdit method=POST name="formParentEdit">
+        <table border="1" style="border-color: gray;width: 1000px;" id="tableParent">
+            <tr><td colspan="10" align=center><font size=2><b><script>dw(parent_rule_table)</script></b></font></td></tr>
+            <tr class="tbl_head">
+                <td align=center style="width: 50px"><font size=2><b><script>dw(parent_rule_name)</script></b></font></td>
+                <td align=center style="width: 115px"><font size=2><b><script>dw(parent_group)</script></b></font></td>
+                <td align=center style="width: 115px"><font size=2><b><script>dw(parent_mac_address)</script></b></font></td>
+                <td align=center style="width: 95px"><font size=2><b><script>dw(parent_day)</script></b></font></td>
+                <td align=center style="width: 90px"><font size=2><b><script>dw(parent_time)</script></b></font></td>
+                <td align=center style="width: 60px"><font size=2><b><script>dw(parent_blocking_type)</script></b></font></td>
+                <td align=center style="width: 110px;display: none;"><font size=2><b><script>dw(parent_url)</script></b></font></td>
+                <td align=center style="width: 75px"><font size=2><b><script>dw(parent_enable_rule)</script></b></font></td>
+                <td align=center style="width: 65px"><font size=2><b><script>dw(portfw_operation)</script></b></font></td>
+                <td align=center style="width: 45px"><font size=2><b><script>dw(portfw_select)</script></b></font></td>
+            </tr>
+            <script>
+                var string_json = '<% getInfo("parentctl_list"); %>';
+                if (string_json == '') {
+                    string_json = '{}'
+                }
+                list = JSON.parse(string_json);
+                /*list = [{
+                    "index": 0,
+                    "rulename": "StudyWorkday0",
+                    "macgroup": "wrwr wrwr",
+                    "mac": "",
+                    "weekdays": "Mon,Wed,Fri",
+                    "time": "19:00-22:00",
+                    "blockingtype": "Allow Url",
+                    "url": "baidu;google",
+                    "enable": "ON",
+                    "edit": ""
+                },{
+                    "index": 1,
+                    "rulename": "StudyWorkday1",
+                    "macgroup": "",
+                    "mac": "F8:C3:9E:F3:EC:9C",
+                    "weekdays": "Mon,Wed,Tue",
+                    "time": "19:00",
+                    "blockingtype": "Allow All",
+                    "url": "baidu",
+                    "enable": "",
+                    "edit": ""
+                },{
+                    "index": 2,
+                    "rulename": "StudyWorkday2",
+                    "macgroup": "",
+                    "mac": "F8:C3:9E:F3:EC:9C",
+                    "weekdays": "Sat,Thu,Sun",
+                    "time": "-",
+                    "blockingtype": "Deny Url",
+                    "url": "baidu;google;qq;rr",
+                    "enable": "ON",
+                    "edit": ""
+                },{
+                    "index": 4,
+                    "rulename": "StudyWorkday2",
+                    "macgroup": "34535",
+                    "mac": "",
+                    "weekdays": "Sat,Thu,Sun",
+                    "time": "19:00-",
+                    "blockingtype": "Deny Url",
+                    "url": "baidu;google;qq;rr",
+                    "enable": "ON",
+                    "edit": ""
+                },{
+                    "index": 5,
+                    "rulename": "StudyWorkday2",
+                    "macgroup": "",
+                    "mac": "F8:C3:9E:F3:EC:9C",
+                    "weekdays": "",
+                    "time": "",
+                    "blockingtype": "",
+                    "url": "baidu;google;baidu;baidu;google;baidu;baidu;google;baidu;baidu",
+                    "enable": "",
+                    "edit": ""
+                }]*/
+                num = list.length
+                var weekdaysObj = {
+                    'Mon':parent_day0,
+                    'Tue':parent_day1,
+                    'Wed':parent_day2,
+                    'Thu':parent_day3,
+                    'Fri':parent_day4,
+                    'Sat':parent_day5,
+                    'Sun':parent_day6
+                };
+                if ( num > 0 ){
+                    for(var i=0;i<num;i++){
+                        document.write('<tr class="tbl_body">');
+                        document.write('<td align=center>'+list[i].rulename+'</td>');
+                        document.write('<td align=center>'+list[i].macgroup+'</td>');
+                        document.write('<td align=center>'+list[i].mac+'</td>');
+                        var weekdaysAA=[];
+                        var weekdaysStr='';
+                        if(list[i].weekdays){
+                            var weekdaysA=list[i].weekdays.split(',');
+                            if(weekdaysA.length>0){
+                                for(var j=0; j<weekdaysA.length; j++){
+                                    weekdaysAA.push(weekdaysObj[weekdaysA[j]]);
+                                }
+                            }
+                            weekdaysStr=weekdaysAA.join(',');
+                        }
+                        document.write('<td align=center>'+weekdaysStr+'</td>');
+                        document.write('<td align=center>'+list[i].time+'</td>');
+                        var blockingtype = parent_allow_all;
+                        switch (list[i].blockingtype) {
+                            case 'Allow All':
+                                blockingtype = parent_allow_all;
+                                break;
+                            case 'Deny All':
+                                blockingtype = parent_deny_all;
+                                break;
+                            case 'Allow Url':
+                                blockingtype = parent_allow_url;
+                                break;
+                            case 'Deny Url':
+                                blockingtype = parent_deny_url;
+                                break;
+                        }
+                        document.write('<td align=center>'+blockingtype+'</td>');
+                        document.write('<td align=center style="display: none;">'+list[i].url+'</td>');
+                        var enable=parent_no;
+                        if(list[i].enable == 'ON'){
+                            enable=parent_yes;
+                        }
+                        document.write('<td align=center>'+enable+'</td>');
+                        document.write('<td align=center>');
+                        document.write('<a style="text-decoration:underline" onClick="editClick('+i+')">'+parent_edit+'</a>');
+                        document.write('</td>');
+                        document.write('<td align=center>');
+                        document.write('<input type="checkbox" name="select'+(i+1)+'" value="ON">');
+                        document.write('</td>');
+                        document.write('</tr>');
+                    }
+                }
+            </script>
+        </table>
+        <br>
+        <input type="submit" value="Delete Selected" name="deleteSelParentCtr" onClick="return deleteClick()">
+        <script>document.formParentEdit.deleteSelParentCtr.value = parent_delete_selected;</script>&nbsp;&nbsp;
+        <input type="submit" value="Delete All" name="deleteAllParentCtr" onClick="return deleteAllClick()">
+        <script>document.formParentEdit.deleteAllParentCtr.value = parent_delete_all;</script>&nbsp;&nbsp;
+        <input type="hidden" value="/parent_control.htm" name="submit-url">
+        <script>
+            if ( num == 0 )
+                disableDelButton();
+        </script>
+    </form>
+</blockquote>
+</body>
+
+</html>

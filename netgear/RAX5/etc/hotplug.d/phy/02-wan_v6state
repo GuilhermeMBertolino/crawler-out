@@ -1,0 +1,14 @@
+if [ $PORT -eq 0 ]; then
+	wan6_mode="$(uci get network.wan_v6.conntype)"
+	if [ "$ACTION" = linkup ]; then
+        # Follow RAX30 behavior, don't handle link change for autoDetect.
+        ifup wan_v6
+	else
+		#ifdown wan_v6
+		if [ $wan6_mode == "autoDetect" ]; then
+			rm /tmp/over_detect6
+		else
+			ifdown wan_v6
+		fi
+	fi
+fi

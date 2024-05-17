@@ -1,0 +1,153 @@
+<!DOCTYPE HTML>
+<% 
+    local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css<?= commonCfg.getVer() ?>">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<?= commonCfg.getVer() ?>"></script>
+  <script src="js/validations.js<?= commonCfg.getVer() ?>"></script>
+
+  <script language="javascript" type="text/javascript">
+    
+    CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+    var bridge_support = <?= commonCfg.getBridgeSupport()?>;
+
+    $(document).ready(function()
+    {
+        /* decide to hidden bridge mode or not */
+        if (bridge_support  == "1") {
+             $('#bridge_mode').show();
+        }
+        else {
+            $('#bridge_mode').hide();
+        }
+        
+        fetchData('target', 'wireless_apmode_basic', '', 'post_fillout_init');
+    });
+    
+    function post_fillout_init()
+    {   
+        /* init function */
+        init_mode();
+
+        /* register a onClick/onChange funtion */
+        $('#target [name=mode]').on('change', function() {
+            onChange_mode($('[name=mode]:checked').val());
+        });
+    }
+    
+    /* init function Section --------> Begin */
+    function init_mode()
+    {
+        var mode = $('[name=mode]:checked').val();
+        
+        //change the color of the icon based on which mode is running
+        if (mode == "router") {
+            $("#router").removeClass("icon").addClass("icon_select");
+        }
+        else if (mode == "ap") {
+            $("#ap").removeClass("icon_unselect").addClass("icon_select");
+        }
+        else if (mode == "bridge") {
+            $("#bridge").removeClass("icon_unselect").addClass("icon_select");
+        }
+    }
+    /* init function Section --------> End */
+    
+    /* Onclick Callback Section --------> Begin */
+    function onChange_mode(mode) {
+        if (mode == "router") {
+            location.href="WLG_ap_router.html";
+        }
+        else if (mode == "ap") {
+            location.href="WLG_ap_ap.html";
+        }
+        else if (mode == "bridge") {
+            location.href="WLG_ap_bridge.html";
+        }
+    }
+    /* Onclick Callback Section --------> End */ 
+  </script>
+
+<style>
+.boxline{width: 700px !important; height: 230px; margin:0 auto; position: relative;}
+.box {width: 205px; height: 205px; float: left; position: relative; margin-left: 20px; margin-top: 20px; border-width: 1px; border-style:solid; border-color:#a8a8aa;}
+.radio_box{width: 90%; height: 30px; border-bottom-width: 1px; border-bottom-style:solid; border-bottom-color:#a8a8aa;  font-size: 13px; font-weight: bold; color: black; position: relative; top: 10px; padding-left: 10%;}
+.icon_unselect, .icon_select{width:120px; height: 120px; position: absolute; bottom: 20px; left: 40px; cursor: pointer;}
+.icon_unselect img, .icon_select img{width:100%; height:120px}
+.icon_unselect { background-color: #5db5e5; border-radius:10px;}
+.icon_select { background-color: #6abd49;}
+</style>
+
+</head>
+
+<body onload="window.top.change_size($(this));" class="page-body" onResize="window.top.change_size($(this));">
+    <div class="page-header" style="position: relative;">
+        <span mlang="ACB_113">Router / AP / Bridge Mode</span>
+    </div>
+    
+    <div id="main" class="form-group"  style=height:365px;overflow:auto;scrolling:auto">
+    
+    <!-- form -->
+    <form id="target"  name="formname" method="POST" >
+        <div class="main_top_button">
+            <div class="boxline" id="icon_box">
+                <div id="router_mode" class="box">
+                    <div class="radio_box">
+                        <input type="radio" name="mode" value="router" id="operation_type_rm">
+                        <label for="operation_type_rm" mlang="RAEM06"> Router Mode</label>
+                    </div>
+                    <div id="router" class="icon_unselect" onclick="onChange_mode('router')">
+                        <img src="/images/router.gif">
+                    </div>
+                </div>
+                <div id="ap_mode" class="box">
+                    <div class="radio_box">
+                        <input type="radio" name="mode" value="ap" id="operation_type_ap">
+                        <label for="operation_type_ap" mlang="AAW028"> AP Mode</label>
+                    </div>
+                    <div id="ap" class="icon_unselect" onclick="onChange_mode('ap')">
+                        <img src="/images/ap.gif">
+                    </div>
+                </div>
+                <div id="bridge_mode" class="box">
+                    <div class="radio_box">
+                        <input type="radio" name="mode" value="bridge" id="operation_type_br">
+                        <label for="operation_type_br" mlang="MRS093"> Bridge Mode</label>
+                    </div>
+                    <div id="bridge" style="width:115px" class="icon_unselect" onclick="onChange_mode('bridge')">
+                        <img src="/images/bridge.gif">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- form end -->
+    </div><!-- form-group end -->
+    
+    <div class="form-btn-row" id="form_btn_div">
+        <button type="button" value="cancel"  onClick="location.href='WLG_ap_basic.html';" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+        <button type="button" value="apply"  onClick="$('[name=mode]').change();" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004">Apply</button>
+    </div>
+    
+</html>

@@ -1,0 +1,155 @@
+<html>
+<head>
+    <meta http-equiv='Pragma' content='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+
+    <script language="javascript" src="portName.js"></script>
+
+    <script language="javascript" src="util.js"></script>
+
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+
+    <script language="javascript">
+      function PrintEnetDiag()
+{
+
+      
+ 	
+ 	  	 var list = new Array(<%ejGet(enetDiag)%>);
+ 	    
+		 for(var i=0;i<list.length;i++)
+	{
+		 		
+			var s=list[i].split("-");
+			var intfDisp = getUNameByLName(s[0]);
+			document.writeln("<tr><td class='hd' width='250'>Test your " + intfDisp +  " Connection: </td>");
+			if(s[1]=='1')
+			document.writeln("<td><b> <font color='green'>PASS</font> </b></td>");
+			else
+			document.writeln("<td><b> <font color='red'>FAIL</font> </b></td>");
+			document.writeln("<td width='100'><A href='hlpethconn.html'>Help</A></td> </tr>");
+	}
+	
+}
+
+
+</script>
+</head>
+<body>
+
+    <form>
+    <script>        tbl_head('');</script>
+<div style="width:90%;text-align:left">
+    <b>
+        <%ejGetOther(diagInfo, serviceName)%>
+        Diagnostics</b><br>
+    <p align="left">
+        The individual tests are listed below. If a test displays a fail status, click &quot;Rerun
+        Diagnostic Tests&quot; at the bottom of this page to make sure the fail status is
+        consistent. If the test continues to fail, click &quot;Help&quot; and follow the
+        troubleshooting procedures.
+    </p>
+    <p>
+        <b>Test the connection to your local network</b>
+        <table border="1" cellspacing="0" cellpadding="3">
+            <tbody>
+
+                <script language="javascript">
+<!-- hide                     
+   // <%ejGet(enetDiag)%>    
+
+  PrintEnetDiag();
+if ('<%ejGet(enblUsb)%>' == '1') {
+   document.writeln("<TR><TD class='hd'>Test your USB Connection: </TD>");
+   document.writeln("<TD><B><%ejGetOther(diagnostic, 13)%></B>&nbsp;</TD>");
+   document.writeln("<TD><A href='hlpusbconn.html'>Help</A></TD> </TR>");
+}
+if ('<%ejGet(enblWireless)%>' == '1') {
+   document.writeln("<TR><TD class='hd'>Test your Wireless Connection: </TD>");
+   document.writeln("<TD><B><%ejGetOther(diagnostic, 17)%></B>&nbsp;</TD>");
+   document.writeln("<TD><A href='hlpwlconn.html'>Help</A></TD></TR>");
+}
+// done hiding -->
+</script>
+
+            </tbody>
+        </table>
+        <p>
+            <b>Test the connection to your Internet service provider</b>
+            <table border="1" cellspacing="0" cellpadding="3" width="100%">
+                <tbody>
+                    <tr>
+                        <td class='hd' width="250">
+                            Ping default gateway:
+                        </td>
+                        <td>
+                            <b>
+                                <%ejGetOther(diagnostic, 9)%></b>&nbsp;
+                        </td>
+                        <td width="100">
+                            <a href="hlppnggw.html">Help</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class='hd'>
+                            Ping primary Domain Name Server:
+                        </td>
+                        <td>
+                            <b>
+                                <%ejGetOther(diagnostic, 10)%></b>&nbsp;
+                        </td>
+                        <td>
+                            <a href="hlppngdns.html">Help</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <center>
+                <br>
+                <br>
+
+                <script language="javascript">
+<!--                    hide
+                    var diagPrev = '<%ejGetOther(diagInfo, diagPrev)%>';
+                    var diagNext = '<%ejGetOther(diagInfo, diagNext)%>';
+                    var sessionKey = '<%ejGetOther(sessionKey)%>';
+                    var GO_PREV = 0;
+                    var GO_NEXT = 1;
+
+                    function btnGo(where) {
+                        var loc = 'diag.cgi?diagCurr=';
+
+                        if (where == GO_PREV)
+                            loc += diagPrev;
+                        else
+                            loc += diagNext;
+
+                        loc += '&sessionKey=' + sessionKey;
+                        var code = 'location="' + loc + '"';
+                        eval(code);
+                    }
+
+                    function btnTest(type) {
+                        var loc = 'diag.cgi?';
+
+                        loc += 'diagType=' + type;
+
+                        loc += '&sessionKey=' + sessionKey;
+                        var code = 'location="' + loc + '"';
+                        eval(code);
+                    }
+
+                    if (diagPrev != '')
+                        document.writeln("                  <input type='button' class='button'  onClick='btnGo(GO_PREV)' value='Previous Connection'>");
+                    if (diagNext != '')
+                        document.writeln("                  <input type='button' class='button'  onClick='btnGo(GO_NEXT)' value='Next Connection'>");
+// done hiding -->
+</script>
+
+                <br>
+            </center>
+</div>
+            <script>                tbl_tail("<input type='button' class='button'  onClick=\"btnTest('f5')\" value='Test'>&nbsp;&nbsp;<input type='button' class='button'  onClick=\"btnTest('f4')\" value='Test With OAM F4'>");</script>
+    </form>
+</body>
+</html>

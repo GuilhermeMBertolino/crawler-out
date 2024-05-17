@@ -1,0 +1,466 @@
+<!DOCTYPE HTML>
+<!-- include PHP to use php functions -->
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/validations.js"></script>
+
+  <script language="javascript" type="text/javascript">
+    
+    //CSRF_TOKEN_TOP = <!--?= genCsrfTokenTopFilePhp('tokenNumber')?-->;
+
+    $(document).ready(function()
+    {
+        fetchData('target', 'email', '', 'post_fillout_init');
+    });
+
+    function post_fillout_init()
+    {  
+        /* init function */
+        init_enableEmail();
+        
+        /* register a onClick/onChange funtion */
+        $('#target [name=enableEmail]').on('change', function() {
+            $('[name=enableEmail]').val($('[name=enableEmail]').prop("checked"));
+            onChange_enableEmail();
+        });
+        $('#target [name=isServerAuth]').on('change', function() {
+            $('[name=isServerAuth]').val($('[name=isServerAuth]').prop("checked"));
+            onChange_isServerAuth();
+        });
+        //$('#target [name=sendLogType]').on('change', function() {
+        //    onChange_sendLogType();
+        //});
+        $('#target [name=sendAlert]').on('change', function() {
+            $('[name=sendAlert]').val($('[name=sendAlert]').prop("checked"));
+        });
+
+        //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+        $('#alert_schedule_type')[0].selectedIndex = $('#alertScheduleType').prop('selectedIndex');
+        $('#alert_schedule_type').on('click', function() {
+            $('#alertScheduleType')[0].selectedIndex = $('#alert_schedule_type').prop('selectedIndex');
+            onChange_sendLogType();
+        });
+
+        $('#alert_day')[0].selectedIndex = $('#alertDay').prop('selectedIndex');
+        $('#alert_day').on('click', function() {
+            $('#alertDay')[0].selectedIndex = $('#alert_day').prop('selectedIndex');
+        });
+
+        //PEGA JYang, for GUI automation, set sender as default and no user input
+        var sender = "admin@<?= commonCfg.getModelNameStr()?>.netgear.com";
+        $('#target [name=sender]').val(sender);
+    }
+
+    function formSubmit() {
+        //sync 12 hour time of am/pm to 24 hour time
+        var hour12 = $('select[name=hour]').val();
+        var am_pm = $('[name=am_pm]:checked').val();
+        var hour24 = 0;
+        var time_str;
+        
+        if (am_pm == "am") {
+            hour24 = parseInt(hour12);
+        }
+        else if (am_pm == "pm") {
+            hour24 = parseInt(hour12) + 12;
+        }
+       
+        if (hour24 <= 9) {
+            time_str = "0" + hour24.toString() + ":00";
+        }
+        else {
+            time_str = hour24.toString() + ":00";
+        }
+        
+        $('[name=time]').val(time_str);
+        
+        if (validation()) {
+            $.postForm('emailSetup', $('#target'), 'cgi-bin/netgear.plua', 'postSubmit');
+        }
+    }
+    
+    function postSubmit(json) {
+    }
+	
+    function validation()
+    {
+        var enableEmail = $('[name=enableEmail]').val();
+        
+        if (enableEmail == "false") {
+            // email is not enable, no need to validate input element value
+            return true;
+        }
+        
+        //check mail server
+        var mailServer = $('[name=mailServer]').val();
+        var mailServer_tmp = mailServer.split(".");
+        if (mailServer_tmp.length < 3) {
+            //Error: Invalid SMTP server address.
+            alert(window.top.mlang["CEME01"]);
+            $('[name=mailServer]').focus();
+            return false;
+        }
+        
+        //check mail address
+        if ($('[name=emailAddr1]').val() == "") {
+            //E-mail address cannot be empty.
+            alert(window.top.mlang["genie_754"]);
+            return false;
+        }
+        
+        //check mail server port
+        var mailServerPort = $('[name=mailServerPort]').val()
+        if (isNumStr(mailServerPort) == false || parseInt(mailServerPort, 10) > 65535 ||
+            parseInt(mailServerPort, 10) < 1) {
+            //Outgoing Mail Server Port Number, must be in the range 1-65535.
+            alert(window.top.mlang["CEM059"] + window.top.mlang["APPE10"]);
+            $('[name=mailServerPort]').focus();
+            return false;
+        }
+
+        
+        return true;
+    }
+    
+    
+    /* init function Section --------> Begin */
+    function init_enableEmail()
+    {
+        onChange_enableEmail();
+    }
+    
+    /* init function Section --------> End */
+    
+    /* Onclick Callback Section --------> Begin */
+    function onChange_enableEmail()
+    {
+        var enableEmail = $('[name=enableEmail]').val();
+        var Emailbefore = $('[name=enableEmail_pre]').val();
+        
+        if (enableEmail == "true") {
+            $('[name=emailAddr1]').attr('readonly', false);
+            $('[name=emailAddr2]').attr('readonly', false);
+            $('[name=sender]').attr('readonly', false);
+            $('[name=mailServer]').attr('readonly', false);
+            $('[name=username]').attr('readonly', false);
+            $('[name=password]').attr('readonly', false);
+            $(".no_readonly_element").css("pointer-events", "");
+            $(".no_readonly_element").css("opacity", "");
+            if(Emailbefore == "false")
+            {
+                $('[name=sendAlert]').prop("checked",true);
+                $('[name=sendAlert]').val($('[name=sendAlert]').prop("checked"));
+            }
+            /* only when Email is enabled, the readonly/writeable of the sub-enable-elements can be active */
+            onChange_isServerAuth();
+            onChange_sendLogType();
+            
+        }
+        else if (enableEmail == "false") {
+            $('[name=emailAddr1]').attr('readonly', true);
+            $('[name=emailAddr2]').attr('readonly', true);
+            $('[name=sender]').attr('readonly', true);
+            $('[name=mailServer]').attr('readonly', true);
+            $('[name=username]').attr('readonly', true);
+            $('[name=password]').attr('readonly', true);
+            $(".no_readonly_element").css("pointer-events", "none");
+            $(".no_readonly_element").css("opacity", "0.5");
+            /* When Email is disabled, all element should be readonly no matter what value of the sub-enable-elements are */
+        }
+
+        $('[name=enableEmail_pre]').val(enableEmail);
+    }
+    
+    function onChange_isServerAuth()
+    {
+        var isServerAuth = $('[name=isServerAuth]').val();
+        
+        if (isServerAuth == "true") {
+            $('[name=username]').attr('readonly', false);
+            $('[name=password]').attr('readonly', false);
+        }
+        else if(isServerAuth == "false") {
+            $('[name=username]').attr('readonly', true);
+            $('[name=password]').attr('readonly', true);
+        }
+    }
+    
+    function onChange_sendLogType()
+    {
+        var sendLogType =  $('select[name=sendLogType]').val();
+       
+        if (sendLogType == "LogFull" || sendLogType == "Hourly" || sendLogType == "None" ) {
+            $('.day').css("pointer-events", "none");
+            $('.day').css("opacity", "0.5");
+            $('.hour').css("pointer-events", "none");
+            $('.hour').css("opacity", "0.5");
+            $('.am_pm').css("pointer-events", "none");
+            $('.am_pm').css("opacity", "0.5");
+        }
+        else if (sendLogType == "Daily") {
+            $('.day').css("pointer-events", "none");
+            $('.day').css("opacity", "0.5");
+            $('.hour').css("pointer-events", "");
+            $('.hour').css("opacity", "");
+            $('.am_pm').css("pointer-events", "");
+            $('.am_pm').css("opacity", "");            
+        }
+        else if (sendLogType == "Weekly") {
+            $('.day').css("pointer-events", "");
+            $('.day').css("opacity", "");
+            $('.hour').css("pointer-events", "");
+            $('.hour').css("opacity", "");
+            $('.am_pm').css("pointer-events", "");
+            $('.am_pm').css("opacity", "");      
+        }
+    }
+    
+    /* Onclick Callback Section --------> End */ 
+    
+    function isNumStr(str)
+    {
+        var i;
+        
+        if (str.length == 0) {
+            return false;
+        }
+        
+        for(i = 0; i < str.length; i++) {
+            var c = str.substring(i, i+1);
+            if("0" <= c && c <= "9") {
+                continue;
+            }
+            return false;
+        }
+        
+        return true;
+    }
+  </script>
+
+
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('FW_email','');" class="page-body" onResize="window.top.change_size($(this));">
+    <div id="main_page">
+        <div class="page-header" style="position: relative;">
+            <span mlang="LUP020">E-mail</span>
+        </div>
+    
+        <div id="main" class="form-group"  style=height:365px;overflow:auto;scrolling:auto">
+    
+        <!-- form -->
+        <form id="target"  name="formname" method="POST" >
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="CEM014" >Turn E-mail Notification On</span>
+                        <input type="checkbox" name="enableEmail" id="email_notify" value="true">
+                    <span class="checkbox-checkmark"></span>
+                </label>
+            </div>
+            
+            <div class="form-row">
+                <a href="javascript:loadhelp('FW_email','receive')" tabindex="-1">
+                    <b mlang="CEM010">Send alerts and logs through e-mail</b>
+                </a>
+            </div>
+        
+            <div class="form-row">
+                <span mlang="UBS165">Primary E-mail Address</span>
+            </div>
+            <div class="form-row">
+                <input type="text" class="input1" name="emailAddr1" id="email_addr" size="24" maxlength="50">
+            </div>
+            
+            <div class="form-row" style="display:none">
+                <span mlang="UBS166">Secondary E-mail Address (optional)</span>
+            </div>
+            <div class="form-row" style="display:none">
+                <input type="text" class="input1" name="emailAddr2" id="email_addr2" size="24" maxlength="50">
+            </div>
+            
+            <div class="form-row" style="display:none">
+                <span mlang="PCVP_018">Sender</span>
+            </div>
+            <div class="form-row" style="display:none">
+                <input type="text" class="input1" name="sender" id="email_sender" size="24" maxlength="50">
+            </div>
+            
+            <div class="form-row">
+                <span mlang="CEM011">Your Outgoing Mail Server</span>
+            </div>
+            <div class="form-row">
+                <input type="text" class="input1" name="mailServer" id="email_smtp" size="24" maxlength="50">
+            </div>
+            
+            <div class="form-row">
+                <span mlang="CEM059">Outgoing Mail Server Port Number</span>
+            </div>
+            <div class="form-row">
+                <input type="text" class="input1" name="mailServerPort" id="email_port" size="4" maxlength="50">
+            </div>
+            
+            <div class="form-row">
+                <label class="checkbox-container no_readonly_element">
+                    <span mlang="CEM002" >My mail server requires authentication</span>
+                        <input type="checkbox" name="isServerAuth" id="smtp_auth" value="true">
+                    <span class="checkbox-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row">
+                <span mlang="SWP051">User Name</span>
+            </div>
+            <div class="form-row">
+                <input class="input1 s_input2"  maxLength=64 name="username" id="auth_user" size=24>
+            </div>
+            
+            <div class="form-row">
+                <span mlang="SWP027">User Name</span>
+            </div>
+            <div class="form-row">
+                <input class="input1" type="password" maxLength=64 name="password" id="auth_pwd" size=24>
+            </div>
+            
+            <div class="divider">&nbsp;</div>
+            
+            <div class="form-row no_readonly_element">
+                <label class="checkbox-container">
+                    <span mlang="CEM009" >Send Alert Immediately</span>
+                        <input type="checkbox" name="sendAlert" id="alert_blocksite" value="true">
+                    <span class="checkbox-checkmark"></span>
+                </label>
+            </div>
+            
+            <div class="form-row">
+                <span mlang="CEM015">When someone attempts to visit a blocked site</span>
+            </div>
+            
+            <div class="divider">&nbsp;</div>
+            
+            <div class="form-row">
+                <a href="javascript:loadhelp('FW_email','schedule')" tabindex="-1">
+                    <b mlang="CEM008">"Send logs according to this schedule</b>
+                </a>
+            </div>
+
+            <!--PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)-->
+            <div class="form-row no_readonly_element" style="display:none">
+                <select name="sendLogType" id="alertScheduleType" size=1>
+                    <option value="LogFull" mlang="CEM006">When log is full</option>
+                    <option value="Hourly" mlang="CEM007">Hourly</option>
+                    <option value="Daily" mlang="CEM004">Daily</option>
+                    <option value="Weekly" mlang="CEM016">Weekly</option>
+                    <option value="None" mlang="SWS016">None</option>
+                </select>
+            </div>
+
+            <div class="form-row no_readonly_element">
+                <select id="alert_schedule_type" size=1>
+                    <option value="full" mlang="CEM006">When log is full</option>
+                    <option value="Hourly" mlang="CEM007">Hourly</option>
+                    <option value="Daily" mlang="CEM004">Daily</option>
+                    <option value="Weekly" mlang="CEM016">Weekly</option>
+                    <option value="None" mlang="SWS016">None</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <span mlang="CEM005">Day</span>
+            </div>
+
+            <!--PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)-->
+            <div class="form-row no_readonly_element" style="display:none">
+                <select name="day" id="alertDay" size=1>
+                    <option value="Sunday" mlang="CSE012">Sunday</option>
+                    <option value="Monday" mlang="CSE009">Monday</option>
+                    <option value="Tuesday" mlang="CSE015">Tuesday</option>
+                    <option value="Wednesday" mlang="CSE016">Wednesday</option>
+                    <option value="Thursday" mlang="CSE013">Thursday</option>
+                    <option value="Friday" mlang="CSE006">Friday</option>
+                    <option value="Saturday" mlang="CSE010">Saturday</option>
+                </select>
+            </div>
+            <div class="form-row no_readonly_element day">
+                <select id="alert_day" size=1>
+                    <option value="0" mlang="CSE012">Sunday</option>
+                    <option value="1" mlang="CSE009">Monday</option>
+                    <option value="2" mlang="CSE015">Tuesday</option>
+                    <option value="3" mlang="CSE016">Wednesday</option>
+                    <option value="4" mlang="CSE013">Thursday</option>
+                    <option value="5" mlang="CSE006">Friday</option>
+                    <option value="6" mlang="CSE010">Saturday</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <span mlang="CEM012">Time</span>
+            </div>
+            <div class="form-row no_readonly_element hour">
+                <select name="hour" id="alert_hour" size=1>
+                    <option value=0>12:00</option>
+                    <option selected value=1>1:00</option>
+                    <option value=2>2:00</option>
+                    <option value=3>3:00</option>
+                    <option value=4>4:00</option>
+                    <option value=5>5:00</option>
+                    <option value=6>6:00</option>
+                    <option value=7>7:00</option>
+                    <option value=8>8:00</option>
+                    <option value=9>9:00</option>
+                    <option value=10>10:00</option>
+                    <option value=11>11:00</option>
+                </select>
+            </div>
+            
+            <div class="form-row no_readonly_element am_pm">
+                <label class="checkbox-container" ><div mlang="ATM001">am</div>
+                    <input type="radio" name="am_pm" id="alert_am" value="am">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+            <div class="form-row no_readonly_element am_pm">
+                <label class="checkbox-container" ><div mlang="ATM004">pm</div>
+                    <input type="radio" name="am_pm" id="alert_pm" value="pm">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+            
+            <input type="hidden" name="time">
+            <input type="hidden" name="enableEmail_pre" value="">
+        </form>
+        <!-- form end -->
+    
+        </div><!-- form-group end -->
+    
+        <div class="form-btn-row" id="form_btn_div">
+            <button type="button" value="cancel"  onClick="location.href='FW_email.html';" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+            <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004">Apply</button>
+        </div>
+    </div><!-- main page end-->
+    </body>
+   <? commonCfg.genHelpSection() ?>
+</html>

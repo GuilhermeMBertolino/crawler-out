@@ -1,0 +1,102 @@
+#!/bin/sh
+# Enable/disable EndPoint
+# Needed object: Device.WiFi.EndPoint with the parameters: Enable and X_LANTIQ_COM_Vendor_WispEnable
+
+script_name=`basename $0`
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name=$1
+
+# Find the interface index and the radio index
+interface_index=`find_index_from_interface_name $interface_name`
+radio_name=`get_radio_name_from_endpoint $interface_name`
+radio_index=`find_index_from_interface_name $radio_name`
+
+print2log $radio_index DEBUG "$script_name $*"
+timestamp $radio_index "$script_name:$interface_name:begin"
+
+# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the in conf file
+[ "$debug_save_conf" ] && cp ${IN_CONF} ${TEMP_DIR}/endpoint_enable_set_in_conf_${interface_name}
+# Create the output configuration file
+cat /dev/null > ${OUT_CONF}
+
+# Source in.conf
+in_conf_source
+
+# Update the status file with the real-time interface status
+interface_enabled=`db2fapi_convert boolean Enable 0`
+[ -e "${INTERFACES_STATUS}_${radio_name}" ] && sed -i '/^'$interface_name'_rt=.*/d' ${INTERFACES_STATUS}_${radio_name}
+echo "${interface_name}_rt=${interface_enabled}" >> ${INTERFACES_STATUS}_${radio_name}
+
+# Check if the configuration files for the VAP exist
+confs_exist=`check_configurations_exist $interface_name $STA`
+if [ "$confs_exist" = "no" ]
+then
+	print2log $radio_index ERROR "$script_name: configuration files for $interface_name are missing"
+	update_conf_out "wlan_configuration_status" "FAILURE"
+	exit 1
+fi
+
+# Create a runner script to start/stop supplicant
+# Delete the runner file
+rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+echo "##### $script_name commands ####" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+if [ "$interface_enabled" = "0" ]
+then
+	echo "ppacmd dellan -i ${interface_name}" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	(. $ETC_PATH/fapi_wlan_wave_down $interface_name "FAPI_WLAN_WAVE_ENDPOINT_ENABLE_SET" "$STA" "1" "$radio_name" "$interface_name" "$radio_index")
+elif [ "$interface_enabled" = "1" ]
+then
+	up_merge_supplicant_conf $interface_name
+
+	# Source needed DBs
+	local_db_source RADIO
+	local_db_source SSID
+	local_db_source ENDPOINT
+	# Read the needed parameters to start the endpoint
+	endpoint_mac=`db2fapi_convert regular MACAddress $interface_index`
+	radio_mac=`db2fapi_convert regular MACAddress $radio_index`
+	endpoint_bridge=`db2fapi_convert regular X_LANTIQ_COM_Vendor_BridgeName $interface_index`
+	wds=`db2fapi_convert boolean X_LANTIQ_COM_Vendor_WaveEndPointWDS $interface_index`
+	fastpath_enabled=`db2fapi_convert boolean WaveFastpathEnabled $radio_index`
+	supplicant_log_level=`db2fapi_convert regular X_LANTIQ_COM_Vendor_SupplicantLoglevel $interface_index`
+	supplicant_log_output=`db2fapi_convert regular X_LANTIQ_COM_Vendor_SupplicantLogOutput $interface_index`
+	up_add_start_endpoint_to_runner $interface_name $endpoint_mac $radio_mac $script_name $endpoint_bridge $wds $fastpath_enabled $supplicant_log_level $supplicant_log_output
+fi
+
+# Execute the runner (if exists)
+if [ -e ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ]
+then
+	echo "exit 0" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	chmod +x ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	# If runner execution failed, return FAILURE
+	if [ $? -gt 0 ]
+	then
+		# Create the output configuration file
+		update_conf_out "wlan_configuration_status" "FAILURE"
+		# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the out conf file
+		[ "$debug_save_conf" ] && cp ${OUT_CONF} ${TEMP_DIR}/endpoint_enable_set_out_conf_${interface_name}
+		up_clean_and_restore $radio_name
+		exit 1
+	fi
+fi
+
+update_interfaces_status $interface_name "$STA" $radio_name "1" "rt"
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"
+
+# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the out conf file
+[ "$debug_save_conf" ] && cp ${OUT_CONF} ${TEMP_DIR}/endpoint_enable_set_out_conf_${interface_name}
+
+up_clean_and_restore $radio_name
+
+# DEBUG: set debug_save_runner in fapi_wlan_wave_lib_common.sh to save the runner script
+[ "$debug_save_runner" ] && [ -e ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ] && cp ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER} ${CONF_DIR}/runner_endpoint_enable_set_${interface_name}.sh
+
+print2log $radio_index DEBUG "$script_name done"
+timestamp $radio_index "$script_name:$interface_name:done"

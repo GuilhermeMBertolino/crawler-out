@@ -1,0 +1,32 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+--local uci  = require "luci.model.uci".cursor()
+
+--For LUA
+function __FILE__() return debug.getinfo(2, 'S').short_src end -- or use .source
+function __LINE__() return debug.getinfo(2, 'l').currentline end
+
+package.path = '/lib/wifi/?.lua;'..package.path
+--local mtkwifi = require("mtkwifi")
+local log    = require "luci.log"
+    log.debug(0)
+
+local wps = require "commonFunc.wifiUtils_WPS"
+
+--log.console("\n")
+--log.console("====Debug Print Start of "..__FILE__().."====")
+
+local data = { }
+--WPS data
+data["wpsStatus"] = { value = wps.get_WPS_running_status_forGUI(), type = "input" } --1: in progress, 2: success, 4: failed, 8: failed.
+data["client_mac"] = { value = wps.get_WPS_client_mac_forGUI(), type = "spantext" }
+
+--log.console("====Debug Print End of "..__FILE__().."====")
+--log.console("\n")
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)
+

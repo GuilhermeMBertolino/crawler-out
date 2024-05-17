@@ -1,0 +1,41 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local interface = require "webGetFunc.interface"
+local openVpn = require "webGetFunc.openVpn"
+local ddns  = require "webGetFunc.ddns"
+local ipv6 = require "webGetFunc.ipv6"
+
+local data = { }
+
+data["username"] = { value = interface.getPptpUsername() }
+data["password"] = { value = interface.getPptpPassword() }
+data["mode_autoid"] = { value = interface.getPptpMode_autoid(), type = 'select' }
+data["idleTimeout"] = { value = interface.getPptpIdleTime() }
+data["ipAddr"] = { value = interface.getPptpIpAddr(), type = 'ip', idStr_prefix = 'myip' }
+data["netmask"] = { value = interface.getPptpIpMask(), type = 'ip', idStr_prefix = 'mymask' }
+data["serverAddr"] = { value = interface.getPptpServerAddr(), type = 'input' }
+data["gateway"] = { value = interface.getPptpGateway(), type = 'ip', idStr_prefix = 'mygw' }
+data["connectId"] = { value = interface.getPptpConnectId(), type = 'input' }
+
+data["dnsType"] = { value = interface.getDNStype(), type = 'radio' }
+data["dns1"] = { value = interface.getDNSServerIpAddr(1), type = 'ip', idStr_prefix = 'daddr' }
+data["dns2"] = { value = interface.getDNSServerIpAddr(2), type = 'ip', idStr_prefix = 'pdaddr' }
+data["macClone"] = { value = interface.getWANMacSelect(), type = 'radio' }
+data["cloneMac"] = { value = interface.getWANCloneMac() }
+data["wan_hwaddr_default"] = { value = interface.getWANMacDefault() }
+data["wan_hwaddr_client"] = { value = interface.getClientMac() }
+data["wan_hwaddr_user"] = { value = interface.getWANMacUser() }
+data["runningWanMode"] = { value = interface.get_wanMode() }
+data["circleActivationStatus"] = { value = interface.getCircleActivationStatus() }
+data["hidOpenvpnEnable"] = { value = openVpn.getOpenVpnEnable(), type = "input" }
+data["hidDdnsEnable"] = { value = ddns.getCheckboxVal_enableDdns(), type = "input" }
+data["runningIpType"] = { value = interface.getWanIpType(), type = "input" }
+data["runningStaticIp"] = { value = interface.getWanIpAddr(), type = "input" }
+data["v6Type"] = { value = interface.get_ipv6Type() }
+data["v6Mode"] = { value = ipv6.getSelectVal_v6Type() }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

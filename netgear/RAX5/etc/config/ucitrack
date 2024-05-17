@@ -1,0 +1,111 @@
+config network
+	option init network
+	list affects dhcp
+	list affects radvd
+	list affects dropbear
+	list affects telnet
+
+config wireless
+	list affects network
+
+config NTGR_WiFi
+	option init wifi
+
+config firewall
+	option init firewall
+	list affects luci-splash
+	list affects qos
+	list affects upnpd
+
+config olsr
+	option init olsrd
+
+config dhcp
+	option init dnsmasq
+	#option exec /usr/sbin/lan_linkdownup.sh #PeguBU6, YochengLian, 2022.08.05, Fix RAX5-IR006 and No more restart need to execute link down/up by this ucitrack dhcp section. We centralize it to post actoion of luci-reload.
+
+	list affects odhcpd
+
+config odhcpd
+	option init odhcpd
+
+config dropbear
+	option init dropbear
+
+config telnet
+	option init telnet
+
+config httpd
+	option init httpd
+
+config fstab
+	option init fstab
+
+config qos
+	option init qos
+
+config system
+	option init system
+	list affects luci_statistics
+	option exec /usr/sbin/sysntpd_restart.sh
+
+config luci_splash
+	option init luci_splash
+
+config upnpd
+	option init miniupnpd
+
+config ntpclient
+	option init ntpclient
+
+config samba
+	option init samba
+
+config tinyproxy
+	option init tinyproxy
+
+config email
+	option init email
+
+config omcproxy
+	option init omcproxy
+
+config logs
+	option init logs
+
+config ddns
+	option exec /usr/sbin/ddns_config.sh
+	option init ddns
+
+config routing
+	option init quagga
+
+config landev
+	option init access_ctrl
+
+config blocksch
+    option init blocksch
+
+config blocksite
+    option init blocksite
+	
+config WebServiceManagement
+	option exec /usr/sbin/lighttp_restart.sh
+
+config tm
+	option exec /usr/sbin/tm_reload.sh
+
+config led_ctl
+	option init led
+
+config openvpn
+	option init openvpn
+	list affects dnsmasq
+
+config vlan
+	option init vlan
+	#option exec /usr/sbin/lan_linkdownup.sh #PeguBU6, YochengLian, 2022.08.05, Fix RAX5-IR006 and No more restart need to execute link down/up by this ucitrack dhcp section. We centralize it to post actoion of luci-reload.
+
+
+config loginpwd
+	option exec /usr/sbin/ssh_telnet_Enabled.sh

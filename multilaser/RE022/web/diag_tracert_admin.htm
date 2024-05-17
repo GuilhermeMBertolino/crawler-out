@@ -1,0 +1,89 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+	<meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+	<% getIndex("no-cache"); %>
+	<title>tracert</title>
+	<% language=javascript %>
+	<script type="text/javascript" src="util_gw.js"> </script>
+	<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+	<% getInfo("include_css"); %>
+	<SCRIPT language = "javascript" type = "text/javascript" >
+		parent.hideWaitDiv();
+		function isValidUrlName(url) {
+			var i = 0;
+			var invalidArray = new Array();
+			invalidArray[i++] = "www";
+			invalidArray[i++] = "com";
+			invalidArray[i++] = "org";
+			invalidArray[i++] = "net";
+			invalidArray[i++] = "edu";
+			invalidArray[i++] = "www.";
+			invalidArray[i++] = ".com";
+			invalidArray[i++] = ".org";
+			invalidArray[i++] = ".net";
+			invalidArray[i++] = ".edu";
+			for (i = 0; i < url.length; i++) {
+				if (['\\', '&', '(', ')', '<', '>', '|', '`', '\'', '\"'].indexOf(url.charAt(i)) >= 0) {
+					return false;
+				}
+			}
+			if (url == "") {
+				return false;
+			}
+			if (url.length < 3) {
+				return false;
+			}
+			for (var j = 0; j < invalidArray.length; j++) {
+				if (url == invalidArray[j]) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		function on_Apply() {
+			if (!isValidUrlName(document.forms[0].target_addr.value) || !sji_checkvip(document.forms[0].target_addr.value) && !sji_checkhostname(document.forms[0].target_addr.value) && !isIPv6(document.forms[0].target_addr.value)) {
+				alert(illegal_destination_address);
+				document.forms[0].target_addr.value = "";
+				return false;
+			}
+			parent.showWaitDiv();
+			return true;
+		}
+		function load() {
+			parent.hideWaitDiv();
+		}
+	</SCRIPT>
+</HEAD>
+
+<!-------------------------------------------------------------------------------------->
+<!--主页代码-->
+<body>
+	<blockquote>
+        <h2>tracert <script>dw(diagnostic_hearder)</script></h2>
+        <hr size=1 noshade align=top>
+	<form id="form" action=/boafrm/formTracert method=POST target="tracertresult" name="tracert">
+			<table border="0">
+			<tr style="display: none">
+				<td width="30%"><font size=2><b><script>dw(interface_selection)</script></b></font></td>
+				<td width="70%"><select name="wanifac"><option value="default">Default</option><% getInfo("multi_wan_name_get"); %></select></td>
+			</tr>
+			<tr>
+				<td width="30%"><font size=2><b><script>dw(destination_address)</script></b></font></td>
+				<td width="70%"><input type="text" name="target_addr" maxlength="60" value="127.0.0.1"/></td>
+			</tr>
+			</table>
+		<p>
+			<input type="submit" value="go" name="go" onClick="return on_Apply()">&nbsp;&nbsp;
+			<script>document.tracert.go.value = diagnostic_go;</script>
+		</p>
+		<br>
+		<div align="left">
+		<iframe align="left" id="tracertresult" name="tracertresult" src='' frameborder='0' width='600' height='400' onload="load()"></iframe>
+		</div>
+	</form>
+	</blockquote>
+</body>
+</html>
+

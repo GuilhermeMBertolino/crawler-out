@@ -1,0 +1,50 @@
+<html>
+<HEAD>
+
+<META http-equiv="content-type" content='text/html; charset=UTF-8'>
+<LINK rel="stylesheet" type="text/css" href="style/hijack_style.css">
+<script language="javascript" type="text/javascript" src="string.js"></script>
+<script language="javascript" type="text/javascript">
+var refresh_times="@sso_refresh_times#";
+var hasInternet="@sso_ping_result#"; 
+var dev_sn = "@dev_sn#";
+var redirect_url_after_login="http://" + window.location.host ;
+var sso_cur_server="@sso_cur_server#";
+var netgear_sso_url="";
+if(sso_cur_server == "dev")
+	netgear_sso_url = "https://accounts-dev.netgear.com/";
+else if(sso_cur_server == "qa")
+	netgear_sso_url = "https://accounts-qa.netgear.com/";
+else
+	netgear_sso_url = "https://accounts.netgear.com/";
+
+function check_pingresult()
+{
+	if (hasInternet == "success")
+	{
+		var redirect=netgear_sso_url+'serial?redirectUrl='+redirect_url_after_login+'&serial_num='+dev_sn;
+	
+		top.location.href = redirect;
+	}
+	else if(hasInternet == "failed" || refresh_times > 5)
+	{		
+			top.location.href = "index.htm";
+	}else
+        	this.location.href="sso_check_status.html";
+}
+function wait_before_check()
+{
+    setTimeout('check_pingresult();',2000);
+}
+</script>
+</HEAD>
+<BODY bgcolor=#ffffff onLoad="wait_before_check();">
+<div  align="center"><BR><BR><TR><TD align="center"><B languageCode = "859">Please wait a moment...</B></TD></TR><BR><BR></div>
+<div class="waiting_img_div" align="center"><img src="image/wait30.gif" alt="waiting" /></div>
+
+<script language="javascript" type="text/javascript" src="langs.js">
+
+</script>
+
+</BODY>
+</HTML>

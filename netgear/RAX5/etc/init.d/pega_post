@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+. /lib/network/switch.sh
+START=99
+
+set_last_date_time() {
+    #sync date-time when factory reset(btn or gui) was triggered
+    file=$1
+    [ -z $file ] return
+    last_date_time=$(date -u -r $file "+%Y-%m-%d %T")
+    date -u -s "$last_date_time" > /dev/null
+}
+
+boot() {
+    #enable all ethernet ports
+    echo -e "\n\033[31mLAN ports power UP\033[0m\n" > /dev/console
+    
+    #force ethernet packet length to be 1518
+    switch reg w 30e0 3e08
+
+    #wan_ports_up
+    lan_ports_up
+    /bin/touch /tmp/sys_ready
+    
+    #NTGR LOG event
+    FW=$(d2 -s general.fwrevision| awk -F '_' '{printf $1}')
+    logger -t [MustDisplay] "[Initialized, firmware version:$FW]"
+
+    if [ -f "/etc/reserve-data/restoreDefault" ]; then
+        echo "Factory Reset by GUI"
+        /usr/bin/ra_cli -r 4
+    fi
+    if [ -f "/etc/reserve-data/resetbtn" ]; then
+        echo "Factory Reset by Reset button"
+        /usr/bin/ra_cli -r 3
+    fi
+    #DAL
+    /usr/bin/dal_inited.sh &
+    #Armor
+    mkdir -p /etc/bitdefender_backup/
+    #touch /etc/bitdefender_backup/armor_air_agent
+
+    /usr/bin/bdagent_init.sh &
+    /bin/dmesg > /tmp/bootupmessages &
+    /usr/sbin/debug.sh INIT &
+}

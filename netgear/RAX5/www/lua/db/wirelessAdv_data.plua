@@ -1,0 +1,138 @@
+#!/usr/bin/lua
+
+--For LUA
+function __FILE__() return debug.getinfo(2, 'S').short_src end -- or use .source
+function __FUNCTION__() return debug.getinfo(2, 'n').name end
+function __LINE__() return debug.getinfo(2, 'l').currentline end
+
+local json = require "luci.json"
+local uci = require "luci.model.uci".cursor()
+--local uci_st = require "luci.model.uci".cursor("/var/state", "/var/state") --Naming the local variable with "_st" to mean it's using to access "/var/state" uci.
+--                                                                           --If we want to get/set UCI that mixed /etc/config/XXXX and /var/state/XXXX at same time,
+--                                                                           --the parameters for cursor() should be (nil, "/var/state") or ("/etc/config", "/var/state").
+local log    = require "luci.log"
+    log.debug(0)
+--log.console("\n")
+
+--Proprietary LUA Objects/Libararies/APIs--
+local netUtils = require "commonFunc.netUtils"
+local wifiUtil_convert = require "commonFunc.wifiUtils_convertWifiSettings"
+local wifi = require "webGetFunc.wireless"
+
+function file_exists( name )
+    local f=io.open(name,"r")
+    if f~=nil then io.close(f) return true else return false end
+end
+
+if file_exists("\/etc\/config\/"..NTGR_WIFI_UCI_CONFIG_NAME) == false then
+    --Create and Update NTGR_WiFi UCI config--
+    wifiUtil_convert.update_NTGR_WiFi_uci()
+end
+
+log.console("\n")
+log.console("====Debug Print Start of "..__FILE__().."====")
+
+local data = { }
+data["2GRadioOn"] = { value = wifi.getRadioOn("2.4G"), type = "checkbox" }
+data["2GCtsRts"] = { value = wifi.getCtsRtsThreshold("2.4G"), type = "input" }
+data["2GPreamble"] = { value = wifi.getPreamble("2.4G"), type = "select" }
+data["2GTxPower"] = { value = wifi.getTxPower("2.4G"), type = "select" }
+data["2GWifiSchedule"] = { value = wifi.getEnableWifiSchedule("2.4G"), type = "checkbox" }
+
+data["5GRadioOn"] = { value = wifi.getRadioOn("5G"), type = "checkbox" }
+data["5GCtsRts"] = { value = wifi.getCtsRtsThreshold("5G"), type = "input" }
+data["5GPreamble"] = { value = wifi.getPreamble("5G"), type = "select" }
+data["5GTxPower"] = { value = wifi.getTxPower("5G"), type = "select" }
+data["5GWifiSchedule"] = { value = wifi.getEnableWifiSchedule("5G"), type = "checkbox" }
+
+data["wpsPin"] = { value = wifi.getWpsPin(), type = "spantext" } --Hardcode for initially version, implement it after WPS function ready.
+data["wpsPinEnabled"] = { value = wifi.getWpsPinEnable(), type = "checkbox" } --Hardcode for initially version, implement it after WPS function ready.
+data["wpsAutoDisablePin"] = { value = wifi.getWpsAutoDisablePin(), type = "checkbox" } --Hardcode for initially version, implement it after WPS function ready.
+data["wpsNumOfFailedPin"] = { value = wifi.getWpsNumOfFailedPin(), type = "input" } --Hardcode for initially version, implement it after WPS function ready.
+data["wpsKeepSetting2G"] = { value = wifi.getWpsKeepSetting("2.4G"), type = "checkbox" } --Hardcode for initially version, implement it after WPS function ready.
+data["wpsKeepSetting5G"] = { value = wifi.getWpsKeepSetting("5G"), type = "checkbox" } --Hardcode for initially version, implement it after WPS function ready.
+
+data["enableBeamforming"] = { value = wifi.getEnableBeamforming(), type = "checkbox" }
+data["enableMuMimo"] = { value = wifi.getEnableMuMimo(), type = "checkbox" }
+data["disablePMF"] = { value = wifi.getDisablePMF(), type = "checkbox" }
+data["enable_atf"] = { value = wifi.getEnableATF(), type = "checkbox" }
+
+data["enableAX"] = { value = wifi.getEnableAX(), type = "input" } --hidden input
+data["WifiBtnEnable"] = { value = wifi.getWifiBtnEnable(), type = "input" }
+data["smartConnectEnable"] = { value = wifi.getSmartConnect(), type = "input" } --hidden input.
+data["2GSecurity"] = { value = wifi.getSecurityType("2.4G", "primary"), type = "input" } --hidden input.
+data["5GSecurity"] = { value = wifi.getSecurityType("5G", "primary"), type = "input" } --hidden input.
+
+log.console("====Debug Print End of "..__FILE__().."====")
+log.console("\n")
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)
+
+--//================RAX30's wirelessAdv_data.php(Not implemented items)================//--TODO: Remove me when this paga all done.
+--<?
+--  include '../wifi.php';
+--  if (!isset($data))
+--    $data = new stdClass();
+--
+--/*  
+--  $data->{'5G1RadioOn'} = (object) null;
+--  $data->{'5G1RadioOn'}->value = getCheckboxVal_5G1RadioOn();
+--  $data->{'5G1RadioOn'}->type = 'checkbox';
+--  
+--  $data->{'5G1Preamble'} = (object) null;
+--  $data->{'5G1Preamble'}->value = getSelectVal_5G1Preamble();
+--  $data->{'5G1Preamble'}->type = 'select';
+--
+--  $data->{'5G1WifiSchedule'} = (object) null;
+--  $data->{'5G1WifiSchedule'}->value = getCheckboxVal_5G1WifiSchedule();
+--  $data->{'5G1WifiSchedule'}->type = 'checkbox';
+--*/  
+--  $data->{'wpsPinEnabled'} = (object) null;
+--  $data->{'wpsPinEnabled'}->value = getCheckboxVal_wpsPinEnabled();
+--  $data->{'wpsPinEnabled'}->type = 'checkbox';
+--  
+--  $data->{'wpsAutoDisablePin'} = (object) null;
+--  $data->{'wpsAutoDisablePin'}->value = getCheckboxVal_wpsAutoDisablePin();
+--  $data->{'wpsAutoDisablePin'}->type = 'checkbox';
+--  
+--  $data->{'wpsNumOfFailedPin'} = (object) null;
+--  $data->{'wpsNumOfFailedPin'}->value = getTextVal_wpsNumOfFailedPin();
+--  $data->{'wpsNumOfFailedPin'}->type = 'input';
+--  
+--  $data->{'wpsKeepSetting2G'} = (object) null;
+--  $data->{'wpsKeepSetting2G'}->value = getCheckboxVal_wpsKeepSetting2G();
+--  $data->{'wpsKeepSetting2G'}->type = 'checkbox';
+--  
+--  $data->{'wpsKeepSetting5G'} = (object) null;
+--  $data->{'wpsKeepSetting5G'}->value = getCheckboxVal_wpsKeepSetting5G();
+--  $data->{'wpsKeepSetting5G'}->type = 'checkbox';
+--  
+--  $data->{'wpsKeepSetting5G1'} = (object) null;
+--  $data->{'wpsKeepSetting5G1'}->value = getCheckboxVal_wpsKeepSetting5G1();
+--  $data->{'wpsKeepSetting5G1'}->type = 'checkbox';
+--  
+--  $data->{'2GFragLength'} = (object) null;
+--  $data->{'2GFragLength'}->value = "2346";
+--  
+--  $data->{'5GFragLength'} = (object) null;
+--  $data->{'5GFragLength'}->value = "2346";
+--/*  
+--  $data->{'5G1FragLength'} = (object) null;
+--  $data->{'5G1FragLength'}->value = "2346";
+--
+--  $data->{'5G1CtsRts'} = (object) null;
+--  $data->{'5G1CtsRts'}->value = "2347";
+--*/  
+--
+--  $data->{'wpsPin'} = (object) null;
+--  $data->{'wpsPin'}->value = db_get("Device.WiFi.X_BROADCOM_COM_WpsCfg.WpsDevicePin");
+--  $data->{'wpsPin'}->type = 'spantext';
+--  
+--  $data->{'WifiBtnEnable'} = (object) null;
+--  $data->{'WifiBtnEnable'}->value = db_get("Device.X_PEGATRON_COM_DeviceInfo.WifiBtnEnable");
+--  
+--  echo json_encode($data);
+--?>

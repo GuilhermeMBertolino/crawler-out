@@ -1,0 +1,25 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local qos = require "webGetFunc.qos"
+local up = ""
+local tmp_up = ""
+local down = ""
+local tmp_down = ""
+
+local data = { }
+
+tmp_down = qos.downSpeed()
+down = string.format("%.2f", tmp_down/1000)
+tmp_up = qos.upSpeed()
+up = string.format("%.2f", tmp_up/1000)
+data["speedtest_down"] = { value = down, type = 'spantext' }
+data["speedtest_up"] = { value = up, type = 'spantext' }
+data["speedtest_down_hid"] = { value = down, type = 'input' }
+data["speedtest_up_hid"] = { value = up, type = 'input' }
+data["speedtest_tm_hid"] = { value = qos.speedtest_time(), type = 'input' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

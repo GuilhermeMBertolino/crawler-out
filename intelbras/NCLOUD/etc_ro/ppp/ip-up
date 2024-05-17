@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# place the commands to run after the pppd dial up successfully.
+
+if [ -x /bin/qos_run ]; then
+	echo "/bin/qos_run"
+	/bin/qos_run
+fi
+
+if [ -x /sbin/config-udhcpd.sh ]; then
+	echo "/sbin/config-udhcpd.sh $DNS1 $DNS2"
+	/sbin/config-udhcpd.sh -d $DNS1 $DNS2
+fi
+if [ "$DNS1" != "" ]; then
+	echo "nameserver $DNS1" >/etc/resolv.conf1
+	`nvram_set 2860 dhcpPriDns $DNS1`
+fi
+if [ "$DNS2" != "" ]; then
+	echo "nameserver $DNS2" >>/etc/resolv.conf1
+	`nvram_set 2860 dhcpSecDns $DNS2`
+fi
+rm -rf /etc/resolv.conf
+touch /etc/resolv.conf
+chmod 777 /etc/resolv.conf
+chmod 777 /etc/resolv.conf1
+cat /etc/resolv.conf1 >> /etc/resolv.conf
+#rm -rf /etc/resolv.conf1
+# notify goahead that WAN IP has been acquired/updated.
+killall -SIGTSTP goahead
+
+#lktos_networkconfig mtk7620 initlan

@@ -1,0 +1,222 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=60
+rip_enable=''
+
+write_wan_daemon_config() {
+        local section=$1
+        local interface
+        local rip_ver
+        local rip_dir
+        local sendRA
+        local acceptRA
+
+        config_get interface "$section" "interface"
+        config_get rip_ver "$section" "rip_ver"
+        config_get rip_dir "$section" "rip_dir"
+
+        if [ $rip_dir == "both" ]; then
+                acceptRA="1"
+                sendRA="1"
+        elif [ $rip_dir == "out" ]; then
+                acceptRA="0"
+                sendRA="1"
+        elif [ $rip_dir == "in" ]; then
+                acceptRA="1"
+                sendRA="0"
+        fi
+
+        # Re-build ripd.conf and zebra.conf
+        mkdir -p /var/zebra
+
+        # Generate ripd.conf
+        echo "interface $interface" >> /var/zebra/ripd.conf
+        echo "router rip" >> /var/zebra/ripd.conf
+        echo "redistribute kernel" >> /var/zebra/ripd.conf
+        echo "redistribute connected" >> /var/zebra/ripd.conf
+        echo "no redistribute static" >> /var/zebra/ripd.conf
+        echo "network $interface" >> /var/zebra/ripd.conf
+                
+        
+        # Apply access list "local_lan".
+        # In RIP packet fields, filter out the routing entry which its destination is LAN network.
+        if [ $sendRA == "1" ]; then
+                echo "distribute-list local_lan out $interface" >> /var/zebra/ripd.conf
+        fi
+        if [ $acceptRA == "1" ]; then
+                echo "distribute-list local_lan in $interface" >> /var/zebra/ripd.conf
+        fi
+
+        # The default is to be passive on all interfaces, don't need to configure it.
+        #if [ $sendRA == "0" ]; then
+               #echo "passive-interface $interface" >> /var/zebra/ripd.conf
+        #fi
+
+        # Use filter list "deny_any", "permit_any" to deny/permit the in/out routing entry based on rip direction setting value.
+        # Select direction is done by the filter here.
+        if [ $rip_dir == "out" ]; then
+                echo "distribute-list p_list out $interface" >> /var/zebra/ripd.conf
+                echo "distribute-list d_list in $interface" >> /var/zebra/ripd.conf
+        elif [ $rip_dir == "in" ]; then
+                echo "distribute-list d_list out $interface" >> /var/zebra/ripd.conf
+                echo "distribute-list p_list in $interface" >> /var/zebra/ripd.conf
+        fi
+
+        echo "interface $interface" >> /var/zebra/ripd.conf
+
+        # "ip rip send/receive" selects which version of RIP packets to send/receive, not selects direction.
+        if [ $rip_ver == "v1" ]; then
+                echo "ip rip send version 1" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 1" >> /var/zebra/ripd.conf
+        elif [ $rip_ver == "v2M" ]; then
+                echo "ip rip send version 2" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 2" >> /var/zebra/ripd.conf
+        elif [ $rip_ver == "v2B" ]; then
+                echo "ip rip send version 2" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 2" >> /var/zebra/ripd.conf
+        fi
+        
+        # Generate zebra.conf
+        touch /var/zebra/zebra.conf # zebra.conf must exists, even it is empty content.
+        if [ $rip_ver == "v2B" ]; then
+                echo "interface $interface" >> /var/zebra/zebra.conf
+                echo "no multicast" >> /var/zebra/zebra.conf
+        elif [ $rip_ver == "v2M" ]; then
+                echo "interface $interface" >> /var/zebra/zebra.conf
+                echo "multicast" >> /var/zebra/zebra.conf
+        fi
+        
+
+        # Add iptables rules for RIP packets to pass through firewall
+        # It is done by uci:set firewall.rip.enabled=1 in lanSetup.lua
+
+}
+
+write_lan_daemon_config() {
+        local section=$1
+        local interface
+        local rip_ver
+        local rip_dir
+
+        local lan_ip
+        local lan_netmask
+        local prefix
+        local network
+
+        config_get interface "$section" "interface"
+        config_get rip_ver "$section" "rip_ver"
+        config_get rip_dir "$section" "rip_dir"
+
+        # Re-build ripd.conf and zebra.conf
+        mkdir -p /var/zebra
+
+        # Generate ripd.conf
+        echo "interface $interface" >> /var/zebra/ripd.conf
+        echo "router rip" >> /var/zebra/ripd.conf
+        echo "redistribute kernel" >> /var/zebra/ripd.conf
+        echo "redistribute connected" >> /var/zebra/ripd.conf
+        echo "no redistribute static" >> /var/zebra/ripd.conf
+        echo "network $interface" >> /var/zebra/ripd.conf
+
+        # To implement Use filter list "deny_any", "permit_any" to filter out all routing entry at in/out direction
+        # Select direction is done by the filter here.
+        if [ $rip_dir == "out" ]; then
+                echo "distribute-list p_list out $interface" >> /var/zebra/ripd.conf
+                echo "distribute-list d_list in $interface" >> /var/zebra/ripd.conf
+        elif [ $rip_dir == "in" ]; then
+                echo "distribute-list d_list out $interface" >> /var/zebra/ripd.conf
+                echo "distribute-list p_list in $interface" >> /var/zebra/ripd.conf
+        fi
+       
+        echo "interface $interface" >> /var/zebra/ripd.conf
+
+        # "ip rip send/receive" selects which version of RIP packets to send/receive, not selects direction.
+        if [ $rip_ver == "v1" ]; then
+                echo "ip rip send version 1" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 1" >> /var/zebra/ripd.conf
+        elif [ $rip_ver == "v2M" ]; then
+                echo "ip rip send version 2" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 2" >> /var/zebra/ripd.conf
+        elif [ $rip_ver == "v2B" ]; then
+                echo "ip rip send version 2" >> /var/zebra/ripd.conf
+                echo "ip rip receive version 2" >> /var/zebra/ripd.conf
+        fi
+
+        # Generate zebra.conf
+        if [ $rip_ver == "v2B" ]; then
+                echo "interface $interface" >> /var/zebra/zebra.conf
+                echo "no multicast" >> /var/zebra/zebra.conf
+        elif [ $rip_ver == "v2M" ]; then
+                echo "interface $interface" >> /var/zebra/zebra.conf
+                echo "multicast" >> /var/zebra/zebra.conf
+        fi
+
+        # Get LAN IP and Netmask
+        config_load "network"
+        config_get lan_ip "lan" "ipaddr"
+        config_get lan_netmask "lan" "netmask"
+
+        # Transform LAN IP and Netmask to Network and Prefix
+        network=`ipcalc.sh $lan_ip $lan_netmask | sed -n 's/^NETWORK=\(.*\)/\1/p'`
+        prefix=`ipcalc.sh $lan_ip $lan_netmask | sed -n 's/^PREFIX=\(.*\)/\1/p'`
+        
+        # Always deny local LAN in RIP
+        echo "access-list local_lan deny $network/$prefix" >> /var/zebra/ripd.conf
+        echo "access-list local_lan permit any" >> /var/zebra/ripd.conf
+
+        # The filter list for implement RIP in/out direction
+        if [ $rip_dir == "out" -o $rip_dir == "in" ]; then
+                echo "access-list d_list deny any" >> /var/zebra/ripd.conf
+                echo "access-list p_list permit any" >> /var/zebra/ripd.conf
+        fi
+
+        # ToDo : Always deny forwarding dest network of routing rule.
+
+
+        # LAN don't need to add firewall exception
+}
+
+write_daemon_config() {
+        local section=$1
+
+        if [ $section == "rip_wan" ]; then
+                write_wan_daemon_config $section
+        elif [ $section == "rip_lan" ]; then
+                write_lan_daemon_config $section
+        fi
+}
+
+get_rip_enable() {
+        local section=$1
+        config_get rip_enable "$section" "enable"
+}
+
+start() {
+       
+        config_load "routing"
+        
+        # Get config value of routing.@rip[0].enable
+        config_foreach get_rip_enable "rip"
+
+        # Start daemon ripd and zebra only when rip enabled
+        if [ $rip_enable -eq 1 ]; then
+                # Prepare the daemon config files, and the iptables rule
+                config_foreach write_daemon_config "rip_interface_settings"
+
+                # Start daemon ripd and daemon zebra
+                /usr/sbin/quagga.init start
+        fi
+
+        
+}
+
+stop() {
+        # remove RIP iptable rules
+        # It is done by uci:set firewall.rip.enabled=0 in lanSetup.lua
+
+        /usr/sbin/quagga.init stop
+
+        #Remove previous ripd.conf and zebra.conf
+        rm -rf /var/zebra
+}

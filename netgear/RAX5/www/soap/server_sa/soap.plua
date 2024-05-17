@@ -1,0 +1,188 @@
+#!/usr/bin/env cgilua.cgi
+
+local log = require"luci.log"
+log.debug(1)
+
+local xml2lua = require"xml2lua"
+local handler = require"xmlhandler.tree"
+local soapParser = require"soap.soapParser"
+local soapResponse = require "soap.soapResponse"
+local soapAuth = require"soap.soapAuth"
+local soapUtil = require"soap"
+local uci_st= require "luci.model.uci".cursor_state()
+local installEvents = require "commonFunc.installEvents"
+local uci = require "luci.model.uci".cursor()
+local sha2 = require "sha2"
+local pwdCommon = require "webPostHandler.passwdCommon"
+
+--local inputXml = cgilua.POST["inputXml"]
+local inputXml = soapParser.escapeXmlTag(cgilua.POST["inputXml"])
+local parser = xml2lua.parser(handler)
+local pasreResult = xpcall(function() parser:parse(inputXml) end, function(s) log.force("XML parser error:"..s ) end)
+
+if not pasreResult then
+    return soapResponse.buildResponseData("RESPONSE_ERROR",{},"Unknown","Unknown")
+end
+
+
+local cookie = cgilua.servervariable"HTTP_COOKIE"
+local clientToken = ""
+if string.len(cookie) > 0  then
+    clientToken = string.match(cookie, ".?token=?(%w+)")
+end
+
+local service , action = soapParser.getServiceAction(cgilua.servervariable("HTTP_SOAPACTION"))
+local loginSA = {ParentalControl="Authenticate", DeviceConfig="SOAPLogin"} --These actions can do login
+
+local clientIpAddr = cgilua.servervariable("REMOTE_ADDR")
+local clientMac = soapAuth.getClientMac(clientIpAddr)
+
+soapAuth.removeTimeoutClient()
+
+log.console("service:"..service..", action:"..action)
+installEvents.send("soap request", nil, service..":"..action)
+
+local function restart_lighttpd()
+    local blank_state_flag = uci_st:get("soap", "blank_state", "flag")
+    if blank_state_flag == "1" then
+        -- copy from SetEnable function
+        local fork_exec = require"commonFunc.fork".fork_exec
+        fork_exec("pudil -D")
+        log.console("Restart lighttpd")
+        fork_exec("sleep 3; /etc/init.d/lighttpd restart")
+        -- Jinjuan_Pei, 20220418, Reload dnsmasq to update the config file when wizard is completed by NightHawk APP.
+        fork_exec("/etc/init.d/dnsmasq reload")
+        -- Jinjuan_Pei, 20220418, End.
+    end
+    uci_st:revert("soap", "blank_state")
+    uci_st:save("soap")
+end
+
+if clientMac then
+    cgilua.contentheader("text","xml")
+    local servicePath = "soap.soapService."..service
+    local serivceModule= require (servicePath)
+    local serviceAction = serivceModule[action]
+
+    if serviceAction == nil then
+        return soapResponse.buildResponseData("RESPONSE_ACTION_FAILED",{},action,service)
+    end
+
+    if type(loginSA[service]) == "string" and loginSA[service] == action then
+        local inputUser = soapParser.getActionParameter(handler.root,action,"Username")
+        local inputPw = soapParser.getActionParameter(handler.root,action,"Password")
+        local response, newToken = serviceAction(inputUser, inputPw, clientIpAddr, clientToken)
+        if type(newToken) == "string" and string.len(newToken) > 0 then
+            cgilua.header("Set-Cookie: token="..newToken.."\r\n","")
+        end
+        return response
+    else
+        local isAuthenticated , newToken = soapAuth.checkAuthenticated(clientMac, clientIpAddr, clientToken)
+
+        if isAuthenticated then
+            if type(newToken) == "string" and string.len(newToken) > 0 then
+                cgilua.header("Set-Cookie: token="..newToken.."\r\n","")
+            end
+
+            local actionResponse = serviceAction(handler.root)
+
+            local configStartSession = uci_st:get("soap","ConfigurationStarted","startSession")
+            local configFinishReboot = uci_st:get("soap","ConfigurationFinished","status")
+            local needReboot = uci_st:get("soap","Reboot","status")
+            local needReset = uci_st:get("soap", "reset", "flag")
+            local cmd = "sleep 3"
+
+            local needUpdatePW = uci_st:get("soap","isNeedUpdatePW","status")
+            local updatePW = uci_st:get("soap","updatePW","password")
+
+            if (type(configStartSession) == "string" and type(configFinishReboot) == "string") then
+                if needUpdatePW ~= nil and updatePW ~= nil then
+                    if needUpdatePW == "1" then
+                        local soapAuth = require"soap.soapAuth"
+                        soapAuth.UpdateAdminPassword(updatePW)
+
+                    end
+                    uci_st:revert("soap", "isNeedUpdatePW")
+                    uci_st:revert("soap", "updatePW")
+                    uci_st:save("soap")
+                end
+
+                if needReset == "1" then
+                    cmd = cmd..";/usr/sbin/factory_reset.sh"
+                    uci_st:revert("soap", "reset")
+                    uci_st:save("soap")
+                end
+
+                if configFinishReboot ~= "RebootRequired" then
+                    if  #changed_config > 0 then
+                        --POST function have insert chagned_config table
+                        --call /sbin/cgilua_checkchange to check whether the config files are changed or not
+                        local uci = require "luci.model.uci".cursor()
+                        final_change = uci:check_change()
+
+                        restart_lighttpd()
+                    end
+                else
+                    if #changed_config > 0 then
+                        --POST function have insert chagned_config table
+                        --call /sbin/cgilua_checkchange to check whether the config files are changed or not
+                        local uci = require "luci.model.uci".cursor()
+                        final_change = uci:check_change()
+                    end
+                end
+
+                if (type(needReboot)== "string" and needReboot == "1") or configFinishReboot == "RebootRequired" then
+                    cmd = cmd..";reboot"
+                    uci_st:revert("soap", "Reboot")
+                    uci_st:save("soap")
+                end
+
+                uci_st:revert("soap","ConfigurationStarted")
+                uci_st:revert("soap","ConfigurationFinished")
+                uci_st:save("soap")
+            elseif configStartSession == nil then
+                if needReset == "1" then
+                    cmd = cmd..";/usr/sbin/factory_reset.sh"
+                    uci_st:revert("soap", "reset")
+                    uci_st:save("soap")
+                else
+                    if #changed_config > 0 then
+                        --POST function have insert chagned_config table
+                        --call /sbin/cgilua_checkchange to check whether the config files are changed or not
+                        local uci = require "luci.model.uci".cursor()
+                        final_change = uci:check_change()
+                    end
+                end
+
+                if needReboot == "1" then
+                    cmd = cmd..";reboot"
+                    uci_st:revert("soap", "Reboot")
+                    uci_st:save("soap")
+                else
+                    restart_lighttpd()
+                end
+            end
+
+            if cmd ~= "sleep 3" then
+                log.force("cmd:"..cmd)
+                local fork_exec = require"commonFunc.fork".fork_exec
+                fork_exec(cmd)
+            end
+
+            -- Add for JIRA RAX5-145
+            if #changed_config > 0 then
+                local exec  = require "luci.util".exec
+                exec("puDataStr set manageStatus manageByApp 1")
+            end
+
+            --log.console_r(actionResponse)
+            return actionResponse
+        else
+            return soapResponse.buildResponseData("RESPONSE_UNAUTHENTICATE",{},action,service)
+        end
+    end
+
+
+end
+
+return ""

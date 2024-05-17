@@ -1,0 +1,470 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo "you need specified arguements"
+    exit
+fi        
+
+. /usr/bin/scriptlib
+. /usr/bin/pptpc-header
+. /usr/bin/pptpc-customer
+
+TUN_IDX=$1
+PIDFILE_PPPD="/var/run/ppp-pptpc-$TUN_IDX.pid"
+RESET_FILE="/var/run/pptpc-reset-$TUN_IDX"
+DONT_WANTYPE_UPDATE="/var/run/dont_update_wantype"
+PPP_OPTS="/etc/ppp/options.pptpc-$TUN_IDX"
+PEERS_FILE="/etc/ppp/peers/pptpc-$TUN_IDX"
+PEERS_DIR="/etc/ppp/peers"
+PAP_FILE="/etc/ppp/pap-secrets"
+CHAP_FILE="/etc/ppp/chap-secrets"
+CSID_FILE="/var/csman_changetime"
+PPTP_PNSSERVER=""
+PPTP_LNSPORT=1723
+PPP_PID=
+PPP_IF=
+RIPD_FLAG=1
+DISCONNECT=0
+CONNECTING=1
+CONNECT=2
+DISCONNECTING=3
+
+# Write PPTP connection infomation (pid, interface name, ip ...) to CSID
+log_pptp_info() 
+{      
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+    wrcsman "$addr $PPP_PID"
+
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+    wrcsman "$addr $CONNECT"
+
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_IFNAME $TUN_IDX`
+    wrcsman "$addr \"$PPP_IF"
+
+    addr=`get_csid_addr $CSID_S_ROUTING_RESTART_FLAG $TUN_IDX`
+    wrcsman "$addr $RIPD_FLAG"
+
+    #echo `ifconfig $PPP_IF  | grep P-t-P | cut -d ':' -f2 | cut -d ' ' -f1`
+    PPP_VIRTUAL_IP=`ifconfig $PPP_IF  | grep P-t-P | cut -d ':' -f2 | cut -d ' ' -f1`
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_VIRTUAL_IP $TUN_IDX`
+    wrcsman "$addr {$PPP_VIRTUAL_IP}"
+
+    #echo `ifconfig $PPP_IF  | grep P-t-P | cut -d ':' -f3 | cut -d ' ' -f1`
+    PPP_REMOTE_IP=`ifconfig $PPP_IF  | grep P-t-P | cut -d ':' -f3 | cut -d ' ' -f1`
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_REMOTE_IP $TUN_IDX`
+    wrcsman "$addr {$PPP_REMOTE_IP}" 
+    return 1
+}    
+
+# Setup Route if need
+setup_route()
+{
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_CONNECT_TYPE $TUN_IDX`
+    cnt_type=`rdcsman $addr u8` 
+
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_ROUTE $TUN_IDX`
+    ROUTEING="`rdcsman $addr str`"
+    if [ "$ROUTEING" == "" ]; then
+        return 
+    fi
+
+    # Failover may use different GW 
+#	default_gw=""
+#   addr=`get_csid_addr $CSID_S_3G_AUTOBAK_STATUS 0`
+#   autobak_status=`rdcsman $addr u8` 
+#   if [ $autobak_status -eq $AUTOBAK_STATUS_3G_CONNECT ]; then
+#   	addr=`get_csid_addr $CSID_S_3G_CARD_VENDORID 0`
+#       vendor="`rdcsman $addr u16`" 
+#
+#   	addr=`get_csid_addr $CSID_S_3G_CARD_PRODUCTID 0`
+#       product="`rdcsman $addr u16`"
+#
+#       # For flash OFDM
+#   	if [ $vendor -eq 4753 ] && [ $product -eq 17 ]; then
+#   		addr=`get_csid_addr $CSID_S_FLASHOFDM_IF_GW 0`
+#   	    default_gw="`rdcsman $addr ipv4`" 
+#   	else
+#   		addr=`get_csid_addr $CSID_S_3G_IF_GW 0`
+#   	    default_gw="`rdcsman $addr ipv4`" 
+#   	fi	
+#   else
+#   	addr=`get_csid_addr $CSID_S_LOCAL_WAN_GW 0`
+#       default_gw="`rdcsman $addr ipv4`" 
+#   fi
+
+    route_fail=0
+    default_gw=""
+    if [ "$ROUTEING" == "0.0.0.0/0" ]; then
+        route_fail=1
+
+        addr=`get_csid_addr $CSID_C_3G_AUTOBAK_ENABLE 0`
+        enable_3g_autobak=`rdcsman $addr u8`
+        if [ $enable_3g_autobak -eq 1 ]; then 
+            addr=`get_csid_addr $CSID_S_FLASHOFDM_IF_GW 0`
+            ofdm_gw="`rdcsman $addr ipv4`" 
+            if [ "$ofdm_gw" != "0.0.0.0" ]; then
+                route_fail=0
+                default_gw="$ofm_gw"
+            fi
+
+            addr=`get_csid_addr $CSID_S_3G_IF_GW 0`
+            _3g_gw="`rdcsman $addr ipv4`" 
+            if [ "$_3g_gw" != "0.0.0.0" ]; then
+                route_fail=0
+                default_gw="$_3g_gw"
+            fi
+        fi
+
+        # IF Not in failover 
+        if [ "$default_gw" == "" ]; then
+            addr=`get_csid_addr $CSID_S_LOCAL_WAN_GW 0`
+            default_gw="`rdcsman $addr ipv4`"  
+            if [ "$default_gw" != "0.0.0.0" ]; then
+                route_fail=0
+            fi
+        fi
+
+        echo "route add -host $PPTP_PNSSERVER gw $default_gw"
+        route add -host $PPTP_PNSSERVER gw $default_gw 
+        echo "route delete -host $PPTP_PNSSERVER gw $default_gw >/dev/null 2>&1" >> $RESET_FILE
+    fi
+
+    if [ $route_fail -eq 0 ]; then 
+        echo "route add -net $ROUTEING dev $PPP_IF"
+        route add -net $ROUTEING dev $PPP_IF
+        echo "route delete -net $ROUTEING dev $PPP_IF >/dev/null 2>&1" >> $RESET_FILE 
+    else
+        echo "ROUTING ERROR: can't route to PPTP Server"
+    fi
+}
+
+# Setup iptables rules if need
+setup_iptables()
+{
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_NAT $TUN_IDX`
+    is_nat=`rdcsman $addr u8`
+    if [ $is_nat -eq 1 ]; then
+        get_lan_range lan_ip lan_mask
+        echo "iptables -t nat -A POSTROUTING -s $lan_ip/$lan_mask -o $PPP_IF -j MASQUERADE"
+        iptables -t nat -A POSTROUTING -s $lan_ip/$lan_mask -o $PPP_IF -j MASQUERADE
+        echo "iptables -t nat -D POSTROUTING -s $lan_ip/$lan_mask -o $PPP_IF -j MASQUERADE >/dev/null 2>&1 " >> $RESET_FILE
+    fi  
+
+    echo "iptables -I block_http -o $PPP_IF -j ACCEPT"
+    iptables -I block_http -o $PPP_IF -j ACCEPT
+    echo "iptables -D block_http -o $PPP_IF -j ACCEPT" >> $RESET_FILE 
+}
+
+# Generate PPTP Client's secret file in /etc/ppp/...
+gen_secret_file()
+{
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_USER $TUN_IDX`
+    account="`rdcsman $addr str`" 
+
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_PASSWORD $TUN_IDX`
+    passwd="`rdcsman $addr str`"    
+    echo "$account * $passwd *" > $PAP_FILE.pptpc-$TUN_IDX
+    echo "$account * $passwd *" > $CHAP_FILE.pptpc-$TUN_IDX
+
+    [ -f $PAP_FILE  ] && mv $PAP_FILE $PAP_FILE.orig
+    [ -f $CHAP_FILE ] && mv $CHAP_FILE $CHAP_FILE.orig
+    mv $PAP_FILE.pptpc-$TUN_IDX $PAP_FILE
+    mv $CHAP_FILE.pptpc-$TUN_IDX $CHAP_FILE 
+}
+
+# Restore from PPTP Client's secret to original secret file
+restore_secret_file()
+{
+    [ -f $PAP_FILE.orig  ] && mv $PAP_FILE.orig $PAP_FILE
+    [ -f $CHAP_FILE.orig ] && mv $CHAP_FILE.orig $CHAP_FILE 
+}
+
+# The parameter of 
+gen_peers_file()
+{
+    if [ ! -d $PEERS_DIR ]; then
+        mkdir -p $PEERS_DIR
+    fi
+
+    rm -f $PEERS_FILE > /dev/null 2>&1
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_MPPE $TUN_IDX`
+    used_mppe=`rdcsman $addr u8` 
+    if [ "$used_mppe" = "1" ]; then
+        echo "pty \"pptp $PPTP_PNSSERVER --nolaunchpppd --loglevel 0\"" >> $PEERS_FILE
+    else
+        echo "pty \"pptp $PPTP_PNSSERVER --nolaunchpppd --loglevel 0 --sync\"" >> $PEERS_FILE
+    fi
+
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_USER $TUN_IDX`
+    account="`rdcsman $addr str`" 
+    echo "name $account"            >> $PEERS_FILE
+    
+    echo "file $PPP_OPTS"           >> $PEERS_FILE
+    echo "ipparam pptpc-$TUN_IDX"   >> $PEERS_FILE
+}
+
+reset_connect()
+{
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+    wrcsman "$addr 0"
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+    wrcsman "$addr $DISCONNECT"
+    rm -f $DONT_WANTYPE_UPDATE
+    restore_secret_file    
+	echo "0 100000" > $CSID_FILE
+}
+          
+check_network_status()
+{
+    addr=`get_csid_addr $CSID_S_LOCAL_WAN_STATUS 0`
+    wan_status=`rdcsman $addr u8`
+    if [ "$wan_status" == "$LOCAL_WAN_STATUS_CONNECT" ]; then
+        return;
+    fi
+    echo "Main WAN isn't connected !!"
+
+    addr=`get_csid_addr $CSID_C_3G_AUTOBAK_ENABLE 0`
+    autobak_enable=`rdcsman $addr u8`    
+
+    addr=`get_csid_addr $CSID_S_3G_AUTOBAK_STATUS 0`
+    autobak_status=`rdcsman $addr u8` 
+    if [ "$autobak_enable" == "1" ] && 
+       [ "$autobak_status" == "$AUTOBAK_STATUS_3G_CONNECT" ]; then
+        return;
+    fi
+    echo "3G Autobak isn't connected !!"
+
+    addr=`get_csid_addr $CSID_C_FAILOVER_LOADSHARING_ENABLE 0`
+    loadsharing_enable=`rdcsman $addr u8` 
+    if [ "$loadsharing_enable" == "1" ]; then
+        addr=`get_csid_addr $CSID_S_LOADSHARING_STATUS 0`
+        loadsharing_status=`rdcsman $addr u8` 
+        if [ "$loadsharing_status" == "$LOADSHARING_STATUS_CONNECT" ]; then
+            return;
+        fi
+        echo "LoadSharing isn't connected !"
+    else
+        addr=`get_csid_addr $CSID_S_FAILOVER_STATUS 0`
+        failover_status=`rdcsman $addr u8` 
+        if [ "$failover_status" == "$FAILOVER_STATUS_CONNECT" ]; then
+            return;
+        fi         
+        echo "Failover isn't connected !"
+    fi
+
+    # Reset PID
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+    wrcsman "$addr 0"
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+    wrcsman "$addr $DISCONNECT"
+
+    logger -t "pptpc" "PPTP Client #$TUN_IDX waited for WAN/Failover/3G AutoBak/LoadSharing connecting... !"
+    echo "PPTP Client #$TUN_IDX don't action since WAN isn't connected !"
+	echo "0 100000" > $CSID_FILE
+    exit 1
+} 
+
+chg_txqlen()
+{              
+    # wan_type:    
+    #  16 -> LOCAL_WANTYPE_3G        0x10
+    #  17 -> LOCAL_WANTYPE_IBURST    0x11
+    #  21 -> LOCAL_WANTYPE_FLASHOFDM 0x15
+    #  22 -> LOCAL_WANTYPE_S3G       0x16
+    #  64 -> LOCAL_WANTYPE_PPPOE     0x40
+    #  144 -> LOCAL_WANTYPE_DIALUP   0x90
+    addr=`get_csid_addr $CSID_C_LOCAL_WANTYPE 0`
+    wan_type="`rdcsman $addr u32`"    
+    if [ $wan_type -eq 16 ] || [ $wan_type -eq 17 ] ||
+       [ $wan_type -eq 21 ] || [ $wan_type -eq 22 ] ||
+       [ $wan_type -eq 64 ] || [ $wan_type -eq 144 ]; then
+        addr=`get_csid_addr $CSID_S_LOCAL_WAN_IF_NAME 0`
+        wan_if="`rdcsman $addr str`"
+        tmp="`expr substr $wan_if 1 3`"
+
+        if [ "$tmp" == "ppp" ]; then 
+            echo "set ifconfig $wan_if txqueuelen to 3"
+            ifconfig $wan_if txqueuelen 3 > /dev/null 2>&1
+        else
+            echo "Trick: set ifconfig ppp0 txqueuelen to 3"
+            ifconfig ppp0 txqueuelen 3 > /dev/null 2>&1
+        fi
+    fi
+}
+
+get_host_ip()
+{    
+    local idx=0
+    local timeout=5
+    local domain_name=`rdcsman $1 str` # $1 is addr
+    if [ "$domain_name" == "" ]; then
+		echo "No IP/Domain of PPTP Client ID $TUN_IDX !" 
+	    logger -t "pptpc" "No Peer IP/Domain of PPTP Client ID $TUN_IDX "
+    	
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+		wrcsman "$addr 0"
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+		wrcsman "$addr $DISCONNECT"
+		exit 1
+    fi
+
+    PPTP_PNSSERVER=`getHostIP $domain_name &`
+    local gethip_pid=$!
+    while [ true ]; do
+        if [ -n "$PPTP_PNSSERVER" ]; then
+            addr=`get_csid_addr $CSID_C_PPTP_CLI_PEERIP $TUN_IDX`
+            wrcsman "$addr {$PPTP_PNSSERVER}"
+            break
+        fi
+
+        sleep 1
+        idx=$((idx+1))
+        [ $idx -gt $timeout ] && break
+    done
+
+	if [ -z "$PPTP_PNSSERVER" ]; then
+		echo "Cannot resolved IP, Please Check Host's Domain Name" 
+	    logger -t "pptpc" "Please Check Peer IP/Domain of PPTP Client ID $TUN_IDX Again!"
+        kill $gethip_pid > /dev/null 2>&1
+
+    	addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+		wrcsman "$addr 0"
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+		wrcsman "$addr $DISCONNECT"
+		exit 1
+	fi
+}
+
+waitfor_ppp_negotiaction()
+{
+    local idx=0
+    while [ true ]; do     
+        # Check the PPTP connection 
+        if [ ! -f $DONT_WANTYPE_UPDATE ]; then
+            echo "PPP negotiation complete !!"
+            break
+        fi 
+
+        if [ $idx -ge 30 ]; then
+            echo "PPTP Connecting ... timeout !!"
+            logger -t "pptpc" "PPTP Connecting ... timeout !!"
+            break
+        fi
+
+        idx=$((idx+1))
+        sleep 1
+        echo "PPTP Connecting ... $idx sec"
+    done
+
+        if [ ! -r $PIDFILE_PPPD ] ; then
+            echo "Can't find $PIDFILE_PPPD. May PPP negotiation failed !! Check PPP option, plz !"
+            logger -t "pptpc" "Can't find $PIDFILE_PPPD. May PPP negotiation failed !! Check PPP option, plz !"
+            reset_connect
+            exit 1  
+        fi 
+
+    sl_get_ppp_PID_IFname $PIDFILE_PPPD PPP_PID PPP_IF
+    if [ $? != 0 ] ; then		
+        echo "Can't find PPPD/PPTP process"
+        reset_connect
+        exit 1
+    fi
+
+    # Show the cnt status
+    logger -t "pptpc" "Link is up and running on interface $PPP_IF (PID: $PPP_PID)"
+    echo "PPTP's status : Link is up and running on interface $PPP_IF"
+    echo "IF=$PPP_IF  PID=$PPP_PID" 
+}
+
+main()
+{
+	echo "1 0" > $CSID_FILE
+    # Test if the tunnel had created
+    addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+    cnt_pid=`rdcsman $addr s32`
+    if [ $cnt_pid -gt 0 ] && [ $cnt_pid -lt 65535 ]; then
+        logger -t "pptpc"  "Tunnel $TUN_IDX is already running (PID:$cnt_pid)"
+        echo "Tunnel $TUN_IDX is already running (PID:$cnt_pid)"
+		echo "0 100000" > $CSID_FILE
+        exit 1
+    else
+        wrcsman "$addr -1"
+    fi
+
+    check_network_status
+
+    # Change Tx Quele length for 3G (no longer need)
+    # chg_txqlen
+
+    # Clear last ppp auth fail temp file
+    rm -rf /var/run/ppp_auth*
+    if [ -f $RESET_FILE ]; then
+        (. $RESET_FILE)
+        rm -f $RESET_FILE
+    fi
+
+    # Get Server's address
+    #addr=`get_csid_addr $CSID_C_PPTP_CLI_PEERIP $TUN_IDX`
+    #PPTP_PNSSERVER="`rdcsman $addr ipv4`" # old version
+    addr=`get_csid_addr $CSID_C_PPTP_CLI_PEERIP_STR $TUN_IDX`    
+    get_host_ip $addr
+    echo "PPTP_PNSSERVER=$PPTP_PNSSERVER"  
+    if [ -z "$PPTP_PNSSERVER" ]; then
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_PID $TUN_IDX`
+        wrcsman "$addr 0"  
+        addr=`get_csid_addr $CSID_S_PPTP_CLI_PEER_CONNT_STAT $TUN_IDX`
+		wrcsman "$addr $DISCONNECT"
+
+        echo "Unknown PPTP Server address !!"
+        logger -t "pptpc" "Unknown PPTP Server address !!"
+		echo "0 100000" > $CSID_FILE
+        exit 1
+    fi
+    
+    # Generate new negotiaction file
+    # Make sure PPTP Client's account/password/config wouldn't conflict with others 
+    gen_secret_file
+    gen_peers_file
+    gen_ppp_options
+
+    # Start Connect & Log PPTP Session ID to /var/run/
+    echo "PPTP Client start to connect $PPTP_PNSSERVER!"
+    touch $DONT_WANTYPE_UPDATE
+    sleep 2
+    pppd call pptpc-$TUN_IDX debug dump logfd 2 &
+ 
+    # Waiting Time for negotiaction
+    waitfor_ppp_negotiaction
+    
+    # Restore original PPP secrets                          
+    restore_secret_file
+
+    # Some configuration after the pptp connection established
+    log_pptp_info 
+    setup_route
+    setup_iptables
+
+    # Enlarger MTU to avoid fragment packets
+    local mtu="`rdcsman $CSID_C_PPTP_MTU u16`"
+    if [ $mtu -gt 0 ]; then
+		ifconfig $PPP_IF mtu $mtu
+    else
+		wantype="`rdcsman $CSID_C_LOCAL_WANTYPE u32`"
+		if [ $wantype -eq 16 ] ; then
+			mtu_3g="`rdcsman $CSID_C_3G_MTU u16`"
+			set_mtu=$(($mtu_3g-80))
+			ifconfig $PPP_IF mtu $set_mtu
+		else
+			ifconfig $PPP_IF mtu 1500
+		fi
+	fi
+    ifconfig $PPP_IF txqueuelen 1000
+	echo "0 100000" > $CSID_FILE
+}
+
+#
+#  Main ()
+# 
+main
+
+

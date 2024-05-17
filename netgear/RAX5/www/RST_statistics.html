@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<%
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css<? commonCfg.getVer(); ?>">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css" type="text/css">
+
+  <script language="javascript" type="text/javascript">
+
+  var defaultInterval = 5;
+  var interval = 5;
+  var intervalId, intervalId2;
+  $(document).ready(function() {
+       getStatisticTable();
+
+       $("#set_interval").on("click", function(){
+           resetInterval($("#timeset").val());
+       });
+       
+       $("#stop").on("click", function(){
+           stopInterval();
+       });
+  });
+
+  function loadInterval()
+  {
+      intervalId = setInterval("getStatisticTable()", interval * 1000);
+      intervalId2 = setInterval("setDefaultInterval()", 20);
+  }
+
+  function transUptimeStr()
+  {
+    $("[name='sysUptime']").text($("[name='sysUptime']").text().replace("Days", window.opener.top.mlang["ATM005"]));
+  }
+
+  function refreshSysUpTime()
+  {
+      fetchData('target', 'statistics','', 'transUptimeStr');
+  }
+  
+  function removeTableRow()
+  {
+      $(".stats_row").remove();
+  }
+  
+  function getStatisticTable()
+  {
+      var new_tr ='<tr class="stats_row" style="background-color:#FFFFFF;">\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__portName</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__ifStatus</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__txPkt</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__rxPkt</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__collision</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__txBps</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="10%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__rxBps</span>\r\n\
+      </td>\r\n\
+      <td nowrap width="20%" align="center" style="border-left:#d7d7d7 solid 1px; border-top:#d7d7d7 solid 1px;">\r\n\
+        <span class="thead">__upTime</span>\r\n\
+      </td>\r\n\
+      </tr>';
+      refreshSysUpTime();
+      fetchTableData('statistic_table', 'interfaceStatisticsTable', new_tr, 'removeTableRow');
+  }
+
+  function resetInterval(newInterval)
+  {
+      interval = parseInt(newInterval,10);
+      if ( isNaN(interval) || interval < 5 || interval > 86400)
+      {
+          interval = defaultInterval;
+      }
+      $("#timeset").val(interval);
+      clearInterval(intervalId) ;
+      intervalId = setInterval("getStatisticTable()", interval * 1000);
+  }
+
+  function setDefaultInterval()
+  {
+      $("#timeset").val(defaultInterval);
+      clearInterval(intervalId2) ;
+  }
+
+  function stopInterval()
+  {
+      clearInterval(intervalId) ;
+      $("#timeset").val("");
+  }
+
+  function initLoad()
+  {
+      $("[mlang]").each(function(idx, obj) {
+              obj.innerHTML = window.opener.top.mlang[obj.attributes.mlang.value];
+      });
+      
+      loadInterval();
+  }
+  </script>
+</head>
+
+
+<body onload="initLoad()" style="margin:0px;display: block;overflow: auto;width: 100%;">
+<form id="target" style="width: 100%;">
+<div class="topHalf" style="height: 50%;overflow: visible;">
+  <div class="page-header" style="position: relative;" mlang="MRS030">Show Statistics</div>
+  <div class="form-row pl28">
+    <b  mlang="MRS038"></b> <!><span name="sysUptime"></span><!>
+  </div>
+  <div class="form-row pl28">
+    <table border="1" cellpadding="0" cellspacing="0" width="97%" class="tbWhite" id="statistic_table">
+      <tr class="table_header">
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="SBS028">Port</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="UAS004">Status</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="MRS040">TxPkts</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="MRS035">RxPkts</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="MRS031">Collisions</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="MRS039">Tx B/s</span></td>
+        <td nowrap width="10%" align="center"> <span class="thead" mlang="MRS034">Rx B/s</span></td>
+        <td nowrap width="20%" align="center"> <span class="thead" mlang="MRS041">Up Time</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+<div class="bottomHalf" style="position: relative; top: 5%;">
+  <div class="form-row pl28">
+    <b  mlang="MRS033">Poll Interval</b><b>:</b>
+  </div>
+  <div class="form-row pl28" style="white-space: nowrap; width:20%;">
+  
+    <input type="text" class="input1" name="interval" id="timeset" size="5" maxlength="5" value="5" /><span>(5~86400 Seconds)</span>
+  </div>
+  <div class="form-row pl28">
+    <button type="BUTTON" value="Set Interval" name="SetIntvl" id="set_interval" class="button-sty1" mlang="MRS036">Set Interval</button>
+    <button type="BUTTON" value="Stop" name="stopIntvl" id="stop" class="button-sty1" mlang="MRS037">Stop</button>
+  </div>
+</div>
+</form>
+</body>
+
+
+
+
+</html>

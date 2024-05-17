@@ -1,0 +1,589 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title> 
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+<script type="text/javascript" src="script/sorttable.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%16%>
+<style type="text/css">
+.device-bwBarBackground {
+    margin:4px;
+    display:block;
+    height:12px;
+    border:#000000 2px solid;
+    background-color:#F2F2F2;
+    float: left;
+}
+.device-bwBarX {
+    height:12px;
+    background-image:url('barX.gif'); 
+    background-repeat:repeat;
+    display:block;
+}
+.device-bwBarY {
+    height:12px;
+    background-image:url('barY.gif'); 
+    background-repeat:repeat;
+    display:block;
+}
+
+.device-bwInfoBarBackground {
+    margin:4px;
+    display:block;
+    height:12px;
+    border:#FFFFFF 0px solid;
+    background-color:#FFFFFF;
+    float: left;
+}
+
+.device-bwInfoBarX {
+    height:14px;
+    background-image:url('barX.gif'); 
+    background-repeat:repeat;
+    display:block;
+}
+
+.device-bwInfoBarY {
+    height:14px;
+    background-image:url('barY.gif'); 
+    background-repeat:repeat;
+    display:block;
+}
+
+.device-bwBarLabelPadding {
+    margin:4px;
+    line-height: 12px;
+    display:block;
+    height:12px;
+    width:30%;
+    border:#FFFFFF 2px solid;
+    background-color:#FFFFFF;
+    float: left;
+}
+.device-bwBarLabel {
+    height:12px;
+    display:block;
+    width:60px;
+    font-size:12px;
+}
+.device-BarTable
+{
+    width:100%;
+}
+.device-BarTD
+{
+    width:10%;
+}
+//define A
+a:link{
+/*	COLOR: blue;*/
+	background : transparent; 
+}
+a:visited {
+/*	COLOR: blue;*/
+	background : transparent; 
+}
+
+a:hover {
+/*	COLOR: blue;*/
+	background : transparent; 
+    cursor:pointer;
+}
+
+a:active {
+/*	COLOR: blue;*/
+	background : transparent;  
+}
+a {
+/*	 COLOR: blue; */
+	TEXT-DECORATION: underline
+}
+.clickMe {
+   cursor:text;
+}
+.DeviceICON{
+  float:left;
+}
+.DeviceICON img{
+  width:70px;
+  padding:10px;
+}
+.DeviceInfo{
+  margin-top:20px;
+}
+.DeviceInfo span{
+  margin:4px 10px 4px 2px;
+  display:block;
+}
+span[name=rule_device_type]{
+  display:none;
+}
+span[name=rule_conndevice]{
+  display:none;
+}
+span[name=rule_device_model]{
+  color:black;
+}
+
+td {
+    /*white-space: pre-wrap;*/
+    word-wrap: break-word;
+}
+
+.top-status-area, .top-status td {
+    white-space: initial !important;
+    height: 30px;
+}
+</style>
+<script language="javascript" type="text/javascript">
+<!--
+    var device_type_path="device_type/";
+    var unknown_device_icon="device_type/icon/Network_(Generic).png";
+    var iconArray={};
+  
+    $(document).ready(function()
+    {
+        queryDevicesResult();
+
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+        
+        // iMaxWidth=0;
+        // $(".DeviceInfo").each(function(){
+        //     iCuttentWidth=parseInt($(this)[0].scrollWidth);
+        //     if(iCuttentWidth > iMaxWidth)
+        //         iMaxWidth=iCuttentWidth;
+        // });
+        // if((iMaxWidth+80) > parseInt($(".DeviceTable tr:eq(0) td:eq(3)").width())) {
+        //     if (/Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor))
+        //         $(".DeviceTable tr:eq(0) td:eq(3)").css('width', (iMaxWidth+100) +"px");
+        //     document.getElementsByClassName("DeviceInfo")[0].style.width=(iMaxWidth+100) +"px";
+        // }
+        try{
+            document.getElementsByClassName("DeviceInfo")[0].style.width = "100%";
+        }catch(e){}
+        
+        iconArray['unknown']={ "img" : unknown_device_icon, "txt" : "<%944%>"};
+        $.getJSON("device_type/device_type.json", function (data){
+            $.each(data, function(key,val){
+              iconArray[val["Device type"]]={ "img" : device_type_path +"icon/"+val["Icon"], "txt" : val["Device type"]};
+            });
+            $("span[name=rule_device_type]").each(function(){
+              DeviceType = $(this).html().replace(/\([0-9]*\)/g,"");
+              if(!iconArray.hasOwnProperty(DeviceType))
+                DeviceType='unknown';
+                
+              $(this).closest("td").prepend("<div class='DeviceICON'><img src='"+iconArray[DeviceType].img+"' alt=\'"+iconArray[DeviceType].txt+"\' title=\'"+iconArray[DeviceType].txt+"\'/></div>");
+            });
+        });
+    });
+
+    /*
+    <tr>
+        <td align="center">
+            <label class="checkbox-container">
+                <input name="check_dev" type="checkbox" value="0" onclick="handle_checkboxElements(this);" />
+                <span class="checkbox-checkmark"></span>
+            </label>
+        </td>
+
+        <td align="center" name="show_status"><span class="clickMe" style="color:green">Allowed</span></td>
+
+        <td align="center"><span class="clickMe">Wired</span></td>
+
+        <td nowrap align="right">
+            <table class="DeviceInfo_TB" border="0" cellpadding="0" cellspacing="0" width="400px">
+                <tbody>
+                    <tr>
+                        <td style="border-top: 0px;">
+                            <div class="DeviceInfo">
+                                <span class="hidden" name="rule_device_type_base">Computer (Generic)</span>
+                                <span name="rule_device_model">Apple Mac</span>
+                                <span name="rule_device_name">Bling-iMac</span>
+                                <span name="rule_device_ip">192.168.1.2</span>
+                                <span class="hidden" name="rule_conndevice">1361719</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+
+        <td align="center"><span class="clickMe">192.168.1.2</span></td>
+
+        <td align="center"><span class="clickMe" name="mac">00:E0:4C:68:D7:A9</span></td>
+    </tr>
+    */
+
+    var numberOfDevices = "";
+    var mode = "";
+    var HTMLTAG_IQOS_CHECKBOX = "";
+    var HTMLTAG_IQOS_STATUS = "";
+    var HTMLTAG_IQOS_TYPE = "";
+    var HTMLTAG_IQOS_DEV3 = "";
+    var HTMLTAG_IQOS_IP = "";
+    var HTMLTAG_IQOS_MAC = "";
+
+    var tableID = "";
+    var rowData = "";
+
+    function queryDevicesResult() {
+        $.ajax({
+            url: "ajax/devices_table_result",
+            dataType: "json",
+            type: "POST",
+            success: function(data) {
+                console.log(data);
+                numberOfDevices = data.numberOfDevices;
+                mode = data.mode;
+                if(isSPCEnable()){
+                    mode = 0;
+                }
+                tableID = document.getElementById("device_table").getElementsByTagName("tbody")[0];
+
+                for (var i = 0; i < numberOfDevices; i++) {
+                    rowData = tableID.insertRow();
+
+                    if (mode == 1) {
+                        HTMLTAG_IQOS_CHECKBOX = rowData.insertCell(0);
+                        HTMLTAG_IQOS_STATUS = rowData.insertCell(1);
+                        HTMLTAG_IQOS_TYPE = rowData.insertCell(2);
+                        HTMLTAG_IQOS_DEV3 = rowData.insertCell(3);
+                        HTMLTAG_IQOS_IP = rowData.insertCell(4);
+                        HTMLTAG_IQOS_MAC = rowData.insertCell(5);
+                    } 
+                    else {
+                        HTMLTAG_IQOS_CHECKBOX = rowData.insertCell(0);
+                        HTMLTAG_IQOS_TYPE = rowData.insertCell(1);
+                        HTMLTAG_IQOS_DEV3 = rowData.insertCell(2);
+                        HTMLTAG_IQOS_IP = rowData.insertCell(3);
+                        HTMLTAG_IQOS_MAC = rowData.insertCell(4);
+                    }
+                    
+                    HTMLTAG_IQOS_CHECKBOX.innerHTML = "\t\t<tr><td align=\"center\">\n<label class=\"checkbox-container\"> <input name=\"check_dev\" type=\"checkbox\" value=\"" + data.connDevices[i].checkDev + "\" onclick=\"handle_checkboxElements(this);\">\n<span class=\"checkbox-checkmark\"></span></label></td>\n"
+                    HTMLTAG_IQOS_STATUS.innerHTML = "\t\t<td align=\"center\" name=\"show_status\"><span class=\"clickMe\" style=\"" + data.connDevices[i].scene + "\">" + data.connDevices[i].mark + "</span></td>\n";
+                    HTMLTAG_IQOS_TYPE.innerHTML = "\t\t<td align=\"center\"><span class=\"clickMe\">" + data.connDevices[i].connection + "</span></td>\n";
+                    HTMLTAG_IQOS_DEV3.innerHTML = "\t\t<td nowrap align=\"right\"><table class='DeviceInfo_TB' border='0' cellpadding='0' cellspacing='0' width='400px'><tbody><tr><td style='border-top: 0px'><div class=\"DeviceInfo\"><span style=\"display:none\" class=\"hidden\" name=\"rule_device_type_base\">" + data.connDevices[i].type + "</span><span name=\"rule_device_model\">" + data.connDevices[i].model + "</span><span name=\"rule_device_name\">" + data.connDevices[i].name + "</span><span class=\"hidden\" name=\"rule_conndevice\">" + i + "</span></div></td></tr></tbody></table></td>\n";
+                    HTMLTAG_IQOS_IP.innerHTML = "\t\t<td align=\"center\"><span sorttable_customkey=\"" + data.connDevices[i].ipZero + "\" class=\"clickMe\">" + data.connDevices[i].ip + "</span></td>\n";
+                    HTMLTAG_IQOS_IP.setAttribute('sorttable_customkey', data.connDevices[i].ipZero);
+                    HTMLTAG_IQOS_MAC.innerHTML = "\t\t<td align=\"center\"><span class=\"clickMe\" name=\"mac\">" + data.connDevices[i].mac + "</span></td></tr>\n";
+                }
+
+                //document.getElementById("progressbar").style.display = "none";
+
+                iconArray['unknown'] = {"img": unknown_device_icon, "txt": "<%944%>"};
+                $.getJSON("device_type/device_type.json", function (data) {
+                    $.each(data, function(key, val) {
+                        iconArray[val["Device type"]] = {"img": device_type_path + "icon/" + val["Icon"], "txt": val["Device type"]};
+                    });
+
+                    $("span[name=rule_device_type_base]").each(function() {
+                        DeviceType = $(this).html().replace(/\([0-9]*\)/g, "");
+
+                        if (!iconArray.hasOwnProperty(DeviceType)) {
+                            DeviceType = 'unknown';
+                        }
+
+                        $(this).closest("td").prepend("<div class='DeviceICON'><img src='" + iconArray[DeviceType].img + "' alt=\'" + iconArray[DeviceType].txt + "\' title=\'" + iconArray[DeviceType].txt + "\'/></div>");
+                    });
+                });
+            }
+        });
+    }
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+    function adjust_column_backColor(){
+    }
+
+function isSPCEnable()
+{
+	var cf = document.forms[0];
+    if(( (cf.spc_provisioned.value=='1')) && (cf.enable_ap_mode.value!='1'))
+        return true;
+    else
+        return false;
+}
+
+function loadSettings()
+{
+    var isIE = navigator.userAgent.search("MSIE") > -1; 
+    var isFirefox = navigator.userAgent.search("Firefox") > -1;
+    var isOpera = navigator.userAgent.search("Opera") > -1;
+    var isSafari = navigator.userAgent.search("Safari") > -1;
+    var isIE8=navigator.appVersion.indexOf("MSIE 8") > -1;  
+    
+    if(isSPCEnable())
+    {
+        $("#acl_tips").css("visibility","hidden");
+        $("#acl_status").css("visibility","hidden");
+    }
+    
+    if(isIE)
+    {
+        $('.device-bwBarLabel').css("width","80px"); 
+    }
+    grayout_button("edit_attached");
+
+    $('#checkboxGroup li input').click(function(){
+  if($(this).prop('checked')){
+    $('#checkboxGroup li input:checkbox').prop('checked',false);
+    $(this).prop('checked',true);
+  }
+  })
+    var enable_access_control = document.getElementsByName("enable_access_control");
+
+    if(enable_access_control[0].value != "1" || isSPCEnable()) {	
+        for(i=0 ; i<$('td[name=show_status]').length ; i++)
+        {
+                $('td[name=show_status]')[i].style.display = "none";	
+        }
+    }
+}   
+function get_devinfo(dev_num){
+    var cf = document.forms[0];
+    cf.select_dev.value = dev_num;
+    cf.page_submit.value = "get_devinfo";
+    cf.submit();
+}
+
+function handle_checkboxElements(checkbox)
+{
+    var i,checked_count=0;
+    var checkboxElements = document.getElementsByName(checkbox.name);    
+    var cf = document.forms[0];
+    if(checkbox.checked==false){
+        checkbox.checked==false;
+        grayout_button("edit_attached");
+    }else{
+        for(i=0 ; i<checkboxElements.length ; i++) {
+            checkboxElements[i].checked=false;
+        }
+        ungrayout_button("edit_attached");
+        checkbox.checked=true;
+        cf.page_submit.value = "edit_dev";
+    }
+}
+
+function delete_satellite_row(satellite_id) {
+    var cf = document.forms[0];
+    cf.page_submit.value = "delete_satellite";
+    cf.select_dev.value = satellite_id
+}
+//--></script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">	
+<style type="text/css">
+    .cmn-table-2 {
+        table-layout: fixed;
+    }
+    .cmn-table-2 tr td {
+        vertical-align: middle;
+    }
+    .cmn-table-2 .checkbox-container {
+        height: 108px;
+        width: 100%;
+        padding: 0 0 0 0;
+        margin-bottom: 0px;
+    }
+    .cmn-table-2 tr td .checkbox-container span {
+        top: 45px;
+        left: calc(50% - 8px);
+    }
+    .access{
+        width: 270px;
+    }  
+</style>
+</head>
+<body  onload="change_size(false);loadSettings();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  method="post" action="devices.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%74%>">
+<div class="subhead2"> <%466%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr><td class="scrollpane-table-seperate-border scroll_container pt-0" colspan="2"><div id="main" class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+<tr>
+    <td class="pb-15 top-status-area">
+    <table border="0" cellpadding="3" cellspacing="0" width="100%" class="top-status">
+        <tr>
+            <td width="50%" align="left">
+            <!--<button value="Edit" onclick="buttonClick(this,'Edit');"  type="SUBMIT" name="edit" id="edit_attached" class="button-sty1" ><%698%></button>-->
+            </td>
+            <td id="acl_tips" width="30%" align="left">
+                <div class="justify-content-end">
+                    <%915%>
+                </div>
+                <div class="justify-content-end">
+                    <div class="text-start">
+                    <div class="justify-content-end">
+                    <div class="text-start">
+                        <%523%>:
+                    <span class="fw-bolder">
+                    <!-- access_control_mode: 1: enabled 0: disabled -->
+                        <%916%>
+                        <%917%>
+                        <%918%>
+                        <%919%>
+                        <%920%>
+                        <%921%>
+                    </span>
+                    </div>
+                    <div>
+                        <!-- access_all_new_devices: 1: allow all 0: block all -->
+                        <%922%>
+                    </div>
+                    </div>
+                   </div>
+                </div>                    
+            </td>
+            <td width="20%" align="right">
+                <button id="refresh" value="Cancel" onclick="buttonClick(this,'Refresh');"  type="SUBMIT" name="refresh" class="button-sty1" ><%923%></button>
+            </td>
+        </tr>        
+    </table>
+    </td>
+</tr>
+
+<!--connected satellite-->
+<%2943%>
+<tr>
+ <td nowrap colspan="2"><b><%2944%></b></td>
+</tr>
+<tr>
+	<td colspan="2">
+	<table id="deviceTableSatellite" class="sortable DeviceTable tbWhite cmn-table-2" border="1" cellpadding="2" cellspacing="0" width="100%">
+	<tr>
+		<td nowrap align="center" width="5%"><span>#</span></td>
+		<td nowrap align="center" width="35%"><span><%509%></span></td>
+		<td nowrap align="center" width="15%"><span><%947%></span></td>
+		<td nowrap align="center" width="15%"><span><%979%></span></td>
+		<td nowrap align="center" width="15%"><span><%2945%></span></td>
+		<td nowrap align="center" width="15%"><span><%2946%></span></td>
+	</tr>
+        <%2947%>
+	</table>
+	</td>
+</tr>
+
+<tr><td colspan="2" height="12" class="pt-15 pb-15"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<BR>
+<%2948%>
+<!--connected devices-->
+<tr>
+ <td nowrap colspan="2"><b><%2949%></b></td>
+</tr>
+<tr>
+    <td>
+        <button value="Edit" onclick="buttonClick(this,'Edit');"  type="SUBMIT" name="edit" id="edit_attached" class="button-sty1" ><%698%></button>
+     </td>
+</tr>
+<tr>
+	<td colspan="2">
+	<table id="device_table" class="sortable DeviceTable tbWhite cmn-table-2" border="1" cellpadding="2" cellspacing="0" width="100%">
+	<tr>
+		<td nowrap align="center" width="5%"><span></span></td>
+		<%2950%>
+        <td nowrap align="center" width="10%" name="show_status"><span><%925%></span></td>
+		<%2951%>
+		<td nowrap align="center" width="15%"><span><%979%></span></td>
+		<td nowrap align="center" width="40%"><span><%509%></span></td>
+		<td nowrap align="center" width="15%"><span><%947%></span></td>
+		<td nowrap align="center" width="15%"><span><%949%></span></td>
+		
+	</tr>
+
+    <tbody></tbody>
+	
+    </table>
+	</td>
+</tr>
+
+ <td nowrap colspan="2"><b><%938%></b></td>
+</tr>
+<tr>
+	<td colspan="2">
+	<table id="vpn_device_table" class="sortable tbWhite cmn-table-2" border="1" cellpadding="2" cellspacing="0" width="100%">
+	<tr class="table_header">
+		<td nowrap align="center" width="40%"><span><%509%></span></td>
+		<td nowrap align="center" width="20%"><span><%939%></span></td>
+		<td nowrap align="center" width="20%"><span><%940%></span></td>
+		<td nowrap align="center" width="20%"><span><%941%></span></td>
+	</tr>
+	<%942%>	
+	</table>
+	</td>
+</tr>
+<tr><td colspan="2" height="12" class="pt-15 pb-15"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="DEV_device2_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+    <input name="select_dev" type="hidden" value= "0">
+    <input name="page_submit" type="hidden" value= "">
+    <input name="enable_access_control" type="hidden" value= "<%943%>">
+    <input name="spc_provisioned" type="hidden" value= "<%990%>">
+    <input name="enable_ap_mode" type="hidden" value= "<%289%>">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>
+

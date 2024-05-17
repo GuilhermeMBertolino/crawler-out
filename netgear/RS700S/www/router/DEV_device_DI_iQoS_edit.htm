@@ -1,0 +1,283 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title> 
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+<script type="text/javascript" src="script/sorttable.js"></script>
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<style type="text/css">
+.DeviceICON img{
+  width:80px;
+}
+</style>
+<script language="javascript" type="text/javascript">
+<!--
+    var device_type_path="device_type/";
+    var unknown_device_icon="device_type/icon/Network_(Generic).png";
+    var iconArray={};
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+          iconArray['unknown']={ "img" : unknown_device_icon, "txt" : "<%944%>"};
+          $.getJSON("device_type/device_type.json", function (data){
+            $.each(data, function(key,val){
+              iconArray[val["Device type"]]={ "img" : device_type_path +"icon/"+val["Icon"], "txt" : val["Device type"]};
+            });
+
+            $.each(iconArray, function(key,value){
+              $("select[name=dev_type]").append($("<option></option>").attr("value", key).text(value.txt));
+            
+            });
+            $("select[name=dev_type]").change(function(){
+              sSelectedDevice = $("select[name=dev_type]").find(":selected").val();
+              if(!iconArray.hasOwnProperty(sSelectedDevice))
+                sSelectedDevice = 'unknown';
+              $("#device_type_icon").html("<div class='DeviceICON'><img src='"+iconArray[sSelectedDevice].img+"' alt=\'"+iconArray[sSelectedDevice].txt+"\' title=\'"+iconArray[sSelectedDevice].txt+"\'/></div>");
+            });
+            $("select[name=dev_type]").val($("input[name=hid_device_type]").val().replace(/\([0-9]*\)/g,"")).change();
+          }); 
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+
+    //var type_name=["Amazon Kindle","Android Device","Android Phone","Android Tablet","Apple Airport Express","Blu-ray player","Bridge","Cable STB","Camera","Router","DVR","Gaming Console","iMac","iPad","iPad mini","iPhone 5/5s/5c","iPhone","iPod Touch","Linux PC","Mac mini","Mac Pro","Mac Book","Media Device","Network Device","Other STB","Powerline","Printer","Repeater","Satellite STB","scanner","Sling box","Smart phone","Storage NAS","Switch","TV","Tablet","Unix PC","Windows PC","Surface","Wifi Extender","Apple TV","AV Receiver","Chromecast","Google Nexus 5","Google Nexus 7","Google Nexus 10","Other","WN1000RP","WN2500RP","VoIP","iPhone 6/6 Plus"];
+    //var type_icon=["icon/Device_0.png","icon/Amazon_Kindle_1.png","icon/Android_Device_2.png","icon/Android_Phone_3.png","icon/Android_Tablet_4.png","icon/Apple_Airport_Express_5.png","icon/Blu-ray_player_6.png","icon/Bridge_7.png","icon/Cable_STB_8.png","icon/Camera_9.png","icon/Router_10.png","icon/DVR_11.png","icon/Gaming_Console_12.png","icon/iMac_13.png","icon/iPad_14.png","icon/iPad_mini_15.png","icon/iPhone_5_16.png","icon/iPhone_17.png","icon/iPod_Touch_18.png","icon/Linux_PC_19.png","icon/Mac_mini_20.png","icon/Mac_Pro_21.png","icon/Mac_Book_22.png","icon/Media_Device_23.png","icon/Network_Device_24.png","icon/Other_STB_25.png","icon/Powerline_26.png","icon/Printer_27.png","icon/Repeater_28.png","icon/Satellite_STB_29.png","icon/scanner_30.png","icon/Sling_box_31.png","icon/Smart_phone_32.png","icon/Storage_NAS_33.png","icon/Switch_34.png","icon/TV_35.png","icon/Tablet_36.png","icon/Unix_PC_37.png","icon/Windows_PC_38.png","icon/Surface_39.png","icon/Wifi_Extender_40.png","icon/Apple_TV_41.png","icon/AV_Receiver_42.png","icon/Chromcast_43.png","icon/Google_Nexus_5_44.png","icon/Google_Nexus_7_45.png","icon/Google_Nexus_10_46.png","icon/Other_47.png","icon/WN1000RP_48.png","icon/WN2500RP_49.png","icon/VoIP_50.png","icon/iPhone6_51.png"];
+
+function unescapeHtml(str)
+{ 
+    var map = {amp: '&', lt: '<', gt: '>'} ;
+    return str.replace(/&([^;]+);/g, (m, c) => map[c]|| '');
+}
+
+function loadSettings()
+{
+    var prio=<%2961%>;
+    //var devType=<%2962%>;
+    var enable_iqos = document.getElementsByName("enable_iqos");
+    
+    //if(devType==0)
+    //    devType=47;
+    if($("#priority option[value='"+prio+"']").length)
+        $("#priority").val(prio);
+    else
+        $("#priority").val(0);
+    
+    if(enable_iqos[0].value == "0"){
+        var iqos_item = document.getElementsByName("iqos_item");
+        for(i=0 ; i<$('tr[name=iqos_item]').length ; i++)
+        {
+            $('tr[name=iqos_item]')[i].style.display = "none";
+        }
+    }
+
+    var dev_name = document.getElementsByName("dev_name_from_cgi");
+    var new_dev_name = unescapeHtml(dev_name[0].innerHTML);
+    var cf = document.forms[0];
+    cf.devName.value = new_dev_name;
+
+    /*
+    var list=document.forms[0].devType;
+    var index=list.options.length;
+	for(index=0;index<type_name.length;index++){
+    list.options[index]=new Option(type_name[index],index+1); //Amazon Kindle devtype=1
+    }
+    $("#devType").attr("value",devType);
+    document.forms[0].devIcon.src =type_icon[devType];
+	*/
+	return 0;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+
+/*    if (cf.devName.value.match( /[^\x20-\x7E]/ ))
+        msg+="<%945%>\n";
+*/
+    if((new TextEncoder().encode(cf.devName.value)).length > 63 || cf.devName.value.length > 32)
+		msg+="<%945%>\n";		
+		
+/*
+    if (   (cf.devName.value.match( /[\x20-\x2C]/ ))
+        || (cf.devName.value.match( /[\x2E-\x2F]/ ))
+        || (cf.devName.value.match( /[\x3A-\x40]/ ))
+        || (cf.devName.value.match( /[\x5B-\x5E]/ ))
+        || (cf.devName.value.match( /[\x60-\x60]/ ))
+        || (cf.devName.value.match( /[\x7B-\x7E]/ ))
+       )
+    {
+        msg+= "<%945%>\n";
+	}
+*/
+    if (msg.length > 1) {
+        alert(msg);
+        return false;
+    }
+    return true;			
+}
+function set_mac()
+{
+    var mac = getElementsByName_iefix("span", "mac"); 
+    var cf = document.forms[0];
+    cf.select_mac.value=mac[0].innerHTML;
+}  
+
+function changeIcon(list) 
+{     
+    var index=list.selectedIndex+1;
+    document.forms[0].devIcon.src =type_icon[index];
+} 
+//-->
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css"> 
+</head>
+<body  onload="change_size(false);loadSettings();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="frmLan" method="POST" action="devices.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+	<img class="subtop-image" src="<%74%>" style="width: 852px; height: 32px;">
+<div class="subhead2"> <%2963%></div>
+<table border="0"    style="height:620px; position: relative; top: -3px; width: 825px;"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td align="center" colspan="2" class="table-seperate-border">
+<div class="fix_button">	
+<button id="cancel" value="<%76%>" onClick="window.location.href='DEV_redirect.htm';" type="BUTTON" name="Cancel" class="button-cancel cancel_bt" ><%77%></button>
+<button id="apply" value="<%78%>"  onClick="set_mac();buttonClick(this,'Apply');return checkData()" type="SUBMIT" name="Apply" class="button-apply apply_bt" ><%80%></button>
+</div>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div id="main" class="scroll-pane main_bas" style="height:620px;width:825px;overflow:auto;"><table style="border-collapse:collapse;width:97%">
+		
+
+<tbody>
+
+<tr height="30px">
+<td nowrap="" class="pb-0"><%947%></td>
+<td nowrap=""><%2964%></td>
+<td id="device_type_icon" rowspan="6"></td>
+</tr>
+<tr height="30px">
+<td nowrap="" class="pb-0"><%949%></td>
+<td nowrap colspan="2"><span id="mac" name="mac"><%2965%></span></td>
+</tr>
+<tr height="30px" class="NonSatellites">
+    <td nowrap="" class="pb-0"><%951%></td>
+    <td nowrap="" class="pt-0">
+    <select id="icon_tag1" name="dev_type"></select>
+</td>
+</tr>
+<tr height="30px" class="NonSatellites">
+    <td nowrap="" class="pb-0"><%952%></td>
+    <td nowrap="" class="pt-0"><input id="dev_model" class="input1" type="text" size="24" maxlength="24" name="dev_model" value="<%2966%>"></td>
+</tr>
+<tr height="30px">
+<td nowrap="" class="pb-0"><%954%></td>
+<td nowrap="" class="pt-0"><input id="dev_name" class="input1" type="text" size="32" maxlength="32" name="devName" value="<%2967%>"></td>
+</tr>
+<!--
+<tr name="iqos_item" height="30px">
+<td nowrap="" class="pb-0"><%2359%></td>
+<td nowrap="" class="pb-0"><select name="priority" id="priority"><option value=3><%2968%></option><option value=2><%2969%></option><option value=1><%2970%></option><option value=0><%2971%></option></select></td>
+</tr>
+-->
+<!--
+<tr name="iqos_item">
+<td nowrap style="vertical-align:top;" ><%951%></td>
+<td nowrap width=15% style="vertical-align:top;">
+<select name="devType" id="devType" onchange="changeIcon(this);">
+</select>
+</td>
+<td nowrap align="left">
+<img src="" id="devIcon" name="devIcon">
+</td>
+</tr>
+-->
+<tr><td colspan="3" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+
+
+<tr><td colspan="3"><div height="12" id="black_list_line2" style="background-image:url('seprator.gif');width:100%;display:none;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="3" style="padding-left:0px"><div id="help" class="help-frame-div" style="display: none; width: 802px; top: 510px; visibility: hidden;"> <iframe id="helpframe"  src="DEV_device_iQoS_edit_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+<a name="helpframe-anchor"></a>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" style="width: 852px;">
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow" style="position: absolute; left: 426px;">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+    <input name="hid_device_type" type="hidden" value= "<%2972%>">
+    <input name="enable_iqos" type="hidden" value= "<%741%>">
+    <input name="select_dev" type="hidden" value= "<%2960%>">
+    <input name="page_submit" type="hidden" value= "edit_dev">
+    <input name="select_mac" type="hidden" value= "">
+    <div name="dev_name_from_cgi" style="display:none"><%2967%></div>
+</form>
+
+</div>
+</body>
+ 
+</html>
+

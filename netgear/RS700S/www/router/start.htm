@@ -1,0 +1,1444 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>NETGEAR Router <%14%></title>
+<%13%>
+<script src="jquery.1.12.js"></script>
+<script src="script/script.js"></script>
+<link rel="stylesheet" type="text/css" href="css/mainpage.css">	
+<link rel="stylesheet" type="text/css" href="css/tabs.css">
+<link rel="stylesheet" type="text/css" href="css/button.css">
+<link rel="stylesheet" type="text/css" href="css/menu.css">
+<link rel="stylesheet" type="text/css" href="css/modalBoxControl.css">
+<link rel="shortcut icon" href="favicon.ico">
+<script type="text/javascript" language="javascript">
+var gui_lang_local;
+var load_page = 0;
+var is_loading_page = 0;
+var adjustPageHeight = 0;
+var num_nosubLarge = 0;
+var num_submenuLarge = 0;
+var loadDelay = 1200;
+var funjsq_check = 0;
+
+function get_browser()
+{
+    if(navigator.userAgent.indexOf("Navigator") != -1){ 
+        return "Netscape";
+    }else if(navigator.userAgent.indexOf("Android") != -1){
+        return "Android";
+    }else if((navigator.userAgent.indexOf("iPad") != -1) || 
+    (navigator.userAgent.indexOf("iPhone") != -1) ||
+    (navigator.userAgent.indexOf("iPod") != -1)){
+        return "iOS";
+    }else if (!(false || !!document.documentMode) && !!window.StyleMedia){
+        return "Edge";
+    //else if(navigator.userAgent.indexOf("MSIE") != -1)
+    }else if(false || !!document.documentMode){
+        return "IE";
+    //else if(navigator.userAgent.indexOf("Chrome") != -1)
+    }else if(!!window.chrome && !!window.chrome.loadTimes){
+        return "Chrome";//bug 21975:spec1.9-p228,[usb] the real links are different for different browsers
+    //else if(navigator.userAgent.indexOf("Firefox") != -1)
+    }else if(typeof InstallTrigger !== 'undefined'){
+        return "Firefox";
+    }else if((navigator.userAgent.indexOf("iPad") != -1) ||
+    (navigator.userAgent.indexOf("iPhone") != -1) ||
+    (navigator.userAgent.indexOf("iPod") != -1)){
+        return "iOS";
+    //else if((navigator.userAgent.indexOf("Safari") != -1 ))
+    }else if(/Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor)){
+        return "Safari";
+    }else if(navigator.userAgent.indexOf("Camino") != -1) {
+        return "Camino"; 
+    }else if(navigator.userAgent.indexOf("Gecko/") != -1){
+        return "Gecko"; 
+    }else if(navigator.userAgent.indexOf("Opera") != -1){
+        return "Opera";
+    }else{
+        return "";
+    }
+} 
+    
+function loadAdvancePage()
+{         
+    $("#first").hide();  
+    $("#second").show();
+    $('.subHeader').hide(); 
+    $("#basic-pane").css("display","none");
+    $("#adv-pane").css("display","block");  
+    $('.noSubActive').removeClass('noSubActive');
+    $('.noSubActiveLarge').removeClass('noSubActiveLarge');
+    $('.SubMenuActive').addClass('SubMenu')
+                       .removeClass('SubMenuActive');   
+    $('.SubMenuActiveLarge').addClass('SubMenuLarge SubMenu Large')
+                            .removeClass('SubMenuActiveLarge');
+    $('.SubActive').addClass('Sub').removeClass('SubActive');
+
+    if ($('#adv-home').hasClass('noSubLarge')){
+        $('#adv-home').addClass('noSubActiveLarge');  
+    }else{
+        $('#adv-home').addClass('noSubActive'); 
+    }
+
+    $('.subHeader:visible').slideUp('fast');  
+
+    loadPage2("ADVANCED_home.htm");      
+}
+
+function loadBasicPage()
+{
+  $("#second").hide();
+  $("#first").show();
+  $("#basic-pane").css("display","block");
+  $("#adv-pane").css("display","none");
+  $('.subHeader').hide();
+  $('.menuActive').removeClass('menuActive');
+  $('#basic-home').addClass('menuActive');
+  loadPage("DashBoard.htm");        
+}
+
+function loadGstManagePage()
+{
+    $("#second").hide();
+    $("#first").show();
+    $("#basic-pane").css("display","block");
+    $("#adv-pane").css("display","none");
+    $('.subHeader').hide();
+    $('.menuActive').removeClass('menuActive');
+    loadPage("GstManagePage.htm"); 
+}
+
+function loadDefaultPage()
+{
+    if (<%441%>)
+        loadPage("WLG_home.htm");
+    <%442%>
+    else if (<%443%>=="1")
+        loadPage("BAS_basic.htm");
+    <%444%>
+    else
+        loadPage("DashBoard.htm");
+}
+
+function dieLabelClick()
+{
+    document.getElementById('topframe').contentWindow.dieLabelClick();
+}
+
+function getCurrentLabel()
+{
+    return document.getElementById('topframe').contentWindow.getCurrentLabel();
+}
+
+function getCurrentLang()
+{
+  return document.getElementById('topframe').contentWindow.getCurrentLang();
+}
+
+function loadSubPage(page)
+{
+  if (getCurrentLabel() == 'basic_label')
+    loadPage(page);
+  else
+    loadPage2(page);
+}
+
+function OnSubmitForm()
+{
+  var text = $('#searchText').val();
+  var URItext = encodeURIComponent(text);
+
+  URItext =  "http://support.netgear.com/app/answers/list/kw/" + URItext;   
+  document.searchform.action = URItext;
+
+  return true; 
+}
+
+function fw_upgrade_hint()
+{
+    loadSubPage("UPG_fw_check2.htm");
+}
+
+function gui_logout()
+{
+    loadSubPage("LGO_logout.htm");
+}
+
+function gui_resize()
+{
+    if (get_browser() == "IE")
+    {
+        $('#topframe').css('height', '237px');
+    }
+    else if (get_browser() == "Firefox")
+    {
+        $('#topframe').css('height', '237px');
+    }
+}
+
+function change_size()
+{
+    /*
+    * Root cause: js error in firefix and ie
+    * Uncaught TypeError: $(...)[0] is undefined 
+    *
+    * setLanglistPosition();
+    */
+    gui_resize();
+    setFooterClass();
+    subpage_resize();
+}
+
+$(window).load(function() {
+    var isIE = navigator.userAgent.search("MSIE") > -1;
+    var isFirefox = navigator.userAgent.search("Firefox") > -1;
+    var isOpera = navigator.userAgent.search("Opera") > -1;
+    var isSafari = navigator.userAgent.search("Safari") > -1;
+    var isAndroid = navigator.userAgent.search("Android") > -1;
+    var isIE8=navigator.appVersion.indexOf("MSIE 8") > -1;
+
+    var form = document.forms[0];
+
+    change_size();
+
+    try {
+        document.execCommand("BackgroundImageCache", false, true);  
+    } catch (e){}
+
+    var modal = document.getElementById('modalBox');
+    <%445%>
+    var modal_funjsq = document.getElementById('modalBox_funjsq');
+    <%446%>
+
+    // When the user clicks anywhere outside of the modal, close it 
+    window.onclick = function(event){
+        if(event.target == modal)
+        {
+            modal.style.display = "none";
+        }
+    };
+
+    $(".modal-close").click(function(){
+        $("#modalBox").hide();
+        show_circle_window();
+    });
+
+    <%445%>
+    $(".modal-close-funjsq").click(function(){
+        $("#modalBox_funjsq").hide();
+    });
+    <%446%>
+
+    cf = document.forms["SSOAPI"];
+    <%447%>
+    if ((cf.armor_enable.value == "1") && !(cf.bd_never_remind_me.value==1) && !(cf.enable_stamode.value==1) && !(cf.enable_apmode.value==1))
+    {
+        showModalById("armor-popup");
+    }
+    else
+    <%448%>
+    {
+        $("#modalBox").hide();
+        show_circle_window();
+    }
+
+    <%445%>
+    if (<%449%> == "1"){
+        modal_funjsq.style.display = "block";
+    }
+    <%446%>
+	var ap_mode_flag = document.getElementsByName("enable_apmode");
+	//if ( (ap_mode_flag[0].value==1) || ("<%450%>" == "" && "<%451%>" == "" && "<%451%>" == "") ){	
+    if ( ("<%33%>" == "Disable" && "<%34%>" == "Disable" && "<%35%>" == "Disable") ){	
+		WPS_wizard_grayout();
+	}
+	else 
+		WPS_wizard_ungrayout ();
+});
+
+function showModalById(modalId)
+{
+    $("#modalBox").show();
+    $(".modal-content-armor").hide();
+    $("#"+modalId).show();
+}
+
+
+$(document).ready(function(){
+    adjustPageLayout();
+      
+    <%452%>;
+         
+    liveMenuClick();
+    advanceMenu();
+    $('.subHeader').hide();
+});   
+
+function checkMenuDisable()
+{
+    var basic_page = document.getElementById('formframe').contentWindow;
+    var advanced_page = document.getElementById('formframe').contentWindow;
+
+    try
+    {
+        if (basic_page.document.getElementsByName("disable_menu")[0])
+        {
+        dieMenuClick();
+            setTimeout('checkMenuDisable()',1500); 
+        } 
+        else if (advanced_page.document.getElementsByName("disable_menu")[0])
+        {
+            dieMenuClick();
+            setTimeout('checkMenuDisable()',1500); 
+        }
+        else
+        {
+            liveMenuClick();
+        }
+    }
+    catch (e)
+    {
+        liveMenuClick();
+    }
+}
+
+function dieMenuClick(){
+    dieLabelClick();
+
+    $('.noSub').unbind("click");
+    $('.noSubLarge').unbind("click");
+    $('.noSubActive').unbind("click");
+    $('.noSubActiveLarge').unbind("click");
+    $('.SubMenu').unbind("click");
+    $('.SubMenuLarge').unbind("click");
+    $('.SubMenuActive').unbind("click");
+    $('.SubMenuActiveLarge').unbind("click");
+    $('.basic-menu-div').unbind("click");
+
+    $('.basic-menu-div').on("click", function(ev){ 
+        return false;
+    });
+
+    $('.noSub , .noSubLarge , .noSubActive, .noSubActiveLarge').on("click", function(ev){ 
+        return false;
+    });
+
+    return true;
+}
+
+
+
+function loadPage(path)
+{
+    load_page = 1;
+
+    $('#page_contain2 iframe').attr('src', '');
+    $('#page_contain2 iframe').remove();
+
+    subpage_resize();
+
+    if (path.search("DashBoard.htm") != -1){
+        var page_width = get_page_contain_width() - 130;
+        var page_height = get_page_contain_height() - 45;
+        var iframeItem = $('<iframe>').attr('id','formframe').attr('name', 'formframe')
+                         .attr('scrolling', 'no').attr('frameborder', 0)
+                         .attr('border', 0).attr('cellspacing', 0)
+                         .attr('src', path);
+
+        iframeItem.focus(function(){
+            $(this).blur();
+        });
+
+        iframeItem.css({
+            'width': page_width+'px',
+            'height': page_height+'px',
+            'margin-top': 0,
+            'margin-left': '30px',
+            'visibility': 'hidden'
+        });
+
+        if ($.browser.msie){
+            iframeItem.css({
+                'background-color': '#E5E5E5',
+            });
+        }
+        $('#page_contain').addClass('main-page-contain-loading').html(iframeItem);
+        // $('#formframe').delay(1000).attr("src", path);
+
+        iframeItem.ready(function(){
+            checkIframeLoaded('formframe','page_contain',iframeItem);
+            // setTimeout(function(){
+            //     $('#page_contain').removeClass('main-page-contain-loading');
+            //     iframeItem.css("visibility","visible");
+            // }, loadDelay);
+        });
+    }
+    else if (path.search("netgear") != -1){
+        window.open(path,'_blank','fullscreen=yes,toolbar=yes,location=yes,scrollbars=yes');
+    }
+    else
+    {
+        var page_width = get_page_contain_width() - 50;
+        var page_height = get_page_contain_height();
+
+        var iframeItem = $('<iframe>').attr('id','formframe').attr('name', 'formframe')
+                         .attr('scrolling', 'no').attr('frameborder', 0)
+                         .attr('border', 0).attr('cellspacing', 0)
+                         .attr('src', path);
+
+        iframeItem.focus(function(){
+            $(this).blur();
+        });
+
+        iframeItem.css({
+            'width': page_width+'px',
+            'height': page_height+'px',
+            'margin-top': 0,
+            'margin-left': '30px',
+            'visibility': 'hidden'
+        });
+                 
+        if ($.browser.msie){
+            iframeItem.css({
+                'background-color': '#E5E5E5',
+            });
+        }
+        $('#page_contain').addClass('main-page-contain-loading').html(iframeItem);
+
+        iframeItem.ready(function(){
+            checkIframeLoaded('formframe','page_contain',iframeItem);
+            // setTimeout(function(){
+            //     $('#page_contain').removeClass('main-page-contain-loading');
+            //     iframeItem.css("visibility","visible");
+            // }, loadDelay);
+        });
+    }
+
+    return false;
+}
+
+function loadPage2(path)
+{
+    load_page = 2;
+
+    $('#page_contain iframe').attr('src', '');
+    $('#page_contain iframe').remove();
+
+    subpage_resize();
+
+    // while(is_loading_page==1){}
+    is_loading_page=1;
+
+    if (path.search("ADVANCED_home.htm") != -1)
+    {
+        var page_width = get_page_contain_width() - 130;
+        var page_height = get_page_contain_height() - 45;
+
+        var iframeItem = $('<iframe>').attr('id','formframe').attr('name', 'formframe')
+                         .attr('scrolling', 'no').attr('frameborder', 0)
+                         .attr('border', 0).attr('cellspacing', 0)
+                         .attr('src', path);
+
+        iframeItem.focus(function(){
+            $(this).blur();
+        });
+
+        iframeItem.css({
+            'width': page_width+'px',
+            'height': page_height+'px',
+            'margin-top': 0,
+            'margin-left': '30px',
+            'visibility': 'hidden'
+        });
+
+        if ($.browser.msie){
+            iframeItem.css({
+                'background-color': '#E5E5E5',
+            });
+        }
+
+        $('#page_contain2').addClass('main-page-contain-loading').html(iframeItem);
+
+        iframeItem.ready(function(){
+            checkIframeLoaded('formframe','page_contain2',iframeItem);
+            // setTimeout(function(){
+            //     $('#page_contain2').removeClass('main-page-contain-loading');
+            //     iframeItem.css("visibility","visible");
+            // }, loadDelay);
+        });
+    }
+    else if (path.search("netgear") != -1)
+    {
+        window.open(path,'_blank','fullscreen=yes,toolbar=yes,location=yes,scrollbars=yes');
+    }
+    else
+    {
+        var page_width = get_page_contain_width() - 50;
+        var page_height = get_page_contain_height();
+
+        var iframeItem = $('<iframe>').attr('id','formframe').attr('name', 'formframe')
+                         .attr('scrolling', 'no').attr('frameborder', 0)
+                         .attr('border', 0).attr('cellspacing', 0)
+                         .attr('src', path);
+
+        iframeItem.focus(function(){
+            $(this).blur();
+        });
+
+        iframeItem.css({
+            'width': page_width+'px',
+            'height': page_height+'px',
+            'margin-top': 0,
+            'margin-left': '30px',
+            'visibility': 'hidden'
+        });
+
+        if ($.browser.msie){
+            iframeItem.css({
+                'background-color': '#E5E5E5',
+            });
+        }
+
+        $('#page_contain2').addClass('main-page-contain-loading').html(iframeItem);
+    
+
+        iframeItem.ready(function(){
+            checkIframeLoaded('formframe','page_contain2',iframeItem);
+            // setTimeout(function(){
+            //     $('#page_contain2').removeClass('main-page-contain-loading');
+            //     iframeItem.css("visibility","visible");
+            // }, loadDelay);
+        });
+    }
+
+    is_loading_page=0;
+    return false;
+}
+
+
+
+function liveMenuClick()
+{   //alert("4");
+    var isie = navigator.userAgent.search("MSIE") > -1;
+    var ap_mode_flag = document.getElementsByName("enable_apmode");
+    var sta_mode_flag = document.getElementsByName("enable_stamode");
+    var repeater_flag = document.getElementsByName("repeater");
+    var repeater_an_flag = document.getElementsByName("repeater_an");
+    var wps_mode_flag = document.getElementsByName("wps_mode");
+    //var downloader_flag = document.getElementsByName("have_usb_attached");
+
+    $('.noSub , .noSubLarge , .noSubActive, .noSubActiveLarge').unbind("click");
+    $('.basic-menu-div').unbind("click");
+      
+    if(ap_mode_flag[0].value=="1" || repeater_flag[0].value=="1" || repeater_an_flag[0].value=="1")
+    {
+        if($("#basic-internet").hasClass("basic-menu-div"))
+        {
+            $("#basic-internet").addClass('basic-menu-div-gray');
+            $("#basic-internet").removeClass('basic-menu-div');
+            $('#basic-internet').bind('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        if($("#basic-qos").hasClass("basic-menu-div"))
+        {
+            $("#basic-qos").addClass('basic-menu-div-gray');
+            $("#basic-qos").removeClass('basic-menu-div');
+            $('#basic-qos').bind('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        if($("#basic-par").hasClass("basic-menu-div")){
+            $("#basic-par").addClass('basic-menu-div-gray');
+            $("#basic-par").removeClass('basic-menu-div');
+            $('#basic-par').bind('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+    }  
+    if( sta_mode_flag[0].value=="1" ){
+        if($("#basic-internet").hasClass("basic-menu-div")){
+            $("#basic-internet").addClass('basic-menu-div-gray');
+            $("#basic-internet").removeClass('basic-menu-div');
+        }
+        if($("#basic-wireless").hasClass("basic-menu-div")){
+            $("#basic-wireless").addClass('basic-menu-div-gray');
+            $("#basic-wireless").removeClass('basic-menu-div');
+        }
+
+        if($("#basic-qos").hasClass("basic-menu-div"))
+        {
+            $("#basic-qos").addClass('basic-menu-div-gray');
+            $("#basic-qos").removeClass('basic-menu-div');
+            $('#basic-qos').bind('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        if($("#basic-par").hasClass("basic-menu-div")){
+            $("#basic-par").addClass('basic-menu-div-gray');
+            $("#basic-par").removeClass('basic-menu-div');
+        }
+        if($("#basic-guest").hasClass("basic-menu-div")){
+            $("#basic-guest").addClass('basic-menu-div-gray');
+            $("#basic-guest").removeClass('basic-menu-div');
+        }
+    }
+    if( $('#setup-wizard').hasClass('noSubGray')){
+        $('#setup-wizard').bind('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    }
+
+    $("#adv-wps").removeClass();
+    $("#adv-wps").addClass(wps_mode_flag[0].value);
+
+    if (wps_mode_flag[0].value=="noSubGrayLarge")
+    {
+        $('#adv-wps').bind('contextmenu', function(e) {
+            return false;
+        });
+    }
+    else
+    {
+        parent.$('#adv-wps').unbind('contextmenu');
+    }
+    
+      
+    $('.basic-menu-div').unbind('click').on("click", function(ev){
+        if($(this)[0].getAttribute('id') != "basic-dlr")
+        {  
+            $('.menuActive').removeClass('menuActive');
+            $(this).addClass('menuActive');
+            var path = $(this).find("a").attr("href");      
+            loadPage(path);
+        }
+        ev.preventDefault();
+    }); 
+    <%453%>
+    $('.basic-menu-eco-div').unbind('click').on("click", function(ev){  
+        $('.menuActive').removeClass('menuActive');
+        $(this).addClass('menuActive');
+        var path = $(this).find("a").attr("href");      
+        loadPage(path);
+        ev.preventDefault();
+    });
+    <%454%>
+         
+    $('.noSub').unbind('click').on("click",function(ev){              
+        $("#first").hide();            
+        if( !$(this).hasClass('noSubGray') & !$(this).hasClass('noSubGrayLarge')){                  
+            $('.noSubActive').removeClass('noSubActive'); 
+            $('.noSubActiveLarge').removeClass('noSubActiveLarge');  
+            $('.SubActive').addClass('Sub');
+            $('.SubActive').removeClass('SubActive');
+            $('.SubMenuActive').addClass('SubMenu'); 
+            $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+            $('.SubMenuActiveLarge').addClass('SubMenu');
+            $('.SubMenuActiveLarge').addClass('Large');
+            $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+            $('.SubMenuActive').removeClass('SubMenuActive');
+            if($(this).hasClass('noSubLarge')){
+                $(this).addClass('noSubActiveLarge'); 
+            }
+            else{
+                $(this).addClass('noSubActive'); 
+            }
+            $('.subHeader:visible').slideUp('fast');      
+            var path = $(this).children("a").attr("href");      
+            loadPage2(path);
+            ev.preventDefault();
+        }else{
+            return false;
+        }                               
+    });
+
+    $('.noSubLarge').unbind('click').on("click",function(ev){              
+        $("#first").hide();            
+        if( !$(this).hasClass('noSubGray') & !$(this).hasClass('noSubGrayLarge')){                  
+            $('.noSubActive').removeClass('noSubActive'); 
+            $('.noSubActiveLarge').removeClass('noSubActiveLarge');  
+            $('.SubActive').addClass('Sub');
+            $('.SubActive').removeClass('SubActive');
+            $('.SubMenuActive').addClass('SubMenu'); 
+            $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+            $('.SubMenuActiveLarge').addClass('SubMenu');
+            $('.SubMenuActiveLarge').addClass('Large');
+            $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+            $('.SubMenuActive').removeClass('SubMenuActive');
+            if($(this).hasClass('noSubLarge'))
+                $(this).addClass('noSubActiveLarge'); 
+            else
+                $(this).addClass('noSubActive'); 
+            $('.subHeader:visible').slideUp('fast');      
+            var path = $(this).children("a").attr("href");      
+            loadPage2(path);
+            ev.preventDefault();
+        }else{
+            return false;
+        }                               
+    });    
+      
+    $('.noSubGray').bind("click", function(e){                    
+        e.preventDefault();
+    });
+
+    $('.noSubGray').bind("contextmenu", function(e){                    
+        e.preventDefault();
+    });
+
+    $('.noSubGrayLarge').on("click",function(){                    
+        return false;
+    });
+
+    $('.basic-menu-div-gray').bind("click", function(e){           
+        e.preventDefault();
+    });
+
+    $('.basic-menu-div-gray').bind("contextmenu", function(e){           
+        e.preventDefault();
+    });
+
+    $('.SubMenu').unbind('click').on("click",function(ev){     
+        $("#first").hide();     
+        if( !$(this).hasClass('SubMenuDisable') && !$(this).hasClass('SubMenuLargeDisable') && !$(this).hasClass('SubMenuTitle')){
+            $('.noSubActive').removeClass('noSubActive');
+            $('.noSubActiveLarge').removeClass('noSubActiveLarge');
+            $('.SubMenuActive').addClass('SubMenu');
+            $('.SubMenuActive').removeClass('SubMenuActive');
+            $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+            $('.SubMenuActiveLarge').addClass('SubMenu');
+            $('.SubMenuActiveLarge').addClass('Large');
+            $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+            if($(this).hasClass('Large')){
+                $(this).addClass('SubMenuActiveLarge');
+            }
+            else{
+                $(this).addClass('SubMenuActive');
+            }
+            $(this).removeClass('SubMenu');
+            $(this).removeClass('SubMenuLarge');
+            var path = $(this).children("a").attr("href");      
+            loadPage2(path);
+            ev.preventDefault();
+        }else{           
+            return false;
+        }
+    });
+      
+    $('.SubMenuActive').unbind('click').on("click",function(ev){
+        $("#first").hide();
+        var path = $(this).children("a").attr("href");      
+        loadPage2(path);
+        ev.preventDefault();
+    });
+      
+    $('.SubMenuActiveLarge').unbind('click').on("click",function(ev){
+        $("#first").hide();
+        var path = $(this).children("a").attr("href");      
+        loadPage2(path);
+        ev.preventDefault();
+    });
+    
+    $('#go').unbind('click').click(function(ev){     
+        var text = $('#searchText').val();
+        var URItext = encodeURIComponent(text);
+
+        URItext =  "http://support.netgear.com/app/answers/list/kw/" + URItext;
+        window.open(URItext,'_blank','fullscreen=yes,toolbar=yes,locaiton=yes,scrollbars=yes');
+    });
+     
+    $('.SubMenuDisable, .SubMenuLargeDisable, .SubMenuTitle').unbind('click')
+    .on("click",function(){           
+        return false;
+    })
+    .on( "contextmenu", function(){         
+        return false;
+    });
+	
+}
+  
+function advanceMenu() { //alert("5");
+    $('.subHeader').hide();
+
+    $('.Sub').click(function() {
+        $('#first').hide();
+        var checkElement = $(this).next();
+        if((checkElement.is('li')) && (checkElement.is(':visible'))) {
+            $('.subHeader:visible').slideUp('fast');
+            $(this).removeClass('SubActive');
+            $(this).addClass('Sub');
+            return false;
+        }
+        if((checkElement.is('li')) && (!checkElement.is(':visible'))) { 
+            $('.subHeader:visible').slideUp('fast');
+            checkElement.slideDown('normal');      
+            $('.SubActive').addClass('Sub');
+            $('.SubActive').removeClass('SubActive');
+            $(this).addClass('SubActive');
+            $(this).removeClass('Sub');
+            return false;
+        }
+    });      
+}
+
+
+  
+function adjustPageLayout()
+{
+    var entry = 0;
+
+    $('.subMenu_text, .subMenu_text2, .subMenu_title').each(function(){
+      if ($(this)[0].clientHeight > 15)
+      {
+        if ($(this)[0].parentNode.parentNode.parentNode.getAttribute('id') == "adv_settings_header")
+            num_submenuLarge++;
+
+          $($(this)[0].parentNode.parentNode).addClass('Large');
+
+          if ($($(this)[0].parentNode.parentNode).hasClass('SubMenuDisable'))
+          {
+                $($(this)[0].parentNode.parentNode).removeClass('SubMenuDisable');
+                $($(this)[0].parentNode.parentNode).addClass('SubMenuLargeDisable SubMenuLargeDisable_Grey');
+            } 
+          else
+                    $($(this)[0].parentNode.parentNode).addClass('SubMenuLarge');
+        }
+        else
+        {
+          $($(this)[0].parentNode.parentNode).removeClass('Large');
+          $($(this)[0].parentNode.parentNode).removeClass('SubMenuLarge');
+        }
+    });
+
+    
+    $('.nosub_text').each(function(){
+        if($(this)[0].clientHeight > 16){
+            num_nosubLarge++;
+            if($($(this)[0].parentNode.parentNode).hasClass('noSubGray'))
+                $($(this)[0].parentNode.parentNode).addClass('noSubGrayLarge');
+            else
+                $($(this)[0].parentNode.parentNode).addClass('noSubLarge');
+            $($(this)[0].parentNode.parentNode).removeClass('noSub');
+            $($(this)[0].parentNode.parentNode).removeClass('noSubGray');
+        }else{
+            $($(this)[0].parentNode.parentNode).removeClass('noSubLarge');
+            $($(this)[0].parentNode.parentNode).removeClass('noSubGrayLarge');
+        }
+    });       
+    
+    adjustPageHeight = 16 * num_nosubLarge + 15 * num_submenuLarge;
+    var readyshareField = $("#usb-basic");
+    var readyshareHeight = 0;
+    for (var i = 0; i < $("#usb-basic").parent().children().length; i++) {
+      readyshareHeight += readyshareField[0].clientHeight;
+      readyshareField = readyshareField.next();
+    }
+
+    $("#usb-basic").parent().css("height",readyshareHeight + "px");
+    $("#adv-pane").css("display","none");
+
+
+}
+
+<%447%>
+function setParentalControls()
+{   //alert("9");
+     var ParentalControls_Result = 0;
+
+     var support = 1;
+
+     if(support == 0){
+          $('#PAR_menu').attr("href","http://www.netgear.com/lpc");
+          $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");
+     }else{
+         if(ParentalControls_Result == 0){
+             $('#PAR_menu').attr("href","http://www.netgear.com/lpc");
+             $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");
+         }else{
+             $('#PAR_menu').attr("href","http://netgear.opendns.com/");
+             $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");
+         }
+     }
+}
+<%448%>
+
+function calculate_string_pixel(str)
+{   //alert("12");
+    var obj = document.getElementById("ruler");
+    obj.innerHTML = str;
+    return obj.offsetWidth;
+
+}
+
+
+var timezone_alert_once = 0;
+function chgTimeZone()
+{
+<%455%>
+
+    var ATD_Active_set = "<%456%>";
+
+    if (ATD_Active_set == 1)
+    { 
+        //alert("ATD active already set, ignore local device passive !!"); 
+        return -1;  
+    }
+  
+    if (timezone_alert_once == 1)
+    { 
+        return -1;  
+    }
+
+    var form = document.forms[0];
+    var wan_ipaddr =  "<%238%>";
+    var timezone_state =  "<%457%>";
+    var time_zone = "<%458%>";
+    if (time_zone == "+55")
+    {
+        time_zone= "+5.5";
+    }
+    else if (time_zone == "+95")
+    {
+        time_zone = "+9.5";
+    }
+    else if (time_zone == "-35")
+    {
+        time_zone = "-3.5";
+    }
+
+    // Abort if user is remote access. 
+    if (wan_ipaddr == location.host)
+    {
+        return -1;
+    }
+    
+    // Abort if user is manual configured. 
+    if (timezone_state == "ManualConfigured")
+    {
+        return -1;
+    }
+        
+    // Abort if timezone between router and local system is the same 
+    if (time_zone == (new Date().getTimeZoneOffsetWithDst()) / -60)
+    {
+        return -1;
+    }
+    var warning = "<%459%>";
+    console.log("warning="+warning);
+
+    var ret = confirm(warning);
+    if (ret)
+    {
+        console.log("loadPage");
+        loadPage("FW_autoTimeZone_redirect.htm");
+    }
+    timezone_alert_once = 1;
+
+<%460%>
+
+    return 0;
+}
+
+function enable_circle()
+{
+    if(document.forms[0].never_remind_me.checked==true)
+        $.post("circle.php",{never_remind_me:"1"});
+
+    hide_circle_window();
+    $('.menuActive').removeClass('menuActive');
+    $('#basic-par').addClass('menuActive');
+    loadPage("Parental_controls.htm");
+}
+
+function skip_circle()
+{
+    if(document.forms[0].never_remind_me.checked==true)
+        $.post("circle.php",{never_remind_me:"1"});
+
+    hide_circle_window();
+}
+
+function skip_bd()
+{ 
+    //if(document.forms["SSOAPI"].bit_never_remind_me.checked==true)
+    $.post("armor.php",{never_remind_me_armor:"1"});
+    $("#modalBox").hide();
+    //show_circle_window();
+}
+
+function imgChange(){
+    $("#armor_web").hide();
+    skip_bd();  
+}
+
+function jump_armor(type)
+{
+    $("#modalBox").hide();
+    if( type == "skip" )
+    {
+        $.post("armor.php",{never_remind_me_armor:"1"}); 
+    }
+
+<%455%>
+    chgTimeZone();
+<%460%>
+
+    show_circle_window();
+}
+function show_circle_window()
+{
+<%10%>
+    var no_remind_flag = document.getElementsByName("no_remind");
+    var apmode_flag = document.getElementsByName("enable_apmode");
+    var stamode_flag = document.getElementsByName("enable_stamode");
+
+    if((no_remind_flag[0].value=="1") || (apmode_flag[0].value=="1") || (stamode_flag[0].value=="1"))
+    {
+        document.getElementById("circle-info-modal").style.display="none";
+    }
+    else
+    {
+        document.getElementById("circle-info-modal").style.display="block";
+        if($(window).height()>500)
+            document.getElementById("circle-info-modal").style.top=($(window).height()-500)/2+"px";
+        else
+            document.getElementById("circle-info-modal").style.top="0px";
+
+        $("#container").addClass("gray");
+        $("#main_screen").addClass("gray");
+        document.getElementById("container").style.display="none";
+        document.getElementById("main_screen").style.display="none";
+    }
+<%11%>
+<%461%>
+    document.getElementById("circle-info-modal").style.display="none";
+<%462%>
+}
+
+function hide_circle_window()
+{
+    document.getElementById("circle-info-modal").style.display="none";
+    document.getElementById("container").style.display="block";
+    document.getElementById("main_screen").style.display="block";
+}
+
+
+function checkIframeLoaded(iframeID, areaID, iframeItem) {
+    // Get a handle to the iframe element
+    // Check if loading is complete
+    if ($("#" + iframeID).contents().find("body").contents().length) {
+        // The loading is complete, call the function we want executed once the iframe is loaded
+        afterLoading(areaID, iframeItem);
+        return;
+    } 
+    // If we are here, it is not loaded. Set things up so we check   the status again in 100 milliseconds
+    window.setTimeout(function(){checkIframeLoaded(iframeID, areaID, iframeItem)}, 100);
+}
+
+function afterLoading(areaID, iframeItem){
+    setTimeout(function(){
+        $('#'+areaID).removeClass('main-page-contain-loading');
+        iframeItem.css("visibility","visible");
+    }, loadDelay);
+}
+
+
+</script>
+
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+  html, body {
+    min-width: 1200px;
+  }
+</style>
+</head>
+<body style="padding:0;margin:0;overflow:none" onload="change_size();show_circle_window();get_browser();chgTimeZone();" onResize="change_size();">
+  <iframe name="topframe" id="topframe" src="top.htm" allowtransparency="true" height="100%" width="100%" frameborder="0" style="height: 236px;"></iframe>
+  <form name="frmLanguage" style="margin-top:-5px">
+  <table width="100%" CELLPADDING=0 CELLSPACING=0 style="padding:0;margin:0;" id="all">
+    <tr width="100%">
+      <td style="width:100%;height:100%">
+      <div id="main_screen">
+          <table CELLPADDING=0 CELLSPACING=0 style="height:520px;width:100%;margin:0;padding:0">
+            <tr>
+              <td>
+                <!-- tab "panes" -->
+                <div class="pane" id="basic-pane">
+                  <table width="100%" CELLPADDING="0" CELLSPACING="0" id="basic-table" style="padding:0;margin:0;height:480px">
+                    <tr>
+                      <td style="background-color:#FFFFFF;width:200px;font-size:12px;font-family:Arial;">
+	                      <div class="basic-menu basic-menu-custom">
+                          <div class="basic-menu-div" id="basic-home"><a href="DashBoard.htm"><span id="basic_home"><%463%></span></a></div>
+                          <div class="basic-menu-div" id="basic-internet"><a href="BAS_basic.htm" id="INT_menu"><span id="basic_internet"><%464%></span></a></div>
+                          <div class="basic-menu-div" id="basic-wireless"><a href="WLG_home.htm" id="WLS_menu"><span id="basic_wireless"><%465%></span></a></div>
+                          <div class="basic-menu-div" id="basic-attached"><a href="DEV_redirect.htm"><span id="basic_attached"><%466%></span></a></div>
+                          <%467%>
+                          <div class="basic-menu-div" id="basic-qos"><a href="QOS_down_streaming_iqos_basic.htm"><span id="basic_qos"><%468%></span></a></div>
+                          <%469%>
+<%470%>
+                          <div class="basic-menu-div" id="basic-circle"><a href="Parental_controls.htm"><span id="basic_circle"><%471%></span></a></div>
+<%472%>
+<%473%>
+                          <div class="basic-menu-div" id="basic-circle"><a href="http://netgear.opendns.com/" id="PAR_menu"><span id="basic_circle"><%474%></span></a></div>
+<%475%>
+                          <div class="basic-menu-div" id="basic-ready"><a href="USB_basic_main.htm"><span id="basic_ready"><%476%></span></a></div>
+                          <div class="basic-menu-div" id="basic-guest"><a href="WLG_guest_home.htm"><span id="basic_guest"><%477%></span></a></div>
+                          <!--
+                          <div class="basic-menu-div" id="basic-dlr"><a href="<%478%>" id="DOW_menu" ><span><%479%></span></a></div>
+                          -->
+						 <%480%>
+                          <div class="basic-menu-div" id="basic-xunr"><a href="<%481%>"  > <span id="xunyou_menu" >迅遊加速器</span></a></div>
+                         <%482%>
+			                    <%483%>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div>&nbsp;</div>
+			                    <div class="basic-menu-eco-div" id="basic_eco"><a href="https://genie.netgear.com/" id="ECO_menu"><span id="basic_eco">genie+ Marketplace</span></a></div>
+			                    <%484%>
+
+			              <!--Add left Banner-->
+					    <div>
+					    	<div class="card-orbi-app">
+								  <div class="card-orbi-app-header"> <img src="img/logo-netgear.png" alt="">
+								    <p> <%485%></p>
+								    <a id="nighthawk_app" href="http://nighthawk-app.com/" target="_blank" style="color:white"><span> <%486%></span></a> </div>
+								  <div class="device-content">
+								    <div class="disp-cell"><img src="img/device-nighthawk.png" alt=""> </div>
+								    <div class="disp-cell"><a href="http://nighthawk-app.com/" class="mb app-store" target="_blank"><img src="img/app-store-badge-us-black.png" alt=""></a> 
+								    					   <a href="http://nighthawk-app.com/" class="google-store" target="_blank"><img src="img/google-play-badge-us.png" alt=""></a></div>
+								  </div>
+								  <div class="card-orbi-app-footer" style="background: #4a444d; height: 23px;"><img src="img/logo-netgear.png" alt=""></div>
+							</div>
+					    </div>   
+					    
+                        </div>
+                      </td>
+                      <td style="background-color:#FFFFFF;width:760px;height:480px;font-family:Arial;">
+                        <div id="page_contain" >
+                          <iframe id="formframe" name="formframe" style="width:600px;height:405px;margin-left:30px" frameborder="0" border="0" cellspacing="0" scrolling="no" onFocus="this.blur()" src=""></iframe>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="pane" id="adv-pane">
+                  <table CELLPADDING=0 CELLSPACING=0 id="advance-table" style="padding:0;margin:0;height:480px;border:0;width:960px;">
+                    <tr style="height:480px;">
+                      <td style="background-color:#FFFFFF;width:200px;">
+                       <div class="advance_menu_section">
+                        <ul class="advance-menu">
+                          <li class="noSub" id="adv-home"><a href="ADVANCED_home.htm"><span class="nosub_text" id="home"><%487%></span></a></li>
+                        <%488%>
+                          <li class="<%489%>" id="setup-wizard"><a href="WIZ_select.htm"><span class="nosub_text" id="setup_wizard"><%490%></span></a></li>
+                        <%491%>
+                        <%492%> 
+                          <li class="<%489%>" id="setup-wizard"><a href="WIZ_sel.htm"><span class="nosub_text" id="setup_wizard"><%490%></span></a></li>
+                        <%493%>
+                          <li class="<%494%>" id="adv-wps"><a href="Add_WPS_Client.htm"><span class="nosub_text" id="wps"><%495%></span></a></li>
+                          <li class="Sub" id="setup"><a href="#"><span id="setup"><%496%></span></a></li>
+                          <li  class="subHeader" id="set_hdr">
+                          <%488%>
+                            <ul style="width:100%;height:100%">                               
+                          <%491%>
+                          <%492%> 
+                            <ul style="width:100%;height:100%">                               
+                          <%493%>
+                          <li class="<%497%> SubMenuWDS" id="internet-setup"><a href="<%498%>" onClick="return false"><span class="subMenu_text" id="internet_setup"><%499%></span></a></li>                                     
+                          <li class="<%500%> SubMenu" id="wireless-setup"><a href="WLG_home.htm" onClick="return false"><span class="subMenu_text" id="wireless_setup"><%75%></span></a></li>
+                          <li class="<%497%> SubMenuWDS" id="wan-setup"><a href="WAN_wan.htm" onClick="return false"><span class="subMenu_text" id="wan_setup"><%501%></span></a></li>
+                          <li class="<%502%> SubMenuWDS" id="lan-setup"><a href="LAN_lan.htm" onClick="return false"><span class="subMenu_text" id="lan_setup"><%503%></span></a></li>
+			            <%504%>
+			              <li class="<%502%> SubMenuWDS" id="qos-setup"><a href="<%505%>" onClick="return false"><span class="subMenu_text" id="qos_setup"><%506%>&nbsp;<%496%></span></a></li>
+			            <%507%>
+			            <%467%>
+			              <li class="<%502%> SubMenuWDS" id="qos-setup"><a href="<%505%>" onClick="return false"><span class="subMenu_text" id="qos_setup"><%508%></span></a></li>
+			            <%469%>
+			              <li class="<%500%> SubMenu" id="guest-network-setup"><a href="WLG_guest_home.htm" onClick="return false"><span class="subMenu_text" id="guest_network_setup"><%477%></span></a></li>
+                          <li class="SubMenu" id="device_name"><a href="DEV_name.htm" onClick="return false"><span class="subMenu_text" id="advanced_devname"><%509%></span></a></li>
+                          </ul>
+                          </li>
+                          <li class="Sub" id="usb"><a href="#"><span id="usb"><%510%></span></a></li>
+						  <li  class="subHeader">
+	                        <%511%>
+					      <ul style="width:100%;height:100%">
+						      <%512%>
+                            <%513%>
+                            <ul style="width:100%;height:100%">
+	                          <%514%>
+                              <li class="SubMenu SubMenuTitle" id="readyshare_stor"><a><span class="subMenu_title" id="readyshare_stor"><%515%></span></a></li>
+                              <li class="SubMenu" id="usb_basic"><a href="USB_basic_main.htm" onClick="return false"><span class="subMenu_text2" id="usb_basic"><%516%></span></a></li>
+                              <li class="SubMenu" id="usb_advanced"><a href="USB_adv_tab.htm" onClick="return false"><span class="subMenu_text2" id="usb_basic"><%517%></span></a></li>
+                              <li class="SubMenu" id="usb_media"><a href="UPNP_media.htm" onClick="return false"><span class="subMenu_text2" id="usb_basic"><%518%></span></a></li>
+
+		                        <%511%>
+		                        <li class="SubMenu" id="USB-printer" style="display: none"><a href="USB_basic_printing.htm" onClick="return false"><span id="USB_printer"><%519%></span></a></li>
+		                        <%512%>
+                                <!--
+                                <li class="SubMenu" id="USB_vault"><a href="USB_basic_vault.htm" onClick="return false"><span class="subMenu_text"><%520%></span></a></li>
+                                -->
+	                        </ul>
+                          </li>
+                          <li class="Sub"   id="adv-security"><a href="#"><span id="security"><%521%></span></a></li>
+                          <li  class="subHeader">
+                              <ul id="security_settings_header" style="width:100%;height:100%">
+<%473%>
+                                  <li class="<%497%> SubMenuWDS"><a href="http://www.netgear.com/lpc" id="PAR_menu2" target="_blank"><span style="border:0;" class="subMenu_text" id="parental"><%474%></span></a></li>
+<%475%>
+					                      <%522%>
+                                  <li class="<%500%> SubMenuWDS SubMenuAP" id="security-access-control"><a href="DEV_control.htm" onClick="return false"><span class="subMenu_text" id="security_access_control"><%523%></span></a></li>
+					                      <%524%>
+					              <li class="<%497%> SubMenuWDS" id="security-block-site"><a href="BKS_keyword.htm" onClick="return false"><span class="subMenu_text" id="security_block_site"><%525%></span></a></li>
+  		                          <li class="<%497%> SubMenuWDS" id="security-block-service"><a href="BKS_service.htm" onClick="return false"><span class="subMenu_text" id="security_block_service"><%526%></span></a></li>
+<%470%>
+		                          <li class="<%497%> SubMenuWDS" id="ParentalControls"><a href="Parental_controls.htm" onClick="return false"><span class="subMenu_text" id="security_parental_control"><%471%></span></a></li>
+<%472%>
+		                          <li class="<%527%> SubMenuWDS SubMenuAP" id="security-schedule"><a href="FW_schedule.htm" onClick="return false"><span class="subMenu_text" id="security_schedule"><%528%></span></a></li>
+		                          <li class="<%527%> SubMenuWDS SubMenuAP" id="security-email"><a href="FW_email.htm" onClick="return false"><span class="subMenu_text" id="security_email"><%529%></span></a></li>
+                              </ul>
+                          </li>
+                          <li class="Sub" id="adv-admin"><a href="#"><span id="admin"><%530%></span></a></li>
+                          <li  class="subHeader">
+                              <ul style="width:100%;height:100%">
+                                <li class="SubMenu" id="admin-status"><a href="ADVANCED_home.htm" onClick="return false"><span style="border:0;" class="subMenu_text" id="admin_status"><%531%></span></a></li>
+		                            <li class="<%532%> SubMenuAP" id="admin-logs"><a href="FW_log.htm" onClick="return false"><span class="subMenu_text" id="admin_logs"><%533%></span></a></li>
+		                            <li class="SubMenu" id="admin-attached"><a href="DEV_redirect.htm" onClick="return false"><span class="subMenu_text" id="admin_attached"><%466%></span></a></li>
+		                            <li class="SubMenu" id="admin-bakup"><a href="BAK_backup.htm" onClick="return false"><span class="subMenu_text" id="admin_bakup"><%534%></span></a></li>
+		                            <li class="SubMenu" id="admin-setpassword"><a href="PWD_password.htm" onClick="return false"><span class="subMenu_text" id="admin_setpassword"><%535%></span></a></li>
+		                            <li class="SubMenu" id="ntp-debug"><a href="NTP_settings.htm" onClick="return false"><span class="subMenu_text" id="ntp_debug"><%536%></span></a></li>
+		                            <li class="SubMenu" id="admin-upgrade"><a href="UPG_upgrade.htm" onClick="return false"><span class="subMenu_text" id="admin_upgrade"><%537%></span></a></li>
+	                            </ul>
+                            </li>
+                          <li class="Sub" id="advanced-bt"><a href="#"><span id="advanced_bt"><%538%></span></a></li>
+                          <li  class="subHeader">
+                            <ul id="adv_settings_header" style="width:100%;height:100%;display:block;">
+                              <li class="SubMenu" id="advanced-wireless"><a href="WLG_adv_home.htm" onClick="return false"><span class="subMenu_text" id="advanced_wireless"><%539%></span></a></li>
+                              <%540%>
+                              <li id="advanced-rae" class="SubMenu"><a href="WLG_opmode_main.htm" onClick="return false"><span class="subMenu_text" id="advanced_rae"><%541%></span></a></li>
+                              <%542%>
+                              <li class="<%497%>  SubMenuWDS" id="advanced-pf-pt"><a href="<%543%>" onClick="return false"><span class="subMenu_text" id="advanced_pf_pt"><%544%></span></a></li>
+		                      <li class="<%527%> SubMenuWDS" id="advanced-ddns"><a href="DNS_ddns.htm" onClick="return false"><span class="subMenu_text" id="advanced_ddns"><%545%></span></a></li>		                
+		                      <li class="<%497%> SubMenuWDS" id="Advanced-vpnservice"><a href="OPENVPN.htm" onClick="return false"><span class="subMenu_text" id="Advanced_vpnservice"><%546%></span></a></li>
+		                      <li class="<%527%> SubMenuWDS" id="advanced-static"><a href="STR_routes.htm" onClick="return false"><span class="subMenu_text" id="advanced_static"><%547%></span></a></li>
+		                      <li class="<%497%> SubMenuWDS" id="advanced-remote"><a href="FW_remote.htm" onClick="return false"><span class="subMenu_text" id="advanced_remote"><%548%></span></a></li>
+		                      <li class="<%497%> SubMenuWDS" id="advanced-upnp"><a href="UPNP_upnp.htm" onClick="return false"><span class="subMenu_text" id="advanced_upnp"><%549%></span></a></li>
+                              <li class="<%497%> SubMenuWDS" id="advanced-ipv6"><a href="IPV6_basic.htm" onClick="return false"><span class="subMenu_text" id="advanced_ipv6"><%550%></span></a></li>
+                              <li class="<%497%> SubMenuWDS" id="advanced-traffic"><a href="traffic_meter.htm" onClick="return false"><span class="subMenu_text" id="advanced_traffic"><%551%></span></a></li>
+<%492%> 
+                              <li class="SubMenu" id="advanced-led"><a href="LED_settings.htm" onClick="return false"><span class="subMenu_text" id="advanced_led"><%552%></span></a></li>
+                              <li class="<%497%> SubMenuWDS" id="advanced-vlan"><a href="VLAN_IPTV.htm" onClick="return false"><span class="subMenu_text" id="advanced_vlan"><%553%></span></a></li>
+<%493%>
+                              <li class="SubMenu" id="advanced-eth_ctrl"><a href="FW_eth.htm" onClick="return false"><span class="subMenu_text" id="advanced_eth"><%554%></span>
+                            </ul>
+                          </li>
+
+                        </ul>
+                        </div>
+                      </td>
+                      <td style="background-color:#ffffff">
+                        <div id="page_contain2">
+                          <iframe id="formframe" name="formframe" style="width:600px;height:405px;margin-left:30px"  frameborder="0" border="0" cellspacing="0" scrolling="no" onFocus="this.blur()"></iframe>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+<!-- tab "panes" -->
+          </table>
+        
+        </div> <!--  id=main_screen-->
+<!-- Trigger/Open The Modal -->
+<!-- The Modal -->
+        <div id="circle-info-modal" class="circle-modal" style="border-width:1px;border-color:black">
+          <!-- Modal content -->
+          <div class="circle-info-content">
+            <table style="align:center">
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <p><span style="font-size:24px"><b><%555%></b></span></p>
+                </td>
+                <td style="text-align:center">
+                  <span onclick="hide_circle_window();" style="float:left;font-weight:bold;font-size:24px">&times;</span>
+                </td>
+              </tr>
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <img src="img/circle_with_disney_blue.jpg" border='0'>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+              <tr>
+              </tr>
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                  <td  style="text-align:center">
+                    <span style="font-size:14px"><b><%556%></b></span>
+                  </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+              <tr style="height:50px">
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <a onClick="window.open('http://www.netgear.com/circle', 'Help', 'scrollbars=yes')" href=""><span style="font-size:12px;font-color:RGB(5,187,209)"><b><%557%></b></span></a>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td  align=center>
+                    <div  style="line-height:45px;width:320px;height:46px;cursor: pointer;cursor:hand;background: url(img/circle_enable_button_2.jpg) no-repeat left center" onClick="enable_circle();" >
+                        <span valign=middle style="font-size:16px;color:RGB(240,240,240)"><%558%><span>
+                   </div>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+              <tr style="height:10px">
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr style="height:50px">
+                <td >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td class="centerTd" style="text-align:center;font-size:12px"><style="font-weight:normal;font-size:18px;"><input type="checkbox" name="never_remind_me" value="1"><b><%559%>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><span onClick="skip_circle();"><b><font color=RGB(149,198,462)><%560%></b></font></sapn></td>
+                <td style="text-align:center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      </td>
+    </tr>
+  </table>
+
+</form>
+
+
+<div id="container" class="container_center">
+<div id="footer" class="footer">
+	<img class="footer_img" src="img/footer.gif">
+<div id="support">
+	<b> <%561%></b> &nbsp;
+		<a target="_blank" href="<%562%>"><%563%></a> | 
+		<a target="_blank" href="<%564%>"><%565%></a> | 
+		<a target="_blank" href="<%566%>"><%567%></a> |
+        <a target="_blank" href="OpenSourceLicense.html"><%568%></a>
+</div>
+<div id="search" align=right>
+	<b> <%569%> </b>
+	<input type="text" id="search_text" name="search" value="<%570%>" onkeypress="detectEnter('num',event);" onFocus="this.select();" >
+	<input id="search_button" class="search_button" type="button" name="dosearch" value="<%571%>" onClick="do_search();">
+</div>
+</div>
+</div>
+
+
+
+
+<div id="preloaded-images">
+   <img src="img/basic-white-button.gif" width="1" height="1" alt="">  
+   <img src="img/firmware-hint-background.gif" width="1" height="1" alt="">
+   <img src="img/barrow.jpg" width="1" height="1" alt="">
+   <img src="img/basic-white-button.gif" width="1" height="1" alt="">
+   <img src="img/firmware-hint-background.gif" width="1" height="1" alt="">
+   <img src="img/barrow.jpg" width="1" height="1" alt="">
+   <img src="img/subMenuActive.png" width="1" height="1" alt="">
+   <img src="img/subMenuActiveLarge.png" width="1" height="1" alt="">
+   <img src="img/barrow_down.jpg" width="1" height="1" alt="">
+   <img src="img/basic-purple-button.gif" width="1" height="1" alt="">
+   <img src="img/roundedcornr_637010.gif" width="1" height="1" alt="">
+   <img src="img/warrow.jpg" width="1" height="1" alt="">
+   <img src="ajax-loader.gif" width="1" height="1" alt="">
+   <img src="img/main-page-bottom.gif" width="1" height="1" alt="">
+   <img src="img/gray-button.gif" width="1" height="1" alt="">
+    <input type="hidden" name="repeater" value="<%572%>">
+    <input type="hidden" name="repeater_an" value="<%573%>">
+    <input type="hidden" name="no_remind" value="<%574%>">
+    <input type="hidden" name="enable_apmode" value="<%289%>">   
+    <input type="hidden" name="enable_stamode" value="<%575%>">   
+    <input type="hidden" name="have_usb_attached" value="<%576%>">
+    <input type="hidden" name="wps_mode" value="<%494%>">
+</div>                                                
+<!-- This JavaScript snippet activates those tabs -->
+
+
+<form name="SSOAPI">
+<!-- MODAL BOX CONTROL -->
+<div id="modalBox" class="modal">
+
+    <div id="armor_web" class="modal-content-2" style="background-image:url(../img/Armor_Web.jpg); width:506px;">
+        <div class="modal-header">
+            <span id="armor_close" class="close modal-close">x</span>
+            <div ima="modalBox-title" style="padding-left: 150px;Padding-top: 30px;"></div>
+        </div>
+	    <div class="modal-body" style="padding-top: 340px;">
+		    <table style="width:100%">
+		        
+		        <tr>
+		          <td style="text-align:center;height:60px">
+		        <span id="armor_nvrm" style="text-align:center;font-size:12px" onClick="imgChange();"><b><font style="cursor: pointer;opacity: 0;"><%559%></font></b></span>
+		           
+		          </td>
+		        </tr>
+		    </table>
+	    </div>
+	</div>
+	<div id="armor_loading" class="modal-content-2" style="background-image:url(../img/Loading.png);width:506px; display:none">
+        <div class="modal-header">
+            <span class="close modal-close">x</span>
+            <div ima="modalBox-title" style="padding-left: 150px;Padding-top: 30px;"></div>
+        </div>
+	    <div class="modal-body" style="padding-top: 340px;">
+		    
+	    </div>
+	</div>
+	<div id="armor_update" class="modal-content-2" style="background-image:url(../img/Updated.png);width:506px; display:none">
+        <div class="modal-header">
+            <span class="close modal-close">x</span>
+            <div ima="modalBox-title" style="padding-left: 150px;Padding-top: 30px;"></div>
+        </div>
+	    <div class="modal-body" style="padding-top: 340px;">
+		    
+	    </div>
+	</div>
+
+	
+</div>
+<input type="hidden" name="armor_enable" value="<%577%>">
+<input type="hidden" name="bd_never_remind_me" value="<%578%>">
+<input type="hidden" name="enable_apmode" value="<%289%>">   
+<input type="hidden" name="enable_stamode" value="<%575%>">   
+</form>
+<script>
+
+// perform JavaScript after the document is scriptable.
+$(function() {
+  // setup ul.tabs to work as tabs for each div  directly under div.panes
+  // $("ul.tabs").tabs("> .pane");
+  /* advanced_label is controlled by top.htm
+   * Brogan Chen 2020/11/13
+  var pnpx = <%579%>
+  if (pnpx == 1)
+  {
+    $("#advanced_label").click();
+    $("#basic-pane").css("display","none");
+    $("#adv-pane").css("display","block");
+    pnpx = 0;
+  } */
+    $(".noSub").first().addClass("noSubActive");
+    $('.basic-menu-div').first().addClass('menuActive'); 
+});
+</script>
+</body>
+</html>

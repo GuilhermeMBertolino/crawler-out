@@ -1,0 +1,56 @@
+#!/bin/sh
+
+productionFile="/tmp/productionWpsSwitch"
+ttyPathNum=$(echo $(ls /dev/pts))
+
+if [ -f "$productionFile" ]; then
+    if [ "$ACTION" = "pressed" ]; then
+        echo -n -e \\n$BUTTON pressed > /dev/console
+        echo -n -e \\n$BUTTON pressed > /dev/pts/$ttyPathNum
+        exit 0
+    elif [ "$ACTION" = "released" ]; then
+        echo -n -e \\n$BUTTON released > /dev/console
+        echo -n -e \\n$BUTTON released > /dev/pts/$ttyPathNum
+        exit 0
+    fi
+fi
+
+#[ "${ACTION}" = "released" ] || exit 0
+if [ "${ACTION}" == "pressed" ]; then
+	wpsledd -m 1&
+	exit 0
+fi
+
+. /etc/ugw_notify_defs.sh;
+. /lib/functions.sh
+
+beerocks_is_enabled() {
+    grep '<Enable .*>true</Enable>' $1 &>/dev/null
+}
+
+beerocks_is_master() {
+	grep '<Master .*>true</Master>' $1 &>/dev/null
+}
+
+ire_in_operational() {
+    grep '<Operational .*>1</Operational>' $1 &>/dev/null
+}
+
+
+logger "$BUTTON pressed for $SEEN seconds"
+
+#if [ "$SEEN" -lt 1 ]
+#then
+#	echo "WPS Button pressed for less than 1 seconds..treating as spurious" > /dev/console
+#elif [ "$SEEN" -gt 1 ]
+#then
+	# WPS PBC code to be added by developer
+	echo "WPS Button pressed for $SEEN seconds..Activating PBC functionality" > /dev/console
+		echo "Triggering WPS PBC Registrar" > /dev/console
+	#wpsledd -m 1&
+  source /etc/ugw_notify_defs.sh
+		ubus call servd notify '{"nid" : '$NOTIFY_WIFI_WPS_ACTION', "type" : false, "pn1" : "Action" , "pv1" : "PBC"}' 
+  
+#fi
+
+return 0

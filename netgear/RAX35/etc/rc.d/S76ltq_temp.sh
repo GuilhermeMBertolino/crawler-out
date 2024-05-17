@@ -1,0 +1,1 @@
+../init.d/ltq_temp.sh

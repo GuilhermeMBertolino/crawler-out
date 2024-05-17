@@ -1,0 +1,386 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <%13%>
+    <title>NETGEAR Router <%14%></title>
+    <link rel="stylesheet" href="<%15%>">
+    <link rel="stylesheet" href="css/scrollbar.css">
+    <link rel="stylesheet" href="css/button.css">
+    <script src="jquery.js"></script>
+    <script src="script/jquery.mousewheel.js"></script>
+    <!-- <script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script> -->
+    <script src="script/script.js"></script>
+    <link rel="stylesheet" href="form.css">
+    <STYLE TYPE="text/javascript">
+        classes.num.all.fontFamily = "Courier";
+        classes.num.all.fontSize = "10pt" ;
+    </style>
+    <%16%>
+    <script language="javascript" type="text/javascript">
+    <!--
+
+    $(document).ready(function() {
+        //        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+        $('input[name=ptk_radio]').click(function(){
+            $('input[name=pTrunking_nv]').val($('input[name=ptk_radio]:checked').val());
+        });
+    });
+
+
+    function setHelpIframeVisible() {
+        $('.help-frame-div').css("visibility", "visible");
+    }
+
+
+    function showHelpIframe() {
+        // console.log("FW_eth.htm: no help page due to debug only");
+        // return true;
+
+        var imgSrc = document.getElementById('help-button');
+
+        if (imgSrc.src.search("up") >= 0) {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({ showArrows: true });
+            imgSrc.src = "img/helparrowdown-icon.png";
+        } else {
+            $(".help-frame-div").hide();
+            imgSrc.src = "img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible, 500);
+        }
+        if ((navigator.appName.indexOf("Internet Explorer") == -1) ||
+            (navigator.appVersion.indexOf("MSIE 9") == -1))
+            change_size();
+
+    }
+
+    function checkRemoteMG() {
+        console.log("FW_eth.htm: check remote MG");
+        var cf = document.forms[0];
+
+        if (cf.eth_check_wan.checked)
+            cf.local_pause_wan_enable.value = 1;
+        else
+            cf.local_pause_wan_enable.value = 0;
+
+        if (cf.eth_check_lan1.checked)
+            cf.local_pause_lan1_enable.value = 1;
+        else
+            cf.local_pause_lan1_enable.value = 0;
+
+        if (cf.eth_check_lan2.checked)
+            cf.local_pause_lan2_enable.value = 1;
+        else
+            cf.local_pause_lan2_enable.value = 0;
+
+        if (cf.eth_check_lan3.checked)
+            cf.local_pause_lan3_enable.value = 1;
+        else
+            cf.local_pause_lan3_enable.value = 0;
+
+        if (cf.eth_check_lan4.checked)
+            cf.local_pause_lan4_enable.value = 1;
+        else
+            cf.local_pause_lan4_enable.value = 0;
+
+        if (cf.eth_check_lan5.checked)
+            cf.local_pause_lan5_enable.value = 1;
+        else
+            cf.local_pause_lan5_enable.value = 0;
+
+        return true;
+    }
+
+    function init() {
+        console.log("FW_eth.htm: init");
+        var cf = document.forms[0];
+        if (cf.local_pause_wan_enable.value == 1)
+            cf.eth_check_wan.checked = true;
+        if (cf.local_pause_lan1_enable.value == 1)
+            cf.eth_check_lan1.checked = true;
+        if (cf.local_pause_lan2_enable.value == 1)
+            cf.eth_check_lan2.checked = true;
+        if (cf.local_pause_lan3_enable.value == 1)
+            cf.eth_check_lan3.checked = true;
+        if (cf.local_pause_lan4_enable.value == 1)
+            cf.eth_check_lan4.checked = true;
+        if (cf.local_pause_lan5_enable.value == 1)
+            cf.eth_check_lan5.checked = true;
+
+        loadSettings();
+        PTK_Active();
+    }
+
+    // Customized gui css for this html
+    function resize_gui() {
+        resize_scroll(SCROLL_TYPE.NORMAL);
+    }
+
+    function loadSettings() {
+        var cf = document.forms[0];
+
+        if (cf.pTrunking_nv.value == "disable") {
+            cf.ptk_radio[0].checked = true;
+        }
+
+        if (cf.pTrunking_nv.value == "static") {
+            cf.ptk_radio[2].checked = true;
+        }
+
+        if (cf.pTrunking_nv.value == "dynamic") {
+            cf.ptk_radio[1].checked = true;
+        }
+    }
+
+    function PTK_Active()
+    {
+        var cf = document.forms[0];
+        var nv = cf.pTrunking_nv.value;
+        var on_off =  "<%3891%>"; 
+
+        if(nv == "dynamic")
+        {
+            if(on_off == "<%3892%>")
+            {
+                document.getElementById("active_ptk_status").style.display="block";
+                document.getElementById("inactive_ptk_status").style.display="none";
+
+            }
+            else 
+            {
+                document.getElementById("active_ptk_status").style.display="none";
+                document.getElementById("inactive_ptk_status").style.display="block";
+            }
+        }
+        else if (nv == "static")
+        {
+                if(on_off == "<%3892%>")
+        {
+            document.getElementById("active_ptk_status").style.display="block";
+            document.getElementById("inactive_ptk_status").style.display="none";
+        }
+        else
+        {
+            document.getElementById("active_ptk_status").style.display="none";
+            document.getElementById("inactive_ptk_status").style.display="block";
+        }
+        }
+        else    /*disable*/
+        {
+            document.getElementById("active_ptk_status").style.display="none";
+            document.getElementById("inactive_ptk_status").style.display="block";
+        }
+    }
+
+    function checkData2() {
+        var cf = document.forms[0];
+        var lacp_vlan_conflict = "<%3893%>";
+        if (cf.ptk_radio[0].checked && lacp_vlan_conflict == "1") {
+            alert("<%3894%>");
+            return false;
+        }
+
+        return true;
+    }
+
+    function checkAllData(){
+        if(checkRemoteMG() && checkData2()){
+            $('#target').submit();
+        }        
+    }
+    //-->
+    </script>
+    <link href="css/custom.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+    html,
+    body {
+        height: 100%;
+    }
+
+    .bottom-help-frame,
+    .fix_button {
+        bottom: 32px !important;
+    }
+
+    .full-content {
+        height: calc(100% - 32px - 63px - 74px);
+        overflow: auto;
+        margin-top: 63px;
+        padding-left: 28px;
+    }
+
+    #full-page-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .subhead2 {
+        width: 100%;
+        background: #fff;
+    }
+
+    #help_switch {
+        top: unset;
+        bottom: 0;
+        position: absolute;
+        height: 32px !important;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    b {
+        font-weight: bolder;
+    }
+
+    </style>
+</head>
+
+<body onload="change_size();resize_gui();init();" class="page-body" onResize="change_size();">
+    <img class="cover-image" src="<%67%>">
+    <div id="full-page-container">
+        <div class="subhead2"> Ethernet Settings</div>
+        <div class="full-content">
+            <form id="target" name="remotemg" action="fwEth.cgi" method="post">
+                <div id="main">
+                    <table>
+                        <!-- Eth flow control Start -->
+                        <tr>
+                            <td colspan="2" style="font-size: 16px; height: 40px;"><b>Enable flow control:</b></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_wan" value="eth_wan">Internet port
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_lan1" value="eth_lan1">LAN port 1
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_lan2" value="eth_lan2">LAN port 2
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_lan3" value="eth_lan3">LAN port 3
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_lan4" value="eth_lan4">LAN port 4
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="pt-15">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" name="eth_check_lan5" value="eth_lan5">LAN port 5/ 2.5GbE Multi-Gig port
+                                    <span class="checkbox-checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>
+                        <!-- Eth flow control End -->
+                    </table>
+                </div>
+                <INPUT name=local_pause_wan_enable type=hidden value= "<%3895%>">
+                <INPUT name=local_pause_lan1_enable type=hidden value= "<%3896%>">
+                <INPUT name=local_pause_lan2_enable type=hidden value= "<%3897%>">
+                <INPUT name=local_pause_lan3_enable type=hidden value= "<%3898%>">
+                <INPUT name=local_pause_lan4_enable type=hidden value= "<%3899%>">
+                <INPUT name=local_pause_lan5_enable type=hidden value= "<%3900%>">
+            <%3901%>
+                <table>
+                    <tr>
+                        <td colspan="2" height="12" class="pt-15">
+                            <div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="font-size: 16px; height: 40px;"><b><%3902%></b></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <label class="checkbox-container">
+                                <input type="radio" name="ptk_radio" value="disable">
+                                <%3903%>
+                                <span class="radio-checkmark"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="pt-15">
+                            <label class="checkbox-container">
+                                <input type="radio" name="ptk_radio" value="dynamic">
+                                <%3904%>
+                                <span class="radio-checkmark"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="pt-15 pb-20">
+                            <label class="checkbox-container">
+                                <input type="radio" name="ptk_radio" value="static">
+                                <%3905%>
+                                <span class="radio-checkmark"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr id="active_ptk_status" style="display:none">
+                        <td width="60%" colspan="2"><%3906%>:&nbsp;<b><font color="#04B404"><%3891%></font></b></td>
+                    </tr>
+                    <tr id="inactive_ptk_status" style="display:none">
+                        <td width="60%" colspan="2"><%3906%>:&nbsp;<b><%3891%></b></td>
+                    </tr>
+                    <%3907%>
+                </table>
+                <INPUT name=pTrunking_nv type=hidden value="<%3908%>">
+            <%3909%>
+                <input type="hidden" name="buttonHit">
+                <input type="hidden" name="buttonValue">
+            </form>
+        </div>
+        <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+        <div class="fix_button">
+            <button id="cancel" value="Cancel" onclick="buttonClick(this,'<%71%>');location.href='FW_eth.htm'" type="submit" name="Cancel" class="button-cancel cancel_bt">
+                <%71%></button>
+            <button id="apply" value="Apply" onclick="buttonClick(this,'<%73%>'); checkAllData();" type="button" name="apply" class="button-apply apply_bt">
+                <%73%></button>
+        </div>
+        <div id="help" class="help-frame-div bottom-help-frame">
+            <iframe id="helpframe" src="FW_eth_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe>
+        </div>
+        <div id="help_switch" class="subhead2-bottom">
+            <span id="help_space" class="help_ico"><img id="FW_remote_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+            <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();">
+                <%203%> </span>
+            <span id="help_button" class="button-help-arrow">
+                <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"></span>
+            <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();">
+                <%204%> </span>
+        </div>
+        <a name="helpframe-anchor"></a>
+    </div>
+</body>
+
+</html>

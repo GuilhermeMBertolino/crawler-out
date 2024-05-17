@@ -1,0 +1,51 @@
+<view viewid="queueadd">
+<helptext></helptext>
+    <header>
+        <image>images/icons/qos.png</image>
+    	<name>Queue Configuration</name>
+        <description>Configure a queue by defining scheduler, priority and optional egress shaping on the queue.
+		Please note that default queue for an interface is to be configured with name having 'def_queue' sub-string.</description>
+    </header>
+    <object name="Device.QoS.Queue.*" viewtype="form" title="QosQueue">
+    	<row><col>
+	<parameter name="Alias" type="string" placeholder="true" webname="Queue Name" maxlen="64"></parameter>
+	</col><col>	
+	<parameter name="Enable" type="toggle" webname="Enable" maxlen="64"></parameter>
+	</col></row>
+	<row><col>
+	<parameter name="X_LANTIQ_COM_LowerLayers" type="dropdown" webname="Interface" url="cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=bridge&amp;Name=Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=Object=Device.WiFi.SSID&amp;Status=Up&amp;Name="></parameter>
+	</col><col>
+	<parameter name="Precedence" type="dropdown" webname="Queue Precedence" url="Precedence" maxlen="64"></parameter>
+	</col></row>
+	<row><col>
+	<parameter name="TrafficClasses" type="multi-checkbox" webname="Traffic classes" url="Precedence" maxlen="64"></parameter>
+	</col><col>
+	</col></row>
+	<row><col>
+        <parameter name="DropAlgorithm" type="dropdown" validvalues="RED,DT,WRED," webname="Drop Algorithm" maxlen="64"></parameter>
+	</col><col>
+	<parameter parent="'RED'" parentname="Device.QoS.Queue.*" depends="DropAlgorithm" name="REDThreshold" type="string" webname="RED Min Threshold"/>
+	</col></row>
+	<row><col>
+	<parameter parent="'RED'" parentname="Device.QoS.Queue.*" depends="DropAlgorithm" name="REDPercentage" type="string" webname="RED Max Drop Probability"/>
+	</col><col>
+        <parameter name="SchedulerAlgorithm" type="dropdown" validvalues="WFQ,SP," webname="Schedule Algorithm" maxlen="64"></parameter>
+	</col></row>
+	<row><col>
+	<parameter parent="'WFQ'" parentname="Device.QoS.Queue.*" depends="SchedulerAlgorithm" name="Weight" type="string" required="false" webname="Queue Weight"/>
+	</col><col>
+	<parameter parent="'WFQ'" parentname="Device.QoS.Queue.*" depends="SchedulerAlgorithm" name="X_LANTIQ_COM_CommittedRate" type="string" access="readonly" required="false" webname="Commited Rate (In kbps)" maxlen="64"></parameter>
+	</col></row>
+	<row><col>
+	<parameter name="ShapingRate" type="string" required="false" placeholder="true" webname="Peak Shaping Rate (In kbps)" maxlen="64"></parameter>
+	</col><col>
+	<parameter name="X_LANTIQ_COM_Location" type="dropdown" firstselect="true" required="false" validvalues="Egress,Ingress" access="readonly" webname="Location"></parameter>
+	</col></row>
+	<row><col>
+	<parameter name="X_LANTIQ_COM_InterfaceCategory" parent="'Ingress'" required="false" parentname="Device.QoS.Queue.*" depends="X_LANTIQ_COM_Location" type="dropdown" validvalues="Group1,Group2,Group3,Group4" webname="Interface Category"></parameter>
+	</col></row>
+	<parameter name="Add" type="submitbutton" routeurl="Apply($event,'qospage')" webname="Apply"></parameter>
+	<parameter  name="Close"  type="submitbutton" routeurl="customCancel('qospage')" webname="Cancel"></parameter>
+	</object>
+</view>
+

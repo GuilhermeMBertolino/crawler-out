@@ -1,0 +1,147 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/basic_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div class="basic-box" >
+  <x-help :text="qosTitle"></x-help>
+  <br>
+  <div class="fun-box">
+	<span class="basic-title">{{ lang_t('menu.qos') }}</span>
+	&nbsp;&nbsp;
+	<x-switch v-model="qosState" @change="stateChange"></x-switch>
+  </div>
+  <div  class="fun-box smartflow" v-show ="qosState">
+    <table class="table">
+	  <tbody>
+		<tr>
+		  	<td class="fun-left">{{ lang_t('qos.up') }}</td>
+		  	<td>
+            	<input type="text" :maxlength="maxLoadLen" v-model="qos_up_bw" v-verify="rateRules" data-name="qos_up_bw">
+            	&nbsp;&nbsp;
+            	<small>({{ lang_t('wan.range') }}: 1~{{maxLoadVal}}Mbps)</small>
+          	</td>
+		</tr>
+		<tr>
+		  	<td class="fun-left">{{ lang_t('qos.down') }}</td>
+		  	<td>
+            	<input type="text" :maxlength="maxLoadLen" v-model="qos_down_bw" v-verify="rateRules" data-name="qos_down_bw" >
+            	&nbsp;&nbsp;
+            	<small>({{ lang_t('wan.range') }}: 1~{{maxLoadVal}}Mbps)</small>
+          	</td>
+		</tr>
+	  </tbody>
+	  <tbody>
+		  <tr><td colspan="2"></td></tr>
+		  <tr>
+		  	<td class="fun-left"></td>
+		  	<td>
+		  		  <button type="button" class="btn" @click="applyFun">{{ lang_t('common.apply') }}</button>
+		    </td>
+		  </tr>
+	  </tbody>
+    </table>
+  </div>
+  <div v-show="qosState" class="fun-box smartflow">
+  	<table>
+  		<tr><td height="5">{{ lang_t('rule.qos_list') }}</td></tr>
+	    <tr>
+	    	<td align="right">
+		  	<x-icon type="add" cursor="pointer" @click="addRuleVal">{{ lang_t('common.add') }}</x-icon>
+			<x-icon type="del" cursor="pointer" @click="trashFun('all')">{{ lang_t('common.delete') }}</x-icon>
+			</td>
+		</tr>
+	  	  <tr><td height="5"></td></tr>
+		  <tr>
+		  	<td><table class="t_table3 table-bordered table-striped">
+			  <thead> 
+				  <tr>
+					<th>{{ globalConfig.elinkSupport?lang_t('rule.mac'):lang_t('rule.ip') }}</th>
+					<th>{{ lang_t('rule.max_up_speed') }}(Mbps)</th>
+					<th>{{ lang_t('rule.max_down_speed') }}(Mbps)</th>
+					<!-- <th>{{ lang_t('rule.users_num') }}</th>
+					<th>{{ lang_t('rule.priority') }}</th> -->
+					<th style="width:12%;">{{ lang_t('rule.operate') }}</th>
+					<th style="width:12%;">{{ lang_t('common.select') }}<x-checkbox v-model="selectall" @change="selectAll"></x-checkbox></th>
+				  </tr>
+			  </thead>
+			  <tr v-show="addShow">
+				<td v-if="!globalConfig.elinkSupport">
+					<input type="text" class="ip" v-model="ip" v-verify="formRules" data-name="ip" maxlength="15" :disabled="mac!=''" :readonly="globalConfig.elinkSupport">
+					<img src="/static/images/search.png" class="cursor" :title="lang_t('common.scan')" @click="scanFun('ip')">
+				</td>
+				<td v-if="globalConfig.elinkSupport">
+					<input type="text" class="mac" v-model="mac" v-verify="formRules" data-name="mac" maxlength="17" :disabled="ip!=''">
+					<img src="/static/images/search.png" class="cursor" :title="lang_t('common.scan')" @click="scanFun('mac')">
+				</td>
+				<td><input type="text" class="num" v-model="maxUpload" v-verify="formRules" data-name="maxUpload" :maxlength="maxLoadLen"></td>
+				<td><input type="text" class="num" v-model="maxDownload " v-verify="formRules" data-name="maxDownload" :maxlength="maxLoadLen"></td>
+				<!-- <td><input type="text" class="num" v-model="conNum" v-verify="formRules" data-name="conNum" maxlength="4">
+				</td>
+				<td>
+				  	<select v-model="priority" class="protocol-select">
+					  <option value="0">0</option>
+					  <option value="1">1</option>
+					  <option value="2">2</option>
+					  <option value="3">3</option>
+					  <option value="4">4</option>
+				    </select>
+				</td> -->
+			    <td><button :disabled="disable_addBtn" @click="addRule"><img src="/static/images/added.png" :title="lang_t('common.add')" class="cursor"></button></td>
+			    <td></td>
+			  </tr>
+			  <tbody>
+				<tr v-for="(rule,v) in ruleList">
+					<td v-if="!globalConfig.elinkSupport">
+						<div v-if="edit[rule.idx-1]">
+							<input type="text" class="ip" v-model="editIp[rule.idx-1]" v-verify="formRules" :data-name="'ip'+Number(rule.idx-1)" maxlength="15"  @input="watchValue(rule.idx-1)">
+							<img src="/static/images/search.png" class="cursor" :title="lang_t('common.scan')" @click="scanFun('ip',rule.idx-1)">
+						</div>
+						<span v-else>{{ rule.ip }}</span>
+					</td>
+					<td v-if="globalConfig.elinkSupport">
+						<div v-if="edit[rule.idx-1]">
+							<input type="text" class="mac" v-model="editMac[rule.idx-1]" v-verify="formRules" :data-name="'mac'+Number(rule.idx-1)" maxlength="17"  @input="watchValue(rule.idx-1)">
+							<img src="/static/images/search.png" class="cursor" :title="lang_t('common.scan')" @click="scanFun('mac',rule.idx-1)">
+						</div>
+						<span v-else>{{ rule.mac }}</span>
+					</td>
+					<td>
+						<div v-if="edit[rule.idx-1]">
+						  	<input type="text" class="num" v-model="editUp[rule.idx-1]" v-verify="formRules" :data-name="'maxUpload'+Number(rule.idx-1)" :maxlength="maxLoadLen" @input="watchValue(rule.idx-1)">
+						</div>
+					  	<span v-else>{{ rule.maxUpload/1000 }}</span>
+					</td>
+					<td>
+						<input type="text" class="num" v-model="editDown[rule.idx-1]" v-verify="formRules" :data-name="'maxDownload'+Number(rule.idx-1)" :maxlength="maxLoadLen" v-if="edit[rule.idx-1]" @input="watchValue(rule.idx-1)">
+						<span v-else>{{ rule.maxDownload/1000 }}</span>
+					</td>
+					<!-- <td>
+						<input type="text" class="num" v-model="editUserNum[rule.idx-1]" v-verify="formRules" :data-name="'conNum'+Number(rule.idx-1)" maxlength="4" v-if="edit[rule.idx-1]" @input="watchValue(rule.idx-1)">
+						<span v-else>{{ rule.conNum }}</span>
+					</td>
+					<td>
+						<select v-model="editPriority[rule.idx-1]" class="protocol-select select-drop" v-if="edit[rule.idx-1]" @change="watchValue(rule.idx-1)">
+						  <option value="0">0</option>
+						  <option value="1">1</option>
+						  <option value="2">2</option>
+						  <option value="3">3</option>
+						  <option value="4">4</option>
+						</select>
+						<span v-else>{{ rule.priority  }}</span>
+					</td> -->
+					<td>
+						<img :src="operate[rule.idx-1]" :title="lang_t('rule.edit')" class="cursor" @click="editFun(rule.idx-1)">
+						&nbsp;&nbsp;
+						<img src="/static/images/trash.png" :title="lang_t('common.delete')" class="cursor" @click="trashFun(rule.idx-1)">
+					</td>
+					<td>
+						<x-checkbox v-model="select[rule.idx-1]"></x-checkbox>
+					</td>
+				</tr>
+			    <tr v-show="dataTotal==0">
+				  <td colspan="12">{{ lang_t('common.no_data') }}</td>
+			    </tr>
+			  	</tbody>
+	          </table></td>
+	        </tr>
+			<tr><td><x-page :total="dataTotal" @on-page="pageChange" :data="data"></x-page></td></tr>
+      </table>
+  </div>
+   <x-modal v-model="modelShow" :title="lang_t('common.ip_mac')" show="ip,mac" :listData="listData" @on-select="selectFun"></x-modal>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,qosState:!1,selectall:!1,operate:[],select:[],data:[],edit:[],ruleList:[],editIp:[],editMac:[],editUp:[],editDown:[],dataTotal:0,addShow:!1,qos_up_bw:"200",qos_down_bw:"200",qosVersion:"",ip:"",mac:"",maxUpload:"",maxDownload:"",conNum:"0",priority:"0",editUserNum:[],editPriority:[],listData:[],tempType:"",modelShow:!1,lanNetmask:"",lanIP:"",disable_addBtn:!1,maxLoadVal:1e3,maxLoadLen:4}},watch:{select:function(){var t=0;for(var a in this.select)this.select[a]&&t++;t==this.select.length?this.selectall=!0:this.selectall=!1}},computed:{qosTitle:function(){var t=this.lang_t("qos.help2",[lang_t("menu.qos")]);return"2.0"==this.globalConfig.qosVersion&&(t=this.lang_t("qos.help1")),t},modeName:function(){return[this.lang_t("qos.smart_flow"),this.lang_t("qos.ip_flow")]},rateRules:function(){var i=this;return{qos_up_bw:function(t,a){var e=cs.num_range(t,1,i.maxLoadVal);0==e?a(i.lang_t("qos.up")+i.lang_t("rule.msg12")):1==e?a(i.lang_t("qos.up")+i.lang_t("rule.msg24")):2==e?a(i.lang_t("qos.up")+i.lang_t("rule.msg56",[1,i.maxLoadVal])):99==e&&a()},qos_down_bw:function(t,a){var e=cs.num_range(t,1,i.maxLoadVal);0==e?a(i.lang_t("qos.down")+i.lang_t("rule.msg12")):1==e?a(i.lang_t("qos.down")+i.lang_t("rule.msg24")):2==e?a(i.lang_t("qos.down")+i.lang_t("rule.msg56",[1,i.maxLoadVal])):99==e&&a()}}},formRules:function(){var i=this;return{ip:function(t,a){var e=cs.ip(t);t?0==e?a(i.lang_t("rule.ip")+i.lang_t("network.msg1")):1==e?a(i.lang_t("rule.ip")+i.lang_t("network.msg2")):2==e||3==e||4==e?a(i.lang_t("rule.ip")+i.lang_t("network.msg6")):i.lanIp==t?a(i.lang_t("rule.ip")+i.lang_t("rule.msg2")):0==cs.ip_subnet(t,i.lanNetmask,i.lanIp)?a(i.lang_t("rule.ip")+i.lang_t("rule.msg3")):a():a(i.lang_t("rule.ip")+i.lang_t("network.msg1"))},mac:function(t,a){if(""==i.ip&&""!=t){var e=cs.mac(t);0==e?a(i.lang_t("rule.msg12")):1==e?a(i.lang_t("rule.msg17")):2==e?a(i.lang_t("rule.msg18")):3==e?a(i.lang_t("rule.msg19")):99==e&&a()}else a()},maxUpload:function(t,a){t||a(i.lang_t("rule.max_up_speed")+i.lang_t("rule.msg12"));var e=cs.num_range(t,1,Number(i.qos_up_bw));1==e?a(i.lang_t("rule.max_up_speed")+i.lang_t("rule.msg24")):2==e?a(i.lang_t("rule.max_up_speed")+i.lang_t("rule.msg56",[1,i.qos_up_bw])):99==e&&a()},maxDownload:function(t,a){t||a(i.lang_t("rule.max_down_speed")+i.lang_t("rule.msg12"));var e=cs.num_range(t,1,Number(i.qos_down_bw));1==e?a(i.lang_t("rule.max_down_speed")+i.lang_t("rule.msg24")):2==e?a(i.lang_t("rule.max_down_speed")+i.lang_t("rule.msg56",[1,i.qos_down_bw])):99==e&&a()}}}},created:function(){var a=this;uiPost.getSmartQosCfg(function(t){a.qosState="1"==t.enable,a.qos_up_bw=t.totalUp/1e3,a.qos_down_bw=t.totalDown/1e3,a.lanNetmask=t.lanNetmask,a.lanIp=t.lanIp,"100"==t.bandWidth&&(a.maxLoadVal=100,a.maxLoadLen=3),t.rule&&(a.ruleList=t.rule,a.dataTotal=a.ruleList.length,a.data=t.rule,a.tableInit(t.rule))})},methods:{pageChange:function(t,a){this.ruleList=a},scanFun:function(t,a){var e=this;this.tempIdx=a,this.tempType=t,uiPost.getDeviceInfo(function(t){e.listData=t.rule,e.modelShow=!0})},selectFun:function(t){"number"!=typeof this.tempIdx?"mac"==this.tempType?this.mac=t.mac:this.ip=t.ip:("mac"==this.tempType?this.editMac[this.tempIdx]=t.mac:this.editIp[this.tempIdx]=t.ip,this.watchValue(this.tempIdx))},stateChange:function(t){var a={};a.enable=t?"1":"0",a.addEffect="0",this.setPostFun(a)},selectAll:function(t){var a=!1;t&&(a=!0);var e=this.select.length;this.select=[];for(var i=0;i<e;i++)this.select[i]=a},addRuleVal:function(){this.addShow=!0},addRule:function(){var a=this;if(a.disable_addBtn=!0,10<=a.dataTotal)return Cstool.Msg({content:this.lang_t("rule.msg30",[10])}),a.disable_addBtn=!1;for(i=0;i<a.dataTotal;i++){if(a.ip&&a.ip==a.data[i].ip)return Cstool.Msg({content:this.lang_t("rule.msg61")}),a.disable_addBtn=!1;if(a.mac&&a.mac==a.data[i].mac)return Cstool.Msg({content:this.lang_t("rule.msg11")}),a.disable_addBtn=!1}var e={};Cstool.Verify(this.formRules,function(t){t?(globalConfig.elinkSupport?e.mac=a.mac:e.ip=a.ip,e.maxUpload=1e3*a.maxUpload,e.maxDownload=1e3*a.maxDownload,e.addEffect="1",a.setPostFun(e)):a.disable_addBtn=!1})},applyFun:function(){var a=this,e={};if(0<this.dataTotal){for(var t=this.editUp[0],i=this.editDown[0],n=0;n<this.dataTotal;n++){var s=this.editUp[n];t<s&&(t=s);var l=this.editDown[n];i<l&&(i=l)}if(a.qos_up_bw<t)return Cstool.Msg({content:a.lang_t("qos.up")+a.lang_t("rule.msg56",[t,a.maxLoadVal])}),!1;if(a.qos_down_bw<i)return Cstool.Msg({content:a.lang_t("qos.down")+a.lang_t("rule.msg56",[i,a.maxLoadVal])}),!1}Cstool.Verify(this.rateRules,function(t){t&&(e.enable=1==a.qosState?"1":"0",e.totalUp=1e3*a.qos_up_bw,e.totalDown=1e3*a.qos_down_bw,e.addEffect="3",a.setPostFun(e))})},setPostFun:function(t){uiPost.setSmartQosCfg(t,function(t){var a=1;t.wtime&&"0"!=t.wtime&&(a=t.wtime),Cstool.applyLoad(a,function(){location.href=location.href})})},editFun:function(t){"/static/images/edit.png"==this.operate[t]?this.edit[t]?(this.edit.splice(t,1),this.edit.splice(t,0,!1)):(this.edit.splice(t,1),this.edit.splice(t,0,!0)):this.modefyFun(t)},modefyFun:function(a){var e=this,n={};if(e.dataTotal)for(i=0;i<e.dataTotal&&(i==a&&i++,i!=e.dataTotal);i++){if("0.0.0.0"!=e.editIp[a]&&e.editIp[a]==e.data[i].ip)return Cstool.Msg({content:this.lang_t("rule.msg61"),title:""}),!1;if(e.editMac[a]&&e.editMac[a]==e.data[i].mac)return Cstool.Msg({content:this.lang_t("rule.msg11")}),e.disable_addBtn=!1}Cstool.Verify(this.formRules,function(t){t&&(globalConfig.elinkSupport?n.mac=e.editMac[a]:n.ip=e.editIp[a],n.maxUpload=1e3*e.editUp[a],n.maxDownload=1e3*e.editDown[a],n.idx=String(a+1),n.addEffect="2",e.setPostFun(n))},e.dataTotal,a)},trashFun:function(t){var a={};this.ruleList;if("all"!=t)a[this.data[t].delRuleName]=String(t),Cstool.Msg({content:this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delSmartQosCfg(a,function(t){var a=1;t&&(t.wtime&&"0"!=t.wtime&&(a=t.wtime),Cstool.applyLoad(a,function(){location.href=location.href}))})}});else{var e=0;for(var i in this.select)this.select[i]&&(e++,a[[this.data[i].delRuleName]]=String(i),Cstool.Msg({content:e==this.select.length?this.lang_t("rule.msg26"):this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delSmartQosCfg(a,function(t){var a=1;t&&(t.wtime&&"0"!=t.wtime&&(a=t.wtime),Cstool.applyLoad(a,function(){location.href=location.href}))})}}));if(0==e)return Cstool.Msg({content:this.lang_t("rule.msg14")}),!1}},watchValue:function(t){this.editIp[t]!=this.data[t].ip||this.data[t].mac&&this.editMac[t]!=this.data[t].mac||this.editUp[t]!=this.data[t].maxUpload||this.editDown[t]!=this.data[t].maxDownload?"/static/images/edited.png"!=this.operate[t]&&(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edited.png")):(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edit.png"))},tableInit:function(t){for(var a in t)this.edit[a]=!1,this.select[a]=!1,this.operate[a]="/static/images/edit.png",t[a].ip?this.editIp[a]=t[a].ip:this.editIp[a]="",t[a].mac?this.editMac[a]=t[a].mac:this.editMac[a]="",this.editUp[a]=t[a].maxUpload/1e3,this.editDown[a]=t[a].maxDownload/1e3}}}</script><script src="/static/js/main.js"></script></body></html>

@@ -1,0 +1,883 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title> 
+
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<link rel="stylesheet" href="css/custom.css">
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+var showit = (document.layers) ? "show" : "visible";
+var hideit = (document.layers) ? "hide" : "hidden";
+var NS4 = (document.layers);
+var animationTimer = null;
+var pgbarTimer = null;
+var sParameter = "";
+var fwVersionInfo = null;
+var checkFwGuiState ="";
+var intervalId;
+var update_enable;
+var callReason;
+var wait_server_time;
+
+    $(document).ready(function()
+    {   
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+        checkFw_init();
+		
+		$('.privacy-item').click(function(){
+			window.open('https://www.netgear.com/about/privacy-policy/?cid=wmt_netgear_organic','name','width=600,height=400,scrollbars=1,resizable=1','blank');
+			return false;
+		});
+		
+		$('.tnc-full-item').click(function(){
+			window.open('router_full_tnc_detail.htm','name','width=600,height=400,scrollbars=1,resizable=1','blank');
+			return false;
+		});
+		
+		$('.tnc-item').click(function(){
+			window.open('router_tnc_detail.htm','name','width=600,height=400,scrollbars=1,resizable=1','blank');
+			return false;
+		});
+    });
+
+
+    function apply()
+    {
+        var sUrl=$("form:eq(1)").attr('action');
+        aStr = sUrl.split("?");
+        if(aStr.length == 2)
+            sParameter = "?"+aStr[1];
+        else
+            sParameter = "";
+
+        var cgiUrl='router_tnc_config.cgi'+sParameter;
+
+
+        $.post(cgiUrl,$('#ra_form').serialize());
+
+        return ;
+    }
+
+    function update_current_FW_tbl(){
+        var curr_table_rows=document.getElementById("current_FW_tbl").rows.length;
+        var obj = JSON.parse(fwVersionInfo);
+        var i;
+
+
+        if(obj.router == undefined)
+            return;
+
+        document.getElementById("current_FW_tbl").rows[1].cells[0].innerHTML="<%1761%>";
+        document.getElementById("current_FW_tbl").rows[1].cells[1].innerHTML=obj.router.model;
+        document.getElementById("current_FW_tbl").rows[1].cells[2].innerHTML=obj.router.device_Name;
+        document.getElementById("current_FW_tbl").rows[1].cells[3].innerHTML=obj.router.version;
+
+        if(obj.satellites != undefined)
+        {
+            for(i=0;i<obj.satellites.length;i++)
+            {
+                document.getElementById("current_FW_tbl").rows[i+2].cells[0].innerHTML="<%1762%>";
+                document.getElementById("current_FW_tbl").rows[i+2].cells[1].innerHTML=obj.satellites[i].model;
+                document.getElementById("current_FW_tbl").rows[i+2].cells[2].innerHTML=obj.satellites[i].device_Name;
+                document.getElementById("current_FW_tbl").rows[i+2].cells[3].innerHTML=obj.satellites[i].version;
+            }
+        }
+
+        /* wating ... */
+        if(wait_server_time > 0)
+        {
+
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1763%>";
+
+            if(obj.satellites != undefined)
+            {
+                for(i=0;i<obj.satellites.length;i++)
+                {
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1763%>";
+                }
+            }
+            wait_server_time--;
+            return;
+        }
+
+
+        callReason=obj.router.callReason;
+        checkFwGuiState=obj.router.gui_status;
+
+        if(obj.router.update_enable == 1)
+        {
+            document.getElementById("online_upgrade_btn").style.opacity=1;
+            document.getElementById("online_upgrade_btn").style.cursor="pointer";
+            document.getElementById("online_upgrade_btn").disabled = false;
+        }
+        else
+        {
+            document.getElementById("online_upgrade_btn").style.opacity=0.4;
+            document.getElementById("online_upgrade_btn").style.cursor="not-allowed";
+            document.getElementById("online_upgrade_btn").disabled = true;
+        }
+
+        if(obj.router.callReason == '')
+        {
+            document.getElementById("check").style.opacity=1;
+            document.getElementById("check").style.cursor="pointer";
+        }
+        else
+        {
+            document.getElementById("check").style.opacity=0.4;
+            document.getElementById("check").style.cursor="not-allowed";
+        }
+
+
+        if(obj.router.status == 'Downloading')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1764%>";
+        else if(obj.router.status == 'Download Done')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1765%>";
+        else if(obj.router.status == 'new_firmware_available')
+        {
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML='<%1766%> ('+ '<a href="VER_release_note.htm?dev=999" target="_blank" style="text-decoration:underline;">' +'V'+obj.router.newVersion+ '</a>'+ ') <%1767%>';
+        }
+        else if(obj.router.status == 'waitting')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1763%>";
+        else if(obj.router.status == 'checking')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1763%>";
+        else if(obj.router.status == 'Updating')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1768%>";
+        else if(obj.router.status == 'No new firmware available')
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML="<%1769%>";
+        else
+            document.getElementById("current_FW_tbl").rows[1].cells[4].innerHTML=obj.router.status;
+
+       
+        if(obj.satellites != undefined)
+        {
+
+            for(i=0;i<obj.satellites.length;i++)
+            {
+
+                if(obj.satellites[i].status == 'Downloading')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1764%>";
+                else if(obj.satellites[i].status == 'Download Done')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1765%>";
+                else if(obj.satellites[i].status == 'waitting')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1763%>";
+                else if(obj.satellites[i].status == 'checking')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1763%>";
+                else if(obj.satellites[i].status == 'Updating')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1768%>";
+                else if(obj.satellites[i].status == 'new_firmware_available')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML='<%1766%> ('+ '<a href="VER_release_note.htm?dev='+i+'" target="_blank" style="text-decoration:underline;">'+'V'+obj.satellites[i].newVersion+ '</a>'+') <%1767%>';
+                else if(obj.satellites[i].status == 'No new firmware available')
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML="<%1769%>";
+                else
+                    document.getElementById("current_FW_tbl").rows[i+2].cells[4].innerHTML=obj.satellites[i].status;
+
+            }
+        }
+
+        if(obj.router.reboot == 1)
+        {
+            clearInterval(intervalId);
+            setTimeout(function(){reloadPage("DIG_reboot_upgrade.htm");}, 5000);
+            return;
+        }
+
+    }
+
+    function general_current_FW_tbl(){
+
+        var obj = JSON.parse(fwVersionInfo);
+        var i;
+        var currRow=document.getElementById("current_FW_tbl").rows.length;
+
+        for(i=1;i<currRow;i++)
+        {
+            document.getElementById("current_FW_tbl").deleteRow(currRow-i);
+        }
+
+        document.getElementById("current_FW_tbl").insertRow(1);
+        document.getElementById("current_FW_tbl").rows[1].insertCell(0);
+        document.getElementById("current_FW_tbl").rows[1].insertCell(1);
+        document.getElementById("current_FW_tbl").rows[1].insertCell(2);
+        document.getElementById("current_FW_tbl").rows[1].insertCell(3);
+        document.getElementById("current_FW_tbl").rows[1].insertCell(4);
+
+        if(obj.satellites != undefined)
+        {
+            for(i=0;i<obj.satellites.length;i++)
+            {
+                document.getElementById("current_FW_tbl").insertRow(1);
+                document.getElementById("current_FW_tbl").rows[1].insertCell(0);
+                document.getElementById("current_FW_tbl").rows[1].insertCell(1);
+                document.getElementById("current_FW_tbl").rows[1].insertCell(2);
+                document.getElementById("current_FW_tbl").rows[1].insertCell(3);
+                document.getElementById("current_FW_tbl").rows[1].insertCell(4);
+            }
+        }
+    }
+
+    function checkFw_init()
+    {
+        document.getElementById("online_upgrade_btn").style.opacity=0.4;
+        document.getElementById("online_upgrade_btn").style.cursor="not-allowed";
+        document.getElementById("online_upgrade_btn").disabled = true;
+        document.getElementById("check").style.opacity=0.4;
+        document.getElementById("check").style.cursor="not-allowed";
+
+        checkFwPost_ajax("getinfo");
+
+        general_current_FW_tbl();
+        update_current_FW_tbl();
+
+        checkFw_internetCheck();
+        loopQueryCheckFw();
+    }
+
+    function checkFw_internetCheck()
+    {
+        document.getElementById("check").style.opacity=0.4;
+        document.getElementById("check").style.cursor="not-allowed";
+        document.getElementById("online_upgrade_btn").style.opacity=0.4;
+        document.getElementById("online_upgrade_btn").style.cursor="not-allowed";
+        document.getElementById("online_upgrade_btn").disabled = true;
+        wait_server_time=7;
+        checkFwPost_ajax("check");
+        update_current_FW_tbl();
+    }
+
+    function checkFw_upgrade()
+    {
+        wait_server_time=7;
+        document.getElementById("check").style.opacity=0.4;
+        document.getElementById("check").style.cursor="not-allowed";
+        document.getElementById("online_upgrade_btn").style.opacity=0.4;
+        document.getElementById("online_upgrade_btn").style.cursor="not-allowed";
+        document.getElementById("online_upgrade_btn").disabled = true;
+
+        checkFwPost_ajax("upgrade");
+        update_current_FW_tbl();
+    }
+
+    function reloadPage(url)
+    {
+        var cf = document.forms[0];
+        cf.IS_check_upgrade.value = 1;
+        document.location.href=url;
+
+    }
+
+
+    function loopQueryCheckFw()
+    {
+
+        intervalId=setInterval(function()
+        {
+            checkFwPost_ajax("getinfo");
+            general_current_FW_tbl();
+            update_current_FW_tbl();
+        },1000);
+    }
+
+    function checkFwPost_ajax(action){
+
+        var sUrl=$("form:eq(0)").attr('action');
+        aStr = sUrl.split("?");
+        if(aStr.length == 2)
+            sParameter = "?"+aStr[1];
+        else
+            sParameter = "";
+
+        $.ajax({
+            type:    'POST',
+            url:     "ajax/check_ver_result"+sParameter,
+            data:    {"action" : action },
+            async:   false,
+            cache:   false,
+            success: function (data)  {
+                         if(data!='error')
+                         {
+                             fwVersionInfo=JSON.stringify(data);
+                         }
+                 },
+            error:   function (error) { respond='error'}
+        });
+
+    }
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+  
+
+
+
+   
+function setVisible(divID, setto)
+{
+	if (NS4)
+		document.layers[divID].visibility = setto;
+	else if (document.all)
+		document.all(divID).style.visibility = setto;
+	else if (document.getElementById)
+		document.getElementById(divID).style.visibility = setto;
+}
+
+function stopAnimation()
+{
+	if(animationTimer != null)
+		clearTimeout(animationTimer);
+	//setVisible('animation', hideit);
+    document.getElementById("animation").style.display="none";
+	
+    if(pgbarTimer != null)
+		clearTimeout(pgbarTimer);
+	//setVisible('pgbar', hideit);
+    document.getElementById("pgbar").style.display="none";
+}
+
+function showAnimation()
+{
+	updateProgress();
+}
+
+function checkData()
+{
+	var up_msg = "<%1770%>\n";
+	var a;
+	var msg="";
+	var temp_win;
+	var t_str; 
+	var ver_index=0;
+	var main_ver=0;
+	var checkflag=false;
+        var uploadFile;
+
+        uploadFile=document.getElementsByName("mtenFWUpload");	
+        t_str=uploadFile[0].value;       
+
+	if(t_str.split) 
+		a = t_str.split(".");
+	else
+		a = cdisplit(t_str,".");
+	if(t_str.length == 0)
+	{
+		alert("<%1771%>\n");
+		return false;
+	}
+	//if((a.length<2)||(a[0]=="")||((a[a.length-1].toLowerCase()!="img") && (a[a.length-1].toLowerCase()!="chk") && (a[a.length-1].toLowerCase()!="bin")))
+	if((a.length<2)||(a[0]=="")||(a[a.length-1].toLowerCase()!="chk"))
+	{
+	 alert("<%1772%>chk\n");
+	 return false;
+	}
+    if (!confirm(up_msg))
+    {
+        return false;
+    }
+        setTimeout("showAnimation()", 50);
+	return true;
+}
+function sleep(n)
+{
+    var start = new Date().getTime();
+    while(true)
+        if(new Date().getTime()-start > n)
+            break;
+}
+
+function enableFwCheck()
+{
+	var cf = document.forms[0];
+	if (cf.enable.checked)
+		cf.ver_check_enable.value = 1;
+	else
+		cf.ver_check_enable.value = 0;
+}
+
+var pchar = "|"; // progress char
+var maxchars = 94;
+var delay_time = <%1773%>;
+var charcount = 0;
+
+function makeStr(strSize, fillChar)
+{
+	var temp = "";
+	for (i=0; i < strSize ; i ++)
+		temp = temp + fillChar;
+	return temp;
+}
+
+function updateProgress()
+{
+	var cf = document;
+	var pf = document.forms[0];
+	var df = document.forms[0];
+	var af = document.forms[1];
+	var bf = document.forms[1];
+	if ( charcount == 1 )
+	{
+        pf.Upgrade.style.display="none";
+        pf.Cancel.style.display="none";
+        df.Check.style.display="none";
+        af.agree.style.display="none";
+        bf.reset.style.display="none";
+        //setVisible('animation', showit);
+        //setVisible('pgbar', showit);
+        document.getElementById("pgbar").style.display="";
+        document.getElementById("animation").style.display="";
+	}
+	
+	if (charcount < maxchars)
+	{
+		charcount ++;
+		//document.all("progress").value = makeStr(charcount,pchar);
+      		//document.forms[2].progress.value = makeStr(charcount,pchar);
+                var progress;
+                progress=document.getElementsByName("progress");
+                progress[0].value=makeStr(charcount,pchar);
+		setTimeout("updateProgress()",delay_time);
+	}
+}
+
+function is_ie6()
+{
+    var browser=navigator.appName 
+    var b_version=navigator.appVersion 
+    var version=b_version.split(";"); 
+    var trim_Version=version[1].replace(/[ ]/g,""); 
+
+    if(browser=="Microsoft Internet Explorer" && trim_Version=="MSIE6.0") 
+        return true;
+    else
+        return false;
+}
+
+function set_check_upgrade()
+{
+	var cf = document.forms[0];
+    cf.IS_check_upgrade.value = 1;
+
+    document.location.href="VER_download.htm";
+}
+
+function set_start_upgrade()
+{
+        var cf = document.forms[0];
+    cf.IS_check_upgrade.value = 1;
+
+    document.location.href="VER_download.htm";
+}
+
+
+
+function check_opt_state()
+{
+	var cf = document.forms[1];
+	if(cf.auto_update_state.value==1)
+        cf.auto_update_enable[0].checked=true;
+	else if(cf.auto_update_state.value==2)
+        cf.auto_update_enable[1].checked=true;
+<%1774%>
+	if(cf.ra_state.value==1)
+        cf.ra_enable[0].checked=true;
+	else if(cf.ra_state.value==2)
+        cf.ra_enable[1].checked=true;
+<%1775%>
+}
+
+function pre_check()
+{
+    /* Region is US(11) or AU(3), default check is set as enable for data collection */
+<%1774%>
+    var cf = document.forms[1];
+    if(cf.ra_state.value==0 && (cf.wla_region.value==3 || cf.wla_region.value==11))
+        cf.ra_enable[0].checked=true;
+<%1775%>
+}
+
+function click_online(){
+	var cf = document.forms[0];
+	$("#online").removeClass("fw_wh");
+	$("#online").addClass("fw_bk");
+	$("#manual").removeClass("fw_bk");
+	$("#manual").addClass("fw_wh");
+
+	 document.getElementById("online_check").style.display="block";
+	  document.getElementById("online_check2").style.display="block";
+	   document.getElementById("online_line").style.display="block";
+     document.getElementById("manual_auto_FW_update").style.display="block";
+	 document.getElementById("manual_upload1").style.display="none";
+	 document.getElementById("manual_upload2").style.display="none";
+	 document.getElementById("manual_line").style.display="none";
+}
+
+function click_manual(){
+	var cf = document.forms[0];
+	$("#manual").removeClass("fw_wh");
+	$("#manual").addClass("fw_bk");
+	$("#online").removeClass("fw_bk");
+	$("#online").addClass("fw_wh");
+
+	document.getElementById("online_check").style.display="none";
+	document.getElementById("online_check2").style.display="none";
+	document.getElementById("online_line").style.display="none";
+    document.getElementById("manual_upload1").style.display="block";
+    var stCount = "<%1776%>";
+    if(!parseInt(stCount)){
+        document.getElementById("manual_line").style.display="none";
+        document.getElementById("manual_upload2").style.display="none";
+    }else{
+        document.getElementById("manual_line").style.display="block";
+        document.getElementById("manual_upload2").style.display="block";
+    }
+	document.getElementById("manual_auto_FW_update").style.display="none";
+}
+
+
+//-->
+</script>
+<style type="text/css">
+
+.fw_bk{
+ 	background-color: #3a3a3a;
+    color: #fff !important;
+    border-color: #3a3a3a;
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 30px !important;
+    border: solid 1px #3F354B !important;
+    border-radius: 5px !important;
+    font-family: "Avenir Next";
+    font-size: 14px;
+    padding: 0px 20px;
+}
+
+.fw_wh{
+	background: #E8E8E8;
+    color: #aaaaaa;
+    border-color: #3a3a3a;
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 30px !important;
+    border: solid 1px #c1c1c1 !important;
+    border-radius: 5px !important;
+    font-family: "Avenir Next";
+    font-size: 14px;
+    padding: 0px 20px;
+}
+
+.fw_subhead2-bottom {
+    background: #2C262D;
+    position: relative;
+    width: 100%;
+    z-index: 999;
+    height: auto !important;
+    float: left;
+    bottom:30px;
+}
+.fw_fix_button{
+	position: absolute;
+    width: 99%;
+    left: 0px;
+    bottom: 0px;
+    border-bottom: 0px none;
+    height: auto;
+    background-color: #fff !important;
+    box-shadow: 0 2px 9px 0 #ccc;
+    z-index: 9;
+    background: none;
+    padding: 12px 24px 35px 24px;
+    text-align: right;
+    background-image: none !important;
+}
+.scroll_container {
+    padding-top: 0px;
+}
+
+#manual_auto_FW_update {
+	padding-bottom: 3rem;
+}
+</style>       
+</head>
+<link rel="stylesheet" href="css/custom.css">
+<body  onload="change_size(false);stopAnimation();check_opt_state();pre_check();" class="page-body" onResize="change_size(false);">
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<img class="subtop-image" src="<%74%>">
+<div class="subhead2 page_title"> <%537%></div>
+<BR>
+<table style="padding-left:20px;">
+<!--Online Manual Update-->
+ 	<tr>
+ 		<td>
+     		<button type="buton" id="online" class="fw_bk" onclick="click_online()" value="Online Update" class="button-sty1"><%1777%></button>
+			<button type="buton" id="manual" class="fw_wh" onclick="click_manual()" value="Manual Update" class="button-sty1"><%1778%></button>
+		</td>
+	</tr>               
+ <!----> 
+</table>
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;margin-left: 20px;margin-right: 20px;margin-top: -10px;">&nbsp;</div>
+<table border="0" class="subhead2-table main_bas">
+
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto;">
+<form method="POST" action="upgrade_check.cgi" ENCTYPE="multipart/form-data" style="margin:0px"  >
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<input type="hidden" name="IS_check_upgrade" value="0">
+
+<table style="border-collapse:collapse;width:97%;display:block;" id="online_check">
+
+ <TR>
+ <td class="subhead2-text-menu" ><a href="javascript:loadhelp('UPG_upgrade','check')" tabindex="-1"><b><%1779%></b></a></td>
+ <td align="left" class="subhead2-text-context" >
+ <button id="check" type="button" name="Check" value="<%1780%>" class="button-sty1" onClick="buttonClick(this,'<%1780%>');checkFw_internetCheck();"><%1780%></button>
+ </td>
+ </td>
+ </tr>
+</table>
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;display:block;" id="online_line">&nbsp;</div>
+
+<table style="border-collapse:collapse;width:97%;display:block;" id="online_check2">
+ <tr>
+	<td colspan="2" align="left" class="" ><a href="javascript:loadhelp('UPG_upgrade','locate')" > <b><%1781%>:</b></a></td>
+</tr>	
+ <TR>
+ <td>
+	<table id="current_FW_tbl" class="tbWhite sortable cmn-table-2" border="1" cellpadding="2" cellspacing="0" width="100%">
+		<tr class="table_header"> 
+			<td nowrap="" align="center" width="10%"><span class="subheadtext"></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%1782%></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%509%></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%1783%></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%1781%></span></td>
+		</tr>
+		<%1784%>
+		<!--need cgi here-->
+	</table>
+ </td>
+ </tr>
+ <tr align="left" valign="middle">
+ <td colspan="2" class="table-seperate-border">
+	<button id="online_upgrade_btn" type="button" NAME="online_upgrade_btn" VALUE=" <%1785%>" class="button-sty1" onClick="buttonClick(this,'<%1785%>');checkFw_upgrade();"><%1785%></button>
+</td>
+</tr>
+</table>
+
+
+<input type="hidden" name="ver_check_enable" value="1">
+
+<table border="0" class="subhead2-multi-table" style="margin:0px;border-collapse:collapse;width:97%;display:none;" id="manual_upload1">
+
+<tr>
+	<td colspan="2" align="left" class="" ><a href="javascript:loadhelp('UPG_upgrade','locate')" > <b><%1786%></b></a></td>
+</tr>
+<tr>
+	<td colspan="2" align="left" class="">
+		<input class="input1" type="file" name="mtenFWUpload" id="file" size="23" maxlength="1024" style="position:relative;opacity:0;filter:alpha(opacity=0);font-size:15px;width:310px;padding-top:4px" onchange="this.form.upfile.value=this.value.substr(this.value.lastIndexOf('\\')+1);" contentEditable=false onkeydown="return false;" onbeforeeditfocus="return false;" onpaste="return false;">
+		<div style="margin-top: -56px">
+            <input id="upfile" class="input1" type="text" name="upfile" size="20" class="custom_file_input" maxlength="1024" readonly>
+        </div>    
+        <div style="margin-top: -45px;margin-left: 515px;">
+            <button id="browse" type="button" value="browse"  class="button-sty1" onclick="buttonClick(this,'browse');this.form.file.click();" onmouseover="this.style.cursor='default';"><%621%></button>
+        </div>
+	</td>
+</tr>
+<BR>
+
+<tr align="left" valign="middle">
+<td colspan="2" class="table-seperate-border">
+    <button id="cancel" type="RESET" name="Cancel" VALUE=" <%76%>" class="button-sty1" onClick="stopAnimation();"><%76%></button>
+	<button id="Upload" type="SUBMIT" NAME="Upgrade" VALUE=" <%1785%>" class="button-sty1" onClick="buttonClick(this,'<%1785%>');return checkData();"><%1785%></button>
+</td>
+</tr>
+</table>
+
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;display:none;" id="manual_line">&nbsp;</div>
+
+<table border="0" class="subhead2-multi-table" style="margin:0px;border-collapse:collapse;width:97%;display:none;" id="manual_upload2">
+<tr>
+	<td colspan="2" align="left" class="" ><a href="javascript:loadhelp('UPG_upgrade','locate')" > <b><%1787%></b></a></td>
+
+</tr>
+<tr><td colspan="2">
+	<table id="control_table" class="tbWhite sortable cmn-table-2" border="1" cellpadding="2" cellspacing="0" width="100%">
+		<tr class="table_header"> 
+			<td nowrap="" align="center" width="10%"><span class="subheadtext"><%1781%></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%704%></span></td>
+			<td nowrap="" align="center" width="20%"><span class="subheadtext"><%926%></span></td>
+		</tr>
+		<%1788%>
+		<!--cgi-->
+	</table>
+	</td>
+</tr> 
+</table>
+
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div>
+
+
+
+<table border="0"  class="subhead2-multi-table" id="">
+<tr>
+<td class="" colspan="2">
+<div align="left" ID="pgbar" style="position:relative;top:0;left:0;">
+
+<table border="0" style="border-collapse:collapse;" >
+		<tr>
+		 <td colspan="2" ><BIG><%1789%>  2  <%1790%>
+		 </BIG></td>
+		</tr>
+		<tr>
+		<td align="center" colspan="2" ><input type="text" name="progress" id="progress" class="prgbar" value="" style="color: black; pointer-events: none;" size="42"
+		    contentEditable=false onkeydown="return false;" onbeforeeditfocus="return false;" onpaste="return false;"></td>
+		</tr>
+		<tr>
+		 <td colspan="2" >
+		<div align="center" ID="animation" style="position:relative;top:0;left:0">
+		<br><img src="upload_new.gif" width="290" height="82" alt="" border="0"></div>
+		</td>
+		</tr>
+		</table>
+		</div>
+		</td>
+		</tr>
+</table>
+</form>
+<form id="ra_form" method="POST" action="router_tnc_config.cgi">
+<input type="hidden" name="auto_update_state" value="<%1791%>">
+<input type="hidden" name="ra_state" value="<%1792%>">
+<input type="hidden" name="wla_region" value="<%22%>">
+
+    <table style="border-collapse:collapse;width:97%;display: block;" id="manual_auto_FW_update">
+        <tr align="left" valign="middle">
+            <td colspan="2" class="table-seperate-border">
+            
+            <div class="fw_fix_button">
+            <button id="reset" value="Cancel" onclick="fresh();"  type="button" name="reset" class="button-cancel cancel_bt"><%76%></button>
+            <button id="agree" value="Apply"  onclick="apply();" type="button" name="agree" class="button-apply apply_bt"><%78%></button>
+            </div>
+            
+            </td>
+            </tr>
+            <tr class="">
+            <td colspan="2" height="12" class="mb-50">
+                <b><%1793%></b><br>
+                <%1794%>
+
+			<td class="font-size-16"><%1795%></td>
+
+			<td colspan="2">
+			    <label class="checkbox-container">
+			        <input id="auto_agree" type="radio" name="auto_update_enable" value="Yes" onclick="" ><font color="gray"> <%1796%></font>
+			        <span class="radio-checkmark"></span>
+			    </label>
+			</td>
+			<td colspan="2">
+			    <label class="checkbox-container">
+			        <input id="auto_disagree" type="radio" name="auto_update_enable" value="No"  onclick="" ><font color="gray"> <%1797%></font>
+			        <span class="radio-checkmark"></span>
+			    </label>
+			</td>
+		</td>
+		</tr>
+		<%1798%>
+		<tr><td colspan="2" height="12" class=""><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;"></div></td></tr>
+
+		<tr class="custom_align_tr">
+		<td colspan="2" height="12" class="mb-50">
+
+		<b><%1799%></b><br>
+		<%1800%>
+		<td class="font-size-16">
+		<%1795%></td>
+
+		<td colspan="2">
+		    <label class="checkbox-container">
+		        <input id="yes_ra_enable" type="radio" name="ra_enable" value="Yes" onclick="" ><font color="gray"> <%1796%></font>
+		        <span class="radio-checkmark"></span>
+		    </label>
+		</td>
+		<td colspan="2">
+		    <label class="checkbox-container">
+		        <input id="no_ra_enable" type="radio" name="ra_enable" value="No"  onclick=""> <font color="gray"> <%1797%></font>
+		        <span class="radio-checkmark"></span>
+		    </label>
+		</td>
+		
+		</td>
+		<%1801%>
+		</tr>
+		<tr><td colspan="2" class="">
+		<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;"></div>
+		<div align="right" style="width:100%;">
+		<a href="#" class="privacy-item" style="color: rgb(000,000,255);text-decoration:underline"><%1802%></a>
+
+		<%1803%>
+		<a href="#" class="tnc-full-item" style="color: rgb(000,000,255);text-decoration:underline"> <%1804%></a>
+		<%1805%>
+		<%1798%>
+		<a href="#" class="tnc-item" style="color: rgb(000,000,255);text-decoration:underline"> <%1804%></a>
+		<%1801%>
+		</div>
+		</td></tr>
+</table>
+</form>
+</div></td></tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe" src="UPG_upgrade_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+
+  <div id="help_switch" class="fw_subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+<a name="helpframe-anchor"></a>      
+</div>      
+</body>
+</html>
+

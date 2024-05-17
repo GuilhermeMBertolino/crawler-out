@@ -1,0 +1,13 @@
+# echo $(env) > /dev/console
+# WDEV TYPE = 2 , In Bridge Mode
+if [ $WDEV_TYPE -eq 2 ]; then
+	if [ "$ACTION" = linkup ]; then
+		uci -c /var/state set hotplug_wifi.bridge.status=up
+	else
+		uci -c /var/state set hotplug_wifi.bridge.status=down
+	fi
+	uci -c /var/state commit hotplug_wifi
+	killall -WINCH led_control
+
+fi
+

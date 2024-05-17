@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"><style>input[type=text]:disabled{cursor:not-allowed;background-color:#eee;border-color:#ddd}</style></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="network"></adv-child-menu>
+  <div class="advance-box">
+	<x-help :text="lang_t('network.help')"></x-help>
+  	<br><br>
+	<div class="fun-box">
+	  <table class="table"> 
+	    <tbody>
+		<tr v-show="dhcpShow">
+		  <td class="fun-left">{{ lang_t('network.mode') }}</td>
+		  <td>
+			<select v-model="netMode">
+			  <option value="1">{{ lang_t('wan.auto') }}</option>
+			  <option value="0">{{ lang_t('wan.manual') }}</option>
+			</select>
+		  </td>
+		</tr>   
+		<tr>
+		  <td class="fun-left">{{ lang_t('network.ip') }}</td>
+		  <td>
+			<input type="text" v-model="lanIp" v-verify="formRules" data-name="lanIp" maxlength="15" @input="autoChangePool" :disabled="netMode=='1'">
+		  </td>
+		</tr>
+		<tr>
+		  <td class="fun-left">{{ lang_t('network.mask') }}</td>
+		  <td>
+			<input type="text" v-model="lanNetmask" v-verify="formRules" data-name="lanNetmask" maxlength="15" @input="autoChangePool" :disabled="netMode=='1'">
+		  </td>
+		</tr>
+		<tr v-show="dhcpShow">
+		  <td class="fun-left">{{ lang_t('wan.gateway') }}</td>
+		  <td>
+			<input type="text" v-model="gw" v-verify="formRules" data-name="gw" maxlength="15" :disabled="netMode=='1'">
+		  </td>
+		</tr>
+		<tr v-show="dhcpShow">
+		  <td class="fun-left">{{ lang_t('wan.pri_dns') }}</td>
+		  <td>
+			<input type="text" v-model="priDns" v-verify="formRules" data-name="priDns" maxlength="15" :disabled="netMode=='1'">
+		  </td>
+		</tr>
+		<tr v-show="dhcpShow">
+		  <td class="fun-left">{{ lang_t('wan.sec_dns') }}</td>
+		  <td>
+			<input type="text" v-model="secDns" v-verify="formRules" data-name="secDns" maxlength="15" :disabled="netMode=='1'">
+			&nbsp;&nbsp;
+			<small>({{ lang_t('wan.optional') }})</small>
+		  </td>
+		</tr>
+		<tr v-show="!dhcpShow">
+		  <td class="fun-left">{{ lang_t('network.dhcp_server') }}</td>
+		  <td>
+			<x-switch v-model="dhcpServer"></x-switch>
+		  </td>
+		</tr>      
+		<tr v-show="dhcpServer && !dhcpShow">
+		  <td class="fun-left">{{ lang_t('network.start_ip') }}</td>
+		  <td>
+			<input type="text" v-model="dhcpStart" v-verify="formRules" data-name="dhcpStart" maxlength="15">
+		  </td>
+		</tr>
+		<tr v-show="dhcpServer && !dhcpShow">
+		  <td class="fun-left">{{ lang_t('network.end_ip') }}</td>
+		  <td>
+			<input type="text" v-model="dhcpEnd" v-verify="formRules" data-name="dhcpEnd" maxlength="15">
+		  </td>
+		</tr>
+		<tr v-show="dhcpServer && !dhcpShow">
+		  <td class="fun-left">{{ lang_t('network.lease_time') }}</td>
+		  <td>
+			<select v-model="dhcpLease">
+			  <option value="86400" selected>1 {{ lang_t('network.day') }}</option>
+			  <option value="7200">2 {{ lang_t('network.hours') }}</option>
+			  <option value="3600">1 {{ lang_t('network.hour') }}</option>
+			  <option value="900"> 15 {{ lang_t('network.minutes') }}</option>
+			  <option value="300">5 {{ lang_t('network.minutes') }}</option>
+			</select>
+		  </td>
+		</tr>       
+		<tr>
+		  <td class="fun-left"></td>
+		  <td>
+			<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  </td>
+		</tr>
+		</tbody>
+	  </table>
+	  <x-test ref="verifi"></x-test>
+  	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,wanIp:"",wanNetmask:"",lanIp:"",lanNetmask:"",dhcpShow:!1,dhcpServer:!1,dhcpStart:"",dhcpEnd:"",dhcpLease:"",netMode:"",gw:"",priDns:"",secDns:""}},computed:{formRules:function(){var p=this;return{lanIp:function(t,n){var e=cs.ip(t);t||n(p.lang_t("network.ip")+p.lang_t("network.msg1")),0==e?n(p.lang_t("network.ip")+p.lang_t("network.msg1")):1==e?n(p.lang_t("network.ip")+p.lang_t("network.msg2")):2==e||3==e||4==e?n(p.lang_t("network.ip")+p.lang_t("network.msg6")):cs.ip_subnet2(t,p.lanNetmask,p.wanIp,p.wanNetmask)?n(p.lang_t("network.msg8")):1==cs.ip_subnet(t,p.lanNetmask,p.wanIp)?n(p.lang_t("network.msg11")):n()},lanNetmask:function(t,n){var e=cs.mask(t);t||n(p.lang_t("network.mask")+p.lang_t("network.msg1")),0==e||1==e?n(p.lang_t("network.msg7")):n()},gw:function(t,n){if(p.dhcpShow&&"1"==p.netMode){var e=cs.ip(t);0==e?n(p.lang_t("wan.gateway")+p.lang_t("network.msg1")):1==e?n(p.lang_t("wan.gateway")+p.lang_t("network.msg2")):2==e||3==e||4==e?n(p.lang_t("wan.gateway")+p.lang_t("network.msg6")):n()}else n()},priDns:function(t,n){p.dhcpShow&&"1"==p.netMode?t?99!=cs.ip(t)?n(p.lang_t("vpn.pri_dns")+p.lang_t("vpn.msg6")):n():n(p.lang_t("vpn.pri_dns")+p.lang_t("vpn.msg1")):n()},secDns:function(t,n){p.dhcpShow&&"1"==p.netMode?""==t?n():99!=cs.ip(t)?n(p.lang_t("vpn.sec_dns")+p.lang_t("vpn.msg6")):n():n()},dhcpStart:function(t,n){var e=cs.ip(t,p.lanNetmask),a=1;if(p.dhcpShow)n();else{if(""!=t&&""!=p.dhcpEnd){var r=t.split("."),s=p.dhcpEnd.split(".");Number(r[0])>Number(s[0])?a=0:Number(r[0])==Number(s[0])&&Number(r[1])>Number(s[1])?a=0:Number(r[0])==Number(s[0])&&Number(r[1])==Number(s[1])&&Number(r[2])>Number(s[2])?a=0:Number(r[0])==Number(s[0])&&Number(r[1])==Number(s[1])&&Number(r[2])==Number(s[2])&&Number(r[3])>Number(s[3])&&(a=0)}0==e?n(p.lang_t("network.start_ip")+p.lang_t("network.msg1")):1==e?n(p.lang_t("network.start_ip")+p.lang_t("network.msg2")):2==e||3==e||4==e?n(p.lang_t("network.start_ip")+p.lang_t("network.msg6")):0==cs.ip_subnet(t,p.lanNetmask,p.lanIp)?n(p.lang_t("network.start_ip")+p.lang_t("network.msg9")):0==a?n(p.lang_t("network.msg10")):n()}},dhcpEnd:function(t,n){var e=cs.ip(t,p.lanNetmask);p.dhcpShow?n():0==e?n(p.lang_t("network.end_ip")+p.lang_t("network.msg1")):1==e?n(p.lang_t("network.end_ip")+p.lang_t("network.msg2")):2==e||3==e||4==e?n(p.lang_t("network.end_ip")+p.lang_t("network.msg6")):0==cs.ip_subnet(t,p.lanNetmask,p.lanIp)?n(p.lang_t("network.end_ip")+p.lang_t("network.msg9")):n()}}}},created:function(){var n=this;"br"==this.globalConfig.opmode||"rpt"==this.globalConfig.opmode?this.dhcpShow=!0:this.dhcpShow=!1,uiPost.getLanCfg(function(t){n.wanIp=t.wanIp,n.wanNetmask=t.wanNetmask,n.lanIp=t.lanIp,n.lanNetmask=t.lanNetmask,n.dhcpShow?(n.netMode=t.netMode,n.gw=t.gw,n.priDns=t.priDns,n.secDns=t.secDns):(n.dhcpServer="1"==t.dhcpServer,n.dhcpStart=t.dhcpStart,n.dhcpEnd=t.dhcpEnd,n.dhcpLease=t.dhcpLease)})},methods:{autoChangePool:function(){var t=this.lanIp.split(".")[0],n=this.lanIp.split(".")[1],e=this.lanIp.split(".")[2],a=this.lanIp.split(".")[3];if(Number(254<a))return!1;var r=this.lanNetmask.split(".")[0],s=this.lanNetmask.split(".")[1],p=this.lanNetmask.split(".")[2],l=this.lanNetmask.split(".")[3],o=16777216*Number(t)+(Number(n)<<16)+(Number(e)<<8)+Number(a),i=16777216*Number(r)+(Number(s)<<16)+(Number(p)<<8)+Number(l),m=Math.floor(o/4),g=Number(o%4),u=Math.floor(i/4),h=Number(i%4),c=4*Number(m&u)+Number(g&h),N=1+(o&~i),w=0;w=N<256&&128<N?c+(N=1):(128<Number(a)&&(N=1),c+N);var d=Math.floor(Number(w/16777216)),_=Math.floor(Number(w%16777216)/65536),b=Math.floor(Number(w%65536)/256),k=Math.floor(Number(w%65536)%256);this.dhcpStart=d+"."+_+"."+b+"."+k;var f=Math.floor(c/2),v=Number(c%2),S=Number(v|~i%2)+2*Number(f|~i/2)-1,M=1+(o&~i);(129<M&&4294967040==i||129==M)&&(S=c+M-2),S==o&&S--;var I=Math.floor(Number(S/16777216)),z=Math.floor(Number(S%16777216)/65536),D=Math.floor(Number(S%65536)/256),C=Math.floor(Number(S%65536)%256);this.dhcpEnd=I+"."+z+"."+D+"."+C},zip:function(t,n,e,a){return 16777216*Number(t)+(Number(n)<<16)+(Number(e)<<8)+Number(a)},checkpPrivateNetwork:function(t){var n=this,e=n.zip("0","0","0","0"),a=n.zip("127","255","255","255"),r=n.zip("128","0","0","0"),s=n.zip("191","255","255","255"),p=n.zip("192","0","0","0"),l=n.zip("233","255","255","255"),o=n.zip("10","0","0","0"),i=n.zip("10","255","255","255"),m=n.zip("172","16","0","0"),g=n.zip("172","31","255","255"),u=n.zip("192","168","0","0"),h=n.zip("192","168","255","255"),c=n.zip(t.split(".")[0],t.split(".")[1],t.split(".")[2],t.split(".")[3]);return e<c&&c<a?!(i<c||c<o):r<c&&c<s?!(g<c||c<m):p<c&&c<l&&!(h<c||c<u)},handleSubmit:function(){var a=this;a.$refs.verifi.verify(this.formRules,function(t){if(t){var n={},e=a.lanIp;n.lanIp=a.lanIp,n.lanNetmask=a.lanNetmask,n.dhcpStart=a.dhcpStart,n.dhcpEnd=a.dhcpEnd,a.dhcpShow?(n.netMode=a.netMode,n.gw=a.gw,n.priDns=a.priDns,n.secDns=a.secDns):(n.dhcpServer=a.dhcpServer?"1":"0",n.dhcpLease=a.dhcpLease),uiPost.setLanCfg(n,function(t){var n=0;n=t.wtime||"0"==t.wtime?t.wtime:10,Cstool.Count(n,"js",function(){location.href="http://"+e+"/login.html"})})}})}}}</script><script src="/static/js/main.js"></script></body></html>

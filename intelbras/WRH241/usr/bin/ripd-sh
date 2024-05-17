@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# ripd-sh       This script go for starting/stop rip daemon using ZEBRA packages
+# maintainer: JasonJiang
+#
+
+# From AUTOCONF
+prefix=
+exec_prefix=${prefix}
+
+# Paths to programs
+UVM=/usr/bin/uvm
+UO_PATH=/usr/uo/
+UO_FILE=ripd.conf.uo
+UO_CONF=ripd.conf
+
+start() {
+    	local err; err=0
+    	($UVM $UO_PATH/$UO_FILE > /etc/$UO_CONF || $err=1);
+		#(chmod +x $UO_PATH/$UO_EXE || $err=1);
+	    #(cp $UO_PATH/$UO_CONF /etc);
+		#(rm $UO_PATH/$UO_CONF);
+		(zebra -d -f /etc/zebra.conf);
+		(ripd -d -f /etc/ripd.conf);
+		return $err
+}
+
+stop() {
+	local err; err=0
+	#rm $UO_PATH/$UO_EXE
+	(rm /etc/$UO_CONF);
+	kill `cat /var/run/ripd.pid`
+	(rm -f /var/run/ripd.pid);
+	kill `cat /var/run/zebra.pid`
+	(rm -f /var/run/zebra.pid);
+	return $err
+}
+
+usage() {
+	echo "$0 [start|stop|restart|reload|config]"
+	exit 1
+}
+
+[ -z "$1" ] && usage;
+
+err=0
+
+case "$1" in
+	config)		;;
+	start)		start;;
+	stop)		stop;;
+	reload)		;;
+	restart)	stop; start;;
+	*)		usage;;
+esac
+
+exit $err

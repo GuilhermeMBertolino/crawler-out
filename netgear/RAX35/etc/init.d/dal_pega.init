@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+START=55
+
+start() {
+	echo -e "\033[35m Update d2 ... \033[0m" > /dev/console
+	d2 -c general.devicemodel "`/usr/bin/pudal -m`"
+	d2 -c general.devicename "`/usr/bin/pudal -m`"
+	d2 -c general.fwrevision "`/usr/bin/pudal -f`"
+	d2 -c general.hwrevision "`/usr/bin/pudal -H`"
+	d2 -c general.fsn "`uboot_env --get --name serial_num`"
+	d2 -c general.regionname "`/usr/bin/pudal -r`"
+# David Yeh, 20191114, Set the region number on boot up to avoid the DAL d2_countryname.sh doesn't work.
+	d2 -c general.region "`/usr/bin/pudal -N`"
+	d2 -c general.sku "`/usr/bin/pudal -s`"
+	d2 -c general.wan_ifname "`/usr/bin/pudal -w`"
+	d2 -c general.InternetIP "`/usr/bin/pudal -i`"
+	d2 -c general.Internetstatus "`/usr/bin/pudal -c`"
+	#d2 -c general.dnsip "`cat /etc/resolv.conf | awk '{print $2}'  | sed '1d'| sed '2d'`"
+	d2 -c general.dnsip "`/usr/bin/pudal -D`"
+	d2 -c general.lan_ifname "br-lan"
+	d2 -c general.GatewayIP "`/usr/bin/pudal -I`"
+	d2 -c general.GatewayMAC "`/usr/bin/pudal -M`"
+	d2 -c general.NetworkAddress "`/usr/bin/pudal -n`"
+	d2 -c general.defaultmac "`uboot_env --get --name ethaddr`"
+}

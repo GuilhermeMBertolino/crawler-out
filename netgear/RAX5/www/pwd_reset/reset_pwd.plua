@@ -1,0 +1,37 @@
+#!/usr/bin/env cgilua.cgi
+
+local json = require "luci.json"
+
+local ret = {status="error", message="invalid parameter"}
+local checkFileExist = function(phy_path)
+        local f, err = io.open(phy_path)
+        if not f then return nil, err end
+        f:close()
+        return true, nil
+end
+local inputJson = cgilua.POST["inputJson"]
+
+if inputJson ~= nil then
+  local jsonData = json.decode(inputJson)
+  local postFunc = jsonData["function"]
+  if postFunc then
+    local handler_phy_path = "/usr/lib/lua/webPostHandler/"..postFunc..".lua"
+    local handler_req_path = "webPostHandler."..postFunc
+    local handler_name = postFunc.."_handler"
+    local fileExist , err = checkFileExist(handler_phy_path)
+    if not fileExist then
+      ret = {status="error", message="Can't find "..postFunc}
+    else
+      local handler = require(handler_req_path)
+      if type(handler[handler_name]) == "function" then
+        ret = handler[handler_name](jsonData["data"])
+      else
+        ret = {status="error", message="invalid handler function"}
+      end
+    end
+
+  end
+end
+
+cgilua.contentheader('application','json')
+return json.encode({status=ret.status, message=ret.message})

@@ -1,0 +1,621 @@
+﻿<!DOCTYPE HTML>
+<? include 'php/commonCfg.php';?>
+<? include 'php/attachedDev.php';?>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css"  type="text/css">
+  <script language="javascript" type="text/javascript">
+  CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+
+  var funcName = "blockServices";
+  var disable = false;
+  var serv_array=[["0","","","","1"],["2","1","65535","ALL","1"],["0","1","65535","Any(TCP)","1"],["1","1","65535","Any(UDP)","1"],["0","5190","5190","AIM","1"],["1","47624","47624","Age of Empire","1"],["0","179","179","BGP","1"],["1","68","68","BOOTP CLIENT","1"],["1","67","67","BOOTP SERVER","1"],["2","7648","7648","CU-SEEME(7648)","1"],["2","24032","24032","CU-SEEME(24032)","1"],["2","53","53","DNS","1"],["0","79","79","FINGER","1"],["0","20","21","FTP","1"],["0","80","80","HTTP","1"],["0","443","443","HTTPS","1"],["0","23566","23566","ICUII","1"],["0","113","113","IDENT","1"],["0","6670","6670","IP Phone","1"],["2","6667","6667","IRC","1"],["0","1720","1720","NetMeeting/H.323","1"],["1","2049","2049","NFS","1"],["0","119","119","News","1"],["2","27960","27960","Quake II & III","1"],["0","512","512","RCMD","1"],["2","6970","7170","Real Audio","1"],["0","514","514","REXEC","1"],["0","513","513","RLOGIN","1"],["0","107","107","RTELNET","1"],["2","554","554","RTSP","1"],["0","115","115","SFTP","1"],["0","25","25","SMTP","1"],["2","161","161","SNMP","1"],["2","162","162","SNMP TRAPS","1"],["0","1521","1521","SQL-NET","1"],["2","22","22","SSH","1"],["1","1558","1558","STRMWORKS","1"],["1","49","49","TACACS","1"],["0","23","23","Telnet","1"],["1","69","69","TFTP","1"],["0","7000","7000","VDOLIVE","1"],["1","500","500","VPN-IPSEC","1"],["1","1701","1701","VPN-L2TP","1"],["0","1723","1723","VPN-PPTP","1"]];
+  $(document).ready(function() {
+      var new_tr ='<tr>\r\n\
+        <td nowrap align=\"center\">\r\n\
+        <span class=\"thead\">\r\n\
+        <input type=\"RADIO\" name=\"ruleSelect\" id=\"service_select__index\" />\r\n\
+        <input type=\"hidden\" name=\"selected_iid\" value=\"__iid\" disabled />\r\n\
+        <input type=\"hidden\" name=\"selected_type\" value=\"__sType\" disabled />\r\n\
+        <input type=\"hidden\" name=\"selected_protocol\" value=\"__protocol\" disabled />\r\n\
+        <input type=\"hidden\" name=\"selected_filterType\" value=\"__filterType\" disabled />\r\n\
+        </span>\r\n\
+        </td>\r\n\
+        <td nowrap align=\"center\">\r\n\
+        <span class=\"thead\">__index</span>\r\n\
+        </td>\r\n\
+        <td nowrap align=\"center\">\r\n\
+        <span class=\"ttext\" name=\"selected_name\">__sName</span>\r\n\
+        </td>\r\n\
+        <td nowrap align=\"center\">\r\n\
+        <span class=\"ttext\" name=\"selected_port\">__portStr</span>\r\n\
+        </td>\r\n\
+        <td nowrap align=\"center\">\r\n\
+        <span class=\"ttext\" name=\"selected_ip\">__ipStr</span>\r\n\
+        </td>\r\n\
+        </tr>';
+      fetchTableData('services_table', 'block_service_table', new_tr,'','services_table_post_fillout');
+      fetchData('target', 'block_service', '', 'post_fillout_init');
+      
+      $("button[name='add1']").on('click', function() {
+          toggleDiv();
+
+          //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+          $('#procotol')[0].selectedIndex = $('#Procotol').prop('selectedIndex');
+          $('#procotol').on('click', function() {
+              $('#Procotol')[0].selectedIndex = $('#procotol').prop('selectedIndex');
+          });
+
+          $("button[name='apply']").hide();
+          $("button[name='add2']").show();
+          $("button[name='add1']").attr('id',"add1");
+          $("button[name='add2']").attr('id',"add");
+          loadhelp('BKS_service_add','');
+          $("input[name='action']").val("add");
+      });
+      
+      $("#edit").on('click', function() {
+            /* no rule */
+            if($("#services_table tr").eq(1).length == 0)
+            {
+                //"Please select an item to edit"
+                alert(window.top.mlang["AAWE08"]);
+                return;
+            }
+          toggleDiv();
+          $("button[name='apply']").hide();
+          $("button[name='apply2']").show();
+          $("button[name='apply']").attr('id',"apply1");
+          $("button[name='apply2']").attr('id',"apply");
+          loadhelp('BKS_service_add','');
+
+          $("#services_table input[name='ruleSelect']:checked").closest("tr").each(function(){
+              $("#service_type").val($(this).find("span[name='selected_name']").text());
+              $("#service_type")[0].selectedIndex = parseInt($(this).find("input[name='selected_type']").val());
+              //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+              $("#Procotol").val($(this).find("input[name='selected_protocol']").val());
+              var portRange = $(this).find("span[name='selected_port']").text().split("...")
+              $("#portstart").val(portRange[0]);
+              $("#portend").val(portRange[1] == undefined ? portRange[0] : portRange[1]);
+              $("#userdefined").val($(this).find("span[name='selected_name']").text());
+              var iptype = $(this).find("input[name='selected_filterType']").val();
+              $("input[name='filterType']").each(function() {
+                  if ($(this).val() == iptype)
+                  {  
+                      $(this).click();
+                  }
+              });
+
+              if($("[name=filterType]:checked").val() == "Single")
+              {
+                  $("#single-ip").setIp($(this).find("span[name='selected_ip']").text());
+              }
+              else if($("[name=filterType]:checked").val() == "Range")
+              {
+                  var selected_ip = $(this).find("span[name='selected_ip']").text().split(" - ");
+                  $("#rangeStart-ip").setIp(selected_ip[0]);
+                  $("#rangeEnd-ip").setIp(selected_ip[1]);
+              }
+
+              if($("#service_type")[0].selectedIndex != 0)
+              {
+                  disable = true
+              }
+
+              $("input[name='iid']").val($(this).find("input[name='selected_iid']").val());
+          });
+
+          //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+          $('#procotol')[0].selectedIndex = $('#Procotol').prop('selectedIndex');
+          $('#procotol').on('click', function() {
+              $('#Procotol')[0].selectedIndex = $('#procotol').prop('selectedIndex');
+          });
+
+          $("input[name='action']").val("edit");
+          
+          //For GUI automation, change IDs of edit page to be different from the IDs of add page
+          $("[name=filterType]")[0].id = "iptype_thisip";
+          $("[name=filterType]")[1].id = "iptype_iprang";
+          $("[name=filterType]")[2].id = "iptype_allip";
+      });
+
+      $("#delete").on('click', function() {
+            /* no rule */
+            if($("#services_table tr").eq(1).length == 0)
+            {
+                //"Please select an item to delete"
+                alert(window.top.mlang["AAWE07"]);
+                return;
+            }
+
+          $("#services_table input[name='ruleSelect']:checked").closest("tr").each(function(){
+              $("#service_type").val($(this).find("span[name='selected_name']").text());
+              $("#service_type")[0].selectedIndex = parseInt($(this).find("input[name='selected_type']").val());
+              //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+              $("#Procotol").val($(this).find("input[name='selected_protocol']").val());
+              var portRange = $(this).find("span[name='selected_port']").text().split("...")
+              $("#portstart").val(portRange[0]);
+              $("#portend").val(portRange[1] == undefined ? portRange[0] : portRange[1]);
+              $("#userdefined").val($(this).find("span[name='selected_name']").text());
+              var iptype = $(this).find("input[name='selected_filterType']").val();
+              $("input[name='filterType']").each(function() {
+                  if ($(this).val() == iptype)
+                  {  
+                      $(this).click();
+                  }
+              });
+
+              if($("[name=filterType]:checked").val() == "Single")
+              {
+                  $("input[name='ipAddr']").val($(this).find("span[name='selected_ip']").text());
+              }
+              else if($("[name=filterType]:checked").val() == "Range")
+              {
+                 
+                  var selected_ip = $(this).find("span[name='selected_ip']").text().split(" - ");
+                  $("input[name='startIpAddr']").val(selected_ip[0]);
+                  $("input[name='endIpAddr']").val(selected_ip[1]);
+              }
+
+              if($("#service_type")[0].selectedIndex != 0)
+              {
+                  disable = true
+              }
+
+              $("input[name='iid']").val($(this).find("input[name='selected_iid']").val());
+          });
+          $("input[name='action']").val("delete");
+          
+          $.postForm("blockServiceSetup", $('#target'), 'cgi-bin/rex_cgi');
+      });
+
+      $("#service_type").on('change', function() {
+          if($(this)[0].selectedIndex != 0)
+          {
+              
+              //PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)
+              $("#Procotol")[0].selectedIndex = parseInt(serv_array[$(this)[0].selectedIndex][0]);
+              $("#procotol")[0].selectedIndex = parseInt(serv_array[$(this)[0].selectedIndex][0]);
+              $("#portstart").val(serv_array[$(this)[0].selectedIndex][1]);
+              $("#portend").val(serv_array[$(this)[0].selectedIndex][2]);
+              $("#userdefined").val($(this).val());
+              //$("#userdefined").val($(this).find("span[name='selected_name']").text());
+
+              disable = true;
+          }
+          else
+          {
+              disable = false;
+              $("#userdefined").val("");
+          }
+      });
+
+
+      $("[name=filterType]").on('click', function() {
+          var filterType = $("[name=filterType]:checked").val();
+          
+          if (filterType == "Single")
+          {
+              $("#single-ip input").attr("readonly", false);
+              $("#rangeStart-ip input").attr("readonly", true);
+              $("#rangeEnd-ip input").attr("readonly", true);
+              $("#single-ip :input:eq(0)").focus();
+          }
+          else if (filterType == "Range")
+          {
+              $("#single-ip input").attr("readonly", true);
+              $("#rangeStart-ip input").attr("readonly", false);
+              $("#rangeEnd-ip input").attr("readonly", false);
+              $("#rangeStart-ip :input:eq(0)").focus();
+          }
+          else if (filterType == "All")
+          {
+              $("#single-ip input").attr("readonly", true);
+              $("#rangeStart-ip input").attr("readonly", true);
+              $("#rangeEnd-ip input").attr("readonly", true);
+              $("#apply").focus();
+          }
+      });
+
+      $("#cancel").on('click', function() {
+          location.href='BKS_service.html';
+      });
+      
+      $("button[name='apply']").on('click', function() {
+          $(this).prop("disabled", true);
+            $.postForm(funcName, $('#target'), 'cgi-bin/rex_cgi','postForm_callback');
+      });
+      
+      $("button[name='add2']").on('click', function() {
+          $(this).prop("disabled", true);
+          if(check_data())
+          {
+            $.postForm(funcName, $('#target'), 'cgi-bin/rex_cgi','postForm_callback');
+          }else{
+            $(this).prop("disabled", false);
+          }
+      });
+      
+      $("button[name='apply2']").on('click', function() {
+          $(this).prop("disabled", true);
+          if(check_data())
+          {
+            $.postForm(funcName, $('#target'), 'cgi-bin/rex_cgi','postForm_callback');
+          }else {
+            $(this).prop("disabled", false);
+          }
+      });
+  });
+  
+  function postForm_callback(json)
+  {
+      if (json.message == "Block service rule duplication") {
+          alert(window.top.mlang["CBEE11"]);
+      }
+      else {
+          location.href='BKS_service.html';
+      }
+  }
+
+  function post_fillout_init()
+  {
+      $("#filter_ip_all").click();
+  }
+  
+  function services_table_post_fillout()
+  {
+      //default to select first row
+      if($("#services_table tr").eq(1).length > 0)
+      {
+          $("#services_table tr").eq(1).find("input").prop("checked", true);
+      }
+  }
+  function toggleDiv()
+  {
+      $("#table-div").hide();
+      $("#edit-div").show();
+      $("#single-ip :input:eq(3)").val("");
+      $("#rangeStart-ip :input:eq(3)").val("");
+      $("#rangeEnd-ip :input:eq(3)").val("");
+      funcName = "blockServiceSetup";
+      //PEGA JYang, change the edit id to "main"
+      $('div[name=main]').attr("id", "");
+      $('div[name=mainEdit]').attr("id", "main");
+  }
+  
+  function check_data()
+  {
+      if($("#portstart").val() == "" || $("#portend").val() == "")
+      {
+          alert(window.top.mlang["CBEE07"]);
+          return false;
+      }
+
+      if($("#portstart").val() != parseInt($("#portstart").val()) ||
+          parseInt($("#portstart").val(), 10) < 1 ||
+          parseInt($("#portstart").val(), 10) > 65535)
+      {
+          alert(window.top.mlang["CBEE08"]);
+          return false;
+      }
+
+      if($("#portend").val() != parseInt($("#portend").val()) ||
+          parseInt($("#portend").val(), 10) < 1 || 
+          parseInt($("#portend").val(), 10) > 65535)
+      {
+          alert(window.top.mlang["CBEE02"]);
+          return false;
+      }
+
+
+      if(parseInt($("#portend").val(),10) < parseInt($("#portstart").val(),10))
+      {
+          alert(window.top.mlang["CBEE01"]);
+          return false;
+      }
+
+      if($("#userdefined").val() == "" || $("#userdefined").val().match( /[^\x20-\x7E]/ ))
+      {
+          alert(window.top.mlang["CBEE09"]);
+          return false;
+      }
+      
+      var str_lan_ip = $("#lanIp").val();
+      var str_lan_netmask = $("#lanMask").val();
+      var lan_ip = str_lan_ip.split(".");
+      var lan_netmask = str_lan_netmask.split(".");
+      var lan_ipaddr = ip2int(str_lan_ip);
+      var lan_netmaskaddr =  ip2int(str_lan_netmask);
+      
+      /*$("input[name='trustIpAddr']").val($("#trusted-ip input").map(function(){
+          return $(this).val();
+      }).get().join("."));*/
+
+
+      if($("input[name='filterType']:checked").val() == "Single")
+      {   
+          if(!$("#single-ip").getIp())
+          {
+              alert(window.top.mlang["ACB_098"]);
+              return false;
+          }
+
+          var singleIp_addr = ip2int($("#single-ip").getIp());
+
+          if(checkIP($("#single-ip").getIp(),254) ||
+             parseInt($("#single-ip").getIp().split(".")[3],10) == 0 ||
+             ((singleIp_addr & lan_netmaskaddr) != (lan_ipaddr & lan_netmaskaddr) ))
+          {
+              alert(window.top.mlang["ACB_098"]);
+              return false;
+          }else if(singleIp_addr == lan_ipaddr)
+          {
+            alert(window.top.mlang["MRS096"]);
+            return false;
+          }
+          $("input[name='ipAddr']").val($("#single-ip").getIp());
+      }
+      else if($("input[name='filterType']:checked").val() == "Range")
+      {
+          if(!$("#rangeStart-ip").getIp() || !$("#rangeEnd-ip").getIp())
+          {
+              alert(window.top.mlang["CBEE03"]);
+              return false;
+          }
+          var start_ipaddr = ip2int($("#rangeStart-ip").getIp());
+          var end_ipaddr = ip2int($("#rangeEnd-ip").getIp());
+          if(checkIP($("#rangeStart-ip").getIp(),254) ||
+             parseInt($("#rangeStart-ip").getIp().split(".")[3],10) == 0 ||
+             ((start_ipaddr & lan_netmaskaddr) != (lan_ipaddr & lan_netmaskaddr) ))
+          {
+              alert(window.top.mlang["CBEE03"]);
+              return false;
+          }
+          
+          if(!ip_range_check($("#rangeStart-ip").getIp(),$("#rangeEnd-ip").getIp()))
+          {
+              alert(window.top.mlang["CBEE03"]);
+              return false;
+          }
+          
+          $("input[name='startIpAddr']").val($("#rangeStart-ip").getIp());
+          $("input[name='endIpAddr']").val($("#rangeEnd-ip").getIp());
+      }
+
+      return true;
+  }
+  </script>  
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('BKS_service','')"" class="page-body" onResize="window.top.change_size($(this));">
+  <form id="target"  name="formname" method="POST" >
+  <div id="table-div">
+    <div class="page-header" style="position: relative;" mlang="LUP018">Block Services</div>
+    <div id="main" name="main" class="form-group" style="overflow:auto;scrolling:auto">
+      <div class="form-row ">
+        <label class="checkbox-container">
+          <span mlang="CBS012">Never</span>
+          <input checked type="radio" name="blockingType" id="skeyword_never" value="never">
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+      <div class="form-row ">
+        <label class="checkbox-container">
+          <span mlang="CBS013">Per Schedule</span>
+          <input  type="radio" name="blockingType" id="skeyword_sched" value="schedule">
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+      <div class="form-row ">
+        <label class="checkbox-container">
+          <span mlang="CBS001">Always</span>
+          <input  type="radio" name="blockingType" id="skeyword_always" value="always">
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+
+      <div class="space-divider">&nbsp;</div>
+
+      <div class="form-row">
+        <a href="javascript:loadhelp('BKS_service','table')" tabindex="-1">
+          <b mlang="CBE004" >Service Table</b>
+        </a>
+      </div>
+      <div class="form-row">
+        <table id="services_table" border="1" cellpadding="2" cellspacing="0" width="100%" class="tbWhite table1 cmn-table-2" style="width:97%;">
+          <tr class="table_header">
+            <td nowrap align="center" width="6%"><span class="thead"> &nbsp;</span></td>
+            <td nowrap align="center" width="6%"><span class="thead"># </span></td>
+            <td nowrap align="center"><span class="thead" mlang="CBE005" >Service Type</span></td>
+            <td nowrap align="center"><span class="thead" mlang="SBS028" >Port</span></td>
+            <td nowrap align="center"><span class="thead" mlang="CBE003" >IP</span></td>
+          </tr>
+        </table>
+      </div>
+      <div class="form-row">
+          <button type="button" value="Add" name="add1" id="add" class="button-sty1" mlang="OTH012" >Add</button>
+          <button type="button" value="Edit" name="Edit" id="edit" class="button-sty1" mlang="UAS011" >Edit</button>
+          <button type="button" value="Delete" name="Delete" id="delete" class="button-sty1" mlang="UAS013" >Delete</button>
+        </div>
+    </div><!--form-group-->  
+  </div>
+  
+  <div id="edit-div" style="display:none;">
+    <div class="page-header" style="position: relative;" mlang="CBE006">Block Services Setup</div>
+    <div id="mainEdit" name="mainEdit" class="form-group" style="overflow:auto;scrolling:auto;" >
+      <div class="form-row">
+        
+      </div>
+      <div class="form-row">
+          <span mlang="CBE005">Service Type</span>
+      </div>
+      <div class="form-row">
+        <select name="serviceType" id="service_type" size="1">
+          <option value="User_Defined" selected mlang="CBEE12">User Defined</option>
+          <option value="Any">ALL</option>
+          <option value="Any(TCP)">Any(TCP)</option>
+          <option value="Any(UDP)">Any(UDP)</option>
+          <option value="AIM">AIM</option>
+          <option value="Age-of-Empire">Age of Empire</option>
+          <option value="BGP">BGP</option>
+          <option value="BOOTP-CLIENT">BOOTP CLIENT</option>
+          <option value="BOOTP-SERVER">BOOTP SERVER</option>
+          <option value="CU-SEEME7648">CU-SEEME(7648)</option>
+          <option value="CU-SEEME24032">CU-SEEME(24032)</option>
+          <option value="DNS">DNS</option>
+          <option value="FINGER">FINGER</option>
+          <option value="FTP">FTP</option>
+          <option value="HTTP">HTTP</option>
+          <option value="HTTPS">HTTPS</option>
+          <option value="ICUII">ICUII</option>
+          <option value="IDENT">IDENT</option>
+          <option value="IP_Phone">IP Phone</option>
+          <option value="IRC">IRC</option>
+          <option value="NetMeeting">NetMeeting/H.323</option>
+          <option value="NFS">NFS</option>
+          <option value="News">News</option>
+          <option value="QuakeII/III">Quake II & III</option>
+          <option value="RCMD">RCMD</option>
+          <option value="Real-Audio">Real Audio</option>
+          <option value="REXEC">REXEC</option>
+          <option value="RLOGIN">RLOGIN</option>
+          <option value="RTELNET">RTELNET</option>
+          <option value="RTSP">RTSP</option>
+          <option value="SFTP">SFTP</option>
+          <option value="SMTP">SMTP</option>
+          <option value="SNMP">SNMP</option>
+          <option value="SNMP_TRAPS">SNMP TRAPS</option>
+          <option value="SQL-NET">SQL-NET</option>
+          <option value="SSH">SSH</option>
+          <option value="STRMWORKS">STRMWORKS</option>
+          <option value="TACACS">TACACS</option>
+          <option value="Telnet">Telnet</option>
+          <option value="TFTP">TFTP</option>
+          <option value="VDOLIVE">VDOLIVE</option>
+          <option value="VPN-IPSEC">VPN-IPSEC</option>
+          <option value="VPN-L2TP">VPN-L2TP</option>
+          <option value="VPN-PPTP">VPN-PPTP</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <span mlang="SBS014">Protocol</span>
+      </div>
+
+      <!--PEGA JYang, sync two select list for Netgear GUI automation id (dirty solution)-->
+      <div class="form-row" style="display:none">
+        <select name="protocol" id="Procotol" size="1">
+          <option value="TCP" selected>TCP</option>
+          <option value="UDP">UDP</option>
+          <option value="TCP_UDP">TCP/UDP</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <select id="procotol" size="1" onfocus="if(disable) this.blur();">
+          <option value="TCP" selected>TCP</option>
+          <option value="UDP">UDP</option>
+          <option value="TCP/UDP">TCP/UDP</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <span mlang="CBE012">Starting Port</span>
+      </div>
+      <div class="form-row">
+        <input type="text" class="input1" name="startPort" id="portstart" size="7" maxlength="5" value="" onfocus="if(disable) this.blur();">(1~65535)
+      </div>
+
+      <div class="form-row">
+          <span mlang="CBE001">Ending Port</span>:
+      </div>
+      <div class="form-row">
+        <input type="text" class="input1" name="endPort" id="portend" size="7" maxlength="5" value="" onfocus="if(disable) this.blur();">(1~65535)
+      </div>
+
+      <div class="form-row">
+        <span mlang="CBE011">Service Type/User Defined</span>
+      </div>
+      <div class="form-row">
+        <input type="text" class="input1" name="userDefined" id="userdefined" size="20" maxlength="30" value="" onfocus="if(disable) this.blur();">
+      </div>
+
+      <div class="space-divider">&nbsp;</div>
+
+      <div class="form-row">
+        <a href="javascript:loadhelp('BKS_service_add','ip')" tabindex="-1"><b mlang="CBE008">Filter Services For</b>:</a>
+      </div>
+      <div class="form-row">
+        <label class="checkbox-container">
+          <span mlang="CBE009">Only This IP Address</span>:
+          <input type="radio" name="filterType" id="filter_ip_single" value="Single" />
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+      <div class="form-row">
+        <div id="single-ip"></div>
+      </div>
+      
+      <div class="form-row">
+        <label class="checkbox-container">
+          <span mlang="CBE013">IP Address Range</span>:
+          <input type="radio" name="filterType" id="filter_ip_range" value="Range" />
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+      
+      <div class="form-row">
+        <div id="rangeStart-ip" readonly="readonly"></div>
+      </div>
+      <div class="form-row">
+        <span mlang="CBE010">to</span>
+      </div>
+      <div class="form-row">
+        <div id="rangeEnd-ip" readonly="readonly"></div>
+      </div>
+      
+      <div class="form-row">
+        <label class="checkbox-container">
+          <span mlang="CBE007">All IP Addresses</span>
+          <input type="radio" checked name="filterType" id="filter_ip_all" value="All" />
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+      <input type="hidden" name="action" value="" />
+      <input type="hidden" name="iid" value="" />
+      <input type="hidden" name="ipAddr" value="" />
+      <input type="hidden" name="startIpAddr" value="" />
+      <input type="hidden" name="endIpAddr" value="" />
+      <input type="hidden" name="lanIp" id="lanIp" disabled>
+      <input type="hidden" name="lanMask" id="lanMask" disabled>
+    </div><!--form-group-->
+    
+  </div><!--edit-div-->
+  <div class="form-btn-row" id="form_btn_div">
+      <button type="button" value="BUTTON" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+      <button type="button" value="apply"  name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+      <button type="button" style="display:none;" value="Add"  name="add2" id="add2" class="button-apply apply_bt" mlang="OTH012" >Apply</button>
+      <button type="button" style="display:none;" value="apply"  name="apply2" id="apply2" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+  </div>
+</form>
+<? genHelpSection() ?>
+</html>

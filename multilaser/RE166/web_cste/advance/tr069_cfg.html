@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="tools"></adv-child-menu>
+  <div class="advance-box">
+  	<x-help :text="lang_t('tr069_cfg.help')"></x-help>
+	<br><br>
+	<div class="fun-box">
+	  <table class="table"> 
+	  	<tbody>
+	  	<tr>
+	  	  <td class="fun-left">TR069</td>
+	  	  <td>
+	  	  	<x-switch v-model="status" @change="statusChange"></x-switch>
+	  	  </td>
+		</tr>
+  		</tbody> 
+		<tbody v-show="status">
+			<tr>
+			  	<td class="fun-left">&nbsp;</td>
+			  	<td>
+					<b>ACS</b>
+			  	</td>
+			</tr> 
+			<tr>
+			  	<td class="fun-left">URL</td>
+			  	<td>
+					<input type="text" v-model="url" v-verify="formRules" data-name="url" maxlength="32">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.user') }}</td>
+			  	<td>
+					<input type="text" v-model="user" v-verify="formRules" data-name="user" maxlength="32">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.pass') }}</td>
+			  	<td>
+					<input type="text" v-model="pass" v-verify="formRules" data-name="pass" maxlength="32">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.inform') }}</td>
+			  	<td>
+			  		<x-switch v-model="inform"></x-switch>
+			  	</td>
+			</tr>
+			<tr v-if="inform">
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.inform_interval') }}</td>
+			  	<td>
+					<input type="text" v-model="interval" v-verify="formRules" data-name="interval" maxlength="20">
+			  	</td>
+			</tr>
+			<tr><td colspan="2">&nbsp;</td></tr>
+			<tr>
+				<td class="fun-left">STUN</td>
+				<td>
+				  <x-switch v-model="stunEnable"></x-switch>
+				</td>
+			</tr>
+			  <tr>
+				<td class="fun-left">{{ lang_t('ipv6.user') }}</td>
+				<td>
+				<input type="text" v-model="stun_user" v-verify="formRules" data-name="stunuser" :disabled="!stunEnable" maxlength="32">
+				</td>
+			</tr>
+			<tr>
+			  <td class="fun-left">{{ lang_t('ipv6.pass') }}</td>
+			  <td>
+			  <input type="text" v-model="stun_pass" v-verify="formRules" data-name="stunpass" :disabled="!stunEnable" maxlength="32">
+			  </td>
+		  </tr>
+			<tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.server_addr',['STUN']) }}</td>
+				<td>
+					<input type="text" v-model="stunServerAddr" v-verify="formRules" data-name="stunurl" :disabled="!stunEnable">
+				</td>
+			</tr>
+			<tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.server_port',['STUN']) }}</td>
+				<td>
+					<input type="text" v-model="stunPort" v-verify="formRules" data-name="stunport" :disabled="!stunEnable" maxlength="5">
+				</td>
+			</tr>
+			<tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.max_alive') }}</td>
+				<td>
+					<input type="text" v-model="stunMaxAlive" v-verify="formRules" data-name="stunmaxalive" :disabled="!stunEnable" maxlength="20">
+				</td>
+			</tr>
+			<tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.min_alive') }}</td>
+				<td>
+					<input type="text" v-model="stunMinAlive" v-verify="formRules" data-name="stunminalive" :disabled="!stunEnable" maxlength="20">
+				</td>
+			</tr>
+			<tr><td colspan="2"></td></tr>
+			<tr>
+				<td class="fun-left"></td>
+				<td>
+					<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  		</td>
+			</tr>
+	  	</tbody>
+	  </table>
+  	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,status:!1,url:"",user:"",pass:"",inform:!1,interval:"",requestUser:"",requestPass:"",acs:"",request:"",stunEnable:!1,stunServerAddr:"",stunPort:"",stunMaxAlive:"",stunMinAlive:"",stun_user:"",stun_pass:""}},computed:{modeName:function(){return[this.lang_t("schedule.disable"),this.lang_t("schedule.spec_time"),this.lang_t("schedule.countdown")]},formRules:function(){var a=this;return{url:function(s,n){s?cs.isUrl(s)?n():n(lang_t("traceroute.msg3")):n("URL"+lang_t("rule.msg12"))},stunurl:function(s,n){a.stunEnable?s?cs.isUrl(s)?n():n(lang_t("traceroute.msg3")):n(lang_t("tr069_cfg.server_addr",["STUN"])+lang_t("rule.msg12")):n()},user:function(s,n){var t=cs.commentstr(s);0==t?n(lang_t("ipv6.user")+lang_t("rule.msg12")):1==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):n()},pass:function(s,n){var t=cs.commentstr(s);0==t?n(lang_t("ipv6.pass")+lang_t("rule.msg12")):1==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):n()},rquser:function(s,n){var t=cs.commentstr(s);1==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):n()},rqpass:function(s,n){var t=cs.commentstr(s);1==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):n()},stunuser:function(s,n){var t=cs.commentstr(s);a.stunEnable&&(0==t?n(lang_t("ipv6.user")+lang_t("rule.msg12")):1==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.user")+lang_t("ddns.msg3")):n())},stunpass:function(s,n){var t=cs.commentstr(s);a.stunEnable&&(0==t?n(lang_t("ipv6.pass")+lang_t("rule.msg12")):1==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):3==t?n(lang_t("ipv6.pass")+lang_t("ddns.msg3")):n())},stunport:function(s,n){var t=cs.port(s);a.stunEnable&&(0==t?n(lang_t("tr069_cfg.server_port",["STUN"])+lang_t("rule.msg12")):1==t?n(lang_t("rule.msg6")):2==t?n(lang_t("rule.msg6")):n())},stunmaxalive:function(s,n){var t=cs.num(s);a.stunEnable&&(0==t?n(lang_t("tr069_cfg.max_alive")+lang_t("rule.msg12")):1==t?n(lang_t("tr069_cfg.max_alive")+lang_t("rule.msg5")):n())},stunminalive:function(s,n){var t=cs.num(s);a.stunEnable&&(0==t?n(lang_t("tr069_cfg.min_alive")+lang_t("rule.msg12")):1==t?n(lang_t("tr069_cfg.min_alive")+lang_t("rule.msg5")):n())},interval:function(s,n){var t=cs.num(s);0==t?n(lang_t("tr069_cfg.inform_interval")+lang_t("rule.msg12")):1==t?n(lang_t("tr069_cfg.inform_interval")+lang_t("rule.msg5")):n()}}}},created:function(){var n=this;uiPost.getTr069Cfg(function(s){n.status=1==s.enable,n.url=s.url,n.user=s.user,n.pass=s.pass,n.inform="1"==s.informEnable,n.interval=s.interval,n.requestUser=s.requestUser,n.requestPass=s.requestPass,n.stun_user=s.stun_user,n.stun_pass=s.stun_pass,n.stunEnable="1"==s.stunEnable,n.stunServerAddr=s.stunServerAddr,n.stunPort=s.stunPort,n.stunMaxAlive=s.stunMaxAlive,n.stunMinAlive=s.stunMinAlive})},methods:{statusChange:function(s){var n={enable:s?"1":"0",addEffect:"1"};s||uiPost.setTr069Cfg(n,function(s){var n=1;s&&s.wtime&&"0"!=s.wtime&&(n=s.wtime),Cstool.applyLoad(n,function(){location.href=location.href})})},handleSubmit:function(){var n=this,t={};Cstool.Verify(this.formRules,function(s){s&&n.status&&(t.addEffect="0",t.enable=n.status?"1":"0",t.url=n.url,t.user=n.user,t.pass=n.pass,t.informEnable=n.inform?"1":"0",t.interval=n.interval,t.requestUser=n.requestUser,t.requestPass=n.requestPass,t.stunEnable=n.stunEnable?"1":"0",n.stunEnable&&(t.stun_user=n.stun_user,t.stun_pass=n.stun_pass,t.stunServerAddr=n.stunServerAddr,t.stunPort=n.stunPort,t.stunMaxAlive=n.stunMaxAlive,t.stunMinAlive=n.stunMinAlive),uiPost.setTr069Cfg(t,function(s){var n=1;s&&(s.wtime&&"0"!=s.wtime&&(n=s.wtime),Cstool.applyLoad(n,function(){location.href=location.href}))}))})}}}</script><script src="/static/js/main.js"></script></body></html>

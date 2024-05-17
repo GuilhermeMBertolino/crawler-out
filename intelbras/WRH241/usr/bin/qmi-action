@@ -1,0 +1,169 @@
+#!/bin/sh
+
+UDHCPC="udhcpc"
+UDHCPC_PID_FILE="/var/run/udhcpc.usbnet.pid"
+PIDFILE_CONNECT="/var/run/udhcpc.usbnet.pid.connect"
+DEMAND_FILE="/var/run/udhcpc.usbnet.demand"
+UDHCPC_DEFAULT_SCRIPT="/usr/bin/dhcp.script"
+. /usr/bin/scriptlib
+ETH="usbnet0"
+LANIF=`rdcsman 0x8000F201 str`
+CNTTYPE=`rdcsman 0x001e000a u16`
+CNT_STATUS=`rdcsman 0x801e0700 u16`
+WANTYPE=`rdcsman 0x00010003 u16`
+#WANIP=`rdcsman 0x80010002 ipv4`
+WANIP=`rdcsman 0x801E0200 ipv4`
+HOSTNAME=``
+CNTFORCE=`rdcsman 0x8001000e u8`
+MTU=`rdcsman 0x801e000b u32`
+LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`
+
+qmi_status()
+{
+		TIME=0
+		TIMEOUT=10
+		while [ true ] ; do	
+			sl_get_IP_NM_GW_in_ifconfig $ETH IF_IP IF_NM IF_GW
+			#echo "$0 : IF_IP=$IF_IP IF_NM=$IF_NM IF_GW=$IF_GW"	
+			if [ "${IF_IP}x" != "x" -a "${IF_NM}x" != "x" -a "${IF_GW}x" != "x" ] ; then	
+				return 0		
+			else			
+				sleep 1
+				TIME=$((TIME+1))
+				if [ $TIME -gt $TIMEOUT ] ; then
+					return 1	
+				fi			
+			fi
+		done
+}
+
+
+qmi_start()
+{
+	send_ATcmd /dev/modem 'AT+CGDCONT=1,\"IP\",\"\"' &
+
+	sleep 2
+
+	APN=`rdcsman 0x001e0003 str`
+    USER=`rdcsman 0x001e0001 str`
+    PASSWORD=`rdcsman 0x001e0002 str`
+    AUTH_TYPE=`rdcsman 0x001e000f u16`
+	kill `ps | grep udhcpc |grep usbnet0| cut -dr -f1`
+	if [ -n "$APN" -a -z "$USER" -a -z "$PASSWORD" ]; then
+	    Qmi_connect -c $APN
+        if [ $? = 0 ]; then
+            wrcsman "0x801e0700 0x03"
+        fi
+    elif [ -n "$APN" -a -n "$USER" -a -n "$PASSWORD" ]; then
+        Qmi_connect -c $APN $AUTH_TYPE $USER $PASSWORD
+        if [ $? = 0 ]; then
+            wrcsman "0x801e0700 0x03"
+        fi
+    else
+        Qmi_connect -c
+#        if [ $? = 0 ]; then
+#            wrcsman "0x801e0700 0x03"
+#        fi
+    fi
+
+	IF_IP=`rdcsman 0x801e0200 ipv4`
+    echo "Got DHCP IP: $IF_IP" > /tmp/qmi_ip
+    if [ "$IF_IP" == "0.0.0.0" ] ; then
+        3g-action stop
+    fi
+
+	return 0
+}
+
+
+qmi_stop()
+{
+#	kill `ps | grep udhcpc |grep usbnet0| cut -dr -f1`
+
+    if [ -f "$UDHCPC_PID_FILE" -a -r "$UDHCPC_PID_FILE" ] ; then
+        UDHCPC_PID=`cat $UDHCPC_PID_FILE`
+        rm -f $UDHCPC_PID_FILE
+        kill $UDHCPC_PID > /dev/null 2>&1 || exit 1
+    fi
+
+#   if [ "$CNT_STATUS" -eq 3 ] || [ "$CNT_STATUS" -eq 2 ]  && [ "$WANIP" != "0.0.0.0" ]; then
+	if [ "$WANIP" != "0.0.0.0" ]; then
+        Qmi_connect -d		
+	    ifconfig $ETH down 				 		
+	    wrcsman "0x801e0200 0x00 && \
+		 	    0x801e0300 0x00 && \
+			    0x801e0400 0x00 && \
+			    0x801e0500 0x00 && \
+			    0x801e0600 0x00 && \
+			    0x801e0700 0x00 && \
+			    0x801E0800 0x00 && \
+			    0x801E0900 0x00 && \
+			    0x801E1200 0x00 && \
+			    0x80010002 0x00 && \
+			    0x80010003 0x00 && \
+			    0x80010004 0x00 && \
+			    0x80010005 0x00 && \
+			    0x80010006 0x00 && \
+			    0x80010007 0x00"
+	    rmcsman "0x801e0100"
+	else
+        wrcsman "0x801e0700 0x00 && \
+                 0x80010007 0x00"
+    fi
+
+	return 0
+}
+
+# main ##########################################################
+
+. /usr/bin/scriptlib
+
+case "$1" in
+
+	start)
+		qmi_start		
+#		if [ $? = 1 ] ; then
+#			ifconfig $ETH 0.0.0.0 
+#			exit 1
+#		fi	
+		exit 0	
+		;;
+	
+	stop)
+		qmi_stop
+		;;
+	
+	release)
+#		if [ -f "$UDHCPC_PID_FILE" -a -r "$UDHCPC_PID_FILE" ] ; then 
+#			UDHCPC_PID=`cat $UDHCPC_PID_FILE`
+#			kill -USR2 $UDHCPC_PID			
+#		fi
+#		wrcsman "0x801e0500 0x00 && \
+#				0x80010007 0x00"		
+		exit 0		
+		;;
+	
+	renew)
+#		if [ $CNTTYPE = 0 ] ; then
+#			sierra_stop
+#			sierra_start
+#		elif [ -f "$UDHCPC_PID_FILE" -a -r "$UDHCPC_PID_FILE" ] ; then 
+#			UDHCPC_PID=`cat $UDHCPC_PID_FILE`
+#			kill -USR1 $UDHCPC_PID
+#			sierra_status			 			 
+#		else
+#			$UDHCPC -n -i $ETH -p $UDHCPC_PID_FILE -s $UDHCPC_DEFAULT_SCRIPT 
+
+#		fi
+		
+		exit 0									
+		;;
+	
+		
+	*)
+		exit 1
+		;;
+esac
+
+exit 0		
+			

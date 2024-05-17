@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title> 
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+<script type="text/javascript" src="script/sorttable.js"></script>
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+  
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+
+
+function loadSettings()
+{
+	var access_control_add_type = document.getElementsByName("access_control_add_type")[0].value;
+
+	return 0;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+//	if( cf.dev_name.value.length < 1 )
+//		msg += "Input name can't be empty\n";
+/*
+    if (cf.dev_name.value.match( /[^\x20-\x7E]/ ))
+        msg+="<%945%>\n";
+*/
+
+    if (cf.is_edit_itself.value.length > 0 && cf.access_control_option.value.match("block")){
+        msg+="<%997%>\n";
+        cf.access_control_option.selectedIndex=0;
+    }
+	
+	if((new TextEncoder().encode(cf.dev_name.value)).length >63 || cf.dev_name.value.length > 32)
+		msg+="<%945%>\n";
+	
+/*
+    if (   (cf.dev_name.value.match( /[\x20-\x2C]/ ))
+        || (cf.dev_name.value.match( /[\x2E-\x2F]/ ))
+        || (cf.dev_name.value.match( /[\x3A-\x40]/ ))
+        || (cf.dev_name.value.match( /[\x5B-\x5E]/ ))
+        || (cf.dev_name.value.match( /[\x60-\x60]/ ))
+        || (cf.dev_name.value.match( /[\x7B-\x7E]/ ))
+       )
+    {
+        msg+= "<%945%>\n";
+    }
+*/
+    if (msg.length > 1) {
+        alert(msg);
+        return false;
+    }
+	
+    cf.dev_mac.value = cf.mac.value.replace(/:/g,"");
+
+    return true;			
+}
+
+//-->
+</script>
+<link rel="stylesheet" type="text/css" href="css/custom.css">
+</head>
+<body  onload="change_size(false);loadSettings();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="frmLan" method="POST" action="access_control_edit.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+	<img class="subtop-image" src="<%74%>">
+<div class="subhead2"> Edit Device Name</div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div id="main" class="scroll-pane main_bas" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+<tr>
+<td nowrap class="pb-0"><%523%></td>
+<td nowrap class="pt-0">
+  <select id="<%998%>" name="access_control_option">                             
+  <option value='allow' <%999%> > <%977%> </option>
+  <option value='block' <%1000%> > <%978%> </option>
+  </select> 
+</td>
+</tr>
+<tr>
+<td nowrap><%949%></td>
+<td nowrap><input id="mac_addr" class="input1" type="text" size="17" maxlength="17" name="mac" disabled="disable" value="<%1001%>"></td>
+</tr>
+<tr>
+<td nowrap><%954%></td>
+<td nowrap><input id="dev_name" class="input1" type="text" size="32" maxlength="32" name="dev_name" value="<%1002%>"></td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+
+
+<tr><td>&nbsp;</td></tr>
+<tr><td colspan="2" ><div height="12" id="black_list_line2" style="background-image:url('liteblue.gif');width:100%;display:none">&nbsp;</div></td></tr>
+</table></div></td></tr>
+
+<tr align="left" valign="middle">
+<td colspan="2" class="table-seperate-border" style="padding-top:10px;padding-bottom:10px">
+<div class="fix_button">
+<button id="cancel" value="<%76%>" onClick="buttonClick(this,'<%76%>');location.href='DEV_control.htm'" type="BUTTON" name="Cancel" class="button-cancel cancel_bt" ><%77%></button>
+<button id="apply" value="<%78%>"  onClick="buttonClick(this,'<%78%>');return checkData()" type="SUBMIT" name="action" class=<%79%> ><%80%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe"  src="DEV_control_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+<a name="helpframe-anchor"></a>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+    <input name="access_control_add_type" type="hidden" value="allowed_list">
+    <input name="is_edit_itself" type="hidden" value="<%956%>">
+    <input name="dev_mac" type="hidden" value="">
+</form>
+
+</div>
+</body>
+ 
+</html>
+

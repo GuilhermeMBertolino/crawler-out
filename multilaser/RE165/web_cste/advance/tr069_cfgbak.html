@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="tools"></adv-child-menu>
+  <div class="advance-box">
+  	<x-help :text="lang_t('tr069_cfg.help')"></x-help>
+	<br><br>
+	<div class="fun-box">
+	  <table class="table"> 
+	  	<tbody>
+	  	<tr>
+	  	  <td class="fun-left">TR069</td>
+	  	  <td>
+	  	  	<x-switch v-model="status" @change="statusChange"></x-switch>
+	  	  </td>
+		</tr>
+  		</tbody> 
+		<tbody v-show="status">
+			<tr>
+			  	<td class="fun-left">ACS</td>
+			  	<td>
+					<span>{{ acs }}</span>
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">URL</td>
+			  	<td>
+					<input type="text" v-model="url" v-verify="formRules" data-name="url">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.user') }}</td>
+			  	<td>
+					<input type="text" v-model="user" v-verify="formRules" data-name="user">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.pass') }}</td>
+			  	<td>
+					<input type="text" v-model="pass" v-verify="formRules" data-name="pass">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.inform') }}</td>
+			  	<td>
+			  		<x-switch v-model="inform"></x-switch>
+			  	</td>
+			</tr>
+			<tr v-if="inform">
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.inform_interval') }}</td>
+			  	<td>
+					<input type="text" v-model="interval" v-verify="formRules" data-name="interval">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.request') }}</td>
+			  	<td>
+					<span>{{ request }}</span>
+			  	</td>
+			</tr>  
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.user') }}</td>
+			  	<td>
+					<input type="text" v-model="requestUser" v-verify="formRules" data-name="user">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('ipv6.pass') }}</td>
+			  	<td>
+					<input type="text" v-model="requestPass" v-verify="formRules" data-name="pass">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('tr069_cfg.path') }}</td>
+			  	<td>
+					<input type="text" v-model="path" v-verify="formRules" data-name="path">
+			  	</td>
+			</tr>
+			<tr>
+			  	<td class="fun-left">{{ lang_t('remote.port') }}</td>
+			  	<td>
+					<input type="text" v-model="port" v-verify="formRules" data-name="port">
+			  	</td>
+			</tr>
+
+			<tr>
+				<td class="fun-left">STUN</td>
+				<td>
+				  <x-switch v-model="stunEnable"></x-switch>
+				</td>
+			  </tr>
+			  <tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.server_addr',['STUN']) }}</td>
+				<td>
+					<input type="text" v-model="stunServerAddr" v-verify="formRules" data-name="stunServerAddr" :disabled="!stunEnable">
+				</td>
+			  </tr>
+			  <tr>
+				<td class="fun-left">{{ lang_t('tr069_cfg.server_port',['STUN']) }}</td>
+				<td>
+					<input type="text" v-model="stunPort" v-verify="formRules" data-name="stunPort" :disabled="!stunEnable">
+				</td>
+		  	</tr>
+			<tr><td colspan="2"></td></tr>
+			<tr>
+				<td class="fun-left"></td>
+				<td>
+					<button type="button" class="btn" @click="handleSubmit">{{ lang_t('common.apply') }}</button>
+		  		</td>
+			</tr>
+	  	</tbody>
+	  </table>
+  	</div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,status:!1,url:"",user:"",pass:"",inform:!1,interval:"",requestUser:"",requestPass:"",path:"",port:"",acs:"",request:"",stunEnable:!1,stunServerAddr:"",stunPort:""}},computed:{modeName:function(){return[this.lang_t("schedule.disable"),this.lang_t("schedule.spec_time"),this.lang_t("schedule.countdown")]},formRules:function(){return{url:function(t,e){},user:function(t,e){},pass:function(t,e){},interval:function(t,e){},path:function(t,e){},port:function(t,e){},stunServerAddr:function(){},stunPort:function(){}}}},created:function(){var e=this;uiPost.getTr069Cfg(function(t){e.status=1==t.enable,e.url=t.url,e.user=t.user,e.pass=t.pass,e.inform="1"==t.informEnable,e.interval=t.interval,e.requestUser=t.requestUser,e.requestPass=t.requestPass,e.path=t.path,e.port=t.port,e.stunEnable="1"==t.stunEnable,e.stunServerAddr=t.stunServerAddr,e.stunPort=t.stunPort})},methods:{statusChange:function(t){var e={enable:t?"1":"0",addEffect:"1"};uiPost.setTr069Cfg(e,function(t){var e=1;t&&t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href})})},handleSubmit:function(){var e=this,n={};Cstool.Verify(this.formRules,function(t){t&&e.status&&(n.addEffect="0",n.enable=e.status?"1":"0",n.url=e.url,n.user=e.user,n.pass=e.pass,n.informEnable=e.inform?"1":"0",n.interval=e.interval,n.requestUser=e.requestUser,n.requestPass=e.requestPass,n.path=e.path,n.port=e.port,n.stunEnable=e.stunEnable?"1":"0",n.stunServerAddr=e.stunServerAddr,n.stunPort=e.stunPort,uiPost.setTr069Cfg(n,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))}))})}}}</script><script src="/static/js/main.js"></script></body></html>

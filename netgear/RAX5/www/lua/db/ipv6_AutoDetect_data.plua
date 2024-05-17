@@ -1,0 +1,39 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local ipv6 = require "webGetFunc.ipv6"
+local detect_ret = ""
+local data = { }
+
+data["v6TypeHid"] = { value = ipv6.getSelectVal_v6Type(), type = 'input' }
+if ipv6.getSpanVal_AutoConfig_wan6Ip() ~= "" and ipv6.getMlangVal_AutoDetect_detectResult() ~= "6to4 Tunnel" then
+    data["wan6Ip"] = { value = ipv6.getSpanVal_AutoConfig_wan6Ip(), type = 'spantext' }
+else
+    data["wan6Ip"] = { value = "", type = 'spantext', mlang = "AIP023" }
+end
+data["dnsType"] = { value = ipv6.getRadioVal_AutoConfig_dnsType(), type = 'radio' }
+data["dns1"] = { value = ipv6.getIpVal_AutoConfig_Dns1(), type = 'ipv6', idStr_prefix = 'pdaddr' }
+data["dns2"] = { value = ipv6.getIpVal_AutoConfig_Dns2(), type = 'ipv6', idStr_prefix = 'sdaddr' }
+if ipv6.getSpanVal_AutoConfig_lan6Ip() ~= "" then
+    data["lan6Ip"] = { value = ipv6.getSpanVal_AutoConfig_lan6Ip(), type = 'spantext' }
+else
+    data["lan6Ip"] = { value = "", type = 'spantext', mlang = "AIP023" }
+end
+data["lanIpAddr"] = { value = ipv6.getRadioVal_AutoConfig_lanIpAddr(), type = 'radio' }
+data["enableInterfaceId"] = { value = ipv6.getCheckboxVal_AutoConfig_enableInterfaceId(), type = 'checkbox' }
+data["lanInterfaceId"] = { value = ipv6.getIpVal_AutoConfig_lanInterfaceId(), type = 'ipv6id', idStr_prefix = 'ipv6_interface_id' }
+detect_ret = ipv6.getMlangVal_AutoDetect_detectResult()
+if detect_ret == "down" then
+    data["AutoDetectResult"] = { value = "", type = 'spantext', mlang = "AIP020" }
+elseif detect_ret == "up" then
+    data["AutoDetectResult"] = { value = "", type = 'spantext', mlang = "AIP021" }
+else
+    data["AutoDetectResult"] = { value = ipv6.getMlangVal_AutoDetect_detectResult(), type = 'spantext' }
+end
+data["wanConnectionTypeHid"] = { value = ipv6.getWanConnectionStatus(), type = 'input' }
+data["filter"] = { value = ipv6.getRadioVal_filter(), type = 'radio' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

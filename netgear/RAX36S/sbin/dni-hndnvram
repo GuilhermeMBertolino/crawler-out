@@ -1,0 +1,230 @@
+#!/bin/sh
+
+module_name=$(cat /module_name)
+factory_mode="$(/bin/config get factory_mode)"
+
+############ 2G
+mac_2g=`artmtd -r mac |grep 'lan mac' |awk '{print $3}'`
+
+first_mac_2g_one_temp=0x`echo $mac_2g | cut -d ':' -f 1`
+first_mac_2g_one_temp=$((first_mac_2g_one_temp|2))
+first_mac_2g_one=`printf "%02x" $first_mac_2g_one_temp`
+
+mid_mac_2g=`echo $mac_2g | cut -d ':' -f 2-5`
+
+last_mac_2g_temp=0x`echo $mac_2g | cut -d ':' -f 6`
+last_mac_2g_temp1=$(((last_mac_2g_temp + 1 & 0x07) + (last_mac_2g_temp & 0xf8)))
+last_mac_2g_temp2=$(((last_mac_2g_temp + 2 & 0x07) + (last_mac_2g_temp & 0xf8)))
+last_mac_2g1=`printf "%02x" $last_mac_2g_temp1`
+last_mac_2g2=`printf "%02x" $last_mac_2g_temp2`
+
+mac_2g_guest="${first_mac_2g_one}:${mid_mac_2g}:${last_mac_2g1}"
+mac_2g_guest2="${first_mac_2g_one}:${mid_mac_2g}:${last_mac_2g2}"
+
+############ 5G2
+mac_5g=`artmtd -r mac |grep 'wlan5g' |awk '{print $3}'`
+
+first_mac_5g_one_temp=0x`echo $mac_5g | cut -d ':' -f 1`
+first_mac_5g_one_temp=$(((first_mac_5g_one_temp | 2) + 4 & 0xff))
+first_mac_5g_one=`printf "%02x" $first_mac_5g_one_temp`
+
+mid_mac_5g=`echo $mac_5g | cut -d ':' -f 2-5`
+
+last_mac_5g_temp=0x`echo $mac_5g | cut -d ':' -f 6`
+last_mac_5g_temp1=$(((last_mac_5g_temp + 1 & 0x07) + (last_mac_5g_temp & 0xf8)))
+last_mac_5g_temp2=$(((last_mac_5g_temp + 2 & 0x07) + (last_mac_5g_temp & 0xf8)))
+last_mac_5g1=`printf "%02x" $last_mac_5g_temp1`
+last_mac_5g2=`printf "%02x" $last_mac_5g_temp2`
+
+mac_5g_guest="${first_mac_5g_one}:${mid_mac_5g}:${last_mac_5g1}"
+mac_5g_guest2="${first_mac_5g_one}:${mid_mac_5g}:${last_mac_5g2}"
+
+############ 5G
+if [ "$(config get radio_number)" = "0x7" ]; then
+	mac_5g_2nd=`artmtd -r mac |grep 'wlan2nd5g' |awk '{print $3}'`
+
+	first_mac_5g_2nd_one_temp=0x`echo $mac_5g_2nd | cut -d ':' -f 1`
+	first_mac_5g_2nd_one_temp=$(((first_mac_5g_2nd_one_temp | 2) + 8 & 0xff))
+	first_mac_5g_2nd_one=`printf "%02x" $first_mac_5g_2nd_one_temp`
+
+	mid_mac_5g_2nd=`echo $mac_5g_2nd | cut -d ':' -f 2-5`
+
+	last_mac_5g_2nd_temp=0x`echo $mac_5g_2nd | cut -d ':' -f 6`
+	last_mac_5g_2nd_temp1=$(((last_mac_5g_2nd_temp + 1 & 0x07) + (last_mac_5g_2nd_temp & 0xf8)))
+	last_mac_5g_2nd_temp2=$(((last_mac_5g_2nd_temp + 2 & 0x07) + (last_mac_5g_2nd_temp & 0xf8)))
+	last_mac_5g_2nd1=`printf "%02x" $last_mac_5g_2nd_temp1`
+	last_mac_5g_2nd2=`printf "%02x" $last_mac_5g_2nd_temp2`
+
+	mac_5g_2nd_guest="${first_mac_5g_2nd_one}:${mid_mac_5g_2nd}:${last_mac_5g_2nd1}"
+	mac_5g_2nd_guest2="${first_mac_5g_2nd_one}:${mid_mac_5g_2nd}:${last_mac_5g_2nd2}"
+fi
+
+region="$(/sbin/artmtd -r region | grep REGION | awk '{print $2}')"
+# disable 5G1 high band
+if [ "$(config get radio_number)" = "0x7" ]; then
+	eval nvram kset sb/0/macaddr=$mac_2g
+	eval nvram kset sb/1/macaddr=$mac_5g
+	eval nvram kset 1:macaddr=$mac_5g_2nd
+	eval nvram set wl1.1_hwaddr=$mac_2g_guest
+	eval nvram set wl1.2_hwaddr=$mac_2g_guest2
+	eval nvram set wl2.1_hwaddr=$mac_5g_guest
+	eval nvram set wl2.2_hwaddr=$mac_5g_guest2
+	eval nvram set wl0.1_hwaddr=$mac_5g_2nd_guest
+	eval nvram set wl0.2_hwaddr=$mac_5g_2nd_guest2
+	nvram set triband=3 #Will be judged when generating wps unconfig ssid 
+
+	# [14D auto]if fast_restart=1, it will try rmmod and insmod dhd.ko, it will trigger re-bring up 43684 dongle.
+	nvram set fast_restart=1
+
+	nvram kset 1:tempthresh=120
+	nvram kset sb/0/tempthresh=120 
+	nvram kset sb/1/tempthresh=120
+
+	nvram kset sb/1/dis_ch_grp=0x18
+
+	# acsd setting
+	nvram set wl1_acs_boot_only=1
+	nvram set acs_2g_ch_no_restrict=1
+	nvram set acs_ifnames="wl0 wl1 wl2"
+else
+	eval nvram kset sb/0/macaddr=$mac_2g
+	eval nvram kset sb/1/macaddr=$mac_5g
+	#eval nvram kset 1:macaddr=$mac_5g_2nd
+	eval nvram set wl0.1_hwaddr=$mac_2g_guest
+	eval nvram set wl0.2_hwaddr=$mac_2g_guest2
+	eval nvram set wl1.1_hwaddr=$mac_5g_guest
+	eval nvram set wl1.2_hwaddr=$mac_5g_guest2
+	#eval nvram set wl2.1_hwaddr=$mac_5g_2nd_guest
+	#eval nvram set wl2.2_hwaddr=$mac_5g_2nd_guest2
+
+	nvram set triband=2 #Will be judged when generating wps unconfig ssid 
+	nvram set wl2_radio=0
+	nvram set wl2_bss_enabled=0
+
+	nvram kset sb/0/tempthresh=120 
+	nvram kset sb/1/tempthresh=120
+
+	nvram kset sb/1/dis_ch_grp=0x00
+	# remove FCC Band2 and band3 channel for dual band project
+	if [ "$region" = "NA" -o "$region" = "CA" -o "$region" = "PA" ]; then #NA CA
+		if [ "${factory_mode}" = "1" ]; then
+			echo "factory mode will enable DFS channel" > /dev/console
+		#else
+		#	nvram kset sb/1/dis_ch_grp=0x0E
+		fi
+	fi
+
+	# acsd setting
+	nvram set wl0_acs_boot_only=1
+	nvram set acs_2g_ch_no_restrict=1
+	nvram set acs_ifnames="wl0 wl1"
+
+fi
+
+#Setting power-off temp thresh to 100 for power control circuit function.
+i2cset -y 0 0x48 0x0B 0x65 
+
+#if project need single ssid, set triband=1
+#if project is dualband, set triband=2
+#if project is triband, set triband=3
+if [ "$(config get ssid_number_per_radio)" = "0x7" ]; then
+	nvram set triband=1 #Will be judged when generating wps unconfig ssid 
+fi
+
+if [ "$region" = "PA" -o "$region" = "NA" -o "$region" = "CA" ]; then
+	if [ "$region" = "NA" -a "$factory_mode" = "1" ]; then
+		/bin/config set wla_country="10"
+		/bin/config set wl_country="10"
+		/bin/config set wla_2nd_country="10"
+	else
+		/bin/config set wla_country="3"
+		/bin/config set wl_country="3"
+		/bin/config set wla_2nd_country="3"
+	fi
+	fixed_region=$(/bin/config get xcloud_region_fixed)
+	if [ "x$fixed_region" != "x" ]; then
+		case $fixed_region in
+		NA | US)
+			/bin/config set wla_country="10"
+			/bin/config set wl_country="10"
+			/bin/config set wla_2nd_country="10"
+			;;
+		CA)
+			/bin/config set wla_country="3"
+			/bin/config set wl_country="3"
+			/bin/config set wla_2nd_country="3"
+			;;
+		TW)
+			/bin/config set wla_country="21"
+			/bin/config set wl_country="21"
+			/bin/config set wla_2nd_country="21"
+			;;
+		*)
+			echo "[$0][$(date)]the xcloud_region_fixed config setting for NA/CA/TW is a error value($fixed_region)!!" >/dev/console
+			echo "[$0][$(date)]unset xcloud_region_fixed config(current setting:$fixed_region)!!" >/dev/console
+			/bin/config unset xcloud_region_fixed
+			;;
+		esac
+	fi
+fi
+
+if [ "$(config get ap_region_default)" = "1" -a "$region" = "AP" ]; then
+	nvram set acs_2g_ch_no_restrict=0
+	if [ "$(config get radio_number)" = "0x7" ]; then
+		nvram set wl1_acs_excl_chans="0x100c,0x100d,0x100e"
+	else
+		nvram set wl0_acs_excl_chans="0x100c,0x100d,0x100e"
+	fi
+	/bin/config set ap_region_default="0"
+fi
+
+# enable ceventd console log
+nvram set ceventd_log_console=0
+
+#judge channel if correct or not
+country_num=$(config get wl_country)
+for band_prefix in wl wla wla_2nd
+do
+	case $band_prefix in
+		wl)
+			band="2G"
+		;;
+		*)
+			band="5G"
+		;;
+	esac
+	ht_mode=$(config get ${band_prefix}_htmode)
+	[ -z "$ht_mode" ] && ht_mode="HT20"
+	now_channel=$(config get ${band_prefix}_hidden_channel)
+	if [ "$band_prefix" = "wla_2nd" ];then
+		list_channels=$(cat /etc/channel_regulations.conf | grep "^$country_num" | grep $ht_mode | grep $band | awk -F"[][]" '{print $2}' | sed -e 's/[^0-9 ]//g' | awk -F"64 " '{print $2}')
+	elif [ "$band_prefix" = "wla"  -a "$(config get radio_number)" = "0x7" ];then
+		list_channels=$(cat /etc/channel_regulations.conf | grep "^$country_num" | grep $ht_mode | grep $band | awk -F"[][]" '{print $2}' | sed -e 's/[^0-9 ]//g' | awk -F"100 " '{print $1}')
+	else
+		list_channels=$(cat /etc/channel_regulations.conf | grep "^$country_num" | grep $ht_mode | grep $band | awk -F"[][]" '{print $2}' | sed -e 's/[^0-9 ]//g')
+	fi
+	if [ -n "$list_channels" -a -z "$(echo $list_channels | grep -o $now_channel)" ];then
+		default_ch=$(get_default_channel $country_num $band_prefix $ht_mode)
+		config set ${band_prefix}_hidden_channel=$default_ch
+	fi
+done
+config commit
+
+# 
+if [ "$(config get radio_number)" = "0x7" ]; then
+	nvram loadfile /etc/wlan/nvram/RF_knvram_triadband
+else
+	nvram loadfile /etc/wlan/nvram/RF_knvram_dualband
+fi
+
+if [ "${module_name}" = "RAX78" ]; then #set QAM
+	fix_sb1_boardflags4=$(nvram kget sb/1/boardflags4)
+	fix_sb0_boardflags4=$(nvram kget sb/0/boardflags4)
+	sb1_tmp=$(($fix_sb1_boardflags4 | 0x800))
+	sb0_tmp=$(($fix_sb0_boardflags4 | 0x00000800))
+	nvram kset sb/1/boardflags4="0x$(echo "obase=16;$sb1_tmp" | bc)"
+	nvram kset sb/0/boardflags4="0x$(echo "obase=16;$sb0_tmp" | bc)"
+fi
+
+nvram kcommit
+

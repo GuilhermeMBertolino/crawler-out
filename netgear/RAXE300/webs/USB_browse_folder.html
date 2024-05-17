@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<? include 'php/commonCfg.php';?>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  <META content="MSHTML 6.00.2800.1141" name=GENERATOR>
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+  <link rel="stylesheet" type="text/css" href="css/custom.css">
+  <link rel="stylesheet" type="text/css" href="css/filetree.css">
+  
+  <script src="js/jquery.min.js"></script>
+
+  <script language="javascript" type="text/javascript">
+    CSRF_TOKEN_SUB2 = <?= genCsrfTokenSub2FilePhp('tokenNumber')?>;
+
+    var dName = window.opener.$("select[name='volumeName'] option:selected").val();
+    var dText = window.opener.$("select[name='volumeName'] option:selected").text();
+    var selectedPath = "/mnt/"+ dName;
+    $(document).ready(function() {
+        $( '#container' ).html( '<ul class="filetree start"><li class="root expanded"> <a class="selected" rel="'+dText.split('(')[0]+'">' + dText  +'</a><li></ul>');
+        getfilelist( $('.root') , selectedPath );
+        
+        function getfilelist( cont, root ) {
+            $( cont ).addClass( 'wait' );
+            
+            $.post( '/php/foldertree.php', { dir: root }, function( data ) {
+            $( cont ).removeClass( 'wait' ).append( data );
+
+            if( selectedPath == root ) 
+                $( cont ).find('UL:hidden').show();
+            else 
+                $( cont ).find('UL:hidden').slideDown({ duration: 500, easing: null });
+            })
+            .always(function() {
+            });
+        }
+        
+        $( '#container' ).on('click', 'LI A', function() {
+            var entry = $(this).parent();
+            $('.selected').removeClass('selected');
+            if( entry.hasClass('folder') )
+            {
+                
+                if( entry.hasClass('collapsed') )
+                {
+                    entry.find('UL').remove();
+                    getfilelist( entry, escape( $(this).attr('rel') ));
+                    entry.removeClass('collapsed').addClass('expanded');
+                }
+                else
+                {
+                    entry.find('UL').slideUp({ duration: 500, easing: null });
+                    entry.removeClass('expanded').addClass('collapsed');
+                }
+            }
+            $(this).addClass('selected');
+            return false;
+        });
+    });
+    
+    function applyFolder()
+    {
+        var selectedfolderPath = "";
+        if($(".selected").closest("li").hasClass("root"))
+        {
+            selectedfolderPath = $(".selected").attr("rel");
+        }
+        else
+        {
+            selectedfolderPath = dText.split('(')[0]+$(".selected").attr("rel").replace(selectedPath,"");
+        }
+        
+        window.opener.$("input[name='folderNameDisplay']").val(selectedfolderPath.replace(/\//g,"\\"));
+        window.close();
+    }
+
+  </script>
+
+</head>
+<body id="mybody" onload="window.opener.opener.top.mlangInit($('#mybody'))" class="page-body">
+  <form id="target" name="formname" method="POST" >
+      <div id="container"> </div>
+  </form>
+  <div class="form-btn-row">
+     <button type="button" value="" name="Apply" id="apply" class="button-sty1" onclick="applyFolder();" mlang="LUP004"></button>
+     <button type="button" value="" name="Close" id="close" class="button-sty1" onclick="window.close();" mlang="WP0006"></button>
+  </div>
+</body>
+</html>

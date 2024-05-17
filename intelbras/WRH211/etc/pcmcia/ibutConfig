@@ -1,0 +1,337 @@
+# ibutConfig -- shell definitions for startup scripts
+#       for iBurst UT Wireless Modem
+
+
+# ibutInstallDir -- where to find all the goodies.
+#   This may have been set by the calling script already...
+if [ -z "$ibutInstallDir" ]
+then
+    # CAUTION: ibutInstall expects format of next line:
+    ibutInstallDir=/etc/pcmcia
+fi
+
+
+############# ibutInitdDir -- where init.d dir is ####################
+# Service initialization directory might differ for some
+#   linux distributions (but then again, this might not work
+#   at all for them....)
+ibutInitdDir=/etc/rc.d/init.d
+############# ibutStartupScripts to be (un)installed ##################
+# Make sure that ibutBase is first (and present).
+#   The order or presence of the others doesn't matter much,
+#       but ifconfig works only if hardware driver sees
+#       connected device first...
+ibutStartupScripts="ibutBase ibutUsb ibutPcmcia ibutNet ibutFile"
+############## ibutBase definitions #############################
+# ibutNModems -- max no. of modems handled simultaneously (max max is 256)
+ibutNModems=1
+# ibutPreInit = 1 to create emulated networks at driver load time 
+#   (ibutNModems of them), 0 to not do that
+ibutPreInit=1
+
+############## ibutNet definitions #################################
+# ibutNetNModems -- No. of modems to establish network devices for.
+#   This must be less than or equal to ibutNModems in ibutBase,
+#   and if nonzero then ibutPreInit should be set in ibutBase.
+ibutNetNModems=$ibutNModems
+# ibutNetworkName = base of name used with pppoe, ifconfig etc. to 
+#       identify networks. ibut driver appends decimal table_index to this.
+ibutNetworkName=ibut
+# ibutNetEnable == yes to enable emulated ethernets at startup time
+#       (this does an ifconfig "up").
+ibutNetEnable=yes
+#
+# ibut0 IP parameters - *only* if you are using IP communications to UT
+# instead of ibutalk. Note that this is currently *only* implemented for
+# ibut0, if you have machine with multiple UT's then IP comms won't
+# work. Recommendation is to configure ibutNModems=1 above also.
+#
+# ibut0IpEnable=no to disable (default) IP networking, yes to enable
+ibut0IpEnable=no
+# Default IP address corresponds to default UT address of
+# 192.168.250.10. If you have changed UT ip address then you will have
+# to change this accordingly to be on same network. This has no effect
+# unless ibut0IpEnable is enabled
+ibut0IpAddress=192.168.250.11
+
+################# ibutFile definitions #############################
+# ibutFileNModems -- no. of ibut modems to create device files for
+#   This does not need to agree with ibutNModems in ibutBase,
+#   but DOES need to be less than or equal to 128.
+ibutFileNModems=$ibutNModems
+# ibutMajor -- If major number 237 (the default) is in use, then change this
+#   to something else not in use, between about 200 and 254...
+ibutMajor=237
+
+################# ibutUsb definitions #########################
+
+
+################# ibutPcmcia definitions #########################
+# ibutPcmciaPollPeriod = no. of linux clock ticks (typically at 100 Hz)
+#   between polling periods. Polling supplements interrupts,
+#   and should be necessary only at a low rate; 
+#   a value of zero turns polling off, but this may break things.
+#   A value of 100 or greater could be used to reduce cpu load etc.
+ibutPcmciaPollPeriod=20     # at 100 Hz
+
+
+################ ibutScriptUninstallAll -- uninstall init.d scripts
+ibutInitdUninstallAll()
+{
+    for file in $ibutStartupScripts
+    do
+        ibutStartupScriptsBackwards="$file $ibutStartupScriptsBackwards"
+    done
+    for file in $ibutStartupScriptsBackwards
+    do
+        echo Removing service $file ...
+        if [ -x $ibutInitdDir/$file ]
+        then
+            echo "Stopping and removing existing service $file ..."
+            chkconfig --del $file 
+            $ibutInitdDir/$file stop
+            rm -f $ibutInitdDir/$file
+            rmmod $file 2>/dev/null   # to be sure
+            echo "Stopped(?), disabled and removed service $file ."
+        fi
+        rmmod $file     # to be sure
+        rm -f $ibutInitdDir/$file  # to be sure
+    done
+}
+
+
+
+############## ibutBase functions #############################
+ibutBaseStart()
+{
+    rmmod ibutBase 2>/dev/null
+    /sbin/insmod $ibutInstallDir/ibutBase.o \
+        ibutNModems=$ibutNModems \
+        ibutPreInit=$ibutPreInit 
+}
+
+ibutBaseStop()
+{
+    /sbin/rmmod ibutBase
+}
+
+ibutBaseStatus()
+{
+    if [ -f /proc/driver/ibut ]
+    then
+            echo "ibutBase is loaded"
+            cat /proc/driver/ibut | grep '^C:' &&
+            cat /proc/driver/ibut | grep '^L:' &&
+            return 0
+    else
+            echo "ibutBase is NOT loaded"
+            return 1
+    fi
+}
+
+ibutStatusModuleCompiledFor()
+{   # usage: keyword that appears in proc ibut output, C: line
+    if [ -f /proc/driver/ibut ]
+    then
+        found=`cat /proc/driver/ibut | grep '^C:' | grep "$1"`
+        if [ -z "$found" ]
+        then
+            echo "NOTE!: ibut drivers compiled with $1 DISABLED."
+        else
+            echo "ibut drivers compiled with $1 enabled."
+        fi
+    else
+        echo "ibutBase is NOT loaded"
+    fi
+}
+
+ibutStatusModuleLoaded()
+{   # usage: keyword that appears in proc ibut output, L: line
+    if [ -f /proc/driver/ibut ]
+    then
+        found=`cat /proc/driver/ibut | grep '^L:' | grep "$1"`
+        if [ -z "$found" ]
+        then
+            echo "ibut driver module for $1 is NOT loaded."
+        else
+            echo "ibut driver module for $1 is loaded."
+        fi
+    else
+        echo "ibutBase is NOT loaded"
+    fi
+}
+
+ibutStatusModule()
+{   # usage: keyword that appears in proc ibut output, L: and C: lines
+    ibutStatusModuleLoaded "$1"
+    ibutStatusModuleCompiledFor "$1"
+}
+
+
+
+############## ibutNet functions #################################
+ibutNetUpAll()
+{   # bring up all ibut emulated ethernet networks
+    if [ $ibutNetEnable = yes ]
+    then
+        table_index=0
+        while [ $table_index -lt $ibutNetNModems ]
+        do
+            # note, ifconfig requires that ibutBase is already loaded
+            #   and with ibutPreInit=1 
+            /sbin/ifconfig $ibutNetworkName$table_index up arp
+            table_index=`expr $table_index + 1`
+        done
+    else
+        echo Not doing ifconfig up ... networks not enabled.
+    fi
+    # Configure ibut0 with IP address 
+    if [ $ibut0IpEnable = yes ]
+    then
+        /sbin/ifconfig ibut0 up arp $ibut0IpAddress
+    fi
+}
+
+ibutNetDownAll()
+{   # bring down all ibut emulated ethernet networks
+    table_index=0
+    while [ $table_index -lt $ibutNetNModems ]
+    do
+        /sbin/ifconfig $ibutNetworkName$table_index down
+        # (ignore failure to bring down.... maybe it wasn't up?)
+        # (if we fail to bring it down, we'll be unable to rmmod
+        #   the ibutBase module...)
+        table_index=`expr $table_index + 1`
+    done
+}
+
+ibutNetStatus()
+{   # show all ibut emulated ethernet networks
+    ibutStatusModule net
+    table_index=0
+    while [ $table_index -lt $ibutNetNModems ]
+    do
+        /sbin/ifconfig $ibutNetworkName$table_index 
+        table_index=`expr $table_index + 1`
+    done
+    return 0    # ignore any error
+}
+
+ibutNetStart()
+{
+    rmmod ibutNet 2>/dev/null
+#    /sbin/insmod $ibutInstallDir/ibutNet.o \
+#        ibutNetworkName=$ibutNetworkName &&
+#    ibutNetUpAll &&
+
+#	modprobe ibutNet ibutNetworkName=$ibutNetworkName &&
+#	modprobe ibutNet &&
+	modprobe ibutNet
+	ibutNetUpAll &&
+    true
+}
+
+ibutNetStop()
+{
+    ibutNetDownAll &&
+    /sbin/rmmod ibutNet
+	rmmod ib-pcmcia
+	rmmod ibutBase
+}
+
+
+################ ibutFile functions ####################
+# ibutFileNodeCreate -- subroutine called per modem table index
+ibutFileNodeCreate()
+{   # make device files; argument: which ibut driver table entry
+    table_index=$1
+    talk_minor=`expr $table_index '*' 2`
+    stat_minor=`expr $table_index '*' 2 '+' 1`
+    mknod /dev/ibut/talk$table_index c $ibutMajor $talk_minor || return 1
+    mknod /dev/ibut/stat$table_index c $ibutMajor $stat_minor || return 1
+    chmod ugo+rw /dev/ibut/* || return 1
+}
+
+ibutFileNodeCreateAll()
+{ # Create new /dev/ibut/ files 
+    echo Creating /dev/ibut directory
+    rm -rf /dev/ibut
+    mkdir /dev/ibut || return 1
+    table_index=0
+    while [ $table_index -lt $ibutFileNModems ]
+    do
+        ibutFileNodeCreate $table_index || return 1
+        table_index=`expr $table_index + 1`
+    done
+}
+
+ibutFileNodeRemoveAll()
+{   # remove /dev/ibut/ files
+    echo Removing old /dev/ibut directory
+    rm -rf /dev/ibut
+}
+
+ibutFileStart()
+{
+    rmmod ibutFile 2>/dev/null
+    /sbin/insmod $ibutInstallDir/ibutFile.o \
+        ibutMajor=$ibutMajor &&
+    ibutFileNodeCreateAll
+}
+
+ibutFileStop()
+{
+    ibutFileNodeRemoveAll
+    /sbin/rmmod ibutFile
+}
+
+ibutFileStatus()
+{
+    ibutStatusModule file
+    if [ -d /dev/ibut ]
+    then
+        echo "Directory /dev/ibut exists"
+    else
+        echo "Directory /dev/ibut does NOT exist"
+    fi
+}
+
+###################### ibutUsb functions ##########################
+ibutUsbStart()
+{
+    rmmod ibutUsb 2>/dev/null
+    /sbin/insmod $ibutInstallDir/ibutUsb.o
+}
+
+ibutUsbStop()
+{
+    /sbin/rmmod ibutUsb
+}
+
+ibutUsbStatus()
+{
+    ibutStatusModule usb
+    echo "Do: cat /proc/driver/ibut  -- U indicates usb connect"
+}
+
+
+###################### ibutPcmcia functions ##########################
+ibutPcmciaStart()
+{
+    rmmod ibutPcmcia 2>/dev/null
+    /sbin/insmod $ibutInstallDir/ibutPcmcia.o ibutPcmciaPollPeriod=$ibutPcmciaPollPeriod
+}
+
+ibutPcmciaStop()
+{
+    /sbin/rmmod ibutPcmcia
+}
+
+ibutPcmciaStatus()
+{
+    ibutStatusModule pcmcia
+    echo "Do: cat /proc/driver/ibut  -- P indicates pcmcia connect"
+}
+
+
+##########################################################################

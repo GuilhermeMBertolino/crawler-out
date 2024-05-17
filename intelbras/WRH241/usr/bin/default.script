@@ -1,0 +1,276 @@
+#!/bin/sh
+# udhcpc script edited by Tim Riker <Tim@Rikers.org>
+
+. /usr/bin/scriptlib
+
+RUNNING="/var/run/default-script-running"
+[ -z "$1" ] && echo "Error: should be called from udhcpc" && exit 1
+
+# Make sure only one default script running.
+while : ; do
+    [ ! -f "$RUNNING" ] && break
+    echo "exist $RUNNING"
+    sleep 1
+done
+echo 1 > $RUNNING
+
+# Check if exist multiwan index
+WANTYPE=`rdcsman 0x00010003 u32`
+LOCAL_WAN_PORT=`rdcsman 0x80010020 u8`
+PIDFILE_CONNECT="/var/run/udhcpc.pid.connect"
+[ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
+[ -n "$subnet" ] && NETMASK="netmask $subnet"
+RESOLV_CONF="/etc/resolv.conf"
+PPP_RESOLV_CONF="/etc/ppp/resolv.conf"
+MTU_SIZE=`rdcsman 0x00035009 u16`
+
+RS232_AUTOBAK_STATUS=`rdcsman 0x80420500 u32`
+AUTOBAK_STATUS=`rdcsman 0x801E1200 u16`
+AUTOBAK_ENABLE=`rdcsman 0x001E000d u16`
+AUTOBAK_MODE=`rdcsman 0x801e4000 u32`
+FAILOVER_MODE=`rdcsman 0x001E0080 u16`			
+FAILOVER_WANTYPE=`rdcsman 0x0043000b u32` #failover wantype
+FAILOVER_ENABLE=`rdcsman 0x00430001 u32` #failover enable
+FAILOVER_STATUS=`rdcsman 0x80430600 u32` #set_fo
+
+LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`
+LOADSHARING_WANTYPE=`rdcsman 0x0043000b u32`
+LOADSHARING_LAST_WANTYPE=`rdcsman 0x80432b20 u32`
+
+udhcpc_ip_up()
+{
+    local action="$1"
+    sl_get_uptime CNTTIME
+    logger -p 8.7 -t "udhcpc/ip-up/$action" "IP: $ip, Netmask: $subnet, Gateway: $router, DNS: $dns, Domain: $domain, IF: $interface, Boradcast: $broadcast"
+
+    #Check Local wan port exit or not
+    if [ "$LOCAL_WAN_PORT" == "0" ]  ;then   
+            logger -p 8.7 -t "udhcpc/ip-up/$action:" "Local Wan Port Disconnect\""
+        return;
+    fi
+
+    if [ "$action" = "renew" ]; then
+        if [ "`rdcsman 0x80035002 ipv4`" = "$ip" ] && 
+           [ "`rdcsman 0x80035003 ipv4`" = "$subnet" ] && 
+           [ "`rdcsman 0x80035004 ipv4`" = "$router" ] ; then
+            wrcsman "0x80035007 0x2" 
+            return; # Renew OK, do nothing ...
+        fi
+        logger -p 8.7 -t "udhcpc/ip-up/$action" "IP/Netmask/Gateway may changed !"
+    fi 
+
+    if [ "$router" != "" ] ; then
+        echo "deleting all default routes for $interface "
+        while route del default gw 0.0.0.0 dev $interface ; do : ; done
+        for i in $router ; do IF_GW="$i" ; break ; done         
+        IF_IP="$ip"
+        IF_NM="$subnet"
+    else
+        sl_get_IP_NM_GW_in_ifconfig $interface IF_IP IF_NM IF_GW
+	fi       
+    
+    # Manual DHCP WAN Type DNS 
+    local CSID_DNS1=`rdcsman 0x00035007 ipv4`
+    local CSID_DNS2=`rdcsman 0x00035008 ipv4`
+
+    # Replace each CSID fields if under Russian mode
+    local wantype=`rdcsman 0x00010003 u32`
+    local DisableRussianMode=`rdcsman 0x0001002B u32` # For PPTP and L2TP wantype
+    if [ $DisableRussianMode -eq 0 ] && [ $wantype -eq 96 ] ; then # Russian PPTP wantype
+        CSID_DNS1="`rdcsman 0x00050700 ipv4`"
+        CSID_DNS2="`rdcsman 0x00050800 ipv4`"
+    elif [ $DisableRussianMode -eq 0 ] && [ $wantype -eq 128 ] ; then # Russian L2TP wantype
+        CSID_DNS1="`rdcsman 0x00060700 ipv4`"
+        CSID_DNS2="`rdcsman 0x00060800 ipv4`"
+    fi
+
+    if [ "$CSID_DNS1" != "0.0.0.0" -o "$CSID_DNS2" != "0.0.0.0" ] ; then
+        IF_DNS1="$CSID_DNS1"
+        IF_DNS2="$CSID_DNS2"
+
+        if [ $wantype -eq 96 ] || [ $wantype -eq 128 ] ; then # PPTP L2TP
+            if [ $DisableRussianMode -eq 1 ] ; then # Not Russian
+                sl_insert_dns_file $RESOLV_CONF $CSID_DNS1 $CSID_DNS2
+
+                wrcsman "0x80035005 {$CSID_DNS1} && 
+                         0x80010005 {$CSID_DNS1} &&
+                         0x80035006 {$CSID_DNS2} &&
+                         0x80010006 {$CSID_DNS2}"
+            fi
+        fi
+    else         
+        if [ "$dns" != "" ]; then
+            cnt=0
+            for i in $dns ; do		
+                [ $cnt = 0 ] &&  IF_DNS1="$i" && wrcsman "0x80035005 {$i} && 0x80010005 {$i}"
+                [ $cnt = 1 ] &&  IF_DNS2="$i" && wrcsman "0x80035006 {$i} && 0x80010006 {$i}"
+                cnt=$(($cnt+1))		
+            done
+        else
+            sl_get_DNS_in_resolv_conf IF_DNS1 IF_DNS2
+        fi
+    fi     
+
+    # First Write Status CSID
+    wrcsman "0x80035002 {$IF_IP} && \
+             0x80035003 {$IF_NM} && \
+             0x80035004 {$IF_GW} && \
+             0x80035007 0x2"
+              
+    # Handle Failover situation here
+    if [ "$FAILOVER_ENABLE" = "1" ] ; then
+         if [ "$FAILOVER_WANTYPE" = "2" ] ; then
+                # Set Local WAN info.
+                 wrcsman "0x80010002 {$IF_IP} && \
+                          0x80010003 {$IF_NM} && \
+                          0x80010004 {$IF_GW} && \
+                          0x80010007 0x2 && \
+                          0x8001000B \"$interface"  
+
+                 if [ "$FAILOVER_STATUS" == "2" ]  ;then   
+                     logger -p 8.7 -t "dhcpc ip-up" "Under Failover mode, dont write to local \""
+                     route delete default gw $IF_GW dev $IFNAME   
+                     return;
+                 fi
+                                         
+         elif [ "$FAILOVER_WANTYPE" = "5" ] ; then
+                 # Set Route 
+                 route add default gw $IF_GW dev $interface   
+                 # Set FAILOVER WAN info
+                 wrcsman "0x80430002 {$IF_IP} && \
+                          0x80430003 {$IF_NM} && \
+                          0x80430004 {$IF_GW} && \
+                          0x80430005 {$IF_DNS1} && \
+                          0x80430006 {$IF_DNS2} && \
+                          0x80430600 0x02 && \
+                          0x8043000B \"$interface && \
+                          0x8043000C $CNTTIME"
+         fi 
+    fi
+
+    # if Main WAN if PPTP/L2TP -> don't write to Local CSID 
+    if [ $WANTYPE -eq 96 -o $WANTYPE -eq 128 ] ; then
+        #route add default gw $IF_GW dev $interface  
+        if [ $DisableRussianMode -eq 0 ] && [ $wantype -eq 96 ] ; then # Russian PPTP wantype
+            sl_insert_dns_file $RESOLV_CONF $IF_DNS1 $IF_DNS2
+        elif [ $DisableRussianMode -eq 0 ] && [ $wantype -eq 128 ] ; then # Russian L2TP wantype
+            sl_insert_dns_file $RESOLV_CONF $IF_DNS1 $IF_DNS2
+        fi          
+        return;
+	fi   
+
+    # if in failover status do not Local CSID
+    if [ "$RS232_AUTOBAK_STATUS" != "0" ] || 
+       [ "$AUTOBAK_MODE"          = "1" ]; then
+       return; 
+    fi
+
+    if [ "$LOADSHARING_ENABLE" = "1" ] ; then
+        logger -p 8.7 -t "udhcpc/ip-up/$action" "Don't do default.script update flag !\""
+        if [ -r /var/run/dont_update_wantype ]; then
+            rm -f /var/run/dont_update_wantype
+            echo "Load Sharing Don't do default.script update flag" > /tmp/LS_dhcp.log
+            echo "Load Sharing gw:$router," >> /tmp/LS_dhcp.log
+            echo "Load Sharing dns:$dns" >> /tmp/LS_dhcp.log
+        fi
+        echo "Load Sharing Don't do default.script update flag failed" >> /tmp/LS_dhcp.log
+    fi      
+
+    # Set Route
+    route add default gw $IF_GW dev $interface
+
+    # Set Local WAN info.
+    wrcsman	"0x80010002 {$IF_IP} && \
+             0x80010003 {$IF_NM} && \
+             0x80010004 {$IF_GW} && \
+             0x80010007 0x2 && \
+             0x8001000B \"$interface"
+
+    # Set DNS info.
+    [ -n "$domain" ] && echo search $domain >> $RESOLV_CONF    
+    sl_insert_dns_file $RESOLV_CONF $IF_DNS1 $IF_DNS2
+}
+
+udhcpc_ip_down()
+{
+    local action="$1"
+    logger -p 8.7 -t "udhcpc/ip-down/$action" "IP: $ip, Netmask: $subnet, Gateway: $router, DNS: $dns, Domain: $domain, IF: $interface, Boradcast: $broadcast"
+
+    wrcsman "0x80035002 0x00 && \
+             0x80035003 0x00 && \
+             0x80035004 0x00 && \
+             0x80035005 0x00 && \
+             0x80035006 0x00 && \
+             0x80035007 0x00 && \
+             0x80035009 0x00"
+
+ 	if [ "$FAILOVER_ENABLE" = "1" ] ; then
+	    if [ "$FAILOVER_WANTYPE" = "5" ] ; then
+            wrcsman "0x80430002 0x00 && \
+                     0x80430003 0x00 && \
+                     0x80430004 0x00 && \
+                     0x80430005 0x00 && \
+                     0x80430006 0x00 && \
+                     0x8043000B 0x00 && \
+                     0x8043000C 0x00 && \
+                     0x80430600 0x00"
+        else 
+            logger -p 8.7 -t "dhcpc ip-down" "Under Failover mode, dont write to local \""
+            return; 
+        fi
+    fi
+    # if Main WAN if PPTP/L2TP -> don't write to Local CSID 
+    if [ $WANTYPE -eq 96 -o $WANTYPE -eq 128 ] ; then
+        while route delete default gw $router dev $interface ; do : ; done
+        return;
+	fi   
+
+    # if in failover status do not Local CSID
+    if [ "$RS232_AUTOBAK_STATUS" != "0" ] ||
+       [ "$AUTOBAK_MODE"         != "0" ]; then
+       return; 
+    fi 
+ 
+    if [ "$LOADSHARING_ENABLE" = "1" ] ; then
+        logger -p 8.7 -t "udhcpc-ip-down" "Don't do default.script update flag !\""
+        # rm -f /var/run/dont_update_wantype
+        return; 
+    fi  
+
+    wrcsman "0x80010002 0x00 && \
+             0x80010003 0x00 && \
+             0x80010004 0x00 && \
+             0x80010005 0x00 && \
+             0x80010006 0x00 && \
+             0x80010007 0x00 && \
+             0x8001000B 0x00"     
+	
+	if [ ! -e "/var/run/check_pppoe_voip" ] && 
+       [ ! -e /var/run/multiwan_enable ] ; then
+        rm -f $PPP_RESOLV_CONF
+	fi
+	return 0
+}
+		
+case "$1" in
+	renew|bound)
+        if [ $MTU_SIZE -eq 0 ] ; then
+            /sbin/ifconfig $interface $ip $BROADCAST $NETMASK
+        else
+            /sbin/ifconfig $interface $ip $BROADCAST $NETMASK mtu $MTU_SIZE
+        fi		
+		udhcpc_ip_up "$1"
+		;;
+
+	deconfig|leasefail|*)
+	 	/sbin/ifconfig $interface 0.0.0.0
+	 	if [ -f "$PIDFILE_CONNECT" ] ; then
+			kill `cat $PIDFILE_CONNECT` > /dev/null 2>&1
+			rm -f $PIDFILE_CONNECT > /dev/null 2>&1	
+		fi	          
+		udhcpc_ip_down "$1"
+		;;
+esac
+
+rm -f $RUNNING
+exit 0

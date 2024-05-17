@@ -1,0 +1,547 @@
+#!/bin/sh
+#
+# 3g-action                     This script do a job for 3g ppp link
+#
+
+# From AUTOCONF
+prefix=
+exec_prefix=${prefix}
+
+# Paths to programs
+UVM=/usr/bin/uvm
+UO_PATH=/usr/uo
+CONF_PATH=/etc/ppp
+EXEC_PATH=/usr/sbin
+. /usr/bin/scriptlib
+
+start() {
+	
+	VENDORID=`rdcsman 0x801e1400 u16`
+	PRODUCTID=`rdcsman 0x801e1500 u16`
+	AUTOBAK=`rdcsman 0x001e000d u16`
+	_3G_USER_NAME=`rdcsman 0x001e0001 str`
+  _3G_PASSWD=`rdcsman 0x001e0002 str`
+	PROFILE=`rdcsman 0x001e0030 u16`
+	CNT_TYPE=`rdcsman 0x001e000a u16`
+	PRE_COMMAND=`rdcsman 0x001e0031 str`
+
+	init_start
+	if [ $? != 0 ] ; then
+		send_ATcmd /dev/modem 'AT' -T 1000
+		sleep 2
+	#	if [ $PROFILE -eq 8 ] ; then #for TELEXCELL
+	#		send_ATcmd /dev/modem 'AT'
+	#		sleep 2
+	#	fi
+		if [ $PROFILE -eq 10 ] ; then #for INDIA_HARIER
+			if [ $VENDORID -eq 5611 ] && [ $PRODUCTID -eq 1 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 5845 ] && [ $PRODUCTID -eq 25875 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 5845 ] && [ $PRODUCTID -eq 25876 ]; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 5848 ] && [ $PRODUCTID -eq 26627 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 5926 ] && [ $PRODUCTID -eq 4096 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 65534 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 65535 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 6538 ] && [ $PRODUCTID -eq 2 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 7903 ] && [ $PRODUCTID -eq 24579 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 7903 ] && [ $PRODUCTID -eq 24580 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 8479 ] && [ $PRODUCTID -eq 26625 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			elif [ $VENDORID -eq 8926 ] && [ $PRODUCTID -eq 26625 ] ; then
+				send_ATcmd /dev/modem 'AT+CRM=1'
+			fi
+			sleep 1
+		fi
+		if [ $PROFILE -eq 16 ] ; then #for    Identech
+			send_ATcmd /dev/modem2 'AT+CFUN=0'
+			sleep 3
+			send_ATcmd /dev/modem2 'AT+CFUN=1'
+			sleep 3
+			echo -e "AT+CFUN=1\n" > /tmp/identech
+		fi
+		if [ "$PRE_COMMAND" != "" ] ; then
+			echo -e "$PRE_COMMAND\n"
+			send_ATcmd /dev/modem2 "$PRE_COMMAND" > /tmp/precommand
+			sleep 3
+		else
+			echo -e "no command\n" > /tmp/precommand
+		fi
+
+		if [ $PROFILE -eq 15 ] ; then
+			if [ $VENDORID -eq 8311 ] && [ $PRODUCTID -eq 28672 ] ; then
+				if [ ! -e /tmp/3g_test ]; then
+					echo -e "AT^RESET\n" > /tmp/3g_test
+					send_ATcmd /dev/modem2 'AT^RESET' &
+					sleep 30
+					if [ $CNT_TYPE -eq 1 ] ; then
+						exit
+					fi
+				fi 
+			fi
+		fi
+		if [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 160 ]; then #must use modem
+			send_ATcmd /dev/modem 'ATH'
+			sleep 2
+			send_ATcmd /dev/modem 'ATH'
+			sleep 2
+		fi
+		if [ $VENDORID -eq 5848 ] && [ $PRODUCTID -eq 16384 ]; then #ccu-700
+			send_ATcmd /dev/modem 'ATZ' &
+			sleep 1
+			send_ATcmd /dev/modem 'ATZ' &
+			sleep 1
+		fi
+		if [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 3 ]; then
+			send_ATcmd /dev/modem2 'AT+CFUN=1'
+			sleep 1
+			send_ATcmd /dev/modem2 'AT+CREG=1'
+			sleep 1
+			send_ATcmd /dev/modem2 'AT+CGREG=1'
+			sleep 1
+		fi
+
+#		if [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 65534 ] ; then
+#			send_ATcmd /dev/modem2 'ATH'
+#			sleep 2
+#			send_ATcmd /dev/modem2 'ATH'
+#		fi
+		if [ $VENDORID -eq 7694 ] && [ $PRODUCTID -eq 52766 ]; then
+			send_ATcmd /dev/modem2 'ATH'
+		fi
+		if [ $VENDORID -eq 7694 ] && [ $PRODUCTID -eq 52759 ]; then
+			send_ATcmd /dev/modem 'ATZ'
+		fi
+		if [ $VENDORID -eq 8311 ] && [ $PRODUCTID -eq 28688 ]; then
+			send_ATcmd /dev/modem2 'ATH'
+		fi
+
+		if [ $VENDORID -eq 8973 ]; then
+			send_ATcmd /dev/modem 'AT+CFUN=1'
+        fi
+	fi
+#------------------------------init end----------------------------------
+    USE_PPP_ONLY=`rdcsman 0x001e0026 u16`
+    RNDIS=` lsmod | grep rndis_host`
+	CDC_ETHER=` lsmod | grep cdc_ether`
+	HSO=` lsmod | grep hso`
+	SIERRA_NET=` lsmod | grep sierra_net`
+    QMI=`cat /proc/bus/usb/devices | grep GobiNet`
+	PTUML=` lsmod | grep ptumlusbnet`
+    HW_CDC=`lsmod | grep hw_cdc_driver`
+    QMI2=`cat /proc/bus/usb/devices | grep qmi_wwan`
+	if [ ! -z "$RNDIS" ];then
+		logger -t "O3G/SCRIPT" -p 8.7 "rndis_dhcp!!"
+		wrcsman "0x801e4001 0x04"
+		rndis-action start
+	elif [ $VENDORID -eq 8559 ] && [ $PRODUCTID -eq 65 ] ; then #altair solution(216f,0041), rock +130123
+		wrcsman "0x801e4001 0x01"
+		echo -e "Start lteue-action start...\n"
+		lteue-action start		
+	elif [ ! -z "$CDC_ETHER" ] ;then
+		logger -t "O3G/SCRIPT" -p 8.7 "cdc_ether_dhcp!!"
+		wrcsman "0x801e4001 0x01"
+		cdc-ether-action start
+	elif [ ! -z "$PTUML" ];then  
+		logger -t "O3G/3g-status" "Bringing up Pantech link..."
+		wrcsman "0x801e4001 0x04"
+		cmapp-action start
+	elif [ ! -z "$HW_CDC" ];then  
+		logger -t "O3G/3g-status" "Bringing up Huawei CDC link..."
+		wrcsman "0x801e4001 0x05"
+		hw-cdc-action start
+	elif [ $VENDORID -eq 2996 ] ; then
+#		if [ $PRODUCTID -eq 771 ] || [ $PRODUCTID -eq 2829 ] || [ $PRODUCTID -eq 4094 ] ; then
+			echo -e "Bringing up 3G DHCP link...\n" > /tmp/rndis_dhcp
+			
+			wrcsman "0x801e4001 0x04"
+			rndis-action start
+#		fi
+	elif [ $VENDORID -eq 1256 ] && [ $PRODUCTID -eq 26753 ] ; then
+		echo -e "Bringing up 3G DHCP link...\n" > /tmp/amandadhcp
+		wrcsman "0x801e4001 0x04"
+		rndis-action start
+	elif [ $VENDORID -eq 5136 ] && [ $PRODUCTID -eq 45057 ] ; then
+		wrcsman "0x801e4001 0x01"
+		cdc-ether-action start
+	elif [ $VENDORID -eq 6353 ] && [ $PRODUCTID -eq 20003 ] ; then
+	#Samsung Nexus S with andriod 2.3.2
+		logger -t "O3G/3g-status" "Bringing up 3G-RNDIS link..."
+		wrcsman "0x801e4001 0x04"
+		rndis-action start
+	elif [ $VENDORID -eq 3035 -a $PRODUCTID -eq 6413 ] ||
+         [ $VENDORID -eq 3035 -a $PRODUCTID -eq 6416 ] ||     # Ericsson F5521gw
+         [ $VENDORID -eq 3035 -a $PRODUCTID -eq 6425 ] ; then # Ericsson H5321gw
+        if [ "`cat /proc/cpuinfo | grep BogoMIPS | awk '{print $3}'`" != "239.61" ]; then
+            wrcsman "0x001e2490 0x00"
+        fi
+		wrcsman "0x801e4001 0x04"
+		cdc-ncm-action start
+	elif [ $VENDORID -eq 1228 -a $PRODUCTID -eq 8991 ] ||
+         [ $VENDORID -eq 4817 -a $PRODUCTID -eq 7198 ] ||     # Ericsson F5521gw
+		 [ $VENDORID -eq 5075 -a $PRODUCTID -eq 13158 ]; then	# WW-M18
+		wrcsman "0x801e4001 0x04"
+		cdc-ncm-action start
+#	elif [ $VENDORID -eq 1452 ] && [ $PRODUCTID -eq 4756 ] ; then  # IPhone4
+	elif [ $VENDORID -eq 1452 ] ; then
+		echo -e "Bringing up IPhone4 DHCP link...\n" > /tmp/ipheth_dhcp
+		wrcsman "0x801e4001 0x03"
+		ipheth-action start
+	elif [ $VENDORID -eq 4100 ] && [ $PRODUCTID -eq 25002 ] ; then
+		wrcsman "0x801e4001 0x05"
+		wmc-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 4817 ] && [ $PRODUCTID -eq 5382 ] && [ $USE_PPP_ONLY -ne 1 ]; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 7326 ] && [ $PRODUCTID -eq 38403 ] && [ $USE_PPP_ONLY -ne 1 ]; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start 
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1032 ] && [ $PRODUCTID -eq 59926 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start 
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 7326 ] && [ $PRODUCTID -eq 38913 ]  && [ $USE_PPP_ONLY -ne 1 ]; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 23 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start 
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 599 ] && [ $USE_PPP_ONLY -ne 1 ]; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start 
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36881 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36901 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36934 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 8193 ] && [ $PRODUCTID -eq 32278 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+    elif [ -n "$QMI2" ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Start Qmi connect with APN `rdcsman 0x001e0003 str`...\n"
+        wrcsman "0x801e4001 0x05"
+        qmi-action start
+	else
+		echo -e "Bringing up 3G PPP link...\n"
+		if [ $CNT_FORCE -eq 1 ] ; then    #amanda-add090821
+			#rewrite connect manual force enable
+			3g-stop
+		fi        
+
+		$UVM $UO_PATH/3g.conf.uo > $CONF_PATH/3g.conf
+		$UVM $UO_PATH/3g_chat.uo > $CONF_PATH/3g_chat
+#		if [ $AUTOBAK -eq 1 ] && [ "$_3G_USER_NAME" == "" ] ; then
+#            sl_insert_secrets_file "guest" "guest"
+#		else
+#            sl_insert_secrets_file $_3G_USER_NAME $_3G_PASSWD
+#		fi
+#		chmod 600 /etc/ppp/*-secrets
+
+		if [ $CNT_FORCE -eq 1 ] ; then        #amanda-add090821
+			#rewrite connect manual force disable
+			wrcsman "0x8001000E 0x00"
+		fi                                    #amanda-090821
+
+		if [ ! -z "$HSO" ];then
+			logger -t "O3G/SCRIPT" -p 8.7 "Bringing up 3G HSO link..."
+			wrcsman "0x801e4001 0x02"
+			3g-hso-start
+		elif [ ! -z "$SIERRA_NET" ];then
+			wrcsman "0x801e4001 0x01"
+			sierra-action start
+		else
+			if [ $VENDORID -eq 4505 ] && [ $PRODUCTID -eq 26787 ]; then
+				NOT_USE_DIRECTIP=`rdcsman 0x001e0026 u16`
+				if [ $NOT_USE_DIRECTIP -eq 1 ]; then
+					wrcsman "0x801e4001 0x00"
+					3g-start
+				else
+					wrcsman "0x801e4001 0x01"
+					mkdir -p /tmp/sierra_dhcp_up
+
+					CNT_TYPE=`rdcsman 0x001e000a u16`
+        				#if CNT_TYPE is on-demand write "wait for traffic" state to csid
+        				if [ $CNT_TYPE -eq 0 ] ; then
+            					wrcsman "0x80010007 0x05 && \
+                	     			0x801e0700 0x05 "
+							3g-sierra-ondemand	
+						else
+							sierra-action start
+       		 			fi
+				fi
+			else
+				wrcsman "0x801e4001 0x00"
+				3g-start
+			fi
+		fi
+
+		if [ $? = 0 ] ; then
+			exit 0
+		else
+			LOADSHARING=`rdcsman 0x004301c0 u32`
+			if [ $LOADSHARING -eq 0 ] ; then
+				wrcsman "0x801e0700 0x03 && \
+						0x80010007 0x03"
+			fi
+			exit 1
+		fi
+	fi
+	exit 0
+}
+
+stop() {
+
+	VENDORID=`rdcsman 0x801e1400 u16`
+    PRODUCTID=`rdcsman 0x801e1500 u16`
+
+	wrcsman "0x8001000E 0x01"
+	USE_PPP_ONLY=`rdcsman 0x001e0026 u16`
+    RNDIS=` lsmod | grep rndis_host`
+	CDC_ETHER=` lsmod | grep cdc_ether`
+	HSO=` lsmod | grep hso`
+	SIERRA_NET=` lsmod | grep sierra_net`
+    QMI=`cat /proc/bus/usb/devices | grep GobiNet`
+	PTUML=` lsmod | grep ptumlusbnet`
+	HW_CDC=` lsmod | grep hw_cdc_driver`
+    QMI2=`cat /proc/bus/usb/devices | grep qmi_wwan`
+	if [ ! -z "$RNDIS" ];then
+		logger -t "O3G/SCRIPT" -p 8.7 "rndis_dhcp stop!!"
+		rndis-action stop&
+	elif [ ! -z "$CDC_ETHER" ] ;then
+		logger -t "O3G/SCRIPT" -p 8.7 "cdc_ether_dhcp stop!!"
+		cdc-ether-action stop
+#		if [ $VENDORID -eq 5136 ] && [ $PRODUCTID -eq 45057 ] ; then
+#			hotplug unload
+#		fi
+		exit 0
+	elif [ ! -z "$PTUML" ];then        
+		logger -t "O3G/SCRIPT" -p 8.7 "Pantech link stop!!"
+		cmapp-action stop
+	elif [ ! -z "$HW_CDC" ];then        
+		logger -t "O3G/SCRIPT" -p 8.7 "Huawei CDC link stop!!"
+		hw-cdc-action stop
+    elif [ $VENDORID -eq 2996 ] ; then
+#		if [ $PRODUCTID -eq 771 ] || [ $PRODUCTID -eq 2829 ] || [ $PRODUCTID -eq 4094 ] ; then
+			echo -e "Shutting down 3G DHCP link...\n" > /tmp/rndis_shut
+			rndis-action stop
+#		fi
+	elif [ $VENDORID -eq 1256 ] && [ $PRODUCTID -eq 26753 ] ; then
+		echo -e "Shutting down 3G DHCP link...\n"
+		rndis-action stop
+	elif [ $VENDORID -eq 8559 ] && [ $PRODUCTID -eq 65 ] ; then #altair solution(216f,0041), rock +130123
+		echo -e "Shutting down lteue...\n"
+		lteue-action stop	
+	elif [ $VENDORID -eq 6353 ] && [ $PRODUCTID -eq 20003 ] ; then
+		#Samsung Nexus S with andriod 2.3.2
+		logger -t "O3G/3g-status" "Shutting down 3G-RNDIS link..."
+		rndis-action stop
+#	elif [ $VENDORID -eq 1452 ] && [ $PRODUCTID -eq 4756 ] ; then  # IPhone4
+	elif [ $VENDORID -eq 1452 ] ; then
+		echo -e "Shutting down IPhone4 DHCP link...\n" > /tmp/ipheth_shut
+		ipheth-action stop
+	elif [ $VENDORID -eq 1228 -a $PRODUCTID -eq 8991 ] ||
+         [ $VENDORID -eq 4817 -a $PRODUCTID -eq 7198 ] ||     # Huawei E586
+		 [ $VENDORID -eq 5075 -a $PRODUCTID -eq 13158 ]; then	# WW-M18
+		cdc-ncm-action stop
+	elif [ $VENDORID -eq 3035 ] && [ $PRODUCTID -eq 6413 ] ; then # Ericsson F5521gw
+		cdc-ncm-action stop
+	elif [ $VENDORID -eq 3035 ] && [ $PRODUCTID -eq 6416 ] ; then # Ericsson F5521gw
+		cdc-ncm-action stop
+	elif [ $VENDORID -eq 3035 ] && [ $PRODUCTID -eq 6425 ] ; then # Ericsson H5321gw
+		cdc-ncm-action stop
+    elif [ $VENDORID -eq 4100 ] && [ $PRODUCTID -eq 25002 ] ; then
+        echo -e "Stop wmc connect...\n"
+        wmc-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 4817 ] && [ $PRODUCTID -eq 5382 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 7326 ] && [ $PRODUCTID -eq 38403 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1032 ] && [ $PRODUCTID -eq 59926 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 7326 ] && [ $PRODUCTID -eq 38913 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 23 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36881 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36901 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    elif [ -n "$QMI" ] && [ $VENDORID -eq 1478 ] && [ $PRODUCTID -eq 36934 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+    #elif [ -n "$QMI2" ] && [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 1042 ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+    elif [ -n "$QMI2" ] && [ $USE_PPP_ONLY -ne 1 ] ; then
+        echo -e "Stop Qmi connect...\n"
+        qmi-action stop
+        rm /var/config/QMI_SERVICE_WDS_clientID
+	else
+		local err; err=0
+		echo -e "Shutting down 3G PPP link...\n"
+
+		if [ ! -z "$HSO" ];then
+	#	if [ $VENDORID -eq 2800 ]; then
+			logger -t "O3G/SCRIPT" -p 8.7 "Shutting down 3G HSO link..."
+			3g-hso-stop > /dev/null 2>&1
+
+		elif [ ! -z "$SIERRA_NET" ];then
+#			3g-sierra-stop > /dev/null 2>&1
+			sierra-action stop
+			rm -rf /tmp/sierra_dhcp_up
+		else
+			if [ $VENDORID -eq 4505 ] && [ $PRODUCTID -eq 26787 ]; then
+				NOT_USE_DIRECTIP=`rdcsman 0x001e0026 u16`
+				if [ $NOT_USE_DIRECTIP -eq 1 ]; then
+			    	3g-stop > /dev/null 2>&1
+				else
+#					3g-sierra-stop > /dev/null 2>&1
+					sierra-action stop
+					rm -rf /tmp/sierra_dhcp_up
+				fi
+			else
+			    3g-stop > /dev/null 2>&1
+			fi
+		fi
+	#	3g-stop > /dev/null 2>&1
+		err=$?
+
+		wrcsman "0x801e0200 0x00 && \
+				0x801e0300 0x00 && \
+				0x801e0400 0x00 && \
+				0x801e0500 0x00 && \
+				0x801e0600 0x00 && \
+				0x801e0100 0x00 && \
+				0x801e0700 0x00"
+
+
+		WANTYPE=`rdcsman 0x00010003 u16`
+		AUTOBAK=`rdcsman 0x001e000d u16`
+		FAILOVER=`rdcsman 0x00430001 u32`
+		LOADSHARING=`rdcsman 0x004301c0 u32`
+
+		if [ $LOADSHARING -eq 0 ] ; then
+			if [ $WANTYPE -eq 16 ]; then
+				wrcsman "0x80010002 0x00 && \
+						0x80010003 0x00 && \
+						0x80010004 0x00 && \
+						0x80010005 0x00 && \
+						0x80010006 0x00 && \
+						0x80010007 0x00"
+			fi
+		fi
+		#failover is enable , 3g = main wan
+		if [ $FAILOVER -eq 1 ] && [ $WANTYPE -eq 16 ]; then 
+			wrcsman "0x801e0700 0x03 && \
+					0x80010007 0x03"
+		fi
+		
+		init_stop
+		if [ $? != 0 ] ; then
+			PROFILE=`rdcsman 0x001e0030 u16`
+			if [ $PROFILE -eq 8 ] ; then
+				if [ $VENDORID -eq 6610 ] ; then
+					if [ $PRODUCTID -eq 65533 ] || [ $PRODUCTID -eq 65534 ] ; then
+					send_ATcmd /dev/modem2 'ATH'
+					fi
+				fi
+			fi
+			
+			if [ $PROFILE -eq 10 ]; then
+				send_ATcmd /dev/modem2 'ATH'
+			fi
+
+			if [ $PROFILE -eq 15 ]; then
+				send_ATcmd /dev/modem2 'ATH'&
+				sleep 2
+				killall -9 send_ATcmd
+			fi
+
+			if [ $PROFILE -eq 17 ] ; then
+				if [ $VENDORID -eq 5848 ] ; then
+					if [ $PRODUCTID -eq 26627 ] ; then
+						send_ATcmd /dev/modem 'ATH'
+					fi
+				fi
+			fi
+
+	#		if [ $VENDORID -eq 5848 ] && [ $PRODUCTID -eq 16384 ]; then
+	#			hotplug unload
+	#		fi
+			if [ $VENDORID -eq 4817 ] && [ $PRODUCTID -eq 5188 ]; then
+				send_ATcmd /dev/modem2 'ATZ'
+			fi
+			if [ $VENDORID -eq 6538 ] && [ $PRODUCTID -eq 2 ]; then
+				hotplug unload
+			fi
+			if [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 112 ]; then
+				send_ATcmd /dev/modem2 'ATH'
+			fi
+#			if [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 65534 ]; then
+#				hotplug unload
+#			fi
+			if [ $VENDORID -eq 6610 ] && [ $PRODUCTID -eq 8194 ]; then
+				hotplug unload
+			fi
+			if [ $VENDORID -eq 7694 ] && [ $PRODUCTID -eq 52759 ]; then
+				send_ATcmd /dev/modem2 'ATH'
+				sleep 1
+				send_ATcmd /dev/modem2 'ATH'
+			fi
+			if [ $VENDORID -eq 8479 ] && [ $PRODUCTID -eq 26625 ]; then
+				hotplug unload
+			fi
+		fi
+		exit $err
+	fi
+}
+
+status() {
+	3g-status
+}
+
+
+usage() {
+	echo "$0 [start|stop|restart|status]"
+	exit 1
+}
+
+# +++++++++++++++ main ++++++++++++++++++++++ 
+CNT_FORCE=`rdcsman 0x8001000e u16`        #amanda-add090821
+[ -z "$1" ] && usage;
+
+case "$1" in
+	start)		start ;;
+	stop)		stop ;;
+	restart)	stop; start;;
+	status)		status ;;
+	*)			usage;;
+esac
+
+exit 0

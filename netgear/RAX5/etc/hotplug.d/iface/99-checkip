@@ -1,0 +1,6 @@
+[ "$ACTION" != "ifup" -a "$ACTION" != "ifupdate" -a "$ACTION" != "ifdown" ] && return
+
+if [ "$INTERFACE" == "wan" ] || [ "$INTERFACE" = "pptp" ] || [ "$INTERFACE" = "l2tp" ]; then
+    echo "check ip conflict" > /dev/console
+    (/usr/sbin/check_ipconflict.sh "$INTERFACE" "$DEVICE" $ACTION)&
+fi

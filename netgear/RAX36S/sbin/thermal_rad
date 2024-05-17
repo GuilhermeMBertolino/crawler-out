@@ -1,0 +1,104 @@
+#!/bin/sh
+
+. /etc/wlan/wifi_conf
+
+# === global parameter ===
+g_sleep_time=60
+g_thermal_onboard_file=/tmp/cache/wireless/thermal_board.conf
+g_onboard_sensor_name="onboard-ddr"
+g_otpEnable="True"
+g_debug_mode=
+
+[ ! -d "/tmp/cache/wireless" ] && /bin/mkdir -p /tmp/cache/wireless
+
+debugecho() { [ "$g_debug_mode" = "1" ] && echo $@ > /dev/console; }
+debugcat() { [ "$g_debug_mode" = "1" ] && cat $@ > /dev/console; }
+
+# $1: sensor_name, $2: highestTemp, $3: lowestTemp,
+# $4: otpEnable, $5: otpTriggerStatus, $6: otpTriggerCount, $7: otpTriggerLongestDuration
+print_thermal_data()
+{
+	cat <<EOF
+Name=$1
+highestTemp=$2
+lowestTemp=$3
+otpEnable=$4
+otpTriggerStatus=$5
+otpTriggerCount=$6
+otpTriggerLongestDuration=$7
+EOF
+}
+
+get_onboard_temp()
+{
+	temp_i2c=`i2cget -y 0 0x48 0x00`
+	#temp_chip=`cat /sys/power/bpcm/select0 | awk '{print $2}'`
+	t_tmp=$(($temp_i2c & 0x80 ))
+
+	if [ $t_tmp -gt 0  ]; then
+		cur_temp=0
+	else
+		cur_temp=$(( $temp_i2c & 0xff ))
+	fi
+
+	[ -z "$cur_temp" ] && echo "Unknown" || echo "$cur_temp"
+}
+
+get_onboard_level()
+{
+	cur_dc_wl0=$(wl -i wl0 dutycycle_cck 2>/dev/null | awk '{print $1}')
+	cur_dc_wl1=$(wl -i wl1 dutycycle_cck 2>/dev/null | awk '{print $1}')
+	if [ "$is_dual_band" = "0" ]; then
+		cur_dc_wl2=$(wl -i wl2 dutycycle_cck 2>/dev/null | awk '{print $1}')
+	fi
+
+	for wlx in ${main_ifname_list}
+	do
+		eval now=\$cur_dc_$wlx
+		if [ -n "$now" ]; then
+			[ "$now" -eq "100" ] && echo "0" && return
+			[ "$now" -lt "100" ] && echo "1" && return
+		fi
+	done
+	echo "Unknown"
+}
+
+update_thermal_onboard_data()
+{
+	debugecho "==== doing onboard sensor ===="
+
+	local highestTemp lowestTemp
+	local otpTriggerStatus=0 otpTriggerCount=0 otpTriggerLongestDuration=0
+	local cur_temp=$(get_onboard_temp)
+	local cur_level=$(get_onboard_level)
+	debugecho "cur_temp=$cur_temp, cur_level=$cur_level"
+
+	[ -f $g_thermal_onboard_file ] && . $g_thermal_onboard_file
+
+	if [ "$cur_temp" != "Unknown" ]; then
+		highestTemp=${highestTemp:-$cur_temp}
+		lowestTemp=${lowestTemp:-$cur_temp}
+		[ $cur_temp -gt $highestTemp ] && highestTemp=$cur_temp
+		[ $cur_temp -lt $lowestTemp ] && lowestTemp=$cur_temp
+	fi
+	if [ "${g_otpEnable}" = "True" ]; then
+		[ "$otpTriggerStatus" = "0" ] && [ "$cur_level" = "1" ] && otpTriggerCount=$((otpTriggerCount + 1))
+		[ "$otpTriggerStatus" = "1" ] && otpTriggerLongestDuration=$((otpTriggerLongestDuration + $g_sleep_time))
+		otpTriggerStatus=$cur_level
+	else
+		otpTriggerCount=Null
+		otpTriggerLongestDuration=Null
+		otpTriggerStatus=Unknown
+	fi
+
+	print_thermal_data "$g_onboard_sensor_name" "$highestTemp" "$lowestTemp" "$g_otpEnable" \
+		"$otpTriggerStatus" "$otpTriggerCount" "$otpTriggerLongestDuration" > "$g_thermal_onboard_file"
+
+	debugcat $g_thermal_onboard_file
+}
+
+while : ; do
+	[ -n "$g_onboard_sensor_name" ] && update_thermal_onboard_data
+	sleep $g_sleep_time
+done
+

@@ -1,0 +1,31 @@
+#!/bin/sh
+
+script_name="$0"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name=$1
+
+# Set to BG scan mode
+# Read current value
+ScanModifFlags=`iw $interface_name iwlwav gScanModifFlags`
+ScanModifFlags=`echo ${ScanModifFlags##*:}`
+
+# Set scan to be FG scan
+if [ $ScanModifFlags -ne 32 ]
+then
+	iw $interface_name iwlwav sScanModifFlags 32
+fi
+
+# Trigger scan with iw API
+iw dev $interface_name scan > ${TEMP_DIR}/${interface_name}_scan.dump
+
+# Parse the scan results to a MAPI format
+cat ${TEMP_DIR}/${interface_name}_scan.dump | awk -v output="MAPI" -f ${ETC_PATH}/fapi_wlan_wave_ap_scan_parse.awk > ${TEMP_DIR}/${interface_name}_scan_MAPI.result
+#cat ${TEMP_DIR}/${interface_name}_scan_MAPI.result
+
+# Revert ScanModifFlags to original value
+if [ $ScanModifFlags -ne 32 ]
+then
+	iw $interface_name iwlwav sScanModifFlags $ScanModifFlags
+fi

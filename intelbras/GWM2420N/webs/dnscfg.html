@@ -1,0 +1,155 @@
+<html>
+<head>
+    <meta http-equiv='Pragma' content='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+
+    <script language="javascript" src="util.js"></script>
+
+    <script language="javascript">
+<!-- hide
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var state = '<%ejGet(dnsRefresh)%>';
+if ( state == '1' ) {
+   var loc = 'dnscfg.cgi?dnsRefresh=0';
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+var interfaceInfo = '<%ejGetOther(wanInterfaceInfo, forDns)%>';
+var interfaces = interfaceInfo.split('|');
+var ethIpAddress = '<%ejGet(ethIpAddress)%>';
+var prtcl = '<%ejGetOther(memInfo, ntwkPrtcl)%>';
+var dns1 = '<%ejGetOther(sysInfo, dnsPrimary)%>'; if ( dns1 == '&nbsp' ) dns1 = '';
+var dns2 = '<%ejGetOther(sysInfo, dnsSecondary)%>'; if ( dns2 == '&nbsp' ||dns2== '0.0.0.0') dns2 = '';
+//var dnsIfcs = '<%ejGetOther(sysInfo, dnsIfcs)%>'; if (dnsIfcs == '&nbsp') dnsIfcs= ''; 
+var dnsIfcs=interfaceInfo.split('/');
+function disableDnsIPInfo() {
+   with ( document.forms[0] ) {
+      dnsPrimary.disabled = 1;
+      dnsPrimary.value = '';
+      dnsSecondary.disabled = 1;
+      dnsSecondary.value = '';
+   }
+}
+
+function enableDnsIPInfo() {
+   with ( document.forms[0] ) {
+      dnsPrimary.disabled = 0;
+      dnsPrimary.value = dns1;
+      dnsSecondary.disabled = 0;
+      dnsSecondary.value = dns2;
+   }
+}
+
+function dnsClick() {
+   with ( document.forms[0] ) {
+      if (dns.checked == true )
+         enableDnsIPInfo();
+      else
+         disableDnsIPInfo();
+   }
+}
+
+function btnApply() {
+   var loc = 'dnscfg.cgi?';
+   
+   with ( document.forms[0] ) {
+     if (dns.checked) {
+         if ( isValidIpAddress(dnsPrimary.value) == false ) {
+            alert('Primary DNS "' + dnsPrimary.value + '" has invalid IP address.');
+            return;
+         }
+	if(dnsPrimary.value == ethIpAddress) {
+           alert('Primary DNS "' + dnsPrimary.value + '" was the same with Lan IP address.');
+            return;
+		}
+	
+         loc += 'dnsPrimary=' + dnsPrimary.value;
+         if (dnsSecondary.value != '') {
+            if ( isValidIpAddress(dnsSecondary.value) == false ) {
+               alert('Secondary DNS "' + dnsSecondary.value + '" has invalid IP address.');
+               return;
+            }
+		if(dnsSecondary.value == ethIpAddress){
+            alert('Secondary DNS "' + dnsSecondary.value + '" was the same with Lan IP address.');
+             return;
+		}
+            loc += '&dnsSecondary=' + dnsSecondary.value;
+         }
+         else
+            loc +=  '&dnsSecondary=' + '0.0.0.0';	  	
+         loc += '&dnsIfcsList=' + '';
+         loc += '&dnsRefresh=1';
+     }
+    else{
+	   loc = loc + 'dnsIfcsList=' + dnsIfcs[1];
+       loc +=  '&dnsPrimary=' + '0.0.0.0';
+       loc +=  '&dnsSecondary=' + '0.0.0.0';
+       loc += '&dnsRefresh=0';
+
+	 }
+   	}
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function frmLoad() {
+   var names;
+   with ( document.forms[0] ) {
+      dns.checked  = false;
+      names = interfaces[0].split('/');
+      if (names == '') {
+         dns.disabled = 1;
+      }
+      if(dns1!=''){
+        dns.checked = true;
+         dnsPrimary.value = dns1;
+         if (dns2 == '')
+            dnsSecondary.value = '';
+         else				 
+            dnsSecondary.value = dns2;
+      }
+      dnsClick();
+   }
+}
+
+// done hiding -->
+    </script>
+
+</head>
+<body onload='frmLoad()'>
+    <form> 
+    <script>tbl_head('DNS Server Configuration');</script>
+<div style="width:90%;text-align:left">
+    <table width="88%">
+        <tr>
+            <td colspan="2">
+                <input type="checkbox" name="dns" onclick='dnsClick()'><b>&nbsp;&nbsp;Use the following
+                    Static DNS IP address:</b>
+            </td>
+        </tr>
+        <tr>
+            <td width="200">
+                Primary DNS server:
+            </td>
+            <td>
+                <input type='text' name='dnsPrimary' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Secondary DNS server:
+            </td>
+            <td>
+                <input type='text' name='dnsSecondary' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+            </td>
+        </tr>
+    </table>
+</div>
+    <script>tbl_tail("<input type='button' class='button'  onClick='btnApply()' value='Apply/Save'>");</script>
+
+    </form>
+</body>
+</html>

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+PID=$(cat /var/run/$1.pid)
+
+if [ $PID ]; then
+    PROCCESS="$(last | grep $1)"
+    NAME=$(echo $PROCCESS |cut -d' ' -f1)
+    NUMLOGINS="$(last | grep vpn | cut -d' ' -f1 | grep -wc $NAME)"
+    if [ $NUMLOGINS -gt 1 ]; then
+        kill $PID
+    fi
+fi
+
+
+killall -9 dnsmasq
+sleep 1
+config-dnsmasq.sh
+
+

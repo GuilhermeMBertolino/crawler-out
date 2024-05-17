@@ -1,0 +1,13 @@
+#!/bin/sh
+
+ip=$(ip -oneline -4 address show dev $CIRCLE_BRIDGE | awk '{ gsub("/.*", "", $4); print $4; exit }')
+linklocalip6=$(ip -oneline -6 address show dev $CIRCLE_BRIDGE | grep "scope link" | awk '{ gsub("/.*", "", $4); print $4; exit }')
+
+max_ttl="--max-ttl=1"
+port="--port=$CIRCLE_DNSMASQ_PORT"
+server_ips="--server=$ip#53 --server=$linklocalip6#53"
+host_file="-H $CIRCLE_TMP/circle_hosts"
+pid_file="--pid-file=$CIRCLE_TMP/dnsmasq.pid"
+dnsmasq_opts="--cache-size=500 --user=root -k -R --filter-https"
+
+exec $CIRCLE_ROOT/dnsmasq -C "" $max_ttl $port $server_ips $host_file $pid_file $dnsmasq_opts

@@ -1,0 +1,92 @@
+#!/bin/sh
+
+rm -f /tmp/radarchannel*
+rm -f /tmp/radartemp
+
+if [ ! -f /tmp/radar_dfs ]; then
+	cat > /tmp/radar_dfs <<EOF
+HT40:52 56
+HT40:60 64
+HT40:100 104
+HT40:108 112
+HT40:116 120
+HT40:124 128
+HT40:132 136
+HT40:140 144
+HT80:52 56 60 64
+HT80:100 104 108 112
+HT80:116 120 124 128
+HT80:132 136 140 144
+HT160:100 104 108 112 116 120 124 128
+EOF
+fi
+
+print_radar_channel()
+{
+	radar_channel=$1
+	time=$2
+
+	time=$(($time * 60)) # min to second
+
+	echo "        channel: $radar_channel    expire: $time" >> /tmp/radarchannel_20
+
+	cat /tmp/radar_dfs |grep HT40 | awk -F ':' '{print $2}' |grep $radar_channel |while read channel1 channel2
+	do
+		echo "        channel: $channel1    expire: $time" >> /tmp/radarchannel_40
+		echo "        channel: $channel2    expire: $time" >> /tmp/radarchannel_40
+	done 
+
+	cat /tmp/radar_dfs |grep HT80 | awk -F ':' '{print $2}' |grep $radar_channel |while read channel1 channel2 channel3 channel4
+	do
+		echo "        channel: $channel1    expire: $time" >> /tmp/radarchannel_80
+		echo "        channel: $channel2    expire: $time" >> /tmp/radarchannel_80
+		echo "        channel: $channel3    expire: $time" >> /tmp/radarchannel_80
+		echo "        channel: $channel4    expire: $time" >> /tmp/radarchannel_80
+	done 
+
+	cat /tmp/radar_dfs |grep HT160 | awk -F ':' '{print $2}' |grep $radar_channel |while read channel1 channel2 channel3 channel4 channel5 channel6 channel7 channel8
+	do
+		echo "        channel: $channel1    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel2    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel3    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel4    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel5    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel6    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel7    expire: $time" >> /tmp/radarchannel_160
+		echo "        channel: $channel8    expire: $time" >> /tmp/radarchannel_160
+	done 
+}
+
+module_name=$(cat /module_name)
+if [ "$(config get radio_number)" = "0x7" ]; then
+	wl -i wl0 chan_info | grep "Out of Service"  > /tmp/radartemp
+	wl -i wl2 chan_info | grep "Out of Service"  >> /tmp/radartemp
+	while read line
+	do 
+		channel=`echo $line |awk '{print $2}'`
+		time=`echo $line |awk '{print $13}'`
+		print_radar_channel $channel $time
+	done < /tmp/radartemp
+else
+	wl -i wl1 chan_info | grep "Out of Service"  >> /tmp/radartemp
+	while read line
+	do 
+		channel=`echo $line |awk '{print $2}'`
+		time=`echo $line |awk '{print $13}'`
+		print_radar_channel $channel $time
+	done < /tmp/radartemp
+fi
+
+#sort -u  /tmp/radarchannel_20  /tmp/radarchannel_40  /tmp/radarchannel_80  /tmp/radarchannel_160 2>&1 1>/dev/null
+
+echo "HT20:" >> /tmp/radarchannel
+[ -f  /tmp/radarchannel_20 ] && cat /tmp/radarchannel_20 |awk -F ":" '{a[$2]=$0}END{for (i in a) print a[i]}' >>  /tmp/radarchannel
+echo "HT40:" >> /tmp/radarchannel
+[ -f  /tmp/radarchannel_40 ] && cat /tmp/radarchannel_40 |awk -F ":" '{a[$2]=$0}END{for (i in a) print a[i]}' >>  /tmp/radarchannel
+echo "HT80:" >> /tmp/radarchannel
+[ -f  /tmp/radarchannel_80 ] && cat /tmp/radarchannel_80 |awk -F ":" '{a[$2]=$0}END{for (i in a) print a[i]}' >>  /tmp/radarchannel
+echo "HT160:" >> /tmp/radarchannel
+[ -f  /tmp/radarchannel_160 ] && cat /tmp/radarchannel_160 |awk -F ":" '{a[$2]=$0}END{for (i in a) print a[i]}' >>  /tmp/radarchannel
+
+# cat /tmp/radarchannel > /dev/console
+

@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Hotplug script to initialize Intel CAT# modems
+#
+source /opt/lantiq/etc/ugw_notify_defs.sh
+
+
+if [ -n "$ACTION" ]; then
+    if [ "$ACTION" = "add" ]; then
+        if [ -n "$DEVPATH" ]; then
+			grep -q "Vendor=8087" /sys/kernel/debug/usb/devices && grep -q "ProdID=0911" /sys/kernel/debug/usb/devices &&{
+				if ! [ -f /tmp/usb-lte-mbim-load.tmp ]; then
+					touch /tmp/usb-lte-mbim-load.tmp
+					ubus call servd notify '{ "id": '$NOTIFY_DEFAULT_USBNET_ADD', "type": false, "pn1": "vendor_id", "pv1": "8087", "pn2": "product_id", "pv2": "0911" }'
+
+				fi
+			} || true
+		fi
+    elif [ "$ACTION" = "remove" ]; then
+		grep -q "Vendor=8087" /sys/kernel/debug/usb/devices || grep -q "ProdID=0911" /sys/kernel/debug/usb/devices ||{
+			if [ -f /tmp/usb-lte-mbim-load.tmp ]; then
+				rm -f /tmp/usb-lte-mbim-load.tmp
+				ubus call servd notify '{ "id": '$NOTIFY_DEFAULT_USBNET_REMOVE', "type": false, "pn1": "vendor_id", "pv1": "8087", "pn2": "product_id", "pv2": "0911" }'
+			fi
+		} || true
+    fi
+fi
+

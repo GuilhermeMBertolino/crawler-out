@@ -1,0 +1,211 @@
+<!DOCTYPE HTML>
+<? include 'php/commonCfg.php';?>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css<? getVer(); ?>">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css"  type="text/css">
+  <script language="javascript" type="text/javascript">
+
+  CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+
+  $(document).ready(function() {
+      $("#remote_mg_enable").on("click", function(){
+          $(this).val($(this).prop("checked"));
+      });
+      
+      $("#rm_only").on("click", function(){
+          $("#only-ip input").prop("disabled", false);
+          $("#rangeStart-ip input").prop("disabled", true);
+          $("#rangeStart-ip input").val("");
+          $("#rangeEnd-ip input").prop("disabled", true);
+          $("#rangeEnd-ip input").val("");
+      });
+      $("#rm_range").on("click", function(){
+          $("#only-ip input").prop("disabled", true);
+          $("#only-ip input").val("");
+          $("#rangeStart-ip input").prop("disabled", false);
+          $("#rangeEnd-ip input").prop("disabled", false);
+      });
+      $("#rm_all").on("click", function(){
+          $("#only-ip input").prop("disabled", true);
+          $("#only-ip input").val("");
+          $("#rangeStart-ip input").prop("disabled", true);
+          $("#rangeStart-ip input").val("");
+          $("#rangeEnd-ip input").prop("disabled", true);
+          $("#rangeEnd-ip input").val("");
+      });
+      
+      $("#apply").on("click", function(){
+          if(validate())
+          {
+              $.postForm('remoteMgmt', $('#target'), 'cgi-bin/rex_cgi');
+          }
+          
+      });
+  });
+
+  function post_fillout()
+  {
+      $("#rangeStart-ip div").prepend('<span style="display: inline-block;width: 40px;" mlang="ARM003">From </span>');
+      $("#rangeEnd-ip div").prepend('<span style="display: inline-block;width: 40px;" mlang="ARM007" >To </span>');
+      $("#rangeStart-ip div span").html(window.top.mlang[$("#rangeStart-ip div span").attr("mlang")]);
+      $("#rangeEnd-ip div span").html(window.top.mlang[$("#rangeEnd-ip div span").attr("mlang")]);
+
+      $("input[name='accessType']:checked").click();
+
+      if($("input[name='ipv6Enable']").val() != "true")
+      {
+          $("span[name='remote_mg_addr_ipv6']").parent().hide();  
+      }
+  }
+
+  function validate()
+  {
+      var portNum = $("input[name='portNumber']").val();
+      if(isNaN(portNum) || !_isNumeric(portNum) ||
+      parseInt(portNum,10) < 1024 ||
+      parseInt(portNum) > 65534 || portNum.indexOf(".") != -1)
+      {
+          alert(window.top.mlang["ARME04"]);
+          ("input[name='portNumber']").focus();
+          return false;
+      }
+      
+      if($("input[name='accessType']:checked").val() == "Range")
+      {
+          var startIp = $("#rangeStart-ip").getIp();
+          var endIp = $("#rangeEnd-ip").getIp();
+          if(checkIP(startIp,254))
+          {
+              alert(window.top.mlang["ARME02"]);
+              return false;  
+          }
+          else if(checkIP(endIp,254))
+          {
+              alert(window.top.mlang["ARME01"]);
+              return false;  
+          }
+          else if(!ip_range_check(startIp, endIp))
+          {
+              alert(window.top.mlang["ARME03"]);
+              return false; 
+          }
+          else
+          {
+            $("input[name='startIp']").val(startIp);
+            $("input[name='endIp']").val(endIp);
+          }
+      }
+      else if($("input[name='accessType']:checked").val() == "Single")
+      {
+          var onlyIp = $("#only-ip").getIp();
+          var wanipaddr = $("input[name='wanipaddr']").val();
+          if(checkIP(onlyIp,254) || (parseInt(onlyIp.split('.')[3], 10) == 0) || (wanipaddr == onlyIp))
+          {
+              alert(window.top.mlang["SWPE05"]);
+              return false;  
+          }
+          else
+          {
+              $("input[name='startIp']").val(onlyIp);
+          }
+      }
+      
+      return true;
+  }
+  </script>
+</head>
+
+<? bodyBegin('remoteMgmt', 'FW_remote', 'LUP036', 'LUP036', '', 'post_fillout') ?>
+    <div id="main" class="form-group" style="overflow:auto;scrolling:auto">
+      <div class="form-row ">
+        <label class="checkbox-container">
+          <input type="checkbox"  name="enableRemoteMgmt" id="remote_mg_enable" value="true"><a href="javascript:loadhelp('FW_remote','turnon')" tabindex="-1"><b mlang="ARM002">Turn Remote Management On</b></a>
+          <span class="checkbox-checkmark"></span>
+        </label>
+      </div>
+
+      <div class="divider">&nbsp;</div>
+
+      <div class="form-row ">
+        <a href="javascript:loadhelp('FW_remote','address')" tabindex="-1"><b mlang="ARM004">Remote Management Address</b><b>:</b></a>
+      </div>
+      <div class="form-row ">
+        <span name="remote_mg_addr"></span>
+      </div>
+
+      <div class="form-row">
+        <span name="remote_mg_addr_ipv6"></span>
+      </div>
+ 
+      <div class="divider">&nbsp;</div>
+
+      <div class="form-row ">
+        <a href="javascript:loadhelp('FW_remote','access')" tabindex="-1"><b mlang="ARM001">Allow Remote Access By</b><b>:</b></a>
+      </div>
+      <div class="form-row ">
+        <label class="checkbox-container">
+          <input type="radio" name="accessType" id="rm_only" value="Single" mlang="ARM006">Only This Computer</input><span>:</span>
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+
+      <div id="only-ip"></div>
+
+      <div class="form-row">
+        <label class="checkbox-container">
+          <input type="radio" name="accessType" id="rm_range" value="Range" mlang="CBE013">IP Address Range</input><span>:</span>
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+
+      <div id="rangeStart-ip"></div>
+
+      <div id="rangeEnd-ip"></div>
+
+      <div class="form-row">
+        <label class="checkbox-container">
+          <input type="radio"  checked name="accessType" id="rm_all" value="All" mlang="ARM005">Everyone</input>
+          <span class="radio-checkmark"></span>
+        </label>
+      </div>
+
+      <div class="divider">&nbsp;</div>
+      
+      <div class="form-row">
+        <a href="javascript:loadhelp('FW_remote','port')" tabindex="-1"><b mlang="SGN011">Port Number</b><b>:</b></a>
+      </div>
+      <div class="form-row">
+       <input type="text" class="num s_input" name="portNumber" id="http_rmport" value="" size=6 maxlength=5>
+      </div>
+      
+      <div class="space-divider">&nbsp;</div>
+      <div class="space-divider">&nbsp;</div>
+    </div><!--form-group-->  
+    
+    <input name="startIp" type=hidden value= ""/>
+    <input name="endIp" type=hidden value= ""/>
+    <input name="ipv6Enable" type=hidden value= "" disabled />
+    <input name="wanipaddr" type=hidden value= "" disabled />
+    
+  <? bodyEnd(0, 'FW_remote.html') ?>
+</html>

@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+SERVICE_USE_PID=1
+START=70
+BLKSRV_ON="/var/blockservice_on.sh"
+BLKSRV_OFF="/var/blockservice_off.sh"
+
+blockService_script() {
+    echo "#!/bin/sh" > $BLKSRV_ON
+    echo ". \$IPKG_INSTROOT/lib/functions.sh" >> $BLKSRV_ON
+    echo "rule_config(){ " >> $BLKSRV_ON
+    echo "  config_get log_prefix \$1 log_prefix " >> $BLKSRV_ON
+    echo "  prefix=\$(echo \$log_prefix | cut -d \":\" -f 1)" >> $BLKSRV_ON
+    echo "  if [ \"\$prefix\" == \"[site_blocked]\" ]; then" >> $BLKSRV_ON
+    echo "     config_get enabled \$1 enabled" >> $BLKSRV_ON
+    echo "     if [ \"\$enabled\" == \"0\" ]; then" >> $BLKSRV_ON
+    echo "       uci set \"firewall.\$1.enabled=1\"" >> $BLKSRV_ON
+    echo "       uci commit firewall" >> $BLKSRV_ON
+    echo "     fi" >> $BLKSRV_ON
+    echo "  fi" >> $BLKSRV_ON
+    echo "}" >> $BLKSRV_ON
+    echo "config_load firewall" >> $BLKSRV_ON
+    echo "config_foreach rule_config rule" >> $BLKSRV_ON
+    echo "fw3 reload 2>/dev/null" >> $BLKSRV_ON
+
+
+    echo "#!/bin/sh" > $BLKSRV_OFF
+    echo ". \$IPKG_INSTROOT/lib/functions.sh" >> $BLKSRV_OFF
+    echo "rule_config(){ " >> $BLKSRV_OFF
+    echo "  config_get log_prefix \$1 log_prefix " >> $BLKSRV_OFF
+    echo "  prefix=\$(echo \$log_prefix | cut -d \":\" -f 1)" >> $BLKSRV_OFF
+    echo "  if [ \"\$prefix\" == \"[site_blocked]\" ]; then" >> $BLKSRV_OFF
+    echo "     config_get enabled \$1 enabled" >> $BLKSRV_OFF
+    echo "     if [ \"\$enabled\" == \"1\" ]; then" >> $BLKSRV_OFF
+    echo "       uci set \"firewall.\$1.enabled=0\"" >> $BLKSRV_OFF
+    echo "       uci commit firewall" >> $BLKSRV_OFF
+    echo "     fi" >> $BLKSRV_OFF
+    echo "  fi" >> $BLKSRV_OFF
+    echo "}" >> $BLKSRV_OFF
+    echo "config_load firewall" >> $BLKSRV_OFF
+    echo "config_foreach rule_config rule" >> $BLKSRV_OFF
+    echo "fw3 reload 2>/dev/null" >> $BLKSRV_OFF
+}
+
+
+block_type() {
+    local type
+
+    config_get type $1 blocking_type
+
+    if [ "$type" == "never" ]; then
+      rm -f $BLKSRV_ON $BLKSRV_OFF 2>/dev/null
+    elif [ "$type" == "schedule" ]; then
+      blockService_script
+      chmod 755 $BLKSRV_ON
+      chmod 755 $BLKSRV_OFF
+    elif [ "$type" == "always" ]; then
+      rm -f $BLKSRV_ON $BLKSRV_OFF 2>/dev/null
+    fi
+}
+
+start() {
+    config_load firewall
+
+    config_foreach block_type BlockService
+}
+
+stop() {
+    rm -r $BLKSRV_ON $BLKSRV_OFF 2>/dev/null
+}
+
+restart() {
+    stop
+    start
+}
+

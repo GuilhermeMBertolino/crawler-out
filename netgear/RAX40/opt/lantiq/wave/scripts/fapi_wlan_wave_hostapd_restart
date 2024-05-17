@@ -1,0 +1,98 @@
+#!/bin/sh
+# call fapi_wlan_wave_down to bring down and then up a Wave interface (restart the hostapd in the process)
+# Needed object: None
+
+script_name="fapi_wlan_wave_hostapd_restart"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name="$1"
+
+script_result="success"
+interface_type=`check_interface_type $interface_name`
+if [ "$interface_type" = "$STA" ]
+then
+	radio_name=`get_radio_name_from_endpoint $interface_name`
+	radio_index=`find_index_from_interface_name $radio_name`
+	endpoint_name="$interface_name"
+	endpoint_index=`find_index_from_interface_name $endpoint_name`
+	interface_name="$endpoint_name"
+else
+	radio_name=${interface_name%%.*}
+	[ "$radio_name" != "$interface_name" ] && interface_type="$VAP"
+	radio_index=`find_index_from_interface_name $radio_name`
+	interface_index="$radio_index"
+	interface_name="$radio_name"
+	endpoint_suffix=${radio_name##wlan}
+	endpoint_suffix=$((endpoint_suffix+1))
+	endpoint_name="wlan${endpoint_suffix}"
+	endpoint_index=`find_index_from_interface_name $endpoint_name`
+fi
+
+endpoint_disabled_for_down=0
+
+timestamp $radio_index "$script_name:$interface_name:begin"
+print2log $radio_index DEBUG "$script_name $*"
+
+# The script can be called from other script or from external API
+if [ -z "$interface_name" ] 
+then  
+	print2log $radio_index ERROR "$script_name must get interface"
+	script_result="FAILURE"
+else
+	# Delete the runner file
+	rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Create down runner
+	(. $ETC_PATH/fapi_wlan_wave_down $interface_name "$script_name" "$interface_type" "$endpoint_disabled_for_down" "$radio_name" "$endpoint_name" "$radio_index")
+	echo -ne "\n" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	# Execute the down runner
+	if [ -e "${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}" ]
+	then
+		chmod +x ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	fi
+	# If runner execution failed, return failure
+	if [ $? -gt 0 ] 
+	then
+	    script_result="FAILURE"
+	else
+	    # Delete the runner file
+	    rm -f ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	    echo "[ ! \"\$LIB_COMMON_SOURCED\" ] && . /tmp/fapi_wlan_wave_lib_common.sh" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	    # Create up runner
+	    echo "##### fapi_wlan_wave_up commands #####" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	    # Start hostapd and drvhlpr and wait for hostapd to be ready
+	    [ -e ${RADIO_UP_CONF}_${radio_name}.conf ] && cat ${RADIO_UP_CONF}_${radio_name}.conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	    [ -e ${DRVHLPR_UP_CONF}_${radio_name}.conf ] && cat ${DRVHLPR_UP_CONF}_${radio_name}.conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	    [ -e ${WAIT_HOSTAPD_CONF}_${radio_name}.conf ] && cat ${WAIT_HOSTAPD_CONF}_${radio_name}.conf >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+
+	    # Execute post-up commands of the radio VAP (even if radio is disabled)
+	    up_add_ap_post_up_to_runner $radio_name $accesspoint_disabled $restart_radio
+
+	    # Execute the up runner
+	    if [ -e "${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}" ]
+	    then
+		    chmod +x ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		    ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+	    fi
+	    # If runner execution failed, return failure
+	    [ $? -gt 0 ] && script_result="FAILURE"
+	fi
+fi
+
+# Create the output configuration file
+cat /dev/null > ${OUT_CONF}
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "$script_result"
+
+print2log $radio_index DEBUG "$script_name done"
+timestamp $radio_index "$script_name:$interface_name:done"
+
+[ $script_result = "FAILURE" ] && exit 1
+

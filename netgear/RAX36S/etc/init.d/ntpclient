@@ -1,0 +1,50 @@
+#!/bin/sh /etc/rc.common
+START=30
+
+echo "$START" >/dev/null
+
+CONFIG=/bin/config
+
+DGC_WAN_PPP_IF="ppp0"
+DGC_WAN_BR_IF="brwan"
+DGC_LAN_BR_IF="br0"
+config()
+{
+	wan_proto=$($CONFIG get wan_proto)
+
+	dst_options="-e 1" #the optin -e is the flag whether ntpclinet need to set time by time zone, we enable it here.
+
+	time_zone=$($CONFIG get time_zone)
+
+	manual_ntp=$($CONFIG get ntp_server_type)
+
+	manual_ntp_server=$($CONFIG get manual_ntp_server)
+
+	if [ "X$($CONFIG get ap_mode)" = "X1" ] || [ "X$($CONFIG get bridge_mode)" = "X1" ]; then
+		net_ifname=$DGC_LAN_BR_IF
+		wan_proto=dhcp
+	elif [ "X$wan_proto" = "Xpppoe" ] || [ "X$wan_proto" = "Xpptp" ] || [ "X$wan_proto" = "Xmulpppoe1" ] || [ "X$wan_proto" = "Xpppoa" ] || [ "X$wan_proto" = "Xipoa" ]; then
+		net_ifname=$DGC_WAN_PPP_IF
+	else
+		net_ifname=$DGC_WAN_BR_IF
+	fi
+}
+
+start()
+{
+	[ -d /tmp/run ] || mkdir -p /tmp/run
+	config
+	/usr/sbin/ntpclient -w "${wan_proto:-dhcp}" -n "${net_ifname:-brwan}" -a "$DGC_LAN_BR_IF" -z "$time_zone" -j "${manual_ntp:-0}" -k "$manual_ntp_server" "$dst_options"
+}
+
+stop()
+{
+	pid_fd=$(cat /tmp/run/ntpclient.pid)
+	kill "$pid_fd"
+}
+
+restart()
+{
+	stop
+	start
+}

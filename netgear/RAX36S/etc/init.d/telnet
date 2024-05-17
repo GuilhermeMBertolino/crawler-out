@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+
+start()
+{
+	if [ "x$(/bin/config get factory_mode)" = "x1" ]; then
+	# telnet don't neet username and passwd for calibration and OTA
+		#if [ "`/bin/config get cal`" = "0" -o "`/bin/config get ota`" = "0" ]; then
+		if [ "`/bin/config get cal`" = "0" ]; then
+			killall utelnetd
+			/usr/sbin/utelnetd -d -i br0 -l /bin/sh
+		else
+			/usr/sbin/utelnetd -d -i br0
+		fi
+	else
+		/usr/sbin/telnetenable
+	fi
+}
+
+stop()
+{
+	killall utelnetd
+	killall telnetenable
+}
+
+boot()
+{
+	start
+}

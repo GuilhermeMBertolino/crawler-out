@@ -1,0 +1,1016 @@
+#!/bin/sh
+
+RUNNUNG="/var/run/loadsharing-script-running"
+# Make sure only one default script running.
+while :
+do
+    if [ ! -f "$RUNNING" ] ; then
+        break
+    fi
+    echo "exist $RUNNING"
+    sleep 1
+done
+echo 1 > $RUNNING
+
+. /usr/bin/scriptlib
+LOADSHARING_ENABLE=`rdcsman 0x004301c0 u32`
+FIRST_WANTYPE=`rdcsman 0x00010003 u32`
+SECOND_WANTYPE=`rdcsman 0x0043000b u32`
+
+FIRST_STATUS=`rdcsman 0x80432b22 u32`
+SECOND_STATUS=`rdcsman 0x80430600 u32`
+
+_3G_CONNECT_TYPE=`rdcsman 0x801e4001 u16`
+
+DUALSTACK_ENABLE=`rdcsman 0x00900004 u32`
+
+DNS_CONF="/etc/resolv.conf"
+PPP_DNS_CONF="/etc/ppp/resolv.conf"
+FIRST_DNS_CONF="/var/lsing/first_resolv.conf"
+SECOND_DNS_CONF="/var/lsing/second_resolv.conf"
+FIRST_LOG="/var/lsing/lsing_first.log"
+SECOND_LOG="/var/lsing/lsing_second.log"
+FIRST_STOP="/var/lsing/lsing_first_stop.log"
+SECOND_STOP="/var/lsing/lsing_second_stop.log"
+
+###### LoadSharing CSID to fill in ######
+## $1 is first wan 1 or second wan 2
+## $2 is action start 2  or stop 3
+
+#echo start script $1 $2 > /var/lsing/lsing.log
+
+if [ "$LOADSHARING_ENABLE" = "1" ] && [ "$1" = "1" ] ; then
+
+    echo start first wan $1 $2 >> $FIRST_LOG
+    ## DHCP Wan Type
+    if [  "$FIRST_WANTYPE" = "0" ] && [ "$2" = "2" ] ; then
+        echo start first dhcp >> $FIRST_LOG
+        IF_NAME=`rdcsman 0x8000F231 str`
+
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ -z $IP ] ; then
+            echo dhcp disconnect >> $FIRST_LOG
+            return 0
+        fi
+
+        if [ -z $GW ] ; then
+            GW=`cat /tmp/LS_dhcp.log |grep "gw" | cut -d ":" -f2 | cut -d "," -f1`
+        else
+            chk=`cat $GW|grep "."`
+            if [ -z $chk ] ; then
+                GW=`cat /tmp/LS_dhcp.log |grep "gw" | cut -d ":" -f2 | cut -d "," -f1`
+            fi
+        fi
+
+        wrcsman "0x80035002 {$IP} && \
+                 0x80035003 {$NM} && \
+                 0x80035004 {$GW}"
+        
+        echo dhcp $IF_NAME $IP $NM $GW >> $FIRST_LOG
+
+        DNS1=`cat /tmp/LS_dhcp.log |grep "dns"| cut -d ":" -f2 | cut -d " " -f1`
+        DNS2=`cat /tmp/LS_dhcp.log |grep "dns"| cut -d ":" -f2 | cut -d " " -f2`
+
+        echo dhcp $DNS1 $DNS2 >> $FIRST_LOG
+
+        wrcsman "0x80035005 {$DNS1} && \
+                 0x80035006 {$DNS2} && \
+                 0x80010005 {$DNS1} && \
+                 0x80010006 {$DNS2} && \
+                 0x80035007 0x02"
+
+        wrcsman "0x80010002 {$IP} && \
+                 0x80010007 0x02 && \
+                 0x80432b22 0x02 && \
+                 0x8001000b \"$IF_NAME && \
+                 0x80432b24 \"$IF_NAME"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS2
+            logger -t "lsing_script" "first dhcp DNS1 no value .."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1
+            logger -t "lsing_script" "first dhcp DNS2 no value .."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "first dhcp DNS error ..."
+        else
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "first dhcp DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$FIRST_WANTYPE" = "0" ] && [ "$2" = "3" ] ; then
+        echo stop first dhcp > $FIRST_STOP
+
+        wrcsman "0x80035009 0x00 && \
+                 0x80035002 0x00 && \
+                 0x80035003 0x00 && \
+                 0x80035004 0x00"
+        
+        wrcsman "0x80035005 0x00 && \
+                 0x80035006 0x00 && \
+                 0x80035007 0x00"
+
+        wrcsman "0x80010002 0x00 && \
+                 0x80010007 0x00 && \
+                 0x80432b22 0x00 && \
+                 0x8001000b 0x00 && \
+                 0x80432b24 0x00"
+
+        wrcsman "0x80432b21 0x00"
+        
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+    fi
+
+    ## 3G Wan Type
+    if [ "$FIRST_WANTYPE" = "16" ] && [ "$2" = "2" ] ; then
+        echo start first 3g >> $FIRST_LOG
+
+        if [ "$_3G_CONNECT_TYPE" = "1" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "Sierra First IF_NAME = usbnet0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "2" ] ; then
+            IF_NAME="hso0"
+            logger -t "lsing_script" "Hso First IF_NAME = hso0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "3" ] ; then
+            IF_NAME="wwan0"
+            logger -t "lsing_script" "IPhome First IF_NAME = wwan0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "4" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "HTC First IF_NAME = usbnet0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "5" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "HTC First IF_NAME = usbnet0 ..."
+        else
+            v6_IF_NAME=`rdcsman 0x80902000 str`
+            if [ "$SECOND_STATUS" = "2" ] && [ "$SECOND_WANTYPE" = "6" ] ; then
+                Second_IF_NAME=`rdcsman 0x8043000b str`
+                if [ "$DUALSTACK_ENABLE" = "1"  ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$DUALSTACK_ENABLE" = "1"  ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp0"
+                else
+                    if [ -z "$v6_IF_NAME" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ -z "$v6_IF_NAME" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp0"
+                    elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp2"
+                    elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$Second_IF_NAME" = "ppp2" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp2"
+                    elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$Second_IF_NAME" = "ppp2" ] ; then
+                        IF_NAME="ppp0"
+                    elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp0"
+                    else
+                        if [ "$Second_IF_NAME" = "ppp0" ] ; then
+                            IF_NAME="ppp1"
+                        else
+                            IF_NAME="ppp0"
+                        fi
+                    fi
+                fi
+            else
+                if [ "$v6_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                else
+                    IF_NAME="ppp0"
+                fi
+            fi
+        fi
+        
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ "$_3G_CONNECT_TYPE" = "1" ] ; then
+            PIP=`cat /tmp/sierra-connect |grep "!SCPADDR:" |cut -d "," -f2 |cut -d "\"" -f2`
+            if [ "$PIP" != "$IP" ] ; then
+                echo "Got DHCP IP: $IP 3g disconnect" >> $FIRST_LOG
+                return 0
+            fi
+        fi
+
+        if [ -z $IP ] ; then
+            echo 3g disconnect >> $FIRST_LOG
+            return 0
+        fi
+
+        local ts CFG_TS
+        CFG_TS=`cat /proc/uptime |cut -d " " -f1`
+        for ts in $CFG_TS
+        do
+            ts=${ts%%.*}
+        done
+        
+        wrcsman "0x801e0100 {$ts} && \
+                 0x801e0200 {$IP} && \
+                 0x801e0300 {$NM} && \
+                 0x801e0400 {$GW} && \
+                 0x801e2200 \"$IF_NAME && \
+                 0x80432b24 \"$IF_NAME"
+        
+        echo 3g $IF_NAME $IP $NM $GW >> $FIRST_LOG
+
+        n=0
+        if [ "$_3G_CONNECT_TYPE" = "0" ] ; then
+            if [ -f $PPP_DNS_CONF ] ; then
+                CFG=`cat $PPP_DNS_CONF`
+            else
+                echo $PPP_DNS_CONF failed >> $FIRST_LOG
+                return 1
+            fi
+        else
+            CFG=`cat $DNS_CONF`
+        fi
+        got=0
+        cnt=0
+        for s in $CFG
+        do
+            if [ $got = 1 ] ; then
+                if [ $cnt = 0 ] ; then
+                    DNS1=$s
+                fi
+
+                if [ $cnt = 1 ] ; then
+                    DNS2=$s
+                fi
+                cnt=$(($cnt+1))     
+                got=0
+                continue           
+            fi
+
+            if [ $s = "nameserver" ] ; then
+                got=1
+            fi
+        done
+
+        echo 3g $DNS1 $DNS2 >> $FIRST_LOG
+
+        wrcsman "0x801e0500 {$DNS1} && \
+                 0x801e0600 {$DNS2} && \
+                 0x80010005 {$DNS1} && \
+                 0x80010006 {$DNS2} && \
+                 0x801e0700 0x02"
+
+        wrcsman "0x80010002 {$IP} && \
+                 0x80010007 0x02 && \
+                 0x80432b22 0x02 && \
+                 0x8001000b \"$IF_NAME"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS2
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS2
+            logger -t "lsing_script" "first 3g DNS1 no value ..."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS1
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1
+            logger -t "lsing_script" "first 3g DNS2 no value ..."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "first 3g DNS error ..."
+        else
+            sl_insert_dns_file $DNS_CONF $DNS1 $DNS2
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "first 3g DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$FIRST_WANTYPE" =  "16" ] && [ "$2" = "3" ] ; then
+        echo stop first 3g > $FIRST_STOP
+
+        wrcsman "0x801e0100 0x00 && \
+                 0x801e0200 0x00 && \
+                 0x801e0300 0x00 && \
+                 0x801e0400 0x00 && \
+                 0x801e1000 0x00"
+
+        wrcsman "0x801e0500 0x00 && \
+                 0x801e0600 0x00 && \
+                 0x801e0700 0x00"
+
+        wrcsman "0x80010002 0x00 && \
+                 0x80010007 0x00 && \
+                 0x80432b22 0x00 && \
+                 0x8001000b 0x00 && \
+                 0x80432b24 0x00"
+
+        wrcsman "0x80432b21 0x00"
+        
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+    ## FIXED
+    if [ "$FIRST_WANTYPE" = "32" ] && [ "$2" = "2" ] ; then
+        echo start first fixip >> $FIRST_LOG
+        IF_NAME=`rdcsman 0x8000F361 str`
+        IP=`rdcsman 0x00110001 ipv4`
+
+        ## First WAN IF  IP  STATUS
+        wrcsman "0x80010002 {$IP} && \
+                 0x80010007 0x02 && \
+                 0x80432b22 0x02 && \
+                 0x8001000b \"$IF_NAME && \
+                 0x80432b24 \"$IF_NAME"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    elif [ "$FIRST_WANTYPE" = "32" ] && [ "$2" = "3" ] ; then
+        echo stop first fixip > $FIRST_STOP
+
+        ## First WAN IF IP STATUS
+        wrcsman    "0x80010002 0x00 && \
+                 0x80010007 0x00 && \
+                 0x80432b22 0x00 && \
+                 0x8001000b 0x00 && \
+                 0x80432b24 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+    ## PPPoE Wan Type
+    if [ "$FIRST_WANTYPE" = "64" ] && [ "$2" = "2" ] ; then
+        echo start first PPPoE >> $FIRST_LOG
+        v6_IF_NAME=`rdcsman 0x80902000 str`
+        v6_PPPOE_CNT_STATUS=`rdcsman 0x80900030 u32`
+        if [ "$SECOND_STATUS" = "2" ] && [ "$SECOND_WANTYPE" = "2" ] ; then
+            Second_IF_NAME=`rdcsman 0x8043000b str`
+            if [ "$DUALSTACK_ENABLE" = "1" ] ; then
+                logger -t "lsing_script" "First Wan PPPoE DUALSTACK_ENABLE .."
+                echo PPPoE DUALSTACK_ENABLE >> $SECOND_LOG
+                if [ "$v6_PPPOE_CNT_STATUS" != "2" ] || [ -z "$v6_IF_NAME" ] ; then
+                    logger -t "lsing_script" "Second Wan PPPoEv6 $v6_IF_NAME .."
+                    return 0
+                fi
+            fi
+
+            if [ "$DUALSTACK_ENABLE" = "1"  ] ; then
+                IF_NAME=$v6_IF_NAME 
+            else
+                if [ -z "$v6_IF_NAME" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ -z "$v6_IF_NAME" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp0"
+                elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp2"
+                elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$Second_IF_NAME" = "ppp2" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp2"
+                elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$Second_IF_NAME" = "ppp2" ] ; then
+                    IF_NAME="ppp0"
+                elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$Second_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$Second_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp0"
+                else
+                    if [ "$Second_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    else
+                        IF_NAME="ppp0"
+                    fi
+                fi
+            fi
+        else
+            if [ "$DUALSTACK_ENABLE" = "1"  ] ; then
+                IF_NAME=$v6_IF_NAME 
+            else
+                if [ "$v6_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                else
+                    IF_NAME="ppp0"
+                fi
+            fi
+        fi
+        
+        echo PPPoE $IF_NAME >> $FIRST_LOG
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ -z $IP ] ; then
+            echo PPPoE $IF_NAME  disconnect >> $FIRST_LOG
+            return 0
+        fi
+
+        local ts CFG_TS
+        CFG_TS=`cat /proc/uptime |cut -d " " -f1`
+        for ts in $CFG_TS
+        do
+            ts=${ts%%.*}
+        done
+        
+        wrcsman "0x80040100 {$ts} && \
+                 0x80040200 {$IP} && \
+                 0x80040300 {$NM} && \
+                 0x80040400 {$GW} && \
+                 0x8001000b \"$IF_NAME && \
+                 0x80432b24 \"$IF_NAME"
+        
+        echo PPPoE $IF_NAME $IP $NM $GW >> $FIRST_LOG
+
+        CSID_DNS1=`rdcsman 0x00040700 ipv4`
+        CSID_DNS2=`rdcsman 0x00040800 ipv4`
+        if [ "$CSID_DNS1" = "0.0.0.0" ] && [ "$CSID_DNS2" = "0.0.0.0" ] ; then
+            n=0
+            if [ -f $PPP_DNS_CONF ] ; then
+                CFG=`cat $PPP_DNS_CONF`
+            else
+                echo $PPP_DNS_CONF failed >> $FIRST_LOG
+                return 1
+            fi
+            got=0
+            cnt=0
+            for s in $CFG
+            do
+                if [ $got = 1 ] ; then
+                    if [ $cnt = 0 ] ; then
+                        DNS1=$s
+                    fi
+
+                    if [ $cnt = 1 ] ; then
+                        DNS2=$s
+                    fi
+                    cnt=$(($cnt+1))     
+                    got=0
+                    continue           
+                fi
+
+                if [ $s = "nameserver" ] ; then
+                    got=1
+                fi
+            done
+        else
+            if [ "$CSID_DNS1" = "0.0.0.0" ] && [ "$CSID_DNS2" != "0.0.0.0" ] ; then
+                DNS1=$CSID_DNS2
+                DNS2=$CSID_DNS2
+            elif [ "$CSID_DNS1" != "0.0.0.0" ] && [ "$CSID_DNS2" = "0.0.0.0" ] ; then
+                DNS1=$CSID_DNS1
+                DNS2=$CSID_DNS1
+            else
+                DNS1=$CSID_DNS1
+                DNS2=$CSID_DNS2
+            fi
+        fi
+
+        echo PPPoE $DNS1 $DNS2 >> $FIRST_LOG
+
+        wrcsman "0x80040500 {$DNS1} && \
+                 0x80040600 {$DNS2} && \
+                 0x80010005 {$DNS1} && \
+                 0x80010006 {$DNS2} && \
+                 0x80040700 0x02"
+
+        wrcsman "0x80010002 {$IP} && \
+                 0x80432b22 0x02 && \
+                 0x80010007 0x02"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS2
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS2
+            logger -t "lsing_script" "first pppoe DNS1 no value .."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS1
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1
+            logger -t "lsing_script" "first pppoe DNS2 no value .."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "first pppoe error ..."
+        else
+            sl_insert_dns_file $DNS_CONF $DNS1 $DNS2
+            sl_insert_dns_file $FIRST_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "first pppoe DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$FIRST_WANTYPE" = "64" ] && [ "$2" = "3" ] ; then
+        echo stop first PPPoE > $FIRST_STOP
+
+        wrcsman "0x80040100 0x00 && \
+                 0x80040200 0x00 && \
+                 0x80040300 0x00 && \
+                 0x80040400 0x00 && \
+                 0x8001000b 0x00"
+        
+        wrcsman "0x80040500 0x00 && \
+                 0x80040600 0x00 && \
+                 0x80040700 0x00"
+
+        wrcsman "0x80010002 0x00 && \
+                 0x80432b22 0x00 && \
+                 0x80010007 0x00 && \
+                 0x80432b24 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+elif [ "$LOADSHARING_ENABLE" = "1" ] && [ "$1" = "2" ] ; then
+    
+    echo start second wan $1 $2 >> $SECOND_LOG
+
+    ## 3G Wan Type
+    if [ "$SECOND_WANTYPE" = "2" ] && [ "$2" = "2" ] ; then
+        echo start second 3g >> $SECOND_LOG
+
+        if [ "$_3G_CONNECT_TYPE" = "1" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "First IF_NAME = usbnet0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "2" ] ; then
+            IF_NAME="hso0"
+            logger -t "lsing_script" "Second IF_NAME = hso0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "3" ] ; then
+            IF_NAME="wwan0"
+            logger -t "lsing_script" "Second IF_NAME = wwan0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "4" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "Second IF_NAME = usbnet0 ..."
+        elif [ "$_3G_CONNECT_TYPE" = "5" ] ; then
+            IF_NAME="usbnet0"
+            logger -t "lsing_script" "Second IF_NAME = usbnet0 ..."
+        else
+            v6_IF_NAME=`rdcsman 0x80902000 str`
+            if [ "$FIRST_STATUS" = "2" ] && [ "$FIRST_WANTYPE" = "64" ] ; then
+                First_IF_NAME=`rdcsman 0x80432b24 str`
+                if [ "$DUALSTACK_ENABLE" = "1"  ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$DUALSTACK_ENABLE" = "1"  ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp0"
+                else
+                    if [ -z "$v6_IF_NAME" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ -z "$v6_IF_NAME" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp0"
+                    elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp2"
+                    elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$First_IF_NAME" = "ppp2" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp2"
+                    elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$First_IF_NAME" = "ppp2" ] ; then
+                        IF_NAME="ppp0"
+                    elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                        IF_NAME="ppp0"
+                    else
+                        if [ "$First_IF_NAME" = "ppp0" ] ; then
+                            IF_NAME="ppp1"
+                        else
+                            IF_NAME="ppp0"
+                        fi
+                    fi
+                fi
+            else
+                if [ "$v6_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                else
+                    IF_NAME="ppp0"
+                fi
+            fi
+        fi
+        
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ "$_3G_CONNECT_TYPE" = "1" ] ; then
+            PIP=`cat /tmp/sierra-connect |grep "!SCPADDR:" |cut -d "," -f2 |cut -d "\"" -f2`
+            if [ "$PIP" != "$IP" ] ; then
+                echo "Got DHCP IP: $IP 3g disconnect" >> $SECOND_LOG
+                return 0
+            fi
+        fi
+
+        if [ -z $IP ] ; then
+            echo 3g disconnect >> $SECOND_LOG
+            return 0
+        fi
+
+        local ts CFG_TS
+        CFG_TS=`cat /proc/uptime |cut -d " " -f1`
+        for ts in $CFG_TS
+        do
+            ts=${ts%%.*}
+        done
+
+        wrcsman "0x8043000c {$ts} && \
+                 0x80430002 {$IP} && \
+                 0x80430003 {$NM} && \
+                 0x80430004 {$GW} && \
+                 0x8043000b \"$IF_NAME"
+        
+        echo 3g $IF_NAME $IP $NM $GW >> $SECOND_LOG
+
+        n=0
+        if [ "$_3G_CONNECT_TYPE" = "0" ] ; then
+            if [ -f $PPP_DNS_CONF ] ; then
+                CFG=`cat $PPP_DNS_CONF`
+            else
+                echo $PPP_DNS_CONF failed >> $SECOND_LOG
+                return 1
+            fi
+        else
+            CFG=`cat $DNS_CONF`
+        fi
+        got=0
+        cnt=0
+        for s in $CFG
+        do
+            if [ $got = 1 ] ; then
+                if [ $cnt = 0 ] ; then
+                    DNS1=$s
+                fi
+
+                if [ $cnt = 1 ] ; then
+                    DNS2=$s
+                fi
+
+                cnt=$(($cnt+1))     
+                got=0
+                continue           
+           fi
+
+            if [ $s = "nameserver" ] ; then
+                  got=1
+               fi
+        done
+
+        echo 3g $DNS1 $DNS2 >> $SECOND_LOG
+
+        wrcsman "0x80430005 {$DNS1} && \
+                 0x80430006 {$DNS2} && \
+                 0x80430600 0x02 && \
+                 0x801e0700 0x02"
+        
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS2
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS2
+            logger -t "lsing_script" "second 3g DNS1 no value .."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS1
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1
+            logger -t "lsing_script" "second 3g DNS2 no value .."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "second 3g DNS error ..."
+        else
+            echo `cat $DNS_CONF` >> /tmp/test_log
+            echo "3G: sl_insert_dns_file $DNS_CONF $DNS1 $DNS2" >> /tmp/test_log
+            sl_insert_dns_file $DNS_CONF $DNS1 $DNS2
+            echo `cat $DNS_CONF` >> /tmp/test_log
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "second 3g DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$SECOND_WANTYPE" = "2" ] && [ "$2" = "3" ] ; then
+        echo stop second 3g > $SECOND_STOP
+        
+        wrcsman "0x80430002 0x00 && \
+                 0x80430003 0x00 && \
+                 0x80430004 0x00 && \
+                 0x80430005 0x00 && \
+                 0x80430006 0x00 && \
+                 0x8043000b 0x00 && \
+                 0x8043000c 0x00 && \
+                 0x80430600 0x00 && \
+                 0x801e0700 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+    ## FIXED
+    if [ "$SECOND_WANTYPE" = "4" ] && [ "$2" = "2" ] ; then
+        echo start second fixip >> $SECOND_LOG
+        IF_NAME=`rdcsman 0x8000F361 str`
+        IP=`rdcsman 0x00110001 ipv4`
+        NM=`rdcsman 0x00110002 ipv4`
+        GW=`rdcsman 0x00110003 ipv4`
+        DNS1=`rdcsman 0x00110004 ipv4`
+        DNS2=`rdcsman 0x00110005 ipv4`
+    
+        ## Second wan IP NM GW DNS1 DNS2
+        wrcsman "0x80430002 {$IP} && \
+                 0x80430003 {$NM} && \
+                 0x80430004 {$GW} && \
+                 0x80430005 {$DNS1} && \
+                 0x80430006 {$DNS2} && \
+                 0x8043000b \"$IF_NAME"
+
+        ## Second wan STATUS
+        wrcsman "0x80430600 0x02"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    elif [ "$SECOND_WANTYPE" = "4" ] &&  [ "$2" = "3" ] ; then
+        echo stop second fixip > $SECOND_STOP
+
+        ## Second wan IP NM GW DNS1 DNS2
+        wrcsman "0x80430002 0x00 && \
+                 0x80430003 0x00 && \
+                 0x80430004 0x00 && \
+                 0x80430005 0x00 && \
+                 0x80430006 0x00 && \
+                 0x8043000b 0x00"
+
+        ## Second wan STATUS
+        wrcsman "0x80430600 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+    ## DHCP Wan Type
+    if [ "$SECOND_WANTYPE" = "5" ] && [ "$2" = "2" ] ; then
+        echo start second dhcp >> $SECOND_LOG
+
+        IF_NAME=`rdcsman 0x8000F231 str`
+
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ -z $IP ] ; then
+            echo dhcp disconnect >> $SECOND_LOG
+            return 0
+        fi
+
+        if [ -z $GW ] ; then
+            GW=`cat /tmp/LS_dhcp.log |grep "gw" | cut -d ":" -f2 | cut -d "," -f1`
+        else
+            chk=`cat $GW|grep "."`
+            if [ -z $chk ] ; then
+                GW=`cat /tmp/LS_dhcp.log |grep "gw" | cut -d ":" -f2 | cut -d "," -f1`
+            fi
+        fi
+
+        local ts CFG_TS
+        CFG_TS=`cat /proc/uptime |cut -d " " -f1`
+        for ts in $CFG_TS
+        do
+            ts=${ts%%.*}
+        done
+        
+        wrcsman "0x8043000c {$ts} && \
+                 0x80430002 {$IP} && \
+                 0x80430003 {$NM} && \
+                 0x80430004 {$GW} && \
+                 0x8043000b \"$IF_NAME"
+        
+        echo dhcp $IF_NAME $IP $NM $GW >> $SECOND_LOG
+
+        DNS1=`cat /tmp/LS_dhcp.log |grep "dns"| cut -d ":" -f2 | cut -d " " -f1`
+        DNS2=`cat /tmp/LS_dhcp.log |grep "dns"| cut -d ":" -f2 | cut -d " " -f2`
+
+        echo dhcp $DNS1 $DNS2 >> $SECOND_LOG
+
+        wrcsman "0x80430005 {$DNS1} && \
+                 0x80430006 {$DNS2} && \
+                 0x80430600 0x02 && \
+                 0x80035007 0x02"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS2
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS2
+            logger -t "lsing_script" "second dhcp DNS1 no value .."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS1
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1
+            logger -t "lsing_script" "second dhcp DNS2 no value .."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "second dhcp DNS error ..."
+        else
+            sl_insert_dns_file $DNS_CONF $DNS1 $DNS2
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "second dhcp DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$SECOND_WANTYPE" = "5" ] &&  [ "$2" = "3" ] ; then
+        echo stop second dhcp >> $SECOND_STOP
+
+        wrcsman "0x80430002 0x00 && \
+                 0x80430003 0x00 && \
+                 0x80430004 0x00 && \
+                 0x80430005 0x00 && \
+                 0x80430006 0x00 && \
+                 0x8043000b 0x00 && \
+                 0x8043000c 0x00 && \
+                 0x80430600 0x00 && \
+                 0x80035007 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+
+    ## PPPoE Wan Type
+    if [ "$SECOND_WANTYPE" = "6" ] && [ "$2" = "2" ] ; then
+        echo start second PPPoE >> $SECOND_LOG
+        v6_IF_NAME=`rdcsman 0x80902000 str`
+        v6_PPPOE_CNT_STATUS=`rdcsman 0x80900030 u32`
+        if [ "$DUALSTACK_ENABLE" = "1" ] ; then
+            logger -t "lsing_script" "Second Wan PPPoE DUALSTACK_ENABLE .."
+            echo PPPoE DUALSTACK_ENABLE >> $SECOND_LOG
+            if [ "$v6_PPPOE_CNT_STATUS" != "2" ] || [ -z "$v6_IF_NAME" ] ; then
+                logger -t "lsing_script" "Second Wan PPPoEv6 $v6_IF_NAME..$v6_PPPOE_CNT_STATUS.."
+                return 0
+            fi
+        fi
+
+        if [ "$FIRST_STATUS" = "2" ] && [ "$FIRST_WANTYPE" = "16" ] ; then
+            First_IF_NAME=`rdcsman 0x80432b24 str`
+            if [ "$DUALSTACK_ENABLE" = "1"  ] ; then
+                IF_NAME=$v6_IF_NAME 
+            else
+                if [ -z "$v6_IF_NAME" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ -z "$v6_IF_NAME" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp0"
+                elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp2"
+                elif [ "$v6_IF_NAME" = "ppp0" ] && [ "$First_IF_NAME" = "ppp2" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp2"
+                elif [ "$v6_IF_NAME" = "ppp1" ] && [ "$First_IF_NAME" = "ppp2" ] ; then
+                    IF_NAME="ppp0"
+                elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$First_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                elif [ "$v6_IF_NAME" = "ppp2" ] && [ "$First_IF_NAME" = "ppp1" ] ; then
+                    IF_NAME="ppp0"
+                else
+                    if [ "$First_IF_NAME" = "ppp0" ] ; then
+                        IF_NAME="ppp1"
+                    else
+                        IF_NAME="ppp0"
+                    fi
+                fi
+            fi
+        else
+            if [ "$DUALSTACK_ENABLE" = "1"  ] ; then
+                IF_NAME=$v6_IF_NAME 
+            else
+                if [ "$v6_IF_NAME" = "ppp0" ] ; then
+                    IF_NAME="ppp1"
+                else
+                    IF_NAME="ppp0"
+                fi
+            fi
+        fi
+        
+        sl_get_IP_NM_GW_in_ifconfig $IF_NAME IP NM GW
+
+        if [ -z $IP ] ; then
+            echo PPPoE disconnect IF:$IF_NAME >> $SECOND_LOG
+            return 0
+        fi
+
+        local ts CFG_TS
+        CFG_TS=`cat /proc/uptime |cut -d " " -f1`
+        for ts in $CFG_TS
+        do
+            ts=${ts%%.*}
+        done
+
+        wrcsman "0x8043000c {$ts} && \
+                 0x80430002 {$IP} && \
+                 0x80430003 {$NM} && \
+                 0x80430004 {$GW} && \
+                 0x8043000b \"$IF_NAME"
+        
+        echo PPPoE $IF_NAME $IP $NM $GW >> $SECOND_LOG
+
+        CSID_DNS1=`rdcsman 0x00040700 ipv4`
+        CSID_DNS2=`rdcsman 0x00040800 ipv4`
+        if [ "$CSID_DNS1" = "0.0.0.0" ] && [ "$CSID_DNS2" = "0.0.0.0" ] ; then
+            n=0
+            if [ -f $PPP_DNS_CONF ] ; then
+                CFG=`cat $PPP_DNS_CONF`
+            else
+                echo $PPP_DNS_CONF failed >> $SECOND_LOG
+                return 1
+            fi
+
+            got=0
+            cnt=0
+            for s in $CFG
+            do
+                if [ $got = 1 ] ; then
+                    if [ $cnt = 0 ] ; then
+                        DNS1=$s
+                    fi
+
+                    if [ $cnt = 1 ] ; then
+                        DNS2=$s
+                    fi
+                    cnt=$(($cnt+1))     
+                    got=0
+                    continue           
+                fi
+
+                if [ $s = "nameserver" ] ; then
+                    got=1
+                fi
+            done
+        else
+            if [ "$CSID_DNS1" = "0.0.0.0" ] && [ "$CSID_DNS2" != "0.0.0.0" ] ; then
+                DNS1=$CSID_DNS2
+                DNS2=$CSID_DNS2
+            elif [ "$CSID_DNS1" != "0.0.0.0" ] && [ "$CSID_DNS2" = "0.0.0.0" ] ; then
+                DNS1=$CSID_DNS1
+                DNS2=$CSID_DNS1
+            else
+                DNS1=$CSID_DNS1
+                DNS2=$CSID_DNS2
+            fi
+        fi
+
+        echo PPPoE $DNS1 $DNS2 >> $SECOND_LOG
+
+        wrcsman "0x80430005 {$DNS1} && \
+                 0x80430006 {$DNS2} && \
+                 0x80430600 0x02 && \
+                 0x80040700 0x02"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+        if [ -z "$DNS1" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS2
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS2
+            logger -t "lsing_script" "second pppoe DNS1 no value .."
+        elif [ -z "$DNS2" ] ; then
+            sl_insert_dns_file $DNS_CONF $DNS1
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1
+            logger -t "lsing_script" "second pppoe DNS1 no value .."
+        elif [ -z "$DNS1" ] && [ -z "$DNS2" ] ; then
+            logger -t "lsing_script" "second pppoe DNS error ..."
+        else
+            sl_insert_dns_file $DNS_CONF $DNS1 $DNS2
+            sl_insert_dns_file $SECOND_DNS_CONF $DNS1 $DNS2
+            logger -t "lsing_script" "second pppoe DNS1 and DNS2 value ok ..."
+        fi
+
+    elif [ "$SECOND_WANTYPE" = "6" ] && [ "$2" = "3" ] ; then
+        echo stop second PPPoE > $SECOND_STOP
+
+        wrcsman "0x80430002 0x00 && \
+                 0x80430003 0x00 && \
+                 0x80430004 0x00 && \
+                 0x80430005 0x00 && \
+                 0x80430006 0x00 && \
+                 0x8043000b 0x00 && \
+                 0x8043000c 0x00 && \
+                 0x80430600 0x00 && \
+                 0x80040700 0x00"
+
+        wrcsman "0x80432b21 0x00"
+
+        # init tx rx
+        wrcsman "0x80013000 0x00 && \
+                 0x80013010 0x00"
+
+    fi
+fi

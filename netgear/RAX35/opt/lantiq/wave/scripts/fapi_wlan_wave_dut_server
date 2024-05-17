@@ -1,0 +1,67 @@
+#!/bin/sh
+# Start DUT server
+
+stop_dutserver(){
+        killall dutserver
+        retries=0
+        RETRIES_MAX=10
+        while pgrep -x "${bindir}/dutserver" > /dev/null
+        do
+			if [ $retries -ge $RETRIES_MAX ]
+            then
+				echo "dutserver is still running after $retries seconds. Please try again..."
+                exit 1
+			fi
+			sleep 1
+            retries=$(expr $retries + 1)
+        done
+        sleep 1
+}
+
+start_dutserver(){
+        ## Move to DUT mode
+        ${ETC_PATH}/fapi_wlan_wave_dut_drvctrl.sh stop
+        ${ETC_PATH}/fapi_wlan_wave_dut_drvctrl.sh start
+
+        ## Start DUT server
+        ${bindir}/dutserver &
+}
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+## TODO: workaround until moving dutserver to BINDIR on CGR
+bindir=${BINDIR}
+if [ -f "$RDKBOS_WIFI_UTIL" ]
+then
+	bindir="/bin"
+fi
+
+## Get start/stop/restart flag
+flag="start"
+if [ $# -gt 0 ]
+then
+	flag="$1"
+	if [ $flag != "start" ] && [ $flag != "stop" ] && [ $flag != "restart" ]
+	then
+		flag="start"
+	fi
+fi
+
+## Execute dutserver according to start/stop/restart flag
+if [ $flag = "start" ]
+then
+	#if dutserver already running - exit
+	if pgrep -x "${bindir}/dutserver" > /dev/null
+	then
+		exit 0
+	else
+		start_dutserver	
+	fi
+elif [ "$flag" = "stop" ]
+then
+	stop_dutserver
+elif [ "$flag" = "restart" ]
+then
+	stop_dutserver
+	start_dutserver
+fi

@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<%
+      local commonCfg = require "webGetFunc.commonCfg"
+	  local passwdCfg = require "webGetFunc.passwordCfg"
+%>
+
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+  
+<link rel="stylesheet" href="../css/button.css">
+<link href="../css/custom.css" rel="stylesheet" type="text/css">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/mlang.js<? commonCfg.getVer(); ?>"></script>
+<script src="../js/utils.js<? commonCfg.getVer(); ?>"></script>
+
+<script language="javascript" type="text/javascript">
+CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+function validation(f)
+{
+/*
+  var msg = "";
+  f.apply.disabled = true;
+  if (f.dev_name.value.match( /[^\x20-\x7E]/ ))
+      msg += window.top.mlang["AAWE04"];
+
+  if (msg.length > 1) {
+      alert(msg);
+      f.apply.disabled = false;
+      return false;
+  }
+  $("input[name='displayName']").val(f.dev_name.value);
+  */
+  return true;
+}
+
+function checkAnswerHandler(json) {
+    if (json.code == -1) {
+        //ajax error, Check if the page exists
+        console.log("ajax error : " + json.message);
+    } else if (json.code == 0 || json.status == "success") {
+        //ajax done, and return success.
+        location.href="pwd_reset_passwordReset.html";
+    } else {
+        if(json.code == undefined) {
+            alert(mlang["genie_125"]);
+            document.location.reload(); 
+    }
+
+  }
+}
+
+function formSubmit(btn) {
+    
+    if (validation(document.forms[0])) {
+    $("input[name='answer1']").val(btoa($("input[name='answer1_input']").val()));
+    $("input[name='answer2']").val(btoa($("input[name='answer2_input']").val()));
+        $.postForm('checkAnswer', $('#target'), 'reset_pwd.plua', 'checkAnswerHandler');
+    }
+}
+
+function mlangInit(content) {
+  if (content != undefined) {
+      content.find('[mlang]').each(function(idx, obj) {
+      obj.innerHTML = mlang[obj.attributes.mlang.value];    
+    });
+    return content;
+  } else {
+    $("[mlang]").each(function(idx, obj) {
+      obj.innerHTML = mlang[obj.attributes.mlang.value];
+    });
+  }
+}
+  
+$(document).ready(function() {
+    //fetchData('target', 'checkAnswer', '', 'afterFetch');
+  }); 
+  
+  function  afterFetch()
+  {
+        mlangInit($('#target'));
+  }
+</script>
+</head>
+
+<body bgcolor="#FFFFFF" onload="mlangInit($('#target'));">
+
+
+
+	<div id="pwd_reset_top" style="height: 15%; width: 100%; padding-left: 0%;">
+      <table style="height:92px;width:100%;margin:0;padding:0" CELLPADDING=0 CELLSPACING=0 class="newtopframe">
+        <tr>
+            <td style="padding-left:20px"><img id="logo" style="width: 216px" src="../images/NightHawk.png" ><br><b style="position:relative;left:6px;"></b></td>
+       </tr>
+       <tr>
+           <td>&nbsp;</td>
+       </tr>
+      </table>    
+    </div>
+    
+	<div id="container_unauth" class="container_center">
+	  <form id="target"  name="formname" method="POST">
+        <input type="hidden" name="answer1">
+        <input type="hidden" name="answer2">
+        <table border="0" cellpadding="0" cellspacing="3" style="width:600px; margin-left:auto; margin-right:auto;">
+        <col width="200" />
+        <col width="400" />
+         
+            <tr>
+              <td align="left" class="MNUText" style="width:100%;"><p class="subhead2 p1-0"><span id="password_reset" mlang="PCVP_051"></span></p></td>
+            </tr>
+
+    		<tr>
+    			<td colspan="2" class="MNUText"><p mlang="genie_93"></p></td>
+    		</tr>
+    		
+    		<tr>
+    			<td align="left" class="MNUText"><p mlang="genie_117"></p></td>
+    			<td align="left" class="MNUText">
+    				     <span class="question" name="question1_text"  mlang="<?= passwdCfg.getMlang_question(1) ?>"></span>
+                         <input type="hidden" name="question1" value="<?= passwdCfg.getQuestion1() ?>">
+    			</td>
+    		</tr>
+    		
+    		<tr>
+    			<td align="left" class="MNUText"><span mlang="genie_17"></span><span> *:</span></td>
+    			
+    			<td nowrap="" align="left" class="MNUText">
+                <input type="text" maxlength="64" autocomplete="off" value="" size="30" name="answer1_input" id="answer1" size="">
+                </td>
+    		</tr>
+    		<tr>
+    			<td align="left" class="MNUText"><span mlang="genie_118"></span></td>
+    			<td align="left" class="MNUText">
+                        <span class="question" name="question2_text" mlang="<?= passwdCfg.getMlang_question(2) ?>"></span>
+                        <input type="hidden" name="question2" value="<?= passwdCfg.getQuestion2() ?>">
+    			</td>
+    		</tr>
+    		<tr>
+    			<td align="left" class="MNUText"><span mlang="genie_17"></span></span><span> *:</span></td>
+    			
+    			<td align="left" class="MNUText">
+                <input type="text" maxlength="64" autocomplete="off" value="" size="30"  name="answer2_input" id="answer2" size="">
+                </td>
+    		</tr>
+    		<tr>
+    			<td align="left" class="MNUText"><span mlang="genie_6"></span></td>
+    			<td align="left" class="MNUText"></td>
+    		</tr>
+    		<tr >	
+    			<td class="MNUText" colspan="2" >
+    
+    				<button type="button" value="Cancel" name="Cancel" id="cancel" onClick="location.href='pwd_reset_checkAnswer.html';" class="button-cancel cancel_bt" style="padding-left:10px" ><span mlang="UAS021"></span></button>
+    				<button type="button" value="Continue" name="Continue" id="continue" onClick="formSubmit($(this));" class="button-apply apply_bt" style="padding-left:10px"><span mlang="OTH021"></span></button>
+    
+    			</td>
+    		</tr>
+    		
+    	</table>
+      </form>
+    </div>
+</body>
+</html>

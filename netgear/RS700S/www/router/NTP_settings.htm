@@ -1,0 +1,442 @@
+<!DOCTYPE HTML>
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+
+$(document).ready(function()
+{
+    var select_ntp = <%1488%>;
+    $('select#time_zone')[0].selectedIndex = eval(select_ntp);
+});
+
+function changeCursorPointer()
+{
+    document.body.style.cursor='pointer';
+}
+
+function changeCursorDefault()
+{
+    document.body.style.cursor='default';
+}
+
+function buttonFilter()
+{
+    var buttonElements;
+    var i;
+
+    buttonElements=document.getElementsByTagName('button');
+
+    for(i=0;i<buttonElements.length;i++)
+    {
+        if(buttonElements[i].type=='submit' || buttonElements[i].type=='button'|| buttonElements[i].type=='reset')
+        {
+            if((buttonElements[i].value!=document.forms[0].buttonHit.name))
+                buttonElements[i].disabled=1;
+            else
+            {
+                var name;
+                name=buttonElements[i].name;
+                buttonElements[i].name='NoUse';
+                buttonElements[i].disabled=1;
+                document.forms[0].buttonValue.name=name;
+                document.forms[0].buttonHit.disabled=1;
+            }
+        }
+    }
+}
+
+function buttonClick(btn,value)
+{
+    document.forms[0].buttonHit.value=btn.name;
+    document.forms[0].buttonValue.value=value;
+    return true;
+}
+
+$("#target").submit(function() {
+    buttonFilter();
+});
+
+function setHelpIframeVisible() {
+    $('.help-frame-div').css("visibility","visible");
+}
+
+function showHelpIframe() {
+
+    var imgSrc=document.getElementById('help-button');
+
+    if(imgSrc.src.search("up")>=0)
+    {
+        $(".help-frame-div").show();
+        // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+        imgSrc.src="img/helparrowdown-icon.png";
+    }
+    else
+    {
+        $(".help-frame-div").hide();
+        imgSrc.src="img/helparrowup-icon.png";
+        setTimeout(setHelpIframeVisible,500);
+    }
+    if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+       (navigator.appVersion.indexOf("MSIE 9")==-1))
+         change_size(false);
+}
+
+function moveToHTMLend()
+{
+    window.location.href='#helpframe-anchor';
+    setHelpIframeVisible();
+}
+
+function init()
+{
+    var cf = document.forms[0]; 
+
+    if (cf.ntp_manual_server.value == 1)
+        cf.user_ntp_server.disabled = false;
+    else
+        cf.user_ntp_server.disabled = true;
+
+    cf.user_ntp_server.value = cf.ntp_user_server.value;
+
+    if (cf.schedule_daylightadjust.value == 1)
+		cf.adjust.checked = true;
+    else
+        cf.adjust.checked = false;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+
+    setTimeZoneIndex();
+
+    if (cf.adjust.checked)
+		cf.schedule_daylightadjust.value = 1;
+	else
+		cf.schedule_daylightadjust.value = 0;
+
+    if (cf.ntp_method.value == "mntp")
+ 	{
+        if (cf.user_ntp_server.value.length == 0)
+        {
+            cf.user_ntp_server.focus();
+            alert("<%804%>");
+            return false;
+        }
+        if (cf.user_ntp_server.value.match( /[^\x20-\x7E]/ ))
+        {
+            alert("<%804%>");
+            return false;
+        }
+    }
+    return true;
+}
+
+function doNTPChange(change)
+{
+    var cf = document.forms[0];
+
+    if(change == 1)
+        cf.user_ntp_server.disabled = false;
+    else
+        cf.user_ntp_server.disabled = true;
+}
+
+function setTimeZoneIndex()
+{
+    var form = document.forms[0];
+    form.time_zone_index.value = form.time_zone.selectedIndex;
+
+    var index = form.time_zone.selectedIndex;
+
+    if(form.time_zone[index].value == "-12")
+    {
+        form.time_zone[index].value = "-12";
+    }
+    else if(form.time_zone[index].value == "-7 Arizona")
+    {
+        form.time_zone[index].value = "-7";
+    }
+    else if(form.time_zone[index].value == "-7 Mountain")
+    {
+        form.time_zone[index].value = "-7";
+    }
+    else if(form.time_zone[index].value == "-6 Central")
+    {
+        form.time_zone[index].value = "-6";
+    }
+    else if(form.time_zone[index].value == "-6 Guadalajara")
+    {
+        form.time_zone[index].value = "-6";
+    }
+    else if(form.time_zone[index].value == "-5 Bogota")
+    {
+        form.time_zone[index].value = "-5";
+    }
+    else if(form.time_zone[index].value == "-5 Eastern")
+    {
+        form.time_zone[index].value = "-5";
+    }
+    else if(form.time_zone[index].value == "-5 Indiana")
+    {
+        form.time_zone[index].value = "-5";
+    }
+    else if(form.time_zone[index].value == "-4")
+    {
+        form.time_zone[index].value = "-4";
+    }
+    else if(form.time_zone[index].value == "-3.5")
+    {
+        form.time_zone[index].value = "-35";
+    }
+    else if(form.time_zone[index].value == "-3.5")
+    {
+        form.time_zone[index].value = "-35";
+    }
+    else if(form.time_zone[index].value == "0 Casablanca")
+    {
+        form.time_zone[index].value = "0";
+    }
+    else if(form.time_zone[index].value == "0 Greenwich")
+    {
+        form.time_zone[index].value = "0";
+    }
+    else if(form.time_zone[index].value == "1 Amsterdam")
+    {
+        form.time_zone[index].value = "1";
+    }
+    else if(form.time_zone[index].value == "1 Belgrade")
+    {
+        form.time_zone[index].value = "1";
+    }
+    else if(form.time_zone[index].value == "1 Brussels")
+    {
+        form.time_zone[index].value = "1";
+    }
+    else if(form.time_zone[index].value == "1 Sarajevo")
+    {
+        form.time_zone[index].value = "1";
+    }
+    else if(form.time_zone[index].value == "2 Athens")
+    {
+        form.time_zone[index].value = "2";
+    }
+    else if(form.time_zone[index].value == "2 Bucharest")
+    {
+        form.time_zone[index].value = "2";
+    }
+    else if(form.time_zone[index].value == "2 Helsinki")
+    {
+        form.time_zone[index].value = "2";
+    }
+    else if(form.time_zone[index].value == "4 Moscow")
+    {
+        form.time_zone[index].value = "4";
+    }
+    else if(form.time_zone[index].value == "5.5")
+    {
+        form.time_zone[index].value = "55";
+    }
+    else if(form.time_zone[index].value == "8 Beijing")
+    {
+        form.time_zone[index].value = "8";
+    }
+    else if(form.time_zone[index].value == "8 Ulaan")
+    {
+        form.time_zone[index].value = "8";
+    }
+    else if(form.time_zone[index].value == "9.5")
+    {
+        form.time_zone[index].value = "95";
+    }
+    else if(form.time_zone[index].value == "10 Brisbane")
+    {
+        form.time_zone[index].value = "10";
+    }
+    else if(form.time_zone[index].value == "10 Yakutsk")
+    {
+        form.time_zone[index].value = "10";
+    }
+    else if(form.time_zone[index].value == "10 Guam")
+    {
+        form.time_zone[index].value = "10";
+    }
+    else if(form.time_zone[index].value == "11 Vladivostok")
+    {
+        form.time_zone[index].value = "11";
+    }
+    else if(form.time_zone[index].value == "11 Magadan")
+    {
+        form.time_zone[index].value = "11";
+    }
+    else if(form.time_zone[index].value == "12 Fiji")
+    {
+        form.time_zone[index].value = "12";
+    }
+    else if(form.time_zone[index].value == "12 Kamchatka")
+    {
+        form.time_zone[index].value = "12";
+    }
+}
+
+//-->
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<body  onload="change_size(false); init();" class="page-body"  onResize="change_size(false);resize();">
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+
+<form id="target"  method="POST" action="ntp_settings.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%74%>">
+<div id="admin_ntp" class="subhead2"> <%1489%></div>
+<table border="0"    style="height:370px"  class="subhead2-table main_bas">
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div id="main" class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+
+
+<tr><td colspan="2"><b id="current_time"><%1292%>: &nbsp; <%1490%></b></td></tr>
+
+<%1491%><%1492%>
+<tr><td colspan="2"><span style="color:#FF0000"><%1493%></span></td></tr>
+<%1494%><%1495%>
+
+
+<tr><td colspan="2"><a href="javascript:loadhelp('NTP_settings','timezone')" tabindex="-1"><b><%1496%></b></a></td></tr>
+    <tr>
+        <td colspan="2">
+            <SELECT id="time_zone" name=time_zone size=1>
+                <option value="-12" selected><%1497%></option><!--0-->
+                <option value="-11" ><%1498%></option>        <!--1-->
+                <option value="-10" ><%1499%></option>        <!--2-->
+                <option value="-9" ><%1500%></option>          <!--3-->
+                <option value="-8" ><%1501%></option>          <!--4-->
+                <option value="-7 Arizona" ><%1502%></option>        <!--5-->
+                <option value="-7 Mountain" ><%1503%></option>        <!--6-->
+                <option value="-6 Central" ><%1504%></option>        <!--7-->
+                <option value="-6 Guadalajara" ><%1505%></option>        <!--8-->
+                <option value="-5 Bogota" ><%1506%></option>      <!--9--><!--8-->
+                <option value="-5 Eastern" ><%1507%></option>      <!--10--><!--9-->
+                <option value="-5 Indiana" ><%1508%></option>        <!--11--><!--10-->
+                <option value="-4" ><%1509%></option>          <!--12--><!--11-->
+                <option value="-3.5" ><%1510%></option>     <!--13--><!--12-->
+                <option value="-3" ><%1511%></option>          <!--14--><!--13-->
+                <option value="-2" ><%1512%></option>          <!--15--><!--14-->
+                <option value="-1" ><%1513%></option>          <!--16--><!--15-->
+                <option value="0 Casablanca" ><%1514%></option>        <!--17--><!--16-->
+                <option value="0 Greenwich" ><%1515%></option>        <!--18--><!--17-->
+                <option value="1 Amsterdam" ><%1516%></option>         <!--19--><!--18-->
+                <option value="1 Belgrade" ><%1517%></option>         <!--20--><!--19-->
+                <option value="1 Brussels" ><%1518%></option>         <!--21--><!--20-->
+                <option value="1 Sarajevo" ><%1519%></option>         <!--22--><!--21-->
+                <option value="2 Athens" ><%1520%></option>         <!--23--><!--22-->
+                <option value="2 Bucharest" ><%1521%></option>         <!--24--><!--23-->
+                <option value="2 Helsinki" ><%1522%></option>         <!--25--><!--24-->
+                <option value="3" ><%1523%></option>         <!--26--><!--25-->
+                <option value="4 Moscow" ><%1524%></option>         <!--27--><!--26-->
+                <option value="4 Abu" ><%1525%></option>           <!--28--><!--27-->
+                <option value="5" ><%1526%></option>         <!--29--><!--28-->
+                <option value="5.5" ><%1527%></option>    <!--30--><!--29-->
+                <option value="6" ><%1528%></option>         <!--31--><!--30-->
+                <option value="7" ><%1529%></option>           <!--32--><!--31-->
+                <option value="8 Beijing" ><%1530%></option>       <!--33--><!--32-->
+                <option value="8 Ulaan" ><%1531%></option>       <!--34--><!--33-->
+                <option value="9" ><%1532%></option>           <!--35--><!--34-->
+                <option value="9.5" ><%1533%></option>      <!--36-->
+                <option value="10 Brisbane" ><%1534%></option>       <!--37--><!--35-->
+                <option value="10 Yakutsk" ><%1535%></option>     <!--38--><!--36-->
+                <option value="10 Guam" ><%1536%></option>     <!--39--><!--37-->
+                <option value="11 Vladivostok" ><%1537%></option>       <!--40--><!--38-->
+                <option value="11 Magadan" ><%1538%></option>         <!--41--><!--39-->
+                <option value="12 Fiji" ><%1539%></option>       <!--42--><!--40-->
+                <option value="12 Kamchatka" ><%1540%></option>       <!--43--><!--41-->
+                <option value="13" ><%1541%></option>         <!--44--><!--42-->
+            </SELECT>
+        </td>
+    </tr>
+
+<tr>
+        <td colspan="2">
+            <label class="checkbox-container">
+                <input id="adjust" type="checkbox" name="adjust" value="adjust"><%1542%>
+                <span class="checkbox-checkmark"></span> 
+            </label>
+        </td>
+    </tr>
+    <tr><td colspan="2">
+    <label class="checkbox-container">
+        <input id="ntp_type1" type="radio" <%1543%> name="ntp_method" value="dntp" onClick="doNTPChange(0)"><%1544%>
+        <span class="radio-checkmark"></span>
+    </label>
+    </td></tr>
+<tr><td colspan="2" class="pt-0">
+    <label class="checkbox-container">
+        <input id="ntp_type2" type="radio" <%1545%> name="ntp_method" value="mntp" onClick="doNTPChange(1)"><%1546%>
+        <span class="radio-checkmark"></span>
+    </label>
+    </td></tr>
+
+    <tr><td colspan="2" class="pb-0"><%1547%>:</td></tr>
+    <tr><td class="pt-0"><INPUT id="pri_ntp" maxLength=128 type="text" name="user_ntp_server" class="input1"></td></tr>
+
+
+    <tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+</table></div></td></tr>
+
+<tr align="left" valign="middle">
+<td colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="cancel" value="<%76%>" onclick="buttonClick(this,'<%76%>');"  type="RESET" name="Cancel" class="button-cancel cancel_bt"><%77%></button>
+<button id="apply" value="<%78%>"  onClick="buttonClick(this,'<%78%>');return checkData()" type="SUBMIT" name="cfAlert_Apply" class="button-apply apply_bt" ><%80%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe" src="NTP_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+
+<!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+  <div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img id="NTP_settings_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+  </div>
+
+<INPUT name=schedule_daylightadjust type=hidden value= "<%1548%>">
+<INPUT name=ntp_manual_server type=hidden value= "<%1549%>">
+<INPUT name=ntp_user_server type=hidden value= "<%1550%>">
+<input type="hidden" name="hid_time_zone" value="<%458%>">
+<input type="hidden" name="time_zone_index" value="">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>

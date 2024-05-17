@@ -1,0 +1,715 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.bas-help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".bas-help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".bas-help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+
+
+function checkType(wan_proto) // called from basictop.htm
+{
+	if (1)
+//	if (basictop.document.forms[0])
+	{
+		if (wan_proto == "pppoe")
+		    window.location.href = "BAS_pppoe.htm";
+		else if (wan_proto == "pptp")
+		    window.location.href = "BAS_pptp.htm";
+		else if (wan_proto == "bpa")
+		    window.location.href = "BAS_bpa.htm";
+		else if (wan_proto == "l2tp")
+		    window.location.href = "BAS_l2tp.htm";
+		else
+		    window.location.href = "BAS_ether.htm";
+	}
+	else 
+	    window.setTimeout(checkType(),300);
+}
+ 
+function setServer()
+{
+    var cf = document.forms[0];
+    var stype = cf.login_type.selectedIndex;
+    if(stype==0) //Disable
+        window.location.href="IPV6_disable.htm";
+    else if(stype==1) //Auto Detect
+        window.location.href="IPV6_auto.htm";
+    else if(stype==2) //6to4 Tunnel
+        window.location.href="IPV6_tunnel.htm";
+    else if(stype==3) //Pass Through
+        window.location.href="IPV6_passthrough.htm";
+    //else if(stype==4) //Fixed
+    //    window.location.href="IPV6_fixed.htm";
+    else if(stype==5) //DHCP
+        window.location.href="IPV6_dhcp.htm";
+    else if(stype==6) //DHCP
+        window.location.href="IPV6_pppoe.htm";
+    else if(stype==7) //Auto Config
+        window.location.href="IPV6_autoconfig.htm";
+	else if(stype==8) //6RD
+        window.location.href="IPV6_6rd.htm";
+}
+/*
+function checkUnicast(fieldObj)
+{    
+    var c = fieldObj.value.substring(0, 1);
+    
+    if("2" == c || c == "3")
+    {
+        return false;
+    }
+    else 
+        return true;
+}*/
+/*
+function convert2CompleteIpV6(ip)
+{
+    var ipV6=ip;
+    var index=ip.indexOf("::");
+    if(index>0)
+    {
+        var size=8-(ip.split(":").length-1);
+        var tmp="";
+        for(var i=0;i<size;i++)
+        {
+            tmp+=":0";
+        }
+        tmp+=":";
+        ipV6=ip.replace("::",tmp);
+    }
+    else if(index==0)
+    {
+        ipV6=ip.replace("::","0:0:0:0:0:0:0:");
+    }
+    return ipV6;
+}*/
+
+/*function isIPv6Equals(src,des)
+{
+    var srcArr=convert2CompleteIpV6(src).split(":");
+    var desArr=convert2CompleteIpV6(des).split(":");
+    for(var i=0;i<8;i++)
+    {
+        if(parseInt(srcArr[i],16)!=parseInt(desArr[i],16))
+        {
+            return false;
+        }
+    }
+    return true;
+}*/
+
+function isSameSubnet(src,des,pre_len)
+{
+    var srcArr=convert2CompleteIpV6(src).split(":");
+    var desArr=convert2CompleteIpV6(des).split(":");
+	for(var i=0;i<8;i++)
+	{
+	    if (pre_len > 16)
+	    {
+            if(parseInt(srcArr[i],16)!=parseInt(desArr[i],16))
+            {
+                return false;
+            }
+	        pre_len = pre_len - 16; 
+	    }
+	    else
+	    {
+	        var mask = 0;
+	        for (var j=0;j<pre_len;j++)
+	        {
+                mask = mask >> 1;
+		        mask = mask | 0x8000;
+	        }
+            if((parseInt(srcArr[i],16) & mask)!=(parseInt(desArr[i],16) & mask))
+            {
+                return false;
+            }
+	        else
+	            return true;
+	    }
+    }
+}
+
+/*function checkFiled(fieldObj)
+{
+    /*I don't know how to check the ip if invalid ...
+    if(fieldObj.value.match( /[^\x30-\x39]/ ) && fieldObj.value.match( /[^\x41-\x46]/ ) && fieldObj.value.match( /[^\x61-\x66]/ ))
+    var temp = fieldObj.value;
+    
+    var tmp;
+    if (fieldObj.value == "")
+    {
+        temp = "0000";
+    }
+    else
+    {
+        if (fieldObj.value.length < 4)
+        {
+            if (fieldObj.value.length == 1)
+            {
+                tmp = '000'+fieldObj.value;
+            }   
+            else if (fieldObj.value.length == 2)
+            {
+                tmp = '00'+fieldObj.value;
+            }
+            else if (fieldObj.value.length == 3)
+            {
+                tmp = '0'+fieldObj.value;
+            }
+            temp = tmp;
+        }
+        else 
+        {
+            temp = fieldObj.value;
+        }
+    }
+    
+    for(i=0; i<fieldObj.value.length;i++)
+    {
+        var c = fieldObj.value.substring(i, i+1);
+        if(("0" <= c && c <= "9") || ("a" <= c && c <= "f") || ("A" <= c && c <= "F"))
+        {
+            continue;
+        }
+        else 
+            return true;
+    }
+
+    fieldObj.value = temp.toUpperCase();
+
+    return false;
+}*/
+
+function checkData()
+{
+    var cf = document.forms[0];    
+    var pri_dns = 0;
+    var sec_dns = 0;
+	var openvpnEnable = "<%665%>";
+    //if (cf.EnableDhcp.checked)
+    //  cf.ipv6_enable_dhcp.value = 1;
+    //else
+    //  cf.ipv6_enable_dhcp.value = 0;  
+    
+    /* I don't allow all fileds blank */
+    if (cf.IPv6WanAddr1.value == "" && cf.IPv6WanAddr2.value == "" && cf.IPv6WanAddr3.value == "" && cf.IPv6WanAddr4.value =="" &&
+        cf.IPv6WanAddr5.value == "" && cf.IPv6WanAddr6.value == "" && cf.IPv6WanAddr7.value == "" && cf.IPv6WanAddr8.value == "")
+    {
+        alert("<%3349%>");
+        return false;
+    }
+    else if (checkFiled(cf.IPv6WanAddr1) || checkFiled(cf.IPv6WanAddr2) || checkFiled(cf.IPv6WanAddr3) || checkFiled(cf.IPv6WanAddr4) ||
+        checkFiled(cf.IPv6WanAddr5) || checkFiled(cf.IPv6WanAddr6) || checkFiled(cf.IPv6WanAddr7) || checkFiled(cf.IPv6WanAddr8))
+    {
+        alert("<%3350%>");
+        return false;
+    }
+    else if (checkUnicast(cf.IPv6WanAddr1))
+    {
+        alert("<%3351%><%3312%>");
+        return false;
+    }
+
+    if (cf.ProfixWanLength.value == "" || (parseInt(cf.ProfixWanLength.value, 10)<4))
+    {
+        alert("<%3352%>");
+        return false;
+    }
+
+    if (cf.IPv6Gateway1.value=="" && cf.IPv6Gateway2.value=="" && 
+        cf.IPv6Gateway3.value=="" && cf.IPv6Gateway4.value=="" &&
+        cf.IPv6Gateway5.value=="" && cf.IPv6Gateway6.value=="" &&
+        cf.IPv6Gateway7.value=="" && cf.IPv6Gateway8.value=="")
+    {
+        alert("<%3353%>");
+        return false;
+    }
+    else if (checkFiled(cf.IPv6Gateway1) || checkFiled(cf.IPv6Gateway2) || 
+             checkFiled(cf.IPv6Gateway3) || checkFiled(cf.IPv6Gateway4) || 
+             checkFiled(cf.IPv6Gateway5) || checkFiled(cf.IPv6Gateway6) || 
+             checkFiled(cf.IPv6Gateway7) || checkFiled(cf.IPv6Gateway8))
+    {
+        alert("<%3354%>");
+        return false;
+    }
+    else if (checkUnicast(cf.IPv6Gateway1))
+    {
+        alert("<%3355%><%3312%>");
+        return false;
+    }
+    if (cf.IPv6LanAddr1.value == "" && cf.IPv6LanAddr2.value == "" && cf.IPv6LanAddr3.value == "" && cf.IPv6LanAddr4.value =="" &&
+        cf.IPv6LanAddr5.value == "" && cf.IPv6LanAddr6.value == "" && cf.IPv6LanAddr7.value == "" && cf.IPv6LanAddr8.value == "")
+    {
+        alert("<%3356%>");
+        return false;
+    }
+    else if (checkFiled(cf.IPv6LanAddr1) || checkFiled(cf.IPv6LanAddr2) || checkFiled(cf.IPv6LanAddr3) || checkFiled(cf.IPv6LanAddr4) ||
+        checkFiled(cf.IPv6LanAddr5) || checkFiled(cf.IPv6LanAddr6) || checkFiled(cf.IPv6LanAddr7) || checkFiled(cf.IPv6LanAddr8))
+    {
+        alert("<%3357%>");
+        return false;
+    }
+    else if (checkUnicast(cf.IPv6LanAddr1))
+    {
+        alert("<%3358%>");
+        return false;
+    }
+    
+    if (cf.ProfixLanLength.value == "" || (parseInt(cf.ProfixLanLength.value, 10)<4))
+    {
+        alert("<%3359%>");
+        return false;
+    }
+
+    if (cf.DAddr1.value == "" && cf.DAddr2.value == "" && cf.DAddr3.value == "" && cf.DAddr4.value =="" &&
+        cf.DAddr5.value == "" && cf.DAddr6.value == "" && cf.DAddr7.value == "" && cf.DAddr8.value == "")
+    {
+        pri_dns = 1;
+    }
+    else if (checkFiled(cf.DAddr1) || checkFiled(cf.DAddr2) || checkFiled(cf.DAddr3) || checkFiled(cf.DAddr4) ||
+        checkFiled(cf.DAddr5) || checkFiled(cf.DAddr6) || checkFiled(cf.DAddr7) || checkFiled(cf.DAddr8))
+    {
+        alert("<%3311%>");
+        return false;
+    }
+    else if (checkUnicast(cf.DAddr1))
+    {
+        alert("<%3310%><%3312%>");
+        return false;
+    }
+    
+    if (cf.PDAddr1.value == "" && cf.PDAddr2.value == "" && cf.PDAddr3.value == "" && cf.PDAddr4.value =="" &&
+        cf.PDAddr5.value == "" && cf.PDAddr6.value == "" && cf.PDAddr7.value == "" && cf.PDAddr8.value == "")
+    {
+        sec_dns=1;
+    }
+    else if (checkFiled(cf.PDAddr1) || checkFiled(cf.PDAddr2) || checkFiled(cf.PDAddr3) || checkFiled(cf.PDAddr4) ||
+        checkFiled(cf.PDAddr5) || checkFiled(cf.PDAddr6) || checkFiled(cf.PDAddr7) || checkFiled(cf.PDAddr8))
+    {
+        alert("<%3313%>");
+        return false;
+    }
+    else if (checkUnicast(cf.PDAddr1))
+    {
+        alert("<%3314%><%3312%>");
+        return false;
+    }
+
+    cf.ipv6_wan_ipaddr.value = cf.IPv6WanAddr1.value+':'+cf.IPv6WanAddr2.value+':'+cf.IPv6WanAddr3.value+':'+cf.IPv6WanAddr4.value+':'+cf.IPv6WanAddr5.value+':'+cf.IPv6WanAddr6.value+':'+cf.IPv6WanAddr7.value+':'+cf.IPv6WanAddr8.value;
+    cf.ipv6_wan_gateway.value = cf.IPv6Gateway1.value+':'+cf.IPv6Gateway2.value+':'+cf.IPv6Gateway3.value+':'+cf.IPv6Gateway4.value+':'+cf.IPv6Gateway5.value+':'+cf.IPv6Gateway6.value+':'+cf.IPv6Gateway7.value+':'+cf.IPv6Gateway8.value;
+    cf.ipv6_lan_ipaddr.value = cf.IPv6LanAddr1.value+':'+cf.IPv6LanAddr2.value+':'+cf.IPv6LanAddr3.value+':'+cf.IPv6LanAddr4.value+':'+cf.IPv6LanAddr5.value+':'+cf.IPv6LanAddr6.value+':'+cf.IPv6LanAddr7.value+':'+cf.IPv6LanAddr8.value;
+    cf.ipv6_pri_dns.value = cf.DAddr1.value+':'+cf.DAddr2.value+':'+cf.DAddr3.value+':'+cf.DAddr4.value+':'+cf.DAddr5.value+':'+cf.DAddr6.value+':'+cf.DAddr7.value+':'+cf.DAddr8.value;
+    cf.ipv6_sec_dns.value = cf.PDAddr1.value+':'+cf.PDAddr2.value+':'+cf.PDAddr3.value+':'+cf.PDAddr4.value+':'+cf.PDAddr5.value+':'+cf.PDAddr6.value+':'+cf.PDAddr7.value+':'+cf.PDAddr8.value;
+    cf.ipv6_wan_length.value = cf.ProfixWanLength.value;
+    cf.ipv6_lan_length.value = cf.ProfixLanLength.value;
+    
+    //gateway should in the same subnet with wan ip
+    if (!isSameSubnet(cf.ipv6_wan_ipaddr.value,cf.ipv6_wan_gateway.value,cf.ipv6_wan_length.value))
+    {
+        alert("<%3360%>");
+        return false;
+    }
+    else if (isIPv6Equals(cf.ipv6_wan_ipaddr.value, cf.ipv6_wan_gateway.value))
+    {
+        alert("<%3361%>");
+        return false;
+    }
+    
+    //lan ip and wan ip should not be in the same subnet
+    var tmpPreLen = (parseInt(cf.ipv6_wan_length.value, 10) > parseInt(cf.ipv6_lan_length.value, 10))? cf.ipv6_lan_length.value : cf.ipv6_wan_length.value;
+    if (isSameSubnet(cf.ipv6_wan_ipaddr.value,cf.ipv6_lan_ipaddr.value,tmpPreLen))
+    {
+        alert("<%3362%>");
+        return false;
+    }
+    
+    if (isIPv6Equals(cf.ipv6_pri_dns.value, cf.ipv6_wan_ipaddr.value) ||
+        isIPv6Equals(cf.ipv6_sec_dns.value, cf.ipv6_wan_ipaddr.value))
+    {
+        alert("<%3363%>");
+        return false;
+    }
+    else if(isIPv6Equals(cf.ipv6_pri_dns.value, cf.ipv6_lan_ipaddr.value) ||
+            isIPv6Equals(cf.ipv6_sec_dns.value, cf.ipv6_lan_ipaddr.value))
+    {
+        alert("<%3364%>");
+        return false;
+    }
+    else
+    {
+        if ((pri_dns != 1) && (sec_dns != 1))
+        {
+            if (isIPv6Equals(cf.ipv6_pri_dns.value, cf.ipv6_sec_dns.value))
+            {
+                alert("<%3315%>");
+                return false;
+            }
+        }
+    }
+
+    if (cf.ipassign_ripng.checked)
+		cf.ipv6_ripng_enable.value = 1;
+	else
+		cf.ipv6_ripng_enable.value = 0;	
+		 
+   return true;
+}
+
+function loadSettings()
+{
+    var cf = document.forms[0];
+
+    var wan_ipaddr = cf.ipv6_wan_ipaddr.value.split(":");
+    var wan_gateway = cf.ipv6_wan_gateway.value.split(":");
+    var lan_ipaddr = cf.ipv6_lan_ipaddr.value.split(":");
+    var wan_length = cf.ipv6_wan_length.value;
+    var lan_length = cf.ipv6_lan_length.value;
+    var pri_dns = cf.ipv6_pri_dns.value.split(":");
+    var sec_dns = cf.ipv6_sec_dns.value.split(":");
+    var ipv6_proto_pre = "<%735%>";
+    var lan_dhcpsv6_enable_pre = "<%3365%>";
+    
+    if (cf.ipv6_wan_ipaddr.value != "")
+    {
+        cf.IPv6WanAddr1.value = wan_ipaddr[0];
+        cf.IPv6WanAddr2.value = wan_ipaddr[1];
+        cf.IPv6WanAddr3.value = wan_ipaddr[2];
+        cf.IPv6WanAddr4.value = wan_ipaddr[3];
+        cf.IPv6WanAddr5.value = wan_ipaddr[4];
+        cf.IPv6WanAddr6.value = wan_ipaddr[5];
+        cf.IPv6WanAddr7.value = wan_ipaddr[6];
+        cf.IPv6WanAddr8.value = wan_ipaddr[7];
+        
+        cf.ProfixWanLength.value = wan_length;
+    }
+
+    if (cf.ipv6_wan_gateway.value != "")
+    {
+        cf.IPv6Gateway1.value = wan_gateway[0];
+        cf.IPv6Gateway2.value = wan_gateway[1];
+        cf.IPv6Gateway3.value = wan_gateway[2];
+        cf.IPv6Gateway4.value = wan_gateway[3];
+        cf.IPv6Gateway5.value = wan_gateway[4];
+        cf.IPv6Gateway6.value = wan_gateway[5];
+        cf.IPv6Gateway7.value = wan_gateway[6];
+        cf.IPv6Gateway8.value = wan_gateway[7];
+    }
+
+    if (cf.ipv6_lan_ipaddr.value != "")
+    {
+        cf.IPv6LanAddr1.value = lan_ipaddr[0];
+        cf.IPv6LanAddr2.value = lan_ipaddr[1];
+        cf.IPv6LanAddr3.value = lan_ipaddr[2];
+        cf.IPv6LanAddr4.value = lan_ipaddr[3];
+        cf.IPv6LanAddr5.value = lan_ipaddr[4];
+        cf.IPv6LanAddr6.value = lan_ipaddr[5];
+        cf.IPv6LanAddr7.value = lan_ipaddr[6];
+        cf.IPv6LanAddr8.value = lan_ipaddr[7];
+        
+        cf.ProfixLanLength.value = lan_length;
+    }
+    
+    if (cf.ipv6_pri_dns.value != "")
+    {
+        cf.DAddr1.value = pri_dns[0];
+        cf.DAddr2.value = pri_dns[1];
+        cf.DAddr3.value = pri_dns[2];
+        cf.DAddr4.value = pri_dns[3];
+        cf.DAddr5.value = pri_dns[4];
+        cf.DAddr6.value = pri_dns[5];
+        cf.DAddr7.value = pri_dns[6];
+        cf.DAddr8.value = pri_dns[7];
+    }    
+    
+    if (cf.ipv6_sec_dns.value != "")
+    {
+        cf.PDAddr1.value = sec_dns[0];
+        cf.PDAddr2.value = sec_dns[1];
+        cf.PDAddr3.value = sec_dns[2];
+        cf.PDAddr4.value = sec_dns[3];
+        cf.PDAddr5.value = sec_dns[4];
+        cf.PDAddr6.value = sec_dns[5];
+        cf.PDAddr7.value = sec_dns[6];
+        cf.PDAddr8.value = sec_dns[7];
+    }
+
+    //if ( (ipv6_proto_pre == "disable") || (lan_dhcpsv6_enable_pre == "1") )
+    //    cf.EnableDhcp.checked = true;
+}
+
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body  onload="change_size(false);loadSettings();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="formname" method="POST" action="ipv6_fix.cgi" >
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue"> 
+<img class="subtop-image" src="<%74%>">
+<div class="subhead2"> <%550%></div>
+<table border="0"     class="subhead2-table main_bas">
+
+<tr><td colspan="2" class="scrollpane-table-seperate-border scroll_container"><div id="main" class="scroll-pane"><table style="border-collapse:collapse;width:97%">
+
+<tr>
+ <td width="50%" class="pb-0"><a><b><%3318%></b></a></td>
+ <td width="50%"  align="left" class="pt-0">
+    <select id="login_type" name="login_type" onChange="setServer()">
+        <option><%785%></option>
+        <option><%3319%></option>
+        <option><%3320%></option>
+        <option><%3321%></option>
+        <option selected><%3322%></option>
+        <option ><%3323%></option>
+        <option ><%759%></option>
+        <option ><%3324%></option>
+ 		<option ><%3325%></option>
+    </select>
+ </td>
+</tr>
+<tr><td colspan="2">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+    <td width="100%"><b><%501%></b></td>
+</tr>
+
+<tr>
+    <td><b><%3366%></b></td>
+</tr>
+<tr>
+    <td class="ip-input-row">
+        <input id="ipv6wanaddr1" type="text" name="IPv6WanAddr1" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr2" type="text" name="IPv6WanAddr2" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr3" type="text" name="IPv6WanAddr3" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr4" type="text" name="IPv6WanAddr4" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr5" type="text" name="IPv6WanAddr5" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr6" type="text" name="IPv6WanAddr6" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr7" type="text" name="IPv6WanAddr7" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6wanaddr8" type="text" name="IPv6WanAddr8" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,1)">/
+        <input id="profixwanlength" type="text" name="ProfixWanLength" class="num" size="4" maxlength="3" onFocus="">
+    </td>
+</tr>
+
+<tr>
+    <td><b><%3367%></b></td>
+</tr>
+<tr>
+    <td class="ip-input-row">
+        <input id="ipv6gateway1" type="text" name="IPv6Gateway1" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway2" type="text" name="IPv6Gateway2" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway3" type="text" name="IPv6Gateway3" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway4" type="text" name="IPv6Gateway4" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway5" type="text" name="IPv6Gateway5" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway6" type="text" name="IPv6Gateway6" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway7" type="text" name="IPv6Gateway7" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6gateway8" type="text" name="IPv6Gateway8" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,1)">
+    </td>
+</tr>
+<tr>
+    <td><b><%710%></b></td>
+</tr>
+<tr>
+    <td class="ip-input-row">
+        <input id="daddr1" type="text" name="DAddr1" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr2" type="text" name="DAddr2" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr3" type="text" name="DAddr3" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr4" type="text" name="DAddr4" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr5" type="text" name="DAddr5" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr6" type="text" name="DAddr6" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr7" type="text" name="DAddr7" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="daddr8" type="text" name="DAddr8" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,1)">
+    </td>
+</tr>
+<tr>
+    <td><b><%711%></b></td>
+</tr>
+<tr>
+    <td class="ip-input-row">
+        <input id="pdaddr1" type="text" name="PDAddr1" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr2" type="text" name="PDAddr2" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr3" type="text" name="PDAddr3" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr4" type="text" name="PDAddr4" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr5" type="text" name="PDAddr5" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr6" type="text" name="PDAddr6" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr7" type="text" name="PDAddr7" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="pdaddr8" type="text" name="PDAddr8" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,1)">
+    </td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+    <td width="50%"><b><%503%></b></td>
+</tr>
+
+<tr>
+	<td nowrap colspan="2"><b><%3331%></b></td>
+</tr>
+<tr>
+	<td colspan="2" nowrap>
+      	<label class="checkbox-container">
+	<input id="ipassign_dhcp" type="radio" name="IpAssign" value="dhcp" <%3332%>><%3333%>
+		  <span class="radio-checkmark"></span>
+		</label>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" nowrap class="pt-0">
+      	<label class="checkbox-container">
+	<input id="ipassign_auto" type="radio" name="IpAssign" value="auto" <%3334%>><%3324%>
+		  <span class="radio-checkmark"></span>
+		</label>
+	</td>
+</tr>
+<tr>
+    <td colspan="2">
+    <label class="checkbox-container" for="ipassign_ripng">
+	<input  type="checkbox" id="ipassign_ripng" <%3335%> name="ipassign_ripng" value=""><b>Enable RIPng</b>
+    <span class="checkbox-checkmark"></span> 
+    </label>
+    </td>
+</tr>
+<tr>
+    <td><b><%3366%></b></td>
+</tr>
+<tr>
+    <td class="ip-input-row">
+        <input id="ipv6_lan1" type="text" name="IPv6LanAddr1" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan2" type="text" name="IPv6LanAddr2" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan3" type="text" name="IPv6LanAddr3" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan4" type="text" name="IPv6LanAddr4" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan5" type="text" name="IPv6LanAddr5" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan6" type="text" name="IPv6LanAddr6" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan7" type="text" name="IPv6LanAddr7" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,0)">:
+        <input id="ipv6_lan8" type="text" name="IPv6LanAddr8" class="num" size="4" maxlength="4" onFocus="" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheckv6(this,1)">/
+        <input id="ipv6_lan_prefix" type="text" name="ProfixLanLength" class="num" size="4" maxlength="3" onFocus="">
+    </td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+</table>
+</td></tr>
+
+<tr>
+	<td nowrap colspan="2"><b><%3338%></b></td>
+</tr>
+<tr>
+	<td colspan="2" nowrap>
+    <label class="checkbox-container">
+    <input id="IPv6Filtering_ss" type="radio" name="ipv6_filter" value="secure" <%3339%>><%1859%>
+    <span class="radio-checkmark"></span>
+    </label>
+	</td>
+</tr>
+<tr>
+    <td colspan="2" nowrap class="pt-0">
+    <label class="checkbox-container">
+    <input id="IPv6Filtering_oo" type="radio" name="ipv6_filter" value="open" <%3340%>><%1860%>
+    <span class="radio-checkmark"></span>
+    </label>
+    </td>
+</tr>
+
+</table></div></td></tr>
+
+<tr align="left" valign="middle">
+<td  colspan="2" class="table-seperate-border">
+<div class="fix_button">
+<button id="cancel" type="button" value="BUTTON"  onClick="buttonClick(this,'<%76%>');reset();loadSettings();" name="Cancel" class="button-cancel cancel_bt"><%76%></button>
+<button id="apply" type="submit" value="SUBMIT"  onClick="buttonClick(this,'<%78%>');return checkData()" name="apply" class="button-apply apply_bt"><%78%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="bas-help-frame-div" > <iframe id="helpframe"  name=helpframe src="IPV6_fixed_h.htm" scrolling="no" class="help-iframe"  frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img id="IPV6_fixed_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text"  onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+      </div>
+
+
+
+<input type="hidden" name="ipv6_wan_ipaddr" value="<%3368%>">
+<input type="hidden" name="ipv6_lan_ipaddr" value="<%3369%>">
+<input type="hidden" name="ipv6_wan_length" value="<%3370%>">
+<input type="hidden" name="ipv6_lan_length" value="<%3371%>">
+<input type="hidden" name="ipv6_pri_dns" value="<%3372%>">
+<input type="hidden" name="ipv6_sec_dns" value="<%3373%>">
+<input type="hidden" name="ipv6_wan_gateway" value="<%3374%>">
+<input type="hidden" name="ipv6_enable_dhcp" value="">
+<INPUT type="hidden" name="ipv6_proto" value= "fixed">
+<input type="hidden" name="ipv6_ripng_enable" value="">
+
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>

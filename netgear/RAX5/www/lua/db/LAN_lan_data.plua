@@ -1,0 +1,48 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local interface  = require "webGetFunc.interface"
+local inetstatus  = require "webGetFunc.inetStatus"
+
+local log = require("luci.log") --for debug
+
+local hostname = interface.getDeviceName()
+local ipaddr = interface.getLanInstanceIpAddr()
+local netmask = interface.getLanInstanceIpMask()
+--local proto = uci:get("network", "lan", "proto")
+local dhcpv4_enable = interface.getLanDhcpv4Enable()
+local  start_ip = interface.getDhcpv4PoolStart()
+local end_ip = interface.getDhcpv4PoolEnd()
+local wan_proto = string.lower(interface.get_wanMode())
+local rip_dir = interface.getRipDirection()
+local rip_ver = interface.getRipVersion()
+
+local data = { }
+
+data["deviceName"] = { value = hostname, type = "spantext" }
+data["hiddenDeviceName"] = { value = hostname }
+data["ipAddr"] = { value = ipaddr }
+data["address"] = { value = ipaddr, type = "ip", idStr_prefix = "sys_lan_ipaddress" }
+data["selected"] = { value = ipaddr, type =" ip", idStr_prefix = "rsv_ipaddress" }
+data["netmask"] = { value = netmask }
+data["lanMask"] = { value = netmask, type = "ip", idStr_prefix = "sys_lan_netmask" }
+data["ripDirection"] = { value = rip_dir, type = "select" }
+data["ripVersion"] = { value = rip_ver, type = "select" }
+data["enableDhcpServer"] = { value = dhcpv4_enable, type = "checkbox" }
+data["start"] = { value= start_ip, type = "ip", idStr_prefix = "sys_pool_starting_address" }
+data["end"] = { value= end_ip, type = "ip", idStr_prefix = "sys_pool_finish_address" }
+data["wan_proto"] = { value = wan_proto, type = "input" }
+data["wan_ipaddr"] = { value = inetstatus.getInet_IpAddr(), type = "input" }
+data["wan_netmask"] = { value= inetstatus.getInet_subnetMask(), type = "input" }
+data["pptp_wan_ipaddr"] = { value = inetstatus.getInet_IpAddr(), type = "input" }
+data["pppoe_wan_ipaddr"] = { value = inetstatus.getInet_IpAddr(), type = "input" }
+data["pptp_serv_ipaddr"] = { value = interface.getPptpServerAddr(), type = "input" }
+data["l2tp_serv_ipaddr"] = { value = interface.getL2tpServerAddr(), type = "input" }
+data["wan_dns1_pri"] = { value = interface.getDNSServerIpAddr(1), type = "input" }
+data["wan_dns1_sec"] = { value = interface.getDNSServerIpAddr(2), type = "input" }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)
+

@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="security"></adv-child-menu>  
+  <div class="advance-box">
+    <x-help :text="lang_t('rule.help_macf')"></x-help>
+	<br><br>
+    <div class="fun-box">
+      <div style="display: flex;line-height: 23px;">
+	  	<span class="fun-title">{{ lang_t('menu.macf') }}</span>
+	  	&nbsp;&nbsp;
+	  	<x-switch v-model="macfState" @change="stateChange"></x-switch>
+	  </div>
+      <table v-show="macfState">
+        <tr><td align="right">
+        	<x-icon type="add" cursor="pointer" @click="addRuleVal">{{ lang_t('common.add') }}</x-icon>
+			<x-icon type="del" cursor="pointer" @click="trashFun('all')">{{ lang_t('common.delete') }}</x-icon>
+        </td></tr>
+        <tr><td height="5"></td></tr>
+        <tr>
+          <td><table class="t_table3 table-bordered table-striped">
+       	    <thead>
+			<tr>
+			  <th>{{ lang_t('rule.description') }}</th>
+			  <th>{{ lang_t('rule.mac') }}</th>
+			  <th>{{ lang_t('rule.operate') }}</th>
+			  <th>{{ lang_t('common.select') }}<x-checkbox v-model="selectall" @change="selectAll"></x-checkbox></th>
+		  	</tr>
+		  	</thead>
+			<tr v-show="addShow">
+              <td><input type="text" class="desc" v-model="desc" v-verify="formRules" data-name="desc" maxlength="20"></td>
+              <td>
+              	<input type="text" class="mac" v-model="mac" v-verify="formRules" data-name="mac" maxlength="17">
+              	<img src="/static/images/search.png" :title="lang_t('common.scan')" class="cursor" @click="scanFun">
+              </td>
+              <td><button :disabled="disable_addBtn" @click="addRule"><img src="/static/images/added.png" :title="lang_t('common.add')" class="cursor"></button></td>
+              <td></td>
+            </tr>
+            <tbody>
+            <tr v-for="(rule,v) in ruleList">
+			  <td>
+			  	<input type="text" class="desc" v-model="editDesc[rule.idx-1]" v-verify="formRules" :data-name="'desc'+Number(rule.idx-1)"  maxlength="20" v-if="edit[rule.idx-1]" @input="watchValue(rule.idx-1)">
+			  	<span v-else>{{ rule.desc }}</span>
+			  </td>
+			  <td>
+			  	<div v-if="edit[rule.idx-1]">
+				  	<input type="text" class="mac" v-model="editMac[rule.idx-1]" v-verify="formRules" :data-name="'mac'+Number(rule.idx-1)" maxlength="17" @input="watchValue(rule.idx-1)">
+				  	<img src="/static/images/search.png" class="cursor" :title="lang_t('common.scan')" @click="scanFun(rule.idx-1)">
+				  </div>
+			  	<span v-else>{{ rule.mac }}</span>
+			  </td>
+			  <td>
+				<img :src="operate[rule.idx-1]" :title="lang_t('rule.edit')" class="cursor" @click="editFun(rule.idx-1)">
+				&nbsp;&nbsp;
+				<img src="/static/images/trash.png" :title="lang_t('common.delete')" class="cursor" @click="trashFun(rule.idx-1)">
+			  </td>
+			  <td>
+				<x-checkbox v-model="select[rule.idx-1]"></x-checkbox>
+			  </td>
+			</tr>
+			<tr v-show="dataTotal==0">
+				<td colspan="12">{{ lang_t('common.no_data') }}</td>
+			</tr>
+		  	</tbody>
+          </table></td>
+        </tr>
+		<tr><td><x-page :total="dataTotal" @on-page="pageChange" :data="data"></x-page></td></tr>
+      </table>
+    </div>
+    <x-modal v-model="modelShow" :title="lang_t('common.ip_mac')" show="ip,mac" :listData="listData" @on-select="selectFun"></x-modal>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,macfState:!1,selectall:!1,operate:[],select:[],data:[],edit:[],ruleList:[],desc:"",mac:"",editDesc:[],editMac:[],dataTotal:0,addShow:!1,tempIdx:0,modelShow:!1,disable_addBtn:!1,listData:[]}},watch:{select:function(){var t=0;for(var e in this.select)this.select[e]&&t++;t==this.select.length?this.selectall=!0:this.selectall=!1}},computed:{formRules:function(){var a=this;return{mac:function(t,e){t||e(a.lang_t("rule.mac")+a.lang_t("rule.msg12"));var i=cs.mac(t);1==i?e(a.lang_t("rule.msg17")):2==i?e(a.lang_t("rule.msg18")):3==i?e(a.lang_t("rule.msg19")):99==i&&e()},desc:function(t,e){var i=cs.commentstr(t);1==i||2==i?e(a.lang_t("rule.msg4")):0!=i&&99!=i||e(),20<t.length&&e(a.lang_t("rule.msg5"))}}}},created:function(){var e=this;uiPost.getMacFilterRules(function(t){e.macfState="1"==t.enable,t.rule&&(e.ruleList=t.rule,e.dataTotal=e.ruleList.length,e.data=t.rule,e.tableInit(t.rule))})},methods:{pageChange:function(t,e){this.ruleList=e},stateChange:function(t){var e={};e.enable=t?"1":"0",e.addEffect="0",uiPost.setMacFilterRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})},selectAll:function(t){var e=!1;t&&(e=!0);var i=this.select.length;this.select=[];for(var a=0;a<i;a++)this.select[a]=e},addRuleVal:function(){this.addShow=!0},scanFun:function(t){var e=this;this.tempIdx=t,uiPost.getDeviceInfo(function(t){e.listData=t.rule,e.modelShow=!0})},selectFun:function(t){"number"!=typeof this.tempIdx?(this.mac=t.mac,null==t.name?this.desc="Unknown":this.desc=t.name):(this.editMac[this.tempIdx]=t.mac,null==t.name?this.desc="Unknown":this.editDesc[this.tempIdx]=t.name,this.watchValue(this.tempIdx))},addRule:function(){var a=this;if(a.disable_addBtn=!0,a.dataTotal){if(16<=a.dataTotal)return Cstool.Msg({content:this.lang_t("rule.msg30",[16])}),a.disable_addBtn=!1;for(i=0;i<a.dataTotal;i++)if(a.mac.toUpperCase()==a.data[i].mac.toUpperCase())return Cstool.Msg({content:this.lang_t("rule.msg62",[this.lang_t("rule.mac")])}),a.disable_addBtn=!1}Cstool.Verify(this.formRules,function(t){if(t||(a.disable_addBtn=!1),t){var e={};e.mac=a.mac.toUpperCase(),e.desc=a.desc,e.addEffect="1",uiPost.setMacFilterRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})}})},editFun:function(t){"/static/images/edit.png"==this.operate[t]?this.edit[t]?(this.edit.splice(t,1),this.edit.splice(t,0,!1)):(this.edit.splice(t,1),this.edit.splice(t,0,!0)):this.modefyFun(t)},modefyFun:function(e){var a={},s=this;if(s.dataTotal)for(i=0;i<s.dataTotal;i++)if(i!=e&&s.editMac[e].toUpperCase()==s.data[i].mac.toUpperCase())return Cstool.Msg({content:this.lang_t("rule.msg62",[this.lang_t("rule.mac")]),title:""}),!1;Cstool.Verify(this.formRules,function(t){t&&(a.mac=s.editMac[e].toUpperCase(),a.desc=s.editDesc[e],a.idx=String(e+1),a.addEffect="2",uiPost.setMacFilterRules(a,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))}))},s.dataTotal,e)},trashFun:function(t){var e={};if("all"!=t)e[this.data[t].delRuleName]=String(t),Cstool.Msg({content:this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delMacFilterRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})}});else{var i=0;for(var a in this.select)this.select[a]&&(i++,e[[this.data[a].delRuleName]]=String(a),Cstool.Msg({content:i==this.select.length?this.lang_t("rule.msg26"):this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delMacFilterRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})}}));if(0==i)return Cstool.Msg({content:this.lang_t("rule.msg14")}),!1}},watchValue:function(t){this.editDesc[t]!=this.data[t].desc||this.editMac[t].toUpperCase!=this.data[t].mac?"/static/images/edited.png"!=this.operate[t]&&(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edited.png")):(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edit.png"))},tableInit:function(t){for(var e in t)this.edit[e]=!1,this.select[e]=!1,this.operate[e]="/static/images/edit.png",this.editDesc[e]=t[e].desc,this.editMac[e]=t[e].mac}}}</script><script src="/static/js/main.js"></script></body></html>

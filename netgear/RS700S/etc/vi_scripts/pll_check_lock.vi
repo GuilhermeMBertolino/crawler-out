@@ -1,0 +1,95 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\pll_check_lock
+########################################
+##############################################
+# wait for TX & RX lock , max-wait=1Sec       
+STMO 1000000000                               
+##############################################
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\D6S_ONU__SerDes_CFG.csv, val_select:general
+########################################
+# cfg_class: pll_lock_check
+########################################
+# pre_order
+WAITBITS @(0x828d0944{0x1}<<2),0x1
+WAITBITS @(0x828d0f3c{0x1}<<2),0x1
+WAITBITS @(0x828cc030{0x1}<<3),0x1
+WAITBITS @(0x828cc030{0x1}<<2),0x1
+WAITBITS @(0x828cc040{0x1}<<1),0x1
+WAITBITS @(0x828d00b4{0x1}),0x1
+###    READ RX/TX Status  ####
+MOV @(0x828d0944{0x1}<<2),rx_pll_lock_status
+MOV @(0x828d0f3c{0x1}<<2),tx_pll_lock_status
+MOV @(0x828cc030{0x1}<<3),tx_phyready_status
+MOV @(0x828cc030{0x1}<<2),tx_pll_phyready_status
+MOV @(0x828cc040{0x1}<<1),rx_phyready_status
+MOV @(0x828d00b4{0x1}),rx_loc_off_cal_done_status
+MOV @(0x828d0088{0xffff}),dlat_off_cal_err_status
+MOV @(0x828d008c{0xff}),xlat_off_cal_err_status
+MOV @(0x828d0090{0xff}),elat_off_cal_err_status
+MOV @(0x828d0094{0xff}),flat_off_cal_err_status
+# unorder
+# post_order
+########################################
+# end of cfg_class: pll_lock_check
+########################################
+# List of Return values
+MOV 10,__RETC
+ 
+MOV rx_pll_lock_status,__RV0
+MOV tx_pll_lock_status,__RV1
+MOV tx_phyready_status,__RV2
+MOV tx_pll_phyready_status,__RV3
+MOV rx_phyready_status,__RV4
+MOV rx_loc_off_cal_done_status,__RV5
+MOV dlat_off_cal_err_status,__RV6
+MOV xlat_off_cal_err_status,__RV7
+MOV elat_off_cal_err_status,__RV8
+MOV flat_off_cal_err_status,__RV9
+ 
+### Check if Error, return (-1) 
+CMP rx_pll_lock_status,1
+JMPEQ _L_ifelse_0_end
+    HALT 1
+_L_ifelse_0_end:
+CMP tx_pll_lock_status,1
+JMPEQ _L_ifelse_1_end
+    HALT 2
+_L_ifelse_1_end:
+CMP tx_phyready_status,1
+JMPEQ _L_ifelse_2_end
+    HALT 3
+_L_ifelse_2_end:
+CMP tx_pll_phyready_status,1
+JMPEQ _L_ifelse_3_end
+    HALT 4
+_L_ifelse_3_end:
+CMP rx_phyready_status,1
+JMPEQ _L_ifelse_4_end
+    HALT 5
+_L_ifelse_4_end:
+CMP rx_loc_off_cal_done_status,1
+JMPEQ _L_ifelse_5_end
+    HALT 6
+_L_ifelse_5_end:
+CMP dlat_off_cal_err_status,0
+JMPEQ _L_ifelse_6_end
+    HALT 7
+_L_ifelse_6_end:
+CMP xlat_off_cal_err_status,0
+JMPEQ _L_ifelse_7_end
+    HALT 8
+_L_ifelse_7_end:
+CMP elat_off_cal_err_status,0
+JMPEQ _L_ifelse_8_end
+    HALT 9
+_L_ifelse_8_end:
+CMP flat_off_cal_err_status,0
+JMPEQ _L_ifelse_9_end
+    HALT 11
+_L_ifelse_9_end:
+ 
+# Done, No Errors
+HALT 0
+########################################
+# end of call_msg: pll_check_lock
+########################################

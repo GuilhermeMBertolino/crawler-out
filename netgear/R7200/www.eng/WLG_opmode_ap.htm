@@ -1,0 +1,415 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="Expires" content="Mon, 06 Jan 1990 00:00:01 GMT"><meta name="description" content="WNR2500_multilangual">
+<title>NETGEAR Router @model_name#</title>
+<script language="javascript" type="text/javascript" src="string.js"></script>
+<link rel="stylesheet" href="style/form.css">
+<link rel="stylesheet" href="style/opmode.css">
+<script language="javascript" type="text/javascript" src="funcs.js"></script>
+<!-- link rel="stylesheet" href="form.css" -->
+<style type="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<style type="text/css">
+.div_content {padding-left: 5%; padding-top:40px; margin-bottom: 1px; vertical-align:top;}
+.link_a{background-color: #702b86; margin-left: 0px; color: #f2f2f2;  font: -webkit-small-control; padding-left:20px; padding-right:20px; border-top-width: 0px; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px;}
+.blue_a{COLOR: blue; TEXT-DECORATION: underline}
+.div_content img{ height: 200px}
+
+.boxline{width: 700px; height: 180px; }
+.box_select {width: 160px; height: 150px; float: left;  margin-left: 20px; margin-top: 20px;}
+.box_select .radio_box{width: 90%; height: 30px; font-size: 13px; font-weight: bold; color: black;  top: 10px; padding-left: 10%;}
+.box_select .icon, .box_select .icon_select{width:100px; height: 100px;  bottom: 10px; left: 20px; cursor: pointer;}
+.box_select .icon img, .box_select .icon_select img{width:100px; height:100px}
+.box {width: 130px; height: 110px; float: left;  margin-left: 20px; margin-top: 30px; }
+.box .radio_box{width: 90%; height: 30px; font-size: 11px; font-weight: bold; color: black;  top: 3px; padding-left: 10%;}
+.box .icon, .box .icon_select{width:60px; height: 60px;  bottom: 10px; left: 20px; cursor: pointer;}
+.box .icon img, .box .icon_select img{width:60px; height:60px}
+.icon { background-color: #5db5e5;}
+.icon_select { background-color: #6abd49;}
+</style>
+<script language="javascript" type="text/javascript" src="utility.js@js_css_suffix#"></script>
+<script language="javascript" type="text/javascript" src="linux.js"></script>
+<script language="javascript" type="text/javascript" src="script/opmode.js"></script>
+<script type="text/javascript" language="javascript" src="jquery.js"></script> 
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+var DisableFixedIP = false;
+var DisableFixedDNS = false;
+var bridge_support="@wifi_router_apcli_function_enable#";
+function goto_wireless()
+{
+	goto_formframe("WLG_dualband_idx.htm&todo=cfg_init");
+       menu_color_change('wireless');
+}
+function showpwd()
+{
+    var cf = document.forms[0];
+    var h_security_type = "@h_security_type#"
+    var h_security_type_an = "@h_security_type_an#"
+   
+
+    if(h_security_type == "Disable")
+		document.getElementById("2.4g_ap_passphrase").style.display = "none";
+	else if(h_security_type == "WEP")
+	{
+		document.getElementById("2.4g_ap_passphrase").style.display = "none";
+		document.getElementById("2.4g_ap_wep_passphrase").style.display = "block";
+	}
+	
+    if(h_security_type_an == "Disable")
+		document.getElementById("5g_ap_passphrase_an").style.display = "none";
+}
+function setIP()
+{
+    var cf = document.forms[0];
+    var dflag = getRadioCheckedValue(cf.APAssign);
+    if(dflag == "disable"){
+      setDisabled(1,cf.APether1,cf.APether2,cf.APether3,cf.APether4,cf.APMask1,cf.APMask2,cf.APMask3,cf.APMask4,cf.APGateway1,cf.APGateway2,cf.APGateway3,cf.APGateway4);
+      DisableFixedIP = true;
+      //document.getElementById("fix_tbl").style.display = "none";
+    }
+    else{
+    	setDisabled(0,cf.APether1,cf.APether2,cf.APether3,cf.APether4,cf.APMask1,cf.APMask2,cf.APMask3,cf.APMask4,cf.APGateway1,cf.APGateway2,cf.APGateway3,cf.APGateway4);
+      DisableFixedIP = false;
+      //document.getElementById("fix_tbl").style.display = "block";
+    }
+}
+
+function setDNS()
+{
+    var cf = document.forms[0];
+    var dflag = getRadioCheckedValue(cf.APAssign);
+    if(dflag == "disable"){
+      setDisabled(1,cf.AP_DAddr1,cf.AP_DAddr2,cf.AP_DAddr3,cf.AP_DAddr4,cf.AP_PDAddr1,cf.AP_PDAddr2,cf.AP_PDAddr3,cf.AP_PDAddr4);
+      DisableFixedDNS = true;
+      //document.getElementById("fix_tbl").style.display = "none";
+      
+    }
+    else{
+    	setDisabled(0,cf.AP_DAddr1,cf.AP_DAddr2,cf.AP_DAddr3,cf.AP_DAddr4,cf.AP_PDAddr1,cf.AP_PDAddr2,cf.AP_PDAddr3,cf.AP_PDAddr4);
+      DisableFixedDNS = false;
+      //document.getElementById("fix_tbl").style.display = "block";
+    }
+}
+function checkData()
+{
+	var cf = document.forms[0];
+	var msg = "";
+
+	
+	        var WPethr;
+	        var WMask;
+	        var fixgw;
+	        if (cf.APAssign[1].checked)
+	        {
+	            if(badLANIP(cf.APether1,cf.APether2,cf.APether3,cf.APether4,254)
+	                || (parseInt(cf.APether4.value, 10)==0))
+	                msg+= getErrorMsgByVar("gsm_msg_eth_inv_ip");
+	            if(badMASK(cf.APMask1,cf.APMask2,cf.APMask3,cf.APMask4))
+	                msg+= getErrorMsgByVar("gsm_msg_eth_inv_mask");
+	            //Gateway last byte could be zero
+	            if(badSubLANIP(cf.APGateway1,cf.APGateway2,cf.APGateway3,cf.APGateway4,254))
+	                msg+= getErrorMsgByVar("gsm_msg_eth_inv_gateway");
+	            if (msg.length > 1)
+	            {
+	                alert(msg);
+	                return false;
+	            }
+	            /* check IP setting valid */
+	            APether = cf.APether1.value + "." + cf.APether2.value + "." + cf.APether3.value +"." + cf.APether4.value;
+	            APMask = cf.APMask1.value + "." + cf.APMask2.value + "." + cf.APMask3.value +"." + cf.APMask4.value;
+	            fixgw = cf.APGateway1.value + "." + cf.APGateway2.value + "." + cf.APGateway3.value +"." + cf.APGateway4.value;
+	            if(IsGatewayValid(APether, APMask, fixgw) == false){
+	                msg += getErrorMsgByVar("gsm_msg_eth_inv_gateway");
+	            }
+	            msg += checkDNSValid(
+	                    cf.AP_DAddr1, cf.AP_DAddr2, cf.AP_DAddr3, cf.AP_DAddr4,
+	                    cf.AP_PDAddr1, cf.AP_PDAddr2, cf.AP_PDAddr3, cf.AP_PDAddr4);
+	        }
+	    
+	if(msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+
+	dataToHidden(cf);
+	cf.h_APDNSAssign.value=cf.h_APAssign.value;
+	return true;
+}
+function display_fixed_ip_setting(display)
+{
+    var cf = document.forms[0];
+    if (display == 1)
+    {
+        document.getElementById("fixed_ip_setting_display").style.display="";
+	    document.getElementById("ap_addr").style.display="";
+	    document.getElementById("ap_mask").style.display="";
+	    document.getElementById("ap_daddr").style.display="";
+	    document.getElementById("ap_pdaddr").style.display="";
+	    document.getElementById("ap_gateway").style.display="";
+    }
+    else
+    {
+        document.getElementById("fixed_ip_setting_display").style.display="none";
+    }
+}
+function handle_fixip_ok()
+{
+	display_fixed_ip_setting(0);
+}
+
+
+function handle_fixip_cancel()
+{
+	display_fixed_ip_setting(0);
+}
+
+function setIconColor()
+{
+	var cf = document.forms[0];
+	var operation_mode = "@h_operation_type#";
+	if( operation_mode == "ap" )
+	{
+		$("#ap").removeClass("icon").addClass("icon_select");
+	}
+	else if(operation_mode == "bridge")
+	{
+		$("#bridge_icon").removeClass("icon").addClass("icon_select");
+	}
+	else
+	{
+		$("#router").removeClass("icon").addClass("icon_select");
+	}
+}
+
+function init()
+{
+	showpwd();
+	setIP();
+	setDNS();
+	setIconColor();
+	if(bridge_support ==1)
+	{
+		document.getElementById("bridge").style.display="";
+	}
+}
+//-->
+</script></head><body bgcolor="#ffffff" onLoad="dataToVisible(document.forms[0]);document.forms[0].elements[0].focus();init();">
+<form method="POST" action="setup.cgi@post_par#" onSubmit="buttonToDisabled(document.forms[0])">
+<div class="page_title" languageCode="10904">Router / AP / Bridge Mode</div>
+<div class="fix_button">
+<table width="100%" border="0" cellpadding="0" cellspacing="2"><tr><td nowrap colspan="2" align="center">
+<input class="cancel_bt" type="RESET" name="Cancel" value="Cancel" onClick="location.href='WLG_opmode_main.htm';" languageCode="51">
+&nbsp;
+<input class="apply_bt" type="SUBMIT" name="Apply" value="Apply" onClick="return checkData()" languageCode="50">
+</td></tr></table>
+</div>
+
+
+
+
+<div id="main" class="main_top_button">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td>
+<table>
+<tr >
+<td colspan=2>    
+	
+	<div class="box ui-corner-all router">
+                <div class="radio_box"><input type="radio" name="operation_type" value="router" onclick="select_type(0)"> <span languageCode="10911">Router Mode</span></div>
+                <div id="router" class="icon" style="margin-left:20px" onclick="select_type(0)"><img src="image/opmode_router.gif"></div>
+	</div>
+	<div class="box_select ui-corner-all ap">
+		<div class="radio_box"><input type="radio" name="operation_type" value="ap"> <span languageCode="3440">AP Mode</span></div>
+		<div id="ap" class="icon" style="margin-left:20px" onclick="select_type(1)"><img src="image/opmode_ap.gif"></div>
+       </div>
+          
+          <div id="bridge" style="display:none" class="box ui-corner-all bridge">
+                  <div class="radio_box"><input type="radio" name="operation_type" value="bridge" onclick="select_type(2);"><span languageCode="10905"> Bridge Mode </span></div>
+                  <div id="bridge_icon" class="icon" style="margin-left:20px" onclick="select_type(2);"><img src="image/opmode_bridge.gif"></div>
+          </div>
+</td>
+</tr>
+<tr>
+	<td style="width:70%">
+	<TABLE  border=0 cellpadding=0 cellspacing=2>
+	<TR>
+	<td  align="left"><span languageCode="10910">AP Mode:The NETGEAR router will functions as a wireless accesspoint.This mode is appropriate for easy setup if devices are already connected to your existing router or gateway,or if you just want to use this new NETGEAR router to extend your WiFi coverage.Some router functions are not available in access point mode.</span></TD>		
+	</TR>
+	<TR><TD height="20px"></TD></TR>
+	<TR>
+	<td nowrap colspan=3><span languageCode="3922">Choose IP Address settings on this access point</span></td>
+	</TR>
+	<TR id=ap_radio_1>
+	<TD nowrap colspan=3>
+	<input type="radio" name="APAssign" value="disable" onClick="display_fixed_ip_setting(0);setIP();setDNS();"><span languageCode="3924">Get dynamically from existing router.</span>
+	</TD>
+	</TR>
+	<TR id=ap_radio_2>
+	<TD nowrap colspan=3>
+	<input type="radio" name="APAssign" value="enable" onClick="display_fixed_ip_setting(1);setIP();setDNS();"><span languageCode="3925">Use fixed IP Address (not recommended).</span>
+	</TD>
+	</TR>
+	<TR><TD height="25px"></TD></TR>
+	<TR><TD nowrap colspan=3><span languageCode="192">&nbsp; Device Name 
+	</span>:@device_name#
+	&nbsp;&nbsp;&nbsp; <input class="new_edit_bt ui-corner-all" type="button" name="Apply" value="Edit" languageCode="147" onClick="location.href='LAN_lan.htm';">
+	</TD><TD></td>
+	</TR>
+	<TR><TD height="10px"></TD></TR>
+
+	</TABLE>
+	
+	</td>
+	<td style="width:20%;algin:left">
+                  <TABLE border=0 cellpadding=0 cellspacing=2>
+		                <TR>
+			                <TD ><b languageCode="10908">Downlink</b></TD>
+		                </TR>
+		                <TR>
+			                <TD><span languageCode="10912">Your client devices can connect to the SSID below.</span></TD>
+		                </TR>
+		                <TR><TD height="15px"></TD></TR>
+		                <TR>
+			                <TD nowrap style="font-size:12px;color:#702b86"><b languageCode="10913">2.4G SSID</b></TD>		
+		                </TR>
+		                <TR>
+			                <TD nowrap colspan=3 style="white-space:pre">@ssid#</TD>		
+		                </TR>
+		                <TR><TD id="2.4g_ap_passphrase" nowrap colspan=3>
+		                 @passphrase#
+		                </TD></TR>
+				   <TR><TD id="2.4g_ap_wep_passphrase" nowrap colspan=3 style="display:none">
+		                 @wep_passphrase#
+		                </TD></TR>
+		                <TR><TD height="15px"></TD></TR>
+		                <TR>
+			                <TD nowrap colspan=3 style="font-size:12px;color:#702b86"><b languageCode="10914">5G SSID</b></TD>		
+		                </TR>
+		                <TR>
+			                <TD nowrap colspan=3 style="white-space:pre">@ssid_an#</TD>		
+		                </TR>
+                		<TR><TD nowrap id="5g_ap_passphrase_an" colspan=3>
+		                  @passphrase_an#
+		                </TD></TR>
+		                <TR><TD height="15px"></TD></TR>
+		                <TR>
+			                <td nowrap colspan=3><span languageCode="10909">To change</span>:</td>
+		                </TR>
+		                <TR><TD height="5px"></TD></TR>
+		                <TR>
+			                <td nowrap colspan=3><input class="wireless_bt ui-corner-all" type="button" name="Apply" value="Wireless Settings" languageCode="494" onClick="goto_wireless();"></td>
+		                </TR>
+	                </TABLE>  
+                </td>
+<tr><td colspan=2>
+
+	<div class="ipaddres_ap" style="display:none" id="fixed_ip_setting_display">
+	<table width=420px height=270px cellpadding=0 cellspacing=2 border=0     class="iptable">
+	<tr height="15px"></tr>
+	<TR id=ap_addr style="display:none">
+	<TD width="10px"></TD>
+	<TD>&nbsp;&nbsp;&nbsp;</TD>
+	<TD nowrap languageCode="71"> IP Address</TD>
+	<TD nowrap align=right>
+	<input type="text" name="APether1" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APether2" class="num"; size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APether3" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APether4" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+	<td width="20px"></td>
+	</TR>
+	<TR id=ap_mask style="display:none">
+	<TD width="10px"></TD>
+	<TD>&nbsp;&nbsp;&nbsp;</TD>
+	<TD nowrap languageCode="75">IP Subnet Mask</TD>		
+	<TD nowrap align=right>
+	<input type="text" name="APMask1" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APMask2" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APMask3" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APMask4" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD> 
+	<td width="20px"></td>
+	</TR>
+	<TR id=ap_gateway style="display:none">
+	<TD width="10px"></TD>
+	<TD>&nbsp;&nbsp;&nbsp;</TD>
+	<TD nowrap languageCode="3054">Gateway IP Address</TD>		
+	<TD nowrap align=right>
+	<input type="text" name="APGateway1" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APGateway2" class="num"; size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APGateway3" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="APGateway4" class="num" size="4" value="" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+	<td width="20px"></td>
+	</TR>
+	<TR id=ap_daddr style="display:none">
+	<TD width="10px"></TD>
+	<TD>&nbsp;&nbsp;&nbsp;</TD>
+	<TD nowrap languageCode="80">Primary DNS</TD>
+	<TD nowrap align=right>
+	<input type="text" name="AP_DAddr1" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_DAddr2" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_DAddr3" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_DAddr4" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+	<td width="20px"></td>
+	</TR>
+	<TR id=ap_pdaddr style="display:none">
+	<TD width="10px"></TD>
+	<TD>&nbsp;&nbsp;&nbsp;</TD>
+	<TD nowrap languageCode="81">Secondary DNS</TD>
+	<TD nowrap align=right>
+	<input type="text" name="AP_PDAddr1" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_PDAddr2" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_PDAddr3" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);"" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.<input type="text" name="AP_PDAddr4" class="num" size="4" maxlength="3" value="" onFocus="if(DisableFixedDNS) this.blur()" onKeyPress="return getkey('num',event);">
+	</TD>
+	<td width="20px"></td>
+	</TR>
+	<tr height="15px"></tr>
+	<tr><td colspan="5">
+	<div>
+	<input type="button" value="OK" languageCode="168" class="fixip_ok" onclick="handle_fixip_ok();">
+	<input type="button" value="Cancel" languageCode="51" class="fixip_cancel" onclick="handle_fixip_cancel();">
+	</div>
+	</td></tr>
+	<tr height="15px"></tr>
+	</table>
+	</div>
+</td><tr>
+<tr><td colspan=2>
+	<img src="image/G7.png" style="">
+</td></tr>
+</tr>
+</table>
+</tr></td>
+</table>
+<input type="hidden" name="todo" value="save">
+<input type="hidden" name="h_operation_type" value="ap">
+<input type="hidden" name="h_APAssign" value="@h_APAssign#">
+<input type="hidden" name="h_APDNSAssign" value="@h_APDNSAssign#">
+<input type="hidden" name="c4_APether" value="@c4_APether#">
+<input type="hidden" name="c4_APMask" value="@c4_APMask#">
+<input type="hidden" name="c4_APGateway" value="@c4_APGateway#">
+<input type="hidden" name="c4_AP_DAddr" value="@c4_AP_DAddr#">
+<input type="hidden" name="c4_AP_PDAddr" value="@c4_AP_PDAddr#">
+<input type="hidden" name="this_file" value="WLG_opmode_ap.htm">
+<input type="hidden" name="next_file" value="WLG_opmode_ap.htm">
+<input type="hidden" name="SID" value="@SID#">
+</div>	
+</form>
+
+<div id="help" style="display: none">
+		<iframe name="help_iframe" id="helpframe" src="WLG_opmode_ap_h.htm" allowtransparency="true" width="100%" frameborder="0">
+		</iframe>
+</div>
+<div id="help_switch" class="close_help">
+	 <img class="help_switch_img" src="image/help/help-bar.gif"><script>
+var help_flag=0;
+if(isIE()){
+	show_hidden_help_top_button(1);
+	var frame_div = top.document.getElementById("formframe_div");
+	frame_div.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+if(get_browser() == "Opera"){
+	window.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+</script><div id="help_space" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_center"><span languageCode="3058">Help Center</span></div>
+<div id="help_button" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_show_hidden"><a href="javascript:void(0)" onClick="show_hidden_help_top_button(help_flag); help_flag++;"><span languageCode="3148">Show/Hide Help Center</span></a></div>
+</div>
+
+<script language="javascript" type="text/javascript" src="langs.js"></script></body></html>

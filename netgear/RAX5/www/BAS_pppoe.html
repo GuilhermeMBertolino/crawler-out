@@ -1,0 +1,423 @@
+<!DOCTYPE HTML>
+<%
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= commonCfg.getModelNameStr()?></title>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/settings.css">
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.inputmask.min.js"></script>
+  <script src="js/ipInput.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+  <script src="js/validations.js"></script>
+  <script src="js/internet.js"></script>
+
+  <script language="javascript" type="text/javascript">
+    CSRF_TOKEN = <?= commonCfg.genCsrfTokenFile('tokenNumber')?>;
+
+    $(document).ready(function()
+    {
+        fetchData('target', 'internet_pppoe', '', 'post_fillout_init');
+    });
+
+    /* post_fillout_init() function Section --------> Begin */
+    function post_fillout_init()
+    {
+        /* register a onClick/onChange funtion */
+        $('#target_basic [name=wanProto]').on('click', function() {
+            onChange_wanProto();
+        });
+
+        post_fillout_init_pppoe();
+    }
+
+    function post_fillout_init_pppoe()
+    {
+        //init_runningWanMode();
+        init_test_button_window();
+        //RAX30-632, init_v6Type6to4 before init_pppoe_mode_autoid to run onChange_pppoe_mode_autoid
+        init_connectionMode();
+        init_pppoe_mode_autoid();
+        init_pppoe_ipType();
+        init_dnsType();
+        init_macClone();
+
+        $('#target [name=login_type]').on('change', function() {
+            onChange_login_type();
+        });
+        $('#target [name=password]').on('focus', function() {
+            onFocus_pppoe_password();
+        });
+        $('#target [name=mode_autoid]').on('change', function() {
+            onChange_pppoe_mode_autoid();
+        });
+        $('#target [name=ipType]').on('change', function() {
+            onChange_pppoe_ipType();
+        });
+        $('#target [name=dnsType]').on('change', function() {
+            onChange_dnsType();
+        });
+        $('#target [name=macClone]').on('change', function() {
+            onChange_macClone();
+        });
+
+    }
+    /*  post_fillout_init() function Section --------> End */
+
+    function after_postForm_handler(json) {
+        if (json.status == "success") {
+            /* system needs 15 seconds for the setting take effect, show progress bar */
+            setTimeout("redirectProgressBar('SWP046', '', '15000', '/BAS_wan.html')", 10);
+        }
+    }
+
+    function formSubmit(btn) {
+        formSubmit_pppoe();
+    }
+
+    function formSubmit_pppoe()
+    {
+        //fill the ip data to hidden input
+        $("[name=ipAddr]").val($("#ipAddr-ip").getIp());
+        $("[name=dns1]").val($("#dns1-ip").getIp());
+        if ($("#dns2-ip").isEmptyIp() == false) {
+            $("[name=dns2]").val($("#dns2-ip").getIp());
+        }
+
+        if (validation_pppoe()) {
+            $.postForm('wanPPPoE', $('#target'), 'cgi-bin/netgear.plua', 'after_postForm_handler');
+        }
+    }
+
+    function formSubmit_testButton()
+    {
+        formSubmit_pppoe();
+
+        sessionStorage.setItem("clickedTestButton", "true");
+    }
+
+
+    function formRefresh()
+    {
+        fetchData('target', 'internet_pppoe', '', 'post_fillout_init');
+    }
+
+    var internetTestWinVar = null;
+
+    function init_test_button_window()
+    {
+        var clickedTestButton = sessionStorage.getItem("clickedTestButton");
+        var winoptions = "width=640,height=480,menubar=yes,toolbar=yes,status=yes,location=yes,resizable=yes";
+
+        if (clickedTestButton == null || clickedTestButton == "false") {
+            return;
+        }
+
+        sessionStorage.setItem("clickedTestButton", "false");
+
+        internetTestWinVar = window.open('BAS_window_testPpp.html', 'internetTest_win', winoptions);
+
+        if (internetTestWinVar && internetTestWinVar.focus) {
+            setTimeout('internetTestWinVar.focus()',200);
+        }
+    }
+
+    function init_runningWanMode()
+    {
+        var runningWanMode = $('[name=runningWanMode]').val();
+
+        //when runningWanMode is not in PPPoE mode, fillout elements by the web default value instead of by the db value
+        if (runningWanMode != "PPPoE") {
+            //change the Connection Mode to be Dail on Demand
+            $('select[name=mode_autoid]').val("Dail on Demand");
+            //change the Idle timeout to be 5
+            $('[name=idleTimeout]').val("5");
+            //change the DNS type setting to be dynamic
+            $('[name=dnsType]')[0].checked = true;
+            //change the MAC address setting to be Use Default Address
+            $('[name=macClone]')[0].checked = true;
+        }
+    }
+
+    //Steven Ju add, RAX30-632,After enabling IPv6 6to4 tunnel, it should automatically change IPv4 PPPoE to always on.
+    function init_connectionMode()
+    {
+        var v6Type = $('[name=v6Type]').val();
+        var v6Mode = $('[name=v6Mode]').val();
+        var runningWanMode = $('[name=runningWanMode]').val();
+        console.log("v6Type:"+v6Type+" v6Mode:"+v6Mode);
+        // RAX5-291/296, the connection mode of PPPoE/PPTP/L2TP is changed to "Always On"
+        if(v6Mode == "pppoe" || v6Type == "6to4") {
+            $('#pppoe_dod').attr("disabled", true);
+            $('[name=idleTimeout]').attr('readonly', true);
+            $('select[name=mode_autoid]').val("Always On");
+        }
+    }
+
+    function onChange_wanProto()
+    {
+        var wanProto = $('[name=wanProto]:checked').val();
+        var login_type = $('select[name=login_type]').val();
+
+        /* show the select form */
+        if (wanProto == "ppp") {
+            if (login_type == "PPTP") {
+                window.location.href = "BAS_pptp.html";
+            }
+            else if (login_type == "PPPoE") {
+                window.location.href = "BAS_pppoe.html";
+            }
+            else if (login_type == "L2TP") {
+                window.location.href = "BAS_l2tp.html";
+            }
+            else {
+                window.location.href = "BAS_pppoe.html";
+            }
+        }
+        else if (wanProto == "eth") {
+            window.location.href = "BAS_ether.html";
+        }
+    }
+
+    function onChange_login_type()
+    {
+        var login_type = $('select[name=login_type]').val();
+
+        if (login_type == "PPTP") {
+            window.location.href = "BAS_pptp.html";
+        }
+        else if (login_type == "PPPoE") {
+            window.location.href = "BAS_pppoe.html";
+        }
+        else if (login_type == "L2TP") {
+            window.location.href = "BAS_l2tp.html";
+        }
+    }
+  </script>
+  <link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+
+<body onload="window.top.change_size($(this));loadhelp('BAS_pppoe','');" class="page-body" onResize="window.top.change_size($(this));">
+    <div class="page-header" style="position: relative;" mlang="genie_68">Internet Setup</div>
+    <!-- target_basic form start-->
+    <form id="target_basic"  name="formname_basic" >
+        <div class="form-row" style="padding-top: 18px; padding-left: 28px;">
+            <a href="javascript:loadhelp('BAS_ether')" tabindex="-1"><b mlang="SBS012" >Does your Internet connection require a login?</b></a>
+        </div>
+        <div class="form-row" style="padding-top: 10px; padding-left: 28px;">
+            <label class="checkbox-container">
+                <a tabindex="-1" mlang="SWP003" >Yes</a>
+                <input type="radio" name="wanProto" id="loginreq" value="ppp" checked>
+                <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        <div class="form-row" style="padding-top: 10px; padding-left: 28px;">
+            <label class="checkbox-container">
+                <a tabindex="-1" mlang="SWP009" >No</a>
+                <input type="radio" name="wanProto" id="no_loginreq" value="eth">
+                <span class="radio-checkmark"></span>
+            </label>
+        </div>
+        <div class="seperate-border"></div>
+    </form> <!-- target_basic form end-->
+
+    <div id="main" class="form-group" style=height:265px;overflow:auto;scrolling:auto>
+        <!-- form start-->
+        <form id="target"  name="formname" >
+            <input name="circleActivationStatus" id="circleActivationStatus" type="hidden" value="" disabled>
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','isp')" tabindex="-1"><b mlang="SBS002" >Internet Service Provider</b></a>
+            </div>
+
+             <div class="form-row">
+                <select name="login_type" id="login_type">
+                    <option value="PPTP">PPTP</option>
+                    <option value="PPPoE" selected >PPPoE</option>
+                    <option value="L2TP">L2TP</option>
+                </select>
+            </div>
+            <div class="divider">&nbsp;</div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','login')" tabindex="-1"><b mlang="D-genie_341" >Login</b></a>
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="username" class="input1" id="pppoe_username" size="15"  maxlength="63" value="">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','password')" tabindex="-1"><b mlang="SWP027" >Password</b></a>
+            </div>
+
+            <div class="form-row">
+                    <input type="password" name="password" id="pppoe_passwd" size="15" style="width:180px" class="input1" maxlength="63" value="">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','serv_name')" tabindex="-1" mlang="SWP039" >&lt;b&gt;Service Name&lt;/b&gt; (If Required)</a> &nbsp;
+            </div>
+
+            <div class="form-row">
+                <input type="text" class="input1" name="serviceName" id="pppoe_servername" maxlength="63" size="15" value="">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','conn_mode')" tabindex="-1"><b mlang="SBS004" >Connection Mode</b></a>
+            </div>
+
+            <div class="form-row">
+                <select name="mode_autoid" id="pppoe_dod" size="1">
+                    <option value="Always On" mlang="SBS008" >Always On</option>
+                    <option value="Dail on Demand" mlang="SBS009" >Dial on Demand</option>
+                    <option value="Manually Connect" mlang="SBS010" >Manually Connect</option>
+                </select>
+                <input type="hidden" name="mode">
+            </div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_pppoe','pppoe_idletime')" tabindex="-1" mlang="SWP015" >&lt;b&gt;Idle Timeout&lt;/b&gt;(In Minutes)</a>
+            </div>
+
+            <div class="form-row">
+                <input type="text" class="num input1" name="idleTimeout" id="pppoe_idletime" size="3" maxlength="3">
+            </div>
+
+            <div class="divider">&nbsp;</div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_ether','InternetIP')" tabindex="-1"><b mlang="SWP021" >Internet IP Address</b></a>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="SWP019">Get Dynamically from ISP</span>
+                    <input type="radio" name="ipType" id="wan_assign_dynamic" value="dynamic">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row  pt-0">
+                <label class="checkbox-container">
+                    <span mlang="SWP024">Use Static IP Address</span>
+                    <input type="radio" name="ipType" id="wan_assign_fixed" value="fixed">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <!-- Ip address section Start -->
+            <div id="ipaddress-section">
+                <div id="ipAddr-ip"></div>
+                <input type="hidden" id="ipAddr" name="ipAddr">
+            </div>
+            <!-- Ip address section End -->
+
+            <!-- Common section start-->
+            <div class="divider">&nbsp;</div>
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_ether','DNSaddress')" tabindex="-1"><b mlang="SWP020" >Domain Name Server (DNS) Address</b></a>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="SWP018">Get Automatically from ISP</span>
+                    <input type="radio" name="dnsType" id="dns_assign_auto" value="dynamic">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row pt-0">
+                <label class="checkbox-container">
+                    <span mlang="SWP025">Use These DNS Servers</span>
+                    <input type="radio" name="dnsType" id="dns_assign_static" value="fixed">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <!-- DNS section Start -->
+            <div id="dns-section">
+
+                <div class="form-row" mlang="SWP022">Primary DNS</div>
+
+                <div id="dns1-ip"></div>
+                <input type="hidden" name="dns1">
+
+                <div class="form-row" mlang="SWP023">Secondary DNS</div>
+
+                <div id="dns2-ip"></div>
+                <input type="hidden" name="dns2">
+
+            </div> <!-- DNS section End -->
+
+            <div class="divider">&nbsp;</div>
+
+
+            <div class="form-row">
+                <a href="javascript:loadhelp('BAS_ether','localaddress')" tabindex="-1"><b mlang="SBS006" >Router MAC Address</b></a>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="SBS005">Use Default Address</span>
+                    <input type="radio" name="macClone" id="mac_assign_default" value="default">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="SBS003">Use Computer MAC Address</span>
+                    <input type="radio" name="macClone" id="mac_assign_computer" value="pc">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <span mlang="SBS007">Use This MAC Address</span>
+                    <input type="radio" name="macClone" id="mac_assign_define" value="user">
+                    <span class="radio-checkmark"></span>
+                </label>
+            </div>
+
+            <div class="form-row ip-input-row">
+                <input type="text" name="cloneMac" id="spoof_mac" class="num ip-feild" data-inputmask="'alias': 'mac'">
+                <input type="hidden" name="wan_hwaddr_default" value="" disabled>
+                <input type="hidden" name="wan_hwaddr_client" value="" disabled>
+                <input type="hidden" name="wan_hwaddr_user" value="" disabled>
+            </div>
+            <!-- Common section start-->
+            <input type="hidden" name="runningWanMode" value="" disabled>
+            <input type="hidden" name="hidOpenvpnEnable" value="" disabled>
+            <input type="hidden" name="hidDdnsEnable" value="" disabled>
+            <input type="hidden" name="runningIpType" value="" disabled>
+            <input type="hidden" name="runningStaticIp" value="" disabled>
+            <input type="hidden" name="v6Type" value="" disabled>
+            <input type="hidden" name="v6Mode" value="" disabled>
+            <input type="hidden" name="disableVPN" value="0">
+        </form> <!--form end-->
+    </div><!-- form-group end -->
+
+    <div class="form-btn-row" id="form_btn_div">
+        <button type="button" value="BUTTON"  onClick="formSubmit_testButton();" name="Test" id="test" class="button-common common_bt" mlang="SWP045">Test</button>
+        <button type="button" value="BUTTON"  onClick="formRefresh();" name="Cancel" id="cancel" class="button-cancel cancel_bt" mlang="UAS021">Cancel</button>
+        <button type="button" value="apply"  onClick="formSubmit($(this))" name="apply" id="apply" class="button-apply apply_bt" mlang="LUP004" >Apply</button>
+    </div>
+
+   <? commonCfg.genHelpSection() ?>
+</html>

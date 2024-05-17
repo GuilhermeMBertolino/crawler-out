@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+#USE_PROCD=1
+START=20
+
+start() {
+	echo -e "\033[35m Check original Access Control Database \033[0m" > /dev/console
+	/usr/bin/pudil -M &
+	usleep 100
+
+	if [ -f "/tmp/access_control_migrating" ]
+	then
+		echo -e "\033[35m Wait Access Control Database Migration\033[0m" > /dev/console
+	else
+		echo -e "\033[35m DAL callback function init \033[0m" > /dev/console
+		/etc/init.d/pucb.sh
+	fi
+}

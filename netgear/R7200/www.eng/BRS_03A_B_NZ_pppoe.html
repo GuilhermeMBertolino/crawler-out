@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><HEAD><TITLE>NETGEAR Router @model_name#</TITLE>
+<meta http-equiv="Pragma" CONTENT="no-cache">
+<meta http-equiv="Cache-Control" CONTENT="no-cache">
+<meta http-equiv="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+<META http-equiv=content-type content="text/html; charset=UTF-8"><LINK href="style/hijack_style.css" type=text/css rel=stylesheet><LINK href="style/hijack_03A_wanInput.css" type=text/css rel=stylesheet>
+<SCRIPT language=javascript src="utility.js" type=text/javascript></SCRIPT>
+<SCRIPT language=javascript src="script/brs_hijack.js" type=text/javascript></SCRIPT>
+<SCRIPT language=javascript src="script/brs_hijack_03A_B_pppoe.js" type=text/javascript></SCRIPT>
+<SCRIPT language=javascript src="script/funcs.js" type=text/javascript></SCRIPT>
+<script language="javascript" type="text/javascript" src="string.js"></script><link rel="stylesheet" href="style/form.css"><script language="javascript" type="text/javascript" src="funcs.js"></script>
+<SCRIPT language=javascript src="language/English.js" type=text/javascript></SCRIPT><script language="javascript" type="text/javascript" src="linux.js"></script>
+<SCRIPT language=javascript src="script/country_isp.js" type=text/javascript></script>
+<SCRIPT language=javascript type=text/javascript>
+var country = "@country#";
+var isp = "@h_isp#";
+function init_iptv()
+{
+	var iptv_str = isp+" tv";
+     for(var i = 0; i < iptv_country_isp_list[0].length; i++)
+     {
+         if(country == iptv_country_isp_list[0][i]){
+              for(var j = 0; j < iptv_country_isp_list[1].length; j++)
+                {
+                  if(isp == iptv_country_isp_list[1][j]){
+                      document.getElementById("dis_isp_iptv").style.display = "block";
+					  document.getElementById("isp_tv_str").value = iptv_str;
+                      if(country != "nz"){
+					      document.getElementById("tv_en").checked = "checked";
+						  document.getElementById("isp_tv_en").checked = "checked";
+					   }
+                      for(var k = 0; k < bridge_country_isp_list[0].length; k++)
+                      {
+						  if(isp == bridge_country_isp_list[0][k]){
+							  document.getElementById("dis_br").style.display = "block";
+							  document.getElementById("iptv_on_lan4").checked = "checked";
+						  }
+					  }
+				  }
+                }
+           }
+     }
+}
+function help_me()
+{    
+    parent.is_reenter = 0;
+    PPPoE_helpme(@is_att#);
+}
+
+function check_vlan()
+{
+    var cf = document.forms[0];
+    if(!cf.vlan_enable.checked)
+       	cf.h_vlan_id.disabled=true;
+    else
+        cf.h_vlan_id.disabled=false;
+}
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+
+    if(cf.vlan_enable.checked && checkInt(cf.h_vlan_id,"",1,4094,true).length > 0)
+        msg += "VLAN ID " + getErrorMsgByVar("gsm_must_tag_range") + "\n";
+    if (msg.length > 1)	
+    {
+        alert(msg);
+        return false;
+    }
+    dataToHidden(cf);
+    return checkPPPoE();
+}
+
+</SCRIPT>
+
+</HEAD>
+<BODY bgcolor="#ffffff" onLoad="dataToVisible(document.forms[0]);check_vlan();init_iptv();">
+<FORM action="setup.cgi@post_par#" method=post>
+<DIV class=wizard_content_div>
+<DIV class=wizard_words_div>
+<H1><span languageCode = "">PPPoE DSL Internet Connection Detected</span></H1>
+<P><span languageCode = "">Enter the required information below.</span></P>
+<DIV class=wanInput_content_middle_div>
+<DIV class=wanInput_left_div id=loginName align=right>ISP <span languageCode = "">User Name</span></DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=inputName maxLength=64 align=right name="pppoe_username"> </DIV>
+<DIV class=wanInput_left_div id=passwd align=right><span languageCode = "">Password</span></DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT type="password" id=inputPasswd maxLength=16 align=right value="" name="pppoe_passwd"> </DIV>
+<DIV class=wanInput_left_div id=vlanid align=right><input type="checkbox" name="vlan_enable" onClick="check_vlan()" disabled="disabled"><span languageCode = "">Use VLANID</span></DIV>
+<DIV class=wanInput_Img_div><IMG src="image/ca_text_pic.gif"> <INPUT id=inputVlanID maxLength=4 align=right value="@h_vlan_id#" name="h_vlan_id" readonly="readonly"></DIV>
+
+<DIV style="CLEAR: both"></DIV>
+</DIV>
+@hide_genie_helpme_s#
+<P><span languageCode = "">Click <b>Help Me</b> if you do not know or have forgotten your DSL username and password.</span></P>
+@hide_genie_helpme_e#
+</DIV>
+<DIV class=wizard_content_div>
+<DIV class=wizard_words_div>
+<DIV  id=dis_iptv style="display:none">
+<input type="checkbox" name="brs_iptv_enable" id="tv_en"><span languageCode = "">Enable IPTV support</span>
+</DIV>
+<DIV id=dis_isp_iptv style="display:none">
+<br><input type="checkbox" name="brs_isp_enable" id="isp_tv_en"><span languageCode = "">Enable </span><input type="text" name="brs_isp_tv" id="isp_tv_str" style="border:0px">
+</DIV>
+<DIV id=dis_br style="display:none">
+<br><span languageCode = ""><font color="blue">Bridge Mode<br>&nbsp;&nbsp;&nbsp;&nbsp;(If select Bridge Mode, the LAN4 port will be configured as IPTV port, you can select max.3 LAN ports for 3 IPTV devices to connect to . LAN1 is reserved for wired internet)</font></span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" id=iptv_on_lan4 name="iptv_on_lan4" readonly="readonly">Enable IPTV on LAN4
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="iptv_on_lan3">Enable IPTV on LAN3
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="iptv_on_lan2">Enable IPTV on LAN2
+</DIV>
+
+<DIV class=wizard_small_buttons_div id=allBtns_div align=right>
+@hide_genie_helpme_s#
+<DIV class=buttons_img_div id=btnsContainer_div1 align=center onclick=help_me()><IMG src="image/ca-little-purple-button.gif"> 
+<DIV class=buttons_words_div><span languageCode = "">Help Me</span></DIV></DIV>
+@hide_genie_helpme_e#
+<DIV class=buttons_img_div id=btnsContainer_div align=center onClick=checkData()><IMG src="image/ca-little-purple-button.gif"> 
+<DIV class=buttons_words_div ><span languageCode = "">Next</span></DIV></DIV></DIV></DIV></DIV>
+</DIV> 
+<input type="hidden" name="todo" value="brs_reset_save">
+<input type="hidden" name="h_vlan_enable" value="@h_vlan_enable#">
+<INPUT type="hidden" name=h_brs_iptv_enable value="@h_brs_iptv_enable#">
+<INPUT type=hidden value="dynamic" name=WANAssign> 
+<input type="hidden" name="h_iptv_on_lan4" value="@h_iptv_on_lan4#">
+<input type="hidden" name="h_iptv_on_lan3" value="@h_iptv_on_lan3#">
+<input type="hidden" name="h_iptv_on_lan2" value="@h_iptv_on_lan2#">
+<input type="hidden" name="this_file" value="BRS_03A_B_NZ_pppoe.html">
+<input type="hidden" name="next_file" value="BRS_04_applySettings.html">
+<input type="hidden" name="SID" value="@SID#">
+</FORM>
+<script language="javascript" type="text/javascript" src="langs.js"></script>
+</BODY></HTML>

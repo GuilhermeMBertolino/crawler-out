@@ -1,0 +1,396 @@
+<!DOCTYPE HTML>
+<? include 'php/commonCfg.php';?>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+
+  <title>NETGEAR Router <?= getModelNameStr()?></title>
+
+  <link rel="stylesheet" type="text/css" href="css/table_noh.css">
+  <link rel="stylesheet" type="text/css" href="css/scrollbar.css">
+  <link rel="stylesheet" type="text/css" href="css/button.css">
+  <link rel="stylesheet" type="text/css" href="css/form.css">
+  <link rel="stylesheet" type="text/css" href="css/settings.css<? getVer(); ?>">
+  <link rel="stylesheet" type="text/css" href="css/custom.css" >
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/utils.js<? getVer(); ?>"></script>
+  <script src="js/validations.js<? getVer(); ?>"></script>
+  
+  
+  <script language="javascript" type="text/javascript">
+    CSRF_TOKEN = <?= genCsrfTokenFilePhp('tokenNumber')?>;
+
+    var tableAction = "";
+    function removeTableRow()
+    {
+        $(".table_row").remove();  
+    }
+
+    function toggleRemoveUsbButton()
+    {
+        if($("#available_folder .table_row").length < 1)
+        {
+            $("#safely_remove").css("pointer-events", "none");
+            $("#safely_remove").css("opacity", "0.5");
+            $("#safely_remove").prop("disabled", true);
+        }
+        else
+        {
+            $("#safely_remove").css("pointer-events", "");
+            $("#safely_remove").css("opacity", "");
+            $("#safely_remove").prop("disabled", false);
+        }
+    }
+
+    function preRefresh()
+    {
+        removeTableRow();
+    }
+
+    function postRefresh()
+    {
+        toggleRemoveUsbButton();
+    }
+    
+    function changmlang()
+    {
+        window.top.mlangInit($("#access_method"));
+        
+        $("input[type='checkbox']").on("click",function(){
+            $(this).val($(this).prop("checked"));
+        });
+
+        //JYang, JIRA#RAXE300-580, passowd of access via internet would be gray out
+        $("input[name='enableHttpsPwd']").parent().css("opacity", "0.5");
+        $("input[name='enableHttpsPwd']").parent().css("pointer-events", "none");
+        $("input[name='enableFtpWanPwd']").parent().css("opacity", "0.5");
+        $("input[name='enableFtpWanPwd']").parent().css("pointer-events", "none");
+    }
+    
+    function refreshAccessMethodTable()
+    {
+        var new_tr = '<tr>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <label class=\"checkbox-container\">\r\n\
+                          <input type=\"checkbox\" class=\"cc\" name=\"__enableName\" id=\"__enableId\" value=\"__enableValue\" __enableChecked>\r\n\
+                          <span class=\"checkbox-checkmark\"></span>\r\n\
+                          </label>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span __method</span>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <a class=\"linktype\" id=\"__linkId\" target=\"_blank\" __linkhref ><u __linkStyle><font color=\"#3f354b\">__linkText</font></u></a>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <input class=\"input1 table-input\" type=\"text\" name=\"__portName\" id=\"__portId\" size="5" maxlength="5" value=\"__portValue\" __portStyle>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\" >\r\n\
+                          <label class=\"checkbox-container\">\r\n\
+                          <input type=\"checkbox\" class=\"cc\" name=\"__protectionName\" id=\"__protectionId\" value=\"__protectionValue\" __protectionChecked>\r\n\
+                          <span class=\"checkbox-checkmark\"></span>\r\n\
+                          </label>\r\n\
+                        </td>\r\n\
+                      </tr>';
+                     
+                       
+        fetchTableData('access_method', 'usb_access_method_table', new_tr ,'','changmlang');
+    }
+    
+    function refreshAvailableFolderTable()
+    {
+        var new_tr2 = '<tr class="table_row">\r\n\
+                        <td style=\"text-align: center;\">\r\n\
+                          <input type=\"radio\" name="folder_radio" id="share_folder_radio1" style=\"padding-left:3px;\">\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__shareName</span>\r\n\
+                        </td>\r\n\
+                        <td id=\"USB_NO_PASSWD\" align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__readText</span>\r\n\
+                        </td>\r\n\
+                        <td id=\"USB_NO_PASSWD\" align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__writeText</span>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\" name=\"folderName\">\r\n\
+                          <span style=\"padding-left:3px;\">__folderName</span>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__volumeName</span>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__total</span>\r\n\
+                        </td>\r\n\
+                        <td align=\"center\" nowrap=\"nowrap\">\r\n\
+                          <span style=\"padding-left:3px;\">__free</span>\r\n\
+                          <input type=\"hidden\" name=\"usb_device\" value=\"__usbDevice\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"file_system\" value=\"__fileSystem\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"folder_name\" value=\"__folderName\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"share_folder\" value=\"__shareFolder\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"read_access\" value=\"__readAccess\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"write_access\" value=\"__writeAccess\" disabled>\r\n\
+                          <input type=\"hidden\" name=\"disk_name\" value=\"__diskName\" disabled>\r\n\
+                        </td>\r\n\
+                      </tr>';
+        fetchTableData('available_folder', 'usb_available_folder_table', new_tr2, 'preRefresh', 'postRefresh');
+        
+    }
+
+function dataPost(postData)
+    {
+        $.ajax({
+          url: "/cgi-bin/rex_cgi?csrftoken=" + CSRF_TOKEN,
+          type: "POST",
+          data: postData,
+          dataType: 'json',
+          contentType: "application/json; charset=utf-8",
+          success : function(data) {
+              if(data.status == "error")
+              {   
+                  console.log("Response: error");
+              }
+              window.location.reload();
+          },
+          error : function(xhr, ajaxOptions, thrownError) {
+              console.log(xhr.status);
+              console.log(thrownError);
+          },
+
+          beforeSend : function(json) {
+              //setTimeout("redirectProgressBar('D-genie_377')", 100);
+          }
+        }); //ajax()
+    }
+
+    function removeFolder()
+    {
+        var postData = {};
+        postData.function = "netFolder";
+        var o = {};
+        o["action"] = "delete";
+        o["volumeName"] = $("input[type='radio']:checked").closest("tr").find("[name='disk_name']").val();
+        o["folderName"] = $("input[type='radio']:checked").closest("tr").find("[name='folder_name']").val();
+        o["shareName"] = $("input[type='radio']:checked").closest("tr").find("[name='share_folder']").val();
+        o["newShareName"] = $("input[type='radio']:checked").closest("tr").find("[name='share_folder']").val();
+        o["readAccess"] = "true";
+        o["writeAccess"] = "true";
+        postData.data = o;
+        //console.log(postData);
+        dataPost(JSON.stringify(postData));
+    }
+
+    function openRemovePage()
+    {
+      var winoptions = "width=400,height=350,status=yes,resizable=yes";
+      openDataSubWin('USB_remove.html',winoptions);
+    }
+
+    function validation()
+    {
+        var msg = "";
+
+        msg+= checkBlank($("input[name='netWorkName']").val(), $("[mlang='UBS002']").text());
+        if ($("input[name='netWorkName']").val().match( /[^a-zA-Z0-9\-]/ ))
+        {
+            msg+= window.top.mlang["AAWE04"]+ "\n";
+        }
+
+        msg+= checkBlank($("input[name='workgroup']").val(), $("[mlang='UAS002']").text());
+        if ($("input[name='workgroup']").val().match( /[^\x20-\x7E]/ ))
+        {
+            msg+= window.top.mlang["UASE20"]+ "\n";
+        }
+
+        var httpViaPort = $("#http_via_port").val();
+        if( (isNaN(httpViaPort) || !_isNumeric(httpViaPort)|| parseInt(httpViaPort,10) < 1024 || parseInt(httpViaPort,10) > 65534 || httpViaPort.indexOf(".") != -1 ) 
+             && (httpViaPort != 443) )
+        {
+            msg+= window.top.mlang["UASE28"]+ "\n";
+        }
+
+        var ftpViaPort = $("#ftp_via_port").val();
+        if( isNaN(ftpViaPort) || (ftpViaPort < 1024 && ftpViaPort != 21) || ftpViaPort > 65534 )
+        {
+            msg+= window.top.mlang["UASE02"]+ "\n";
+        }
+
+        if(httpViaPort == ftpViaPort)
+        {
+            msg+= window.top.mlang["UASE22"]+ "\n";
+        }
+
+        if (msg.length > 1)
+        {
+            alert(msg);
+            return false;
+        }
+
+        return true;
+    }
+
+    $(document).ready(function() {
+        fetchData('target', 'usb_advanced', '', '');
+        refreshAccessMethodTable();
+        refreshAvailableFolderTable();
+
+        $("#radio_readycloud").on("click", function(){
+            window.location.href ="USB_remote.html"
+        });
+
+        $("[name='DevEdit']").on("click",function(){
+            window.location.href ="/DEV_name.html"
+        });
+
+        $(".action_btn").on("click",function(){
+            tableAction = $(this).attr("name") ;
+            edit_folder();
+        });
+
+        $("[name='Delete']").on("click",function(){
+            if($("#available_folder input[type='radio']:checked").length != 1)
+            {
+                alert(window.top.mlang["UASE12"]);
+                return false;
+            }
+            alert(window.top.mlang["UASW01"]);
+            removeFolder();
+        });
+
+        $("[name='Remove']").on("click",function(){
+            openRemovePage();
+        });
+
+        $("[name='Refresh']").on("click",function(){
+            window.location.href = "/USB_advanced.html";
+        });
+        
+        $("[name='Apply']").on("click",function(){
+          
+            if(validation())
+            {
+            $.postForm("usbAdv", $('#target'), 'cgi-bin/rex_cgi', 'postForm_callback');
+            }
+        });
+        
+    });
+    
+    function postForm_callback(json)
+    {
+        /* Show port conflict error popup message while port conflict check fail */
+        if (json.message == "ReadyShare HTTPs Port Conflict" || json.message == "ReadyShare FTP Port Conflict") {
+            //"The specified port(s) are being used by other configurations. ..."
+            alert(window.top.mlang["APPE36"]);
+        }
+        else {
+            location.href='USB_advanced.html';
+        }
+    }
+    function edit_folder()
+    {
+
+        if($("#available_folder .table_row").length < 1)
+        {
+            alert(window.top.mlang["UASE21"]);
+            return false;
+        }
+
+        if(tableAction == "Edit")
+        {
+            if($("#available_folder input[type='radio']:checked").length != 1)
+            {
+                alert(window.top.mlang["UASE12"]);
+                return false;
+            }
+        }
+        winoptions = "width=1100,height=580,status=yes,resizable=yes, scrollbars=yes";
+        datSubWinVar = window.open('USB_edit.html','datasub_win',winoptions);
+    }
+  </script>
+</head>
+<body onload="window.top.change_size($(this));loadhelp('USB_advanced','')" class="page-body" onResize="window.top.change_size($(this));">
+  <form id="target" name="formname" method="POST" >
+      <div class="page-header" style="position: relative;" mlang="UAS001">USB Storage (Advanced Settings)</div>
+      <div id="main" class="form-group" style=height:400px;overflow:auto;scrolling:auto">
+        <div class="form-row">
+          <a href="javascript:loadhelp('USB_advanced','device')" tabindex="-1">
+            <b mlang="UBS002"></b><b>:</b>
+          </a>
+        </div>
+        <div class="form-row">
+          <!--span name="deviceName"></span><span>&nbsp;&nbsp;&nbsp;&nbsp;</span-->
+          <input type="text" class="input1" name="netWorkName" id="network_device_name" size="15" maxlength="15" value="">
+          <button style="display: none;" type="button" name="DevEdit" id="edit_devname_bt" class="button-common button-sty1" onClick="location.href='DEV_name.html';" mlang="UAS011">Edit</button>
+        </div>
+        <div class="form-row">
+          <a href="javascript:loadhelp('USB_advanced','workgroup')" tabindex="-1">
+            <b mlang="UAS002">Workgroup</b><b>:</b>
+          </a>
+        </div>
+        <div class="form-row">
+          <input type="text" class="input1" name="workgroup" id="work_group" size="21" maxlength="15" value="">
+        </div>
+        
+        <div class="form-row">
+          <table border="1" cellpadding="2" cellspacing="0" width="100%" class="tbWhite cmn-table-2" id="access_method">
+          <tr class="table_header">
+            <td align="center" nowrap="nowrap"><span class="thead" mlang="SBS026">Enable</span></td>
+            <td align="center" nowrap="nowrap"><span class="thead" mlang="UAS003">Access Method</span></td>
+            <td align="center" nowrap="nowrap"><span class="thead" mlang="UAS005">Link</span></td>
+            <td align="center" nowrap="nowrap"><span class="thead" mlang="SBS028">Port</span></td>
+            <td align="center" nowrap="nowrap"><span class="thead" mlang="pwr_005">Admin Password Protection</td>
+          </tr>
+          </table>
+        </div>
+        <div class="divider">&nbsp;</div>
+  
+        <div class="form-row">
+          <a href="javascript:loadhelp('USB_advanced','available_folder')" tabindex="-1">
+            <b mlang="UBS003">Available Network Folders</b>
+          </a>
+        </div>
+  
+        <div class="form-row">
+          <table id="available_folder" class="tbWhite" border="1" cellpadding="2" cellspacing="0" width="100%">
+  
+            <tr class="table_header">
+            <td align="center" nowrap="nowrap" width="5%"></td>
+            <td align="center" nowrap="nowrap" width="20%"><span class="thead" mlang="UBS008">Share Name</span></td>
+            <td align="center" nowrap="nowrap" width="17%"><span class="thead" mlang="UBS009">Read Access</span></td>
+            <td align="center" nowrap="nowrap" width="17%"><span class="thead" mlang="UBS010">Write Access</span></td>
+            <td align="center" nowrap="nowrap" width="5%"><span class="thead" mlang="UBS004">Folder Name</span></td>
+            <td align="center" nowrap="nowrap" width="15%"><span class="thead" mlang="UBS005">Volume Name</span></td>
+            <td align="center" nowrap="nowrap" width="10%"><span class="thead" mlang="UBS006">Total Space</span></td>
+            <td align="center" nowrap="nowrap" width="10%"><span class="thead" mlang="UBS007">Free Space</span></td>
+            </tr>
+  
+          </table>
+        </div>
+  
+        <div class="form-row">
+          <button type="button" name="Edit" id="edit" class="button-sty1 action_btn" mlang="UAS011">Edit</button> 
+          <button type="button" name="Add" id="creat" class="button-common button-sty1 action_btn" style="width: auto" mlang="UAS012">Create Network Folder</button>
+          <button type="button" name="Delete" id="delete" class="button-common button-sty1" mlang="UAS013">Delete</button>
+        </div>
+  
+        <div class="divider">&nbsp;</div>
+  
+        <div class="form-row">
+          <button type="button" name="Remove" id="safely_remove" class="new_apply_bt ui-corner-all" style="width: auto"><span style="margin-left: 5px; margin-right: 5px;" mlang="UBS011">Safely Remove USB Device></span></button>
+        </div>
+  
+        <div class="divider">&nbsp;</div>
+        <div class="space-divider">&nbsp;</div>
+      </div><!--form-group-->
+  </form>
+  <div class="form-btn-row">
+    <button type="button" value="Refresh" name="Refresh" id="refresh" class="button-common common_bt" mlang="UBS012">Refresh</button>
+    <button type="button" name="Apply" id="apply" class="button-apply" mlang="LUP004">Apply</button>
+  </div>
+  <? genHelpSection() ?> 
+</html>

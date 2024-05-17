@@ -1,0 +1,137 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language="javascript" src="portName.js"></script>
+<script language="javascript" src="util.js"></script>
+<script language='javascript'>
+<!-- hide
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+//'portMappingDescription,externalPort,X_BROADCOM_COM_ExternalPortEnd,portMappingProtocol,internalPort
+//,X_BROADCOM_COM_InternalPortEnd,internalClient,X_BROADCOM_COM_IfName','',
+var wanItfList=new Array(<%ejGetOther(tenda,virServerList)%>);
+//var wanItfList=new Array('11111,1000,2000,TCP,1000,3000,192.168.1.100,eth3');
+
+function showRTE()
+{
+	//alert("show");
+	for (var i=0; i<wanItfList.length;i++)
+	{
+		var s=wanItfList[i].split(",");
+		//alert("s.length:"+s.length);
+		if (s.length!=8) break;
+    	var  m='<tr align=center>';
+		
+		if(s[0]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[0]+'</td>';
+		}	
+		if(s[1]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[1]+'</td>';
+		}	
+		if(s[2]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[2]+'</td>';
+		}	
+		if(s[3]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[3]+'</td>';
+		}		      		
+		if(s[4]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[4]+'</td>';
+		}	
+		if(s[5]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[5]+'</td>';
+		}	
+		if(s[6]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[6]+'</td>';
+		}			
+		
+		if(s[7]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[7]+'</td>';
+		}			
+		
+		m+="<td align=center><input type=checkbox name=rml value=\'"
+		m+= s[6]+'|'+s[1]+'|'+s[2]+'|'+s[3]+'|'+s[4]+'|'+s[5]+'\'></td>'
+        m+='</tr>';
+		//alert("m="+m);
+		document.write(m);
+	}
+}
+
+
+function addClick() {
+   var loc = 'scvrtsrv.html';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ',';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+   var loc = 'scvrtsrv.cmd?action=remove&rmLst=' + lst;
+
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+// done hiding -->
+</script>
+</head>
+<body>
+<form>
+	<script>tbl_head('NAT -- Virtual Server')</script>
+<div align="left" style="width:90%;text-align:left;">
+<p>
+Virtual Server allows you to direct incoming traffic from WAN side 
+(identified by Protocol and External port) to the Internal server 
+with private IP address on the LAN side. The Internal port is required 
+only if the external port needs to be converted to a different 
+port number used by the server on the LAN side. A maximum 32 entries can be configured.<br><br>
+</p>
+<table border='1' cellpadding='0' cellspacing='0' width='100%'>
+   <tr>
+      <td class='hd'>Server Name</td>
+      <td class='hd'>External Port Start</td>
+      <td class='hd'>External Port End</td>
+      <td class='hd'>Protocol</td>
+      <td class='hd'>Internal Port Start</td>
+      <td class='hd'>Internal Port End</td>
+      <td class='hd'>Server IP Address</td>
+      <td class='hd'>WAN Interface</td>
+      <td class='hd'>Remove</td>
+   </tr>
+   
+   <script>
+   		//alert("hell");
+		showRTE();
+	</script>
+
+</table><br>
+</div>
+<script>tbl_tail("<input type='button' class='button' onClick='addClick()' value='Add'>    <input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");</script>
+</form>
+</body>
+</html>

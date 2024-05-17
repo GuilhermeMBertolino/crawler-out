@@ -1,0 +1,42 @@
+#!/bin/sh
+# Remove a Profile from an EndPoint 
+# Needed object: None
+# This script is called when the active profile needs to be removed
+
+script_name="$0"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name=$1
+pid=$$
+
+# Find the radio index
+radio_name=`get_radio_name_from_endpoint $interface_name`
+radio_index=`find_index_from_interface_name $radio_name`
+
+print2log $radio_index DEBUG "$script_name $*"
+timestamp $radio_index "$script_name:$interface_name:begin"
+
+# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the in conf file
+[ "$debug_save_conf" ] && cp ${IN_CONF} ${CONF_DIR}/profile_delete_in_conf_${interface_name}
+
+# Prepare the temporary configuration files to use
+prepare_confs $interface_name $radio_name $pid $STA
+# Get the pid to use in this configuration session
+. ${CONF_IN_PROGRESS}_${radio_name}
+
+# Create the output configuration file
+cat /dev/null > ${OUT_CONF}
+
+# Delete the profile
+cat /dev/null > ${CONF_DIR}/${SUPPLICANT_PROFILE_CONF_PREFIX}_${interface_name}_${pid}.conf
+touch ${CONNECT_FLAG}_${interface_name}
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"
+
+# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the out conf file
+[ "$debug_save_conf" ] && cp ${OUT_CONF} ${CONF_DIR}/profile_delete_out_conf
+
+print2log $radio_index DEBUG "$script_name done"
+timestamp $radio_index "$script_name:$interface_name:done"

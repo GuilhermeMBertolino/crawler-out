@@ -1,0 +1,88 @@
+#!/bin/sh
+# $1 = `USB_approved_device*`, where `*` is the number which one should be checked.
+
+TMP_DATA_XYZ=/tmp/hotplug_part
+
+USB_ACT="$1"
+USB_DEV="$2"
+
+USB_DBG_FILE="usbdisk_hotplug.log"
+ACTID_DATE="$(date +"%H%M%S")"
+ACTID_RANDOM="$(head -10 /dev/urandom | md5sum | cut -c1-5)"
+ACTID="${ACTID_DATE}_${ACTID_RANDOM}"
+USB_MODULE="USB:USBDISK_CALL"
+USB_DGB_FLAG=/tmp/usbdbg_enable
+USB_MOUNT_IGNORE=/tmp/usb_mount_ignore
+
+echo_console() {
+	local echo_msg="$1"
+	echo "[$USB_MODULE][ACTID:$ACTID] $echo_msg" 1>/dev/console 2>&1
+}
+
+usb_dbglog() {
+	local dbg_message="$1"
+	usbdbg_log "$USB_DBG_FILE" "[$USB_MODULE][ACTID:$ACTID] $dbg_message" 1>/dev/console 2>&1
+}
+
+usb_dbglog_and_console() {
+	local dbg_message="$1"
+
+	if [ ! -f $USB_DGB_FLAG ]; then
+		echo_console "$dbg_message"
+	fi
+
+	usb_dbglog "$dbg_message"
+}
+
+if [ "$USB_ACT" != "mount" -a "$USB_ACT" != "umount" ]; then
+	usb_dbglog_and_console "Unknown USB Hotplug2 Action:USB_ACT=$USB_ACT,USB_DEV=$USB_DEV!!!"
+fi
+
+if [ "x$USB_DEV" = "x" ]; then
+	usb_dbglog_and_console "Unknown USB Hotplug2 Action:USB_ACT=$USB_ACT,USB_DEV=$USB_DEV!!!"
+fi
+
+USBDISK_NAME=$(echo $USB_DEV | sed 's/[0-9].*//')
+
+usb_dbglog_and_console "USB Hotplug2 Event:USB_ACT=$USB_ACT,USB_DEV=$USB_DEV,USBDISK_NAME=$USBDISK_NAME;"
+
+if [ "$USB_ACT" = "mount" ]; then
+	if [ -f $USB_MOUNT_IGNORE ]; then
+		usb_dbglog_and_console "Found the usb mount ignore flag:$USB_MOUNT_IGNORE, Exist!!!"
+		return
+	fi
+
+	if [ "$USB_DEV" != "$USBDISK_NAME" ]; then
+		usb_dbglog_and_console "USB DEV $USB_DEV is not USB Disk $USBDISK_NAME, Return"
+		return
+	fi
+
+	USBDISK_FLAG="/tmp/hotplug2_mounting_$USBDISK_NAME"
+	#if [ -f $USBDISK_FLAG ]; then
+	#	last_mod_time=$(date +%s -r $USBDISK_FLAG)
+	#	cur_sys_time=$(date +%s)
+	#	limit_time=10
+	#	if [ $cur_sys_time -le $(($last_mod_time + $limit_time)) ]; then
+	#		usb_dbglog_and_console "USB Disk $USBDISK_NAME Mount Action is running, Return"
+	#		return
+	#	else
+	#		usb_dbglog_and_console "$USBDISK_FLAG last modification time $last_mod_time old then current time $cur_sys_time with limit time $limit_time, IGNORE THIS FILE FLAG"
+	#	fi
+	#fi
+
+	[ -f $USBDISK_FLAG ] && rm $USBDISK_FLAG
+	echo > $USBDISK_FLAG
+
+	sleep 3 # Wait for 3sec for USB Disk Full Ready
+
+	cat /proc/partitions | awk '{print $4}' | grep "\<$USBDISK_NAME" > ${TMP_DATA_XYZ}_${USBDISK_NAME}
+	while read LINE_PART
+	do
+		/sbin/hotplug2.mount $LINE_PART
+	done<${TMP_DATA_XYZ}_${USBDISK_NAME}
+
+	[ -f $USBDISK_FLAG ] && rm $USBDISK_FLAG
+else
+	#/usr/sbin/detach_afp_shares $USB_DEV hotplug2
+	/sbin/hotplug2.umount $USB_DEV hotplug2
+fi

@@ -1,0 +1,205 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%18%>
+<title>NETGEAR Router <%19%></title>
+<link rel="stylesheet" href="<%20%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%21%>
+<script language="javascript" type="text/javascript">
+<!--
+
+function selHelpFile(helpitem)
+{
+var wanForLoadHelp = "BAS_"+document.forms[0].wan_proto.value;
+	if(!document.forms[0].loginreq[0].checked)
+		parent.loadhelp('BAS_ether',helpitem)
+	else
+		parent.loadhelp(wanForLoadHelp,helpitem)
+}
+function doTypeChange( newIndex )
+{
+	var cf = document.forms[0];
+	var wan_proto = cf.wan_proto.value;
+
+	if (newIndex == 0)
+	{
+		<%527%>
+		parent.location.href = "BAS_ether.htm";
+        <%528%>
+		<%376%>
+		parent.location.href = "BAS_ether_dsl.htm";
+        <%378%>
+	} 
+	else if (newIndex == 1)
+	{
+		if (wan_proto == "pptp")
+			parent.location.href = "BAS_pptp.htm";
+		else if (wan_proto == "bpa")
+			parent.location.href = "BAS_bpa.htm";
+		
+        else if (wan_proto == "l2tp")
+			parent.location.href = "BAS_l2tp.htm";
+		
+<%376%>
+        else if (wan_proto == "pppoa")
+		    parent.location.href = "BAS_pppoa.htm";		
+	    else
+			parent.location.href = "BAS_pppoe_dsl.htm";
+<%378%>
+<%527%>        
+		else
+			parent.location.href = "BAS_pppoe.htm";
+<%528%>	
+	}
+}
+
+function loadSettings()
+{
+	/*var cf = document.forms[0];
+		cf.loginreq[1].checked = true;*/
+	if (document.getElementById("wanaggr").value == "1") {
+<%3985%>
+		document.forms[0].WANAggr[1].checked = true;
+<%3986%>
+<%573%>
+		document.forms[0].WANAggr[2].checked = true;
+<%574%>
+		if (document.getElementById("wan_agg_status").value == "1") {
+			document.getElementById("wan_status").innerHTML = "<font color='blue'><%3987%></font>";
+		}else if (document.getElementById("wan_agg_status").value == "0") {
+			document.getElementById("wan_status").innerHTML = "<font color='red'><%3988%></font>";
+		}
+	}
+<%573%>
+	else if (document.getElementById("wan2dot5g").value == "1")
+	{
+		document.forms[0].WANAggr[1].checked = true;
+	}
+<%574%>
+	else
+		document.forms[0].WANAggr[0].checked = true;
+
+	
+}
+
+function checkNetworkStatus() {
+	var iptv_status = "<%3599%>";
+	var iptv_interface = "<%3600%>";
+	var vlan_status = "<%3598%>";
+	var br0_interface = "<%3989%>";
+
+	if (((iptv_status == "1") && (iptv_interface == "0x1")) || ((vlan_status == "enable") && (br0_interface.search("eth1") == -1))) {
+		document.getElementById("wan_status").innerHTML = "<font color='red'><%3990%></font>";
+	}
+
+	if (document.getElementById("qos_enable").value=="1") {
+		if (confirm("<%3991%>"))
+            ;
+		else
+			document.forms[0].WANAggr[0].checked = true;
+	}
+}
+//-->
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body style="padding-left:8px;background-color:transparent" onload="loadSettings()">
+<form name="basic" method="POST" action="basictop.cgi">
+<div id="bas_top">
+	<table border="0" style="width:97%" >
+		<tr>
+			<td colspan="2">
+				<a href="javascript:selHelpFile('question')" tabindex="-1">
+					<b><%3705%></b>
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+		        <label class="checkbox-container">
+		           <a href="javascript:selHelpFile('question')" tabindex="-1"><%3992%></a>
+		            <input type="radio" name="WANAggr" value="internet">
+		            <span class="radio-checkmark"></span>
+		        </label>
+			</td>
+		</tr>
+		 <%3585%>
+		<tr>
+			<td colspan="2" class="pt-0" style="display: flex;">
+		        <label class="checkbox-container">
+		            <a href="javascript:selHelpFile('question')" tabindex="-1"><%3993%></a>
+		            <input type="radio" name="WANAggr" value="multigiga">
+		            <span class="radio-checkmark"></span>
+			    </label>
+			</td>
+		</tr>
+		<%3588%>
+		<tr>
+			<td colspan="2" class="pt-0">
+		        <label class="checkbox-container">
+		            <a href="javascript:selHelpFile('question')" tabindex="-1"><%3994%></a>
+		            <input type="radio" name="WANAggr" value="aggr" onclick="checkNetworkStatus();">
+		            <span class="radio-checkmark"></span>
+			    </label>
+			    <span id="wan_status" style="margin: 2px 0 0 20px"></span>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" height="12">
+				<div style="background-image:url('seprator.gif');width:100%">&nbsp;</div>
+			</td>
+		</tr>
+	</table>
+	<table border="0" style="width:97%" >
+	<tr>
+		<td colspan="2">
+		<a href="javascript:selHelpFile('question')" tabindex="-1"><b><%531%></b></a></td>
+	</tr>
+	<tr>
+		<td colspan="2">
+	        <label class="checkbox-container">
+	           <a href="javascript:selHelpFile('question')" tabindex="-1"><%525%></a>
+	            <input type="radio" name="loginreq" value="pppoe" onClick="doTypeChange(1)">
+	            <span class="radio-checkmark"></span>
+	        </label>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" class="pt-0">
+	        <label class="checkbox-container">
+	            <a href="javascript:selHelpFile('question')" tabindex="-1"><%526%></a>
+	            <input type="radio"  checked name="loginreq" value="dhcp" onClick="doTypeChange(0)">
+	            <span class="radio-checkmark"></span>
+		    </label>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" height="12">
+			<div style="background-image:url('seprator.gif');width:100%">&nbsp;</div>
+		</td>
+	</tr>
+	</table>
+</div>
+<%433%>
+<INPUT name=wan_proto type=hidden value= "<%532%>">
+<%436%> 
+<%437%>
+  <INPUT name=wan_proto type=hidden value= "<%533%>">
+<%438%>
+<INPUT id="wanaggr" name="wanaggr" type=hidden value="<%611%>">
+<INPUT id="wan2dot5g" name="wan2dot5g" type=hidden value="<%3995%>">
+<input id="qos_enable" type="hidden" name="qos_enable" value="<%827%>">
+<input id="wan_agg_status" type="hidden" name="wan_agg_status" value="<%3996%>">
+</form>
+
+</body>
+</html>

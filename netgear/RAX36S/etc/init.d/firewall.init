@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+
+START=81
+
+
+kernel_version=`uname -r`
+EXTRA_MODULES="ipt_TRIGGER ipt_urlBlock ipt_NETGEAR_REJECT ipt_spiDoS ipt_spiadvDoS ipt_dnshijack ipt_CONENAT ip6t_CONE"
+NETFILTER_MODULES="nf_conntrack_sip nf_nat_sip nf_conntrack_irc nf_nat_irc nf_conntrack_proto_gre 
+nf_conntrack_pptp nf_conntrack_rtsp nf_conntrack_tftp nf_nat_tftp nf_log_common nf_conntrack_h323 nf_conntrack_ftp nf_nat_ftp"
+IP4_NETFILTER_MODULES="nf_nat_proto_gre nf_nat_pptp nf_nat_rtsp nf_log_ipv4 nf_nat_h323"
+NETFILTER_IPSET_MODULES="ip_set ip_set_bitmap_ip ip_set_bitmap_port ip_set_hash_ip ip_set_hash_ipport ip_set_hash_ipportip ip_set_hash_mac ip_set_hash_net ip_set_list_set"
+
+start()
+{
+	local mod
+	for mod in $EXTRA_MODULES; do
+		if [ -e /lib/modules/$kernel_version/extra/$mod.ko ]; then
+			[ -d /sys/module/$mod ] || insmod /lib/modules/$kernel_version/extra/$mod.ko
+		fi
+        done
+
+	for mod in $NETFILTER_MODULES; do
+		if [ -e /lib/modules/$kernel_version/kernel/net/netfilter/$mod.ko ]; then
+			[ -d /sys/module/$mod ] || insmod /lib/modules/$kernel_version/kernel/net/netfilter/$mod.ko
+		fi
+        done
+	for mod in $IP4_NETFILTER_MODULES; do
+		if [ -e /lib/modules/$kernel_version/kernel/net/ipv4/netfilter/$mod.ko ]; then
+			[ -d /sys/module/$mod ] || insmod /lib/modules/$kernel_version/kernel/net/ipv4/netfilter/$mod.ko
+		fi
+        done
+
+	if [ -e /lib/modules/$kernel_version/kernel/net/ipv6/netfilter/nf_log_ipv6.ko ]; then
+		[ -d /sys/module/nf_log_ipv6 ] || insmod /lib/modules/$kernel_version/kernel/net/ipv6/netfilter/nf_log_ipv6.ko
+	fi
+
+	for mod in $NETFILTER_IPSET_MODULES; do
+		if [ -e /lib/modules/$kernel_version/kernel/net/netfilter/ipset/$mod.ko ]; then
+			[ -d /sys/module/$mod ] || insmod /lib/modules/$kernel_version/kernel/net/netfilter/ipset/$mod.ko
+		fi
+        done
+
+	mkdir -p /tmp/cache/netwall
+
+/usr/sbin/net-wall rule
+/usr/sbin/net-wall restart
+/usr/sbin/net-wall -6 restart
+}
+

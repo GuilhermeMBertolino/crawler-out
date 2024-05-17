@@ -1,0 +1,28 @@
+#!/usr/bin/env cgilua.cgi
+
+local json = require "luci.json"
+local upload = require"cgilua.uploadUtils"
+
+local ret = "error"
+local checkVer , curVer, newVer = nil, nil, nil
+
+if upload.validate_image() then
+    checkVer , curVer, newVer = upload.check_image_version()
+
+    if checkVer == 1 then
+       ret = upload.upgrade_image()
+    elseif checkVer == 2 and type(curVer) == "string" and type(newVer) == "string" then
+        ret = "ready"
+    else 
+        ret = "error"
+    end
+end 
+
+cgilua.contentheader('application','json')
+if ret == "ready" then
+return json.encode({status=ret, currentVersion=curVer, newVersion=newVer, message='Finish firmware upgrade'})
+end
+
+return json.encode({status=ret, message='Finish firmware upgrade'})
+
+

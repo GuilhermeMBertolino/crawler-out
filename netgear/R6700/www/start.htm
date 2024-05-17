@@ -1,0 +1,2598 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>NETGEAR Router <%12%></title>
+<%11%>
+<script src="jquery.js"></script>
+<script src="script/script.js"></script>
+<link rel="stylesheet" type="text/css" href="css/mainpage.css">	
+<link rel="stylesheet" type="text/css" href="css/tabs.css">
+<link rel="stylesheet" type="text/css" href="css/button.css">
+<link rel="stylesheet" type="text/css" href="css/menu.css">
+<link rel="stylesheet" type="text/css" href="css/modalBoxControl.css"> 
+<script type="text/javascript">
+var gui_lang_local;
+var load_page = 0;
+var is_loading_page = 0;
+var adjustPageHeight = 0;
+var num_nosubLarge = 0;
+var num_submenuLarge = 0;
+var country_index=-1;
+
+var conuntry_iso=["AF","AX","AL","DZ","AS","AD","AO","AI","AI","AG",
+                  "AR","AM","AW","AU","AT","AZ","BS","BH","BD","BB",
+                  "BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW",
+                  "BV","BR","IO","BN","BG","BF","BI","CV","KK","CM",
+                  "CA","KY","CF","TD","CL","CN","CX","CC","CO","KM",
+                  "CG","CD","CK","CR","CI","HR","CU","CW","CY","CZ",
+                  "DK","DJ","DM","DO","EC","EG","SV","GQ","ER","EE",
+                  "ET","FK","FO","FJ","FI","FR","GF","PF","TF","GA",
+                  "GM","GE","DE","GH","GI","GR","GL","GD","GP","GU",
+                  "GT","GG","GN","GW","GY","HT","HM","VA","HN","HK",
+                  "HU","IS","IN","ID","IR","IQ","IE","IM","IL","IT",
+                  "JM","JP","JE","JO","KZ","KE","KI","KP","KR","KW",
+                  "KG","LA","LV","LB","LS","LR","LY","LI","LT","LU",
+                  "MO","MK","MG","MW","MY","MV","ML","MT","MH","MQ",
+                  "MR","MU","YT","MX","FM","MD","MC","MN","ME","MS",
+                  "MA","MZ","MM","NA","NR","NP","NL","NC","NZ","NI",
+                  "NE","NG","NU","NF","MP","NO","OM","PK","PW","PS",
+                  "PA","PG","PY","PE","PH","PN","PL","PT","PR","QA",
+                  "RE","RO","RU","RW","BL","SH","KN","LC","ME","PM",
+                  "VC","WS","SM","ST","SA","SN","RS","SC","SL","SG",
+                  "SX","SK","SI","SB","SO","ZA","GS","SS","ES","LK",
+                  "SD","SR","SJ","SZ","SE","CH","SY","TW","TJ","TZ",
+                  "TH","TL","TG","TK","TO","TT","TN","TR","TM","TC",
+                  "TV","UG","UA","AE","GB","US","UM","UY","UZ","VU",
+                  "VE","VN","VG","VI","WF","EH","YE","ZM","ZW"];
+
+
+
+function OnSubmitForm()
+{    //alert("1*");
+		var text = $('#searchText').val();
+		
+		var URItext = encodeURIComponent(text);
+			
+		URItext =  "http://support.netgear.com/app/answers/list/kw/" + URItext;	
+		document.searchform.action = URItext;
+	
+		return true;
+    
+}
+$(window).load(function() {
+    //alert("1");
+  var isIE = navigator.userAgent.search("MSIE") > -1; 
+  var isFirefox = navigator.userAgent.search("Firefox") > -1;
+  var isOpera = navigator.userAgent.search("Opera") > -1;
+  var isSafari = navigator.userAgent.search("Safari") > -1;
+  var isIE8=navigator.appVersion.indexOf("MSIE 8") > -1;  
+  var form=document.forms[0];
+	var lang = form.curlang.value;
+	var cf;
+    //notification of R7000 full feature
+    //<%310%>		
+
+//	window.history.pushState('','','start.htm');
+    <%311%>	
+	//When the multilanguage droplsit switched to Japanese and Hungarian disappear. 
+    if((isIE && isIE8 && lang == "Japanese") || (isIE && isIE8 && lang == "Hungarian"))
+	{
+	    //alert("no change");
+	}else
+	{
+    <%312%>	
+		//alert("change");
+		$('#lang_menu_li').css("float", "right");
+ 	    $('#lang_menu_li').css("padding-right", "25px");
+        $('#lang_menu_li').css("margin-bottom", "10px");
+    <%311%>	
+	}
+    <%312%>	
+
+
+	
+    if(<%313%>=="1" & 0)
+    {
+        if($('#firmware-update').hasClass("firmware-update-hint-long")) {
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "480px");
+        } else if(isSafari) {
+            //alert("");
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "410px");
+        } else if(isOpera) {
+            //alert("");
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "0px");
+        } else if(isIE) {
+            //alert("");
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "-10px");
+        } else if($('#firmware-update').hasClass("firmware-update-hint-long-long")) {
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "530px");
+        }  else {
+            $('#ModuleName').css("position", "relative");
+            $('#ModuleName').css("right", "410px");
+        }
+    }
+    else
+    {
+        $('#ModuleName').css("position", "relative");
+        $('#ModuleName').css("right", "0px");    
+    }
+    
+    change_size();
+    
+    /*
+    if((isIE && ($("#firmware-update").hasClass('firmware-update-hint') 
+        || $("#firmware-update").hasClass('firmware-update-hint-long') || $("#firmware-update").hasClass('firmware-update-hint-long-long')))
+        || ((isFirefox || isOpera) && ($("#firmware-update").hasClass('firmware-update-hint-long') || $("#firmware-update").hasClass('firmware-update-hint-long-long'))))
+    { 
+//      $('#lang_menu_li').css("position", "relative");
+//      $('#lang_menu_li').css("top", "-24px");
+    }   
+    */
+	<%314%>
+	 
+		if(<%315%>)
+		{	
+		
+				$("#second").hide();  
+				$("#first").show();
+				$("#basic-pane").css("display","block");
+				$("#adv-pane").css("display","none");     
+				$('#BasicTab').css("background","url(../img/tab-active.gif) no-repeat 0");
+				$("#AdvanceTab").css("background","url(../img/tab-nonactive.gif) no-repeat 0");
+				$('.subHeader').hide();
+				$('.menuActive').removeClass('menuActive');
+				loadPage("GstManagePage.htm"); 
+		
+		}
+		else
+		<%316%>
+		{
+     if (!chgBrsLang()) /* no page is loadded */
+     {
+         if(<%317%>)
+            loadPage("<%318%>");
+         else
+            loadPage("DashBoard.htm");     
+     }
+		}
+     try {
+        document.execCommand("BackgroundImageCache", false, true);  
+     } catch (e){}
+	// foxconn ykj add 2017/6/28
+	// MODALBOX CONTROL
+	//Get the modal
+	var modal = document.getElementById('modalBox');
+	//Get the <span> element that closes the modal
+	//var span = document.getElementsByClassName("modal-close")[0];
+//	var skip =document.getElementsByClassName("modal-skip")[0];
+	// When the user clicks on <span> (x),close the modal
+	/*if(span){
+	    span.onclick =function(){
+		modal.style.display = "none";
+		}
+	}*/
+/*
+	if(skip){
+		skip.onclick = function(){
+		modal.style.display = "none";
+            }
+	}
+	*/
+	// When the user clicks anywhere outside of the modal, close it 
+	window.onclick = function(event){
+	if(event.target == modal) {
+	 modal.style.display = "none";
+	}
+    }
+
+
+	$(".modal-close").click(function()
+	{
+	    $("#modalBox").hide();
+      if(document.forms["SSOAPI"].show_circle.value=="1")
+	        show_circle_window();
+  });
+
+	function showModalById(modalId){
+	    $("#modalBox").show();
+	    $(".modal-content").hide();
+	    $(".modal-content-2").hide();
+	    $("#"+modalId).show();
+	}
+
+	$(".modal-close-2").click(function(){
+	    $("#modalBox").show();
+	    $(".modal-content").hide();
+	    $(".modal-content-2").hide();
+      showModalById("modal-bitdefender-login");
+  });
+
+	$(".modal-close-3").click(function(){
+	    $("#modalBox").hide();
+	    $(".modal-content").hide();
+	    $(".modal-content-2").hide();
+  });
+
+	//Modal link shows modalBox using link ID like modal-LinkID as reference.
+	$(".modalLink").click(function()
+	{
+        change_country();
+	    showModalById("modal-"+$(this).attr('id'));
+	});
+	  
+	$(".modalForgetLink").click(function(){
+	    showModalById("modal-bitdefender-forget-password");
+	  });
+
+	$(".modalForgetLink2").click(function(){
+	    showModalById("modal-bitdefender-forget-password");
+	  });
+
+
+
+	$(".modalRegisterLink").click(function(){
+	    showModalById("modal-bitdefender-login");
+	  });	  
+	  
+	$("#bitTryAgainButton").click(function(){
+ 		  cf.bd_api.value="activating";
+		  document.forms["SSOAPI"].submit();
+	    showModalById("modal-bitdefender-activating");
+	  });	  
+
+	$("#bitOKButton").click(function(){
+            $("#modalBox").hide();
+      	    $(".modal-content").hide();
+            if(document.forms["SSOAPI"].show_circle.value=="1")
+                show_circle_window();
+});	  	    
+
+
+	$(".modalChangeLink").click(function(){
+	    showModalById("modal-bitdefender-login");
+	  });	  
+
+	  
+	$("#bitLoginLink,#bitButtonActivate").click(function(){
+	    showModalById("modal-bitdefender-login");
+         });
+
+	$("#bitLoginButton2").click(function(){
+		cf=document.forms["SSOAPI"];
+		if (cf.box_login_name2.value == "")
+		{
+			alert("<%319%>");
+			return;
+		}
+		if (cf.box_login_password2.value == "")
+		{
+			alert("<%320%>");
+			return;
+		}
+		cf.login_name.value = cf.box_login_name2.value;
+		cf.login_password.value = cf.box_login_password2.value;
+		cf.bd_api.value="authentication2";
+		document.forms["SSOAPI"].submit();
+		showModalById("modal-loading");
+	});
+
+	$("#bitLoginButton").click(function(){
+		cf=document.forms["SSOAPI"];
+		if (cf.box_login_name.value == "")
+		{
+			alert("<%319%>");
+			return;
+		}
+		if (cf.box_login_password.value == "")
+		{
+			alert("<%320%>");
+			return;
+		}
+		cf.login_name.value = cf.box_login_name.value;
+		cf.login_password.value = cf.box_login_password.value;
+		cf.bd_api.value="authentication";
+		document.forms["SSOAPI"].submit();
+		showModalById("modal-loading");
+	});
+
+	$("#bitRecoveryButton").click(function(){
+
+		cf=document.forms["SSOAPI"];
+		if (cf.box_forget_email.value == "")
+		{
+			alert("<%319%>");
+			return;
+		}
+		if (cf.box_forget_serial.value == "")
+		{
+			alert("Serial cannot be empty");
+			return;
+		}
+		cf.login_name.value = cf.box_forget_email.value;
+		cf.register_serial_number.value = cf.box_forget_serial.value;
+		cf.bd_api.value="recovery";
+		document.forms["SSOAPI"].submit();
+	});
+
+
+	$("#bitRetrieveButton").click(function()
+	{
+		cf=document.forms["SSOAPI"];
+		if (cf.box_clean_serial.value == "")
+		{
+			alert("Serial cannot be empty");
+			return;
+		}
+		cf.register_serial_number.value = cf.box_clean_serial.value;
+		cf.bd_api.value="retrieve";
+		document.forms["SSOAPI"].submit();
+	});
+
+	$("#bitCleanButton").click(function()
+	{
+		cf=document.forms["SSOAPI"];
+		if (cf.box_clean_serial.value == "")
+		{
+			alert("Serial cannot be empty");
+			return;
+		}
+		cf.register_serial_number.value = cf.box_clean_serial.value;
+		cf.bd_api.value="clean";
+		document.forms["SSOAPI"].submit();
+	});
+
+
+	$("#bitRegisterButton").click(function(){
+		cf=document.forms["SSOAPI"];
+		if (document.getElementById('acceptTerms').checked==false)
+		{
+		    alert("Please agree the Terms and then register");
+			return;
+		}
+
+		//if ($("#countryBtn").text() == "Choose Country")
+		if (country_index == -1)
+		{
+		    alert("Country cannot be empty");
+			return;
+		}
+		if (cf.box_register_first_name.value == "")
+		{
+			alert("First name cannot be empty");
+			return;
+		}
+		if (cf.box_register_last_name.value == "")
+		{
+			alert("Last name cannot be empty");
+			return;
+		}
+		if (cf.box_register_email.value == "")
+		{
+			alert("Email cannot be empty");
+			return;
+		}
+		if (cf.box_register_password.value == "")
+		{
+			alert("<%320%>");
+			return;
+		}
+		if (cf.box_register_confirm_password.value == "")
+		{
+			alert("Confirm password cannot be empty");
+			return;
+		}
+		if ((cf.box_register_password.value.search(/\d/) == -1) || (cf.box_register_password.value.search(/[a-z]/) == -1) || (cf.box_register_password.value.search(/[A-Z]/) == -1)) 
+		{
+				alert("The password must incluse at least one ower case letter [a-z] and one upper case letter [A-Z] and one numeric character [0-9]");
+			  return;
+		} 	
+		if (cf.box_register_serial_number.value == "")
+		{
+			alert("Serial number cannot be empty");
+			return;
+		}
+
+		cf.bd_api.value="registration";
+		cf.register_first_name.value = cf.box_register_first_name.value;
+		cf.register_last_name.value = cf.box_register_last_name.value;
+		cf.register_email.value = cf.box_register_email.value;
+		cf.register_password.value = cf.box_register_password.value;
+		cf.register_confirm_password.value = cf.box_register_confirm_password.value;
+		cf.register_serial_number.value = cf.box_register_serial_number.value;
+		cf.register_country.value = conuntry_iso[country_index];
+    if(cf.email_communicate.checked==true)
+	     	cf.communicate.value="1";
+	  else
+	     	cf.communicate.value="";
+
+    document.forms["SSOAPI"].submit();
+		showModalById("modal-loading");
+	});
+
+  showModalById("modal-acti");
+
+	$("#bitNotificationConfirmButton").click(function(){
+            $("#modalBox").hide();
+	    $(".modal-content").hide();
+      if(document.forms["SSOAPI"].show_circle.value=="1")
+            show_circle_window();
+
+	});
+	$("#bitErrorMessageConfirmButton").click(function(){
+            showModalById("modal-bitdefender-login");
+	});
+
+	$("#bitActivateButton").click(function(){
+		cf.bd_api.value="activating";
+		document.forms["SSOAPI"].submit();
+    showModalById("modal-bitdefender-activating");
+	});
+
+	$(".dropbtn").click(function(){
+	    $(this).next(".dropdown-content").toggleClass("show");
+	});
+	
+/*	
+	$(".dropdown-content a").click(function(){
+	    var prevButton = $(this).parent().prev("button");
+	    var selectedVal = $(this).html();	
+	    $( prevButton).html(selectedVal);
+	    $(this).parent().removeClass("show");
+	});
+*/
+	// foxconn ykj add end 
+	
+	cf=document.forms["SSOAPI"];
+	
+      <%36%>
+	if (cf.sso_show_result.value == "1")
+	{
+	  showModalById("modal-bitdefender-notification");
+	}
+	else if (cf.sso_show_result.value == "2")
+	{
+          showModalById("modal-bitdefender-error-message");
+	}
+	else if (cf.sso_show_result.value == "3")
+	{
+          showModalById("modal-bitdefender-ok");
+	}
+	else if (cf.sso_show_result.value == "4")
+	{
+          showModalById("modal-bitdefender-failed");
+	}
+	else if (cf.sso_show_result.value == "5")
+	{
+          showModalById("modal-bitdefender-login");
+	}
+	else if (cf.sso_show_result.value == "6")
+	{
+         $('.menuActive').removeClass('menuActive');
+         $('#basic-bit').addClass('menuActive');  
+        $("#modalBox").hide();
+         $("#first").hide();
+         loadPage("NetgearArmor.htm");
+         ev.preventDefault();
+
+	}
+	else
+<%37%>
+	{
+      <%36%>
+	    if ((cf.bd_activated.value == "0") && !(cf.bd_never_remind_me.value==1) && !(cf.enable_stamode.value==1) && !(cf.enable_apmode.value==1) && !(cf.is_guest_user.value==1) )
+	    {
+ 	      showModalById("modal-bitdefender-declaration");
+	    }
+      else
+      <%37%>
+      {
+        $("#modalBox").hide();
+      if(document.forms["SSOAPI"].show_circle.value=="1")
+            show_circle_window();
+      }
+  }
+});
+
+$(document).ready(function(){
+//alert("2*");           
+      //$('#lang_menu').removeAttr("disabled");
+
+    adjustPageLayout();
+      
+    <%321%>;
+         
+    liveMenuClick();
+    advanceMenu();
+    $('.subHeader').hide();
+    var pnpx = <%322%>
+    if(pnpx == 1){        
+        $("#AdvanceTab").click();
+        $("#basic-pane").css("display","none");
+        $("#adv-pane").css("display","block");        
+        pnpx = 0;
+      
+    }
+});   
+
+function select_country(country_number,country_text)
+{
+    var form = document.forms["SSOAPI"];
+    form.latest_counry.value = country_text;
+
+    var prevButton = $(this).parent().prev("button");
+    var selectedVal = country_text;
+    country_index=country_number;
+    $("#countryBtn").html(selectedVal);
+    $(".dropdown-content").removeClass("show");
+
+      if(((country_number>=0) && (country_number<=3))|| 
+          (country_number==5)|| 
+          (country_number==6)|| 
+          (country_number==13)|| 
+          (country_number==14)|| 
+          (country_number==17)|| 
+          (country_number==20)|| 
+          (country_number==21)|| 
+          (country_number==23)|| 
+          (country_number==27)|| 
+          (country_number==30)|| 
+          ((country_number>=34) &&((country_number<=37)))|| 
+          (country_number==39)|| 
+          (country_number==42)|| 
+          (country_number==43)|| 
+          (country_number==49)|| 
+          (country_number==50)|| 
+          (country_number==51)|| 
+          (country_number==54)|| 
+          (country_number==55)|| 
+          ((country_number>=58)&& (country_number<=61)) ||
+          ((country_number>=67)&&(country_number<=72)) ||
+          (country_number==74) || 
+          (country_number==75) || 
+          (((country_number>=79))&&((country_number<=86))) ||
+          (country_number==91) || (country_number==92)|| 
+          (country_number==93)|| (country_number==97)|| 
+          (country_number==100) ||
+          (country_number==101) || 
+          (((country_number>=104))&&((country_number<=109))) ||
+          (((country_number>=112))&&((country_number<=115))) || 
+          (((country_number>=117))&&((country_number<=119))) ||
+          (((country_number>=122))&&((country_number<=129))) || 
+          (((country_number>=131))&&((country_number<=133))) ||
+          (((country_number>=134))&&((country_number<=135))) || 
+          (((country_number>=140))&&((country_number<=142))) || 
+          (country_number==145) ||
+          (country_number==146) || 
+          (country_number==148) || 
+          (country_number==150) || 
+          (country_number==151) || 
+          (country_number==153) ||
+          (country_number==156) || 
+          (country_number==160) || 
+          (country_number==161) || 
+          (country_number==165) || 
+          (country_number==166) ||
+          (country_number==169) || 
+          (country_number==176) || 
+          (country_number==177) || 
+          (((country_number>=179))&&((country_number<=183))) || 
+          (country_number==185) || 
+          (((country_number>=192))&&((country_number<=198))) || 
+          (country_number==201) || 
+          (country_number==202) || 
+          (country_number==208) || 
+          (country_number==210) || 
+          (((country_number>=212))&&((country_number<=216))) || 
+          (country_number==219) || 
+          (country_number==226) || 
+          (country_number==227) || 
+          (((country_number>=231))&&((country_number<=234))) || 
+          (((country_number>=245))&&((country_number<=248)))          ) 
+      {
+           /* EMEA and Switzerland */
+          document.getElementById('giftNotify').innerHTML="<b><%323%></b>"
+          document.getElementById('giftNotifyBox').checked=false;
+      }
+      else if((country_number==102) || (country_number==235))
+      {
+        /* US and India*/
+          document.getElementById('giftNotify').innerHTML="<b><%324%></b>"
+          document.getElementById('giftNotifyBox').checked=true;
+          
+      }
+      else
+      {
+          document.getElementById('giftNotify').innerHTML="<b><%324%></b>"
+          document.getElementById('giftNotifyBox').checked=false;
+      }
+      
+}
+
+function checkMenuDisable()
+{	//alert("2");
+    var basic_page = document.getElementById('page').contentWindow;
+    var advanced_page = document.getElementById('page2').contentWindow;
+
+	try {
+		if(basic_page.document.getElementsByName("disable_menu")[0]) {
+			dieMenuClick();
+			setTimeout('checkMenuDisable()',1500); 
+		} else if(advanced_page.document.getElementsByName("disable_menu")[0]) {
+			dieMenuClick();
+			setTimeout('checkMenuDisable()',1500); 
+		} else {
+			liveMenuClick();
+		}
+	}
+    catch (e){
+		liveMenuClick();
+	}
+}
+
+function dieMenuClick()
+{	//alert("3");
+    $('.noSub').die("click");
+    $('.noSubLarge').die("click");
+    $('.noSubActive').die("click");
+    $('.noSubActiveLarge').die("click");
+    $('.SubMenu').die("click");
+    $('.SubMenuLarge').die("click");
+    $('.SubMenuActive').die("click");
+    $('.SubMenuActiveLarge').die("click");
+
+    $("#BasicTab").die("click");
+    $("#AdvanceTab").die("click");
+    $('.basic-menu-div').die("click");
+    
+    $('.basic-menu-div').live("click", function(ev){ 
+        return false;
+    });
+    $('.noSub , .noSubLarge , .noSubActive, .noSubActiveLarge').live("click", function(ev){ 
+        return false;
+    }); 
+ 
+    return true;
+}
+
+function liveMenuClick()
+{	//alert("4");
+      var isie = navigator.userAgent.search("MSIE") > -1;
+      var ap_mode_flag = document.getElementsByName("enable_apmode");
+      var sta_mode_flag = document.getElementsByName("enable_stamode");
+      var ext_mode_flag = document.getElementsByName("enable_extmode");
+      var repeater_flag = document.getElementsByName("repeater");
+      var repeater_an_flag = document.getElementsByName("repeater_an");
+      var downloader_flag = document.getElementsByName("have_usb_attached");
+
+    $('.noSub , .noSubLarge , .noSubActive, .noSubActiveLarge').die("click");
+    $('.basic-menu-div').die("click");
+      
+	if(ap_mode_flag[0].value=="1" || repeater_flag[0].value=="1" || repeater_an_flag[0].value=="1")
+	{
+		if($("#basic-int").hasClass("basic-menu-div"))
+		{
+			$("#basic-int").addClass('basic-menu-div-gray');
+			$("#basic-int").removeClass('basic-menu-div');
+			if($("#basic-par").hasClass("basic-menu-div")){
+				$("#basic-par").addClass('basic-menu-div-gray');
+				$("#basic-par").removeClass('basic-menu-div');
+				$('#basic-par').bind('contextmenu', function(e) {
+					e.preventDefault();
+				});
+			}
+           if($("#basic-qos").hasClass("basic-menu-div")){
+              $("#basic-qos").addClass('basic-menu-div-gray');
+              $("#basic-qos").removeClass('basic-menu-div');
+           }
+			
+		}
+		if($("#basic-bit").hasClass("basic-menu-div")){
+			$("#basic-bit").addClass('basic-menu-div-gray');
+			$("#basic-bit").removeClass('basic-menu-div');
+			$('#basic-bit').bind('contextmenu', function(e) {
+				e.preventDefault();
+			});
+		}
+	}  
+	else if( ext_mode_flag[0].value=="1" ){
+		if($("#basic-int").hasClass("basic-menu-div")){
+			$("#basic-int").addClass('basic-menu-div-gray');
+			$("#basic-int").removeClass('basic-menu-div');
+		}
+		if($("#basic-gst").hasClass("basic-menu-div")){
+			$("#basic-gst").addClass('basic-menu-div-gray');
+			$("#basic-gst").removeClass('basic-menu-div');
+		}
+	}
+	else if( sta_mode_flag[0].value=="1" ){
+		if($("#basic-int").hasClass("basic-menu-div")){
+			$("#basic-int").addClass('basic-menu-div-gray');
+			$("#basic-int").removeClass('basic-menu-div');
+		}
+		if($("#basic-wls").hasClass("basic-menu-div")){
+			$("#basic-wls").addClass('basic-menu-div-gray');
+			$("#basic-wls").removeClass('basic-menu-div');
+		}
+		if($("#basic-par").hasClass("basic-menu-div")){
+			$("#basic-par").addClass('basic-menu-div-gray');
+			$("#basic-par").removeClass('basic-menu-div');
+		}
+		if($("#basic-gst").hasClass("basic-menu-div")){
+			$("#basic-gst").addClass('basic-menu-div-gray');
+			$("#basic-gst").removeClass('basic-menu-div');
+		}
+		if($("#basic-bit").hasClass("basic-menu-div")){
+		     $("#basic-bit").addClass('basic-menu-div-gray');
+		     $("#basic-bit").removeClass('basic-menu-div');
+		}	
+	}
+
+  WPS_wizard_contextmenu();
+
+        $("#basic-dlr").live("click", function(ev){
+          $.ajax({
+            url: 'usb_check.php',
+            method: 'POST',
+            data: {
+            },
+            success: function(resp) {
+            
+              if(resp == "unavailable")
+              {
+                alert("<%325%>");
+                return false;
+              }
+              else
+              {
+                $('.menuActive').removeClass('menuActive');
+                $("#basic-dlr").addClass('menuActive');
+                var path = $("#basic-dlr").children("a").attr("href");      
+                loadPage(path);
+              }
+            
+            }
+          });
+        });
+      $('#AdvanceTab').live("click", function(ev){         
+          $("#first").hide();  
+          $("#second").show();
+          $('.subHeader').hide(); 
+          $(this).css("background","url(../img/tab-active.gif) no-repeat 0");                       
+          $("#BasicTab").css("background","url(../img/tab-nonactive.gif) no-repeat 0");    
+          $('.noSubActive').removeClass('noSubActive');
+          $('.noSubActiveLarge').removeClass('noSubActiveLarge');
+          $('.SubMenuActive').addClass('SubMenu');   
+          $('.SubMenuActive').removeClass('SubMenuActive');
+          $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+          $('.SubMenuActiveLarge').addClass('SubMenu');
+          $('.SubMenuActiveLarge').addClass('Large');
+          $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+          $('.SubActive').addClass('Sub');
+          $('.SubActive').removeClass('SubActive');
+          if($('#adv-home').hasClass('noSubLarge'))
+            $('#adv-home').addClass('noSubActiveLarge');  
+          else
+            $('#adv-home').addClass('noSubActive');  
+          $('.subHeader:visible').slideUp('fast');  
+          loadPage2("ADVANCED_home.htm");      
+      });
+
+      $('#BasicTab').live("click", function(ev){
+          $("#second").hide();  
+          $("#first").show();
+          $(this).css("background","url(../img/tab-active.gif) no-repeat 0");
+          $("#AdvanceTab").css("background","url(../img/tab-nonactive.gif) no-repeat 0");
+          $('.subHeader').hide();
+          $('.menuActive').removeClass('menuActive');
+          $('#basic-home').addClass('menuActive');
+          loadPage("DashBoard.htm");        
+      });
+      
+      $('.basic-menu-div').live("click", function(ev){
+        if($(this)[0].getAttribute('id') != "basic-dlr")
+        {  
+          $('.menuActive').removeClass('menuActive');
+          $(this).addClass('menuActive');
+          var path = $(this).children("a").attr("href");      
+          loadPage(path);
+        }
+         ev.preventDefault();
+
+      }); 
+	  <%326%>
+	  $('.basic-menu-eco-div').live("click", function(ev){  
+         $('.menuActive').removeClass('menuActive');
+         $(this).addClass('menuActive');
+         var path = $(this).children("a").attr("href");      
+         loadPage(path);
+         ev.preventDefault();
+
+      });
+	  <%327%>
+
+         
+      $('.noSub').live("click",function(ev){              
+          $("#first").hide();            
+          if( !$(this).hasClass('noSubGray') & !$(this).hasClass('noSubGrayLarge')){                  
+                $('.noSubActive').removeClass('noSubActive'); 
+                $('.noSubActiveLarge').removeClass('noSubActiveLarge');  
+                $('.SubActive').addClass('Sub');
+                $('.SubActive').removeClass('SubActive');
+                $('.SubMenuActive').addClass('SubMenu'); 
+                $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+                $('.SubMenuActiveLarge').addClass('SubMenu');
+                $('.SubMenuActiveLarge').addClass('Large');
+                $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+                $('.SubMenuActive').removeClass('SubMenuActive');
+                if($(this).hasClass('noSubLarge'))
+                    $(this).addClass('noSubActiveLarge'); 
+                else
+                    $(this).addClass('noSubActive'); 
+                $('.subHeader:visible').slideUp('fast');      
+                var path = $(this).children("a").attr("href");      
+                loadPage2(path);
+                ev.preventDefault();
+          }else{
+               return false;
+          }                               
+      });
+
+      $('.noSubLarge').live("click",function(ev){              
+          $("#first").hide();            
+          if( !$(this).hasClass('noSubGray') & !$(this).hasClass('noSubGrayLarge')){                  
+                $('.noSubActive').removeClass('noSubActive'); 
+                $('.noSubActiveLarge').removeClass('noSubActiveLarge');  
+                $('.SubActive').addClass('Sub');
+                $('.SubActive').removeClass('SubActive');
+                $('.SubMenuActive').addClass('SubMenu'); 
+                $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+                $('.SubMenuActiveLarge').addClass('SubMenu');
+                $('.SubMenuActiveLarge').addClass('Large');
+                $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+                $('.SubMenuActive').removeClass('SubMenuActive');
+                if($(this).hasClass('noSubLarge'))
+                    $(this).addClass('noSubActiveLarge'); 
+                else
+                    $(this).addClass('noSubActive'); 
+                $('.subHeader:visible').slideUp('fast');      
+                var path = $(this).children("a").attr("href");      
+                loadPage2(path);
+                ev.preventDefault();
+          }else{
+               return false;
+          }                               
+      });    
+      
+       $('.noSubGray').live("click",function(){                    
+            return false;
+       });
+       $('.noSubGrayLarge').live("click",function(){                    
+            return false;
+       });
+      
+     $('.basic-menu-div-gray').live("click",function(){           
+         return false;
+     });      
+      
+
+      $('.SubMenu').live("click",function(ev){     
+         $("#first").hide();     
+         if( !$(this).hasClass('SubMenuDisable') && !$(this).hasClass('SubMenuLargeDisable')){  
+            $('.noSubActive').removeClass('noSubActive');
+            $('.noSubActiveLarge').removeClass('noSubActiveLarge');
+            $('.SubMenuActive').addClass('SubMenu');
+            $('.SubMenuActive').removeClass('SubMenuActive');
+            $('.SubMenuActiveLarge').addClass('SubMenuLarge');
+            $('.SubMenuActiveLarge').addClass('SubMenu');
+            $('.SubMenuActiveLarge').addClass('Large');
+            $('.SubMenuActiveLarge').removeClass('SubMenuActiveLarge');
+            if($(this).hasClass('Large'))
+	           $(this).addClass('SubMenuActiveLarge');
+	        else
+	           $(this).addClass('SubMenuActive');
+	    $(this).removeClass('SubMenu');
+	    $(this).removeClass('SubMenuLarge');
+            var path = $(this).children("a").attr("href");      
+            loadPage2(path);
+            ev.preventDefault();
+         }else{           
+            return false;
+         }
+      });
+      
+      $('.SubMenuActive').live("click",function(ev){
+         $("#first").hide();
+         var path = $(this).children("a").attr("href");      
+         loadPage2(path);
+         ev.preventDefault();
+      });
+      
+      $('.SubMenuActiveLarge').live("click",function(ev){
+         $("#first").hide();
+         var path = $(this).children("a").attr("href");      
+         loadPage2(path);
+         ev.preventDefault();
+      });
+    
+      
+      
+      $('#go').click(function(ev){     
+        var text = $('#searchText').val();
+        var URItext = encodeURIComponent(text);
+		
+		
+        URItext =  "http://support.netgear.com/app/answers/list/kw/" + URItext;
+        window.open(URItext,'_blank','fullscreen=yes,toolbar=yes,locaiton=yes,scrollbars=yes');
+      });
+     
+     $('.SubMenuDisable').live("click",function(){           
+         return false;
+     });
+  
+    $('.SubMenuLargeDisable').live("click",function(){         
+         return false;
+     });
+
+     
+
+
+
+   
+     /*
+     $('.SubMenuDisable').each(function(){
+         if($(this).text().length >= 28){              
+              $(this).addClass('SubMenuDisableLarge');
+              $(this).removeClass('SubMenuDisable');
+         }                     
+     });
+    
+     $('.SubMenuLargeDisable').each(function(){
+         if($(this).text().length < 28){              
+              $(this).addClass('SubMenuDisable');
+              $(this).removeClass('SubMenuLargeDisable');
+         }                     
+     }); 
+    */
+       
+
+}
+  
+function advanceMenu() { //alert("5");
+    var downloader_flag = document.getElementsByName("have_usb_attached");
+    $('.subHeader').hide();
+
+    $('.Sub').click(function() {
+        $('#first').hide();
+        var checkElement = $(this).next();
+        if((checkElement.is('li')) && (checkElement.is(':visible'))) {
+            $('.subHeader:visible').slideUp('fast');
+            $(this).removeClass('SubActive');
+            $(this).addClass('Sub');
+            return false;
+        }
+        if((checkElement.is('li')) && (!checkElement.is(':visible'))) { 
+            $('.subHeader:visible').slideUp('fast');
+            if ($(this)[0].getAttribute('id') == "downloader_header") {
+                $.ajax({
+                    url: 'usb_check.php',
+                    method: 'POST',
+                    data: {
+                    },
+                    success: function(resp) {
+       
+                        if(resp == "available")
+                        {
+                            checkElement.slideDown('normal');      
+                            $('.SubActive').addClass('Sub');
+                            $('.SubActive').removeClass('SubActive');
+                            $(this).addClass('SubActive');
+                            $(this).removeClass('Sub');
+                            return false;
+                        }
+                        else if(resp == "unavailable")
+                        {
+                            alert("<%325%>");
+                            return false;
+                        }
+                    }
+                });
+            }
+            else {
+                checkElement.slideDown('normal');      
+                $('.SubActive').addClass('Sub');
+                $('.SubActive').removeClass('SubActive');
+                $(this).addClass('SubActive');
+                $(this).removeClass('Sub');
+                return false;
+            }
+        }
+    });      
+}
+  
+function adjustPageLayout()
+{
+	//alert("6");
+	var entry = 0;
+	
+    $('.subMenu_text').each(function(){
+        if($(this)[0].clientHeight > 16){
+            if($(this)[0].parentNode.parentNode.parentNode.getAttribute('id') == "adv_settings_header")
+                num_submenuLarge++;
+            var menuHeight = $($(this)[0].parentNode.parentNode.parentNode).css('height');
+            var menuHeight2 = menuHeight.replace("px", "");
+            $($(this)[0].parentNode.parentNode.parentNode).css('height',(parseInt(menuHeight2)+12)+"px"); 
+            $($(this)[0].parentNode.parentNode).addClass('Large');
+            if($($(this)[0].parentNode.parentNode).hasClass('SubMenuDisable')) {
+				$($(this)[0].parentNode.parentNode).removeClass('SubMenuDisable');
+				$($(this)[0].parentNode.parentNode).addClass('SubMenuLargeDisable');
+			} else
+            $($(this)[0].parentNode.parentNode).addClass('SubMenuLarge');
+        }else{
+            $($(this)[0].parentNode.parentNode).removeClass('Large');
+            $($(this)[0].parentNode.parentNode).removeClass('SubMenuLarge');
+        }
+    });
+ 
+	/*
+    $('.subMenu_text').each(function(){
+		if($(this)[0].parentNode.parentNode.parentNode.getAttribute('id') == "security_settings_header")
+			entry++;
+    });
+	$('#security_settings_header').css("height", entry*18+20 + "px");
+	*/
+	
+    $('.nosub_text').each(function(){
+        if($(this)[0].clientHeight > 16){
+            num_nosubLarge++;
+            if($($(this)[0].parentNode.parentNode).hasClass('noSubGray'))
+                $($(this)[0].parentNode.parentNode).addClass('noSubGrayLarge');
+            else
+                $($(this)[0].parentNode.parentNode).addClass('noSubLarge');
+            $($(this)[0].parentNode.parentNode).removeClass('noSub');
+            $($(this)[0].parentNode.parentNode).removeClass('noSubGray');
+        }else{
+            $($(this)[0].parentNode.parentNode).removeClass('noSubLarge');
+            $($(this)[0].parentNode.parentNode).removeClass('noSubGrayLarge');
+        }
+    });       
+    
+    adjustPageHeight = 16 * num_nosubLarge + 15 * num_submenuLarge;
+    /*
+    $('.basic-menu').css("height",adjustPageHeight);
+    $('.advance-menu').css("height",adjustPageHeight);
+    $('#basic-table').css("height",adjustPageHeight);
+    $('#advance-table').css("height",adjustPageHeight);    
+    */
+}
+
+function loadPage(path)
+{	//alert("7");
+         load_page = 1;
+        var page_contain_width = document.body.clientWidth-220 > 735 ? document.body.clientWidth-220 : 735;
+        var page_contain_height = document.documentElement.clientHeight-160 > 470+adjustPageHeight ? document.documentElement.clientHeight-160 : 470+adjustPageHeight;
+        $('.basic-menu').css("height", page_contain_height);
+
+         if(path.search("DashBoard.htm") != -1){
+            var page_width = page_contain_width - 130;
+            var page_height = page_contain_height - 45;         
+         
+         
+            $('#page_contain').width(parseInt(page_contain_width));  
+            $('#page_contain').height(parseInt(page_contain_height));  
+            $('#page_contain').css("margin-top","5");
+            if($.browser.msie){
+               $('#page_contain').html("<iframe id=\"page\" src='' scrolling=\"no\" style=\" background-color:#E5E5E5;width:"+page_width+"px;height:"+page_height+"px;margin-top:0;margin-left:30px\" frameborder=\"0\" border=\"0\" cellspacing=\"0\" onFocus=\"this.blur()\"></iframe>");
+            }else{  
+               $('#page').attr("scrolling","no");
+               $('#page').width(parseInt(page_width));
+               $('#page').height(parseInt(page_height));
+               $('#page').css("margin-top","0");
+               $('#page').css("margin-left","30"); 
+               
+            }      
+            $('#page').css("visibility","hidden");
+            $('#page_contain').addClass('main-page-contain-loading');
+            $('#page').delay(1000).attr("src",path); 
+                  
+            $('#page').load(function(){	             
+                $('#page').css("visibility","visible");
+                $('#page_contain').removeClass('main-page-contain-loading');    
+               
+            })     
+          
+         }else if(path.search("netgear") != -1){
+            window.open(path,'_blank','fullscreen=yes,toolbar=yes,location=yes,scrollbars=yes');
+         }else{
+            var page_width = page_contain_width - 50;
+            var page_height = page_contain_height - 0;         
+            
+            $('#page_contain').width(parseInt(page_contain_width));  
+            $('#page_contain').height(parseInt(page_contain_height));  
+            $('#page_contain').css("margin-top","5");            
+            if($.browser.msie){
+             $('#page_contain').html("<iframe id=\"page\" src='' scrolling=\"no\" style=\"background-color:#E5E5E5;width:"+page_width+"px;height:"+page_height+"px;margin-top:0px;margin-left:30px\" frameborder=\"0\" border=\"0\" cellspacing=\"0\" onFocus=\"this.blur()\"></iframe>");
+            }else{  
+               $('#page').attr("scrolling","no");
+               $('#page').css("overflow-x","hidden");
+               $('#page').css("overflow-y","hidden");
+               $('#page').width(parseInt(page_width));
+               $('#page').height(parseInt(page_height));
+               $('#page').css("margin-top","0");
+               $('#page').css("margin-left","30");                 
+                 
+            }     
+            $('#page').css("visibility","hidden");
+            $('#page_contain').addClass('main-page-contain-loading');             
+            $('#page').attr("src",path); 
+            $('#page').load(function() 
+            {	             
+	             $('#page').css("visibility","visible");	
+	             $('#page_contain').removeClass('main-page-contain-loading'); 
+                   
+            });  
+                
+         }                      
+         
+         
+         return false;
+}
+
+
+function loadPage2(path) {  //alert("8");
+        load_page = 2;
+        while(is_loading_page==1){}
+		is_loading_page=1;
+        var page_contain_width = document.body.clientWidth-220 > 735 ? document.body.clientWidth-220 : 735;
+        var page_contain_height = document.documentElement.clientHeight-160 > 470+adjustPageHeight ? document.documentElement.clientHeight-160 : 470+adjustPageHeight;
+        $('.advance-menu').css("height", page_contain_height);
+        var gui_region = document.forms[0].curlang.value;
+        if(gui_region=="Spanish"){
+        $('.advance-menu li.SubMenuLarge span').css("width", "175px");
+        $('.advance-menu li.SubMenuActiveLarge span').css("width", "175px");
+        }
+        if(path.search("ADVANCED_home.htm") != -1){            
+            var page_width = page_contain_width - 130;
+            var page_height = page_contain_height - 45;         
+                 
+            $('#page_contain2').width(parseInt(page_contain_width));  
+            $('#page_contain2').height(parseInt(page_contain_height));  
+            $('#page_contain').css("margin-top","5");
+           if($.browser.msie){
+               $('#page_contain2').html("<iframe id=\"page2\" src='' scrolling=\"no\" style=\"background-color:#E5E5E5;width:"+page_width+"px;height:"+page_height+"px;margin-top:0;margin-left:30px\" frameborder=\"0\" border=\"0\" cellspacing=\"0\" onFocus=\"this.blur()\"></iframe>");
+           }else{  
+               $('#page2').attr("scrolling","no");
+               $('#page2').width(parseInt(page_width));
+               $('#page2').height(parseInt(page_height));
+               $('#page2').css("margin-top","0");
+               $('#page2').css("margin-left","50");
+
+
+           }  
+           $('#page2').css("visibility","hidden");             
+           $('#page2').attr("src",path);
+       
+           $('#page2').load(function() 
+           {	             
+	             $('#page2').css("visibility","visible");
+	             $('#page_contain2').removeClass('main-page-contain-loading');                                              
+            }); 
+        }else if(path.search("netgear") != -1){
+            window.open(path,'_blank','fullscreen=yes,toolbar=yes,location=yes,scrollbars=yes');
+        }else{
+            var page_width = page_contain_width - 50;
+            var page_height = page_contain_height - 0;          
+               
+            $('#page_contain2').width(parseInt(page_contain_width));  
+            $('#page_contain2').height(parseInt(page_contain_height));                                          
+            
+            if($.browser.msie){ //alert("8 * ");
+               $('#page_contain2').html("<iframe id=\"page2\" src='' scrolling=\"no\" style=\"background-color:#E5E5E5;width:"+page_width+"px;height:"+page_height+"px;overflow-x:hidden;margin-top:0px;margin-left:30px\" frameborder=\"0\" border=\"0\" cellspacing=\"0\" onFocus=\"this.blur()\"></iframe>");
+           }else{  //alert("8 ** ");
+               $('#page2').attr("scrolling","no");
+               $('#page2').css("overflow-x","hidden");
+               $('#page2').css("overflow-y","hidden");
+               $('#page2').width(parseInt(page_width));
+               $('#page2').height(parseInt(page_height));
+               $('#page2').css("margin-top","0");
+               $('#page2').css("margin-left","30");  
+           }    
+           $('#page2').css("visibility","hidden");
+           $('#page_contain2').addClass('main-page-contain-loading');
+           $('#page2').attr("src",path);
+           $('#page2').load(function() 
+           {	             
+                $('#page2').css("visibility","visible");
+                $('#page_contain2').removeClass('main-page-contain-loading');                                             
+           }); 
+
+           
+        }       
+        is_loading_page=0;
+		
+        return false;
+}
+ 
+
+          <%36%>
+function setParentalControls()
+{	//alert("9");
+     var ParentalControls_Result = 0;
+                     
+     var support = 1;
+                                       
+     if(support == 0){
+          $('#PAR_menu').attr("href","http://www.netgear.com/lpc"); 
+          $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");                  
+     }else{ 
+         if(ParentalControls_Result == 0){
+             $('#PAR_menu').attr("href","http://www.netgear.com/lpc"); 
+             $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");  
+         }else{          
+             $('#PAR_menu').attr("href","http://netgear.opendns.com/"); 
+             $('#PAR_menu2').attr("href","http://www.netgear.com/lpc");  
+         }
+     }                              
+}
+          <%37%>
+
+
+function ShowLanguageList()
+{	//alert("10");
+	var form=document.forms[0];
+	var suportlanguage = form.srptlang.value.split(" ");
+	var gui_region = form.curlang.value;
+        var gui_lang = form.gui_lang.value;
+        var local_srpt = form.local_srptlang.value.split(" ");
+        var i;
+	for(i=0; i < suportlanguage.length; i++)
+	{
+       		if((suportlanguage[i] == gui_region) ||
+       		((suportlanguage[i] == "TraditionalChinese") && (gui_region=="TChinese")) ||
+       		((suportlanguage[i] == "SimplifiedChinese") && (gui_region=="Chinese")))
+       		{
+			document.write('<option value='+gui_region+' selected >'+local_srpt[i]+'</option>');
+		}else{
+			document.write('<option value='+suportlanguage[i]+'>'+local_srpt[i]+'</option>');
+                }
+
+  if(((suportlanguage[i] == "TraditionalChinese") && (gui_lang=="TChinese")) ||
+       		((suportlanguage[i] == "SimplifiedChinese") && (gui_lang=="Chinese")) ||
+                (suportlanguage[i] == gui_lang)){              
+                   gui_lang_local = local_srpt[i];
+                }
+	}
+
+  
+               
+}
+
+function resetLanguageList()
+{	//alert("11");
+    var i;
+    var form=document.forms[0];
+    var suportlanguage = form.srptlang.value.split(" ");
+    var gui_region = form.curlang.value;
+    var langList = document.getElementById("lang_menu");
+
+	for(i=0; i < suportlanguage.length; i++)
+	{
+       	if((suportlanguage[i] == gui_region) ||
+           		((suportlanguage[i] == "TraditionalChinese") && (gui_region=="TChinese")) ||
+        		((suportlanguage[i] == "SimplifiedChinese") && (gui_region=="Chinese")))
+        {       
+            langList.selectedIndex = i;
+            return;
+        }
+	}   
+}
+
+function calculate_string_pixel(str)
+{	//alert("12");
+    var obj = document.getElementById("ruler");
+    obj.innerHTML = str;
+    return obj.offsetWidth;
+
+}
+
+function chgLang()
+{	//alert("13");
+    var form=document.forms[0];
+    var gui_region = form.curlang.value;
+    var choice = form.choicelang.value;
+    var auto_block = form.auto_block.value;      
+    var suportlanguage = form.srptlang.value.split(" ");
+    var local_srpt = form.local_srptlang.value.split(" ");
+
+    for(i=0; i < suportlanguage.length; i++)
+    {
+       		if(suportlanguage[i] == choice)
+       		    choice=local_srpt[i];
+    }
+
+    if (choice != gui_region){      
+        setTimeout(function(){
+            ret = confirm("<%328%> "+ gui_lang_local + ""+"<%329%> "+""+ choice + "?");
+            if(ret==1){
+                if($("#BasicTab").hasClass('current')){
+                    loadPage("LANG_check_redirect.htm");
+                }else{
+                    loadPage2("LANG_check_redirect.htm");
+                }
+            }
+            else
+                resetLanguageList();
+        },10);
+    }
+}
+
+function chgBrsLang()
+{ 	//alert("14");
+	var form=document.forms[0];
+        var gui_region = form.curlang.value;
+        var brslang = form.first_brs_lang.value;  
+        var choice = form.choicelang.value;     
+        var auto_block = form.auto_block.value; 
+        var gui_lang = form.gui_lang.value;
+
+        if(choice === "Auto"){
+            if(auto_block == "0"){
+
+                if(gui_lang != brslang)
+                  {
+                    if(brslang=="TChinese")
+                        ret = confirm("<%328%> "+ gui_lang_local + ""+"<%329%> "+" Traditional Chinese?");
+                    else
+                        ret = confirm("<%328%> "+ gui_lang_local + ""+"<%329%> "+""+ brslang + "?");
+                    if(ret==1){
+                        if($("#BasicTab").hasClass('current')){
+                           loadPage("LANG_check_redirect2.htm");
+                        }else{
+                           loadPage2("LANG_check_redirect2.htm");
+                        }
+                    }else{
+                        if($("#BasicTab").hasClass('current')){
+                            loadPage("auto_block.htm");
+                        }else{
+                            loadPage2("auto_block.htm");
+                        }
+                   }
+                   return true;
+               }
+            }
+        }
+        
+        return false;
+}
+
+
+function fw_upgrade_hint()
+{	//alert("15");
+    if($("#BasicTab").hasClass('current')){
+        loadPage("UPG_fw_check2.htm");
+    }else{
+        loadPage2("UPG_fw_check2.htm");
+    }    
+}
+
+function gui_logout()
+{	//alert("16");
+    if($("#BasicTab").hasClass('current')){
+        top.location.href="LGO_logout.htm";
+    }
+    else
+    {
+        top.location.href="LGO_logout.htm";
+    }
+}
+
+function change_country()
+{
+    var form = document.forms["SSOAPI"];
+    select_country(country_index, form.latest_counry.value);
+}
+
+function change_size()
+{	//alert("17");
+    setLanglistPosition();
+	setFooterClass();
+    subpage_resize();
+}
+
+function enable_circle()
+{
+
+    if(document.forms[0].never_remind_me.checked==true)
+        $.post("circle.php",{never_remind_me:"1"});    
+
+    hide_circle_window();
+    $('.menuActive').removeClass('menuActive');
+    $('#basic-par').addClass('menuActive');    
+  	loadPage("Parental_controls.htm"); 
+
+    
+}
+
+function register_bd()
+{
+  if(document.forms["SSOAPI"].bit_never_remind_me.checked==true)
+        $.post("bd.php",{never_remind_me:"1"});
+
+	    $("#modalBox").show();
+	    $(".modal-content").hide();
+	    $("#modal-bitdefender-login").show();
+
+//  showModalById("modal-bitdefender-login");          
+}
+
+function skip_bd()
+{ 
+  if(document.forms["SSOAPI"].bit_never_remind_me.checked==true)
+        $.post("bd.php",{never_remind_me:"1"});
+
+	$("#modalBox").hide();
+      if(document.forms["SSOAPI"].show_circle.value=="1")
+    	show_circle_window();
+
+}
+
+function skip_circle()
+{
+
+    if(document.forms[0].never_remind_me.checked==true)
+        $.post("circle.php",{never_remind_me:"1"});
+    
+    hide_circle_window();
+}
+
+function show_circle_window()
+{
+          <%36%>
+  
+    var no_remind_flag = document.getElementsByName("no_remind");  
+    var apmode_flag = document.getElementsByName("enable_apmode");  
+    var stamode_flag = document.getElementsByName("enable_stamode");  
+    var enable_circle_flag = document.getElementsByName("enable_circle");  
+
+
+    if((no_remind_flag[0].value=="1") || (apmode_flag[0].value=="1") || (stamode_flag[0].value=="1") || (enable_circle_flag[0].value=="1") ) 
+    {
+        document.getElementById("circle-info-modal").style.display="none";        
+    }
+    else
+    {
+        document.getElementById("circle-info-modal").style.display="block";
+        
+    }
+          <%37%>
+          <%34%>
+        document.getElementById("circle-info-modal").style.display="none";        
+          <%35%>
+
+}
+
+function hide_circle_window()
+{
+        document.getElementById("circle-info-modal").style.display="none";
+        document.getElementById("container").style.display="block";
+        document.getElementById("main_screen").style.display="block";
+}
+
+/* Foxconn Bling added start, 2018/11/16 */
+function check_ap_enable()
+{
+  if ("<%69%>" == "Disable" && "<%70%>" == "Disable") {
+    WPS_wizard_grayout();
+  } else {
+    WPS_wizard_ungrayout();
+  }  
+}
+/* Foxconn Bling added end, 2018/11/16 */
+
+</script>
+</head>
+<body style="padding:0;margin:0;background-color:#e5e5e5;overflow:none" onload="change_size();" onResize="change_size();">
+  <form name="frmLanguage">
+<table width="100%" CELLPADDING=0 CELLSPACING=0 style="padding:0;margin:0;" id="all">
+<tr width="100%">
+
+
+<td style="width:100%;height:100%">
+      <div id="main_screen">
+<table style="height:52px;width:100%;margin:0;padding:0" CELLPADDING=0 CELLSPACING=0 class="newtopframe">
+
+<tr>
+    <td style="padding-left:20px">
+        <img style="position:relative;left:-7px;" src="img/NewNetgeargenie.png" >
+        <br><span id="ModuleName"><b>Nighthawk <%12%></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<%330%><b><font color="#EEDAOO">Operation Mode:Access Point</font></b><%331%><%332%><b><font color="#EEDAOO">Operation Mode:Extender Mode</font></b><%333%></span>
+        
+    </td>
+    <td style="text-align:right;padding-right:25px">
+        <button type="button" value="BUTTON"  onClick="gui_logout();" name="logout" class="button-rule" style="padding-left:10px;text-align: right" ><span class="roundleft_button">&nbsp;&nbsp;&nbsp;&nbsp;<%334%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+        <br><br style='line-height:8px'>
+        <b><%335%></b>
+        <br><%336%>
+        </td>
+
+
+</tr>
+</table>
+
+<table CELLPADDING=0 CELLSPACING=0 style="height:520px;width:100%;margin:0;padding:0">
+<%337%>
+<%338%>
+    <input type="hidden" name="curlang" value="Auto"> 
+<%339%>
+<%340%>
+	<input type="hidden" name="curlang" value="<%9%>"> 
+<%341%>
+<%342%>
+<%343%>
+	<input type="hidden" name="curlang" value="<%9%>">
+<%344%>
+	<input type="hidden" name="local_srptlang" value="<%345%>">
+	<input type="hidden" name="srptlang" value="<%346%>">
+	<input type="hidden" name="select_region" value="">
+        <input type="hidden" name="first_brs_lang" value="<%347%>"> 
+        <input type="hidden" name="auto_block" value="<%348%>">
+        <input type="hidden" name= "gui_lang" value="<%9%>">
+        <input type="hidden" name= "gui_lang_local" value="">
+      
+<tr>
+<td>
+<!-- tabs -->
+<ul class="tabs" width="100%" >
+    <li><a id="BasicTab"class="current" onFocus="this.blur()" href="#"><span><%349%></span></a></li>
+    <li><a id="AdvanceTab" onFocus="this.blur()" href="#"><span><%350%></span></a></li>   
+
+<%351%>
+    <li>
+    <div id="firmware-update"  style="padding-left:10px" class=<%352%> >
+    <span class=<%353%>>&nbsp;&nbsp;<%354%></span><span class=<%355%>>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    </div></li>
+<%356%>
+
+    <li id="lang_menu_li" style="" >
+       <select name="choicelang" size="1" id="lang_menu" <%357%> class="selectbox" onchange="chgLang();this.blur();">
+       <script>ShowLanguageList();</script>
+       </select>
+    </li>    
+</ul>
+<!-- tab "panes" -->
+<div class="pane" id="basic-pane">
+<table width="100%" CELLPADDING="0" CELLSPACING="0" id="basic-table" style="padding:0;margin:0;height:480px">
+<tr>
+<td style="background-color:#E5E5E5;width:200px;font-size:12px;font-family:Arial;">
+	<div class="basic-menu">
+            <div class="basic-menu-div" id="basic-home"><a href="DashBoard.htm"><span><%358%></span></a></div>
+            <div class="basic-menu-div" id="basic-int"><a href="<%359%>" <%360%>  id="INT_menu"><span><%361%></span></a></div>
+            <div class="basic-menu-div" id="basic-wls"><a href="<%318%>" <%362%> id="WLS_menu"><span><%363%></span></a></div>
+            <div class="basic-menu-div" id="basic-atd"><a href="DEV_redirect.htm"><span><%364%></span></a></div>
+            <div class="basic-menu-div" id="basic-qos"><a href="QOS_down_streaming_iqos_basic.htm"><span><%365%></span></a></div>
+            <%366%>
+            <div class="basic-menu-div" id="basic-arlo"><a href="arlo.htm"><span><%367%></span></a></div>
+            <%368%>
+          <%369%>
+             <div class="basic-menu-div" id="basic-par"><a href="Parental_controls.htm" <%362%>><span><%370%></span></a></div>
+          <%371%>
+          <%257%>
+             <div class="basic-menu-div" id="basic-par"><a href="http://netgear.opendns.com/" id="PAR_menu" <%362%>><span><%372%></span></a></div>
+          <%258%>
+            <div class="basic-menu-div" id="basic-rea"><a href="USB_basic_main.htm"><span><%373%></span></a></div>
+            <div class="basic-menu-div" id="basic-gst"><a href="<%374%>" <%362%>><span><%375%></span></a></div>
+            <!--<div class="basic-menu-div" id="basic-dlr"><a href="Download_manager.htm" id="DOW_menu" ><span><%376%></span></a></div>-->
+            <%369%>
+	        <div class="basic-menu-div" id="basic-bit"><a href="NetgearArmor.htm"><span>NETGEAR Armor</span></a></div>
+            <%371%>
+            <%377%>
+            <div class="basic-menu-div" id="basic-smz"><a href="sm.htm" id="SMZ_menu"><span>SmartZone</span></a></div>
+            <%378%>
+			<%379%>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div>&nbsp;</div>
+			<div class="basic-menu-eco-div" id="basic-eco"><a href="https://genie.netgear.com/" id="ECO_menu"><span>genie+ Marketplace</span></a></div>
+			<%380%>
+        </div>
+</td>
+<td style="background-color:#e5e5e5;width:760px;height:480px;font-family:Arial;">
+<div id="page_contain" >
+<iframe id="page" style="width:600px;height:405px;margin-left:30px" name="page"  frameborder="0" border="0" cellspacing="0" scrolling="no" onFocus="this.blur()" src=""></iframe>       
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+<div class="pane" id="adv-pane">
+<table CELLPADDING=0 CELLSPACING=0 id="advance-table" style="padding:0;margin:0;height:480px;border:0;width:960px;">
+<tr style="height:480px;">
+<td style="background-color:#E5E5E5;width:200px;">
+<ul class="advance-menu"> 
+    <li class="noSub" id="adv-home"><a href="ADVANCED_home.htm"><span class="nosub_text"><%381%></span></a></li>
+    <li class="<%382%>" id="wizard"><a href="WIZ_sel.htm"<%362%> onClick="return false"><span class="nosub_text"><%383%></span></a></li>
+    <li class="<%384%> <%385%>" id="wps-wizard" <%362%>><a href="Add_WPS_Client.htm"><span class="nosub_text"><%386%></span></a></li>
+    <li class="Sub" id="setup_header"><a href="#"><span><%387%></span></a></li> 
+    <li  class="subHeader" id="set_hdr"> 
+        <ul style="width:100%;height:148px">                               
+        <li class="<%388%> SubMenuWDS" id="int_set"><a href="<%359%>" <%362%> onClick="return false"><span class="subMenu_text"><%389%></span></a></li>                                     
+            <li class="<%390%> SubMenu" id="wireless_set" <%362%>><a href="<%318%>" onClick="return false"><span class="subMenu_text"><%78%></span></a></li>
+            <li class="<%388%> SubMenuWDS" id="wan_set"><a href="WAN_wan.htm" <%362%> onClick="return false"><span class="subMenu_text"><%391%></span></a></li>
+            <li class="<%392%> SubMenuWDS" id="LAN_set"><a href="LAN_lan.htm" <%362%> onClick="return false"><span class="subMenu_text"><%393%></span></a></li>
+            <li class="<%390%> SubMenuWDS SubMenuEXT" id="Qos_set" <%362%>><a href="QOS_down_streaming.htm" onClick="return false"><span class="subMenu_text"><%394%></span></a></li>
+            <li class="<%395%> SubMenuWDS SubMenuAP" id="guest_set" <%362%>><a href="<%374%>" onClick="return false"><span class="subMenu_text"><%375%></span></a></li>
+			<%396%>
+            <li class="SubMenu" id="device_name"><a href="DEV_name.htm" onClick="return false"><span class="subMenu_text"><%397%></span></a></li>
+			<%398%>
+        </ul>				            
+    </li>	           
+          <li class="Sub" id="USBStorage_header"><a href="#"><span><%399%></span></a></li>
+	  <li  class="subHeader">   
+	      <%400%>
+          <ul style="width:100%;height:70px">     
+	      <%401%>
+              <%402%>
+              <ul style="width:100%;height:60px">
+	      <%403%>	      
+                  <li class="SubMenu"><a href="Readyshare_Storage.htm" onClick="return false"><span style="border:0;"><%404%></span></a></li>
+		  <%400%>
+  		  <li class="SubMenu"><a href="USB_basic_printing.htm" onClick="return false"><span><%405%></span></a></li>
+		  <%401%>
+                  <li class="SubMenu"><a href="USB_basic_vault.htm" onClick="return false"><span style="border:0;"><%406%></span></a></li>
+		  <%407%>
+				  <li class="SubMenu"><a href="WWAN_wan.htm" onClick="return false"><span><%408%></span></a></li>
+		  <%409%>
+  	    </ul>				            
+          </li>	 
+        <!--
+        <li class="Sub" id="downloader_header"><a href="#"><span><%376%></span></a></li>
+        <li  class="subHeader">
+            <ul style="width:100%;height:60px">  
+                    <li class="SubMenu" id="down_set"><a href="Download_settings.htm" onClick="return false"><span class="subMenu_text"><%410%></span></a></li>
+                    <li class="SubMenu" id="down_manage"><a href="Download_manager.htm" onClick="return false"><span class="subMenu_text"><%411%></span></a></li>
+
+            </ul>
+        </li> 
+        --> 
+          <li class="Sub"   id="security_header"><a href="#"><span><%412%></span></a></li>
+          <li  class="subHeader">   
+              <ul id="security_settings_header" style="width:100%;height:128px">                            
+          <%257%>
+                    <li class="<%388%> SubMenuWDS"><a href="http://www.netgear.com/lpc" <%362%> id="PAR_menu2" target="_blank"><span style="border:0;" class="subMenu_text"><%372%></span></a></li>
+          <%258%>
+					<%413%>
+					<li class="<%414%> SubMenuWDS" id="access_control"><a href="DEV_control.htm" <%362%> onClick="return false"><span class="subMenu_text"><%415%></span></a></li>
+					<%416%>
+					<li class="<%388%> SubMenuWDS" id="blk_site"><a href="BKS_keyword.htm" <%362%> onClick="return false"><span class="subMenu_text"><%417%></span></a></li>
+  		            <li class="<%388%> SubMenuWDS"id="blk_serv"><a href="BKS_service.htm" <%362%> onClick="return false"><span class="subMenu_text"><%418%></span></a></li>
+          <%369%>
+  		            <li class="<%388%> SubMenuWDS"id="ParentalControls"><a href="Parental_controls.htm" <%362%> onClick="return false"><span class="subMenu_text"><%370%></span></a></li>
+          <%371%>
+                    <%369%>
+  		            <li class="<%388%> SubMenuWDS"id="NetgearArmor"><a href="NetgearArmor.htm" <%362%> onClick="return false"><span class="subMenu_text">NETGEAR Armor</span></a></li>
+                    <%371%>
+		              <li class="<%390%> SubMenuWDS SubMenuAP SubMenuEXT" id="sche" <%362%>><a href="FW_schedule.htm" onClick="return false"><span class="subMenu_text"><%419%></span></a></li>
+		              <li class="<%414%> SubMenuWDS SubMenuAP SubMenuEXT" id="email" <%362%>><a href="FW_email.htm" onClick="return false"><span class="subMenu_text"><%420%></span></a></li>
+                    <%421%>
+                    <li class="<%388%> SubMenuWDS"id="arp"><a href="ARP_binding.htm" onClick="return false"><span class="subMenu_text"><%422%></span></a></li>
+                    <%423%>
+              </ul>				            
+          </li>	 
+          <li class="Sub" id="administration"><a href="#"><span><%424%></span></a></li>
+          <li  class="subHeader">
+
+              <ul style="width:100%;height:128px">  
+            
+                  <li class="SubMenu" id="router_status"><a href="ADVANCED_home.htm" onClick="return false"><span style="border:0;" class="subMenu_text"><%425%></span></a></li>
+		              <li class="<%426%> SubMenuWDS SubMenuAP SubMenuEXT" id="logs"><a href="FW_log.htm" onClick="return false"><span class="subMenu_text"><%427%></span></a></li>
+		              <li class="SubMenu" ><a href="DEV_redirect.htm" onClick="return false"><span class="subMenu_text"><%364%></span></a></li>
+		              <li class="SubMenu"><a href="BAK_backup.htm" onClick="return false"><span id="admin_bakup" name="bak_set" class="subMenu_text"><%428%></span></a></li>
+		              <li class="SubMenu"><a href="PWD_password.htm" onClick="return false"><span class="subMenu_text"><%429%></span></a></li>
+					  <li class="SubMenu"><a href="NTP_settings.htm" onClick="return false"><span class="subMenu_text"><%430%></span></a></li>
+		              <li class="SubMenu"><a href="UPG_upgrade.htm" onClick="return false"><span class="subMenu_text"><%431%></span></a></li>
+	            </ul>
+          </li>  
+          <li class="Sub" id="advset_header"><a href="#"><span><%432%></span></a></li>
+          <li  class="subHeader">      
+
+          <ul id="adv_settings_header" style="width:100%;height:270px;display:block;">          
+          			 
+                  <li class="SubMenu" id="adv_wireless_set"><a href="<%433%>" <%362%> onClick="return false"><span class="subMenu_text"><%434%></span></a></li>                 
+                    <%435%>
+                      <li id="opmode_head" class="SubMenu"><a href="WLG_opmode_main_extender.htm" onClick="return false"><span class="subMenu_text"><%436%></span></a></li>
+                    <%437%>
+                    <%438%>
+                      <li id="opmode_head" class="SubMenu"><a href="WLG_opmode_main.htm" onClick="return false"><span class="subMenu_text"><%436%></span></a></li>
+                    <%439%>
+                    <%440%>					
+		              <li id="ap_head" class="<%395%> SubMenuWDS SubMenuAP"><a href="WLG_ap_dual_band.htm" onClick="return false"><span class="subMenu_text"><%441%></span></a></li>
+		              <li id="wds_head" class="<%392%> SubMenuWDS"><a href="<%442%>" onClick="return false"><span class="subMenu_text"><%443%></span></a></li>
+                    <%444%>					  
+		              <li id="pf_head"  class="<%445%>  SubMenuWDS"><a href="FW_forward3.htm" <%360%> onClick="return false"><span class="subMenu_text"><%446%></span></a></li>
+					  <li class="SubMenu SubMenuWDS SubMenuEXT SubMenuAP" id="ddns"><a href="DNS_ddns.htm" onClick="return false"><span class="subMenu_text"><%447%></span></a></li>
+					  <li class="<%388%> SubMenuWDS" id="openvpn"><a href="OPENVPN.htm" <%362%> onClick="return false"><span class="subMenu_text"><%448%></span></a></li>
+		              <li class="SubMenu SubMenuWDS SubMenuEXT SubMenuAP" id="sta_rout"><a href="STR_routes.htm" onClick="return false"><span class="subMenu_text"><%449%></span></a></li>		                
+		                          <li class="<%388%> SubMenuWDS" id="remote"><a href="FW_remote.htm" <%362%> onClick="return false"><span class="subMenu_text"><%450%></span></a></li>		                
+		              <li class="<%388%> SubMenuWDS" id="upnp"><a href="UPNP_upnp.htm"  <%362%> onClick="return false"><span class="subMenu_text"><%451%></span></a></li>
+                      <li class="<%388%> SubMenuWDS"><a href="IPV6_basic.htm" <%362%> onClick="return false"><span class="subMenu_text"><%452%></span></a></li>
+                      <li class="<%388%> SubMenuWDS"><a href="traffic_meter.htm" <%362%> onClick="return false"><span class="subMenu_text"><%453%></span></a></li>
+                      <li class="SubMenu"><a href="USB_settings.htm" onClick="return false"><span class="subMenu_text"><%454%></span></a></li>
+                      <li class="SubMenu"><a href="LED_settings.htm" onClick="return false"><span class="subMenu_text"><%455%></span></a></li>
+                      <li class="<%388%> SubMenuWDS" id="vlan_set"><a href="VLAN_IPTV.htm" <%362%> onClick="return false"><span class="subMenu_text"><%456%></span></a></li>
+<!--
+                      <li class="SubMenu"><a href="fbwifi.htm" onClick="return false"><span class="subMenu_text"><%457%></span></a></li>
+-->
+          </ul>
+          </li>	   
+      </ul>   
+</td>
+<td style="background-color:#e5e5e5">
+<div id="page_contain2">
+<iframe id="page2" name="page2" style="width:600px;height:405px;margin-left:30px"  frameborder="0" border="0" cellspacing="0" scrolling="no" onFocus="this.blur()"></iframe>       
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<!-- tab "panes" -->
+          </table>
+        </div> <!--  id=main_screen-->
+<!-- Trigger/Open The Modal -->
+<!-- The Modal -->
+        <div id="circle-info-modal" class="circle-modal" style="border-width:1px;border-color:black">
+          <!-- Modal content -->
+          <div class="circle-modal-content" style="width:480px">    
+            <table style="align:center">
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <p><span style="font-size:24px"><b><%458%></b></span></p>
+                </td>
+                <td style="text-align:center">
+                  <span onclick="hide_circle_window();" style="float:left;font-weight:bold;font-size:24px">&times;</span>
+                </td>
+              </tr>
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <img src="img/circle_with_disney_blue.jpg" border='0'">
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>   
+              <tr>
+              </tr>   
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                  <td  style="text-align:center">
+                    <span style="font-size:14px"><b><%459%></b></span>
+                  </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>   
+              <tr style="height:50px">
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align:center">
+                  <a onClick="window.open('http://www.netgear.com/circle', 'Help', 'scrollbars=yes')" href=""><span style="font-size:12px;font-color:RGB(5,187,209)"><b><%460%></b></span></a>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>   
+              <tr>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td  align=center>		
+                    <div  style="line-height:45px;width:320px;height:46px;cursor: pointer;cursor:hand;background: url(img/circle_enable_button_2.jpg) no-repeat left center" onClick="enable_circle();" >
+                        <span valign=middle style="font-size:16px;color:RGB(240,240,240)"><%461%><span>
+                   </div>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>   
+              <tr style="height:10px">
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr style="height:50px">
+                <td >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td class="centerTd" style="text-align:center;font-size:12px"><style="font-weight:normal;font-size:18px;"><input type="checkbox" name="never_remind_me" value="1"><b><%462%>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><span onClick="skip_circle();"><b><font color=RGB(149,198,462)><%463%></b></font></sapn></td>
+                <td style="text-align:center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      </td>
+    </tr>
+  </table>
+
+</form>
+
+<div id="container" class="container_center">
+<div id="footer" class="footer">
+	<img class="footer_img" src="img/footer.gif">
+<div id="support">
+	<b> <%464%></b> &nbsp;
+<%218%>
+		<a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> | 
+<%219%>
+<%220%>
+                <a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> |
+<%221%>
+
+<%230%>
+		<a target="_blank" href="http://documentation.netgear.com/wndr4000/enu/202-10781-01/index.htm"><%465%></a> |
+<%231%>
+
+<%232%>
+		<a target="_blank" href="http://documentation.netgear.com/wndr3700v3/enu/202-10985-01/index.htm"><%465%></a> |
+<%233%>
+
+<%222%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%223%>
+
+<%224%>
+		<a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> | 
+<%225%>
+
+<%226%>
+		<a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> | 
+<%227%>
+
+<%228%>
+		<a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> | 
+<%229%>
+
+<%234%>
+		<a target="_blank" href="http://downloadcenter.netgear.com/"><%465%></a> |
+<%235%>
+
+<%236%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%237%>
+<%238%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%239%>
+<%240%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%241%>
+<%242%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%243%>
+<%244%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%245%>
+<%246%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%247%>
+<%248%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%249%>
+<%250%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%251%>
+<%252%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%253%>
+<%254%>
+		<a target="_blank" href="<%466%>"><%465%></a> | 
+<%255%>
+		<a target="_blank" href="<%467%>"><%468%></a> | 
+		<a target="_blank" href="<%469%>"><%470%></a> |
+        <a target="_blank" href="OpenSourceLicense.html"><%471%></a>
+</div>
+<div id="search" align=right>
+	<b> <%472%> </b>
+	<input style="width:200px" type="text" id="search_text" name="search" value="<%473%>" onkeypress="detectEnter('num',event);" onFocus="this.select();" >
+	<input id="search_button" class="search_button" type="button" name="dosearch" value="<%474%>" onClick="do_search();">
+</div>
+</div>
+</div>
+
+
+
+
+<div id="preloaded-images">
+   <img src="img/basic-white-button.gif" width="1" height="1" alt="">  
+   <img src="img/firmware-hint-background.gif" width="1" height="1" alt="">
+   <img src="img/barrow.jpg" width="1" height="1" alt="">
+   <img src="img/basic-white-button.gif" width="1" height="1" alt="">
+   <img src="img/firmware-hint-background.gif" width="1" height="1" alt="">
+   <img src="img/barrow.jpg" width="1" height="1" alt="">
+   <img src="img/subMenuActive.png" width="1" height="1" alt="">
+   <img src="img/subMenuActiveLarge.png" width="1" height="1" alt="">
+   <img src="img/barrow_down.jpg" width="1" height="1" alt="">
+   <img src="img/basic-purple-button.gif" width="1" height="1" alt="">
+   <img src="img/roundedcornr_637010.gif" width="1" height="1" alt="">
+   <img src="img/warrow.jpg" width="1" height="1" alt="">
+   <img src="ajax-loader.gif" width="1" height="1" alt="">
+   <img src="img/main-page-bottom.gif" width="1" height="1" alt="">
+   <img src="img/gray-button.gif" width="1" height="1" alt="">
+    <input type="hidden" name="repeater" value="<%475%>">
+    <input type="hidden" name="repeater_an" value="<%476%>">
+    <input type="hidden" name="no_remind" value="<%477%>">
+    <input type="hidden" name="enable_apmode" value="<%478%>">   
+    <input type="hidden" name="enable_stamode" value="<%479%>">   
+    <input type="hidden" name="enable_extmode" value="<%480%>">   
+    <input type="hidden" name="enable_circle" value="<%481%>">   
+    <input type="hidden" name="have_usb_attached" value="<%482%>">
+</div>                                                
+<!-- This JavaScript snippet activates those tabs -->
+
+<form name="SSOAPI" method="POST" action="bd_registration.cgi">
+<!-- MODAL BOX CONTROL -->
+<div id="modalBox" class="modal">
+  <div id="modal-bitdefender-login" class="modal-content">
+    <div class="modal-header">
+      <span class="close modal-close">x</span>
+      <div class="modalBox-title"><%483%></div>
+    </div>
+    <div class="modal-body">
+		  <div style="text-align:center;color: #333;font-size: 14px;margin-top:20px">
+			  <b><%484%></b>
+		  </div>
+		  <div class="input-wrapper ">
+			  <input type="text" name="box_login_name" placeholder="<%485%>">
+		  </div>
+		  <div class="input-wrapper">
+			  <input type="password" name="box_login_password" placeholder="<%486%>">
+		  </div>
+		  <div style="height:8px">
+    	<span style="font-size:8px">&nbsp;</span>
+    	</div>
+		  <div>
+    	<span id="forgetNetgearAccount" class="modalForgetLink" style="font-size:12px;height:30px;padding-left:40px;color:#05BBD1"><%487%></span>
+    	</div>
+		  <div id="bitLoginButton" class="modalButton">LOGIN</div>
+      	<span id="createNetgearAccount" class="modalLink"><%488%></span>
+	  </div>
+  </div>
+  <div id="modal-bitdefender-login2" class="modal-content">
+    <div class="modal-header">
+      <span class="close modal-close-3">x</span>
+      <div class="modalBox-title"><%483%></div>
+    </div>
+    <div class="modal-body">
+		  <div style="text-align:center;color: #333;font-size: 14px;margin-top:20px">
+			  <b><%484%></b>
+		  </div>
+		  <div class="input-wrapper ">
+			  <input type="text" name="box_login_name2" placeholder="<%485%>">
+		  </div>
+		  <div class="input-wrapper">
+			  <input type="password" name="box_login_password2" placeholder="<%486%>">
+		  </div>
+		  <div style="height:8px">
+    	<span style="font-size:8px">&nbsp;</span>
+    	</div>
+		  <div>
+    	<span id="forgetNetgearAccount" class="modalForgetLink" style="font-size:12px;height:30px;padding-left:40px;color:#05BBD1"><%487%></span>
+    	</div>
+		  <div id="bitLoginButton2" class="modalButton">LOGIN</div>
+      	<span id="createNetgearAccount" class="modalLink"><%488%></span>
+	  </div>
+  </div>
+  <div id="modal-bitdefender-forget-password" class="modal-content" style="width:200px;height:200px">
+    <div class="modal-header">
+      <span class="close modal-close-3">x</span>
+      <div class="modalBox-title"><%489%></div>
+    </div>
+    <div class="modal-body">
+		  <div style="text-align:center;color: #333;font-size: 14px;margin-top:20px">
+		  </div>
+		  <div class="input-wrapper ">
+			  <input type="text" name="box_forget_email" placeholder="<%420%>">
+		  </div>
+		  <div class="input-wrapper">
+			  <input type="text" name="box_forget_serial" value="<%490%>" placeholder="<%491%>">
+		  </div>
+		  <div style="height:8px">
+    	<span style="font-size:8px">&nbsp;</span>
+    	</div>
+		  <div id="bitRecoveryButton" class="modalButton">RECOVER</div>
+	  </div>
+  </div>
+  <div id="modal-bitdefender-clean" class="modal-content" style="width:200px;height:200px">
+    <div class="modal-header">
+      <span class="close modal-close-2">x</span>
+      <div class="modalBox-title">Reset</div>
+    </div>
+    <div class="modal-body">
+		  <div style="text-align:center;color: #333;font-size: 14px;margin-top:20px">
+		  </div>
+		  <div class="input-wrapper">
+			  <input type="text" name="box_clean_serial" value="<%490%>" placeholder="Serial Number">
+		  </div>
+		  <div style="height:8px">
+    	<span style="font-size:8px">&nbsp;</span>
+    	</div>
+		  <div id="bitRetrieveButton" class="modalButton">RETRIVE</div>
+		  <div id="bitCleanButton" class="modalButton">CLEAN</div>
+	  </div>
+  </div>
+  <div id="modal-createNetgearAccount" class="modal-content">
+		<div class="modal-header">
+		  <span class="close modal-close">x</span>
+		  <div class="modalBox-title"><%492%></div>
+		</div>
+    <div style="text-align:center;color: #333;font-size: 14px;margin-top:20px">
+		  <b><%493%></b>
+		</div>
+		<div class="modal-body">
+      <table style="width:100%">
+        <tr>
+          <td>
+	  		    <div class="input-wrapper half-block">
+		  		    <input type="text" name="box_register_first_name" placeholder="<%494%>" onclick="change_country();">
+			      </div>			
+			    </td>
+  			  <td>
+    			  <div class="input-wrapper half-block">
+		    	    <input type="text" name="box_register_last_name" placeholder="<%495%>" onclick="change_country();">
+			      </div>
+			    </td>
+			  </tr>
+			  <tr>
+			    <td>
+  			    <div class="input-wrapper half-block">
+	  			    <input type="text" name="box_register_email" placeholder="Email" onclick="change_country();">
+		   	    </div>
+			    </td>
+			    <td>  
+			      <div class="input-wrapper half-block">
+				      <div class="dropdown">
+			          <button id="countryBtn" type="button" value="BUTTON" class="dropbtn"><%496%></button>
+				          <div class="dropdown-content" style="height:400px;overflow:auto">
+       	            <a href="#" onclick="select_country(0,'Afghanistan')">Afghanistan</a>
+        	          <a href="#" onclick="select_country(1,'Aland Islands')">Aland Islands</a>
+        	          <a href="#" onclick="select_country(2,'Albania')">Albania</a>
+        	          <a href="#" onclick="select_country(3,'Algeria')">Algeria</a>
+        	          <a href="#" onclick="select_country(4,'American Samoa')">American Samoa</a>
+        	          <a href="#" onclick="select_country(5,'Andorra')">Andorra</a>
+        	          <a href="#" onclick="select_country(6,'Angola')">Angola</a>
+        	          <a href="#" onclick="select_country(7,'Anguilla')">Anguilla</a>
+        	          <a href="#" onclick="select_country(8,'Antarctica')">Antarctica</a>
+        	          <a href="#" onclick="select_country(9,'Antigua and Barbuda')">Antigua and Barbuda</a>
+        	          <a href="#" onclick="select_country(10,'Argentina')">Argentina</a>
+        	          <a href="#" onclick="select_country(11,'Armenia')">Armenia</a>
+        	          <a href="#" onclick="select_country(12,'Aruba')">Aruba</a>
+        	          <a href="#" onclick="select_country(13,'Australia')">Australia</a>
+        	          <a href="#" onclick="select_country(14,'Austria')">Austria</a>
+        	          <a href="#" onclick="select_country(15,'Azerbaijan')">Azerbaijan</a>
+        	          <a href="#" onclick="select_country(16,'Bahamas')">Bahamas</a>
+        	          <a href="#" onclick="select_country(17,'Bahrain')">Bahrain</a>
+        	          <a href="#" onclick="select_country(18,'Bangladesh')">Bangladesh</a>
+        	          <a href="#" onclick="select_country(19,'Barbados')">Barbados</a>
+        	          <a href="#" onclick="select_country(20,'Belarus')">Belarus</a>
+        	          <a href="#" onclick="select_country(21,'Belgium')">Belgium</a>
+        	          <a href="#" onclick="select_country(22,'Belize')">Belize</a>
+        	          <a href="#" onclick="select_country(23,'Benin')">Benin</a>
+        	          <a href="#" onclick="select_country(24,'Bermuda')">Bermuda</a>
+        	          <a href="#" onclick="select_country(25,'Bhutan')">Bhutan</a>
+        	          <a href="#" onclick="select_country(26,'Bolivia, Plurinational State of')">Bolivia, Plurinational State of</a>
+        	          <a href="#" onclick="select_country(27,'Bonaire, Sint Eustatius and Saba')">Bonaire, Sint Eustatius and Saba</a>
+        	          <a href="#" onclick="select_country(28,'Bosnia and Herzegovina')">Bosnia and Herzegovina</a>
+        	          <a href="#" onclick="select_country(29,'Botswana')">Botswana</a>
+        	          <a href="#" onclick="select_country(30,'Bouvet Island')">Bouvet Island</a>
+        	          <a href="#" onclick="select_country(31,'Brazil')">Brazil</a>
+        	          <a href="#" onclick="select_country(32,'British Indian Ocean Territory')">British Indian Ocean Territory</a>
+        	          <a href="#" onclick="select_country(33,'Brunei Darussalam')">Brunei Darussalam</a>
+        	          <a href="#" onclick="select_country(34,'Bulgaria')">Bulgaria</a>
+        	          <a href="#" onclick="select_country(35,'Burkina Faso')">Burkina Faso</a>
+        	          <a href="#" onclick="select_country(36,'Burundi')">Burundi</a>
+        	          <a href="#" onclick="select_country(37,'Cabo Verde')">Cabo Verde</a>
+        	          <a href="#" onclick="select_country(38,'Cambodia')">Cambodia</a>
+        	          <a href="#" onclick="select_country(39,'Cameroon')">Cameroon</a>
+        	          <a href="#" onclick="select_country(40,'Canada')">Canada</a>
+        	          <a href="#" onclick="select_country(41,'Cayman Islands')">Cayman Islands</a>
+        	          <a href="#" onclick="select_country(42,'Central African Republic')">Central African Republic</a>
+        	          <a href="#" onclick="select_country(43,'Chad')">Chad</a>
+        	          <a href="#" onclick="select_country(44,'Chile')">Chile</a>
+        	          <a href="#" onclick="select_country(45,'China')">China</a>
+        	          <a href="#" onclick="select_country(46,'Christmas Island')">Christmas Island</a>
+        	          <a href="#" onclick="select_country(47,'Cocos Keeling Islands')">Cocos (Keeling) Islands</a>
+        	          <a href="#" onclick="select_country(48,'Colombia')">Colombia</a>
+        	          <a href="#" onclick="select_country(49,'Comoros')">Comoros</a>
+        	          <a href="#" onclick="select_country(50,'Congo')">Congo</a>
+        	          <a href="#" onclick="select_country(51,'Congo, the Democratic Republic of the')">Congo, the Democratic Republic of the</a>
+        	          <a href="#" onclick="select_country(52,'Cook Islands')">Cook Islands</a>
+        	          <a href="#" onclick="select_country(53,'Costa Rica')">Costa Rica</a>
+        	          <a href="#" onclick="select_country(54,'Cote Ivoire')">Cote d'Ivoire</a>
+        	          <a href="#" onclick="select_country(55,'Croatia')">Croatia</a>
+        	          <a href="#" onclick="select_country(56,'Cuba')">Cuba</a>
+        	          <a href="#" onclick="select_country(57,'Curacao')">Curacao</a>
+        	          <a href="#" onclick="select_country(58,'Cyprus')">Cyprus</a>
+        	          <a href="#" onclick="select_country(59,'Czech Republic')">Czech Republic</a>
+        	          <a href="#" onclick="select_country(60,'Denmark')">Denmark</a>
+        	          <a href="#" onclick="select_country(61,'Djibouti')">Djibouti</a>
+        	          <a href="#" onclick="select_country(62,'Dominica')">Dominica</a>
+        	          <a href="#" onclick="select_country(63,'Dominican Republic')">Dominican Republic</a>
+        	          <a href="#" onclick="select_country(64,'Ecuador')">Ecuador</a>
+        	          <a href="#" onclick="select_country(65,'Egypt')">Egypt</a>
+        	          <a href="#" onclick="select_country(66,'El Salvador')">El Salvador</a>
+        	          <a href="#" onclick="select_country(67,'Equatorial Guinea')">Equatorial Guinea</a>
+        	          <a href="#" onclick="select_country(68,'Eritrea')">Eritrea</a>
+        	          <a href="#" onclick="select_country(69,'Estonia')">Estonia</a>
+        	          <a href="#" onclick="select_country(70,'Ethiopia')">Ethiopia</a>
+        	          <a href="#" onclick="select_country(71,'Falkland Islands Malvinas')">Falkland Islands (Malvinas)</a>
+        	          <a href="#" onclick="select_country(72,'Faroe Islands')">Faroe Islands</a>
+        	          <a href="#" onclick="select_country(73,'Fiji')">Fiji</a>
+        	          <a href="#" onclick="select_country(74,'Finland')">Finland</a>
+        	          <a href="#" onclick="select_country(75,'France')">France</a>
+        	          <a href="#" onclick="select_country(76,'French Guiana')">French Guiana</a>
+        	          <a href="#" onclick="select_country(77,'French Polynesia')">French Polynesia</a>
+        	          <a href="#" onclick="select_country(78,'French Southern Territories')">French Southern Territories</a>
+        	          <a href="#" onclick="select_country(79,'Gabon')">Gabon</a>
+        	          <a href="#" onclick="select_country(80,'Gambia')">Gambia</a>
+        	          <a href="#" onclick="select_country(81,'Georgia')">Georgia</a>
+        	          <a href="#" onclick="select_country(82,'Germany')">Germany</a>
+        	          <a href="#" onclick="select_country(83,'Ghana')">Ghana</a>
+        	          <a href="#" onclick="select_country(84,'Gibraltar')">Gibraltar</a>
+        	          <a href="#" onclick="select_country(85,'Greece')">Greece</a>
+        	          <a href="#" onclick="select_country(86,'Greenland')">Greenland</a>
+        	          <a href="#" onclick="select_country(87,'Grenada')">Grenada</a>
+        	          <a href="#" onclick="select_country(88,'Guadeloupe')">Guadeloupe</a>
+        	          <a href="#" onclick="select_country(89,'Guam')">Guam</a>
+        	          <a href="#" onclick="select_country(90,'Guatemala')">Guatemala</a>
+        	          <a href="#" onclick="select_country(91,'Guernsey')">Guernsey</a>
+        	          <a href="#" onclick="select_country(92,'Guinea')">Guinea</a>
+        	          <a href="#" onclick="select_country(93,'Guinea-Bissau')">Guinea-Bissau</a>
+        	          <a href="#" onclick="select_country(94,'Guyana')">Guyana</a>
+        	          <a href="#" onclick="select_country(95,'Haiti')">Haiti</a>
+        	          <a href="#" onclick="select_country(96,'Heard Island and McDonald Islands')">Heard Island and McDonald Islands</a>
+        	          <a href="#" onclick="select_country(97,'Holy See Vatican City State')">Holy See (Vatican City State)</a>
+        	          <a href="#" onclick="select_country(98,'Honduras')">Honduras</a>
+        	          <a href="#" onclick="select_country(99,'Hong Kong')">Hong Kong</a>
+        	          <a href="#" onclick="select_country(100,'Hungary')">Hungary</a>
+        	          <a href="#" onclick="select_country(101,'Iceland')">Iceland</a>
+        	          <a href="#" onclick="select_country(102,'India')">India</a>
+        	          <a href="#" onclick="select_country(103,'Indonesia')">Indonesia</a>
+        	          <a href="#" onclick="select_country(104,'Iran, , Islamic Republic of')">Iran, Islamic Republic of</a>
+        	          <a href="#" onclick="select_country(105,'Iraq')">Iraq</a>
+        	          <a href="#" onclick="select_country(106,'Ireland')">Ireland</a>
+        	          <a href="#" onclick="select_country(107,'Isle of Man')">Isle of Man</a>
+        	          <a href="#" onclick="select_country(108,'Israel')">Israel</a>
+        	          <a href="#" onclick="select_country(109,'Italy')">Italy</a>
+        	          <a href="#" onclick="select_country(110,'Jamaica')">Jamaica</a>
+        	          <a href="#" onclick="select_country(111,'Japan')">Japan</a>
+        	          <a href="#" onclick="select_country(112,'Jersey')">Jersey</a>
+        	          <a href="#" onclick="select_country(113,'Jordan')">Jordan</a>
+        	          <a href="#" onclick="select_country(114,'Kazakhstan')">Kazakhstan</a>
+        	          <a href="#" onclick="select_country(115,'Kenya')">Kenya</a>
+        	          <a href="#" onclick="select_country(116,'Kiriba')">Kiribati</a>
+        	          <a href="#" onclick="select_country(117,'Korea, Democratic People Republic of')">Korea, Democratic People's Republic of</a>
+        	          <a href="#" onclick="select_country(118,'Korea, Republic of')">Korea, Republic of</a>
+        	          <a href="#" onclick="select_country(119,'Kuwait')">Kuwait</a>
+        	          <a href="#" onclick="select_country(120,'Kyrgyzstan')">Kyrgyzstan</a>
+        	          <a href="#" onclick="select_country(121,'Lao People Democratic Republic')">Lao People's Democratic Republic</a>
+        	          <a href="#" onclick="select_country(122,'Latvia')">Latvia</a>
+        	          <a href="#" onclick="select_country(123,'Lebanon')">Lebanon</a>
+        	          <a href="#" onclick="select_country(124,'Lesotho')">Lesotho</a>
+        	          <a href="#" onclick="select_country(125,'Liberia')">Liberia</a>
+        	          <a href="#" onclick="select_country(126,'Libya')">Libya</a>
+        	          <a href="#" onclick="select_country(127,'Liechtenstein')">Liechtenstein</a>
+        	          <a href="#" onclick="select_country(128,'Lithuania')">Lithuania</a>
+        	          <a href="#" onclick="select_country(129,'Luxembourg')">Luxembourg</a>
+        	          <a href="#" onclick="select_country(130,'Macao')">Macao</a>
+        	          <a href="#" onclick="select_country(131,'Macedonia, the former Yugoslav Republic of')">Macedonia, the former Yugoslav Republic of</a>
+        	          <a href="#" onclick="select_country(132,'Madagascar')">Madagascar</a>
+        	          <a href="#" onclick="select_country(133,'Malawi')">Malawi</a>
+        	          <a href="#" onclick="select_country(134,'Malaysia')">Malaysia</a>
+        	          <a href="#" onclick="select_country(135,'Maldives')">Maldives</a>
+        	          <a href="#" onclick="select_country(136,'Mali')">Mali</a>
+        	          <a href="#" onclick="select_country(137,'Malta')">Malta</a>
+        	          <a href="#" onclick="select_country(138,'Marshall Islands')">Marshall Islands</a>
+        	          <a href="#" onclick="select_country(139,'Martinique')">Martinique</a>
+        	          <a href="#" onclick="select_country(140,'Mauritania')">Mauritania</a>
+        	          <a href="#" onclick="select_country(141,'Mauritius')">Mauritius</a>
+        	          <a href="#" onclick="select_country(142,'Mayotte')">Mayotte</a>
+        	          <a href="#" onclick="select_country(143,'Mexico')">Mexico</a>
+        	          <a href="#" onclick="select_country(144,'Micronesia, Federated States of')">Micronesia, Federated States of</a>
+        	          <a href="#" onclick="select_country(145,'Moldova, Republic of')">Moldova, Republic of</a>
+                    <a href="#" onclick="select_country(146,'Monaco')">Monaco</a>
+                    <a href="#" onclick="select_country(147,'Mongolia')">Mongolia</a>
+                    <a href="#" onclick="select_country(148,'Montenegro')">Montenegro</a>
+                    <a href="#" onclick="select_country(149,'Montserrat')">Montserrat</a>
+                    <a href="#" onclick="select_country(150,'Morocco')">Morocco</a>
+                    <a href="#" onclick="select_country(151,'Mozambique')">Mozambique</a>
+                    <a href="#" onclick="select_country(152,'Myanmar')">Myanmar</a>
+                    <a href="#" onclick="select_country(153,'Namibia')">Namibia</a>
+                    <a href="#" onclick="select_country(154,'Nauru')">Nauru</a>
+                    <a href="#" onclick="select_country(155,'Nepal')">Nepal</a>
+                    <a href="#" onclick="select_country(156,'Netheralnds')">Netherlands</a>
+                    <a href="#" onclick="select_country(157,'New Caledonia')">New Caledonia</a>
+                    <a href="#" onclick="select_country(158,'New Zealand')">New Zealand</a>
+                    <a href="#" onclick="select_country(159,'Nicaragua')">Nicaragua</a>
+                    <a href="#" onclick="select_country(160,'Niger')">Niger</a>
+                    <a href="#" onclick="select_country(161,'Nigeria')">Nigeria</a>
+                    <a href="#" onclick="select_country(162,'Niue')">Niue</a>
+                    <a href="#" onclick="select_country(163,'Norfolk Island')">Norfolk Island</a>
+                    <a href="#" onclick="select_country(164,'Northern Mariana Islands')">Northern Mariana Islands</a>
+                    <a href="#" onclick="select_country(165,'Norway')">Norway</a>
+                    <a href="#" onclick="select_country(166,'Oman')">Oman</a>
+                    <a href="#" onclick="select_country(167,'Pakistan')">Pakistan</a>
+                    <a href="#" onclick="select_country(168,'Palau')">Palau</a>
+                    <a href="#" onclick="select_country(169,'Palestinian Territory, Occupied')">Palestinian Territory, Occupied</a>
+                    <a href="#" onclick="select_country(170,'Panama')">Panama</a>
+                    <a href="#" onclick="select_country(171,'Papua New Guinea')">Papua New Guinea</a>
+                    <a href="#" onclick="select_country(172,'Paraguay')">Paraguay</a>
+                    <a href="#" onclick="select_country(173,'Peru')">Peru</a>
+                    <a href="#" onclick="select_country(174,'Philippines')">Philippines</a>
+                    <a href="#" onclick="select_country(175,'Pitcairn')">Pitcairn</a>
+                    <a href="#" onclick="select_country(176,'Poland')">Poland</a>
+                    <a href="#" onclick="select_country(177,'Portugal')">Portugal</a>
+                    <a href="#" onclick="select_country(178,'Puerto Rico')">Puerto Rico</a>
+                    <a href="#" onclick="select_country(179,'Qatar')">Qatar</a>
+                    <a href="#" onclick="select_country(180,'Reunion')">Reunion</a>
+                    <a href="#" onclick="select_country(181,'Romania')">Romania</a>
+                    <a href="#" onclick="select_country(182,'Russiaan Federation')">Russian Federation</a>
+                    <a href="#" onclick="select_country(183,'Rwanda')">Rwanda</a>
+                    <a href="#" onclick="select_country(184,'Saint Barthelemy')">Saint Barthelemy</a>
+                    <a href="#" onclick="select_country(185,'Saint Helena, Ascension and Tristan da Cunha')">Saint Helena, Ascension and Tristan da Cunha</a>
+                    <a href="#" onclick="select_country(186,'Saint Kitts and Nevis')">Saint Kitts and Nevis</a>
+                    <a href="#" onclick="select_country(187,'Saint Lucia')">Saint Lucia</a>
+                    <a href="#" onclick="select_country(188,'Saint Martin French part')">Saint Martin (French part)</a>
+                    <a href="#" onclick="select_country(189,'Saint Pierre and Miquelon')">Saint Pierre and Miquelon</a>
+                    <a href="#" onclick="select_country(190,'Saint Vincent and the Grenadines')">Saint Vincent and the Grenadines</a>
+                    <a href="#" onclick="select_country(191,'Samoa')">Samoa</a>
+                    <a href="#" onclick="select_country(192,'San Marino')">San Marino</a>
+                    <a href="#" onclick="select_country(193,'Sao Tome and Principe')">Sao Tome and Principe</a>
+                    <a href="#" onclick="select_country(194,'Saudi Arabia')">Saudi Arabia</a>
+                    <a href="#" onclick="select_country(195,'Senegal')">Senegal</a>
+                    <a href="#" onclick="select_country(196,'Serbia')">Serbia</a>
+                    <a href="#" onclick="select_country(197,'Seychelles')">Seychelles</a>
+                    <a href="#" onclick="select_country(198,'Sierra Leone')">Sierra Leone</a>
+                    <a href="#" onclick="select_country(199,'Singapore')">Singapore</a>
+                    <a href="#" onclick="select_country(200,'Sint Maarten')">Sint Maarten (Dutch part)</a>
+                    <a href="#" onclick="select_country(201,'Slovakia')">Slovakia</a>
+                    <a href="#" onclick="select_country(202,'Slovenia')">Slovenia</a>
+                    <a href="#" onclick="select_country(203,'Solomon Islands')">Solomon Islands</a>
+                    <a href="#" onclick="select_country(204,'Somalia')">Somalia</a>
+                    <a href="#" onclick="select_country(205,'South Africa')">South Africa</a>
+                    <a href="#" onclick="select_country(206,'South Georgia and the South Sandwich Islands')">South Georgia and the South Sandwich Islands</a>
+                    <a href="#" onclick="select_country(207,'South Sudan')">South Sudan</a>
+                    <a href="#" onclick="select_country(208,'Spain')">Spain</a>
+                    <a href="#" onclick="select_country(209,'Sri Lanka')">Sri Lanka</a>
+                    <a href="#" onclick="select_country(210,'Sudan')">Sudan</a>
+                    <a href="#" onclick="select_country(211,'Suriname')">Suriname</a>
+                    <a href="#" onclick="select_country(212,'Svalba and Jan Mayen')">Svalbard and Jan Mayen</a>
+                    <a href="#" onclick="select_country(213,'Swaziland')">Swaziland</a>
+                    <a href="#" onclick="select_country(214,'Sweden')">Sweden</a>
+                    <a href="#" onclick="select_country(215,'Switzerland')">Switzerland</a>
+                    <a href="#" onclick="select_country(216,'Syrian Arab Republic')">Syrian Arab Republic</a>
+                    <a href="#" onclick="select_country(217,'Taiwan, Province of China')">Taiwan, Province of China</a>
+                    <a href="#" onclick="select_country(218,'Tajikistan')">Tajikistan</a>
+                    <a href="#" onclick="select_country(219,'Tanzania, United Republic of')">Tanzania, United Republic of</a>
+                    <a href="#" onclick="select_country(220,'Thailand')">Thailand</a>
+                    <a href="#" onclick="select_country(221,'Timor-Leste')">Timor-Leste</a>
+                    <a href="#" onclick="select_country(222,'Togo')">Togo</a>
+                    <a href="#" onclick="select_country(223,'Tokelau')">Tokelau</a>
+                    <a href="#" onclick="select_country(224,'Tonga')">Tonga</a>
+                    <a href="#" onclick="select_country(225,'Trinidad and Tobago')">Trinidad and Tobago</a>
+                    <a href="#" onclick="select_country(226,'Tunisia')">Tunisia</a>
+                    <a href="#" onclick="select_country(227,'Turkey')">Turkey</a>
+                    <a href="#" onclick="select_country(228,'Turkmeitan')">Turkmenistan</a>
+                    <a href="#" onclick="select_country(229,'Turks and Caicos Islands')">Turks and Caicos Islands</a>
+                    <a href="#" onclick="select_country(230,'Tuvalu')">Tuvalu</a>
+                    <a href="#" onclick="select_country(231,'Uganda')">Uganda</a>
+                    <a href="#" onclick="select_country(232,'Ukraine')">Ukraine</a>
+                    <a href="#" onclick="select_country(233,'United Arab Emirates')">United Arab Emirates</a>
+                    <a href="#" onclick="select_country(234,'United Kingdom')">United Kingdom</a>
+                    <a href="#" onclick="select_country(235,'United States')">United States</a>
+                    <a href="#" onclick="select_country(236,'United States Minor Outlying Islands')">United States Minor Outlying Islands</a>
+                    <a href="#" onclick="select_country(237,'Uruguay')">Uruguay</a>
+                    <a href="#" onclick="select_country(238,'Uzbekistan')">Uzbekistan</a>
+                    <a href="#" onclick="select_country(239,'Vanuatu')">Vanuatu</a>
+                    <a href="#" onclick="select_country(240,'Venezuela, Bolivarian Republic of')">Venezuela, Bolivarian Republic of</a>
+                    <a href="#" onclick="select_country(241,'Viet Nam')">Viet Nam</a>
+                    <a href="#" onclick="select_country(242,'Virgin Islands, British')">Virgin Islands, British</a>
+                    <a href="#" onclick="select_country(243,'Virgin Islands, U.S.')">Virgin Islands, U.S.</a>
+                    <a href="#" onclick="select_country(244,'Wallis and Futuna')">Wallis and Futuna</a>
+                    <a href="#" onclick="select_country(245,'Western Sahara')">Western Sahara</a>
+                    <a href="#" onclick="select_country(246,'Yemen')">Yemen</a>
+                    <a href="#" onclick="select_country(247,'Zambia')">Zambia</a>
+                    <a href="#" onclick="select_country(248,'Zimbabwe')">Zimbabwe</a>
+                </div>
+              </div>
+			      </div>
+			    </td>
+			  </tr>
+			  <tr>
+			    <td>
+			      <div class="input-wrapper half-block">
+				      <input type="password" name="box_register_password" placeholder="<%497%>" onclick="change_country();">
+			      </div>
+			    </td>
+			    <td>
+			      <div class="input-wrapper half-block">
+				      <input type="password" name="box_register_confirm_password" placeholder="<%498%>" onclick="change_country();">
+			      </div>
+			    </td>
+			  </tr>
+			</table>
+			<div class="input-wrapper full-block">
+				<input type="text" name="box_register_serial_number" name="register_serial_number" value="<%490%>" placeholder="<%491%>" onclick="change_country();">
+			</div>
+	    	<div class="checkbox-wrapper">
+				<input type="checkbox" id="acceptTerms">
+				<label for="acceptTerms"><b><%499%></b></label>
+		    </div>
+	    	<div class="checkbox-wrapper">
+				<input type="checkbox" id="giftNotifyBox" name="email_communicate" checked>
+				<label for="giftNotifyBox" id="giftNotify"><b><%324%></b></label>
+		    </div>
+		    <div id="bitRegisterButton" class="modalButton">REGISTER</div>
+		    <span class="footer-link"> <span><%500%></span><span id="bitLoginLink"><%501%></span> </span>
+		</div>
+  </div>
+  <div id="modal-bitdefender-declaration" class="modal-content-2">
+    <div class="modal-header">
+      <span class="close modal-close">x</span>
+      <div ima="modalBox-title">Netgear</div>
+    </div>
+    <div class="modal-body">
+      <table style="width:100%">
+        <tr>
+          <td  style="text-align:center">
+            <img class="bitLogo" src="img/NetgearShield.jpg">
+          </td>
+        </tr>
+        <tr>
+          <td style="height:15px">
+            &nbsp;
+          </td>
+        </tr>
+        <tr>
+          <td  style="text-align:center;font-size:16px">
+            <b><%502%></b><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:center;height:10px">
+            <span class="centerTd" style="text-align:center;font-size:12px">&nbsp;</span>
+          </td>
+        </tr>
+        <tr>
+          <td  style="text-align:center;font-size:16px">
+            <b><%503%></b><br>
+          </td>
+        </tr>
+        <tr>
+          <td  style="text-align:center;font-size:12px">
+            <div style="padding-left:40px;padding-right:40px"><b><%504%></b></div><br>
+          </td>
+        </tr>
+        <tr>
+          <td  style="text-align:center;font-size:12px;;height:30px">
+            <label for="acceptTerms"><a href="http://www.netgear.com/armor" target="_blank"><span style="color:#05BBD1"><b><%460%></b></span></a></label>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:center;height:30px">
+            <span class="centerTd" style="text-align:center;font-size:12px"><input type="checkbox" name="bit_never_remind_me" value="1" style="width:20px"><b><%462%></b></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-size:10px">
+            <div style="background-image:url('liteblue.gif');">&nbsp</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:center;height:40px;font-size:12px;">
+            <b><%505%></b>
+          </td>
+        </tr>
+        <tr>
+          <td cheight="12"  style="text-align:center;height:40px">
+              <img src='img/NetgearShieldYes.jpg' style="cursor:pointer" border='0' class="modalRegisterLink">&nbsp;&nbsp;&nbsp;<img src="img/NetgearShieldNo.jpg" border='0'  style="cursor:pointer" onClick="skip_bd();">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div id="modal-bitdefender-notification" class="modal-content" style="width:440px;height:380px">
+		<div class="modal-header">
+		  <span class="close modal-close">x</span>
+		  <div class="modalBox-title"><%506%></div>
+		</div>
+		<div class="modal-body">
+			<div class="bitLogo-wrapper">
+			  <table align="center">
+			    <tr>
+			      <td>
+			        <img src="img/NetgearShieldNotification.jpg">
+			      </td>
+			      <td> <span style="font-size:12px"><b>Hello </b></span><span style="font-size:16px"><b><br> <%507%></b></span>
+			      </td>
+			    </tr>
+			  </table>
+			</div>	
+      <table style="width: 100%">
+	      <tr>
+			    <td >
+            <hr style="border-color:#888">
+			    </td>
+			  </tr>
+	      <tr>
+			    <td align="center">
+            <span style="font-size:12px"><b><%508%></b></span>			    </td>
+			  </tr>
+			  <tr>
+			    <td align="center" style="padding-top:10px;">			
+            <img src="img/NetgearShield-2.jpg">
+          </td>
+        </tr>
+			  <tr >
+			    <td align="center" >			
+ 		        <span style="font-size:12px;width:80%"><b><%509%></b></span>
+          </td>
+        </tr>
+			  <tr>
+			    <td align="center">			
+     		   <div id="bitActivateButton" class="modalButton"><b><%510%></b></div>
+          </td>
+        </tr>
+			  <tr>
+			    <td align="center">			
+    	      <span id="chageNetgearAccount" class="modalChangeLink" style="font-size:12px;height:30px;color:RGB(52,181,229)" ><b><%511%></b></span>
+          </td>
+        </tr>
+      </table>
+	  </div>
+  </div>
+  <div id="modal-bitdefender-error-message" class="modal-content"">
+  	<div class="modal-header">
+	    <span class="close modal-close">x</span>
+	    <div class="modalBox-title"><%512%></div>
+	  </div>
+	  <div class="modal-body">
+	    <div class="bitLogo-wrapper">
+		    <img class="bitLogo" src="img/bitLogo_icon.png">
+	    </div>	
+	    <span class="modal-text"><%513%></span>
+		  <div id="bitErrorMessageConfirmButton" class="modalButton">OK</div>
+	  </div>
+  </div>
+
+  <div id="modal-bitdefender-activating" class="modal-content" style="width:440px;height:440px">
+		<div class="modal-header">
+			<span class="close modal-close">x</span>
+		  <div class="modalBox-title"><%514%></div>
+		</div>
+		<div class="modal-body">
+      <table align="center">
+			  <tr>
+			    <td align="center" style="padding-top:10px;">			
+            <img src="img/NetgearShieldActivatingR7000P.jpg">
+          </td>
+        </tr>
+			  <tr>
+			    <td  >			
+ 		        <span style="font-size:12px;width:80%"><b><%515%></b></span>
+          </td>
+        </tr>
+      </table>
+		</div>
+  </div>
+  <div id="modal-bitdefender-failed" class="modal-content" style="width:440px;height:400px">
+		<div class="modal-header">
+			<span class="close modal-close">x</span>
+		  <div class="modalBox-title"><%516%></div>
+		</div>
+		<div class="modal-body">
+      <table align="center">
+			  <tr>
+			    <td align="center" style="padding-top:10px;">			
+            <img src="img/NetgearShieldActivate-fail.jpg">
+          </td>
+        </tr>
+			  <tr>
+			    <td  align="center">			
+ 		        <div style="font-size:10px"><b><%517%></b></div>
+ 		        <div style="font-size:10px"><b><%518%></b></div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+		          <div id="bitTryAgainButton" class="modalButton"><b><%519%></b></div>
+		      </td>
+		    </tr>
+      </table>
+		</div>
+  </div>
+  <div id="modal-bitdefender-ok" class="modal-content" style="width:440px;height:380px">
+		<div class="modal-header">
+			<span class="close modal-close">x</span>
+		  <div class="modalBox-title"><b><%520%></b></div>
+		</div>
+		<div class="modal-body">
+      <table align="center">
+			  <tr>
+			    <td align="center" style="padding-top:10px;">			
+            <img src="img/NetgearShieldActivate-ok.jpg">
+          </td>
+        </tr>
+			  <tr>
+			    <td  align="center">			
+ 		        <div style="font-size:10px"><b><%521%></b></div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+		          <div id="bitOKButton" class="modalButton"><b>OK</b></div>
+		      </td>
+		    </tr>
+      </table>
+		</div>
+  </div>
+
+  <div id="modal-loading" class="modal-content" style="width:440px;height:376px">
+		<div class="modal-header">
+			<span class="close modal-close">x</span>
+		  <div class="modalBox-title"><%522%></div>
+		</div>
+		<div class="modal-body">
+			<div class="modalLoader">
+				<img class="loader" src="loading.gif">
+			</div>	
+			<span class="modal-text"><%523%></span>
+		</div>
+  </div>
+</div>
+
+<input type="hidden" name="bd_activated_2" value="<%524%>">
+<input type="hidden" name="bd_activated_sync_subscription" value="<%525%>">
+<input type="hidden" name="bd_activated" value="<%526%>">
+<input type="hidden" name="bd_never_remind_me" value="<%527%>">
+<input type="hidden" name="bd_api" value="registration">
+<input type="hidden" name="login_name" value="">
+<input type="hidden" name="login_password" value="">
+<input type="hidden" name="register_first_name" value="">
+<input type="hidden" name="register_last_name" value="">
+<input type="hidden" name="register_email" value="">
+<input type="hidden" name="register_password" value="">
+<input type="hidden" name="register_confirm_password" value="">
+<input type="hidden" name="register_serial_number" value="">
+<input type="hidden" name="communicate" value="">
+<input type="hidden" name="router_sn" value="<%490%>">
+<input type="hidden" name="register_country" value="">
+<input type="hidden" name="sso_show_result" value="<%528%>">
+<input type="hidden" name="enable_apmode" value="<%478%>">   
+<input type="hidden" name="enable_stamode" value="<%479%>">   
+<input type="hidden" name="show_circle" value="<%529%>">
+<input type="hidden" name="is_guest_user" value="<%530%>">
+<input type="hidden" name="latest_counry" value=<%496%>>
+</form>
+<script>
+
+// perform JavaScript after the document is scriptable.
+$(function() {
+	// setup ul.tabs to work as tabs for each div  directly under div.panes
+	$("ul.tabs").tabs("> .pane");     
+        var pnpx = <%531%>
+            if(pnpx == 1){           
+            $("#AdvanceTab").click();
+            $("#basic-pane").css("display","none");
+            $("#adv-pane").css("display","block");           
+            pnpx = 0;      
+        }                 
+});
+</script>
+
+<script>
+    $(".current").css("background","url(../img/tab-active.gif) no-repeat 0");
+    $("#AdvanceTab").css("background","url(../img/tab-nonactive.gif) no-repeat 0");     
+    $(".noSub").first().addClass("noSubActive");
+    $('.basic-menu-div').first().addClass('menuActive'); 
+    
+</script>
+</body>
+</html>

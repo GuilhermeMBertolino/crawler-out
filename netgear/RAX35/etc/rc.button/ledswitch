@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+productionFile="/tmp/productionLedSwitch"
+ttyPathNum=$(echo $(ls /dev/pts))
+
+if [ -f "$productionFile" ]; then
+    if [ "$ACTION" = "pressed" ]; then
+        echo -n -e \\n$BUTTON pressed > /dev/console
+        echo -n -e \\n$BUTTON pressed > /dev/pts/$ttyPathNum
+    elif [ "$ACTION" = "released" ]; then
+        echo -n -e \\n$BUTTON released > /dev/console
+        echo -n -e \\n$BUTTON released > /dev/pts/$ttyPathNum
+    fi
+else
+    if [ "$ACTION" = "pressed" ]; then
+        ntgrcli -M 2
+        echo "$BUTTON pressed and set led switch mode to power on only" > /dev/console
+    elif [ "$ACTION" = "released" ]; then  
+        ntgrcli -M 1
+        echo "$BUTTON released and set led switch mode to normal mode without blink" > /dev/console   
+    fi 
+fi
+
+return 0

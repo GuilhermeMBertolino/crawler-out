@@ -1,0 +1,314 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<style>
+    #pf_record td:nth-child(0){
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #pf_record .checkbox-container{
+        width: 15px;
+        height: 20px;
+        padding: 0;
+    }
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!--
+  
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+
+
+   
+
+function init()
+{
+    var cf = document.forms[0];
+    var lanSplit = cf.lanIP.value.split(".");
+
+    cf.SV_IP1.value=lanSplit[0];
+    cf.SV_IP2.value=lanSplit[1];
+    cf.SV_IP3.value=lanSplit[2];
+    cf.SV_IP4.value="";
+
+    return true;
+}
+
+function validIp()
+{
+    var cf = document.forms[0];
+    if(checkIP(cf.SV_IP1,cf.SV_IP2,cf.SV_IP3,cf.SV_IP4,254)
+        || parseInt(cf.SV_IP4.value,10) == 0)
+    return alertR(msg_invalid_ip);
+    return true;
+}
+
+function showIP()
+{
+    var cf = document.forms[0];
+    var num = cf.entryData.value.split("#");
+    var nowName = cf.svs_gm.options[cf.svs_gm.selectedIndex].value;
+    var i, data1, data2, data3, flag=0;
+
+    for(i=0; i<=num[1]; i++)
+    {
+        data1 = num[0].split("@");
+        if(i>0)
+        {
+            data2 = data1[i].split(";");
+            if(data2[0] == nowName)
+            {
+                data3 = data2[1].split(".");
+                cf.SV_IP1.value=data3[0];
+                cf.SV_IP2.value=data3[1];
+                cf.SV_IP3.value=data3[2];
+                cf.SV_IP4.value=data3[3];
+                flag=1;
+                break;
+            }
+        }
+    }
+    if(flag == 0)
+    {
+        var lanSplit = cf.lanIP.value.split(".");
+
+        cf.SV_IP1.value=lanSplit[0];
+        cf.SV_IP2.value=lanSplit[1];
+        cf.SV_IP3.value=lanSplit[2];
+        cf.SV_IP4.value="";
+    }
+    return true;
+}
+
+function Check(caller)
+{
+    var cf = document.forms[0];
+    var form_size = cf.elements.length;
+    var checkFlag = 0;
+
+    cf.selectEntry.value = "";
+
+    if(caller == "0")
+    {
+        cf.action.value = "add";
+        cf.SV_IP1.value = parseInt(cf.SV_IP1.value,10);
+        cf.SV_IP2.value = parseInt(cf.SV_IP2.value,10);
+        cf.SV_IP3.value = parseInt(cf.SV_IP3.value,10);
+        cf.SV_IP4.value = parseInt(cf.SV_IP4.value,10);
+        cf.inputIP.value=cf.SV_IP1.value + "." + cf.SV_IP2.value+ "." + cf.SV_IP3.value+ "." + cf.SV_IP4.value;
+        cf.selectService.value=cf.svs_gm.options[cf.svs_gm.selectedIndex].value;
+    }
+    else if(caller == "1")
+        cf.action.value = "edit";
+    else if(caller == "2")
+        cf.action.value = "delete";
+    else if(caller == "3")
+        cf.action.value = "custom";
+
+    if(caller == "1" || caller == "2")
+    {
+    	for (var i = 0; i < form_size; i++)
+    	{
+    		if (cf.elements[i].type == "radio")
+    		{
+		        if(cf.elements[i].name != "serv_type" && cf.elements[i].checked == true)
+                {
+                    cf.selectEntry.value = i-9;
+                }
+            }
+        }
+    }
+    return;
+}
+function doTypeChange(newIndex)
+{
+	var cf = document.forms[0];
+	if (newIndex == 0)
+		location.href = "FW_forward2.htm";
+	else if (newIndex == 1)
+		location.href = "FW_pt.htm";
+}
+
+function enableFwpf()
+{
+	var cf = document.forms[0];
+	if (cf.enable.checked)
+		cf.fwpf_enable.value = 0;
+	else
+		cf.fwpf_enable.value = 1;
+}
+//-->
+
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body  onload="change_size(false); init();" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%67%>">
+<!--<img class="body-image" src="<%68%>">-->
+<div id="full-page-container">
+
+<form id="target"  name="formname" method="POST" action="pforward.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%69%>">
+<div class="subhead2"> <%521%></div>
+<table border="0" style="height:370px" class="subhead2-table inner-main">
+
+<tr><td class="scrollpane-table-seperate-border scroll_container" colspan="2"><div id="main" class="scroll-pane" style="height:410px;width:620px;overflow:auto;scrolling:auto;"><table style="border-collapse:collapse;width:97%">
+
+<tr>
+<td colspan="2">
+<p><tabindex="-1"><b><%1209%></b></a></p></td>
+</tr>
+<tr>
+<td colspan="2">
+  <label class="checkbox-container">
+    <input id="serv_pf" type="radio" checked name="serv_type" value="pf" onClick="doTypeChange(0)"><%1210%>
+    <span class="radio-checkmark"></span>
+  </label>	
+</td>
+</tr>
+<tr>
+<td colspan="2" class="pt-15 pb-15">
+<label class="checkbox-container">
+   <input id="serv_pt" type="radio" name="serv_type" value="pt" onClick="doTypeChange(1)"><%1211%>
+   <span class="radio-checkmark"></span>
+</label>
+</td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr class="dis_td">
+    <td  valign="top"><a href="javascript:loadhelp('FW_forward','setup')" tabindex="-1"><b><%1212%></b></a></td>
+    
+    <td valign="top" class="pb-30">
+	    <select id="svs_gm" name="svs_gm" size="1" onChange="javascript:showIP()">
+	        <%1213%>
+	        </SELECT></td>
+			</tr><tr class="dis_td">
+			<td class="pb-15"><a href="javascript:loadhelp('FW_forward','setup')" tabindex="-1"><b><%1214%></b></a></td>
+    <td nowrap class="ip-input-row pb-30">
+        <input id="server_ipaddress1" type="text" name="SV_IP1" class="num" size="4" maxlength="3" value="192" onFocus="this.select();" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.
+        <input id="server_ipaddress2" type="text" name="SV_IP2" class="num" size="4" maxlength="3" value="168" onFocus="this.select();" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.
+        <input id="server_ipaddress3" type="text" name="SV_IP3" class="num" size="4" maxlength="3" value="0" onFocus="this.select();" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.
+        <input id="server_ipaddress4" type="text" name="SV_IP4" class="num" size="4" maxlength="3" value="" onFocus="this.select();" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)">
+	    &nbsp;&nbsp;&nbsp;
+<%1215%>
+		<button id="server_add" type="Submit" value="<%824%>" name="svAdd" class="button-sty1" onclick="buttonClick(this,'<%824%>');if(!validIp()) return false; Check(0);"><%824%></button>
+<%1216%>
+<%1217%>		
+		<button id="inbound_add2" type="Submit" value="<%824%>" name="svAdd" class="button-sty1" disabled onclick="buttonClick(this,'<%824%>');if(!validIp()) return false; Check(0);"><span class="roundleft_grey"><span>&nbsp;&nbsp;&nbsp;&nbsp;<%824%></span></span><span class="roundright_grey">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+<%1218%>		
+		</td></tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr><td colspan="2" style="width:90%">
+        <table id="pf_record" class="sortable tbWhite" border ="1" cellpadding ="2" cellspacing ="0" width="100%">
+			<tr class="table_header">
+				<td nowrap width="45px" align="center"><span class="thead">&nbsp;</span></td>
+				<td nowrap width="45px" align="center"><span class="thead">#</span></td>
+		 	    <td width="25%" align="center"><span class="thead"><%1212%></span></td>
+				<td width="25%" align="center"><span class="thead"><%1219%></span></td>
+		 	    <td width="25%" align="center"><span class="thead"><%1220%></span></td>	 	    
+				<td width="25%" align="center"><span class="thead"><%1221%></span></td></tr>
+		    <%1222%>
+		</table>
+</td></tr>
+
+
+
+
+<tr><td colspan="2" align="left" height="35" valign="bottom" class="pt-20">
+	<button id="inbound_edit" type="Submit" value="<%1223%>" name="Edit" class="button-sty1" onclick="buttonClick(this,'<%1223%>');Check(1);"><%1223%></button>
+&nbsp;&nbsp;&nbsp;
+<%1215%>	
+	<button id="inbound_del" type="Submit" value="<%1224%>" name="Delete" class="button-sty1" onclick="buttonClick(this,'<%1224%>');Check(2);"><%1224%></button>
+<%1216%>
+<%1217%>
+	<button id="inbound_del2" type="Submit" value="<%1224%>" name="Delete" class="button-sty1" disabled onclick="buttonClick(this,'<%1224%>');Check(2);"><%1224%></button>
+<%1218%>
+
+	<button id="inbound_add" type="Submit" value="<%1225%>" name="Add" class="button-sty1" onclick="buttonClick(this,'<%1225%>');Check(3);"><%1225%></button>
+</td></tr>
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div id="help" class="help-frame-div" > <iframe id="helpframe"  src="FW_forward_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div id="help_switch" class="subhead2-bottom" >
+    <span id="help_space" class="help_ico"><img id="FW_forward2_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span id="help_center" class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%203%> </span>
+    <span id="help_button" class="button-help-arrow">
+      <img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span id="help_show_hidden" class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%204%> </span>
+      </div>
+
+
+
+    <input type="hidden" name="selectService" value="">
+    <input type="hidden" name="lanIP" value="<%1226%>">
+    <input type="hidden" name="action" value="init">
+    <input type="hidden" name="selectEntry" value="">
+    <input type="hidden" name="inputIP" value="">
+    <input type="hidden" name="entryData" value="<%1227%>">
+    <input type="hidden" name="fwpf_enable">
+<a name="helpframe-anchor"></a>
+</form>
+</div>
+</body>
+</html>

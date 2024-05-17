@@ -1,0 +1,60 @@
+#!/bin/sh
+#echo "run udhcpc"
+MaxTry=3
+if [ -f /etc/udhcpc/counter ] ; then
+	Counter=`cat /etc/udhcpc/counter`
+else
+	Counter=0
+	echo "$Counter" > /etc/udhcpc/counter
+fi
+
+if [ $ip ] ; then
+	#if [ $Counter -ge $MaxTry ]; then
+	#	killall dhcpd
+	#fi
+	if [ -f /var/run/dhcpd.pid ]; then
+	dhcpd_pid=`cat /var/run/dhcpd.pid`
+	if [ $dhcpd_pid ]; then
+		kill $dhcpd_pid
+		echo "Kill dhcpd($dhcpd_pid)"
+	fi
+	fi
+
+	echo 0 > /etc/udhcpc/counter
+	ifconfig $interface $ip
+	amit_httpd &
+	amit_upnp &
+	
+	i=0
+	for n in $dns
+	do
+		if [ $i -eq 0 ]; then
+			echo nameserver "$n" > /etc/resolv.conf
+		else
+			echo nameserver "$n" >> /etc/resolv.conf
+		fi
+		i=1
+	done	
+fi
+
+
+if [ $router ]; then
+	for n in $router
+	do
+		route add default gw $n
+		break;
+	done
+fi
+
+if [ $ip ]; then
+	exit
+elif [ $Counter -eq $MaxTry ]; then
+	amit_httpd &
+	amit_upnp &
+	ed N &
+	echo 99 > /etc/udhcpc/counter
+elif [ $Counter -ne 99 ]; then
+	echo "Counter=$Counter"
+	let Counter=$Counter+1
+	echo "$Counter" > /etc/udhcpc/counter
+fi

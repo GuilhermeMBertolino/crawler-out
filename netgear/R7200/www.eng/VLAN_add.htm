@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Cache-Control" content="no-cache"><meta http-equiv="Expires" content="Mon, 06 Jan 1990 00:00:01 GMT"><meta name="description" content="WNR2500_multilangual"><title>NETGEAR Router @model_name#</title><script language="javascript" type="text/javascript" src="string.js"></script><link rel="stylesheet" href="style/form.css"><script language="javascript" type="text/javascript" src="funcs.js"></script><!-- link rel="stylesheet" href="form.css" --><style type="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style><script language="javascript" type="text/javascript" src="utility.js"></script><script language="javascript" type="text/javascript" src="linux.js"></script><script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+
+var vid_min = 1;
+
+function goBack()
+{
+	window.location.href="./VLAN_tables.htm";
+}
+function checkData()
+{
+ 	var cf = document.forms[0];
+	var msg = "";
+
+	msg += checkBlank(cf.group_name, getErrorMsgByVar("gsm_msg_vlan_group_name"));
+	msg += printable_ch_chk(cf.group_name.value);
+
+	if (msg.length > 1)
+	{
+		msg = getErrorMsgByVar("gsm_msg_vlan_group_name_invalid");
+		alert(msg);
+		return false;
+	}
+
+    if (cf.h_vlan_enable.value == "enable")
+	{
+		if (cf.group_vid.value.length < 1)
+		{
+			msg += 	getErrorMsgByVar("gsm_msg_vlan_no_vid_configured");
+		}
+
+		if(checkInt(cf.group_vid, "", vid_min, 4094, true).length > 0)
+		{
+			msg += 	getErrorMsgByVar("gsm_msg_vlan_incorrect_vid");
+		}
+		if(checkInt(cf.group_pri, "", 0, 7, true).length > 0)
+		{
+			msg += 	getErrorMsgByVar("gsm_msg_vlan_incorrect_8021p");
+		}
+	}
+
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+
+	cf.group_name.disabled = false;
+
+	dataToHidden(cf);
+	return true;
+}
+function init()
+{
+    var cf = document.forms[0];
+    if (cf.h_vlan_enable.value == "enable")
+	{
+        document.getElementById("vid_obj").style.display = "";
+        document.getElementById("pri_obj").style.display = "";
+	} 
+	else
+	{
+        document.getElementById("vid_obj").style.display = "none";
+        document.getElementById("pri_obj").style.display = "none";
+	}
+    	if (cf.h_vlan_enable.value == "enable") {
+		if (cf.group_name.value == "Internet" || cf.group_name.value == "Intranet")
+		{
+			cf.group_name.disabled = true;
+			vid_min = 0;
+			document.getElementById("ports_obj").style.display = "none";
+		}
+		else
+		{
+			cf.group_name.disabled = false;
+			vid_min = 1;
+			document.getElementById("vid_tip").innerHTML = "(1~4094)";
+			document.getElementById("ports_obj").style.display = "";
+		}
+	}
+	else
+	{
+		cf.group_name.disabled = false;
+		document.getElementById("ports_obj").style.display = "";
+	}
+}
+//-->
+</script></head><body bgcolor="#ffffff" onLoad="dataToVisible(document.forms[0]);init();document.forms[0].elements[0].focus();">
+<form method="POST" action="setup.cgi@post_par#" onSubmit="buttonToDisabled(document.forms[0])">
+<div class="page_title" languageCode="3618">VLAN/IPTV Setup</div>
+<div class="fix_button">
+<table width="100%" border="0" cellpadding="0" cellspacing="2"><tr><td nowrap colspan="2" align="center">
+<input class="cancel_bt" type="Button" name="Cancel" value="Cancel" onClick="goBack()" languageCode="51">
+&nbsp;
+<input class="apply_bt" type="SUBMIT" name="Apply" value="Apply" onClick="return checkData()" languageCode="50">
+</td></tr></table>
+</div>
+<div id="main" class="main_top_button">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td width="50%" nowrap languageCode="554">Name</td>
+		<td width="50%" align="left"><input type="text" name="group_name" size="9" maxlength="30" value="@group_name#"></td></tr>
+<tr id="vid_obj"><td width="50%" nowrap languageCode="3620">VLAN ID</td>
+	<td width="50%" align="left"><input type="text" name="group_vid" size="8" maxlength="4" value="@group_vid#"><span id="vid_tip" languageCode="">(0~4094, 0: VLAN is not used for the group)</span></td>
+	
+</tr>
+<tr id="pri_obj" style="display:none"><td width="50%" nowrap languageCode="578">Priority</td>
+		<td width="50%" align="left"><input type="text" name="group_pri" size="8" maxlength="1" value="@group_pri#"><span languageCode="">(0~7)</span></td></tr>
+<tr></tr>
+<div id="ports_obj" style="display:none">
+<tr><td>
+<input type="checkbox" name="group_lan1" value="" ><span class="thead">Port1</span>
+<input type="checkbox" name="group_lan2" value="" ><span class="thead">Port2</span>
+<input type="checkbox" name="group_lan3" value="" ><span class="thead">Port3</span>
+<input type="checkbox" name="group_lan4" value="" ><span class="thead">Port4</span>
+<input type="checkbox" name="group_wlan2g" value="" ><span class="thead">WiFi-2.4G</span>
+<input type="checkbox" name="group_wlan5g" value="" ><span class="thead">WiFi-5G</span>
+<div style="display:none">
+<input type="checkbox" name="group_guest2g" value="" ><span class="thead">Guest-2.4G</span>
+<input type="checkbox" name="group_guest5g" value="" ><span class="thead">Guest-5G</span>
+</div>
+</td></tr>
+</div>
+	<tr><!-- RULE --><td colspan="2" background="liteblue.gif" height="12"></td>
+	</tr><tr><td colspan="2" align="center"></td>
+	</tr>
+	</table>
+</div>	
+	<input type="hidden" name="todo" value="save">
+	<input type="hidden" name="this_file" value="VLAN_add.htm">
+	<input type="hidden" name="next_file" value="VLAN_tables.htm"><!-- ServerStart -->
+	<input type="hidden" name="h_ruleSelect" value="@h_ruleSelect#">
+	<input type="hidden" name="edit" value="@edit#">
+	<input type="hidden" name="h_vlan_enable" value="@h_vlan_enable#">
+	<input type="hidden" name="h_group_en" value="@h_group_en#">
+	<input type="hidden" name="h_group_lan1" value="@h_group_lan1#">
+	<input type="hidden" name="h_group_lan2" value="@h_group_lan2#">
+	<input type="hidden" name="h_group_lan3" value="@h_group_lan3#">
+	<input type="hidden" name="h_group_lan4" value="@h_group_lan4#">
+	<input type="hidden" name="h_group_wlan2g" value="@h_group_wlan2g#">
+	<input type="hidden" name="h_group_wlan5g" value="@h_group_wlan5g#">
+	<input type="hidden" name="h_group_guest2g" value="@h_group_guest2g#">
+	<input type="hidden" name="h_group_guest5g" value="@h_group_guest5g#">
+	<!-- ServerEnd -->
+	<input type="hidden" name="SID" value="@SID#">
+</form>
+
+<div id="help" style="display: none">
+		<iframe name="help_iframe" id="helpframe" src="VLAN_tables_h.htm" allowtransparency="true" width="100%" frameborder="0">
+		</iframe>
+</div>
+<div id="help_switch" class="close_help">
+	 <img class="help_switch_img" src="image/help/help-bar.gif"><script>
+var help_flag=0;
+if(isIE()){
+	show_hidden_help_top_button(1);
+	var frame_div = top.document.getElementById("formframe_div");
+	frame_div.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+if(get_browser() == "Opera"){
+	window.onresize =  function(){
+		if(help_flag == 0)  show_hidden_help_top_button(1);
+		else{show_hidden_help_top_button(--help_flag);help_flag++;}
+};}
+</script><div id="help_space" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_center"><span languageCode="3058">Help Center</span></div>
+<div id="help_button" onClick="show_hidden_help_top_button(help_flag); help_flag++;"></div>
+<div id="help_show_hidden"><a href="javascript:void(0)" onClick="show_hidden_help_top_button(help_flag); help_flag++;"><span languageCode="3148">Show/Hide Help Center</span></a></div>
+</div>
+
+<script language="javascript" type="text/javascript" src="langs.js"></script></body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!--系统默认模板-->
+<html>
+<head>
+<title> dev reboot</title>
+<meta http-equiv=pragma content=no-cache>
+<meta http-equiv=cache-control content="no-cache, must-revalidate">
+<meta http-equiv=content-type content="text/html; charset=utf-8">
+<meta http-equiv=content-script-type content=text/javascript>
+<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+<% getInfo("include_css"); %>
+
+<script language="javascript" type="text/javascript">
+    parent.hideWaitDiv();
+    function submitClick() {
+        parent.showWaitDiv();
+        return true;
+    }
+    function load() {
+        var upnpEnabled = '<% getIndex("upnpEnabled"); %>'
+        if (upnpEnabled == '1'){
+            document.upnpForm.upnpEnabled.checked = true;
+        }else{
+            document.upnpForm.upnpEnabled.checked = false;
+        }
+    }
+</script>
+
+</head>
+<body topmargin="0" leftmargin="0" marginwidth="0" marginheight="0" alink="#000000" link="#000000" vlink="#000000" onload="load()">
+	<blockquote>
+        <h2>UPNP</h2>
+        <hr size=1 noshade align=top>
+		<div align="left" style="padding-left:20px; padding-top:5px">
+			<form id="form" name="upnpForm" action="/boafrm/formUpnp" method="post">
+                <table border="0" width="100%">
+                    <tr>
+                        <td width="100%" colspan="2"><font size=2>
+                            <b><input type="checkbox" name="upnpEnabled" value="ON"><script>dw(tcpip_wan_enable_upnp)</script></b>
+                        </td>
+                    </tr>
+                </table>
+				<p>
+					<input value="Reboot" name="save_apply" type="submit" onclick="return submitClick()" />
+					<input type="hidden" value="/upnp.htm" name="submit-url">
+					<script>document.upnpForm.save_apply.value = tcpip_save_apply;</script>
+				</p>
+			</form>
+		</div>
+	</blockquote>
+</body>
+
+</html>

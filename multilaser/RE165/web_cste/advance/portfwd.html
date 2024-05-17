@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <adv-child-menu childType="nat"></adv-child-menu>     
+  <div class="advance-box">
+    <x-help :text="lang_t('rule.help_portfwd')"></x-help>
+	<br><br>
+    <div class="fun-box">
+	  <div style="display: flex;line-height: 23px;">
+	    <span class="fun-title">{{ lang_t('menu.portfwd') }}</span>
+        &nbsp;&nbsp;
+        <x-switch v-model="portfState" @change="stateChange"></x-switch>
+      </div>
+      <table v-show="portfState">
+      	<tr><td align="right">
+      		<x-icon type="add" cursor="pointer" @click="addRuleVal">{{ lang_t('common.add') }}</x-icon>
+			<x-icon type="del" cursor="pointer" @click="trashFun('all')">{{ lang_t('common.delete') }}</x-icon>
+      	</td></tr>
+        <tr><td height="5"></td></tr>
+        <tr>
+          <td><table class="t_table3 table-bordered table-striped">
+           	<thead> 
+			<tr>
+			  <th>{{ lang_t('rule.description') }}</th>
+			  <th>{{ lang_t('rule.protocol') }}</th>
+			  <th>{{ lang_t('rule.ip') }}</th>
+			  <th>{{ lang_t('rule.internal_port') }}</th>
+			  <th>{{ lang_t('rule.external_port') }}</th>
+			  <th style="width:12%;">{{ lang_t('rule.operate') }}</th>
+			  <th style="width:12%;">{{ lang_t('common.select') }}<x-checkbox v-model="selectall" @change="selectAll"></x-checkbox></th>
+			</tr>
+            </thead>
+			<tr v-show="addShow">
+			  <td><input type="text" class="desc" v-model="desc" v-verify="formRules" data-name="desc" maxlength="20"></td>
+			  <td>
+			  	<select v-model="proto" class="protocol-select select-drop">
+				  <option value="ALL">{{ lang_t('rule.all') }}</option>
+				  <option value="TCP">TCP</option>
+				  <option value="UDP">UDP</option>
+			    </select>
+			  </td>
+			  <td>
+			  	<input type="text" class="ip" v-model="ip" v-verify="formRules" data-name="ip" maxlength="15">
+			  	<img src="/static/images/search.png" :title="lang_t('common.scan')" class="cursor" @click="scanFun">
+			  </td>
+		 	  <td><input type="text" class="port" v-model="iPort" v-verify="formRules" data-name="iPort" maxlength="5"></td>
+			  <td><input type="text" class="port" v-model="ePort" v-verify="formRules" data-name="ePort" maxlength="5"></td>
+			  <td><button :disabled="disable_addBtn" @click="addRule"><img src="/static/images/added.png" :title="lang_t('common.add')" class="cursor"></button></td>
+			  <td></td>
+		  	</tr>
+            <tbody>
+			<tr v-for="(rule,v) in ruleList">
+			  <td>
+			  	<input type="text" class="desc" v-model="editDesc[rule.idx-1]" v-verify="formRules" :data-name="'desc'+Number(rule.idx-1)" maxlength="20" v-if="edit[rule.idx-1]" @input="watchValue(rule.idx-1)">
+			  	<span v-else>{{ rule.desc }}</span>
+			  </td>
+			  <td>
+				<select v-model="editProto[rule.idx-1]" class="protocol-select select-drop" v-if="edit[rule.idx-1]" @change="watchValue(rule.idx-1)">
+				  <option value="ALL">{{ lang_t('rule.all') }}</option>
+				  <option value="TCP">TCP</option>
+				  <option value="UDP">UDP</option>
+				</select>
+				<span v-else>{{ rule.proto == 'ALL' ? lang_t('rule.all') : rule.proto }}</span>
+			  </td>
+			  <td>
+			  	<div v-if="edit[rule.idx-1]">
+				  	<input type="text" class="ip" v-model="editIp[rule.idx-1]" v-verify="formRules" :data-name="'ip'+Number(rule.idx-1)" maxlength="15" @input="watchValue(rule.idx-1)">
+				  	<img src="/static/images/search.png" :title="lang_t('common.scan')" class="cursor" @click="scanFun(rule.idx-1)">
+				  </div>
+			  	<span v-else>{{ rule.ip }}</span>
+			  </td>
+			  <td>
+			  	<div v-if="edit[rule.idx-1]">
+				  <input type="text" class="port" v-model="editiPort[rule.idx-1]" v-verify="formRules" :data-name="'iPort'+Number(rule.idx-1)" maxlength="5" @input="watchValue(rule.idx-1)">
+				</div>
+				<span v-else>{{ rule.iPort }}</span>
+			  </td>
+			  <td>
+			  	<div v-if="edit[rule.idx-1]">
+				  <input type="text" class="port" v-model="editePort[rule.idx-1]" v-verify="formRules" :data-name="'ePort'+Number(rule.idx-1)" maxlength="5" @input="watchValue(rule.idx-1)">
+				</div>
+				<span v-else>{{ rule.ePort }}</span>
+			  </td>
+			  <td>
+				<img :src="operate[rule.idx-1]" :title="lang_t('common.edit')" class="cursor" @click="editFun(rule.idx-1)">
+				&nbsp;&nbsp;
+				<img src="/static/images/trash.png" :title="lang_t('common.delete')" class="cursor" @click="trashFun(rule.idx-1)">
+			  </td>
+			  <td>
+				<x-checkbox v-model="select[rule.idx-1]"></x-checkbox>
+			  </td>
+			</tr>
+			<tr v-show="dataTotal==0">
+              <td colspan="12">{{ lang_t('common.no_data') }}</td>
+            </tr>
+		  	</tbody>
+          </table></td>
+        </tr>
+		<tr><td><x-page :total="dataTotal" @on-page="pageChange" :data="data"></x-page></td></tr>
+      </table>
+    </div>
+    <x-modal v-model="modelShow" :title="lang_t('common.ip_mac')" show="ip,mac" :listData="listData" @on-select="selectFun"></x-modal>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,portfState:!1,selectall:!1,lanIp:"",lanNetmask:"",ruleList:[],proto:"ALL",edit:[],operate:[],select:[],data:[],desc:"",ip:"",iPort:"",ePort:"",editDesc:[],editIp:[],editProto:[],editiPort:[],editePort:[],dataTotal:0,addShow:!1,tempIdx:0,modelShow:!1,disable_addBtn:!1,listData:[],remotePort:""}},watch:{select:function(){var t=0;for(var e in this.select)this.select[e]&&t++;t==this.select.length?this.selectall=!0:this.selectall=!1}},computed:{formRules:function(){var o=this;return{desc:function(t,e){var i=cs.commentstr(t);1==i||2==i?e(o.lang_t("rule.msg4")):0!=i&&99!=i||e()},ip:function(t,e){var i=cs.ip(t);0==i?e(o.lang_t("network.ip")+o.lang_t("network.msg1")):1==i?e(o.lang_t("network.ip")+o.lang_t("network.msg2")):2==i||3==i||4==i?e(o.lang_t("network.ip")+o.lang_t("network.msg6")):o.lanIp==t?e(o.lang_t("rule.ip")+o.lang_t("rule.msg2")):0==cs.ip_subnet(t,o.lanNetmask,o.lanIp)?e(o.lang_t("rule.ip")+o.lang_t("rule.msg3")):e()},iPort:function(t,e){var i=cs.num_range(t,1,65535);0==i?e(o.lang_t("rule.internal_port")+o.lang_t("rule.msg12")):1==i||2==i?e(o.lang_t("rule.internal_port")+o.lang_t("rule.msg25",[65535])):e()},ePort:function(t,e){var i=cs.num_range(t,1,65535);0==i?e(o.lang_t("rule.external_port")+o.lang_t("rule.msg12")):1==i||2==i?e(o.lang_t("rule.external_port")+o.lang_t("rule.msg25",[65535])):o.remotePort==t?e(o.lang_t("rule.msg54")):e()}}}},created:function(){var e=this;uiPost.getPortForwardRules(function(t){e.portfState="1"==t.enable,e.lanIp=t.lanIp,e.remotePort=t.remotePort,e.lanNetmask=t.lanNetmask,t.rule&&(e.ruleList=t.rule,e.dataTotal=e.ruleList.length,e.data=t.rule,e.tableInit(t.rule))})},methods:{pageChange:function(t,e){this.ruleList=e},stateChange:function(t){var e={};e.enable=t?"1":"0",e.addEffect="0",uiPost.setPortForwardRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})},selectAll:function(t){var e=!1;t&&(e=!0);var i=this.select.length;this.select=[];for(var o=0;o<i;o++)this.select[o]=e},addRuleVal:function(){this.addShow=!0},scanFun:function(t){var e=this;this.tempIdx=t,uiPost.getDeviceInfo(function(t){e.listData=t.rule,e.modelShow=!0})},selectFun:function(t){"number"!=typeof this.tempIdx?this.ip=t.ip:(this.editIp[this.tempIdx]=t.ip,this.watchValue(this.tempIdx))},addRule:function(){var e=this;if(e.disable_addBtn=!0,e.dataTotal){if(16<=e.dataTotal)return Cstool.Msg({content:this.lang_t("rule.msg30",[16])}),e.disable_addBtn=!1;for(i=0;i<e.dataTotal;i++){if(e.ip==e.data[i].ip&&e.iPort==e.data[i].iPort)return Cstool.Msg({content:this.lang_t("rule.msg60")}),e.disable_addBtn=!1;if(e.ePort==e.data[i].ePort)return Cstool.Msg({content:this.lang_t("rule.msg55")}),e.disable_addBtn=!1}}var o={};Cstool.Verify(this.formRules,function(t){t||(e.disable_addBtn=!1),t&&(o.ip=e.ip,o.proto=e.proto,o.iPort=e.iPort,o.ePort=e.ePort,o.desc=e.desc,o.addEffect="1",uiPost.setPortForwardRules(o,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))}))})},editFun:function(t){"/static/images/edit.png"==this.operate[t]?this.edit[t]?(this.edit.splice(t,1),this.edit.splice(t,0,!1)):(this.edit.splice(t,1),this.edit.splice(t,0,!0)):this.modefyFun(t)},modefyFun:function(e){var o={},a=this;if(a.dataTotal)for(i=0;i<a.dataTotal&&(i==e&&i++,i!=a.dataTotal);i++){if(a.editIp[e]==a.data[i].ip&&a.editiPort[e]==a.data[i].iPort)return Cstool.Msg({content:this.lang_t("rule.msg60"),title:""}),!1;if(a.editePort[e]==a.data[i].ePort)return Cstool.Msg({content:this.lang_t("rule.msg55")}),!1}Cstool.Verify(this.formRules,function(t){t&&(o.ip=a.editIp[e],o.proto=a.editProto[e],o.iPort=a.editiPort[e],o.ePort=a.editePort[e],o.desc=a.editDesc[e],o.idx=String(e+1),o.addEffect="2",uiPost.setPortForwardRules(o,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))}))},a.dataTotal,e)},trashFun:function(t){var e={};this.ruleList;if("all"!=t)e[this.data[t].delRuleName]=t,Cstool.Msg({content:this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delPortForwardRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})}});else{var i=0;for(var o in this.select)this.select[o]&&(i++,e[[this.data[o].delRuleName]]=String(o),Cstool.Msg({content:i==this.select.length?this.lang_t("rule.msg26"):this.lang_t("rule.msg15"),type:"confirm",ok:function(){uiPost.delPortForwardRules(e,function(t){var e=1;t&&(t.wtime&&"0"!=t.wtime&&(e=t.wtime),Cstool.applyLoad(e,function(){location.href=location.href}))})}}));if(0==i)return Cstool.Msg({content:this.lang_t("rule.msg14")}),!1}},watchValue:function(t){this.editDesc[t]!=this.data[t].desc||this.editIp[t]!=this.data[t].ip||this.editProto[t]!=this.data[t].proto||this.editiPort[t]!=this.data[t].iPort||this.editePort[t]!=this.data[t].ePort?"/static/images/edited.png"!=this.operate[t]&&(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edited.png")):(this.operate.splice(t,1),this.operate.splice(t,0,"/static/images/edit.png"))},tableInit:function(t){for(var e in t)this.edit[e]=!1,this.select[e]=!1,this.operate[e]="/static/images/edit.png",this.editDesc[e]=t[e].desc,this.editIp[e]=t[e].ip,this.editProto[e]=t[e].proto,this.editiPort[e]=t[e].iPort,this.editePort[e]=t[e].ePort}}}</script><script src="/static/js/main.js"></script></body></html>

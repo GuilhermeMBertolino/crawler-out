@@ -1,0 +1,95 @@
+#!/bin/sh
+PIDFILE_CONNECT="/var/run/udhcpc.sierra.pid.connect"
+DEMAND_FILE="/var/run/udhcpc.sierra.demand"
+ETH="br0"
+up=0 #if wanip is got
+
+Get_RX_TX_packet_num()
+{
+	local _RX_PKT _TX_PKT
+	CFG=`ifconfig $ETH`
+	stt=0
+	for s in $CFG
+	do
+		if [ $stt -eq 1 -a $up -eq 1 ] ; then
+			case ${s%%:*} in
+				"packets") _RX_PKT=${s##*:};;
+			esac
+			stt=0
+		fi
+		
+		if [ $stt -eq 2 -a $up -eq 1 ] ; then
+			case ${s%%:*} in
+				"packets") _TX_PKT=${s##*:};;
+			esac
+			break
+		fi
+				
+		[ $s = "inet" ] && up=1
+		[ $s = "RX" ] && stt=1
+		[ $s = "TX" ] && stt=2 			
+	done
+	
+	eval $1=$_RX_PKT
+	eval $2=$_TX_PKT
+}
+
+#echo $$ > $PIDFILE_CONNECT
+#IDLETIME=`rdcsman 0x001e000c u16`
+#[ $IDLETIME = 0 ] && IDLETIME=600
+#CNTTYPE=`rdcsman 0x001e000a u16` #3G_CNT_TYPE 0:ondemand 1:auto 2:manual
+#while [ true -a $CNTTYPE -eq 0 ] ; do
+#	if [ -f $DEMAND_FILE ] ; then
+#		STATE=`cat $DEMAND_FILE`
+#		if [ $STATE = "raw" ] ; then
+#			break
+#		fi
+#	fi	
+#	sleep 1
+#done
+
+while [ true ] ; do
+	
+	Get_RX_TX_packet_num old_rx_pkt old_tx_pkt
+	if [ $up -eq 1 ] ; then
+		eq=0
+	else #while wan type is not up
+		sleep 2
+		printf "sleep2\n"
+		continue
+	fi
+
+#	TIME=0
+#	while [ true ] ; do		
+#		sleep 3
+#		TIME=$((TIME+3))
+#		if [ $TIME -gt $IDLETIME ] ; then
+#			break;
+#		fi
+#	done		
+
+	while [ true ] ; do
+
+		Get_RX_TX_packet_num new_rx_pkt new_tx_pkt	
+	
+		#echo "$0 : old_rx_pkt=$old_rx_pkt old_tx_pkt=$old_tx_pkt new_rx_pkt=$new_rx_pkt new_tx_pkt=$new_tx_pkt"
+#		echo "$0 : old_rx_pkt=$old_rx_pkt new_rx_pkt=$new_rx_pkt during $IDLETIME sec"
+#		`logger -t udhcpc-connect-sierra "old_rx_pkt=$old_rx_pkt new_rx_pkt=$new_rx_pkt during $IDLETIME sec"`
+	
+		diff_rx_pkt=$(($new_rx_pkt-$old_rx_pkt)) 
+		diff_tx_pkt=$(($new_tx_pkt-$old_tx_pkt)) 
+	
+		if [ $diff_tx_pkt -ge 200 ] ; then
+
+			wrcsman "0x801e0700 0x01"
+			sierra-action start
+			exit 0
+		fi
+	  
+		sleep 3
+	done
+	
+done
+
+
+		

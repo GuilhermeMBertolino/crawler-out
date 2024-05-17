@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<% 
+      local commonCfg = require "webGetFunc.commonCfg"
+%>
+<html>
+<head>
+  <META charset="UTF-8">
+  <META http-equiv="Pragma" content="no-cache">
+  <META HTTP-equiv="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Expires" CONTENT="Mon, 06 Jan 1990 00:00:01 GMT">
+  
+ <title>NETGEAR Router <? commonCfg.getModelNameStr()?></title>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.jscrollpane.min.js"></script>
+  <script src="js/jquery.mousewheel.js"></script>
+  <script src="js/utils.js<? commonCfg.getVer(); ?>"></script>
+
+  <link rel="stylesheet" href="css/table_noh.css">
+  <link rel="stylesheet" href="css/button.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/scrollbar.css">
+  <link rel="stylesheet" href="css/form.css">
+  <link rel="stylesheet" href="css/custom.css"  type="text/css">
+  <script language="javascript" type="text/javascript">
+  
+    $(document).ready(function() {
+        fetchData('target', 'ddnsStatus','','initLoad');
+    });
+  
+    function initLoad()
+    {
+        $("[mlang]").each(function(idx, obj) {
+            obj.innerHTML = window.opener.top.mlang[obj.attributes.mlang.value];
+        });
+
+        $("[mlang]").each(function(idx, obj) {
+            if (obj.attributes.mlang.value == "ADD008")
+            {
+                var hostname = document.getElementById("ddns_host_name").value;
+                var date_time = document.getElementById("date_time").value;
+                
+                obj.innerHTML = hostname.concat(" ", window.opener.top.mlang[obj.attributes.mlang.value], " ", date_time, ".");
+            }
+            if (obj.attributes.mlang.value == "ADDE32")
+            {
+                var date_time_not_reachable = document.getElementById("date_time_not_reachable").value;
+
+                obj.innerHTML = obj.innerHTML.replace("<time>, <date>", date_time_not_reachable);
+            }
+        });
+    }
+    
+  </script>
+</head>
+<body bgcolor="#ffffff" >
+    <form id="target">
+        <div class="form-row" align="center">
+            <font size="4">
+                <b>
+                    <span name="ddnsStatus" id="ddns_reg_status"></span>
+                    <input type="hidden" name="hiddenDdnsHostName" id="ddns_host_name"></span>
+                    <input type="hidden" name="hiddenDateTime" id="date_time">
+                    <input type="hidden" name="hiddenDateTimeNotReachable" id="date_time_not_reachable">
+                </b>
+            </font>
+        </div>
+    </form>
+</body>
+</html>

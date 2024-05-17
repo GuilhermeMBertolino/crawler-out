@@ -1,0 +1,48 @@
+#!/bin/sh
+# rollback any configuration that was done by the fapi scripts on the given interface
+# Needed object: None
+
+script_name="fapi_wlan_wave_rollback_configuration"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name="$1"
+
+interface_type=`check_interface_type $interface_name`
+if [ "$interface_type" = "$STA" ]
+then
+	radio_name=`get_radio_name_from_endpoint $interface_name`
+	radio_index=`find_index_from_interface_name $radio_name`
+else
+	radio_name=${interface_name%%.*}
+	[ "$radio_name" != "$interface_name" ] && interface_type="$VAP"
+	radio_index=`find_index_from_interface_name $radio_name`
+fi
+
+# The script can be called from other script or from external API
+[ -z "$interface_name" ] && print2log $radio_index ERROR "$script_name must get interface"
+
+timestamp $radio_index "$script_name:$interface_name:begin"
+print2log $radio_index DEBUG "$script_name $*"
+
+# Check if a conf is ongoing for the requested interface, if it is erase all the files with the relevant _pid and then erase the 
+# file indicating that a conf is ongoing
+if [ -e "${CONF_IN_PROGRESS}_${radio_name}" ]
+then
+	. ${CONF_IN_PROGRESS}_${radio_name}
+	for item in `find ${CONF_DIR}/ -name "*_${pid}*" -print`
+	do
+		echo "Temp conf file erase: ${item}" > /dev/console
+		rm -f $item
+	done
+	rm -f ${CONF_IN_PROGRESS}_${radio_name}
+fi
+
+# Create the output configuration file
+cat /dev/null > ${OUT_CONF}
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"
+
+print2log $radio_index DEBUG "$script_name done"
+timestamp $radio_index "$script_name:$interface_name:done"

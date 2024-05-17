@@ -1,0 +1,94 @@
+#!/bin/sh
+pid_file="/var/run/pptpd.pid"
+LAN_IP=`rdcsman 0x001a0008 ipv4`
+NAT=`rdcsman 0x001a000b u8`
+PPTPServ_NAT_ADDED="/var/run/pptpserv_nat_add"
+WAN_IF=`rdcsman 0x8001000b str`
+RESET_NAT="/var/run/reset_nat_iptables"
+STEALTH_MODE=`rdcsman 0x0015000E u8`
+WAN_IP=`rdcsman 0x80010002 ipv4`
+
+case "$1" in
+    start)
+        e=`rdcsman 0x001a0001 u8`
+        if [ $e = "1" ] ; then
+            echo "PPTP Server starting ..... [WAITING]"
+        else
+            echo "PPTP Server don't enable ..... [WARNING]"
+            exit
+        fi
+
+        if [ -f $pid_file ] ; then
+            echo "PPTP Server already existed ..... [WARNING]"
+            exit 1
+        fi
+
+        uvm /usr/uo/pptpd.conf.uo > /etc/pptpd.conf
+        uvm /usr/uo/options.pptpd.uo >  /etc/ppp/options.pptpd
+        uvm /usr/uo/pap-secrets.uo > /etc/ppp/pap-secrets
+        uvm /usr/uo/chap-secrets.uo > /etc/ppp/chap-secrets
+
+        if [ -f /etc/pptpd.conf -a -f /etc/ppp/options.pptpd ] ; then
+            /usr/sbin/pptpd -p $pid_file -d
+            echo "PPTP Server configure file found ..... [OK]"
+        else
+            echo "PPTP Server configure file doesn't exist ..... [FAIL]"
+        fi
+        echo
+
+		# Start PPTPServer NAT
+        if [ $NAT = "1" ] ; then
+			iptables -t nat -A POSTROUTING -s $LAN_IP/255.255.255.0 -o $WAN_IF -j MASQUERADE
+			echo "iptables -t nat -D POSTROUTING -s $LAN_IP/255.255.255.0 -o $WAN_IF -j MASQUERADE >/dev/null 2>&1 " >> $RESET_NAT
+		fi
+
+        # For NAT (Stealth Mode)
+        if [ $STEALTH_MODE == "1" ]; then 
+            nat restart # Enable Stealth Rules for PPTP Server
+        fi
+    ;;
+
+    stop)
+        if [ -f $pid_file ] ; then
+            pid=`cat $pid_file`
+            kill -9 $pid
+            rm -f $pid_file
+            echo "Shutting down pptpd ..... [OK] "
+        else
+            echo " pptpd doesn't start ..... [WARNING] "
+        fi
+        echo
+
+		#Stop PPTPServer NAT
+    	if [ -f $RESET_NAT ]; then
+        	(. $RESET_NAT)
+        	rm -f $RESET_NAT
+    	fi
+
+        # For NAT (Stealth Mode)
+        if [ $STEALTH_MODE == "1" ]; then 
+            nat restart # Disable Stealth Rules for PPTP Server
+        fi 
+
+    ;;
+
+    status)
+        status pptpd
+    ;;
+
+    restart)
+        $0 stop
+        $0 start
+    ;;
+
+    restart-kill)
+        $0 stop
+        $0 start
+    ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart|restart-kill|status}"
+        exit 1
+esac
+
+exit 0

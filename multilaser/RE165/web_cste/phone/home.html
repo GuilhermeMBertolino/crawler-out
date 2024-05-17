@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="/static/css/phone/home.css"><style>.img-invert{-webkit-filter:invert(25%);filter:invert(25%)}</style></head><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <div>
+  <div class="fun-icon cpu">
+    <svg width="130" height="90" xmlns="http://www.w3.org/2000/svg">
+      <text style="fill:#fff;" font-size="15" x="90" y="40" width="90" height="90">{{ cpuOccupy }}%</text>
+      <text style="fill:#fff;" font-size="15" x="90" y="60" width="90" height="90">
+      CPU
+      </text>
+      <circle 
+        cx="40" 
+        cy="40" 
+        r="34" 
+        stroke-width="12" 
+        stroke="#5998fc" 
+        fill="none">
+      </circle>
+      <circle 
+        cx="40" 
+        cy="40" 
+        r="34" 
+        stroke-width="12" 
+        stroke="#9dcafa" 
+        fill="none" 
+        transform="matrix(0,-1,1,0,0,80)" 
+        stroke-dasharray="" 
+        :style="cpuOccupyPercent">
+    </circle>
+    </svg>
+  </div>
+
+  <div class="fun-icon ram">
+    <svg width="130" height="90">
+      <text style="fill:#fff;" font-size="15" x="90" y="34" width="90" height="90">{{ ramOccupy }}%</text>
+      <text style="fill:#fff;" font-size="15" x="90" y="60" width="90" height="90">RAM</text>
+      <circle 
+        cx="40" 
+        cy="40" 
+        r="34" 
+        stroke-width="12" 
+        stroke="#5998fc" 
+        fill="none">
+      </circle>
+      <circle 
+        cx="40" 
+        cy="40" 
+        r="34" 
+        stroke-width="12" 
+        stroke="#9dcafa" 
+        fill="none" 
+        transform="matrix(0,-1,1,0,0,80)" 
+        stroke-dasharray="" 
+        :style="ramOccupyPercent">
+      </circle>
+    </svg>
+  </div>
+
+  <div class="fun-icon speed_up">
+    <a>{{ upOccupy }}</a>
+  </div>
+
+  <div class="fun-icon speed_down">
+    <a>{{ downOccupy }}</a>
+  </div>
+
+  <div>
+    <div v-if="routerShow" class="fun-icon router">
+      <img :src="routerImg" @click="goHref('info')"/>
+    </div>
+    <div v-show="!routerShow" class="fun-icon meshpair">
+      <canvas id='canvas' width='110px' height='100px' @click="goHref('mesh')" >
+        Canvas not supported
+      </canvas>
+    </div>
+  </div>
+
+  <div class="fun-icon list">
+    <div class="content-home">
+      <div>
+        <div class="home row" @click="goHref('wan')" v-if="globalConfig.masterMode == '1'">
+          <img class="home-l" src="/static/images/phone/internet2.png">
+          <div class="home-c">	
+            <span>{{ lang_t('menu.wan').replace('(','\n(') }}</span>
+          </div>
+          <img class="home-r" src="/static/images/phone/sign_right.png">
+        </div>
+        <div class="home row" @click="goHref('wifi')" v-if="globalConfig.masterMode == '1'">
+          <img class="home-l" src="/static/images/phone/wifi.png">	
+          <div class="home-c">	
+            <span>{{ lang_t('menu.wifi') }}</span>
+          </div>
+          <img class="home-r" src="/static/images/phone/sign_right.png">
+        </div>
+        <div class="home row" @click="goHref('mesh')">
+          <img class="home-l" src="/static/images/phone/opmode.png">	
+          <div class="home-c">	
+            <span>{{ lang_t('menu.mesh_set') }}</span>
+          </div>
+          <img class="home-r" src="/static/images/phone/sign_right.png">
+        </div>
+        <div class="home row" @click="goHref('device')" v-if="globalConfig.masterMode == '1'">
+          <img class="home-l" src="/static/images/phone/devices.png">
+          <div class="home-c">
+            <span>{{ lang_t('menu.devices') }}</span>
+          </div>
+          <!--<div class="system-badge-count system-badge-dot">
+            <p>{{ userNum }}</p>
+          </div>-->
+          <img class="home-r" src="/static/images/phone/sign_right.png">
+        </div>
+        <div class="home row" @click="pcBtnFun" v-if="showPc">
+          <img class="home-l" src="/static/images/phone/desktop.png">
+          <div class="home-c">	
+            <span>{{ lang_t('menu.pc_version') }}</span>
+          </div>
+          <img class="home-r" src="/static/images/phone/sign_right.png">
+        </div>
+      </div>
+	</div>
+  </div>
+  <div class="fun-icon list1">
+    <div class="content-home">
+	  <div class="fun-icon tools" @click="goHref('tools')">
+		<a>{{ lang_t('menu.tools') }}</a>
+	  </div>
+	  <div class="fun-icon application" @click="goHref('application')" v-if="globalConfig.masterMode == '1'">
+		<a>{{ lang_t('menu.application') }}</a>
+	  </div>
+	  <div class="fun-icon wizard" @click="goHref('wizard')" v-if="globalConfig.masterMode == '1'">
+		<a>{{ lang_t('menu.wizard') }}</a>
+      </div>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/phone_layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,cpuOccupyPercent:{"stroke-dasharray":2*Math.PI*34*.7+" "+2*Math.PI*34*(1-.7)},ramOccupyPercent:{"stroke-dasharray":2*Math.PI*34*.7+" "+2*Math.PI*34*(1-.7)},menuShow:!1,cpuOccupy:0,ramOccupy:0,wanStatusImg:"error",hardModel:"",userNum:0,upOccupy:0,downOccupy:0,menuHeight:"300px",routerShow:!0,showPc:!0}},created:function(){var e=this,t=navigator.userAgent,n=-1<t.indexOf("Android")||-1<t.indexOf("Adr"),a=(t.match(/(iPad).*OS\s([\d_]+)/i),n&&/(?:Mobile)/.test(t),!!t.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)),i=-1<t.indexOf("Safari"),o=-1<t.indexOf("Manage_App");(self!=top||a&&!i||o)&&(this.showPc=!1),this.menuHeight=.95*window.innerHeight+"px",e.netInit(),setInterval(function(){e.netInit()},5e3),uiPost.getSysStatusCfg(function(t){e.hardModel=t.system.hardModel})},computed:{routerImg:function(){var t="/static/images/phone/router.png";return"04455"==this.hardModel?t="/static/images/phone/IP04455.png":"04447"==this.hardModel?t="/static/images/phone/IP04447.png":"04336"==this.hardModel?t="/static/images/phone/IP04336.png":"04338"==this.hardModel&&(t="/static/images/phone/IP04338.png"),t}},mounted:function(){this.getMesh()},methods:{pcBtnFun:function(){Cstool.Mark({content:this.lang_t("menu.pc_msg"),ok:function(){location.href="/basic/index.html"}})},goHref:function(t){location.href=t+".html?timestamp="+(new Date).getTime()},netInit:function(){var n=this;uiPost.getNetInfoCfg(function(t){if(null==t.cpuRatio)return!1;n.cpuOccupy=Math.round(Number(t.cpuRatio)),n.ramOccupy=Math.round(Number(t.memRatio)),n.userNum=t.lanUserNum;var e=2*Math.PI*34;n.cpuOccupyPercent={"stroke-dasharray":e*n.cpuOccupy/100+" "+e*(1-n.cpuOccupy/100)},n.ramOccupyPercent={"stroke-dasharray":e*n.ramOccupy/100+" "+e*(1-n.ramOccupy/100)},"connected"==t.wanConnStatus?n.wanStatusImg="tick":n.wanStatusImg="error",n.upOccupy=getFlow(1024*Number(t.up)),n.downOccupy=getFlow(1024*Number(t.down))})},getMesh:function(){var n=this;uiPost.getWiFiMeshConfig(function(t){if(t.meshInfo){var e=t.meshInfo.length;0!=e?(n.meshDraw(e),n.routerShow=!1):n.routerShow=!0}})},meshDraw:function(s){var u=document.getElementById("canvas").getContext("2d"),h=u.canvas.width,m=u.canvas.height;u.strokeStyle="#ccc",u.lineWidth=2;var g=function(t,e,n,a){u.beginPath(),u.moveTo(t,e),u.lineTo(n,a),u.stroke()},p=35,d=function(t,e,n){u.drawImage(t,e,n,p,p)},t=new Image;t.src="/static/images/map/t_off.png",t.onload=function(){if(2<s){var t=h/2-35-8,e=h-43,n=m/2-35-5,a=m-35-10;if(d(this,t,n),d(this,e,n),d(this,t,a),d(this,e,a),g(t+p+1,n+p/2,e-1,n+p/2),g(t+p+1,a+p/2,e-1,a+p/2),g(t+p/2,n+p+1,t+p/2,a-1),g(e+p/2,n+p+1,e+p/2,a-1),4<=s)for(var i=a-1-(a-1-(n+p+1))/2,o=0;o<4;o++)c=e+p/2+4*o,r=i,u.beginPath(),u.fillStyle="#ccc",u.arc(c+2,r,1,0,2*Math.PI,!1),u.fill()}else s<2?(d(this,5,(m-35)/2),d(this,h-40,(m-35)/2),g(42,m/2,h-42,m/2)):(d(this,(h-35)/2,5),d(this,2,m-36),d(this,h-36,m-36),g((h-35)/2,40,22,m-38),g((h-35)/2+35,40,h-22,m-38),g(39,m-20,h-39,m-20));var c,r}}}}</script><script src="/static/js/main.js"></script></body></html>

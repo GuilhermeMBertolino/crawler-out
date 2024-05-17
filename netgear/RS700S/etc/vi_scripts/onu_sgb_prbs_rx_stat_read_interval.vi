@@ -1,0 +1,37 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_sgb_prbs_rx_stat_read_interval
+########################################
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_general.csv, val_select:val
+########################################
+# cfg_class: rx_interval_stat_read
+########################################
+# pre_order
+MOV @(0x828c86b8),sgb_gbox_rx_prbs_err_count
+MOV @(0x828c8680{0x1}<<4),sgb_gbox_tx_prbs_err_inj_done_int
+MOV @(0x828c8680{0x1}<<3),sgb_gbox_rx_prbs_err_count_get_int
+MOV @(0x828c8680{0x1}<<2),sgb_gbox_rx_prbs_err_int
+MOV @(0x828c8680{0x1}<<1),sgb_gbox_rx_prbs_loss_int
+MOV @(0x828c8680{0x1}),sgb_gbox_rx_prbs_lock_int
+MOV 0x1,@(0x828c8680{0x1}<<4)
+MOV 0x1,@(0x828c8680{0x1}<<3)
+MOV 0x1,@(0x828c8680{0x1}<<2)
+MOV 0x1,@(0x828c8680{0x1}<<1)
+MOV 0x1,@(0x828c8680{0x1})
+# unorder
+# post_order
+########################################
+# end of cfg_class: rx_interval_stat_read
+########################################
+MOV sgb_gbox_tx_prbs_err_inj_done_int,gbox_tx_prbs_err_inj_done
+MOV sgb_gbox_rx_prbs_err_count_get_int,gbox_rx_prbs_err_count_get
+MOV 6,__RETC
+MOV sgb_gbox_rx_prbs_err_count,__RV0
+MOV gbox_tx_prbs_err_inj_done,__RV1
+MOV gbox_rx_prbs_err_count_get,__RV2
+MOV sgb_gbox_rx_prbs_err_int,__RV3
+MOV sgb_gbox_rx_prbs_loss_int,__RV4
+MOV sgb_gbox_rx_prbs_lock_int,__RV5
+HALT 0
+########################################
+# end of call_msg: onu_sgb_prbs_rx_stat_read_interval
+########################################

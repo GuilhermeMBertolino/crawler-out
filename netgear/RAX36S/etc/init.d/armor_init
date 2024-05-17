@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+#To use circle function,please identify the value of "mount_dev"
+START=94
+
+debug_file="/data/dni/armor_debug"
+start_action() {
+	if [ "x$(/bin/config get factory_mode)" = "x1" ]; then
+		exit 0
+	fi
+
+	local router_region=`artmtd -r region |grep REGION|awk -F ': ' '{print $2}'`
+	if [ "x$router_region" = "xPR" ]; then
+		exit 0
+	fi
+
+	mkdir -p /data/armor/
+	ln -s /data/armor/ /opt/bitdefender
+
+	router_reset=`/bin/config get reset_flag`
+	if [ "$router_reset" != "1" ];then
+		/bin/config set reset_flag=1
+	fi
+	#For version before 2.3.5.8,we only know nvram LastRebootReason from RA to check if router has performed FW upgrade, but this value still exist on case that router directly power off,for version after 2.3.5.8, we specially add nvram fwupgrade_performed for this purpose, value set to 1 before upgrading and set to 0 in done script.
+	FW_is_upraded=`/bin/config get fwupgrade_performed`
+	LastRebootReason=`/bin/config get lastRebootReason`
+	if [ "$FW_is_upraded" = "1" ]; then
+		echo "[`date '+%Y/%m/%d %T'`]FW is upgraded, run backup1" >> $debug_file
+		/usr/share/armor/upgrade_bd_cfg.sh backup
+	elif [ "$FW_is_upraded" = "" ]; then
+		if [ "$LastRebootReason" = "6" ]; then
+			#For RA value reboot reason,there is limitation,this value still is 6 if user directly power off and power on, to handle this we set another value to mark and skip this case,for fw after this version,GUI will set fwupgrade_performed for armor and we only need to check this value
+			LastRebootReason_armor=`/bin/config get lastRebootReason_armor`
+			if [ "$LastRebootReason_armor" != "1" ]; then
+				echo "[`date '+%Y/%m/%d %T'`]run backup2" >> $debug_file
+				/usr/share/armor/upgrade_bd_cfg.sh backup
+				/bin/config set lastRebootReason_armor=1
+			fi
+		fi
+	fi
+			
+
+	if [ ! -e "/opt/bitdefender/bitdefender-release" ]; then
+		[ -e /lib/armor/phase2.tar.gz ] && tar -zxf /lib/armor/phase2.tar.gz -C /
+		if [ "$?" != 0 ];then
+			[ -e /lib/armor/phase2.tar.gz ] && tar -zxf /lib/armor/phase2.tar.gz -C /
+		fi
+		sync
+	fi
+
+	if [ ! -e "/opt/bitdefender/bin/bdupd" ]; then
+		[ -e /lib/armor/phase2-upd.tar.gz ] && tar -zxf /lib/armor/phase2-upd.tar.gz -C /opt/bitdefender
+		if [ "$?" != 0 ];then
+			[ -e /lib/armor/phase2-upd.tar.gz ] && tar -zxf /lib/armor/phase2-upd.tar.gz -C /opt/bitdefender
+		fi
+		sync
+	fi
+	chown -R root:root /opt/bitdefender/ 2>/dev/null
+	chmod +x /opt/bitdefender/guster/scripts/*
+	#Per MH request,disable bdupdater carried in BD agent, Set BD updater check interval to 14days, this requirement is from DT 2.3.0.28
+	sed -ri "/check_interval/s/(check_interval=)[^ ]+/\11209600/g" /opt/bitdefender/etc/patch.server 2>/dev/null
+	
+	if [ ! -e "/opt/bitdefender/lib/libbdbroker.so" ]; then
+ 		cp /lib/libbdbroker.so /opt/bitdefender/lib
+	fi
+
+	if [ -e /lib/armor/phase2.tar.gz ]; then
+		#if we have prebuild BD agent, directly start
+		/usr/share/armor/BD_START.sh &
+	elif [ -e /lib/armor/phase2-upd.tar.gz ]; then
+		#If not have prebuild BD agent, call bdupd to download and start
+		/usr/share/armor/bdupd_start.sh boot &
+	fi
+
+	/bin/config commit
+}	
+
+start() {
+	if [ -f /tmp/boot_status ]; then
+		start_action &
+		return
+	fi
+	start_action
+}
+
+boot() {
+	start
+}
+

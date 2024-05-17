@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+FACTORY_RESET_SECONDS=5
+DELAY_FRESET="delay_freset.sh"
+
+case "$ACTION" in
+pressed)
+	$DELAY_FRESET $FACTORY_RESET_SECONDS &
+;;
+released)
+	if [ "$SEEN" -lt $FACTORY_RESET_SECONDS ]
+	then
+		echo "REBOOT" > /dev/console
+		/usr/bin/ra_cli -r 2
+		# Stop DELAY_FRESET if existed
+		pid=""
+		result=$(ps w)
+		freset=$(echo "$result" | grep $DELAY_FRESET)
+		[ -n "$freset" ] && pid=$(echo "$freset" | cut -d r -f 1)
+		[ -n "$pid" ] && (kill -9 "$pid")
+		# Skip reboot in MFG mode
+		[ -f /tmp/mfg ] && return 0
+		# Reboot
+		sync
+		reboot
+	fi
+;;
+esac
+
+return 0

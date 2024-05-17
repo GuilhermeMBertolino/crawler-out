@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ "$(config get ipv6_type)" = "pppoe" ]; then
+	ppp_link=$(ifconfig $1 | grep 'Scope:Link' | awk -F " " '{print $3}' | awk -F "/" '{print $1}')
+	if [ -n "$(ip -6 ro | grep "$1" | grep fe80 | grep -v "$ppp_link" | awk -F " " '{print $1}')" ]; then
+		ip -6 ro | grep "$1" | grep fe80 | grep -v "$ppp_link" | awk -F " " '{print $1}' > /tmp/ipv6_gw
+	else
+		ip -6 ro | grep "$1" | grep fe80 | awk -F " " '{print $1}' > /tmp/ipv6_gw
+	fi
+else
+	ip -6 ro | grep default | grep $1 | awk -F " " '{print $3}' > /tmp/ipv6_gw
+fi

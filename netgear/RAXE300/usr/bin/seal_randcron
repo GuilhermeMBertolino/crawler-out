@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Create a cron rule to run randomly once per day
+
+set -eu
+
+if [ $# -ne 1 ] ; then
+    echo "usage error"
+    exit
+fi
+
+program=$1
+
+#### Checks if cron already has 'program' set ####
+crontab -l 2>&1 | grep -sq "${program}"$ > /dev/null &&
+{
+    echo "Randomized daily job already added"
+    exit
+}
+
+#### Checks completed - determine random time, any minute of the day ####
+
+minutes=$(seal_randinit $((24*60)))
+hour=$((${minutes}/60))
+minute=$((${minutes}%60))
+
+#### insert cronjob into existing crontab ####
+echo "${minute} ${hour} * * * trigger_event ${program}" > /var/spool/cron/crontabs/seal_randcron
+echo "seal_randcron" > /var/spool/cron/crontabs/cron.update

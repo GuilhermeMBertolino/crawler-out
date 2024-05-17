@@ -1,0 +1,51 @@
+<html>
+<head>
+<link rel="stylesheet" rev="stylesheet" href="style.css" type="text/css">
+<link rel="stylesheet" rev="stylesheet" href="customer.css" type="text/css">
+<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+<script>
+    function clearAuthData(){    
+        if (!confirm(logout_want_logout)) {
+            return false
+        }
+        if (document.all) {
+            // Internet Explorer: 'ClearAuthenticationCache' is only available in IE
+            document.execCommand('ClearAuthenticationCache');
+        } else {
+            var xmlhttp;
+            if (window.XMLHttpRequest) {
+                xmlhttp = new XMLHttpRequest();
+            } else if (window.ActiveXObject) {
+                try {
+                    xmlhttp = new ActiveXObject('Msxml2.XMLHTTP');
+                } catch (ex) {
+                    try {
+                        xmlhttp = new ActiveXObject('Microsoft.XMLHTTP');
+                    } catch (ex) {}
+                }
+            }
+            if (xmlhttp.readyState < 4) {
+                xmlhttp.abort();
+            }
+            // Firefox/Mozilla: use anonymous "login" to trigger a "logout"
+            xmlhttp.open('GET', '/?sling:authRequestLogin=1', false, 'anonymous', 'null');
+            xmlhttp.send('');
+        }
+        document.logout.submit();
+        return true;
+    }
+    
+</script>
+</head>
+<body style="padding: 1px;" class="header-class">
+<img id="topbar" src="topbar.jpg" width="1022" height="142" border="0" align="middle">
+<div class="head-div" style="display: none;">
+    <img id="logo" src="logo.png" border="0" align="middle">
+    <div>
+        <form action=/boafrm/formLogout method=POST name="logout"></form>
+        <p class="logout-text" onclick="return clearAuthData()"><script>dw(logout_header)</script></p>
+        <img id="qrcode" src="qrcode.png" border="0" align="middle">
+    </div>
+</div>
+</body>
+</html>

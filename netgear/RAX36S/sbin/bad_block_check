@@ -1,0 +1,22 @@
+#!/bin/sh
+mtd_part="1:16"
+sum=0
+
+mtd_block_info()
+{
+	while read -r line;
+	do 
+		
+		[ "x$(echo $line |grep \(BAD\))" != "x" ] && let sum+=1
+	done < /tmp/$1	
+}
+
+for i in $mtd_part
+do
+mtd_num=$(echo $i|cut -f 1 -d ":")
+mtd_blk=$(echo $i|cut -f 2 -d ":")
+mtdinfo /dev/mtd$mtd_num -M |grep "[0-9]: " |sed 's/BAD\ /(BAD)\n/g'|sed 's/\ \ \ \ \ \ /\n/g'|sed 's/^[ \t]*//g'|grep : | awk '{print $1 $3}'|head -n $mtd_blk 2>&1 > /tmp/mtd$mtd_num
+mtd_block_info mtd$mtd_num
+done
+
+echo $sum > /tmp/uboot_bad_block_count

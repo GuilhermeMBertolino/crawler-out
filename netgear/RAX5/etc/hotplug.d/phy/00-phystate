@@ -1,0 +1,20 @@
+#echo $(env) > /dev/console
+[ "$PORT" == "0" ] && {
+    [ "$ACTION" == "linkup" ] && {
+        uci_toggle_state network wan link 1
+    } || {
+        uci_toggle_state network wan link 0
+    }
+}
+
+
+[ "$PORT" -ge 0 ] && {
+
+    linkuptime="$(cat /proc/uptime | cut -d " " -f1 | cut -d '.' -f1)"
+    uci -c /var/state/ set portstate.state.port${PORT}_action=$ACTION
+    uci -c /var/state/ set portstate.state.port${PORT}_speed=$SPEED
+    uci -c /var/state/ set portstate.state.port${PORT}_duplex=$DUPLEX
+    uci -c /var/state/ set portstate.state.port${PORT}_linkuptime=$linkuptime
+    uci -c /var/state/ commit portstate
+}
+

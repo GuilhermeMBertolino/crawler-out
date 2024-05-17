@@ -1,0 +1,69 @@
+#!/bin/sh
+
+mount -n -t proc proc /proc
+mount -n -t sysfs sysfs /sys
+mount -n -t ramfs ramfs /home
+mount -n -t ramfs ramfs /tmp
+mount -n -t ramfs ramfs /mnt
+mount -n -t ramfs ramfs /dev
+mkdir /dev/pts
+mount -t devpts devpts /dev/pts
+mount -t usbfs none /proc/bus/usb/
+#mount Sercomm directory
+mount -n -t jffs2  "mtd:factory" /config/factory
+mount -n -t jffs2  "mtd:scnvram" /config/nvram
+mount -n -t jffs2  "mtd:xxx" /config/xxx
+mount -n -t jffs2  "mtd:language_ENU" /config/language_ENU
+mount -n -t jffs2  "mtd:language_CHS" /config/language_CHS
+mount -n -t jffs2  "mtd:language_RUS" /config/language_RUS
+mount -n -t jffs2  "mtd:language_DEU" /config/language_DEU
+mount -n -t jffs2  "mtd:language_FRA" /config/language_FRA
+mount -n -t jffs2  "mtd:language_NLD" /config/language_NLD
+mount -n -t jffs2  "mtd:language_SVE" /config/language_SVE
+#mount -n -t jffs2  "mtd:language_CSY" /config/language_CSY
+#mount -n -t jffs2  "mtd:language_TUR" /config/language_TUR
+mount -n -t jffs2  "mtd:language_ITA" /config/language_ITA
+mount -n -t jffs2  "mtd:language_KOR" /config/language_KOR
+mount -n -t jffs2  "mtd:language_ESP" /config/language_ESP
+
+# build var directories
+/bin/mkdir -m 0777 /tmp/var
+/bin/mkdir -m 0777 /var/lock
+/bin/mkdir -m 0777 /var/log
+/bin/mkdir -m 0777 /var/run
+/bin/mkdir -m 0777 /var/tmp
+/bin/mkdir -m 0777 /var/w
+/bin/mkdir -m 0777 /tmp/etc
+/bin/mkdir -m 0755 /etc/dnrd
+/bin/mkdir -m 0777 /tmp/mnt
+/bin/mkdir -m 0777 /mnt/shares
+/bin/mkdir -m 0777 /var/run/bftpd
+/bin/mkdir -m 0777 /tmp/nv
+/bin/mkdir -m 0777 /tmp/w
+
+/bin/mkdir -m 0777 /tmp/etc_ro
+/bin/mkdir -m 0777 /tmp/dev
+/bin/mkdir -m 0777 /tmp/itunes
+/bin/mkdir -m 0777 /tmp/nv
+/bin/mkdir -m 0777 /var/run/down
+/bin/mkdir -m 0777 /var/run/lock
+/bin/mkdir -m 0777 /var/run/dbus
+
+/bin/cp -a /usr/etc/* /etc
+/bin/cp -a /usr/dev/* /dev/
+
+cp -f /usr/sbin/setupwizard.cgi /tmp/setupwizard.cgi
+
+#mount
+mount -a
+/bin/sleep 1
+if [ ! -e '/config/nvram/ready' ]
+then
+    /bin/echo "mount scnvram failed, calling eraseall " > /dev/console
+    /bin/flash_eraseall -j /dev/mtd3
+	/bin/mount -n -t jffs2  "mtd:scnvram" /config/nvram
+	/bin/touch  /config/nvram/ready
+fi
+/bin/echo "=============mount finished " > /dev/console
+
+

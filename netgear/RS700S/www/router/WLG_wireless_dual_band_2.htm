@@ -1,0 +1,758 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%13%>
+<title>NETGEAR Router <%14%></title>
+<link rel="stylesheet" href="<%15%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%16%>
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+
+    var timer;
+    var isJscrollPaneInit=0;
+    var api;
+    var iframe1Ready=0,iframe2Ready=0;
+    var throttleTimeout;
+
+
+
+
+    function reinitJscrollPane()
+    {
+        if ($.browser.msie) 
+        {
+             // IE fires multiple resize events while you are dragging the browser window which
+             // causes it to crash if you try to update the scrollpane on every one. So we need
+             // to throttle it to fire a maximum of once every 50 milliseconds...
+             if (!throttleTimeout) 
+             {
+                 throttleTimeout = setTimeout(function()
+                 {
+//                     api.reinitialise();
+                     throttleTimeout = null;
+                     
+                 },1500);
+             }
+         } 
+         else                 
+         {
+//             api.reinitialise();
+         }
+    }
+    
+    function loadJscrollPane()
+    {
+
+
+        $('.scroll-pane').each(function()
+        {
+/*  
+          $(this).jScrollPane(
+            {
+                showArrows: $(this).is('.arrow')
+            });
+*/                        
+            api = $(this).data('jsp');
+        });
+        
+        isJscrollPaneInit=1;
+
+    } 
+ 
+    function iframe1Load()
+    {
+    	if(timer)
+    	    clearTimeout(timer);
+    	if(iframe1Ready==0)
+    	    iframe1Ready=1;
+    	if(iframe1Ready==1 && iframe2Ready==1)
+    	{
+    		  iframe1Ready=2;
+        	timer=setTimeout(loadJscrollPane,500);
+      }
+    }
+
+    function iframe2Load()
+    {
+    	if(timer)
+    	    clearTimeout(timer);
+    	if(iframe2Ready==0)
+    	iframe2Ready=1;
+    	if(iframe1Ready==1 && iframe2Ready==1)
+    	{
+          iframe2Ready=2;
+        	timer=setTimeout(loadJscrollPane,500);
+      }
+    }
+
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            // window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.png";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.png";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size(false);
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+function SetCwinHeight(iframeObj)
+{
+	  var cwin=iframeObj;
+    if (document.getElementById)
+    {    
+		    
+        if (iframeObj && !window.opera)
+        {
+            if (iframeObj.contentDocument && iframeObj.contentDocument.body.offsetHeight && !($.browser.msie))
+            {
+                setTimeout(function() {iframeObj.height = iframeObj.contentDocument.body.offsetHeight;}, 100);
+                //iframeObj.height = iframeObj.contentDocument.body.offsetHeight;
+            }
+            else if(document.frames[iframeObj.name].document && document.frames[iframeObj.name].document.body.scrollHeight)
+            {    
+                iframeObj.height = document.frames[iframeObj.name].document.body.scrollHeight;  
+            }    
+        }
+        else
+        {
+        	if(cwin.contentWindow.document && cwin.contentWindow.document.body.scrollHeight)
+        	    cwin.height=cwin.contentWindow.document.body.scrollHeight; // opera
+        }
+
+        if(isJscrollPaneInit==1)
+           reinitJscrollPane();
+    }    
+}    
+
+function showWpsAlert()
+{
+    var cf = document.forms[0];
+    if(cf.show_wps_alert.value == "1")
+        alert("<%63%>");
+}
+
+function displayPassphrase()
+{
+    var cf = document.forms[0];
+    var wlan_secu_2g = "<%252%>";
+    var wlan_secu_5g = "<%253%>";
+
+    if (wlan_secu_2g == "None")
+    {
+        document.getElementById("passphrase_2g").style.display="none";
+    }
+    else
+    {
+        document.getElementById("passphrase_2g").style.display="block";
+    }
+
+    if (wlan_secu_2g == "WPA3-SAE")
+    {
+        document.getElementById("passphrase").maxLength=128;
+        document.getElementById("passphraseSlashText").innerHTML="<%27%>";
+    }
+    
+    if (wlan_secu_5g == "None")
+    {
+        document.getElementById("passphrase_5g").style.display="none";
+    }
+    else
+    {
+        document.getElementById("passphrase_5g").style.display="block";
+    }
+
+    if (wlan_secu_5g == "WPA3-SAE")
+    {
+        document.getElementById("passphrase_an").maxLength=128;
+        document.getElementById("passphrase_anSlashText").innerHTML="<%27%>";
+    }
+
+}
+
+function initScrn()
+{
+    var defaultKey;
+    var fm=document.forms[0];
+    var i;
+
+    /* 2.4G part */
+    if (fm.bssid_enable.value == "1")
+        fm.enable_bssid.checked = true;
+    else
+        fm.enable_bssid.checked = false;
+
+    if (fm.ssid_bc_enable.value == "1")
+        fm.enable_ssid_bc.checked = true;
+    else
+        fm.enable_ssid_bc.checked = false;
+
+    if(fm.enable_allow_see_access.value == "1" || fm.enable_apmode.value == "1")
+        fm.allow_see_access.checked = true;
+    else    
+        fm.allow_see_access.checked = false;
+
+    if(fm.enable_apmode.value == "1")
+        fm.allow_see_access.disabled = true;
+
+    /* 5G part*/
+    if (fm.bssid_enable_an.value == "1")
+        fm.enable_bssid_an.checked = true;
+    else
+        fm.enable_bssid_an.checked = false;
+
+    if (fm.ssid_bc_enable_an.value == "1")
+        fm.enable_ssid_bc_an.checked = true;
+    else
+        fm.enable_ssid_bc_an.checked = false;
+ 
+    if (fm.enable_allow_see_access_an.value == "1" || fm.enable_apmode_an.value == "1")
+        fm.allow_see_access_an.checked = true;
+    else
+        fm.allow_see_access_an.checked = false;
+    
+    if(fm.enable_apmode_an.value == "1")
+        fm.allow_see_access_an.disabled = true;
+
+    displayPassphrase();
+
+    initialized=true;
+}
+
+function autopskCheck_5g()
+{
+    var cf = document.forms[0];
+    var wlan_mode = "<%261%>";
+    if (wlan_mode != "g&#32;and&#32;b")
+    {
+        if (cf.support_ac_mode.value == "1")
+            alert("<%259%>");
+        else
+            alert("<%260%>");
+        document.forms[0].submit();
+    }
+    else
+        document.forms[0].submit();
+    return true;
+}
+
+function autopskCheck()
+{
+    var cf = document.forms[0];
+    var wlan_mode = "<%262%>";
+    if (wlan_mode != "g&#32;and&#32;b")
+    {
+        alert("<%260%>");
+        document.forms[0].submit();
+    }
+    else
+        document.forms[0].submit();
+    return true;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var wps_version = "<%47%>";
+    
+    if (cf.ssid.value == "")
+    {
+        alert("<%52%>");
+        return false;
+    }
+
+    if (cf.ssid.value.match( /[^\x20-\x7E]/ ))
+    {
+        alert("<%53%>");
+        cf.ssid.focus();
+        return false;
+    }
+    
+    if(cf.enable_ssid_bc.checked)
+    {
+        cf.enable_ssid_bc.value = "ssid_24G_bc";    
+    }
+    else
+    {
+        cf.enable_ssid_bc.value = "";
+    }
+    if(cf.enable_bssid.checked)
+    {
+        cf.enable_bssid.value = 1;
+    }
+    else
+    {
+        cf.enable_bssid.value = "";
+    }
+
+    if(cf.allow_see_access.checked)
+    {
+        cf.allow_see_access.value = 1;
+    }
+    else
+    {
+        cf.allow_see_access.value = "";
+    }
+
+    cf.ssid.value = cf.ssid.value; 
+    if("<%2136%>" == "checked")
+    {
+        cf.security_type.value = "WPA-PSK";
+    }
+    else if("<%270%>" == "checked")
+    {
+        cf.security_type.value = "WPA2-PSK";
+    }
+    else if("<%271%>" == "checked")
+    {
+        cf.security_type.value = "AUTO-PSK";
+    }
+    else if("<%272%>" == "checked")
+    {
+        cf.security_type.value = "WPA3-Personal";
+    }
+
+    cf.passphrase.value = cf.passphrase.value;
+    cf.load_2g_frame.value = "1";
+
+    if ( cf.security_type.value != "Disable" )
+    {
+        if(cf.passphrase.value.length < 8)
+        {
+            if(cf.security_type.value == "WPA3-Personal")
+            {
+                alert("<%58%>");
+            } else {
+                alert("<%59%>");
+            }
+            return false;    
+        }
+        
+        if(cf.security_type.value == "WPA3-Personal")
+        {
+            if(cf.passphrase.value.length > 127)
+            {
+                if ( isHex(cf.passphrase.value) == false && cf.pfChanged.value==1)
+                {
+                    alert("<%58%>");
+                    return false;
+                }    
+            }
+        }
+        else 
+        {
+            if(cf.passphrase.value.length > 63)
+            {
+                if ( isHex(cf.passphrase.value) == false && cf.pfChanged.value==1)
+                {
+                    alert("<%59%>");
+                    return false;
+                }    
+            }
+
+        }
+        if (cf.passphrase.value.match( /[^\x20-\x7E]/ ))
+        {
+            alert("<%60%>");
+            cf.passphrase.focus();
+            return false;
+        }
+    }
+
+ 
+    /* 5G part */ 
+    if (cf.ssid_an.value == "")
+    {
+        alert("<%52%>");
+        return false;
+    }
+
+    if (cf.ssid_an.value.match( /[^\x20-\x7E]/ ))
+    {
+        alert("<%53%>");
+        return false;
+    }
+    
+    if(cf.enable_ssid_bc_an.checked)
+    {
+        cf.enable_ssid_bc_an.value = "ssid_5G_bc";    
+    }
+    else
+    {
+        cf.enable_ssid_bc_an.value = "";
+    }
+    if(cf.enable_bssid_an.checked)
+    {
+        cf.enable_bssid_an.value = 1;
+    }
+    else
+    {
+        cf.enable_bssid_an.value = "";
+    }
+
+    if(cf.allow_see_access_an.checked)
+    {
+        cf.allow_see_access_an.value = 1;
+    }
+    else
+    {
+        cf.allow_see_access_an.value = "";
+    }
+
+    cf.ssid_an.value = cf.ssid_an.value; 
+    if("<%2137%>" == "checked")
+    {
+        cf.security_type_an.value = "WPA-PSK";
+    }
+    else if("<%277%>" == "checked")
+    {
+        cf.security_type_an.value = "WPA2-PSK";
+    }
+    else if("<%278%>" == "checked")
+    {
+        cf.security_type_an.value = "AUTO-PSK";
+    }
+    else if("<%279%>" == "checked")
+    {
+        cf.security_type_an.value = "WPA3-Personal";
+    }
+
+    cf.passphrase_an.value = cf.passphrase_an.value;
+    cf.load_5g_frame.value = "1";
+ 
+    if ( cf.security_type_an.value != "Disable" )
+    {
+        if(cf.passphrase_an.value.length < 8)
+        {
+            if(cf.security_type_an.value == "WPA3-Personal")
+            {
+                alert("<%58%>");
+            } else {
+                alert("<%59%>");
+            }
+            return false;    
+        }
+        
+        if(cf.security_type_an.value == "WPA3-Personal")
+        {
+            if(cf.passphrase_an.value.length > 127)
+            {
+                if ( isHex(cf.passphrase_an.value) == false && cf.pfChanged.value==1)
+                {
+                    alert("<%58%>");
+                    return false;
+                }    
+            }
+        }
+        else 
+        {
+            if(cf.passphrase_an.value.length > 63)
+            {
+                if ( isHex(cf.passphrase_an.value) == false && cf.pfChanged.value==1)
+                {
+                    alert("<%59%>");
+                    return false;
+                }    
+            }
+        }
+        if (cf.passphrase_an.value.match( /[^\x20-\x7E]/ ))
+        {
+            alert("<%60%>");
+            cf.passphrase_an.focus();
+            return false;
+        }
+    }
+ 
+    return true;
+}
+
+</script>
+<link href="css/custom.css" rel="stylesheet" type="text/css">
+</head>
+<body  onload="initScrn();change_size(false);showWpsAlert();highLightMenu('setup', 'guest-network-setup');" class="page-body"  onResize="change_size(false);" >
+<img class="cover-image" src="<%72%>">
+<!--<img class="body-image" src="<%73%>">-->
+<div id="full-page-container">
+
+<form id="target"  method="POST" action="wlg_sec_profile_main.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+  <img class="subtop-image" src="<%74%>">
+<div class="subhead2 page_title"> <%263%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr>
+<td class="scrollpane-table-seperate-border scroll_container" colspan="2">
+<div class="scroll-pane main_bas" id="main" style="height:365px;width:620px;overflow:auto;scrolling:auto">
+<table style="border-collapse:collapse;width:97%">
+<tr>
+<td colspan="2" align="left">
+<table class="tbl_1" border="0" cellpadding="0" cellspacing="3" width="100%" id="table_2g_psk">
+<tr>
+<td colspan="2" class="pt-15 pb-10"><b><%167%> - <%264%></b></td>
+</tr>    
+<tr>
+<td align="left" class="pt-15">
+<label class="checkbox-container"><%265%>
+<input id="enable_bssid" type="checkbox" name="enable_bssid" value="1">
+<span class="checkbox-checkmark"></span>
+</label>
+</td>
+</tr>
+
+<tr>
+<td align="left" class="pt-15">
+<label class="checkbox-container"><%172%>
+<input id="enable_ssid_bc" type="checkbox" name="enable_ssid_bc" value="1">
+<span class="checkbox-checkmark"></span>
+</label>
+</td>
+</tr>
+
+<%168%>
+<tr>
+<td align="left" class="pt-15">
+<label class="checkbox-container"><%266%>
+<input id="allow_access" type="checkbox" name="allow_see_access" value="1">
+<span class="checkbox-checkmark"></span>
+</label>
+</td>
+</tr>
+<%171%>
+<tr>
+<td width="50%" align="left" class="pt-25"><%267%>:</td>
+<td width="50%" class="pb-15">
+<input id="ssid" type="text" class="input1" name="ssid" value="<%268%>" size="20" maxlength="32"></td>
+</tr>
+
+<tr>
+<td colspan="2" height="12"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+<td colspan="2" class="pt-15 pb-15"><b><%182%> - <%264%></b></td></tr>
+
+<tr>
+<td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%183%>
+    <input id="security_disable" type="radio" name="security_type" value="Disable" <%269%> onClick="buttonFilter();this.form.submit();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td></tr>
+<tr>
+	<td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%184%>
+    <input id="security_wpa2" type="radio" name="security_type" value="WPA2-PSK" <%185%> <%270%> onClick="buttonFilter();this.form.submit();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td></tr>
+<tr>
+	<td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%186%>
+    <input id="security_auto" type="radio" name="security_type" value="AUTO-PSK" <%185%> <%271%> onClick="autopskCheck();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td>
+</tr>
+<tr>
+    <td colspan="2" class="pt-15">
+        <label class="checkbox-container"><%187%>
+            <input id="security_wpa3" type="radio" name="security_type" value="WPA3-Personal"  <%185%> <%272%> onClick="buttonFilter();this.form.submit();" >
+            <span class="radio-checkmark"></span> 
+        </label>
+    </td>
+</tr> 
+
+<tr id="passphrase_2g" style="display: none;"><td colspan="2">
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div>
+<div>
+    &nbsp;&nbsp;<%189%>: <input class="input1" type="password" id="passphrase" name="passphrase" autocomplete="off" size=20 maxLength=64 value="<%274%>" onFocus="this.form.pfChanged.value='1';">
+<img id="pwd_display" src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('passphrase');">
+<div id="passphraseSlash" class="pwdEyeSlash"></div>
+<div id="passphraseSlashText" style="display: inline;">&nbsp;&nbsp;<%28%>
+</div>
+</td></tr></div>
+
+</table>
+</td></tr>
+<tr>
+<td colspan="2" align="left">
+<table class="tbl_1" border="0" cellpadding="0" cellspacing="3" width="100%" id="table_5g1_psk">
+<tr>
+<td colspan="2" height="12"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td>
+</tr>
+<tr>
+<td colspan="2"><b><%191%> - <%264%></b></td>
+</tr>
+<tr>
+<td align="left" class="pt-15">
+<label class="checkbox-container"><%265%>
+<input id="enable_bssid_an" type="checkbox" name="enable_bssid_an" value="1">
+<span class="checkbox-checkmark"></span> 
+</label>
+</td>
+</tr>
+<tr>
+<td align="left" class="pt-15">
+<label class="checkbox-container"><%172%>
+<input id="enable_ssid_bc_an" type="checkbox" name="enable_ssid_bc_an" value="1">
+<span class="checkbox-checkmark"></span> 
+</label>
+</td>
+</tr>
+<%168%>
+<tr><td align="left" class="pt-15">
+<label class="checkbox-container"><%266%>
+<input id="allow_access_an" type="checkbox" name="allow_see_access_an" value="1">
+<span class="checkbox-checkmark"></span> 
+</label>
+</td>
+</tr>
+<%171%>
+<tr>
+<td width="50%" align="left" class="pt-25"><%267%>:</td>
+<td width="50%" class="pb-15">
+<input id="ssid_an" type="text" class="input1" name="ssid_an" value="<%275%>" size="20" maxlength="32"></td>
+</tr>
+<tr>
+<td colspan="2" height="12"><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td>
+</tr>
+<tr>
+<td colspan="2" class="pt-15 pb-15"><b><%182%> - <%264%></b></td>
+</tr>
+<tr>
+        <td colspan="2" class="pt-15 pb-0">
+        <label class="checkbox-container"><%183%>
+        <input id="security_an_disable" type="radio" name="security_type_an" value="Disable" <%276%> onClick="buttonFilter();this.form.submit();" >
+        <span class="radio-checkmark"></span> 
+        </label>
+        </td></tr>
+<tr>
+	<td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%184%>
+    <input id="security_an_wpa2" type="radio" name="security_type_an" value="WPA2-PSK" <%196%> <%277%> onClick="buttonFilter();this.form.submit();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td></tr>
+<tr>
+	<td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%186%>
+    <input id="security_an_auto" type="radio" name="security_type_an" value="AUTO-PSK" <%196%> <%278%> onClick="autopskCheck_5g();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td></tr>
+<tr>
+    <td colspan="2" class="pt-15">
+    <label class="checkbox-container"><%187%>
+    <input id="security_an_wpa3" type="radio" name="security_type_an" value="WPA3-Personal" <%196%> <%279%> onClick="buttonFilter();this.form.submit();" >
+    <span class="radio-checkmark"></span> 
+    </label>
+    </td>
+</tr> 
+
+<tr id="passphrase_5g" style="display: none;">
+<td colspan="2">
+<div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div>
+<div>
+    &nbsp;&nbsp;<%189%>: <input class="input1" type="password" id="passphrase_an" name="passphrase_an" autocomplete="off" size=20 maxLength=64 value="<%281%>" onFocus="this.form.pfChanged.value='1';">
+<img id="pwd_an_display" src="img/pwdEye.png" style="width: 20px; cursor: pointer;" onclick="changePwdVisibleStatus('passphrase_an');">
+<div id="passphrase_anSlash" class="pwdEyeSlash"></div>
+<div id="passphrase_anSlashText" style="display: inline;">&nbsp;&nbsp;<%28%></div>
+
+</div>
+</td></tr>
+
+
+</table>
+</td></tr>
+
+</table></div></td></tr>
+
+<tr align="left" valign="middle">
+<td colspan="2" class="table-seperate-border">
+<div class="fix_button">
+    <button id="cancel" value="<%76%>" onclick="buttonClick(this,'<%76%>');"  type="SUBMIT" name="Cancel" class="button-cancel cancel_bt" ><%77%></button>
+    <button id="apply" value="<%78%>"  onclick="buttonClick(this,'<%78%>');return checkData();" type="SUBMIT" name="Apply" class=<%79%>><%80%></button>
+</div>
+</td>
+</tr>
+
+<tr valign="middle" align="center">
+<td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > 
+<iframe id="helpframe"  src="WLG_wireless_2_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> 
+</div></td></tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div class="subhead2-bottom" >
+<span class="help_ico"><img id="WLG_wireless_dual_band_2_help-icon" src="img/help-icon.png" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+<span class="subhead2-text help_center_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%207%> </span>
+<span class="button-help-arrow">
+<img src="img/helparrowdown-icon.png" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+<span class="subhead2-text help_right_text" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%208%> </span>
+</div>
+
+<input type="hidden" name="bssid_enable" value="<%286%>">
+<input type="hidden" name="ssid_bc_enable" value="<%287%>">
+<input type="hidden" name="enable_allow_see_access" value="<%288%>"> 
+<input type="hidden" name="enable_apmode" value="<%289%>">
+<input type="hidden" name="bssid_enable_an" value="<%290%>">
+<input type="hidden" name="ssid_bc_enable_an" value="<%291%>">
+<input type="hidden" name="enable_allow_see_access_an" value="<%292%>">
+<input type="hidden" name="enable_apmode_an" value="<%289%>">
+<input type="hidden" name="support_ac_mode" value="<%233%>">
+<input type="hidden" name="tempSetting" value="<%209%>">
+<input type="hidden" name="tempRegion" value="<%210%>">
+<input type="hidden" name="wds_enable" value="<%211%>">    
+<input type="hidden" name="only_mode" value="0">
+<input type="hidden" name="show_wps_alert" value="<%214%>">
+<input type="hidden" name="load_2g_frame" value="0">
+<input type="hidden" name="load_5g_frame" value="0">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>
+

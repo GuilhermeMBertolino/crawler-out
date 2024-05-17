@@ -1,0 +1,30 @@
+#!/bin/sh
+opmode=$(uci get network.@opmode[0].mode)
+[ "$opmode" = "router" ] || return
+
+dmz_ip=`/sbin/uci get firewall.@dmz[0].ip`
+# Jinjuan Pei, 20220314, To support OpenVPN service, and prevent packets going to DMZ host.
+openvpn_tun_enabled=`/sbin/uci get firewall.openvpn_tun.enabled`
+openvpn_tun_proto=`/sbin/uci get firewall.openvpn_tun.proto`
+openvpn_tun_dest_port=`/sbin/uci get firewall.openvpn_tun.dest_port`
+openvpn_tun_name=`/sbin/uci get firewall.openvpn_tun.name`
+
+openvpn_tap_enabled=`/sbin/uci get firewall.openvpn_tap.enabled`
+openvpn_tap_proto=`/sbin/uci get firewall.openvpn_tap.proto`
+openvpn_tap_dest_port=`/sbin/uci get firewall.openvpn_tap.dest_port`
+openvpn_tap_name=`/sbin/uci get firewall.openvpn_tap.name`
+# Jinjuan Pei, 20220314, End.
+
+if [ -n "$dmz_ip" ]; then
+	iptables -t nat -A zone_wan_prerouting -p tcp -m tcp --dport 1723 -m comment --comment Allow-PPTP -j ACCEPT
+	iptables -t nat -A zone_wan_prerouting -p udp -m udp --dport 68 -m comment --comment Allow-DHCP-Renew -j ACCEPT
+	# Jinjuan Pei, 20220314, To support OpenVPN service, and prevent packets going to DMZ host.
+	if [ $openvpn_tun_enabled == '1' -a $openvpn_tap_enabled == '1' ]; then
+		iptables -t nat -A zone_wan_prerouting -p $openvpn_tun_proto -m $openvpn_tun_proto --dport $openvpn_tun_dest_port -m comment --comment $openvpn_tun_name -j ACCEPT
+		iptables -t nat -A zone_wan_prerouting -p $openvpn_tap_proto -m $openvpn_tap_proto --dport $openvpn_tap_dest_port -m comment --comment $openvpn_tap_name -j ACCEPT
+	fi
+	# Jinjuan Pei, 20220314, End.
+	iptables -t nat -A zone_wan_prerouting -p TCP -j DNAT --to-destination $dmz_ip -m comment --comment DMZ
+	iptables -t nat -A zone_wan_prerouting -p UDP -j DNAT --to-destination $dmz_ip -m comment --comment DMZ
+	iptables -I zone_wan_forward -d $dmz_ip -m conntrack --ctstate NEW -j LOG --log-prefix "[PortFw_Tr]" --log-macdecode
+fi

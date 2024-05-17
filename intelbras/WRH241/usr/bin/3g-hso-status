@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Defaults
+CONFIG=/etc/ppp/3g.conf
+
+if [ ! -f "$CONFIG" -o ! -r "$CONFIG" ] ; then
+    echo "$0: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+
+. $CONFIG
+. /usr/bin/scriptlib
+
+PIDFILE_START="$PIDFILE.start"
+PIDFILE_CONNECT="$PIDFILE.connect"
+PIDFILE_HSO="/var/run/hso-3g.pid"
+
+if [ "$DEMAND" != "no" ] ; then
+    echo "Note: You have enabled demand-connection; 3g-status may be inaccurate."
+fi
+
+# If no PIDFILE_HSO, something fishy!
+#if [ ! -r "$PIDFILE_HSO" ] ; then
+#    echo "3g-hso-status: Link is down (can't read hso PID file $PIDFILE_HSO)"
+#    exit 1
+#fi
+
+#sl_get_ppp_PID_IFname $PIDFILE_HSO PPP_PID PPP_IF
+#if [ $? = 0 ] ; then
+
+    # check the cnt status is CONNECT, 2 is CONNECT and 7 is BACKUP
+    CNTSTATUS=`rdcsman 0x801e0700 u16`
+    [ $CNTSTATUS -ne 2 ] && [ $CNTSTATUS -ne 7 ] && echo "CNTSTATUS=$CNTSTATUS" && exit 1
+#    echo "$0: IF=$PPP_IF  PID=$PPP_PID"
+    echo "3g-hso-status: Link is up and running"
+    exit 0
+#fi
+
+
+#echo "3g-hso-status: Link is down -- could not find interface corresponding to"
+exit 1
+

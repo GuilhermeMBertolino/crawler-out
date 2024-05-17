@@ -1,0 +1,145 @@
+<html><head>
+<link rel=stylesheet href='stylemain.css' type='text/css'>
+<link rel=stylesheet href='colors.css' type='text/css'>
+<meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+<script language="javascript" src="portName.js"></script>
+<script language="javascript" src="util.js"></script>
+<script language='javascript'>
+<!-- hide
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+//var wanItfList=new Array('Aim Talk,4099,4099,5191,5191,eth3,TCP,TCP');
+//'name,triggerPortStart,triggerPortEnd,openPortStart,openPortEnd,X_BROADCOM_COM_IfName,triggerProtocol,openProtocol',''....
+var wanItfList=new Array(<%ejGetOther(tenda,portTriggerList)%>);
+
+function showRTE()
+{
+	//alert("show");
+	for (var i=0; i<wanItfList.length;i++)
+	{
+		var s=wanItfList[i].split(",");
+		//alert("s.length:"+s.length);
+		if (s.length!=8) break;
+    	var  m='<tr align=center>';
+		
+		if(s[0]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[0]+'</td>';
+		}	
+		if(s[6]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[6]+'</td>';
+		}	
+		if(s[1]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[1]+'</td>';
+		}	
+		if(s[2]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[2]+'</td>';
+		}		      		
+		if(s[7]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[7]+'</td>';
+		}	
+		if(s[3]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[3]+'</td>';
+		}	
+		if(s[4]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[4]+'</td>';
+		}			
+		
+		if(s[5]==""){
+			m+='<td>&nbsp;</td>';
+		}else{
+			m+='<td>'+s[5]+'</td>';
+		}			
+		
+		m+="<td align=center><input type=checkbox name=rml value=\'"
+		m+= s[5]+'|'+s[6]+'|'+s[1]+'|'+s[2]+'|'+i+'\'></td>'
+        m+='</tr>';
+		//alert("m="+m);
+		document.write(m);
+	}
+}
+
+
+
+
+function addClick() {
+   var loc = 'scprttrg.html';
+
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function removeClick(rml) {
+   var lst = '';
+   if (rml.length > 0)
+      for (i = 0; i < rml.length; i++) {
+         if ( rml[i].checked == true )
+            lst += rml[i].value + ', ';
+      }
+   else if ( rml.checked == true )
+      lst = rml.value;
+   var loc = 'scprttrg.cmd?action=remove&rmLst=' + lst;
+
+   loc += '&sessionKey='+sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+// done hiding -->
+</script>
+</head>
+<body>
+<form>
+<script>tbl_head('NAT -- Port Triggering Setup')</script>
+<div style="width:90%;text-align:left;">
+<p>
+ Some applications require that specific ports in the Router's firewall be opened for access 
+ by the remote parties. Port Trigger dynamically opens up the 'Open Ports' in the firewall when   
+ an application on the LAN initiates a TCP/UDP connection to a remote party using the 'Triggering
+ Ports'. The Router allows the remote party from the WAN side to establish new connections back
+ to the application on the LAN side using the 'Open Ports'.  A maximum 32 entries can be 
+ configured.<br><br></p>
+<table border='1' cellpadding='4' cellspacing='0' width='100%'>
+   <tr align='center'>
+      <td class='hd' rowspan=3>Application Name</td>
+      <td class='hd' colspan=3>Trigger</td>
+      <td class='hd' colspan=3>Open</td>
+      <td class='hd' rowspan=3>WAN Interface</td>
+      <td class='hd' rowspan=3>Remove</td>
+   </tr>
+   <tr align='center'>
+      <td class='hd' rowspan=2>Protocol</td>
+      <td class='hd' colspan=2>Port Range</td>
+      <td class='hd' rowspan=2>Protocol</td>
+      <td class='hd' colspan=2>Port Range</td>
+   </tr>
+   <tr align='center'>
+      <td class='hd'>Start</td>
+      <td class='hd'>End</td>
+      <td class='hd'>Start</td>
+      <td class='hd'>End</td>
+   </tr>
+   
+   <script>
+   		showRTE();
+   </script>
+
+</table>
+</div>
+<script>tbl_tail("<input type='button' class='button' onClick='addClick()' value='Add'>                <input type='button' class='button' onClick='removeClick(this.form.rml)' value='Remove'>");</script>
+</form>
+</body>
+</html>

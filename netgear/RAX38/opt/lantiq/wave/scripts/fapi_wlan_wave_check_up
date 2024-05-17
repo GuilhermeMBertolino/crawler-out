@@ -1,0 +1,58 @@
+#!/bin/sh
+# Check interfaces are up
+# Needed object: None
+# TODO: for gen5.
+
+script_name="$0"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+is_6x_platform=${CONFIG_IFX_MODEL_NAME/"_6X_"/}
+
+# If not equal then this is a 6x platfrom/model.
+if [ "$is_6x_platform" != "$CONFIG_IFX_MODEL_NAME" ] && [ ! -e "$FAPI_RPC" ]; then
+
+	interfaces_init_complete=${TEMP_DIR}/interfaces_init_check
+	boot_success=`interfaces_init_check $interfaces_init_complete`
+
+	if [ "$boot_success" != "1" ]; then
+		[ ! -e "$INIT_STOP_SET_DUT_MODE_FLAG" ] && \
+			echo -e " #############################################\n" \
+							"################# BOOT FAIL  ################\n" \
+							"#############################################\n" \
+							"##### Checking for 'PLL is not locked' in dmesg\n"
+			pll_not_locked=`dmesg | grep -c "PLL is not locked"`
+			if [ $pll_not_locked -gt 0 ]
+			then
+				echo "####### PLL is not locked was found in dmesg" > /dev/console
+				rmmod mtlk
+				insmod /tmp/mtlk.ko fastpath=1 dual_pci=1,0,0
+				rm -f ${CONF_DIR}/fapi_wlan_wave_complete_recovery_in_progress
+				(. $ETC_PATH/fapi_wlan_wave_complete_recovery wlan0)
+			fi
+	else
+		echo -e " #############################################\n" \
+						"################# BOOT OK    ################\n" \
+						"#############################################\n"
+    #20190424,Pegatron merge IPS#00432635 patch
+		# preliminary fix for fastboot is triggered at 3rd times boot up issue
+		# fapi_wlan_wave_radio_conf is changed at first bootup since max_num_vaps_capability function 
+		# of fapi_wlan_wave_capablity_query is called. It causes fapi_wlan_wave_radio_conf checksum is different.
+		# fapi_wlan_wave_check_up is almost last WiFi fapi script, once BOOT OK, backup md5 checksum again
+		cd ${CONF_DIR};md5sum *.conf *_conf > md5confs.cs;cd -;sync
+		# David Yeh, 20190827, NETGEAR (RAX40-975), When upgrade from V1.0.2.46 to V1.0.2.58 , vlan bridge mode can't work.
+		if [ -f "/tmp/needIfup" ]
+		then
+    			ifup -a;
+			rm -rf /tmp/needIfup;
+		fi
+	fi
+fi
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"
+
+#20190327, NETGEAR [RAX40-650].
+#save system init log
+_fw_ver=`ntgrcli --fw_ver| awk -F':' '{ print $2 }'` 
+logger -p local5.info -t "t Important Info" "[Initialized, firmware version: $_fw_ver ]"

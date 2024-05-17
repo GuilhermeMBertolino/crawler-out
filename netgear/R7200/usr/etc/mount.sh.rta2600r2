@@ -1,0 +1,99 @@
+#mount -n -t proc proc /proc
+#mount -n -t sysfs sysfs /sys
+#mount -n -t ramfs ramfs /home
+#mount -n -t ramfs ramfs /tmp
+#mount -n -t ramfs ramfs /mnt
+#mount -n -t ramfs ramfs /dev
+mount -a
+mount -t ramfs mdev /dev
+mkdir /dev/pts
+mkdir /dev/mtd
+mount -t devpts devpts /dev/pts
+
+#for sys/kernel/debug/usb/devices interface in linux 3.10.x
+mount -t debugfs none /sys/kernel/debug
+
+#for lsusb to work with linux 3.10.x
+ln -s /sys/bus /dev/bus
+
+#Ralink MT7620 rcS
+cat /usr/etc/motd
+
+# build var directories
+/bin/mkdir -m 0777 /tmp/mnt
+/bin/mkdir -m 0777 /tmp/var
+/bin/mkdir -m 0777 /tmp/etc
+/bin/mkdir -m 0777 /tmp/etc_ro
+/bin/mkdir -m 0777 /tmp/dev
+/bin/mkdir -m 0777 /tmp/itunes
+/bin/mkdir -m 0777 /tmp/nv
+/bin/mkdir -m 0777 /var/lock
+/bin/mkdir -m 0777 /var/log
+/bin/mkdir -m 0777 /var/run
+/bin/mkdir -m 0777 /var/tmp
+/bin/mkdir -m 0755 /etc/dnrd
+/bin/mkdir -m 0777 /mnt/shares
+/bin/mkdir -m 0777 /var/run/bftpd
+/bin/mkdir -m 0777 /var/run/down
+/bin/mkdir -m 0777 /var/run/lock
+/bin/mkdir -m 0777 /var/run/dbus
+
+/bin/cp -a /usr/etc_ro/* /etc_ro
+/bin/cp -a /usr/etc/* /etc
+/bin/cp -a /usr/dev/* /dev
+#mtk sdk5000 use symlink to /dev/mtd/mtdx
+/bin/cp -a /usr/dev/mtd* /dev/mtd/
+#rc rwfs will generate the correct dev for ubi.
+/bin/rm -f /dev/ubi*
+cp -f /usr/sbin/setupwizard.cgi /tmp/setupwizard.cgi
+
+#copy from MT7623 rcS
+mdev -s
+#insmod /lib/modules/3.10.20/kernel/arch/arm/mach-mt7623/nvram.ko
+mdev -s
+wmt_loader
+
+#for syslogd
+mkdir -p /var/log
+mknod /dev/fuse c 10 229
+
+mknod /dev/zero c 1 5
+
+#the items below is differ in mt7623/sdk5000.
+#thus need to remove and then create them manually.
+rm -f /dev/rdm0
+rm -f /dev/gpio
+rm -f /dev/i2s0
+
+#from mtk7623 internet.sh
+#mknod   /dev/video0      c       81      0
+#mknod	/dev/ppp	    c	 108	 0   
+#mknod   /dev/spiS0       c       217     0
+#mknod   /dev/i2cM0       c       218     0
+mknod   /dev/mt6605      c       219     0
+#mknod   /dev/flash0      c       200     0
+#mknod   /dev/swnat0      c       210     0
+#mknod   /dev/hwnat0      c       220     0
+#mknod   /dev/acl0        c       230     0
+#mknod   /dev/ac0         c       240     0
+#mknod   /dev/mtr0        c       250     0
+mknod   /dev/apsoc_nvram       c       251     0      
+mknod   /dev/rdm0        c       263     0
+mknod   /dev/gpio        c       241     0
+#mknod   /dev/pcm0        c       233     0
+mknod   /dev/i2s0        c       191     0
+#mknod   /dev/cls0        c       235     0
+mknod   /dev/spdif0      c       236     0
+mknod   /dev/vdsp        c       245     0
+mknod   /dev/slic        c       225     0
+
+#from mtk7623 rcS
+mknod /dev/rdm0   c 263 0
+mknod /dev/gpio   c 241 0
+#mknod /dev/pcm0   c 233 0
+
+#sc add
+
+#for WAN EXE BASE
+mkdir -p /var/w/
+mkdir -p /tmp/w/

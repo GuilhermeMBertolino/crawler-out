@@ -1,0 +1,351 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%18%>
+<title>NETGEAR Router <%19%></title>
+<link rel="stylesheet" href="<%20%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%21%>
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+var initialized = false;
+
+  
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size();
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+
+   
+
+function ssid_submit()
+{
+    var fm=document.forms[0];
+    fm.ssid_sel_submit.value = "1";
+    fm.secure_sel_submit.value = "0";
+    
+    fm.submit();
+    return true;
+}
+
+function secure_submit()
+{
+    var fm=document.forms[0];
+    fm.ssid_sel_submit.value = "0";
+    fm.secure_sel_submit.value = "1";
+    
+    fm.submit();
+    return true;
+}
+
+function displayWepWpaRadio()
+{
+    var cf = document.forms[0];
+    var wlan_mode = "<%1889%>";
+    
+    if (wlan_mode == "g&#32;and&#32;b")//Up to 54Mbps
+    {
+        document.getElementById("wep_radio_2G").style.display="block";
+        document.getElementById("wpa_radio_2G").style.display="block";
+        
+    }
+    else
+    {
+        document.getElementById("wep_radio_2G").style.display="none";
+        document.getElementById("wpa_radio_2G").style.display="none";
+    }
+}
+
+function initScrn()
+{
+    var defaultKey;
+    var fm=document.forms[0];
+    var i;
+
+    var profile_idx = <%3107%>;
+    if (!profile_idx || profile_idx < 1 || profile_idx > 3)
+        profile_idx = 1;
+    var sel_index = profile_idx - 1;
+    //fm.ssidSelect[sel_index].checked = true;
+
+    if (fm.bssid_enable.value == "1")
+        fm.enable_bssid.checked = true;
+    else
+        fm.enable_bssid.checked = false;
+
+    if (fm.ssid_bc_enable.value == "1")
+        fm.enable_ssid_bc.checked = true;
+    else
+        fm.enable_ssid_bc.checked = false;
+
+    if (fm.enable_allow_access.value == "1" || fm.enable_apmode.value == "1")
+        fm.allow_access.checked = true;
+    else
+        fm.allow_access.checked = false;
+
+    if(fm.enable_apmode.value == "1")
+        fm.allow_access.disabled = true;
+        
+    if (fm.enable_isolation.value == "1")
+        fm.enable_isolate.checked = true;
+    else if (fm.enable_isolation.value != "111")
+        fm.enable_isolate.checked = false;
+        
+    displayWepWpaRadio();   
+    initialized=true;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+
+    
+    if (cf.ssid.value == "")
+    {
+        alert("<%142%>");
+        return false;
+    }
+
+    if (cf.ssid.value.match( /[^\x20-\x7E]/ ))
+    {
+        alert("<%143%>");
+        cf.ssid.focus();
+        return false;
+    }
+
+    if(cf.passphrase.value.length < 8)
+    {
+        alert("<%1704%>");
+        return false;    
+    }
+    if(cf.passphrase.value.length > 63)
+    {
+        if ( isHex(cf.passphrase.value) == false && cf.pfChanged.value==1)
+        {
+            alert("<%1705%>");
+            cf.passphrase.value = "";
+            return false;
+        }    
+    }
+    
+    if (cf.passphrase.value.match( /[^\x20-\x7E]/ ))
+    {
+        alert("<%150%>");
+        cf.passphrase.focus();
+        return false;
+    }
+
+    return true;
+}
+function showWpsAlert()
+{
+    var cf = document.forms[0];
+    if(cf.show_wps_alert.value == "1")
+        alert("<%155%>");
+}
+// -->
+</script>
+</head>
+<body  onload="change_size();initScrn();showWpsAlert();" class="page-body"  onResize="change_size();" >
+<img class="cover-image" src="<%23%>">
+<img class="body-image" src="<%24%>">
+<div id="full-page-container">
+
+<form id="target"  method="POST" action="wlg_sec_profile_main.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%25%>">
+<div class="subhead2"> <%1886%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+&nbsp;&nbsp;&nbsp;<button value="<%175%>"  onclick="buttonClick(this,'<%175%>');return checkData();" type="SUBMIT" name="Apply" class=<%176%> > <span class="<%982%>" ><%177%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="<%983%>">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%173%>" onclick="buttonClick(this,'<%173%>');"  type="SUBMIT" name="Cancel" class="button-rule" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%174%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+
+ 
+
+<tr><td>
+<table border="0"   width="100%">
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+
+<tr>
+<td colspan="2"><a href="javascript:loadhelp('WLG_wireless_2','wireless')" tabindex="-1"><b><%477%> - <%1890%> <%3107%></b></a></td>
+</tr>
+
+<tr>
+<td align="left" colspan="2" ><input type="checkbox" name="enable_bssid" value="1"><%1891%></td>
+</tr>
+
+<tr>
+<td align="left" colspan="2" ><input type="checkbox" name="enable_ssid_bc" value="1"><%255%></td>
+</tr>
+
+<tr>
+<td align="left" colspan="2" ><input type="checkbox" name="allow_access" value="1"><%3108%></td>
+</tr>
+
+<%251%>
+<tr>
+<td align="left" colspan="2" ><input type="checkbox" name="enable_isolate" value="1"><%253%></td>
+</tr>
+<%254%>
+
+<tr>
+<td align="left" colspan="2" ><%1893%><input type="text" name="ssid" value="<%3109%>" size="20" maxlength="32"></td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+<tr>
+    <td colspan="2"><a href="javascript:loadhelp('WLG_wireless_2','security')" tabindex="-1"><b><%269%> - <%1890%> <%3107%></b></a></td></tr>
+
+<tr><td colspan="2">
+<table cellpadding="0" cellspacing="3" width="100%">
+<tr>
+        <td colspan="2"><input type="radio" name="security_type" value="Disable" onClick="return secure_submit();" ><%270%><td></tr>
+<tr>
+	<td colspan="2">
+	<div id="wep_radio_2G" style="display: block;">
+	<input type="radio" name="security_type" value="WEP" onClick="buttonFilter();return secure_submit();" ><%275%>
+	</div>
+	</td>
+</tr>
+<tr>
+	<td colspan="2">
+	<div id="wpa_radio_2G" style="display: block;">
+	<input type="radio" name="security_type" value="WPA-PSK" <%272%> <%1908%> onClick="buttonFilter();return secure_submit();" ><%276%>
+	</div>
+	</td>
+</tr>
+<tr>
+	<td colspan="2"><input type="radio" name="security_type" value="WPA2-PSK" <%272%> <%1909%> onClick="buttonFilter();return secure_submit();" ><%271%></td></tr>
+<tr>
+	<td colspan="2"><input type="radio" name="security_type" value="AUTO-PSK" <%272%> <%1910%> onClick="buttonFilter();return secure_submit();" ><%273%></td></tr>
+
+</table>
+</td></tr>
+
+    <tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+    
+    <%3116%>
+    
+    <tr>
+      <td colspan="2">&nbsp;&nbsp;<%297%>: <input type="text" name="passphrase" autocomplete="off" size=20 maxLength=64 value="<%3117%>" onFocus="if (this.form.pfChanged.value=='0') this.form.passphrase.value=''; this.form.pfChanged.value='1';">&nbsp;&nbsp;<%131%></td></tr>
+    <tr><td colspan="2" height="12" ><div style="background-image:url('seprator.gif');width:100%;background-repeat:repeat-x;">&nbsp;</div></td></tr>
+    
+  </table></td></tr>
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="WLG_wireless_2_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <!--<img class="subfooter-image" src="img/subhead2-bottom.gif">-->
+<div class="subhead2-bottom" >
+    <span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> Help Center </span>
+    <span class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> Show/Hide Help Center </span>
+      </div>
+
+
+
+  <input type="hidden" name="pfChanged" value="0">
+  <input type="hidden" name="only_mode" value="0">
+  <input type="hidden" name="bssid_enable" value="<%3112%>">
+  <input type="hidden" name="ssid_bc_enable" value="<%3113%>">
+  <input type="hidden" name="enable_allow_access" value="<%3114%>">
+  <input type="hidden" name="enable_isolation" value="<%3115%>">  
+  <input type="hidden" name="ssid_sel_submit" value="0">
+  <input type="hidden" name="secure_sel_submit" value="0">
+  <input type="hidden" name="show_wps_alert" value="<%333%>">
+  <input type="hidden" name="enable_apmode" value="<%507%>">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>
+

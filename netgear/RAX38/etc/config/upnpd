@@ -1,0 +1,42 @@
+config upnpd config
+	option enable_natpmp	1
+	option enable_upnp	1
+	# 20181116, Disable secure_mode.
+	option secure_mode	0
+	option log_output	0
+	option download 	1024
+	option upload   	512
+        #by default, looked up dynamically from ubus
+	option external_iface	iface_eth1
+	option internal_iface	lan
+	option port		5000
+	option upnp_lease_file	/var/upnp.leases
+    # 20171025, Implement /api/Device/name functions.
+	# 20181031, modify model name and number.
+	option friendly_name	"RAX40 (Gateway)"
+	option manufacturer_name	"Netgear, Inc."
+	option manufacturer_url	"http://www.NETGEAR.com"
+	option model_name	"RAX40"
+	option model_number	"RAX40"
+	# 20190911, Check all the links, model link show "page not found"
+	option model_url	"http://www.netgear.com/home"
+	option presentation_url	"http://www.routerlogin.net"
+    #End of 20171025.
+	
+config perm_rule
+	option action		allow
+	# 20180131, Not limit port range.
+	#option ext_ports	1024-65535
+	option ext_ports	0-65535
+	option int_addr		0.0.0.0/0	# Does not override secure_mode
+	# 20180131, Not limit port range.
+	#option ext_ports	1024-65535
+	option int_ports	0-65535
+	option comment		"Allow high ports"
+
+config perm_rule
+       option action		deny
+       option ext_ports		0-65535
+       option int_addr		0.0.0.0/0
+       option int_ports		0-65535
+       option comment		"Default deny"

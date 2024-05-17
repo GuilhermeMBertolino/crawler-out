@@ -1,0 +1,197 @@
+<html>
+   <head>
+      <meta HTTP-EQUIV='Pragma' CONTENT='no-cache'>
+            <script language="javascript">
+<!-- hide
+var msg = new Array();
+msg[0] = 'Uploading is in progress. The Broadband Router will reboot upon completion. This process will take about 2 minutes,and then it will automatically renew the web page';
+msg[1] = 'Image uploading failed. The system is out of memory. The Broadband Router is rebooting.';
+msg[2] = 'Image uploading failed. No image file was selected.';
+msg[3] = 'Image uploading failed. The selected file contains an illegal image.';
+msg[4] = 'Fatal error during image uploading.';
+
+var idxStr = '<%ejGetOther(sysInfo, upldSts)%>';
+
+
+function tbl_head_str(title,img,width)
+{
+    var m;
+    if( width == null )
+        m='<TABLE border=0 cellPadding=0 class=space width=700>';
+    else
+        m='<TABLE border=0 cellPadding=0 class=space width=' + width + '>';
+
+	m+='<TR><TD valign=middle ';
+	m+='background="./menuok.gif"';
+	m+=' colspan=3 class=title><span class=style1>&nbsp;'+title+'</span></TD></TR>';
+	m+='<TR><TD class=vline rowSpan=15 width=1><BR></TD><TD><center><br>';
+	return m;
+}
+
+function tbl_head(title,img,width)
+{
+document.write(tbl_head_str(title,img,width));
+}
+
+function tbl_tail_str(button)
+{
+	var m='<br>&nbsp;</TD><TD class=vline rowSpan=15 width=1><BR></TD></TR>';
+	m+='<TR><TD class=hline></TD></TR>';
+	if (button!='')
+	{
+		m+='<TR><TD valign=center height=40>&nbsp;';
+		m+=button;
+		m+='</TD></TR>';
+		m+='<TR><TD class=hline></TD></TR>';
+	}
+	m+='</table>';
+	return m;
+}
+
+function tbl_tail(button)
+{
+	document.write(tbl_tail_str(button));
+}
+function getMsgIndex() {
+   var idxNum = parseInt(idxStr);
+   if ( isNaN(idxNum) || idxNum < 0 || idxNum > 4 )
+      idxNum = 4;
+
+   return idxNum;
+}
+
+
+function progressbar()
+{
+	document.write("<table width=\"90%\" align=\"left\" bgcolor=\"#ffffff\"     cellpadding=\"0\" cellspacing=\"0\" bordercolor=\"#999999\" id=\"AutoNumber19\" style=\"border-style: solid; border-width: 1px\">");
+	document.write("<tr>");
+	document.write("<td align=left>"); 
+	document.write("<table id=lpc bgcolor=\"#CCCCCC\" height=20>");
+	document.write("<tr>");
+	document.write("<td></td>");
+	document.write("</tr>");
+	document.write("</table>");
+	document.write("</TD>");		
+	document.write("</TR>");
+	document.write("</table>");  	
+	document.write("<br><br><div style='width:90%;text-align:center;font-size:14px;' id='percent'></div>");
+	increase();
+}
+
+function setWidth(windowObj, el, newwidth)
+{
+  if (document.all)
+	{   
+	  if (windowObj.document.all(el) )
+        windowObj.document.all(el).style.width = newwidth ;
+	}
+	else if (document.getElementById)
+	{
+	  if (windowObj.document.getElementById(el) )
+	    windowObj.document.getElementById(el).style.width = newwidth;
+	}
+}
+
+var pc=0; 
+function increase()
+{
+
+	pc=pc+1;
+
+	if (pc > 100) 
+	{ 
+		 reboot();
+	}
+	else
+	{ 
+		setWidth(self, "lpc", pc + "%");
+	  	document.getElementById("percent").innerHTML = "   "+pc + "%"
+		setTimeout("increase()",800);
+	}	
+}
+function reboot() {
+   var enblPopWin = '<%ejGet(enblPopWin)%>';
+   var loc = 'main.html';
+   var code = 'window.top.location="' + loc + '"';
+
+   if ( enblPopWin == '1' ) {
+    //  loc = 'index.html';
+	loc = 'main.html';
+      code = 'location="' + loc + '"';
+   }
+
+   eval(code);
+}
+
+function frmLoad() {
+   // only reboot if upload progress is successful
+  getMsgIndex();
+}
+
+function btnBack() {
+   var code = 'location="' + 'upload.cgi' + '"';
+  
+   if (<%ejGet(glbUploadMode)%> == 2)
+     code = 'location="' + 'updatesettings.cgi' + '"';
+   eval(code);
+}
+
+// done hiding -->
+</script>
+
+</head>
+<style>
+
+.style1 {
+	FONT-WEIGHT: bold; COLOR: #000001; TEXT-INDENT: 2em
+}
+TD.title {
+	FONT-SIZE: 12px; COLOR: #000000; HEIGHT: 24px; BACKGROUND-COLOR: #CCCCCC
+}
+TD.vline {
+	WIDTH: 1px; COLOR: #CCCCCC; BACKGROUND-COLOR: #CCCCCC
+}
+TD.hline {
+	COLOR: #CCCCCC; HEIGHT: 1px; BACKGROUND-COLOR: #CCCCCC
+}
+
+BODY {
+	BACKGROUND-COLOR: #FFFFFF;
+	COLOR: #000000;
+	FONT-FAMILY: "Arial", "Times New Roman";
+	FONT-SIZE: 75%;
+	PADDING-LEFT: 0px;
+	PADDING-TOP: 0px;
+	margin-left:70px
+}
+
+TD {
+	FONT-SIZE: 12px; LINE-HEIGHT: 18px; TEXT-DECORATION: none
+}
+
+</style>
+<body onLoad='frmLoad()'>
+    
+    <script>tbl_head('Broadband Router Update');</script>
+    <form>
+     <div align="left" style="margin-left:33">
+   
+    <script language="javascript">
+<!-- hide
+	document.write(msg[getMsgIndex()]);
+	if(getMsgIndex()!=0)
+	{
+		document.write("<script>tbl_tail(\" <input type='button' class='button'  onClick='btnBack()' value='Back'>\")</script>");
+   	}
+	else 
+	{
+			document.write("<br><br><br>");
+			progressbar();
+			document.write("<script>tbl_tail(\"\")</script>");
+	 }
+//done hiding -->
+   </script>
+    </div>
+ </form>
+</body>
+</html>

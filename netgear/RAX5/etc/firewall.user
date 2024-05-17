@@ -1,0 +1,28 @@
+# This file is interpreted as shell script.
+# Put your custom iptables rules here, they will
+# be executed with each firewall (re-)start.
+
+# Internal uci firewall chains are flushed and recreated on reload, so
+# put custom rules into the root chains e.g. INPUT or FORWARD or into the
+# special user chains, e.g. input_wan_rule or postrouting_lan_rule.
+
+add_netbios_monitor_chain(){
+    iptables -w -t filter -I input_lan_rule -p udp --dport 137 -j NFLOG --nflog-group 0
+    iptables -w -t filter -I input_lan_rule -p udp --dport 138 -j NFLOG --nflog-group 0
+    iptables -w -t filter -I forwarding_lan_rule -p udp --dport 137 -j NFLOG --nflog-group 0
+    iptables -w -t filter -I forwarding_lan_rule -p udp --dport 138 -j NFLOG --nflog-group 0
+}
+
+add_dhcp_monitor_chain() {
+    iptables -w -t filter -I input_lan_rule -p udp --dport 67 -j NFLOG --nflog-group 0
+    iptables -w -t filter -I forwarding_lan_rule -p udp --dport 67 -j NFLOG --nflog-group 0
+}
+
+add_http_monitor_chain() {
+    iptables -w -t filter -I input_rule -i br-lan -p tcp --dport 80 -j NFLOG --nflog-group 0 --tcp-flags ALL PSH,ACK
+    iptables -w -t filter -I forwarding_rule -p tcp --dport 80 -j NFLOG --nflog-group 0 --tcp-flags ALL PSH,ACK
+}
+
+add_netbios_monitor_chain
+add_dhcp_monitor_chain
+add_http_monitor_chain

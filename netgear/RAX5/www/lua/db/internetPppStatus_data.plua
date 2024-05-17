@@ -1,0 +1,19 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local uci  = require "luci.model.uci".cursor()
+local inetStatus = require "webGetFunc.inetStatus"
+
+local data = { }
+
+data["wanPortConnectTime"] = { value = inetStatus.getTextVal_wanPortConnectTime(), type = 'spantext' }
+data["wanPortConnectStatus"] = { value = inetStatus.getTextVal_wanPortConnectStatus(), type = 'spantext' }
+data["negotiationStatus"] = { value = inetStatus.getTextVal_negotiationStatus(), type = 'spantext' }
+data["authStatus"] = { value = inetStatus.getTextVal_authStatus(), type = 'spantext' }
+data["wanIp"] = { value = inetStatus.getInet_IpAddr(), type = 'spantext' }
+data["internetStatus"] = { value = inetStatus.getWizardInternetStatus() }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

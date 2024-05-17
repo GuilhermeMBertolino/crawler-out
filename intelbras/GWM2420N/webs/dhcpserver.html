@@ -1,0 +1,286 @@
+<html>
+<head>
+    <meta http-equiv='Pragma' content='no-cache'>
+    <link rel="stylesheet" href='stylemain.css' type='text/css'>
+    <link rel="stylesheet" href='colors.css' type='text/css'>
+
+    <script language="javascript" src="util.js"></script>
+
+    <script language="javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var state = '<%ejGet(lanRefresh)%>';
+/*if ( state == '1' ) {
+   var loc = 'dhcpserver.html';
+   var code = 'location=\"' + loc + '\"';
+   eval(code);
+}*/
+
+var ethIpAddress ='<%ejGet(ethIpAddress)%>';
+var ethSubnetMask ='<%ejGet(ethSubnetMask)%>';
+
+var dhcpStart = '<%ejGet(dhcpEthStart)%>';
+var dhcpEnd = '<%ejGet(dhcpEthEnd)%>';
+var dhcpLease = '<%ejGet(dhcpLeasedTime)%>';
+//if(dhcpLease=='') dhcpLease='24';
+//var enblLanFirewall = '<%ejGet(enblLanFirewall)%>';
+var proto = '<%ejGetOther(sysInfo, noBrPrtcl)%>';
+var ipExt = '<%ejGetOther(sysInfo, pppIpExtension)%>';
+var dhcpEnbl = '<%ejGet(enblDhcpSrv)%>';
+//var enblIgmpSnp = '<%ejGetOther(sysInfo, enblIgmpSnp)%>';
+//var enblIgmpMode = '<%ejGetOther(sysInfo, enblIgmpMode)%>';
+//var staticiplease_count = 0;
+var dhcpRelayServer = '<%ejGet(dhcpRelayServer)%>';
+//var natEnbl = '<%ejGetOther(sysInfo, enblNat)%>';
+//var buildDhcpRelay = '<%ejGetOther(sysInfo, buildDhcpRelay)%>';
+var wanItfList=new Array(<%ejGetOther(tenda,wanCfgList)%>);
+
+function hideDhcpInfo(hide) {
+   var status = 'block';
+
+   if ( hide == 1 )
+      status = 'none';
+   if (document.getElementById)  // DOM3 = IE5, NS6
+      document.getElementById('dhcpInfo').style.display = status;
+   else {
+      if (document.layers == false) // IE4
+         document.all.dhcpInfo.style.display = status;
+   }
+}
+
+function disableDhcpSrv() {
+   with ( document.forms[0] ) {
+      dhcpSrvType[1].checked = false;
+      dhcpEthStart.disabled = 1;
+      dhcpEthEnd.disabled = 1;
+      //dhcpLeasedTime.value = '';
+      dhcpLeasedTime.disabled = 1;
+      //ivan:always show the value
+      dhcpEthStart.value = dhcpStart;
+      dhcpEthEnd.value = dhcpEnd;
+      dhcpLeasedTime.value = dhcpLease;
+   }
+}
+
+function enableDhcpSrv(formLoad) {
+   with ( document.forms[0] ) {
+      dhcpSrvType[1].checked = true;
+      dhcpEthStart.disabled = 0;
+      dhcpEthEnd.disabled = 0;
+      if (formLoad != 0)
+        // setDhcpAddresses(ethIpAddress.value);
+      {
+         dhcpEthStart.value = dhcpStart;
+         dhcpEthEnd.value = dhcpEnd;
+         dhcpLeasedTime.value = dhcpLease;
+      }
+      dhcpLeasedTime.disabled = 0;
+   }
+}
+
+function disableDhcpSrvRelay() {
+   with ( document.forms[0] ) {
+      dhcpSrvType[2].checked = false;
+      dhcpSrvAddr.disabled = 1;
+   }
+}
+/*
+function enableDhcpSrvRelay(formLoad) {
+   with ( document.forms[0] ) {
+      dhcpSrvType[2].checked = true;
+      if (formLoad == 1)
+         dhcpSrvAddr.value = dhcpRelayServer;
+      dhcpSrvAddr.disabled = 0;
+   }
+}
+*/
+function typeClick() {
+   with ( document.forms[0] ) {
+      // if any protocol has NAT enabled then
+      // don't show DHCP relay
+	     
+         if ( dhcpSrvType[0].checked == true ) {
+            disableDhcpSrv();
+            //disableDhcpSrvRelay();
+         } else if ( dhcpSrvType[1].checked == true ) {
+            enableDhcpSrv(1);
+            //disableDhcpSrvRelay();
+         } else {
+           // enableDhcpSrvRelay(0);
+            disableDhcpSrv();
+         }
+   }
+  
+}
+
+function changeBrName() {
+   var loc = 'lancfg2get.cgi?';   
+   with ( document.forms[0] ) { 
+       loc += 'brName=' + brName.value;   
+   }
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function frmLoad() {
+		var allbr = 1;
+		for(var i = 0;i<wanItfList.length;i++)
+		{
+			if(wanItfList[i].length<3) break;
+			var tmp = wanItfList[i].split(",");
+			if("Bridge"!=tmp[2])
+			{
+				allbr = 0;break;
+			}
+		}
+		
+   with ( document.forms[0] ) {
+
+      // if protocol is Bridge or PPP IP extension
+      // then don't show DHCP info
+      if ((proto == 'Bridge'&& allbr==1 ) || ipExt == '1')
+      {
+         hideDhcpInfo(1);
+         document.getElementById("apply").disabled = true;
+         document.getElementById("note").style.display = "block";
+      }
+      else {
+         hideDhcpInfo(0);
+         // if any protocol has NAT enabled then
+         // don't show DHCP relay
+            if ( dhcpEnbl == '1' ) {
+               enableDhcpSrv(1);
+              // disableDhcpSrvRelay();
+            } else if ( dhcpEnbl == '2' ) {
+              // enableDhcpSrvRelay(1);
+               disableDhcpSrv();
+            } else {
+               dhcpSrvType[0].checked = true;
+               disableDhcpSrv();
+              // disableDhcpSrvRelay();
+            }
+			
+      }
+   }
+}
+function isEndGTEStart(EndIp, StartIp)
+{
+   addrEnd = EndIp.split('.');
+   addrStart = StartIp.split('.');
+   E = parseInt(addrEnd[3]) + 1;
+   S = parseInt(addrStart[3]) + 1;
+   if (E < S) 
+      return false;
+   return true;
+}
+
+function btnSave(reboot) {
+   var loc = 'dhcpserver.cgi?';
+   if (reboot)
+      loc = 'lancfg2Reset.cgi?';
+ // alert(ethIpAddress);
+   with ( document.forms[0] ) {
+      if ( dhcpSrvType[1].checked == true ) {
+	  	 if (isValidIpAddress(dhcpEthStart.value) == false || 
+               !(isSameSubNet(ethIpAddress, ethSubnetMask, dhcpEthStart.value, ethSubnetMask))) {
+            alert('Start IP address "' + dhcpEthStart.value + '" is invalid IP address.');
+            return;
+         }
+         if ( isValidIpAddress(dhcpEthEnd.value) == false ||
+               !(isSameSubNet(ethIpAddress, ethSubnetMask, dhcpEthEnd.value, ethSubnetMask))) {
+            alert('End IP address "' + dhcpEthEnd.value + '" is invalid IP address.');
+            return;
+         }   
+         if (!(isEndGTEStart(dhcpEthEnd.value, dhcpEthStart.value))) {
+            alert("End ip has to be equal or greater than Start Ip address.");
+            return;
+         }
+         if ( isNaN(dhcpLeasedTime.value) == true || dhcpLeasedTime.value <= 0) {
+            alert('Leased time "' + dhcpLeasedTime.value + '" is invalid.');
+            return;
+         }
+         loc += 'dhcpEthStart=' + dhcpEthStart.value;
+         //alert(dhcpEthStart.value+'1');
+         loc += '&dhcpEthEnd=' + dhcpEthEnd.value;
+         loc += '&dhcpLeasedTime=' + dhcpLeasedTime.value;
+         loc += '&enblDhcpSrv=1';
+		 // alert("2 btnsave ok");
+      } 
+      else{
+            loc += 'enblDhcpSrv=0';
+            /*if ( dhcpSrvType[2].checked == true ) {
+               if ( isValidIpAddress(dhcpSrvAddr.value) == false ) {
+                  alert('DHCP server IP address "' + dhcpSrvAddr.value + '" is invalid IP address.');
+                  return;
+               }
+               loc += '&dhcpRelayServer=' + dhcpSrvAddr.value;
+               loc += '&enblDhcpSrv=2';
+            } else*/
+              
+      }
+
+   }
+   loc += '&sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+    </script>
+
+</head>
+<body onload='frmLoad()'>
+
+    <script>tbl_head("DHCP Settings - DHCP Server");</script>
+
+    <form>
+    <div id='dhcpInfo'>
+        <table border="0" cellpadding="0" cellspacing="0" width="86%">
+            <tr>
+                <td colspan="2">
+                    <input type='radio' name='dhcpSrvType' onclick='typeClick()'>&nbsp;&nbsp;Disable
+                    DHCP Server
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type='radio' name='dhcpSrvType' onclick='typeClick()'>&nbsp;&nbsp;Enable
+                    DHCP Server
+                </td>
+            </tr>
+            <tr>
+                <td width="31%">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Start IP Address:
+                </td>
+                <td width="69%">
+                    <input type='text' name='dhcpEthStart' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End IP Address:
+                </td>
+                <td>
+                    <input type='text' name='dhcpEthEnd' onKeyUp="value=value.replace(/[^0-9\.]/g,'')">
+                </td>
+            </tr>
+           <tr>
+                     <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leased Time (hour):</td>
+					 <td>
+						<select name=dhcpLeasedTime size=1>
+						<option value="1" selected="selected">one hour</option>
+						<option value="2">two hours</option>
+						<option value="3">three hours</option>
+						<option value="24">one day</option>
+						<option value="48">two days</option>
+						<option value="168">one week</option>
+						</select>
+	  				</td>					 
+                  </tr>
+        </table>
+        <div id="note" style="width:90%;text-align:left;display:none;">DHCP Server can not use as you use Bridge Only mode or the PPP IP extension now.</div>
+      
+        <script>tbl_tail("<input type='button' id='apply' class='button'  onClick='btnSave(0)' value='Apply/Save'>");</script>
+    </form>
+</body>
+</html>

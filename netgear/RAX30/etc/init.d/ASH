@@ -1,0 +1,32 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		echo -e "\033[35mStarting ASH...\033[0m"
+		#<< PEGA Mark: support DAL logs
+        #Alway enable ash log
+		#if [ -e /data/dal/log_dal_when_bootup ]; then
+		    d2 -c dallogcfg[0].AshConfigurationApply false
+		    sleep 1
+		    setlogLevelForDAL.sh dal_ash LOG_DEBUG false true
+		#fi
+		#PEGA>>
+		/usr/bin/dal_ash &
+		exit 0
+		;;
+
+	stop)
+		echo "Stopping ASH..."
+    	killall dal_ash
+    	kill -17 1
+    	rm /tmp/dal_ash.log
+		exit 0
+		;;
+
+	*)
+		echo "$0: unrecognized option $1"
+		exit 1
+		;;
+
+esac
+

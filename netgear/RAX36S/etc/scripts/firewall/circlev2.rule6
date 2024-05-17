@@ -1,0 +1,47 @@
+#! /bin/sh
+
+circle_version=`/usr/bin/get_circle_status circle_version`
+[ "$circle_version" != "2" ] && return
+
+opmode=$(config get i_opmode)
+if [ "$opmode" = "apmode" -o "$opmode" = "brmode" ]; then
+	return
+fi
+
+case $1 in
+        "start")
+		circle_rules=`ip6tables -w -t filter -nvL FORWARD |grep CIRCLE_FILTERS`
+		if [ "$circle_rules" = "" ];then
+			ip6tables -w -t filter -N CIRCLE_FILTERS
+			#CIRCLE_FILTERS chain should insert after BD_FILTER chain
+			BD_FILTER=`ip6tables -w -nvL FORWARD | grep -n "BD_FILTER"  | cut -d  ":"  -f  1`
+			if [ "x$BD_FILTER" = "x" ];then
+				ip6tables -w -t filter -I FORWARD -j CIRCLE_FILTERS
+			else
+				line=`expr $BD_FILTER - 1`
+				ip6tables -w -t filter -I FORWARD $line -j CIRCLE_FILTERS
+			fi
+		fi
+		circle_rules=`ip6tables -w -t nat -nvL PREROUTING |grep CIRCLE_NAT`
+		if [ "$circle_rules" = "" ];then
+			ip6tables -w -t nat -N CIRCLE_NAT
+			ip6tables -w -t nat -N CIRCLE_NAT_FILTERED
+			ip6tables -w -t nat -A PREROUTING -j CIRCLE_NAT
+			ip6tables -w -t nat -A PREROUTING -j CIRCLE_NAT_FILTERED
+		fi
+		/usr/bin/circlev2_iptable
+                ;;
+        "stop")
+		ip6tables -w -t filter -F CIRCLE_FILTERS	
+		ip6tables -w -t nat -F CIRCLE_NAT
+		ip6tables -w -t nat -F CIRCLE_NAT_FILTERED
+		ip6tables -w -t filter -D FORWARD -j CIRCLE_FILTERS
+		ip6tables -w -t nat -D PREROUTING -j CIRCLE_NAT
+		ip6tables -w -t nat -D PREROUTING -j CIRCLE_NAT_FILTERED
+		ip6tables -w -t filter -X CIRCLE_FILTERS
+		ip6tables -w -t nat -X CIRCLE_NAT
+		ip6tables -w -t nat -X CIRCLE_NAT_FILTERED
+                ;;
+        *)
+        ;;
+esac

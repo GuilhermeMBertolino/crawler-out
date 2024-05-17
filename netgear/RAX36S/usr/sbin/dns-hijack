@@ -1,0 +1,28 @@
+#!/bin/sh
+
+config="/bin/config"
+
+if [ "$($config get dns_hijack)" = "1" ]; then
+	# Enable DNS Hijack mode
+	killall -SIGUSR1 dnsmasq
+	sleep 1
+	killall -SIGUSR1 dnsmasq
+else
+	# Disable DNS Hijack mode
+	killall -SIGUSR2 dnsmasq
+	sleep 1
+	killall -SIGUSR2 dnsmasq
+	
+	#Disable nmrp function after install done
+	nmrp_flag=`/sbin/artmtd -r nmrp | cut -d' ' -f 2`
+	if [ "$nmrp_flag" = "1" ]; then
+	    /sbin/artmtd -w nmrp 0
+	fi
+
+	#restart dnsmasq if region is PR for xunyou
+	region="$(/sbin/artmtd -r region | grep REGION | awk '{print $2}')"
+	if [ "$region" = "PR" ]; then
+		/etc/init.d/dnsmasq restart
+	fi
+
+fi

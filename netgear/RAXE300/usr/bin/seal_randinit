@@ -1,0 +1,14 @@
+#!/bin/sh
+# This is not a high quality random, but good enough for non-crypto use, and it's portable
+
+if [ $# -ne 1 ] ; then
+    echo "$0: usage error"
+    exit
+fi
+
+# Values are selected from [0-range)
+range=$1
+seed=$(head /dev/urandom | tr -dc "0123456789" | cut -c -5)
+output=$(awk "BEGIN{srand(${seed});print int(rand()*${range})}")
+
+echo "${output}"

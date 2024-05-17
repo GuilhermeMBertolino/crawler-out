@@ -1,0 +1,77 @@
+#!/bin/sh
+
+MAPIF="map-e"
+lanif=$(config get lan_ifname)
+
+map_rule()
+{
+	local action=$1
+	local gap
+	if [ "$action" = "add" ]; then
+		gap="-I"
+	else
+		gap="-D"
+	fi
+
+	if [ -s "/tmp/v6plus/map.rules" ]; then
+		local RULE_DATA=$(cat /tmp/v6plus/map.rules)
+		RULE_DATA=$(mapcalc brwan $RULE_DATA)
+		eval $RULE_DATA
+
+		local k=$RULE_BMR
+		local rule=1
+
+		if [ -z "$(eval "echo \$RULE_${k}_PORTSETS")" ]; then
+			snat_ip=$(eval "echo \$RULE_${k}_IPV4ADDR")
+			iptables -w -t nat $gap POSTROUTING 1 -o $MAPIF -j MASQUERADE
+		else
+			for portset in $(eval "echo \$RULE_${k}_PORTSETS"); do
+				mark=$(expr $rule + 16)
+				pn=$(expr $rule - 1)
+				snat_ip=$(eval "echo \$RULE_${k}_IPV4ADDR")
+				iptables -w -t nat $gap PREROUTING -m statistic --mode nth --every 15 --packet $pn -j MARK --set-mark $mark
+				iptables -w -t nat $gap OUTPUT -m statistic --mode nth --every 15 --packet $pn -j MARK --set-mark $mark
+				for proto in icmp tcp udp; do
+					iptables -w -t nat $gap POSTROUTING 1 -p $proto -m mark --mark $mark -o $MAPIF -j MASQUERADE --to-ports $portset
+				done
+				for proto in tcp udp; do
+					iptables -w -t mangle $gap PREROUTING -p $proto -i $lanif -d $(eval "echo \$RULE_${k}_IPV4ADDR") --dport $(eval "echo $portset | sed 's/-/:/g'") -j MARK --set-mark 0x100
+				done
+				rule=$(expr $rule + 1)
+			done
+		fi
+	fi
+
+	iptables -w $gap INPUT -i $MAPIF -j ACCEPT
+	iptables -w $gap OUTPUT -o $MAPIF -j ACCEPT
+	iptables -w $gap FORWARD -i $MAPIF -j ACCEPT
+	iptables -w $gap FORWARD -o $MAPIF -j ACCEPT
+	iptables -w $gap FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+}
+
+start()
+{	
+	#If map-e is not started, pls start it first
+	[ -z "$(ip link show $MAPIF)" ] && return
+	map_rule add
+}
+
+stop()
+{
+	#If map-e is already started, pls stop it first
+	[ -n "$(ip link show $MAPIF)" ] && return
+	map_rule del
+}
+
+
+case $1 in
+	"start")
+		if [ "x`/bin/config get ipv6_type`" != "xv6plus" ]; then
+			exit
+		fi
+		start
+		;;
+	"stop")
+		stop
+		;;
+esac

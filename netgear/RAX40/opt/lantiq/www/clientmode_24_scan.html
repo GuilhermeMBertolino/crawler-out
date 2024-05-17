@@ -1,0 +1,74 @@
+<div class="ngdialog-message">
+            <form class="form-horizontal" role="form">
+            <!-- Modify: In Process Feature -->
+            <div class="form-group">
+            <label class="col-sm-12 col-lg-3 col-md-3 col-xs-12 control-label" for="Status" ></label>
+            <div class="col-sm-12 col-md-6 col-lg-6 col-xs-12" style="text-align:center;font-weight: bold;">
+            <!-- <input type="text" ng-model="$root.status" class="form-control" id="Status" placeholder="WPS Session Start" readonly/> -->
+            </div>
+            </div>
+           <div id="translation" class="hide">clientmodescan</div>
+           <div class="form-group">
+           <div class="col-sm-6 col-md-12 col-lg-12 col-xs-6" ng-controller="clientModeScanController" ng-init="getSSIDs('Object=Device.WiFi.EndPoint.1&amp;Operation=Modify&amp;X_LANTIQ_COM_Vendor_ScanStatus=Scanning','Device.WiFi.EndPoint.1.Profile')">
+            <div class="row" ng-show="clientmodescanpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('clientmodescanpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="clientmodescanpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="clientmodescanpostpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('clientmodescanpostpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="clientmodescanpopupval"></span>
+                </div>
+            </div>
+           <div class="panel-body">
+                  <div ng-show="isScanning" class="col-sm-12 col-md-12 col-lg-12 col-xs-12" style="text-align:center;font-weight: bold;">
+                    <!-- <input type="text" ng-model="$root.status" class="form-control" id="Status" placeholder="WPS Session Start" readonly/> -->
+                        Scanning in progress...
+                    </div>
+                <progressbar ng-show="isScanning" class="progress-striped active"></progressbar>
+                
+            <div class="table-responsive table-scroll-vr">
+                <table  ng-show="!isScanning" class="table table-bordered tableCount theme_intel" formname="{@form}" name="Device.WiFi.EndPoint.1.Profile?SSID,X_LANTIQ_COM_Vendor_SignalStrength,ModeEnabled,">
+                    <tr>
+                        <th id="SSID" ng-bind="'Device.WiFi.EndPoint.1.Profile.SSID' | translate" class="ng-binding" style="text-align: left;padding-left:30px">SSID</th>
+                        <th id="ModeEnabled" ng-bind="'Device.WiFi.EndPoint.1.Profile.Authentication Method' | translate" class="ng-binding">Authentication Method</th>
+                        <th id="X_LANTIQ_COM_Vendor_SignalStrength" ng-bind="'Device.WiFi.EndPoint.1.Profile.Signal Strength' | translate" class="ng-binding">Signal Strength</th>
+                    </tr> 
+                    <tbody id="bodyData">
+                        <tr ng-repeat="data in DeviceWiFiEndPoint1Profiletable track by $index" class="ng-scope">
+                        
+                         <td class="ng-scope">
+                            <div class="row">
+                                <div class="mbl-no-padding-hr no-padding-hr">
+
+                                    <div class="input-field1 radiogroup mbl-no-padding-hr" style="text-align:left">                            
+                                        <input id="DeviceWiFiEndPoint1Profile_SSID{{$index}}" name="SSID" class="with-gap" type="radio" ng-value="data" ng-model="selectedItem" ng-change="setSelectedItem(data)">
+                                        <label for="DeviceWiFiEndPoint1Profile_SSID{{$index}}" class="radio_left_align mr-20" ng-bind="data.SSID"></label>
+                                    </div>
+                                </div>
+                             </div>
+                         </td>
+                         <td class="ng-scope">
+                              <span ng-bind="data.ModeEnabled" class="ng-binding ng-scope"></span>
+                         </td>
+                         <td class="ng-scope">
+                              <span ng-bind="data.X_LANTIQ_COM_Vendor_SignalStrength" class="ng-binding ng-scope"></span>
+                         </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+          </div>    
+         </div>
+         </div>
+            <!-- Modify -->
+            </form>
+            </div>
+            <div class="ngdialog-buttons">
+                <button type="button" class="btn btn-info pull-right" ng-click=closeThisDialog("OK")>OK</button>
+                <button type="button" class="btn btn-info pull-right" style="margin-right:10px;margin-left:10px" ng-click=closeThisDialog("Cancel")>Cancel</button>
+                
+            </div>
+   

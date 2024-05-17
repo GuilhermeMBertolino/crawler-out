@@ -1,0 +1,32 @@
+########################################
+# call_msg: ..\..\ONU\Common\D6S__SerDes\MSG\General\onu_jtf_cap_trig
+########################################
+# load atm file: ..\..\ONU\Common\D6S__SerDes\ATM\General\onu_general.csv, val_select:val
+########################################
+# cfg_class: jtf_cap_trig
+########################################
+# pre_order
+MOV 0x0,@(0x828c81b4)
+MOV 0x0,@(0x828c81b8{0xff})
+MOV 0x0,@(0x828c81b0{0x1}<<16)
+MOV 0x1,@(0x828c81b0{0x1}<<16)
+MOV @(0x828c80fc{0x1}<<11),ram_init_done
+MOV 0x0,@(0x828c81b0{0x1}<<16)
+MOV 0x0,@(0x828c8184{0x1}<<4)
+MOV 0x0,@(0x828c8184{0x1}<<5)
+MOV 0x1,@(0x828c8184{0x1}<<4)
+MOV 0x0,@(0x828c8184{0x1}<<4)
+SLEEP 10000000  # Time to perform and collect all measurement results
+MOV 0x1,@(0x828c8184{0x1}<<5)
+MOV 0x0,@(0x828c8184{0x1}<<5)
+# unorder
+# post_order
+########################################
+# end of cfg_class: jtf_cap_trig
+########################################
+MOV 1,__RETC
+MOV ram_init_done,__RV0
+HALT 0
+########################################
+# end of call_msg: onu_jtf_cap_trig
+########################################

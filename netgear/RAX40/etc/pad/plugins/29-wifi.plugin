@@ -1,0 +1,70 @@
+PLUGIN_ID=29
+platforms=GRX350,IRE220
+trace=enable
+
+plugin_desc=WIFI related logs
+version=
+
+COMMAND_ID=1
+tool1=iwconfig
+desc=wifi interface information
+catalog=Information
+tool1_param=
+CMD_END
+
+COMMAND_ID=2
+tool2=iwlist
+desc=wifi connected peers information
+catalog=Information
+tool2_param=peers
+CMD_END
+
+COMMAND_ID=3
+tool3=mv
+desc=Move FW dump
+catalog=Information
+tool3_param=/opt/lantiq/wave/confs/*dump*.tar* .
+CMD_END
+
+COMMAND_ID=4
+tool4=/opt/lantiq/wave/scripts/fapi_wlan_wave_debug.sh dump_fapi
+desc=Generate FAPI dump
+catalog=Information
+tool4_param=
+CMD_END
+
+COMMAND_ID=5
+tool5=mv
+desc=Move FAPI & FW dumps
+catalog=Information
+tool5_param=/opt/lantiq/wave/*dump*.tar* .
+CMD_END
+
+COMMAND_ID=6
+tool6=cp
+desc=Copy /tmp/wlan_wave
+catalog=Information
+tool6_param=-r /tmp/wlan_wave .
+CMD_END
+
+COMMAND_ID=7
+tool7=iwpriv wlan0 gEnableRadio; iwpriv wlan2 gEnableRadio; iwpriv wlan4 gEnableRadio
+desc=wifi TX Power status
+catalog=Information
+tool7_param=
+CMD_END
+
+COMMAND_ID=8
+tool8=find
+desc=proc list of wlan instance
+catalog=Debug
+tool8_param=/proc/net/mtlk -iname Debug > wlan_proc
+CMD_END
+
+OMMAND_ID=9
+tool9=cat
+desc=copy wlan proc entries 
+catalog=Debug
+tool9_param=wlan_proc | while read LINE;do instance=$(echo $LINE | cut -d "/" -f5);mkdir -p wlan_wave/$instance;cp -r $LINE wlan_wave/$instance;done
+CMD_END
+~        

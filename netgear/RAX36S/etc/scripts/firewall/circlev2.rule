@@ -1,0 +1,48 @@
+#! /bin/sh
+
+circle_version=`/usr/bin/get_circle_status circle_version`
+[ "$circle_version" != "2" ] && return
+opmode=$(config get i_opmode)
+if [ "$opmode" = "apmode" -o "$opmode" = "brmode" ]; then
+	return
+fi
+
+case $1 in
+        "start")
+		CIRCLE_SKIP=`iptables -w -t mangle -nvL CIRCLE_SKIP_ACCEL`
+		if [ "x$CIRCLE_SKIP" = "x" ]; then
+			iptables -w -t mangle -N CIRCLE_SKIP_ACCEL
+		fi
+		iptables -w -t mangle -A PREROUTING -j CIRCLE_SKIP_ACCEL
+
+		iptables -w -t filter -N CIRCLE_FILTERS
+		#CIRCLE_FILTERS chain should insert after BD_FILTER chain
+		BD_FILTER=`iptables -w -nvL FORWARD | grep -n "BD_FILTER"  | cut -d  ":"  -f  1`
+		if [ "x$BD_FILTER" = "x" ];then
+			iptables -w -t filter -I FORWARD -j CIRCLE_FILTERS
+		else
+			line=`expr $BD_FILTER - 1`
+			iptables -w -t filter -I FORWARD $line -j CIRCLE_FILTERS
+		fi
+
+		iptables -w -t nat -N CIRCLE_NAT
+		iptables -w -t nat -N CIRCLE_NAT_FILTERED
+		iptables -w -t nat -A PREROUTING -j CIRCLE_NAT
+		iptables -w -t nat -A PREROUTING -j CIRCLE_NAT_FILTERED
+
+		/usr/bin/circlev2_iptable &
+                ;;
+        "stop")
+		iptables -w -t filter -F CIRCLE_FILTERS	
+		iptables -w -t nat -F CIRCLE_NAT
+		iptables -w -t nat -F CIRCLE_NAT_FILTERED
+		iptables -w -t filter -D FORWARD -j CIRCLE_FILTERS
+		iptables -w -t nat -D PREROUTING -j CIRCLE_NAT
+		iptables -w -t nat -D PREROUTING -j CIRCLE_NAT_FILTERED
+		iptables -w -t filter -X CIRCLE_FILTERS
+		iptables -w -t nat -X CIRCLE_NAT
+		iptables -w -t nat -X CIRCLE_NAT_FILTERED
+                ;;
+        *)
+        ;;
+esac

@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="proma" content="no-cache"><meta http-equiv="cache-control" content="no cache"><meta http-equiv="expires" content="0"><title></title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><link rel="stylesheet" href="/static/css/main.css"><link rel="stylesheet" href="/static/css/common.css"><link rel="stylesheet" href="/static/css/advance_menu.css"><link rel="stylesheet" href="/static/css/loading.css"></head><style>.btn-delete{background:#af4b4b;width:auto;min-width:100px}</style><body><div id="app"></div><script type="text/x-template" id="main"><div>
+  <!--子菜单-->
+  <phone-back url="/phone/home.html"></phone-back>
+  <adv-child-menu childType="mesh"></adv-child-menu>
+  <br><br>
+  <div class="advance-box">
+    <x-help :text="lang_t('mesh.help')"></x-help>
+    <br><br>
+	  <div class="fun-box">
+      <table class="table">
+        <tbody>
+        <tr>
+          <td class="fun-left">{{ lang_t('mesh.mesh_set') }}</td>
+          <td>
+            <x-switch v-model="enable" @change="submit_status"></x-switch>
+          </td>
+        </tr>       
+        </tbody>
+        <tbody v-show="enable">
+        <tr>
+          <td class="fun-left">&nbsp;</td>
+          <td>
+            <br><button type="button" class="btn" @click="handleSubmit">{{ lang_t('mesh.add_mesh') }}</button>
+          </td>
+        </tr>
+        <tr><td colspan="2">&nbsp;</td></tr>
+        <tr><td colspan="2"><span class="basic-title">{{lang_t('mesh.crrent_device')}}</span></td></tr>
+	      <tr><td colspan="2">
+          <table class="t_table3 table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>{{lang_t('rule.ip')}}</th>
+                <th>{{lang_t('rule.mac')}}</th>
+                <th>{{lang_t('mesh.rssi')}}</th>
+                <th>{{lang_t('rule.operate')}}</th>
+              </tr>
+            </thead>
+            <tr v-for="(list,index) in this.device" v-if="meshState!='0'">
+              <td>{{list.idx}}</td>
+              <td>{{list.ip}}</td>
+              <td>{{list.mac}}</td>
+              <td>{{list.signal+"%"}}</td>
+			  <!--<td>{{signalStatus(list.signal)}}</td>-->
+              <td>
+                <button type="button" class="btn btn-delete" @click="dele_device(list.ip)">{{lang_t('mesh.reboot')}}</button>
+              </td>
+            </tr>
+            <tr v-if="meshState=='0'">
+              <td align="center" colspan="5">{{ lang_t('mesh.msg2') }}</td>
+            </tr>
+			<!--<tr v-if="meshState!='0'&&lowSignal">
+              <td colspan="5"><div style="text-align:left; padding-left:15px; font-weight:bold; color:#f00;">{{ lang_t('mesh.signal_info') }}</div></td>
+            </tr>-->
+          </table>
+		    </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div></script><script src="/plugin/vue.js"></script><script src="/plugin/jquery-3.2.1.min.js"></script><script src="/static/js/config.js"></script><script src="/static/js/layout.js"></script><script src="/static/js/common.js"></script><script src="/static/js/topicurl.js"></script><script>var cs_main={template:"#main",data:function(){return{globalConfig:globalConfig,lang:$.lang,lang_t:lang_t,lowSignal:!1,enable:!1,wifiOff:"",wifiOff5g:"",device:[],meshState:"0",meshInfo:"",operate:[]}},watch:{},computed:{formRules:function(){var n=this;return{name:function(e,i){var t=cs.commentstr(e);1==t||2==t?i(n.lang_t("wan.msg22")):i()}}}},created:function(){var a=this;uiPost.getWiFiMeshConfig(function(e){if(a.wifiOff=e.wifiOff,a.wifiOff5g=e.wifiOff5g,a.meshState=e.meshState,a.device=e.meshInfo,a.device)for(var i=a.device.length,t=0;t<i;t++){for(var n=Number(a.device[t].signal),o=0;o<i;o++){var f=Number(a.device[o].signal);f<n&&(n=f)}a.lowSignal=n<70}a.enable="1"==e.meshEnabled,"1"==a.wifiOff&&"1"==a.wifiOff5g&&(a.enable=!1)})},methods:{signalStatus:function(e){var i=this;return 80<Number(e)?i.lang_t("mesh.high"):70<Number(e)?i.lang_t("mesh.medium"):i.lang_t("mesh.low")},submit_status:function(){var t=this,e={effectType:"0"};e.meshEnabled=t.enable?"1":"0",uiPost.setWiFiMeshConfig(e,function(e){var i=15;null!=e.wtime&&0!=e.wtime&&(i=e.wtime),Cstool.Count(i,"js",function(){t.enable?location.href="/login.html":location.href=location.href})})},dele_device:function(e){var i={};i.ipAddr=e,Cstool.Msg({content:this.lang_t("mesh.msg59"),type:"confirm",ok:function(){return uiPost.delDevice(i,function(e){var i=15;null!=e.wtime&&0!=e.wtime&&(i=e.wtime),Cstool.Count(i,"js",function(){location.href=location.href})}),!1}})},handleSubmit:function(){var e={effectType:"1",meshEnabled:"1"};uiPost.setWiFiMeshConfig(e,function(e){var i=15;null!=e.wtime&&0!=e.wtime&&(i=e.wtime),Cstool.Count(i,"js",function(){location.href=location.href})})}}}</script><script src="/static/js/main.js"></script></body></html>

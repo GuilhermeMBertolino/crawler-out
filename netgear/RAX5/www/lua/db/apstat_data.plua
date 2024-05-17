@@ -1,0 +1,27 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local uci  = require "luci.model.uci".cursor()
+local inetStatus = require "webGetFunc.inetStatus"
+
+local data = { }
+
+data["ipAddr"] = { value = inetStatus.getInet_IpAddr(), type = 'spantext' }
+data["subnetMask"] = { value = inetStatus.getInet_subnetMask(), type = 'spantext' }
+data["defaultGateway"] = { value = inetStatus.getInet_Gateway(), type = 'spantext' }
+data["dhcpServer"] = { value = inetStatus.getDhcpv4Router(), type = 'spantext' }
+data["dnsPrimary"] = { value = inetStatus.getInet_DNSServer(1), type = 'spantext' }
+data["dnsSlave"] = { value = inetStatus.getInet_DNSServer(2), type = 'spantext' }
+
+local lease_time = inetStatus.getDhcpLeaseTime()
+data["leaseObtainedDays"] = { value = lease_time[1], type = 'spantext' }
+data["leaseObtainedHours"] = { value = lease_time[2], type = 'spantext' }
+data["leaseObtainedMinutes"] = { value = lease_time[3], type = 'spantext' }
+data["leaseExpiredDays"] = { value = lease_time[4], type = 'spantext' }
+data["leaseExpiredHours"] = { value = lease_time[5], type = 'spantext' }
+data["leaseExpiredMinutes"] = { value = lease_time[6], type = 'spantext' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

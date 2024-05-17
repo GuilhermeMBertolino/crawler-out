@@ -1,0 +1,1 @@
+/cp/cp/itbcaptive.cgi

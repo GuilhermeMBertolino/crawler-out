@@ -1,0 +1,40 @@
+#!/bin/sh
+
+show_usage()
+{
+	echo "---------- load-nvram usage ------------" > /dev/console
+	echo "load-nvram user user-nvram" > /dev/console
+	echo "load-nvram kernel kernel-nvram" > /dev/console
+	echo "You have to reboot DUT to apply new setting !!!" > /dev/console
+}
+
+load_nvram_to_data_dir()
+{
+	mode=$1
+	file=$2
+
+	if [ "$mode" = "user" ]; then
+		eval cp $file /data/.user_nvram.setting
+		sync
+		/bin/config set load_nvram_manual=1
+		/bin/config commit
+		sync
+		echo "load user nvram done! please reboot DUT" > /dev/console
+	elif [ "$mode" = "kernel" ]; then
+		eval cp $file /data/.kernel_nvram.setting
+		sync
+		/bin/config set load_nvram_manual=1
+		/bin/config commit
+		sync
+		echo "load kernel nvram done! please reboot DUT" > /dev/console
+	else
+		show_usage
+	fi
+}
+
+case "$1" in
+	user) load_nvram_to_data_dir $@;;
+	kernel) load_nvram_to_data_dir $@;;
+	*) show_usage
+esac
+

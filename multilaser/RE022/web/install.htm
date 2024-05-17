@@ -1,0 +1,661 @@
+<html>
+<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <% getIndex("no-cache"); %>
+    <title>install</title>
+    <script type="text/javascript" src="util_gw.js"> </script>
+    <script type="text/javascript" src="macro.js"> </script>
+    <SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+    <% getInfo("include_css"); %>
+    <link rel="stylesheet" rev="stylesheet" href="customer.css" type="text/css">
+    <style>
+    .on {display:on}
+    .off {display:none}
+    input{background-color:expression((this.readOnly && this.readOnly == true)? "#efefef":"");}
+    input[readonly]{
+        background-color: #F5F5F5;
+        border: 1px solid #E9E9E9;
+    }
+    h3{
+        font-size: 14px;
+        color: #0000FF;
+    }
+    .level{
+        margin-top: 3px;
+        margin-left: 6px;
+    }
+    .level>div{
+        float: left;
+        width: 50px;
+        height: 8px;
+        margin-right: 3px;
+        border-bottom: 4px solid;
+    }
+    </style >
+    <script>
+    parent.hideWaitDiv();
+    var ssid2g = "";
+    var pskValue2g = "";
+    var ssid5g = "";
+    var pskValue5g = "";
+    var isDual = "";
+    var encrypt_2g = <% getIndex("encrypt2g"); %>
+    var encrypt_5g = <% getIndex("encrypt5g"); %>
+
+    function includeSpace(str){
+        for (var i=0; i<str.length; i++)
+        {
+            if ( str.charAt(i) == ' ' )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function saveChanges() {
+        //pppoe的用户名和密码
+        var wanType = document.installSet.wanType.selectedIndex;
+        if (wanType == 0) {//pppoe
+            var regexp =/^[!-~]*$/;
+            if (document.installSet.pppUserName.value == "") {
+                alert(install_ppp_user_name_cannot_be_empty);
+                document.installSet.pppUserName.focus();
+                return false;
+            }
+            if (document.installSet.pppPassword.value == "") {
+                alert(install_ppp_password_cannot_be_empty);
+                document.installSet.pppPassword.focus();
+                return false;
+            }
+            if (includeSpace(document.installSet.pppUserName.value)) {
+                alert(install_cannot_accept_space_character_in_ppp_user_name);
+                document.installSet.pppUserName.focus();
+                return false;
+            }
+            if (includeSpace(document.installSet.pppPassword.value)) {
+                alert(install_cannot_accept_space_character_in_ppp_password);
+                document.installSet.pppPassword.focus();
+                return false;
+            }
+        }
+        if (wanType == 2) {
+            if (!checkHostIP(document.installSet.wan_ip, 1)) {
+                handleStaticIP();
+                return false;
+            }
+            if (!checkHostIP(document.installSet.wan_gateway, 1)) {
+                handleStaticIP();
+                return false;
+            }
+            if (!checkNetmask(document.installSet.wan_mask, 1)) {
+                handleStaticIP();
+                return false;
+            }
+            if ( !checkSubnet(document.installSet.wan_ip.value,document.installSet.wan_mask.value,document.installSet.wan_gateway.value)){
+                alert(util_gw_invalid_gw_ip+util_gw_locat_subnet);
+                document.installSet.wan_gateway.focus();
+                return false;
+            }
+            if (!checkIP(document.installSet.dns1)) {
+                handleStaticIP();
+                return false;
+            }
+        }
+        var regexpp =/^[!-~]{8,63}$/;
+        if (document.installSet.wifi_band_steering[1].checked) {
+            //无线名称和密码
+            if (document.installSet.band_steering_ssid.value == "") {
+                alert(install_ssid_cannot_be_empty);
+                document.installSet.band_steering_ssid.focus();
+                return false;
+            }
+            if (document.installSet.band_steering_ssid.value.trim() == "") {
+                alert(ssid_cannot_be_all_spaces);
+                document.installSet.band_steering_ssid.focus();
+                return false;
+            }
+            if (byteLength(document.installSet.band_steering_ssid.value) > 32){
+                alert(install_ssid_length_should_be_maximum_32_octets);
+                document.installSet.band_steering_ssid.focus();
+                return false;
+            }
+            if (includeSpace(document.installSet.band_steering_ssid.value)) {
+                if (!confirm(ssid_contains_spaces_continue_saving)) {
+                    document.installSet.band_steering_ssid.focus();
+                    return false;
+                } else {
+                    document.installSet.band_steering_ssid.value = document.installSet.band_steering_ssid.value.trim()
+                }
+            }
+            if (document.installSet.encrypt_band_steering.value != 0 && !regexpp.test(document.installSet.band_steering_passwd.value)) {
+                alert(install_invalid_password);
+                document.installSet.band_steering_passwd.focus();
+                return false;
+            }
+            // 双频合一开启，后台获取的值为2.4G值，此处将双频合一的值赋值给2g
+            document.installSet.ssid2g.value = document.installSet.band_steering_ssid.value;
+            document.installSet.pskValue2g.value = document.installSet.band_steering_passwd.value;
+        } else {
+            //2.4G无线名称和密码
+            if (document.installSet.ssid2g.value == "") {
+                alert(install_ssid_cannot_be_empty);
+                document.installSet.ssid2g.focus();
+                return false;
+            }
+            if (document.installSet.ssid2g.value.trim() == "") {
+                alert(ssid_cannot_be_all_spaces);
+                document.installSet.ssid2g.focus();
+                return false;
+            }
+            if (byteLength(document.installSet.ssid2g.value) > 32) {
+                alert(install_ssid_length_should_be_maximum_32_octets);
+                document.installSet.ssid2g.focus();
+                return false;
+            }
+            if (document.installSet.encrypt_2g.value != 0 && !regexpp.test(document.installSet.pskValue2g.value)) {
+                alert(install_invalid_password);
+                document.installSet.pskValue2g.focus();
+                return false;
+            }
+
+            if (document.getElementById("ssid5g").readOnly) {
+                //5G随2G变化
+                sync();
+            }
+            //5G无线名称和密码
+            if (document.installSet.ssid5g.value == "") {
+                alert(install_ssid_cannot_be_empty);
+                document.installSet.ssid5g.focus();
+                return false;
+            }
+            if (document.installSet.ssid5g.value.trim() == "") {
+                alert(ssid_cannot_be_all_spaces);
+                document.installSet.ssid5g.focus();
+                return false;
+            }
+            if (byteLength(document.installSet.ssid5g.value) > 32) {
+                alert(install_ssid_length_should_be_maximum_32_octets);
+                document.installSet.ssid5g.focus();
+                return false;
+            }
+            if (document.getElementById("encrypt_5g_hidden").value != 0 && !regexpp.test(document.installSet.pskValue5g.value)) {
+                alert(install_invalid_password);
+                document.installSet.pskValue5g.focus();
+                return false;
+            }
+            if (includeSpace(document.installSet.ssid5g.value) || includeSpace(document.installSet.ssid2g.value)) {
+                if (!confirm(ssid_contains_spaces_continue_saving)) {
+                    return false;
+                }else {
+                    document.installSet.ssid2g.value = document.installSet.ssid2g.value.trim()
+                    document.installSet.ssid5g.value = document.installSet.ssid5g.value.trim()
+                }
+            }
+        }
+
+        var guest_2g = '<% getInfo("guestssid2g"); %>'
+        var guest_5g = '<% getInfo("guestssid5g"); %>'
+        var main_2g = document.installSet.ssid2g.value
+        var main_5g = document.installSet.ssid5g.value
+
+        if (main_2g == guest_2g || main_2g == guest_5g) {
+            alert(wlguest_ssid_same_as_root_2g)
+            document.installSet.ssid2g.focus()
+            return false
+        }
+        // 只有双频合一开关关闭的情况下才校验5G SSID
+        if (document.installSet.wifi_band_steering[0].checked) {
+            if (main_5g == guest_2g || main_5g == guest_5g) {
+                alert(wlguest_ssid_same_as_root_2g)
+                document.installSet.ssid5g.focus()
+                return false
+            }
+        }
+
+        if (wanType != 2) {
+            clearStatic();
+            document.installSet.dnsMode.value = "dnsAuto";
+        } else {
+            document.installSet.dnsMode.value = "dnsManual";
+        }
+        parent.showWaitDiv();
+        return true;
+    }
+    function sync() {
+        if (document.installSet.sync5g.checked) {
+            if (document.installSet.ssid2g.value) {
+                var ssid2g_value = document.installSet.ssid2g.value
+                if (ssid2g_value.indexOf('2.4G') != -1 || ssid2g_value.indexOf('2G') != -1 
+                    || ssid2g_value.indexOf('2.4g') != -1 || ssid2g_value.indexOf('2g') != -1) {
+                    document.installSet.ssid5g.value = ssid2g_value.replace(/2.4G/g,"5G").replace(/2G/g,"5G").replace(/2g/g,"5g").replace(/2.4g/g,"5g")
+                }else {
+                    document.installSet.ssid5g.value = ssid2g_value + "-5G";
+                }
+            } else {
+                document.installSet.ssid5g.value = "";
+            }
+            document.installSet.pskValue5g.value = document.installSet.pskValue2g.value;
+            document.getElementById("encrypt_5g_hidden").value = document.installSet.encrypt_2g.value
+            document.installSet.encrypt_5g_show.value = document.installSet.encrypt_2g.value
+            encrypt_5g_change()
+        }
+    }
+    function asyn() {
+        if (isDual != 'ON') {
+            document.installSet.ssid5g.value = document.installSet.cssid5g.value;
+            document.installSet.pskValue5g.value = document.installSet.cpskValue5g.value;
+            document.getElementById("encrypt_5g_hidden").value = encrypt_5g
+            document.installSet.encrypt_5g_show.value = encrypt_5g
+        }
+    }
+    function clearStatic() {
+        document.installSet.wan_ip.value = "";
+        document.installSet.wan_gateway.value = "";
+        document.installSet.wan_mask.value = "";
+        document.installSet.dns1.value = "";
+    }
+    function handleStaticIP() {
+        var v = "0.0.0.0";
+        if(document.installSet.wan_ip.value == v)
+            document.installSet.wan_ip.value = "";
+        if(document.installSet.wan_gateway.value == v)
+            document.installSet.wan_gateway.value = "";
+        if(document.installSet.wan_mask.value == v)
+            document.installSet.wan_mask.value = "";
+        if(document.installSet.dns1.value == v)
+            document.installSet.dns1.value = "";
+    }
+    function dualControlEnabledClick() {
+        if (document.installSet.wifi_band_steering[1].checked) { // 双频合一打开
+            document.getElementById("dual_div").style.display = "";
+            document.getElementById("2G_div").style.display = "none";
+            document.getElementById("5G_div").style.display = "none";
+            document.installSet.band_steering_ssid.value = ssid2g;
+            document.installSet.band_steering_passwd.value = pskValue2g;
+            document.installSet.encrypt_band_steering.value = encrypt_2g;
+            encrypt_dual_change()
+        } else {
+            document.getElementById("dual_div").style.display = "none";
+            document.getElementById("2G_div").style.display = "";
+            document.getElementById("5G_div").style.display = "";
+            if (isDual == "ON") { // 双频合一打开默认开启同步2.4G
+                document.installSet.ssid2g.value = ssid2g;
+                document.installSet.pskValue2g.value = pskValue2g;
+                document.installSet.encrypt_2g.value = encrypt_2g
+
+                document.installSet.ssid5g.value = ssid2g + "-5G";
+                document.installSet.pskValue5g.value = pskValue2g;
+                document.getElementById("encrypt_5g_hidden").value = encrypt_2g
+                document.installSet.encrypt_5g_show.value = encrypt_2g
+                document.installSet.sync5g.checked = true;
+            } else {
+                document.installSet.ssid2g.value = ssid2g;
+                document.installSet.pskValue2g.value = pskValue2g;
+                document.installSet.encrypt_2g.value = encrypt_2g
+                document.installSet.ssid5g.value = ssid5g;
+                document.installSet.pskValue5g.value = pskValue5g;
+                document.getElementById("encrypt_5g_hidden").value = encrypt_5g
+                document.installSet.encrypt_5g_show.value = encrypt_5g
+                //判断是否同步2.4G
+                if (ssid2g + "-5G" == ssid5g && pskValue2g == pskValue5g) {
+                    document.installSet.sync5g.checked = true;
+                } else {
+                    document.installSet.sync5g.checked = false;
+                }
+            }
+            sync5gChecked(document.installSet.sync5g.checked);
+        }
+    }
+    function LoadSetting() {
+        //广域网设置
+        var op_mode = <% getIndex("opMode"); %>;
+        if (op_mode == 0) {
+            document.getElementById("wan_div").style.display  = "";
+        }
+        var wanDhcp = <% getIndex("wanDhcp"); %>;
+        var wanType_index = 0;  //default:PPPoE
+        if ( wanDhcp == 0 ) {  //static ip
+            wanType_index = 2;
+        } else if(wanDhcp == 1) {  //dhcp
+            wanType_index = 1;
+        }
+        document.installSet.wanType.selectedIndex = wanType_index;
+        wanTypeSelection(document.installSet.wanType);
+        handleStaticIP();
+        //未加密时，密码显示为空
+        ssid2g = "<% getInfo("ssid2g", "js"); %>";
+        if (<% getIndex("encrypt2g"); %> !== 0) {
+            pskValue2g = "<% getInfo("pskValue2g", "js"); %>";
+        }
+        ssid5g = "<% getInfo("ssid5g", "js"); %>";
+        if (<% getIndex("encrypt5g"); %> !== 0) {
+            pskValue5g = "<% getInfo("pskValue5g", "js"); %>";
+        }
+        document.installSet.cpskValue5g.value = pskValue5g;
+        document.installSet.pskValue2g.value = pskValue2g;
+		document.installSet.encrypt_2g.value = encrypt_2g
+
+        document.installSet.ssid5g.value = ssid5g;
+        document.installSet.pskValue5g.value = pskValue5g;
+		document.getElementById("encrypt_5g_hidden").value = encrypt_5g
+        document.installSet.encrypt_5g_show.value = encrypt_5g
+
+        //判断是否同步5G
+        var comparessid = ssid2g.replace(/2.4G/g,"5G").replace(/2G/g,"5G").replace(/2g/g,"5g").replace(/2.4g/g,"5g")
+        if (ssid2g != ssid5g && (ssid2g + "-5G" == ssid5g || comparessid == ssid5g) 
+            && pskValue2g == pskValue5g && encrypt_2g == encrypt_5g) {
+            document.installSet.sync5g.checked = true;
+            document.getElementById("ssid5g").readOnly = true;
+            document.getElementById("pskValue5g").readOnly = true;
+			document.getElementById("encrypt_5g").disabled = true;
+        } else {
+            document.getElementById("ssid5g").readOnly = false;
+            document.getElementById("pskValue5g").readOnly = false;
+			document.getElementById("encrypt_5g").disabled = false;
+        }
+
+        //双频合一
+        isDual = "<% getInfo("wifi_band_steering"); %>";
+        if (isDual == "ON") { // 双频合一打开
+            document.installSet.wifi_band_steering[1].checked = true;
+            document.getElementById("dual_div").style.display = "";
+            document.getElementById("2G_div").style.display = "none";
+            document.getElementById("5G_div").style.display = "none";
+            document.installSet.band_steering_ssid.value = ssid2g;
+            document.installSet.band_steering_passwd.value = pskValue2g;
+            document.installSet.encrypt_band_steering.value = encrypt_2g;
+        } else {
+            document.installSet.wifi_band_steering[0].checked = true;
+            document.getElementById("dual_div").style.display = "none";
+            document.getElementById("2G_div").style.display = "";
+            document.getElementById("5G_div").style.display = "";
+        }
+        encrypt_dual_change()
+        encrypt_5g_change()
+        encrypt_2g_change()
+
+        if (<% getIndex("multi_ap_controller"); %>  == 2) { //mesh agent can not change
+            var inputs = document.getElementsByTagName("input");
+            for (var i=0; i<inputs.length; i++) {
+                if (inputs[i].type == "password") {
+                    inputs[i].readOnly = true;
+                } else {
+                    inputs[i].disabled = true;
+                }
+            }
+            var selects = document.getElementsByTagName("select");
+            for (var i=0; i<selects.length; i++) {
+                selects[i].disabled = true;
+            }
+        }
+    }
+
+    function wanTypeSelection(field) {
+        if (field.selectedIndex == 0) { //pppoe
+            document.getElementById("ppp_div1").className = "on";
+            document.getElementById("ppp_div2").className = "on";
+            document.getElementById("static_div1").className = "off";
+            document.getElementById("static_div2").className = "off";
+            document.getElementById("static_div3").className = "off";
+            document.getElementById("static_div4").className = "off";
+            document.getElementById("DHCP_describe").className = "off";
+            document.getElementById("static_describe").className = "off";
+            document.getElementById("pppo_describe").className = "on";
+        } else if(field.selectedIndex == 1) { //dhcp
+            document.getElementById("ppp_div1").className = "off";
+            document.getElementById("ppp_div2").className = "off";
+            document.getElementById("static_div1").className = "off";
+            document.getElementById("static_div2").className = "off";
+            document.getElementById("static_div3").className = "off";
+            document.getElementById("static_div4").className = "off";
+            document.getElementById("DHCP_describe").className = "on";
+            document.getElementById("static_describe").className = "off";
+            document.getElementById("pppo_describe").className = "off";
+        } else if(field.selectedIndex == 2) { //static
+            document.getElementById("ppp_div1").className = "off";
+            document.getElementById("ppp_div2").className = "off";
+            document.getElementById("static_div1").className= "on";
+            document.getElementById("static_div2").className = "on";
+            document.getElementById("static_div3").className = "on";
+            document.getElementById("static_div4").className = "on";
+            document.getElementById("DHCP_describe").className = "off";
+            document.getElementById("static_describe").className = "on";
+            document.getElementById("pppo_describe").className = "off";
+        }
+    }
+    function sync5gChecked(checked) {
+        if (checked) {
+            sync();
+            document.getElementById("ssid5g").readOnly = true;
+            document.getElementById("pskValue5g").readOnly = true;
+            document.getElementById("encrypt_5g").disabled = true;
+        } else {
+            asyn();
+            document.getElementById("ssid5g").readOnly = false;
+            document.getElementById("pskValue5g").readOnly = false;
+            document.getElementById("encrypt_5g").disabled = false;
+        }
+        encrypt_5g_change()
+    }
+
+    function encrypt_dual_change() {
+        if (document.installSet.encrypt_band_steering.value == 0) {
+            document.getElementById("band_steering_passwd_tr").style.display = "none"
+        } else {
+            document.getElementById("band_steering_passwd_tr").style.display = ""
+        }
+    }
+    
+    function encrypt_2g_change() {
+        if (document.installSet.encrypt_2g.value == 0) {
+            document.getElementById("2g_passwd_tr").style.display = "none"
+        } else {
+            document.getElementById("2g_passwd_tr").style.display = ""
+        }
+        if (document.installSet.sync5g.checked) {
+            sync()
+        }
+    }
+
+    function encrypt_5g_change() {
+        document.getElementById("encrypt_5g_hidden").value = document.installSet.encrypt_5g_show.value
+        if (document.getElementById("encrypt_5g_hidden").value == 0) {
+            document.getElementById("5g_passwd_tr").style.display = "none"
+        } else {
+            document.getElementById("5g_passwd_tr").style.display = ""
+        }
+    }
+    </script>
+</head>
+
+<body onload="LoadSetting();">
+<blockquote>
+    <h2 class="intro_title"><script>dw(install_header)</script></h2>
+    <div><font size=2><script>dw(install_header_explain)</script></div>
+    <div><hr size=1 noshade align=top></div>
+    <form action=/boafrm/formInstallSetup method=POST name="installSet">
+        <INPUT type=hidden name="cssid5g" value="<% getInfo("ssid5g", "html"); %>">
+        <INPUT type=hidden name="cpskValue5g" value="">
+        <div id = "wan_div" style="display: none">
+            <div size=2 class="column_title" style="margin-top: 10px;"><h3><script>dw(install_wan)</script></h3></div>
+            <table border="0" width=500>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_wan_access_type)</script></b></font></td>
+                    <td width="70%">
+                        <select id="wanType_id" size="1" name="wanType" onChange="wanTypeSelection(this)">
+                            <option value="ppp">PPPoE</option>
+                            <option value="autoIp">DHCP</option>
+                            <option value="fixedIp"><script>dw(tcpip_wan_static_ip)</script></option>
+                        </select>
+                    </td>
+                <tr>
+                <tr class="describe_all">
+                    <td></td>
+                    <td id="DHCP_describe" class = "off"><script>dw(install_dhcp_on_info)</script></td>
+                    <td id="static_describe" class = "off"><script>dw(install_staticip_on_info)</script></td>
+                    <td id="pppo_describe" class = "off"><script>dw(install_pppoe_on_info)</script></td>
+                </tr>
+                <tr id="ppp_div1" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_wan_user)</script></b></font></td>
+                    <td width="70%"><input type="text" name="pppUserName" size="18" maxlength="128" value="<% getInfo("pppUserName"); %>"></td>
+                </tr>
+                <tr id="ppp_div2" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_wan_password)</script></b></font></td>
+                    <td width="70%"><input type="password" name="pppPassword" size="18" maxlength="128" onfocus="inputOnFocus(this)" onblur="inputOnBlur(this)" value="<% getInfo("pppPassword"); %>"></td>
+                </tr>
+                <tr id="static_div1" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_ip_address)</script>:</b></font></td>
+                    <td width="70%"><input type="text" name="wan_ip" size="18" maxlength="128" value="<% getInfo("ipv4-addr"); %>"></td>
+                </tr>
+                <tr id="static_div2" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_gateway_address)</script>:</b></font></td>
+                    <td width="70%"><input type="text" name="wan_gateway" size="18" maxlength="128" value="<% getInfo("remote-ip"); %>"></td>
+                </tr>
+                <tr id="static_div3" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_subnet_mask)</script>:</b></font></td>
+                    <td width="70%"><input type="text" name="wan_mask" size="18" maxlength="128" value="<% getInfo("net-mask"); %>"></td>
+                </tr>
+                <tr id="static_div4" class = "off">
+                    <td width="20%"><font size=2><b><script>dw(install_primary_dns_server)</script>:</b></font></td>
+                    <td width="70%"><input type="text" name="dns1" size="18" maxlength="128" value="<% getInfo("wan-dns1"); %>"></td>
+                </tr>
+                <input type="hidden" name="dnsMode" size="18" maxlength="128" />
+            </table>
+        </div>
+        <div id = "one_switch">
+            <div size=2 class="column_title" style="margin-top: 10px;"><h3><script>dw(install_dual_control)</script></h3></div>
+            <table border="0" width=500>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_dual_control)</script></b></font></td>
+                    <td>
+                        <input type="radio" name="wifi_band_steering" value="OFF" onclick="dualControlEnabledClick()"><script>dw(install_close)</script>&nbsp;&nbsp;
+                        <input type="radio" name="wifi_band_steering" value="ON" onclick="dualControlEnabledClick()"><script>dw(install_open)</script>
+                    </td>
+                </tr>
+                <tr class="describe_all">
+                    <td></td>
+                    <td>
+                        <div><script>dw(install_bandsteering_on_info)</script></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id = "dual_div" style="display: none">
+            <br>
+            <div size=2 class="column_title"><h3><script>dw(install_wifi_setting)</script></h3></div>
+            <table border="0" width=500>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_ssid)</script></b></font></td>
+                    <td width="70%"><input type="text" name="band_steering_ssid" size="18" maxlength="32" value=""></td>
+                </tr>
+                <tr>
+                    <td width="20%" class="bgblue"><font size="2"><b><script>dw(wlsecurity_encryption)</script></b></font></td>
+                    <td>
+                        <select size="1" id="encrypt_dual" name="encrypt_band_steering" onchange="encrypt_dual_change()">
+                            <option value="0"> <script>dw(wlsecurity_disable)</script> </option>
+                            <option value="1" style="display: none;"> WEP </option>
+                            <option value="4"> WPA2(AES) </option>
+                            <option value="6"> WPA-WPA2-Mixed </option>
+                            <option value="2"> WPA </option>
+                        </select>
+                    </td>
+                </tr>
+                <tr id="band_steering_passwd_tr">
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_password)</script></b></font></td>
+                    <td width="70%"><input type="password" name="band_steering_passwd" size="18" maxlength="63" onfocus="inputOnFocus(this)" onblur="inputOnBlur(this)" oninput="showPwdLevel(0,this.value)" value="">
+                    <div id="level0" class="level" style="display: none">
+                        <div id="level00" style="border-color: #666666;"></div>
+                        <div id="level01" style="border-color: #666666;"></div>
+                        <div id="level02" style="border-color: #666666;"></div>
+                        <div id="leveltext0" style="border: 0px;"></div>
+                    </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div id = "2G_div" style="display: none">
+            <br>
+            <div size=2 class="column_title"><h3><script>dw(install_2g)</script></h3></div>
+            <table border="0" width=500>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_ssid)</script></b></font></td>
+                    <td width="70%"><input type="text" name="ssid2g" size="18" maxlength="32" onblur="sync()" value="<% getInfo("ssid2g", "html"); %>"></td>
+                </tr>
+                <tr>
+                    <td width="20%" class="bgblue"><font size="2"><b><script>dw(wlsecurity_encryption)</script></b></font></td>
+                    <td>
+                        <select size="1" id="encrypt_2g" name="encrypt_2g" onchange="encrypt_2g_change()">
+                            <option value="0"> <script>dw(wlsecurity_disable)</script> </option>
+                            <option value="1" style="display: none;"> WEP </option>
+                            <option value="4"> WPA2(AES) </option>
+                            <option value="6"> WPA-WPA2-Mixed </option>
+                            <option value="2"> WPA </option>
+                        </select>
+                    </td>
+                </tr>
+                <tr id="2g_passwd_tr">
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_password)</script></b></font></td>
+                    <td width="70%"><input type="password" name="pskValue2g" size="18" maxlength="63" onfocus="inputOnFocus(this)" onblur="sync();inputOnBlur(this)" oninput="showPwdLevel(1,this.value)" value="">
+                        <div id="level1" class="level" style="display: none">
+                            <div id="level10" style="border-color: #666666;"></div>
+                            <div id="level11" style="border-color: #666666;"></div>
+                            <div id="level12" style="border-color: #666666;"></div>
+                            <div id="leveltext1" style="border: 0px;"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div id = "5G_div" style="display: none">
+            <br>
+            <div size=2 class="column_title"><h3><script>dw(install_5g)</script></h3></div>
+            <table border="0" width=500>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_sync_2g)</script></b></font></td>
+                    <td width="70%"><input type="checkbox" name="sync5g" value="ON" onclick="sync5gChecked(this.checked);" ></td>
+                </tr>
+                <tr>
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_ssid)</script></b></font></td>
+                    <td width="70%"><input type="text" readonly="readonly" id="ssid5g" name="ssid5g" size="18" maxlength="32" value=""></td>
+                </tr>
+                <tr>
+                    <td width="20%" class="bgblue"><font size="2"><b><script>dw(wlsecurity_encryption)</script></b></font></td>
+                    <td>
+                        <input type="text" name="encrypt_5g" id="encrypt_5g_hidden" value="" style="display: none;">
+                        <select size="1" id="encrypt_5g" name="encrypt_5g_show" onchange="encrypt_5g_change()">
+                            <option value="0"> <script>dw(wlsecurity_disable)</script> </option>
+                            <option value="1" style="display: none;"> WEP </option>
+                            <option value="4"> WPA2(AES) </option>
+                            <option value="6"> WPA-WPA2-Mixed </option>
+                            <option value="2"> WPA </option>
+                        </select>
+                    </td>
+                </tr>
+                <tr id="5g_passwd_tr">
+                    <td width="20%"><font size=2><b><script>dw(install_wifi_password)</script></b></font></td>
+                    <td width="70%"><input type="password" readonly="readonly" id="pskValue5g" name="pskValue5g" size="18" maxlength="63" onfocus="inputOnFocus(this)" onblur="inputOnBlur(this)" oninput="showPwdLevel(2,this.value)" value="">
+                        <div id="level2" class="level" style="display: none">
+                            <div id="level20" style="border-color: #666666;"></div>
+                            <div id="level21" style="border-color: #666666;"></div>
+                            <div id="level22" style="border-color: #666666;"></div>
+                            <div id="leveltext2" style="border: 0px;"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br>
+        <input type="submit" value="Save & Apply" name="save_apply" onClick="return saveChanges()">
+        <script>document.installSet.save_apply.value = install_apply;</script>
+        <input type="hidden" value="/install.htm" name="submit-url">
+    </form>
+</blockquote>
+<script>
+    
+</script>
+</body>
+</html>

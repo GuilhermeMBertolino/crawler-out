@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# snmp-wrcsman                     This script do a action of wrcsman
+#
+
+# Paths to programs
+WRCSMAN_EXEC=/usr/bin/wrcsman
+
+usage() {
+	echo "Usage: $0 CSID value"
+	echo "ex: $0 0x40000007 \"It is a good day\""
+	exit 1
+}
+
+# +++++++++++++++ main ++++++++++++++++++++++ 
+[ $# -eq 2 ] || usage;
+
+err=0
+
+$WRCSMAN_EXEC "$1 \"$2"
+[ $? = "0" ] || echo $0 $@ error; err=1 
+
+exit $err

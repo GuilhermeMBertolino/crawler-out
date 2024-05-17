@@ -1,0 +1,31 @@
+#!/usr/bin/lua
+
+local json = require "luci.json"
+local qos = require "webGetFunc.qos"
+local up = ""
+local tmp_up = ""
+local down = ""
+local tmp_down = ""
+
+local data = { }
+
+data["enableQos"] = { value = qos.getQosState(), type = 'checkbox' }
+data["speedMethod"] = { value = qos.getQoS_SpeedTestMethod(), type = 'radio' }
+tmp_down = qos.manual_downSpeed()
+down = string.format("%.2f", tmp_down/1000)
+data["manuallyDownSpeed"] = { value = down, type = 'input' }
+tmp_up = qos.manual_upSpeed()
+up = string.format("%.2f", tmp_up/1000)
+data["manuallyUpSpeed"] = { value = up, type = 'input' }
+tmp_down = qos.downSpeed()
+down = string.format("%.2f", tmp_down/1000)
+data["downSpeed"] = { value = down, type = 'input' }
+tmp_up = qos.upSpeed()
+up = string.format("%.2f", tmp_up/1000)
+data["upSpeed"] = { value = up, type = 'input' }
+data["wan_status"] = { value = qos.getApModeInternetStatus(), type = 'input' }
+
+--io.write("Content-type: %s" %  {"application/json"} )
+--io.write("\r\n\r\n")
+--io.write(json.encode(data))
+return json.encode(data)

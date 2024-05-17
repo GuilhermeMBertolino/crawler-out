@@ -1,0 +1,113 @@
+#!/bin/sh
+#final boot-up script to start circle functionality
+
+DIR=/mnt/shares/usr/bin
+export PATH=$PATH:$DIR
+export LD_LIBRARY_PATH=$DIR
+echo 3 > /proc/sys/vm/drop_caches
+export TZ=`$DIR/get_tz`
+[ "x$TZ" = "x" ] && export TZ='GMT8DST,M03.02.00,M11.01.00'
+
+cp $DIR/myreboot /tmp/
+
+if [ -s $DIR/MAC ] ; then
+	cp -f $DIR/MAC /tmp/MAC;
+else
+	ROUTERMAC=`ifconfig eth0 | awk '/HWaddr/{print $5;exit;}'`
+	wget -q -O $DIR/MAC "http://download.meetcircle.co/dev/netgear/genmac.php?token=5d7a21a57fd3158be53213131be065d6&routermac=$ROUTERMAC"
+	MAC=`cat $DIR/MAC`
+	grep "^8C:E2:DA:" $DIR/MAC > /dev/null || { rm -f $DIR/MAC; MAC="8C:E2:DA:F0:FD:E7"; }
+	echo "$MAC" > /tmp/MAC;
+fi
+
+#PAUSE chain in iptables
+iptables -N PAUSE
+iptables -I FORWARD -j PAUSE
+#iptables -t raw -N RAWPAUSE
+#iptables -t raw -A PREROUTING -j RAWPAUSE
+#FILTERED chains
+iptables -N FILTERED
+iptables -A FORWARD -j FILTERED
+#Minecraft Pocket Edition Chain
+#iptables -t raw -N MCPE
+#iptables -t raw -A PREROUTING -j MCPE
+
+#misc
+ln -s /bin/wget /tmp/
+
+if [ ! -s $DIR/configure.xml ]; then
+	if [ -s $DIR/configure.xml.backup ]; then
+		cp $DIR/configure.xml.backup $DIR/configure.xml
+	else
+		cp $DIR/configure-default.xml $DIR/configure.xml
+	fi
+fi
+
+mkdir -p $DIR/category_data
+#generate platform db and files
+$DIR/timetracker -p
+
+ifconfig br0:0 10.123.234.1 netmask 255.255.255.0
+iptables  -t nat -I PREROUTING -i br0 -p udp --dport 53 -j REDIRECT
+#ip6tables -t nat -I PREROUTING -i br0 -p udp --dport 53 -j REDIRECT
+#iptables  -t nat -A PREROUTING -i br0 -p tcp --dport 80  -d 10.123.234.1 -j DNAT --to-port 8889
+iptables  -t nat -A PREROUTING -i br0 -p tcp --dport 80  -d 10.123.234.1 -j DNAT --to-destination 10.123.234.1:8889
+
+#ipset init
+cd /lib/modules/2.6.36.4brcmarm\+/kernel/net/
+insmod ip_set.ko
+insmod xt_set.ko
+insmod ip_set_hash_ip.ko
+insmod ip_set_hash_net.ko
+insmod ip_set_hash_ipportip.ko
+cd /
+
+insmod $DIR/skipctf.ko
+
+ipset create circleservers hash:ip
+cp $DIR/scripts/circleservers.list /tmp/circleservers
+$DIR/ipsetload circleservers /tmp/circleservers
+ipset create vpns hash:ip
+ipset create minecraft hash:ip
+ipset create games hash:ip
+ipset create games_net hash:net
+ipset create filtered hash:ip,port,ip timeout 60
+while read p ; do 
+	ipset add games_net $p; 
+done < $DIR/scripts/iprange_games.txt
+#FIXME
+#ipset -file $DIR/scripts/tor.save -exist restore
+
+iptables -I FILTERED -m set --match-set filtered dst,dst,src -p tcp -j REJECT --reject-with tcp-reset
+iptables -I FILTERED -m set --match-set filtered dst,dst,src -p udp -j DROP
+iptables -t nat -A PREROUTING -m set --match-set filtered dst,dst,src -p tcp --dport 80 -j REDIRECT
+iptables -t nat -A PREROUTING -m set --match-set filtered dst,dst,src -p tcp --dport 443 -j REDIRECT
+
+#start cron job
+#$DIR/tinycron 3600 $DIR/start_updater.sh
+$DIR/tinycron 7200 $DIR/scripts/check_torlist.sh
+$DIR/tinycron 14400 $DIR/scripts/check_circleservers.sh
+$DIR/tinycron 1800 $DIR/scripts/check_platforms.sh
+
+#start services
+cp -a $DIR/service /var
+[ -f $DIR/runsvdir ] || {
+	cd $DIR &&  ln -sf busybox runsvdir && ln -sf busybox sv && ln -sf busybox runsv
+}
+killall dnsmasq;
+sleep 1;
+runsvdir /var/service >/dev/null 2>/dev/null &
+
+ip=`ifconfig br0 | awk '/inet addr:/{print substr($2,6);}'`
+ipv6="FE80::C001:37FF:FE6C:0"
+cp $DIR/hosts0 $DIR/hosts
+#echo "$ip device.meetcircle.co" >> $DIR/hosts
+echo "10.123.234.1 device.meetcircle.co" >> $DIR/hosts
+route add -net 224.0.0.0 netmask 224.0.0.0 br0
+$DIR/mdnsd $ip "$ipv6" &
+#$DIR/mdns-scan &
+ip -6 addr add fd22:9464:dfb8::1/64 dev br0
+
+echo 8 > /proc/sys/net/ipv4/tcp_retries2
+#disable ipv6 forward
+echo 0 > /proc/sys/net/ipv6/conf/all/forwarding

@@ -1,0 +1,40 @@
+#!/usr/bin/env cgilua.cgi
+
+local json = require "luci.json"
+local execute = os.execute
+local fork_exec = require"commonFunc.fork".fork_exec
+
+local formDataName = cgilua.getPegaTable("formDataName")
+local f = cgilua.POST[formDataName]
+local config_tmp   = cgilua.getPegaTable("tmpPath") .."/".. cgilua.getPegaTable("formDataNameToTmpNameMap")[formDataName]
+
+local function config_supported(config_tmp)
+	return (execute("mkpegaimg -t 1 -d %q -o /tmp/tmp_restore_config > /tmp/config_check_result 2>&1" % config_tmp) == 0)
+end
+
+local ret = "error"
+
+if config_supported(config_tmp) then
+
+  if formDataName ==  "wiz_config_file" then
+    local default  = require "webGetFunc.commonCfg".getDefaultState()
+    if default == "1" then
+      local exec  = require "luci.util".exec
+      local status = exec("puDataStr set wizardCheck RestoreConfigInProgress true")
+
+    end
+  end
+	fork_exec("sleep 1; killall dropbear lighttpd; sleep 1; /sbin/sysupgrade -r /tmp/tmp_restore_config; sync; reboot")
+	ret = "success"
+end
+
+if f.file then
+ f.file:close()
+end 
+
+os.remove(config_tmp)
+
+cgilua.contentheader('application','json')
+return json.encode({status=ret, message='restore config'})
+
+

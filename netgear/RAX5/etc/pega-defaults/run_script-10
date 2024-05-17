@@ -1,0 +1,16 @@
+#!/bin/sh
+
+echo -e "\n\033[31m[pega-defaults] run_script-10 running ...\033[0m\n" > /dev/console
+
+# PegaBU6, Matt Lin, 2022/10/21, To limit Wirelease station number
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b0.dat set VHT_BW_SIGNAL 0
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b1.dat set VHT_BW_SIGNAL 0
+
+# MattLin, 20221025. Change PMFMFPC/PMFMFPR setting by UCI security setting
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b0.dat set PMFMFPC $(/usr/bin/lua -lcommonFunc/wifiUtils_mfp -e "local M = require \"commonFunc.wifiUtils_mfp\";M.getMFPC_2G()")
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b0.dat set PMFMFPR $(/usr/bin/lua -lcommonFunc/wifiUtils_mfp -e "local M = require \"commonFunc.wifiUtils_mfp\";M.getMFPR_2G()")
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b1.dat set PMFMFPC $(/usr/bin/lua -lcommonFunc/wifiUtils_mfp -e "local M = require \"commonFunc.wifiUtils_mfp\";M.getMFPC_5G()")
+/usr/bin/datconf -f /etc/wireless/mediatek/mt7915.dbdc.b1.dat set PMFMFPR $(/usr/bin/lua -lcommonFunc/wifiUtils_mfp -e "local M = require \"commonFunc.wifiUtils_mfp\";M.getMFPR_5G()")
+
+# add 'exit 0' in the end of file (all commands MUST be before 'exit 0')
+exit 0

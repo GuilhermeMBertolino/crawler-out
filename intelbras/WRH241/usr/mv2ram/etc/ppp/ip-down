@@ -1,0 +1,371 @@
+#!/bin/sh
+#
+# $1 interface-name   e.g. ppp0, ppp1 ...etc
+# $2 tty-device       e.g. /dev/modem ...
+# $3 speed 
+# $4 local-IP-address 
+# $5 remote-IP-address 
+# $6 ipparam          e.g. extra parameters     
+
+WANTYPE=`rdcsman 0x00010003 u16`
+LOADSHARING=`rdcsman 0x004301c0 u32`
+
+# For debug 
+logger -p 8.7 -t "pppd ip-down" "$0 ->  1:$1, 2:$2, 3:$3, 4:$4, 5:$5, 6:$6, 7:$7"                                                      
+
+if [ -e /var/run/multiwan_enable ]; then
+   # Do nothing under multiwan.
+    if [ "$2" == /dev/port1_modem ] ; then
+        TMP1=1; TMP8=8;
+    elif [ "$2" == /dev/port2_modem ]; then
+        TMP1=2; TMP8=9;
+    fi
+
+	if [ $TMP1-eq 1 ] || [ $TMP1 -eq 2 ] ; then
+        wrcsman "0x801e020$TMP1 0x00 && \
+                 0x801e030$TMP1 0x00 && \
+                 0x801e040$TMP1 0x00 && \
+                 0x801e050$TMP1 0x00 && \
+                 0x801e060$TMP1 0x00 && \
+                 0x801e010$TMP1 0x00 && \
+                 0x801e070$TMP1 0x00 && \
+                 0x8001011$TMP8 0x00 && \
+                 0x8001012$TMP8 0x00 && \
+                 0x8001013$TMP8 0x00 && \
+                 0x8001014$TMP8 0x00 && \
+                 0x8001015$TMP8 0x00 && \
+                 0x8001016$TMP8 0x00"
+	fi
+    exit 0
+fi
+
+if [ $LOADSHARING -eq 1 ] || [ -r /var/run/dont_update_wantype ]; then
+    logger -p 8.7 -t "pppd ip-down" "$0 : Exit ip-down directly !\""
+    rm -f /var/run/dont_update_wantype  
+    exit 0 # may pptp/l2tp/pppoe client -> do nothing
+fi
+
+#
+# For the case L2TP/PPTP tunnel had been shutdown unexpectedly.
+# We don't want them to interrupt the current WAN type by 
+# calling ip-up/ip-down !
+#
+ipparam="$6"
+ipparam_="`expr substr $ipparam 1 5`"
+if [ ! -z "$ipparam_" ]; then
+    if [ "$ipparam_" == "pptpc" ] || [ "$ipparam_" == "pptpd" ] ; then
+        logger -p 8.7 -t "pppd ip-down" "$0 : Called by PPTP tunnel ! Exit directly "
+        exit 0        
+    fi  
+
+    if [ "$ipparam_" == "l2tpc" ] || [ "$ipparam_" == "l2tpd" ]; then
+        logger -p 8.7 -t "pppd ip-down" "$0 : Called by L2TP tunnel ! Exit directly "
+        exit 0        
+    fi  
+fi
+
+CNT_STATUS_3G=`rdcsman 0x801e0700 u16`
+AUTOBAK_STATUS=`rdcsman 0x801e1200 u32`
+if [ $CNT_STATUS_3G -eq 7 ] || [ $AUTOBAK_STATUS -eq 3 ]; then
+
+	wrcsman "0x801e0100 0x00 && \
+			0x801e0200 0x00 && \
+			0x801e0300 0x00 && \
+			0x801e0400 0x00 && \
+			0x801e0500 0x00 && \
+			0x801e0600 0x00 && \
+			0x801e0700 0x00 && \
+			0x801e0800 0x00 && \
+			0x801e0900 0x00 && \
+			0x801e1200 0x03 && \
+			0x80340100 0x00 && \
+			0x80340200 0x00 && \
+			0x80340300 0x00 && \
+			0x80340400 0x00 && \
+			0x80340500 0x00 && \
+			0x80340600 0x00 && \
+			0x80340700 0x00 && \
+			0x80340800 0x00 && \
+			0x80340900 0x00 && \
+			0x80010300 0x00"
+	exit 0
+fi
+
+#FAILOVER
+CNT_FAILOVER_ENABLE=`rdcsman 0x00430001 u32`
+CNT_FAILOVER_WANTYPE=`rdcsman 0x0043000b u32` #backup wan type
+FAILOVER_BACKUP_STATUS=`rdcsman 0x80430600 u32` #set_fo
+FAILOVER_MAIN_STATUS=`rdcsman 0x80430700 u32` #fo_st
+FAILOVER_SEAMLESS_STATUS=`rdcsman 0x80430900 u32` #sl_st
+if [ $CNT_FAILOVER_ENABLE -eq 1 ] ; then
+
+	echo $PPPD_PID > /tmp/failover_ppp
+	FAILOVER_PPP_ID=`rdcsman 0x8043000e str`
+#	if [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $WANTYPE -eq 64 ] || [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $CNT_FAILOVER_WANTYPE -eq 6 ] ; then
+	if [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $CNT_FAILOVER_WANTYPE -eq 6 ] ; then
+		wrcsman "0x80040100 0x00 && \
+				0x80040200 0x00 && \
+				0x80040300 0x00 && \
+				0x80040400 0x00 && \
+				0x80040500 0x00 && \
+				0x80040600 0x00 && \
+				0x80040800 0x00 && \
+				0x80040900 0x00"
+
+		wrcsman "0x8043000e 0x00"
+	fi
+#	if [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $WANTYPE -eq 16 ] || [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $CNT_FAILOVER_WANTYPE -eq 2 ] ; then
+	if [ $FAILOVER_PPP_ID -eq $PPPD_PID -a $CNT_FAILOVER_WANTYPE -eq 2 ] ; then
+	
+		wrcsman "0x801e0100 0x00 && \
+				0x801e0200 0x00 && \
+				0x801e0300 0x00 && \
+				0x801e0400 0x00 && \
+				0x801e0500 0x00 && \
+				0x801e0600 0x00 && \
+				0x801e0800 0x00 && \
+				0x801e0900 0x00 "
+
+		wrcsman "0x8043000e 0x00"	
+	fi			
+
+	if [ $FAILOVER_MAIN_STATUS -ne 1 ] ; then
+		wrcsman "0x80010002 0x00 && \
+				0x80010003 0x00 && \
+				0x80010004 0x00 && \
+				0x80010005 0x00 && \
+				0x80010006 0x00 && \
+				0x80010007 0x03 && \
+				0x8001000c 0x00 && \
+				0x8001000b 0x00"
+		if [ $WANTYPE -eq 64 ] ; then
+			wrcsman "0x80400700 0x03 "
+		elif [ $WANTYPE -eq 16 ] ; then
+			wrcsman "0x801e0700 0x03 "
+		fi
+	fi
+	if [ $FAILOVER_BACKUP_STATUS -eq 3 ] && [ $FAILOVER_SEAMLESS_STATUS -eq 0 ] ; then
+		wrcsman "0x8043000c 0x00 && \
+				0x80430002 0x00 && \
+				0x80430003 0x00 && \
+				0x80430004 0x00 && \
+				0x80430005 0x00 && \
+				0x80430006 0x00 && \
+				0x8043000b 0x00"
+	
+	fi
+	exit 0
+fi
+
+CNT_STATUS_RS232=`rdcsman 0x80420200 u16`
+if [ $CNT_STATUS_RS232 -eq 7 ] ; then
+	wrcsman "0x80421000 0x00 && \
+			0x80421001 0x00 && \
+			0x80420102 0x00 && \
+			0x80420103 0x00 && \
+			0x80420104 0x00 && \
+			0x80420105 0x00 && \
+			0x80420200 0x00 && \
+			0x80420300 0x00 && \
+			0x80420301 0x00 && \
+			0x80420500 0x00"
+	exit 0
+fi
+
+S3G_FAILOVER_ENABLE=`rdcsman 0x001e0810 u32`
+F3G_USE_PORT=`rdcsman 0x001E0800 u32`
+CNT_STATUS_S3G=`rdcsman 0x801e0701 u16`
+IFNAME_S3G=`rdcsman 0x801e2201 str`
+if [ "$S3G_FAILOVER_ENABLE" == "1" ]; then
+
+	if [ "$F3G_USE_PORT" == "1" ];then
+		S3G_FAILOVER_PORT=/dev/port2_modem
+	elif [ "$F3G_USE_PORT" == "2" ];then
+		S3G_FAILOVER_PORT=/dev/port1_modem
+	fi
+
+	if [ "$2" == "$S3G_FAILOVER_PORT" ] ; then
+        if [ $CNT_STATUS_S3G -eq 7 -o $CNT_STATUS_S3G -eq 2 ] ; then
+            wrcsman "0x801e0101 0x00 && \
+                    0x801e0201 0x00 && \
+                    0x801e0301 0x00 && \
+                    0x801e0401 0x00 && \
+                    0x801e0501 0x00 && \
+                    0x801e0601 0x00 && \
+                    0x801e0701 0x00 && \
+                    0x801e0801 0x00 && \
+                    0x801e0901 0x00 && \
+                    0x801e1201 0x03 && \
+                    0x801e2201 0x00"
+                    
+            exit 0
+        fi
+	fi
+fi
+
+if [ $WANTYPE -eq 64 ] ; then
+	
+	wrcsman "0x80040100 0x00 && \
+			0x80040200 0x00 && \
+			0x80040300 0x00 && \
+			0x80040400 0x00 && \
+			0x80040500 0x00 && \
+			0x80040600 0x00 && \
+			0x80040700 0x00 && \
+            0x80040C00 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"	 
+
+    # Consider for LCS PPPoE for secondary DNS 
+    if [ -e /usr/bin/lcs-pppoe ]; then
+        /usr/bin/lcs-pppoe setdns
+        /usr/bin/lcs-pppoe dmfilter 
+    fi              
+
+elif [ $WANTYPE -eq 80 ] ; then
+	wrcsman "0x80040100 0x00 && \
+			0x80040200 0x00 && \
+			0x80040300 0x00 && \
+			0x80040400 0x00 && \
+			0x80040500 0x00 && \
+			0x80040600 0x00 && \
+			0x80040700 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"	 
+				
+elif [ $WANTYPE -eq 96 ] ; then
+	
+	wrcsman "0x80050100 0x00 && \
+			0x80050200 0x00 && \
+			0x80050300 0x00 && \
+			0x80050400 0x00 && \
+			0x80050500 0x00 && \
+			0x80050600 0x00 && \
+			0x80050700 0x00 && \
+            0x80050c00 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"
+
+    CNTTYPE=`rdcsman 0x00050900 u32`
+    if [ "$CNTTYPE" = "0" ] ; then  
+        #on-demand
+	    wrcsman "0x80010007 0x01"
+    fi
+ 
+    if [ -e /var/run/wan-pptp-phygw ]; then
+        route delete default
+        local phygw="`cat /var/run/wan-pptp-phygw`"
+        route add default gw $phygw
+        rm -f /var/run/pptp-phy.gw
+    fi   
+
+elif [ $WANTYPE -eq 128 ] ; then			 
+			 
+	wrcsman "0x80060100 0x00 && \
+			0x80060200 0x00 && \
+			0x80060300 0x00 && \
+			0x80060400 0x00 && \
+			0x80060500 0x00 && \
+			0x80060600 0x00 && \
+			0x80060700 0x00 && \
+            0x80063000 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"
+
+    if [ -e /var/run/wan-l2tp-phygw ]; then
+        route delete default
+        local phygw="`cat /var/run/wan-l2tp-phygw`"
+        route add default gw $phygw
+        rm -f /var/run/l2tp-phy.gw
+    fi
+
+	CNTTYPE=`rdcsman 0x00060900 u16`
+	if [ $CNTTYPE -ne 2 ] ; then
+		wrcsman "0x80060700 0x03 && 0x80010007 0x03"
+	fi						
+
+elif [ $WANTYPE -eq 16 ] ; then
+
+	wrcsman "0x801e0100 0x00 && \
+			0x801e0200 0x00 && \
+			0x801e0300 0x00 && \
+			0x801e0400 0x00 && \
+			0x801e0500 0x00 && \
+			0x801e0600 0x00 && \
+			0x801e0700 0x03 && \
+			0x801e0800 0x00 && \
+			0x801e0900 0x00 && \
+			0x801e2200 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x03"
+
+#    CNTTYPE=`rdcsman 0x001e000a u16`
+#    if [ $CNTTYPE -ne 2 ] ; then
+#        wrcsman "0x801e0700 0x03 && 0x80010007 0x03"
+#    fi
+
+elif [ $WANTYPE -eq 17 ] ; then
+	
+	wrcsman "0x80340100 0x00 && \
+			0x80340200 0x00 && \
+			0x80340300 0x00 && \
+			0x80340400 0x00 && \
+			0x80340500 0x00 && \
+			0x80340600 0x00 && \
+			0x80340700 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"	 
+	
+    CNTTYPE=`rdcsman 0x00340900 u16`
+    if [ $CNTTYPE -ne 2 ] ; then
+        wrcsman "0x80340700 0x03 && 0x80010007 0x03"
+    fi
+
+elif [ $WANTYPE -eq 144 ] ; then
+#Dialup Wantype
+	wrcsman "0x80420100 0x00 && \
+			0x80420101 0x00 && \
+			0x80420102 0x00 && \
+			0x80420103 0x00 && \
+			0x80420104 0x00 && \
+			0x80420105 0x00 && \
+			0x80420200 0x00 && \
+			0x80010002 0x00 && \
+			0x80010003 0x00 && \
+			0x80010004 0x00 && \
+			0x80010005 0x00 && \
+			0x80010006 0x00 && \
+			0x80010007 0x00"	 
+	
+    CNTTYPE=`rdcsman 0x00320900 u16`
+    if [ $CNTTYPE -ne 2 ] ; then
+        wrcsman "0x80420200 0x03 && 0x80010007 0x03"
+    fi
+
+fi
+
+

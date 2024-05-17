@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<glgps xmlns="http://www.glpals.com/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.glpals.com/ glconfig.xsd" >
+  <!--HAL Confguration  -->
+  <hal 
+       PortName="/sys/class/bcmgps/spidev"
+       GpioDelayMs="250"
+       NvStorageDir="/data/gps/"
+       NmeaOutName="/data/gps/nmeaout"
+       LogEnabled="true"
+       Log="FILE"
+       LogDirectory="/data/gps/broadcom/storage/"
+       GpioNStdbyPath="/sys/class/bcmgps/gpio/nstandby"
+       CtrlPipe="/data/gps/ctrlpipe"
+       GpioHostReqPath="/dev/bcmgps_host_req"
+       LbsSyncLto="false"
+       HttpSyncLto="true"
+       LtoDir="/data/gps/"
+       LtoFileName="lto2.dat"
+  />
+
+<!--   
+LbsEnable="true"
+LbsServer="bcmlbsqa2.glpals.com"
+LbsPort="7275"
+LbsSyncLto="true"
+HttpSyncLto="false"
+LtoFileName="lto2.dat"
+LtoDir="/opt/gnss/data"
+LtoSyncThresholdDays="3"
+LbsTAC="10102100"
+LbsWlanEnable="false"
+-->
+
+  <gll 
+       LogPriMask="LOG_DEBUG"
+       LogFacMask="LOG_GLLIO | LOG_GLLAPI | LOG_NMEA | LOG_RAWDATA | LOG_DEVKF"
+       FrqPlan="FRQ_PLAN_26MHZ_2PPM"
+       RfType="GL_RF_4778_BRCM"
+       MultiCarrRFMode="GL_MULTI_CARR_RF_MODE_L1_L5"
+       MultiCarrLnaMask ="L1_EXT_ON | L5_EXT_ON"
+  />
+  <!--
+       LogFacMask="LOG_GLLAPI | LOG_DEVIA | LOG_NMEA | LOG_RAWDATA | LOG_DEVDH | LOG_DEVMS | LOG_ASIC_IO | LOG_BBTEST | LOG_DEVET | LOG_MESM | LOG_DEVKF | LOG_DEVJG | LOG_DEVMR | LOG_DEVCV | LOG_DEVRA"
+       WarmStandbyTimeout1Seconds="10"
+       WarmStandbyTimeout2Seconds="15"
+  -->
+  <gll_features
+       EnableLowPowerEls="false"
+       EnableLowPowerPmm="true"
+  />
+
+<job Id="Periodic">
+    <task>
+      <req_pos/>
+    </task>
+</job>
+
+  <!-- Job  to perform autonomus mode testing   -->
+  <job Id="auton-Coldstart">
+    <task Id="factory" Repeat="1">
+      <!-- Instructs GLL to ignore all elements stored in NVRAM listed below -->
+      <startup
+         IgnoreOsc="false"
+         IgnoreRomAlm="false"
+         IgnoreRamAlm="true"
+         IgnorePosition="true"
+         IgnoreNav="true"
+         IgnoreTime="true"
+      />
+      <!-- Do this test in periodic mode  -->
+      <!-- Stop if we got either 100 any fixes or one valid  -->
+      <req_pos
+        Period="1000"
+        FixCount="40000"
+        ValidFixes="40000"
+       />
+
+    </task>
+  </job>
+
+
+</glgps>
