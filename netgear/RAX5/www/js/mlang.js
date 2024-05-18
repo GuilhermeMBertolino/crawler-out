@@ -1,1 +1,0 @@
-/etc/lang/mlang.js

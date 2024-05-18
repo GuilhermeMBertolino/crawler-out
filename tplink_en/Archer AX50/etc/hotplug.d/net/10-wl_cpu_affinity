@@ -1,0 +1,44 @@
+#!/bin/sh
+
+local release=$(uname -a)
+local txworkq=$(nvram get txworkq)
+
+[ "x$DEVNAME" != "x" ] && exit 0
+
+# Fix these hard code
+$(echo "$INTERFACE" | grep -Eq "^eth[1-3]$") || exit 0
+
+case "$ACTION" in
+	add)
+		if $(echo $release | grep -Eq "2.6.36")
+		then
+			if [ "$(nvram get gmac3_enable)" = "1" ]
+			then
+				local cpumap=$(nvram get fwd_cpumap)
+
+				if [ "$cpumap" = "" ]
+				then
+					echo 1 > /proc/irq/181/smp_affinity
+				else
+					for map in $cpumap
+					do
+						chan=$(echo $map | awk -F ':' '{print $2}')
+						cpu=$(echo $map | awk -F ':' '{print $5}')
+
+						[ "$chan" == "u" -o "$chan" == "U" ] && {
+							echo $((1 << $cpu)) > /proc/irq/181/smp_affinity
+						}
+					done
+				fi
+			elif [ "x$txworkq" != "x1" ]
+			then
+				[ -e /proc/irq/163/smp_affinity ] && echo 2 > /proc/irq/163/smp_affinity		# 2.4G only work on CPU1
+				[ -e /proc/irq/169/smp_affinity ] && echo 2 > /proc/irq/169/smp_affinity		# 5G only work on CPU1
+			fi
+		fi
+	;;
+	remove)
+	;;
+	*)
+	;;
+esac

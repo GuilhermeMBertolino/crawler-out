@@ -1,0 +1,61 @@
+#!/bin/sh
+# Return the AccesspPoint status
+# Needed object: None
+
+script_name=`basename $0`
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+interface_name=$1
+
+# Find the interface index and the radio index
+interface_index=`find_index_from_interface_name $interface_name`
+radio_name=${interface_name%%.*}
+radio_index=`find_index_from_interface_name $radio_name`
+
+print2log $radio_index DEBUG "$script_name $*"
+timestamp $radio_index "$script_name:$interface_name:begin"
+
+# Create the output configuration file and add state value
+cat /dev/null > ${OUT_CONF}
+
+# If interface name is not supplied, exit script
+if [ -z "$interface_name" ]
+then
+    print2log $radio_index ERROR "$script_name: interface_name is missing. exit execution"
+    update_conf_out "wlan_configuration_status" "FAILURE"
+	exit 1
+fi
+
+ap_status="Enabled"
+ssid_status="Down"
+interface_in_conf="1"
+
+# Check if interface exists in hostapd.conf (only check for VAPs, radio interface is always in conf)
+if [ "$interface_name" != "$radio_name" ]
+then
+    if [ `grep -c "^bss=$interface_name" ${CONF_DIR}/hostapd_${radio_name}.conf` -eq 0 ]
+    then
+        ap_status="Disabled"
+    fi
+fi
+
+# Check if interface is ready (ifconfig up returns value of 0)
+if [ `check_interface_is_ready $interface_name` = "0" ]
+then
+    ssid_status="Up"
+fi
+
+update_conf_out "Object_0" "$ACCESSPOINT_OBJECT"
+update_conf_out "Status_0" "$ap_status"
+update_conf_out "Object_1" "$SSID_OBJECT"
+update_conf_out "Status_1" "$ssid_status"
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"
+
+# DEBUG: set debug_save_conf in fapi_wlan_wave_lib_common.sh to save the out conf file
+[ "$debug_save_conf" ] && cp ${OUT_CONF} ${TEMP_DIR}/ap_status_query_${interface_name}
+
+print2log $radio_index DEBUG "$script_name done"
+timestamp $radio_index "$script_name:$interface_name:done"

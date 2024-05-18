@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>VPN Connections</title>
+</head>
+<body>
+<div class="func-container">
+	<div id="openvpn_connections">
+		<p  class="note"><span id="openvpn_conn"></span></p>
+		<div id="openvpn_conn_list"></div>
+	</div>
+	<div id="pptpvpn_connections">
+		<p  class="note"><span id="pptpvpn_conn"></span></p>
+		<div id="pptpvpn_conn_list"></div>
+	</div>
+	<div id="vpn_help"></div>
+<div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}$(document).ready(function(h){var d=$.su.url("/admin/vpnconn?form=config");$("div#openvpn_connections").panel({title:$.su.CHAR.VPN.VPN_CONNECTIONS,collapsible:false});$("span#openvpn_conn").html("<B>"+$.su.CHAR.VPN.OPEN_VPN_CONNECTIONS+"</B>");var b=$("div#openvpn_conn_list").grid({store:{proxy:{url:d},fields:[{name:"ipaddr"},{name:"extra"}]},columns:[{text:$.su.CHAR.GRID.ID,width:100,renderer:function(k,i,j){if(!j.ipaddr){return"--"}else{return i}}},{text:$.su.CHAR.VPN.CLIENT_IP_ADDRESS,width:100,dataIndex:"ipaddr"},{text:$.su.CHAR.GRID.MODIFY,width:100,renderer:function(n,k,m){var j=m[b.grid("getStore").keyProperty];var l='<div class="button-container">';l+='<a href="javascript:void(0);" class="grid-content-btn btn-openvpn-disconn" data-index="'+k+'" data-key="'+j+'">';l+='<span class="icon"></span>';l+='<span class="text">'+$.su.CHAR.VPN.DISCONNECT+"</span>";l+="</a>";l+="</div>";return l}}]});var c=b.grid("getStore");c.load({vpntype:"openvpn",operation:"list"});b.delegate("a.btn-openvpn-disconn","click",function(){var k=$(this).attr("data-index"),l=$(this).attr("data-key"),j=b.grid("getStore"),i=j.keyProperty;if(!l){return}else{j.remove(l,{operation:"disconnect",vpntype:"openvpn"},function(m,n){})}});$("span#pptpvpn_conn").html("<B>"+$.su.CHAR.VPN.PPTP_VPN_CONNECTIONS+"</B>");var f=$("div#pptpvpn_conn_list").grid({store:{proxy:{url:d},fields:[{name:"ipaddr"},{name:"extra"}]},columns:[{text:$.su.CHAR.GRID.ID,width:100,renderer:function(k,i,j){if(!j.ipaddr){return"--"}else{return i}}},{text:$.su.CHAR.VPN.CLIENT_IP_ADDRESS,width:100,dataIndex:"ipaddr"},{text:$.su.CHAR.GRID.MODIFY,width:100,renderer:function(n,k,m){var j=m[f.grid("getStore").keyProperty];var l='<div class="button-container">';l+='<a href="javascript:void(0);" class="grid-content-btn btn-pptpvpn-disconn btn-openvpn-disconn" data-index="'+k+'" data-key="'+j+'">';l+='<span class="icon"></span>';l+='<span class="text">'+$.su.CHAR.VPN.DISCONNECT+"</span>";l+="</a>";l+="</div>";if(!m.ipaddr){return"--"}else{return l}}}]});var g=f.grid("getStore");g.load({vpntype:"pptp",operation:"list"});f.delegate("a.btn-pptpvpn-disconn","click",function(){var k=$(this).attr("data-index"),l=$(this).attr("data-key"),j=f.grid("getStore"),i=j.keyProperty;if(!l){return}else{j.remove(l,{operation:"disconnect",vpntype:"pptp"},function(m,n){})}});var a=new $.su.Help({container:"div#vpn_help",content:["VPN_CONNNECTION"]})});</script>
+</body>
+</html>

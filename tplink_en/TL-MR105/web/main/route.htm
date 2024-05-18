@@ -1,0 +1,166 @@
+<script language="javascript">function initEditV4(e,n){routeStack=[];var t=$.act(ACT_GL,ROUTE_ENTRY,null,null);if($.exe()||(indexroute=0,$.each(t,function(){routeStack[++indexroute-1]=this.__stack})),1==e){optFlag=1,stkEdit=n;var a=$.act(ACT_GET,L3_FORWARDING_ENTRY,n,null,["destIPAddress","destSubnetMask","gatewayIPAddress","__ifAliasName","enable"])}if(INCLUDE_IPV6){var l=$.act(ACT_GL,WAN_IP_CONN,null,null,["enable","name","connectionType","X_TP_IPv4Enabled"]),i=$.act(ACT_GL,WAN_PPP_CONN,null,null,["enable","name","X_TP_IPv4Enabled","transportType"]);if(INCLUDE_L2TP)s=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["enable","name"]);if(INCLUDE_PPTP)_=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["enable","name"])}else{var l=$.act(ACT_GL,WAN_IP_CONN,null,null,["enable","name","connectionType"]),i=$.act(ACT_GL,WAN_PPP_CONN,null,null,["enable","name","transportType"]);if(INCLUDE_L2TP)var s=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["enable","name"]);if(INCLUDE_PPTP)var _=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["enable","name"])}if(!$.exe()){for(o=0;o<l.length;o++)"IP_Bridged"==l[o].connectionType||1!=l[o].enable||INCLUDE_IPV6&&1!=l[o].X_TP_IPv4Enabled||$("#wanInf").append("<option value='"+l[o].name+"' text='"+l[o].name+"'>"+l[o].name+"</option>");for(var d=0;d<i.length;d++)1!=i[d].enable||"PPP3G"==i[d].transportType||INCLUDE_IPV6&&1!=i[d].X_TP_IPv4Enabled||$("#wanInf").append("<option value='"+i[d].name+"' text='"+i[d].name+"'>"+i[d].name+"</option>");if(INCLUDE_L2TP)for(o=0;o<s.length;o++)1==s[o].enable&&$("#wanInf").append("<option value='"+s[o].name+"' text='"+s[o].name+"'>"+s[o].name+"</option>");if(INCLUDE_PPTP)for(var o=0;o<_.length;o++)1==_[o].enable&&$("#wanInf").append("<option value='"+_[o].name+"' text='"+_[o].name+"'>"+_[o].name+"</option>");$("#wanInf").append("<option value='LAN' text='LAN'>LAN</option>"),1==e&&($("#desAddr").tpAddress("val",a.destIPAddress),$("#route_mask").tpAddress("val",a.destSubnetMask),$("#defGw").tpAddress("val",a.gatewayIPAddress),$("#wanInf option[value='"+a.__ifAliasName+"']").prop("selected","selected"),1==a.enable?$("#state_en").prop("checked",!0).data("tpCheckbox").refresh():$("#state_en").prop("checked",!1).data("tpCheckbox").refresh()),$("#wanInf").tpSelect({refresh:1})}}function initEditV6(e,n){routeStackv6=[];var t=$.act(ACT_GL,ROUTE_ENTRYV6,null,null);if($.exe()||(indexroutev6=0,$.each(t,function(){routeStackv6[++indexroutev6-1]=this.__stack})),1==e){optFlag=1,stkEdit=n;var a=$.act(ACT_GET,L3_IP6_FORWARDING_ENTRY,n,null,["destIPv6Address","destIPv6AddressPrefixLength","gatewayIPv6Address","__ifAliasName","interface","enable"])}if(ipConnList=$.act(ACT_GL,WAN_IP_CONN,null,null,["name","enable","X_TP_IfName","X_TP_IPv6Enabled"]),pppConnList=$.act(ACT_GL,WAN_PPP_CONN,null,null,["name","enable","X_TP_IfName","X_TP_IPv6Enabled"]),!$.exe()){for(l=0;l<ipConnList.length;l++)1==ipConnList[l].enable&&1==ipConnList[l].X_TP_IPv6Enabled&&$("#wanInfV6").append("<option value='"+ipConnList[l].name+"' text='"+ipConnList[l].name+"'>"+ipConnList[l].name+"</option>");for(var l=0;l<pppConnList.length;l++)1==pppConnList[l].enable&&1==pppConnList[l].X_TP_IPv6Enabled&&$("#wanInfV6").append("<option value='"+pppConnList[l].name+"' text='"+pppConnList[l].name+"'>"+pppConnList[l].name+"</option>");$("#wanInfV6").append("<option value='LAN' text='LAN'>LAN</option>"),1==e&&($("#desAddrV6").val(a.destIPv6Address),$("#prelenV6").val(a.destIPv6AddressPrefixLength),$("#defGwV6").val(a.gatewayIPv6Address),$("#wanInfV6 option[value='"+a.__ifAliasName+"']").prop("selected","selected"),1==a.enable?$("#state_enV6").prop("checked",!0).data("tpCheckbox").refresh():$("#state_enV6").prop("checked",!1).data("tpCheckbox").refresh()),$("#wanInfV6").tpSelect({refresh:1})}}function init(){index=0;var e=1,n=$.act(ACT_GL,L3_FORWARDING_ENTRY,null,null,["destIPAddress","destSubnetMask","gatewayIPAddress","__ifAliasName","enable"]);if(INCLUDE_WAN_MODE){if(INCLUDE_3G4G_BACKUP)t=$.act(ACT_GET,SYS_MODE,null,null,["mode","lteBackupEnable"]);else if(INCLUDE_USB_3G_BACKUP&&INCLUDE_EWAN_BACKUP)t=$.act(ACT_GET,SYS_MODE,null,null,["mode","usb3gBackup","ewanBackup"]);else var t=$.act(ACT_GET,SYS_MODE,null,null,["mode"]);var a=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),l=$.act(ACT_GL,WAN_IP_CONN,null,null,["name"]),i=$.act(ACT_GL,WAN_PPP_CONN,null,null,["name"]);if(INCLUDE_L2TP)var s=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["name"]);if(INCLUDE_PPTP)var _=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["name"])}if(!$.exe()){var d=0,o=0,c=0;if(INCLUDE_WAN_MODE){$.merge(l,i),INCLUDE_L2TP&&$.merge(l,s),INCLUDE_PPTP&&$.merge(l,_);var r="ETH"==t.mode?"Ethernet":t.mode;INCLUDE_3G4G_BACKUP?d="ETH"==t.mode&&"1"==t.lteBackupEnable?1:0:INCLUDE_USB_3G_BACKUP&&INCLUDE_EWAN_BACKUP&&(c=t.ewanBackup,o=t.usb3gBackup)}$.each(n,function(){if(INCLUDE_WAN_MODE){var n=0,t=this.__ifAliasName;if($.each(l,function(){if(t==this.name){var e=$.stkPop(this.__stack,2);$.each(a,function(){e!=this.__stack||this.WANAccessType==r||0!=d||0!=c||0!=o||(n=1)})}}),1==n)return}var i="["+this.__stack+"]";bodyArrayV4.push([{text:"<div><input type='checkbox' id='V4"+index+"' class='table-select-one' /><label></label></div>",width:"10%"},{text:e++,width:"10%"},{text:this.destIPAddress,width:""},{text:this.destSubnetMask,width:"20%"},{text:this.gatewayIPAddress,width:"20%"},{text:1==this.enable?"<span class='table-grid-icon enable-icon' id='en4_"+index+"' onclick='enRoute(\"en4_\","+index+", "+i+")'></span>":"<span class='table-grid-icon disable-icon' id='en4_"+index+"' onclick='enRoute(\"en4_\","+index+", "+i+")'></span>",width:"10%"},{text:"<span class='table-grid-icon edit-modify-icon' onclick='initEditV4(1, "+i+");'></span><span class='table-grid-icon edit-trash-icon' onclick='delItem(1, "+i+");'></span>",width:"15%"}]),stkArrayV4[index]=this.__stack,index++}),$.initTableBody($("#staticRouteV4"),bodyArrayV4),$.tablePages($("#staticRouteV4"),8)}}function initRouteTable(){var e=[],n=$.act(ACT_GL,ROUTE_ENTRY,null,null),t=0;return $.exe(function(a){if(!a){for(var l=0;l<n.length;l++){var i="",s="",_="",d="";d=n[l].iface,i=$.num2ip(parseInt(n[l].destIPAddress,10)),s=$.num2ip(parseInt(n[l].destSubnetMask,10)),_=$.num2ip(parseInt(n[l].gatewayIPAddress,10)),t++,e.push([{text:t,width:"10%"},{text:i,width:"25%"},{text:s,width:"20%"},{text:_,width:"20%"},{text:d,width:"20%"}])}$.initTableBody($("#table_routeList"),e),$.tablePages($("#table_routeList"),10),$("span.edit-trash-icon.route-list").click(function(){var e=$(this).parents("tr").find("td").eq(1).text();$.act(ACT_DEL,ROUTE_ENTRY,routeStack[e-1],null),$.exe(function(e){e||$.reload()})})}}),e}function initV6(){indexV6=0;var e=1,n=0,t=0,a=$.act(ACT_GL,L3_IP6_FORWARDING_ENTRY,null,null,["destIPv6Address","destIPv6AddressPrefixLength","gatewayIPv6Address","__ifAliasName","enable"]);if(INCLUDE_WAN_MODE){if(INCLUDE_USB_3G_BACKUP&&INCLUDE_EWAN_BACKUP)l=$.act(ACT_GET,SYS_MODE,null,null,["mode","usb3gBackup","ewanBackup"]);else var l=$.act(ACT_GET,SYS_MODE,null,null,["mode"]);var i=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),s=$.act(ACT_GL,WAN_IP_CONN,null,null,["name"]),_=$.act(ACT_GL,WAN_PPP_CONN,null,null,["name"])}if(!$.exe()){if(INCLUDE_WAN_MODE){$.merge(s,_);var d="ETH"==l.mode?"Ethernet":l.mode;INCLUDE_USB_3G_BACKUP&&INCLUDE_EWAN_BACKUP&&(t=l.ewanBackup,n=l.usb3gBackup)}$.each(a,function(){if(INCLUDE_WAN_MODE){var a=0,l=this.__ifAliasName;if($.each(s,function(){if(l==this.name){var e=$.stkPop(this.__stack,2);$.each(i,function(){e!=this.__stack||this.WANAccessType==d||0!=t||0!=n||(a=1)})}}),1==a)return}var _="["+this.__stack+"]";bodyArrayV6.push([{text:"<div><input type='checkbox' id='V6"+indexV6+"' class='table-select-one' /><label></label></div>",width:"10%"},{text:e++,width:"10%"},{text:this.destIPv6Address+" /"+this.destIPv6AddressPrefixLength,width:""},{text:this.gatewayIPv6Address,width:"20%"},{text:1==this.enable?"<span class='table-grid-icon enable-icon' id='en6_"+indexV6+"' onclick='enRoute(\"en6_\", "+indexV6+", "+_+")'></span>":"<span class='table-grid-icon disable-icon' id='en6_"+indexV6+"' onclick='enRoute(\"en6_\", "+indexV6+", "+_+")'></span>",width:"10%"},{text:"<span class='table-grid-icon edit-modify-icon' onclick='initEditV6(1, "+_+");'></span><span class='table-grid-icon edit-trash-icon' onclick='delItem(2, "+_+");'></span>",width:"15%"}]),stkArrayV6[indexV6]=this.__stack,indexV6++}),$.initTableBody($("#staticRouteV6"),bodyArrayV6),$.tablePages($("#staticRouteV6"),8)}}function initRoutev6Table(){var e=[],n=$.act(ACT_GL,ROUTE_ENTRYV6,null,null),t=0;return $.exe(function(a){if(!a){for(var l=0;l<n.length;l++){var i="",s="",_="";_=n[l].iface,i=n[l].destination,s=n[l].nextHop,t++,e.push([{text:t,width:"10%"},{text:i,width:"30%"},{text:s,width:"30%"},{text:_,width:"20%"}])}$.initTableBody($("#table_routeListv6"),e),$.tablePages($("#table_routeListv6"),10),$("span.edit-trash-icon.route-list").click(function(){var e=$(this).parents("tr").find("td").eq(1).text();$.act(ACT_DEL,ROUTE_ENTRYV6,routeStack[e-1],null),$.exe(function(e){e||$.reload()})})}}),e}function enRoute(e,n,t){var a=$("#"+e+n),l=a.hasClass("disable-icon");1==l?$.act(ACT_SET,"en4_"==e?L3_FORWARDING_ENTRY:L3_IP6_FORWARDING_ENTRY,t,null,["enable=1"]):$.act(ACT_SET,"en4_"==e?L3_FORWARDING_ENTRY:L3_IP6_FORWARDING_ENTRY,t,null,["enable=0"]),$.exe(function(e){1==l?a.removeClass("disable-icon").addClass("enable-icon"):a.removeClass("enable-icon").addClass("disable-icon")})}function initGw(){var e=0,n=0;if(INCLUDE_LTEWAN||INCLUDE_USB_3G_DONGLE?$("#title2").removeClass("nd"):($("#title1").removeClass("nd"),$("#selectWanV4").removeClass("nd"),$("#selectWanV6").removeClass("nd")),aliasName=$.act(ACT_GET,L3_FORWARDING,null,null,["__ifAliasName"]),filterlist=$.act(ACT_GL,L2_BRIDGING_FILTER,null,null,["filterKey","X_TP_IfAliasName","__filterBridgeRefName"]),INCLUDE_IPV6){var t=$.act(ACT_GL,WAN_IP_CONN,null,null,["enable","name","connectionType","X_TP_IPv4Enabled","X_TP_IPv6Enabled"]),a=$.act(ACT_GL,WAN_PPP_CONN,null,null,["enable","name","X_TP_IPv4Enabled","X_TP_IPv6Enabled"]);if(INCLUDE_L2TP)i=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["enable","name"]);if(INCLUDE_PPTP)s=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["enable","name"]);var l=$.act(ACT_GET,L3_IP6_FORWARDING,null,null,["__ifAliasName"])}else{var t=$.act(ACT_GL,WAN_IP_CONN,null,null,["enable","name","connectionType"]),a=$.act(ACT_GL,WAN_PPP_CONN,null,null,["enable","name"]);if(INCLUDE_L2TP)var i=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["enable","name"]);if(INCLUDE_PPTP)var s=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["enable","name"])}if(!$.exe()){if(INCLUDE_USB_3G_DONGLE&&INCLUDE_WAN_MODE&&null!=aliasName.__ifAliasName.match("USB_3G")){var _,d,o=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),c=$.act(ACT_GL,WAN_USB_3G_LINK_CFG,null,null,["backupEnable"]),r=$.act(ACT_GET,SYS_MODE,null,null,["mode"]);$.exe()||($.each(o,function(){"USB_3G"==this.WANAccessType&&(_=this.__stack)}),$.each(c,function(){var e=$.stkPop(this.__stack,1);_==e&&(d=$.act(ACT_GET,WAN_USB_3G_LINK_CFG,this.__stack,null,["mainConnObjName"]))}),$.exe()||"USB_3G"!=r.mode&&(aliasName.__ifAliasName=d.mainConnObjName))}for(p=0;p<t.length;p++)"IP_Bridged"==t[p].connectionType||1!=t[p].enable||INCLUDE_IPV6&&1!=t[p].X_TP_IPv4Enabled||!checkGroup(t[p].name)||($("#wanInfGw").append("<option value='"+t[p].name+"' text='"+t[p].name+"'>"+t[p].name+"</option>"),e++,t[p].name==aliasName.__ifAliasName&&$("#wanInfGw option[text='"+t[p].name+"']").prop("selected","selected")),INCLUDE_IPV6&&1==t[p].enable&&1==t[p].X_TP_IPv6Enabled&&($("#wanInfGw6").append("<option value='"+t[p].name+"' text='"+t[p].name+"'>"+t[p].name+"</option>"),n++,t[p].name==l.__ifAliasName&&$("#wanInfGw6 option[text='"+t[p].name+"']").prop("selected","selected"));for(var u=0;u<a.length;u++)1!=a[u].enable||null!=a[u].name.match("USB_3G")||INCLUDE_IPV6&&1!=a[u].X_TP_IPv4Enabled||!checkGroup(a[u].name)||($("#wanInfGw").append("<option value='"+a[u].name+"' text='"+a[u].name+"'>"+a[u].name+"</option>"),e++,a[u].name==aliasName.__ifAliasName&&$("#wanInfGw option[text='"+a[u].name+"']").prop("selected","selected")),INCLUDE_IPV6&&1==a[u].enable&&1==a[u].X_TP_IPv6Enabled&&($("#wanInfGw6").append("<option value='"+a[u].name+"' text='"+a[u].name+"'>"+a[u].name+"</option>"),n++,a[u].name==l.__ifAliasName&&$("#wanInfGw6 option[text='"+a[u].name+"']").prop("selected","selected"));if(INCLUDE_L2TP)for(p=0;p<i.length;p++)1==i[p].enable&&($("#wanInfGw").append("<option value='"+i[p].name+"' text='"+i[p].name+"'>"+i[p].name+"</option>"),e++,i[p].name==aliasName.__ifAliasName&&$("#wanInfGw option[text='"+i[p].name+"']").prop("selected","selected"));if(INCLUDE_PPTP)for(var p=0;p<s.length;p++)1==s[p].enable&&($("#wanInfGw").append("<option value='"+s[p].name+"' text='"+s[p].name+"'>"+s[p].name+"</option>"),e++,s[p].name==aliasName.__ifAliasName&&$("#wanInfGw option[text='"+s[p].name+"']").prop("selected","selected"));0==e&&$("#wanInfGw").append("<option value='0' text='"+s_str.noAvaiIntf+"'>"+s_str.noAvaiIntf+"</option>"),INCLUDE_IPV6&&0==n&&$("#wanInfGw6").append("<option value='0' text='"+s_str.noAvaiIntf+"'>"+s_str.noAvaiIntf+"</option>")}INCLUDE_ROUTE_BINDING&&$("#t_info2").removeClass("nd")}function checkGroup(e){if(INCLUDE_ROUTE_BINDING){var n=0;for(n=0;n<filterlist.length;n++)if(filterlist[n].X_TP_IfAliasName==e&&"Default"!=filterlist[n].__filterBridgeRefName)return!1}return!0}function delSelect(e){var n,t=[];"V4"==e?t=bodyArrayV4:"V6"==e&&(t=bodyArrayV6),$.confirm(c_str.del_choosed,function(){for(n in t)$("#"+e+n).prop("data-checked")&&("V4"==e?$.act(ACT_DEL,L3_FORWARDING_ENTRY,stkArrayV4[n],null):$.act(ACT_DEL,L3_IP6_FORWARDING_ENTRY,stkArrayV6[n],null));$.exe(function(){$.reload(),"V4"==e?setTimeout(function(){$("span.first-mode").click()},50):"V6"==e&&setTimeout(function(){$("span.second-mode").click()},50)})})}function delItem(e,n){1==e?$.act(ACT_DEL,L3_FORWARDING_ENTRY,n,null):$.act(ACT_DEL,L3_IP6_FORWARDING_ENTRY,n,null),$.exe(function(){$.reload(),1==e?setTimeout(function(){$("span.first-mode").click()},50):2==e&&setTimeout(function(){$("span.second-mode").click()},50)})}var index,indexroute,indexroutev6,stkArrayV4=[],indexV6,stkArrayV6=[],optFlag=0,stkEdit,routeStack,routeStackv6,bodyArrayV4=[],bodyArrayV6=[],filterlist,aliasName;$("#addV4").click(function(){optFlag=0,initEditV4(0)}),$("#addV6").click(function(){optFlag=0,initEditV6(0)});var ipConnList,pppConnList;$("#saveBtnV4").click(function(){if($.ifip($("#desAddr").tpAddress("val"),!0))return $.alert(ERR_IP_FORMAT),$("#desAddr").tpAddress("focus"),!1;if($.mask($("#route_mask").tpAddress("val"),!0))return $.alert(ERR_MASK_INVAD),$("#desAddr").tpAddress("focus"),!1;if($.ifip($("#defGw").tpAddress("val"),!0))return $.alert(ERR_IP_FORMAT),$("#desAddr").tpAddress("focus"),!1;var e={};e.destIPAddress=$.ip2ip($("#desAddr").tpAddress("val")),e.destSubnetMask=$.ip2ip($("#route_mask").tpAddress("val")),e.gatewayIPAddress=$.ip2ip($("#defGw").tpAddress("val")),e.__ifAliasName=$("#wanInf").data("value"),e.enable=1==$("#state_en").prop("data-checked")?"1":"0",0==optFlag?$.act(ACT_ADD,L3_FORWARDING_ENTRY,null,null,e):1==optFlag&&$.act(ACT_SET,L3_FORWARDING_ENTRY,stkEdit,null,e),$.exe(function(e){e||($.reload(),setTimeout(function(){$("span.first-mode").click()},50))})}),$("#saveBtnV6").click(function(){var e=/^[0-9]{1,2}$/,n=$("#prelenV6").val();if(!$.isValidGLUIP6Addr($("#desAddrV6").val()))return $.alert(ERR_ROUTE6_DST_ADDR_VALID),$("#desAddrV6").focus().select(),!1;if(!e.test(n)||n>64||n%8!=0)return $.alert(ERR_ROUTE6_PREFIX_LEN_VALID),$("#prelenV6").focus().select(),!1;if(!$.isValidGLUIP6AddrStrict($("#defGwV6").val()))return $.alert(ERR_ROUTE6_GW_ADDR_VALID),$("#defGwV6").focus().select(),!1;var t={};if(t.destIPv6Address=$("#desAddrV6").val(),t.destIPv6AddressPrefixLength=n,t.gatewayIPv6Address=$("#defGwV6").val(),t.__ifAliasName=$("#wanInfV6").data("value"),t.enable=1==$("#state_enV6").prop("data-checked")?"1":"0","LAN"==$("#wanInfV6").data("value"))t.interface="br0";else{for(a=0;a<ipConnList.length;a++)1==ipConnList[a].enable&&1==ipConnList[a].X_TP_IPv6Enabled&&ipConnList[a].name==t.__ifAliasName&&(t.interface=ipConnList[a].X_TP_IfName);for(var a=0;a<pppConnList.length;a++)1==pppConnList[a].enable&&1==pppConnList[a].X_TP_IPv6Enabled&&pppConnList[a].name==t.__ifAliasName&&(t.interface=pppConnList[a].X_TP_IfName)}0==optFlag?$.act(ACT_ADD,L3_IP6_FORWARDING_ENTRY,null,null,t):1==optFlag&&$.act(ACT_SET,L3_IP6_FORWARDING_ENTRY,stkEdit,null,t),$.exe(function(e){e||($.reload(),setTimeout(function(){$("span.second-mode").click()},50))})}),$("#submitBtn4").click(function(){$.addLoading($(this)),$.act(ACT_SET,L3_FORWARDING,null,null,["__ifAliasName="+$("#wanInfGw").data("text"),"__ifName=","defaultConnectionService="]),$.exe(function(e){$.removeLoading(),e||($.reload(),setTimeout(function(){$("span.first-mode").click()},50))})}),$("#submitBtn6").click(function(){$.addLoading($(this)),$.act(ACT_SET,L3_IP6_FORWARDING,null,null,["__ifAliasName="+$("#wanInfGw6").data("text"),"__ifName=","defaultConnectionService="]),$.exe(function(e){$.removeLoading(),e||($.reload(),setTimeout(function(){$("span.second-mode").click()},50))})}),$("button[id^='cancelBtnV']").click(function(){$.reload(),"cancelBtnV4"==this.id?setTimeout(function(){$("span.first-mode").click()},50):"cancelBtnV6"==this.id&&setTimeout(function(){$("span.second-mode").click()},50)})</script>
+<div id="title1" class="nd">
+	<h3 id="et1">Default Gateway</h3>
+</div>
+<div id="title2" class="nd">
+	<h3 id="et4">Static Route</h3>
+</div>
+<div class="content-container">
+    <div id="static_route_mode" class="mode-change">
+        <span class="mode-select">IPv4</span>
+        <span>IPv6</span>
+    </div>
+    <form class="pure-form pure-form-aligned">
+		<div id="selectWanV4" class="nd">
+			<p id="t_info1" class="cfg-line">Note1:Select a preferred WAN interface as the system default gateway.</p>
+			<p id="t_info2" class="cfg-line nd">Note2:The WAN that in other group can not be selected as system default gateway.</p>
+			<div style="margin-right:30px">
+				<b class="xl T_c_selwan">Select WAN Interface:</b>
+				<select class="xl" id="wanInfGw"></select>
+			</div>
+			<button type="submit" class="green T_save" id="submitBtn4" value="Save">Save</button>
+
+			<div class="part-separate"></div>
+			<h3 id="et2">Static Route</h3>
+		</div>
+        <div style="position:relative">
+            <div class="table-op">
+                <div class="table-btn">
+                    <span id="addV4" class="add-icon"></span>
+                    <label class="T_add">Add</label>
+                    <span id="delV4" class="delete-icon"></span>
+                    <label class="T_del">Delete</label>
+                </div>
+            </div>
+            <table id="staticRouteV4">
+                <thead></thead>
+                <tbody id="routeBodyV4">
+                    <tr id="editContainerV4" class="nd">
+                        <td colspan="7">
+                            <div>
+                                <b id="t_dstip">Destination IP Address:</b>
+                                <input type="text" id="desAddr" maxlength="15" class="ip-address">
+                            </div>
+                            <div>
+                                <b class="T_netmask">Subnet Mask:</b>
+                                <input type="text" id="route_mask" maxlength="15" class="ip-address">
+                            </div>
+                            <div>
+                                <b class="T_gateway">Gateway:</b>
+                                <input type="text" id="defGw" maxlength="15" class="ip-address">
+                            </div>
+                            <b class="T_c_intf">Interface:</b>
+                            <select id="wanInf"></select>
+                            <div>
+                            <b></b>
+                            <input type="checkbox" id="state_en" checked="true">
+                            <label class="T_c_enable">Enable this Entry</label>
+                            </div>
+                            <div class="inline-btn-right">
+                                <button type="submit" class="green T_cancel" id="cancelBtnV4">Cancel</button>
+                                <button type="submit" class="green T_save" id="saveBtnV4">Save</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <div id="lteNote" class="nd">
+            <p id="t_info_lte" class="cfg-line">Note: If LTE interface is selected, gateway must be on the same subnet with 192.168.225.1.</p>
+            </div>
+        </div>
+
+
+        <h3 id="et5">System Routing Table</h3>
+        <div class="content-container">
+            <form class="pure-form pure-form-aligned">
+                <div class="table-op">
+                    <div class="table-btn">
+                        <span class="refresh-icon"></span>
+                        <label class="T_refresh">Refresh</label>
+                    </div>
+                </div>
+                <table id="table_routeList">
+                    <thead></thead>
+                    <tbody id="body_routeList">
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </form>
+
+    <form class="pure-form pure-form-aligned">
+		<div id="selectWanV6" class="nd">
+			<p id="t_info3" class="cfg-line">Select a preferred wan interface as the system IPv6 default gateway.</p>
+			<div style="margin-right:30px">
+				<b class="xl T_c_selwan">Select WAN Interface:</b>
+				<select class="xl" id="wanInfGw6"></select>
+			</div>
+			<button type="submit" class="green T_save" id="submitBtn6" value="Save">Save</button>
+
+			<div class="part-separate"></div>
+			<h3 id="et3">Static Route</h3>
+		</div>
+        <div style="position:relative">
+            <div class="table-op">
+                <div class="table-btn">
+                    <span id="addV6" class="add-icon"></span>
+                    <label class="T_add">Add</label>
+                    <span id="delV6" class="delete-icon"></span>
+                    <label class="T_del">Delete</label>
+                </div>
+            </div>
+            <table id="staticRouteV6">
+                <thead></thead>
+                <tbody id="routeBodyV6">
+                    <tr id="editContainerV6" class="nd">
+                        <td colspan="6">
+                            <div>
+                                <b id="t_dstip6">Destination IPv6 Address:</b>
+                                <input type="text" id="desAddrV6" maxlength="39">
+                            </div>
+                            <div>
+                                <b id="t_plen">Prefix Length:</b>
+                                <input type="text" id="prelenV6" maxlength="39">
+                            </div>
+                            <div>
+                                <b class="T_gateway">Gateway:</b>
+                                <input type="text" id="defGwV6" maxlength="39">
+                            </div>
+                            <b class="T_c_intf">Interface:</b>
+                            <select id="wanInfV6"></select>
+                            <div>
+                            <b></b>
+                            <input type="checkbox" id="state_enV6" checked="true">
+                            <label class="T_c_enable">Enable this Entry</label>
+                            </div>
+                            <div class="inline-btn-right">
+                                <button type="submit" class="green T_cancel" id="cancelBtnV6">Cancel</button>
+                                <button type="submit" class="green T_save" id="saveBtnV6">Save</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 id="et6">System Routing Table</h3>
+        <div class="content-container">
+            <form class="pure-form pure-form-aligned">
+                <div class="table-op">
+                    <div class="table-btn">
+                        <span class="refresh-icon"></span>
+                        <label class="T_refresh">Refresh</label>
+                    </div>
+                </div>
+                <table id="table_routeListv6">
+                    <thead></thead>
+                    <tbody id="body_routeListv6">
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </form>
+</div>
+
+<script language="javascript">var headArrayV4=[{text:'<div><input type="checkbox" id="chk_routeV4" class="table-select-all" /><label></label></div>',width:"10%"},{text:table_str.id,width:"10%"},{text:table_str.destNtw,width:""},{text:table_str.subMask,width:"20%"},{text:table_str.dftGw,width:"20%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"15%"}],headArrayV6=[{text:'<div><input type="checkbox" id="chk_routeV6" class="table-select-all" /><label></label></div>',width:"10%"},{text:table_str.id,width:"10%"},{text:table_str.destNtw6,width:""},{text:table_str.dftGw,width:"20%"},{text:table_str.enable,width:"10%"},{text:table_str.modify,width:"15%"}],routeListHeadArray=[{text:table_str.id,width:"10%"},{text:table_str.destNtw,width:"25%"},{text:table_str.subMask,width:"20%"},{text:table_str.dftGw,width:"20%"},{text:s_str.intf,width:"20%"}],routeListHeadArrayv6=[{text:table_str.id,width:"10%"},{text:table_str.destNtw6,width:"30%"},{text:table_str.dftGw,width:"30%"},{text:s_str.intf,width:"20%"}];$.initTableHead($("#staticRouteV4"),headArrayV4),$.initTableHead($("#staticRouteV6"),headArrayV6),$.initTableHead($("#table_routeList"),routeListHeadArray),$.initTableHead($("#table_routeListv6"),routeListHeadArrayv6),$("#staticRouteV4").tpTable(init),$("#staticRouteV6").tpTable(initV6),$("#table_routeList").tpTable(initRouteTable),$("#table_routeListv6").tpTable(initRoutev6Table),$.tpInit(initGw),$("span[id^=delV]").click(function(){var t="delV4"==$(this).attr("id")?"V4":"V6";delSelect(t)})</script>

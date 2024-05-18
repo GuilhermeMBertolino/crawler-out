@@ -1,0 +1,106 @@
+<h3 id="t_title">IPTV</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="T T_iptv">IPTV:</b>
+            <input type="checkbox" id="iptv-en">
+            <label class="T_en"></label>
+        </div>
+        <div id="iptv-setting-ctn">
+            <div id="dslType-ctn" class="nd">
+                <b class="T_dslmode">DSL Modulation Type:</b>
+                <input type="radio" name="dsltype" id="vdsl">
+                <label for="vdsl" id="t_vdsl">VDSL</label>
+                <input type="radio" name="dsltype" id="adsl">
+                <label for="adsl" id="t_adsl">ADSL</label>
+            </div>
+            <div>
+                <b class="T T_profile">Profile:</b>
+                <select name="" id="profile" class="xl">
+                    <option value="0">China</option>
+                    <option value="1">USA</option>
+                    <option value="others" class="T T_others">Other</option>
+                </select>
+            </div>
+            <div id="detail-setting-ctn">
+                <div id="vdsl-setting-ctn">
+                    <div>
+                        <b class="T T_c_vlan">VLAN ID:</b>
+                        <input type="checkbox" id="vlan-en">
+                        <label for="vlan-en" class="T T_en">Enable</label>
+                    </div>
+                    <div id="vlan-setting-ctn">
+                        <div>
+                            <b class="T T_c_vlan">VLAN ID:</b>
+                            <input type="text" id="vlan" class="tpInput">
+                        </div>
+                        <div>
+                            <b class="T T_priority">Priority:</b>
+                            <input type="text" id="priority" class="tpInput">
+                        </div>
+                    </div>
+                </div>
+                <div id="adsl-setting-ctn">
+                    <div>
+                        <b id="t_vpi">VPI:</b>
+                        <input type="text" id="vpi">
+                    </div>
+                    <div>
+                        <b id="t_vci">VCI:</b>
+                        <input type="text" id="vci">
+                    </div>
+                </div>
+                <div>
+                    <b class="T T_connectiontype">Connection Type:</b>
+                    <select name="" id="conntype">
+                        <option value="Bridge" class="T T_bridge">Bridge</option>
+                        <option value="PPPoE" class="T T_pppoe">PPPoE</option>
+                        <option value="Dynamic IP" class="T T_dynip">Dynamic IP</option>
+                    </select>
+                </div>
+                <div id="pppoe-setting-ctn">
+                    <div>
+                        <b class="T T_username"></b>
+                        <input type="text" id="username">
+                    </div>
+                    <div>
+                        <b class="T T_passwd"></b>
+                        <input type="text" id="password">
+                    </div>
+                </div>
+                <div id="dhcp-setting-ctn">
+                    <div>
+                        <b class="T T_merEnable">MerEnable:</b>
+                        <input type="checkbox" id="merenable">
+                        <label for="" class="T T_en"></label>
+                    </div>
+                    <div id="mer-setting-ctn">
+                        <div>
+                            <b class="T T_username"></b>
+                            <input type="text" id="dhcp-username">
+                        </div>
+                        <div>
+                            <b class="T T_passwd"></b>
+                            <input type="text" id="dhcp-password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="bridge-setting-ctn">
+                <div>
+                    <b class="T T_lanport">LAN Port:</b>
+                    <input type="checkbox" name="lanport" id="lan1">
+                    <label for="">LAN1</label>
+                    <input type="checkbox" name="lanport" id="lan2">
+                    <label for="">LAN2</label>
+                    <input type="checkbox" name="lanport" id="lan3">
+                    <label for="">LAN3</label>
+                    <input type="checkbox" name="lanport" id="lan4">
+                    <label for="">LAN4</label>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="green T_save" id="save">Save</button>
+    </form>
+</div>
+<script>var dslType,ispIptvProfileSettings=null,initFlag=!1,changeTextFlag=!1,currentSettings={connectionType:void 0,ispIndex:void 0,linkType:null};function initDslType(e,t,n,i){var a=!1;switch(e){case"ADSL":$("#adsl").prop("checked",!0),$("#vdsl-setting-ctn").addClass("nd"),$("#adsl-setting-ctn").removeClass("nd"),t.iptvLinkType="0";break;case"VDSL":$("#vdsl").prop("checked",!0),$("#adsl-setting-ctn").addClass("nd"),$("#vdsl-setting-ctn").removeClass("nd"),t.iptvLinkType="1";break;default:$("#dslType-ctn").removeClass("nd"),$("#adsl-setting-ctn").addClass("nd"),$("#vdsl-setting-ctn").removeClass("nd")}for(var p="",s=0;s<regionCodeInfo.length;s++)if(n==regionCodeInfo[s][1].substring(0,2)){var l=regionCodeInfo[s][4];if(ispList[l]&&ispList[l].iptv&&ispList[l].iptv[i]){var o=ispList[l].iptv[i];a=!0,(ispIptvProfileSettings={iptvLinkType:"adsl"==o.dslType?"0":"1",iptvVLANID:o.vid||o.vtag,iptvVPI:o.vpi,iptvVCI:o.vci,connectionType:o.connType,iptvVLANPriority:o.priority||0}).iptvVLANEnabled=0<ispIptvProfileSettings.iptvVLANID?"1":"0"}break}return a?p+='<option value="1">'+i+"</option>":$("#profile").addClass("nd"),p+='<option value="0">'+s_str.others+"</option>",$("#profile").html(p),a&&"1"==t.ispIndex?$("#profile option[value='1']").prop("selected","selected"):$("#profile option[value='0']").prop("selected","selected"),t}function showIptvParam(e){if(void 0!==e.enable&&("1"===e.enable?($("#iptv-en").prop("checked",!0),$("#iptv-setting-ctn").removeClass("nd")):($("#iptv-en").prop("checked",!1),$("#iptv-setting-ctn").addClass("nd"))),void 0!==e.iptvLinkType&&(currentSettings.linktype=e.iptvLinkType,"0"===e.iptvLinkType?($("#adsl").prop("checked",!0),$("#vdsl-setting-ctn").addClass("nd"),$("#adsl-setting-ctn").removeClass("nd")):($("#vdsl").prop("checked",!0),$("#adsl-setting-ctn").addClass("nd"),$("#vdsl-setting-ctn").removeClass("nd")),initFlag&&e.ispIndex&&($("#adsl").data("tpRadio").refresh(),$("#vdsl").data("tpRadio").refresh())),void 0!==e.connectionType){switch(e.connectionType){case"PPPoE":$('#conntype option[value="PPPoE"]').prop("selected","selected"),$("#pppoe-setting-ctn").removeClass("nd"),$("#dhcp-setting-ctn").addClass("nd"),$("#bridge-setting-ctn").addClass("nd");break;case"Dynamic IP":$('#conntype option[value="Dynamic IP"]').prop("selected","selected"),$("#pppoe-setting-ctn").addClass("nd"),$("#bridge-setting-ctn").addClass("nd");break;default:$('#conntype option[value="Bridge"]').prop("selected","selected"),$("#pppoe-setting-ctn").addClass("nd"),$("#dhcp-setting-ctn").addClass("nd"),$("#bridge-setting-ctn").removeClass("nd")}currentSettings.connectionType=e.connectionType,initFlag&&e.ispIndex&&$("#conntype").tpSelect({refresh:1})}if(void 0!==e.iptvLanPort)for(var t=parseInt(e.iptvLanPort,10),n=1;0<t;){var i=t%2;t=parseInt(t/2,10),i&&$("#lan"+n).prop("checked",!0),n++}void 0!==e.iptvVLANEnabled&&("1"==e.iptvVLANEnabled?($("#vlan-en").prop("checked",!0),$("#vlan-setting-ctn").removeClass("nd")):($("#vlan-en").prop("checked",!1),$("#vlan-setting-ctn").addClass("nd")),initFlag&&e.ispIndex&&$("#vlan-en").tpCheckbox({refresh:1})),void 0!==e.merEnabled&&("1"==e.merEnabled?($("#merenable").prop("data-checked",!0),$("#dhcp-setting-ctn").removeClass("nd")):($("#merenable").prop("data-checked",!1),$("#dhcp-setting-ctn").addClass("nd"))),void 0!==e.iptvVLANID&&$("#vlan").prop("value",e.iptvVLANID),void 0!==e.iptvVLANPriority&&$("#priority").prop("value",e.iptvVLANPriority),void 0!==e.iptvVPI&&$("#vpi").prop("value",e.iptvVPI),void 0!==e.iptvVCI&&$("#vci").prop("value",e.iptvVCI),void 0!==e.username&&$("#username").prop("value",e.username),void 0!==e.password&&$("#password").prop("value",e.password),void 0!==e.ispIndex&&($("#ul-nav #basic").hasClass("selected")&&("0"===e.ispIndex?$("#detail-setting-ctn").removeClass("nd"):$("#detail-setting-ctn").addClass("nd")),currentSettings.ispIndex=e.ispIndex)}function checkValidity(e){if("0"===e.enable)return!0;if("1"===e.iptvLinkType){if("1"===e.iptvVLANEnabled&&(!0!==$("#vlan").tpInput("validate")||!0!==$("#priority").tpInput("validate")))return!1}else if(!0!==$("#vpi").tpInput("validate")||!0!==$("#vci").tpInput("validate"))return!1;return"PPPoE"===e.connectionType||e.connectionType,!0}function doCollect(){var e={};return $("#iptv-en").prop("data-checked")?(e.enable="1",e.ispIndex=$("#profile").data("value"),getDslParam(e),getConnTypeParam(e)):e.enable="0",e}function getDslParam(e){null===dslType?$("#adsl").prop("checked")?e.iptvLinkType="0":e.iptvLinkType="1":e.iptvLinkType="ADSL"==dslType?"0":"1","0"==e.iptvLinkType?(e.iptvVPI=parseInt($("#vpi").prop("value"),10),e.iptvVCI=parseInt($("#vci").prop("value"),10)):(e.iptvVLANEnabled=$("#vlan-en").prop("data-checked")?"1":"0","1"==e.iptvVLANEnabled&&(e.iptvVLANID=parseInt($("#vlan").prop("value"),10),e.iptvVLANPriority=parseInt($("#priority").prop("value"),10)))}function getConnTypeParam(e){var t=$("#conntype").data("value");switch(e.connectionType=t){case"Bridge":e.iptvLanPort=0;for(var n=1;n<5;n++)$("#lan"+n).prop("data-checked")&&(e.iptvLanPort+=1<<n-1);break;case"PPPoE":e.username=$("#username").prop("value"),e.password=$("#password").prop("value");break;case"Dynamic IP":0}}function switchToOthers(){initFlag&&($('#profile option[value="0"]').prop("selected","selected"),$("#profile").tpSelect({refresh:1}))}function init(){var e=$.act(ACT_GET,DSL_IPTV_CFG,null,null,null),t=$.act(ACT_GET,LOCAL,null,null,["Country","ispName"]),n=$.act(ACT_GL,WAN_DSL_INTF_CFG,null,null,INCLUDE_VDSLWAN?["status","linkEncapsulationUsed"]:["status"]);INCLUDE_RU_IPTV||$.act(ACT_OP,ACT_IPTV_UPDATE_DSL_IPTV_CFG,null,null),$.exe();var i="Up"==n[0].status,a="G.993.2_Annex_K_PTM"==n[0].linkEncapsulationUsed?"PTM":"ATM";dslType=i?"PTM"==a?"VDSL":"ADSL":null;var p=t.country,s=t.ispName;showIptvParam(e=initDslType(dslType,e,p,s))}$("#iptv-en").click(function(e){$("#iptv-en").prop("data-checked")?showIptvParam({enable:"1"}):showIptvParam({enable:"0"})}),$("#adsl").click(function(e){var t=1==currentSettings.linktype;showIptvParam({iptvLinkType:"0"}),t&&($("#detail-setting-ctn").removeClass("nd"),switchToOthers())}),$("#vdsl").click(function(e){var t=0==currentSettings.linktype;showIptvParam({iptvLinkType:"1"}),t&&($("#detail-setting-ctn").removeClass("nd"),switchToOthers())}),$("#vlan-en").click(function(e){$("#vlan-en").prop("data-checked")?showIptvParam({iptvVLANEnabled:"1"}):showIptvParam({iptvVLANEnabled:"0"}),switchToOthers()}),$("#conntype").click(function(e){var t=$("#conntype").data("value");t!=currentSettings.connectionType&&(showIptvParam({connectionType:t}),switchToOthers())}),$("#profile").click(function(e){var t=$("#profile").data("value"),n={};"1"==t&&(n=ispIptvProfileSettings),n.ispIndex=t,showIptvParam(n)}),$("#vlan,#priority,#vpi,#vci").on("keydown",function(e){changeTextFlag=!0,switchToOthers()}),$("#save").click(function(e){var t=doCollect();checkValidity(t)&&($.act(ACT_SET,DSL_IPTV_CFG,null,null,t),$.addLoading(),$.exe(function(e){$.removeLoading(),e||$.reload()}))}),$("#vlan").tpInput({allowBlank:!1,vtype:{vtype:"number",max:4094,min:1},suffix:"(1-4094)",validator:function(e){return!(e<1||4094<e)},invalidText:s_str.vlanIdChk}),$("#priority").tpInput({allowBlank:!1,vtype:{vtype:"number",max:7,min:0},suffix:"(0-7)",validator:function(e){return!(e<0||7<e)},invalidText:s_str.priorityChk}),$("#vpi").tpInput({allowBlank:!1,vtype:{vtype:"number",max:255,min:0},suffix:"(0-255)",validator:function(e){return!(e<0||255<e)},invalidText:s_str.vpiChk}),$("#vci").tpInput({allowBlank:!1,vtype:{vtype:"number",max:65535,min:0},suffix:"(0-65535)",validator:function(e){return!(e<0||65535<e)},invalidText:s_str.vciChk}),$.tpInit(init),initFlag=!0</script>

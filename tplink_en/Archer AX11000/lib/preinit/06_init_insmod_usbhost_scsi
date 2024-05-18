@@ -1,0 +1,35 @@
+#!/bin/sh
+
+#insert usbhost & scsi modules
+ 
+insmod_usbhost_scsi() {
+	linux_ver=`grep -o "Linux version [0-9A-Za-z_.-]*" /proc/version | grep -o "[0-9A-Za-z_.-]*$"`
+	insmod xhci-hcd
+	insmod ehci-hcd
+	insmod ohci-hcd
+	
+	insmod /lib/modules/$linux_ver/kernel/drivers/usb/host/ehci-platform.ko  
+	insmod /lib/modules/$linux_ver/kernel/drivers/usb/host/ohci-platform.ko  
+	insmod /lib/modules/$linux_ver/kernel/drivers/usb/host/xhci-plat-hcd.ko  
+	insmod /lib/modules/$linux_ver/extra/bcm_usb.ko  
+	insmod /lib/modules/$linux_ver/kernel/drivers/usb/class/usblp.ko  
+	insmod /lib/modules/$linux_ver/kernel/drivers/usb/storage/usb-storage.ko  
+
+	insmod sd_mod
+	insmod scsi_wait_scan
+
+	insmod crc16
+	insmod mbcache
+	insmod jbd2
+	insmod fat
+	insmod vfat
+	insmod ntfs
+	insmod hfs
+	insmod hfsplus
+	insmod ext4
+	insmod msdos
+
+	insmod fuse
+}
+#move insmod all usb ko to /etc/rc.d/S39usb
+boot_hook_add preinit_main insmod_usbhost_scsi 

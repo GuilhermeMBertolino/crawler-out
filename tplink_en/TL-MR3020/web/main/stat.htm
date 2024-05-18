@@ -1,0 +1,414 @@
+<style>
+#chart-info {
+    line-height: 28px;
+    text-align: right;
+}
+#chart-info label {
+    display: inline-block;
+    width: 15px;
+    height:15px;
+    margin: 0 5px;
+}
+#down label {
+    background-color: #4ACBD6;
+}
+#up label {
+    background-color: #FFCB00;
+}
+</style>
+<script>
+function changeX(value) {
+    var result = value;
+    if (value >= 1024 * 1024 * 1024) {
+        result = (result / (1024 * 1024 * 1024)).toFixed(1) + "G";
+    } else if (value >= 1024 * 1024) {
+        result = (result / (1024 * 1024)).toFixed(1) + "M";
+    } else if (value >= 1024) {
+        result = (result / (1024)).toFixed(1) + "K";
+    }
+	else {
+		result = result.toFixed(1);
+	}
+    return result;
+}
+
+function changeY(value) {
+    var result = parseInt(value);
+    if (value >= 1000 * 1000 * 1000) {
+        result = (result / (1000 * 1000 * 1000)).toFixed(1) + "G";
+    } else if (value >= 1000 * 1000) {
+        result = (result / (1000 * 1000)).toFixed(1) + "M";
+    } else if (value >= 1000) {
+        result = (result / (1000)).toFixed(1) + "K";
+    } else {
+		result = result.toFixed(1);
+    }
+    return result;
+}
+
+function initChart(interval, data) {
+    var label = [],
+        dataUp = [],
+        dataDown = [],
+        length = data.length,
+        daysCount = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    var time = $.act(ACT_GET, HOUR, null, null, ["year", "month", "day", "hours", "minutes"]);
+    if (!$.exe()) {
+        var tmpHour = parseInt(time.hours, 10),
+            tmpMinute = parseInt(time.minutes, 10),
+            tmpYear = parseInt(time.year, 10),
+            tmpMonth = parseInt(time.month, 10),
+            tmpDay = parseInt(time.day, 10);
+        var hour, minute, year, month, day;
+        if ((tmpYear % 400 == 0) || (tmpYear % 400 != 0 && tmpYear % 4 == 0)) {
+            daysCount[1] = 29;
+        }
+        for (var i = 0; i < data.length; i++) {
+            if (interval == "Hor") {
+                hour = tmpHour - length + 1 + i;
+                if (hour < 0) {
+                    hour = hour + 24;
+                }
+                hour = hour < 10 ? ('0' + hour) : hour;
+                label.push(hour + ':00');
+                dataUp.push(data[i].ups / 3600);
+                dataDown.push(data[i].downs / 3600);
+            } else if (interval == "Min") {
+                minute = tmpMinute - length + 1 + i;
+                if (minute < 0) {
+                    minute = minute + 60;
+                    hour = (tmpHour == 0) ? 23 : tmpHour - 1;
+                } else {
+                    hour = tmpHour;
+                }
+                hour = hour < 10 ? ('0' + hour) : hour;
+                minute = minute < 10 ? ('0' + minute) : minute;
+                label.push(hour + ":" + minute);
+                dataUp.push(data[i].ups / 60);
+                dataDown.push(data[i].downs / 60);
+            } else {
+                day = tmpDay - length + 1 + i;
+                if (day <= 0) {
+                    if (tmpMonth == 1) {
+                        month = 12;
+                        year = tmpYear - 1;
+                        day = day + daysCount[month - 1];
+                    } else {
+                        month = tmpMonth - 1;
+                        year = tmpYear;
+                        day = day + daysCount[month - 1];
+                    }
+                } else {
+                    month = tmpMonth;
+                    year = tmpYear;
+                }
+                month = month < 10 ? '0' + month : month;
+                day = day < 10 ? '0' + day : day;
+                label.push([month, day, year].join('.'));
+                dataUp.push(data[i].ups / 86400);
+                dataDown.push(data[i].downs / 86400);
+            }
+
+        }
+        var lineChartData = {
+            labels: label,
+            datasets: [{
+                label: $.tpLang.stat_nstr.t_downstream,
+                fillColor: "rgba(74,203,214,0.2)",
+                strokeColor: "rgba(74,203,214,1)",
+                pointColor: "rgba(74,203,214,1)",
+                pointStrokeColor: "rgba(74,203,214,0.1)",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(74,203,214,1)",
+                data: dataDown
+            }, {
+                label: $.tpLang.stat_nstr.t_upstream,
+                fillColor: "rgba(255,203,0,0.2)",
+                strokeColor: "rgba(255,203,0,1)",
+                pointColor: "rgba(255,203,0,1)",
+                pointStrokeColor: "rgba(255,203,0,0.1)",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(255,203,0,1)",
+                data: dataUp
+            }]
+
+        };
+        var ctx = document.getElementById("canvas").getContext("2d");
+        if (!window.myLine) {
+            window.myLine = new Chart(ctx).Line(lineChartData, {
+                responsive: true,
+                animation: false,
+                scaleLabel: "<%=changeY(value)%>B",
+                scaleLineColor:"#cccccc",
+                scaleGridLineColor:"#cccccc",
+                pointDotRadius: 5,
+                pointDotStrokeWidth: 2,
+                bezierCurveTension: 0.4,
+                multiTooltipTemplate: "<%= changeX(value)%>B/s",
+                tooltipFillColor:"rgba(54,68,75,0.9)",
+                legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span class=\"legend-icon\" style=\"background-color:<%=datasets[i].strokeColor%>\"></span><p><%if(datasets[i].label){%><%=datasets[i].label%><%}%></p></li><%}%></ul>"
+            });
+        } else {
+            window.myLine.initialize(lineChartData);
+        }
+    }
+}
+</script>
+<h3 id='t_trafficMonitor'>Traffic Monitor</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container">
+            <b id='t_trafficMonitorEn'>Traffic Monitor:</b>
+            <ul>
+                <li>
+                    <button id="t_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <p id='t_switchNote' class='nd'></p>
+        </div>
+    </form>
+</div>
+<div class="content-container" id='traffic-chart'>
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <span id='usage-contianer' style='display:inline-block;width:250px'>
+                <label id='t_devUsage' class='xl'>The Traffic Usage of1</label>
+                <span id='deviceName'></span>
+            </span>
+            <select id="device" class="inline"></select>
+            <select id="interval" class="inline">
+                <option value="Day" id='t_daily'></option>
+                <option value="Hor" id='t_hourly'></option>
+                <option value="Min" id='t_Minutely'></option>
+            </select>
+        </div>
+        <div id="chart">
+            <div id='canvas-container'>
+            </div>
+        </div>
+        <div id='chart-info'>
+            <span id='down'>
+                <label></label>
+                <span id='t_downstream'></span>
+            </span>
+            <span id='up'>
+                <label></label>
+                <span id='t_upstream'></span>
+            </span>
+        </div>
+    </form>
+</div>
+<h3 id="t_monitorList">Traffic Statistics List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span id="freshAll" class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="resetAll" class="reset-icon"></span>
+                <label class="T_cleanAllRecord">Reset</label>
+            </div>
+        </div>
+        <table id="traffic-stat">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </form>
+</div>
+<script type="text/javascript">
+var canvas = document.createElement('canvas');
+canvas.id = 'canvas';
+document.getElementById('canvas-container').appendChild(canvas);
+if (!canvas.getContext) {
+    G_vmlCanvasManager.initElement(canvas);
+}
+window.myLine = null;
+
+var trafficIntervalId,
+    listIntervalId;
+clearTimeout(trafficIntervalId);
+clearTimeout(listIntervalId);
+
+function init() {
+    var statCfg = $.act(ACT_GET, STAT_CFG, null, null);
+    var recordCfg = $.act(ACT_GET, RECORD_CFG, null, null);
+    var deviceList = $.act(ACT_GL, STAT_ENTRY, null, null);
+
+    if (!$.exe()) {
+        if (statCfg.enable == 1) {
+            $("#t_on").addClass('selected');
+            $("#t_off").removeClass('selected');
+            var deviceOpt = '<option value="1" id="t_allDev">' + $.tpLang.stat_nstr.t_allDev + '</option>';
+            for (var i = 0; i < deviceList.length; i++) {
+                deviceOpt += '<option value="' + $.htmlEncodeStr(deviceList[i].hostName) + '">' + deviceList[i].hostName + '</option>';
+            }
+            if (recordCfg.allDevices != 1) {
+                $('#interval').html('<option value="Min" id="t_Minutely">' + $.tpLang.stat_nstr.t_Minutely + '</option>');
+            }
+            $('#device').append(deviceOpt);
+            $('#device').attr('value', recordCfg.allDevices == '1' ? recordCfg.allDevices : recordCfg.hostName);
+            if ($('#device').val() == 1) {
+                $('#deviceName').html($.tpLang.stat_nstr.t_allDev + ':');
+            } else {
+                $('#deviceName').html($.htmlEncodeStr($('#device').val()) + ':');
+            }
+            $('#interval').attr('value', recordCfg.recordInterval);
+            $('#traffic-chart').removeClass('nd');
+            var statRecord = $.act(ACT_GL, RECORD_ENTRY, null, null);
+            var recordCfg = $.act(ACT_GET, RECORD_CFG, null, null);
+            if (!$.exe()) {
+                initChart(recordCfg.recordInterval, statRecord);
+            }
+        } else {
+            $('#t_switchNote').removeClass('nd');
+            $("#t_on").removeClass('selected');
+            $("#t_off").addClass('selected');
+            $('#traffic-chart').addClass('nd');
+        }
+        initMonitorList(deviceList);
+
+        function redrawChart() {
+            if ($.curPage !== 'stat.htm') {
+                return;
+            }
+			if (rebooting && trafficIntervalId){
+				clearTimeout(trafficIntervalId);
+				return;
+			}
+            var statRecord = $.act(ACT_GL, RECORD_ENTRY, null, null);
+            if (!$.exe()) {
+                try {
+                    initChart(recordCfg.recordInterval, statRecord);
+                } catch (ex) {
+                    return;
+                }
+                trafficIntervalId = setTimeout(redrawChart, 10000);
+            }
+        }
+        if (statCfg.enable == 1 && recordCfg.recordInterval == 'Min') {
+            trafficIntervalId = setTimeout(redrawChart, 10000);
+        }
+    }
+}
+
+function changeUnit(val) {
+    if (val >= 1024 * 1024 * 1024) {
+        return (val / (1024 * 1024 * 1024)).toFixed(3) + "G";
+    } else if (val >= 1024 * 1024) {
+        return (val / (1024 * 1024)).toFixed(3) + "M";
+    } else if (val >= 1024) {
+        return (val / 1024).toFixed(3) + "K";
+    } else {
+        return val;
+    }
+}
+
+function initMonitorList(record) {
+    var array = [];
+    for (var i = 0; i < record.length; i++) {
+        array.push([{
+            "text": record[i].hostType == 'wired' ? table_str.wired : (record[i].hostType == '2.4g' ? table_str.type24g : table_str.type5g),
+            "width": '20%',
+        }, {
+            "text": $.htmlEncodeStr(record[i].hostName),
+            "width": '20%',
+        }, {
+            "text": record[i].macAddress.split(':').join('-'),
+            "width": '20%'
+        }, {
+            "text": '<span>' + changeUnit(record[i].currBytesTx) + 'B/s↑</br>' + changeUnit(record[i].currBytesRx) + 'B/s↓</span>',
+            "width": '20%'
+        }, {
+            "text": changeUnit(parseInt(record[i].totalBytesRx) + parseInt(record[i].totalBytesTx)),
+            "width": '20%'
+        }]);
+    }
+
+    $.initTableBody($("#traffic-stat"), array);
+}
+var headArray = [{
+    "text": table_str.conntype,
+    "width": "20%"
+}, {
+    "text": table_str.devName,
+    "width": "20%"
+}, {
+    "text": table_str.mac,
+    "width": "20%"
+}, {
+    "text": table_str.realRate,
+    "width": "20%"
+}, {
+    "text": table_str.usage,
+    "width": "20%"
+}];
+$.initTableHead($("#traffic-stat"), headArray);
+$("#traffic-stat").tpTable();
+$.tpInit(init);
+
+$("#t_on").click(function() {
+    $.act(ACT_SET, STAT_CFG, null, null, ["Enable=1"]);
+    if (!$.exe()) {
+        $.reload();
+    }
+});
+$("#t_off").click(function() {
+    $.act(ACT_SET, STAT_CFG, null, null, ["Enable=0"]);
+    if (!$.exe()) {
+        $.reload();
+    }
+});
+$('#device').click(function(e) {
+    if ($('#device').data('value') == 1) {
+        var recordCfg = $.act(ACT_SET, RECORD_CFG, null, null, ['allDevices=1', 'recordInterval=' + $('#interval').data('value')]);
+    } else {
+        var recordCfg = $.act(ACT_SET, RECORD_CFG, null, null, ['allDevices=0', 'hostName=' + $('#device').data('value'), 'recordInterval=Min']);
+    }
+    if (!$.exe()) {
+        $.reload();
+    }
+});
+$('#interval').click(function(e) {
+    if ($('#device').data('value') == 1) {
+        var recordCfg = $.act(ACT_SET, RECORD_CFG, null, null, ['allDevices=1', 'recordInterval=' + $('#interval').data('value')]);
+    } else {
+        var recordCfg = $.act(ACT_SET, RECORD_CFG, null, null, ['allDevices=0', 'hostName=' + $('#device').data('value'), 'recordInterval=Min']);
+    }
+    if (!$.exe()) {
+        $.reload();
+    }
+});
+$('#freshAll').click(function(e) {
+    var deviceList = $.act(ACT_GL, STAT_ENTRY, null, null);
+    if (!$.exe()) {
+        initMonitorList(deviceList);
+    }
+});
+$("#resetAll").click(function() {
+    $.act(ACT_SET, STAT_CFG, null, null, ["action=1"]);
+    $.exe(function(ret) {
+        if (!ret) $.reload();
+    });
+});
+
+function refreshList() {
+    if ($.curPage !== 'stat.htm') {
+        return;
+    }
+	if (rebooting && listIntervalId){
+		clearTimeout(listIntervalId);
+		return;
+	}
+    var deviceList = $.act(ACT_GL, STAT_ENTRY, null, null);
+    if (!$.exe()) {
+        initMonitorList(deviceList);
+    }
+    listIntervalId = setTimeout(refreshList, 10000);
+}
+listIntervalId = setTimeout(refreshList, 10000);
+</script>

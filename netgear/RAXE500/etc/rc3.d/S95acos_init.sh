@@ -1,1 +1,0 @@
-../init.d/S95acos_init.sh

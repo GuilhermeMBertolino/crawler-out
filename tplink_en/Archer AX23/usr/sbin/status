@@ -1,0 +1,131 @@
+#!/bin/sh
+. /lib/switch/core_phy.sh
+local wan_status=
+local wan_speed=
+local wan_duplex=
+local lan_status=
+local lan_speed=
+local lan_duplex=
+
+# the output format
+# port 0 Link UP 100MFD
+# port 1 Link DOWN
+# ...
+
+local  phy_status=$(get_port_link_status 0x1f)
+
+port_link ()
+{
+	local ps=${phy_status#*port $1 Link }
+	if [ "${ps:0:2}" == "UP" ] ; then
+		echo "connected"
+	else
+		echo "unconnected"
+	fi
+}
+
+port_speed ()
+{
+	local ps=${phy_status#*port $1 Link }
+	if [ "${ps:0:2}" == "UP" ] ; then
+		ps=${ps#UP }
+		ps=${ps%%M*}
+		echo $ps
+	else
+		echo 0
+	fi
+}
+
+port_duplex ()
+{
+	local ps=${phy_status#*port $1 Link }
+	if [ "${ps:0:2}" == "UP" ] ; then
+		ps=${ps#*M}
+		ps=${ps%%D*}
+		if [ "$ps" == "F" ] ; then
+			echo "FULL"
+		else
+			echo "HALF"
+		fi
+	else
+		echo NONE
+	fi
+}
+
+get_lan_status()
+{
+	for port in 0 1 2 3 ; do
+	lan_status="$lan_status $(port_link $port)"
+	done
+}
+
+get_lan_speed()
+{
+	for port in 0 1 2 3 ; do
+	lan_speed="$lan_speed $(port_speed $port)"
+	done
+}
+
+get_lan_duplex()
+{
+	for port in 0 1 2 3 ; do
+	lan_duplex="$lan_duplex $(port_duplex $port)"
+	done
+}
+
+get_wan_status()
+{
+	wan_status=$(port_link 4)
+}
+
+get_wan_speed()
+{
+	wan_speed=$(port_speed 4)
+}
+
+get_wan_duplex()
+{
+	wan_duplex=$(port_duplex 4)
+}
+
+
+
+case $1 in
+	"lan_status")
+		get_lan_status
+		echo -n $lan_status
+		;;
+	"wan_status")
+		get_wan_status
+		echo -n $wan_status
+		;;
+	"lan_speed")
+		get_lan_speed
+		echo -n $lan_speed
+		;;
+	"wan_speed")
+		get_wan_speed
+		echo -n $wan_speed
+		;;
+	"lan_duplex")
+		get_lan_duplex
+		echo -n $lan_duplex
+		;;
+	"wan_duplex")
+		get_wan_duplex
+		echo -n $wan_duplex
+		;;
+	"speed")
+		get_wan_speed
+		get_lan_speed
+		echo -n $wan_speed $lan_speed
+		;;
+	"duplex")
+		get_wan_duplex
+		get_lan_duplex
+		echo -n $wan_duplex $lan_duplex
+		;;
+	*)
+		echo "bad choice"
+		;;
+esac

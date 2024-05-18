@@ -1,0 +1,47 @@
+#!/bin/sh
+# Copyright (c) 2017 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : HQL <huangqinglou@tp-link.com.cn>
+# Date    : 2017/11/06
+
+REPEATER_MONITOR_PID="/var/run/repeater_monitor.pid"
+
+CHECK_INTERVAL=$1
+CONNECT_STATUS=0
+
+[ -n $CHECK_INTERVAL ] || exit 0
+
+repeater_connect_status_detect(){
+	ath02_connected=0
+	ath12_connected=0
+	current_status=0
+	if [ -d /var/run/wpa_supplicant-ath02 ] && [ "`wpa_cli -p /var/run/wpa_supplicant-ath02 status| grep wpa_state| cut -d = -f 2`" == "COMPLETED" ]; then
+		ath02_connected=1
+		current_status=2
+	fi
+	if [ -d /var/run/wpa_supplicant-ath12 ] && [ "`wpa_cli -p /var/run/wpa_supplicant-ath12 status| grep wpa_state| cut -d = -f 2`" == "COMPLETED" ]; then
+		ath12_connected=1
+		if [ $ath02_connected == 1 ]; then
+			current_status=6
+		else
+			current_status=4
+		fi
+	fi
+	
+	if [ "$CONNECT_STATUS" != "$current_status" ]; then
+		CONNECT_STATUS=$current_status
+		echo $CONNECT_STATUS >/proc/range_extender_config/range_extender_link_state
+	fi
+}
+
+# Save the pid
+
+echo $$ > ${REPEATER_MONITOR_PID}
+
+while [ true ]
+do
+	repeater_connect_status_detect
+	sleep $CHECK_INTERVAL &
+	wait
+done
+
+exit 0

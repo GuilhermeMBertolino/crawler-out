@@ -1,0 +1,333 @@
+
+<link rel="stylesheet" type="text/css" href="../dynaform/widget.css"></link>
+<!--[if lte IE 8]>
+<link href="../dynaform/ie8.css", rel="stylesheet" type="text/css">
+ <![endif]-->
+<script type="text/javascript" src="../js/su/su.js"></script>
+<script type="text/javascript" src="../js/su/widget/widget.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/textbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/combobox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/checkbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/radio.js"></script>
+<SCRIPT language="javascript" src="../dynaform/custom.js" type="text/javascript"></SCRIPT>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<!--JS-->
+<SCRIPT type="text/javascript">
+<!--
+function doBack(nPage, nOtherPage)
+{
+	if ( document.forms[0].fromAdd.value == 1 )
+	{
+		location.href="AccessCtrlAccessRulesRpm.htm?Add=Add&Page="+nOtherPage;
+		return;
+	}
+	if (nOtherPage == 0)
+	location.href="AccessCtrlTimeSchedRpm.htm?Page="+nPage;
+	else
+	location.href="AccessCtrlAccessRulesRpm.htm?Page="+nOtherPage;
+	return;
+}
+function getValLen(val)
+{
+	var len = 0;
+	var i = 0;
+	for (i = 0; i < val.length; i ++)
+	{
+		var c = val.charAt(i);
+		len += ((c >= ' ') && (c <= '~')) ? 1 : 2;
+	}
+	return len;
+}
+function doSubmit()
+{
+	var desc_len = getValLen(document.forms[0].time_sched_name.value);
+	if ((desc_len < 1) || (desc_len > 24))
+	{
+		alert(js_pl_sch_name="Please input the schedule name (Length < 25)!");
+		var element = document.forms[0].time_sched_name;
+		if(element)
+		{
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	if($("input#day_type").radio("getValue")==0)
+	{
+		if (
+		($("input#Mon_select").checkbox("getChecked") == 0)&&
+		($("input#Tue_select").checkbox("getChecked") == 0)&&
+		($("input#Wed_select").checkbox("getChecked") == 0)&&
+		($("input#Thu_select").checkbox("getChecked") == 0)&&
+		($("input#Fri_select").checkbox("getChecked") == 0)&&
+		($("input#Sat_select").checkbox("getChecked") == 0)&&
+		($("input#Sun_select").checkbox("getChecked") == 0)
+		)
+		{
+			alert(js_pl_sel_day="Please select days !");
+			return false;
+		}
+	}
+	if($("input#all_hours").checkbox("getChecked")==0)
+	{
+		if (document.forms[0].time_sched_start_time.value=="")
+		{
+			alert(js_pl_begin_time="Please input the begining time !");
+			var element = document.forms[0].time_sched_start_time;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		if (document.forms[0].time_sched_end_time.value=="")
+		{
+			alert(js_pl_end_time="Please input the ending time !");
+			var element = document.forms[0].time_sched_end_time;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		
+		var st=parseInt(document.forms[0].time_sched_start_time.value, 10);
+		var et=parseInt(document.forms[0].time_sched_end_time.value, 10);
+		if (st > et)
+		{
+			alert(js_end_n_start_time = "The ending time should not be less than the starting time!");
+			var element = document.forms[0].time_sched_end_time;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+
+	return true;
+}
+function change_weekdays_status()
+{
+	var Status = $("input#day_type").radio("getValue");
+	if (Status == 1)
+	{
+		$("input#Mon_select").checkbox("setChecked", 1);
+		$("input#Tue_select").checkbox("setChecked", 1);
+		$("input#Wed_select").checkbox("setChecked", 1);
+		$("input#Thu_select").checkbox("setChecked", 1);
+		$("input#Fri_select").checkbox("setChecked", 1);
+		$("input#Sat_select").checkbox("setChecked", 1);
+		$("input#Sun_select").checkbox("setChecked", 1);
+		
+		$("input#Mon_select").checkbox("disable");
+		$("input#Tue_select").checkbox("disable");
+		$("input#Wed_select").checkbox("disable");
+		$("input#Thu_select").checkbox("disable");
+		$("input#Fri_select").checkbox("disable");
+		$("input#Sat_select").checkbox("disable");
+		$("input#Sun_select").checkbox("disable");
+	}
+	else if (Status == 0)
+	{
+		$("input#Mon_select").checkbox("setChecked", timeSchedAdvDynArray[2]);
+		$("input#Tue_select").checkbox("setChecked", timeSchedAdvDynArray[3]);
+		$("input#Wed_select").checkbox("setChecked", timeSchedAdvDynArray[4]);
+		$("input#Thu_select").checkbox("setChecked", timeSchedAdvDynArray[5]);
+		$("input#Fri_select").checkbox("setChecked", timeSchedAdvDynArray[6]);
+		$("input#Sat_select").checkbox("setChecked", timeSchedAdvDynArray[7]);
+		$("input#Sun_select").checkbox("setChecked", timeSchedAdvDynArray[8]);
+		
+		$("input#Mon_select").checkbox("enable");
+		$("input#Tue_select").checkbox("enable");
+		$("input#Wed_select").checkbox("enable");
+		$("input#Thu_select").checkbox("enable");
+		$("input#Fri_select").checkbox("enable");
+		$("input#Sat_select").checkbox("enable");
+		$("input#Sun_select").checkbox("enable");
+	}
+}
+function change_hours_status()
+{
+	if($("input#all_hours").checkbox("getChecked")==1)
+	{
+		document.forms[0].time_sched_start_time.disabled = 1;
+		document.forms[0].time_sched_end_time.disabled = 1;
+	}
+	else
+	{
+		document.forms[0].time_sched_start_time.disabled = 0;
+		document.forms[0].time_sched_end_time.disabled = 0;
+	}
+}
+function check_all_status()
+{
+	document.forms[0].time_sched_name.value = timeSchedAdvDynArray[0];
+	if(1 == timeSchedAdvDynArray[1])
+	{
+		$("input#day_type").radio("setValue",1);
+	}
+	if (0 == timeSchedAdvDynArray[1])
+	{
+		$("input#day_type").radio("setValue",0);
+	}
+
+	change_weekdays_status();
+
+}
+function doHelp(){location.href="/help/LanArpBindingHelpRpm.htm";}
+function pageload()
+{
+	check_all_status();
+
+	LoadHelp("AccessCtrlTimeSchedAdvHelpRpm.htm");
+	window.helpLoaded = true;
+}
+//-->
+</SCRIPT>
+</HEAD>
+<!-- change XXXX to your dest page.-->
+<BODY>
+<FORM action="AccessCtrlTimeSchedRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+	<TABLE id="autoWidth" >
+	<TBODY>
+		<!--chang your title below.-->
+		<TR>
+			<TD class="h1" id="t_title">Advance Schedule Settings</TD>
+		</TR>
+		<TR>
+			<TD class="blue"></TD>
+		</TR>
+		<!--Content-->
+		<TR>
+			<TD><TABLE border="0" align="center" cellpadding="3" cellspacing="0" class="space">
+				<TR>
+					<TD id="t_note_sch" class="error" colspan="2">Note: The Schedule is based on the time of the Router. </TD>
+				</TR>
+				<TR><TD colspan="2">&nbsp;</TD></TR>
+				<TR>
+					<TD class="item" id="t_sch">Schedule Description:</TD>
+					<TD><INPUT name="time_sched_name" type="text" class="text" value="" size="25" maxlength="24"></TD>
+				</TR>
+				<TR>
+					<TD class="item" id="t_day">Day:</TD>
+					<TD>
+						<input id="day_type" name="day_type"/>
+					</TD>
+				</TR>
+				<TR>
+					<TD>&nbsp;</TD>
+					<TD>
+						<input id="Mon_select" name="Mon_select" />
+						<input id="Tue_select" name="Tue_select" />
+						<input id="Wed_select" name="Wed_select" />
+						<input id="Thu_select" name="Thu_select" />
+						<input id="Fri_select" name="Fri_select" />
+						<input id="Sat_select" name="Sat_select" />
+						<input id="Sun_select" name="Sun_select" />
+					</TD>
+				</TR>
+				<TR>
+					<TD class="item" id="t_time">Time: </TD>
+					<TD>
+						<input id="all_hours" name="all_hours"/>
+					</TD>
+				</TR>
+				<TR>
+					<TD class="item" id="t_start_time">Start Time:</TD>
+					<TD><INPUT name="time_sched_start_time" type="text" class="text" value="" size="5" maxlength="4">
+					&nbsp;(HHMM)</TD>
+				</TR>
+				<TR>
+					<TD class="item" id="t_stop_time">Stop Time:</TD>
+					<TD><INPUT name="time_sched_end_time" type="text" class="text" value="" size="5" maxlength="4">
+					&nbsp;(HHMM)</TD>
+				</TR>
+			</TABLE></TD>
+		</TR>
+		<TR>
+			<TD class="blue"></TD>
+		</TR>
+		<TR>
+			<TD class="mbtn"><!--Button-->
+				<INPUT name="Changed" type="hidden" value="">
+				<INPUT name="SelIndex" type="hidden" value="">
+				<INPUT name="fromAdd" type="hidden" value="">
+				<INPUT name="Page" type="hidden" value="">
+				&nbsp;
+				<INPUT name="Save" type="submit" class="buttonBig" value="Save">
+				&nbsp;
+				<INPUT type="button" value="Back" name="Back" class="buttonBig" onClick="doBack(timeSchedAdvDynArray[14], timeSchedAdvDynArray[15]);">
+			</TD>
+		</TR>
+	</TBODY>
+	</TABLE>
+</FORM>
+<script type="text/javascript">
+	var dayStrs = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], i;
+	var dayID = ["", "mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+	$("input#day_type").radio({
+		columns: 2,
+		items: [
+			{boxlabel: (js_everyday = "Everyday"), inputvalue: "1", id: "day_type_all"},
+			{boxlabel: (js_select_day = "Select Days"), inputvalue: "0", id: "day_type_choose"}
+		]
+	}).on("ev_click", change_weekdays_status);
+	
+	for (i = 1; i <= 7; i++)
+	{
+		$("input#"+dayStrs[i]+"_select").checkbox({
+			cls: "inline",
+			items: [{id: "t_" + dayID[i], boxlabel: dayStrs[i], inputvalue: "1"}]
+		});
+	}
+	
+	$("input#all_hours").checkbox({
+			cls: "inline",
+			items: [{boxlabel: (t_all = "all day-24 hours"), inputvalue: "1"}]
+		}).on("ev_change", change_hours_status);
+	
+</script>
+
+<SCRIPT type="text/javascript">
+	document.forms[0].time_sched_name.value =timeSchedAdvDynArray[0];
+	if (document.forms[0].time_sched_name.value == "")
+	{
+		timeSchedAdvDynArray[1] = 1;
+		timeSchedAdvDynArray[9] = 1;
+	}
+	if(1 == timeSchedAdvDynArray[1])
+	{
+		$("input#day_type").radio("setValue",1);
+	}
+	if (0 == timeSchedAdvDynArray[1])
+	{
+		$("input#day_type").radio("setValue",0);
+	}
+	if (timeSchedAdvDynArray[1] == 1)
+	{
+		change_weekdays_status();
+	}
+	else
+	{
+		change_weekdays_status();
+	}
+
+	var hoursCheck=timeSchedAdvDynArray[9]==1?true:false;
+	$("input#all_hours").checkbox("setChecked",hoursCheck);
+	change_hours_status();
+	document.forms[0].time_sched_start_time.value =timeSchedAdvDynArray[10];
+	document.forms[0].time_sched_end_time.value =timeSchedAdvDynArray[11];
+	document.forms[0].Changed.value = timeSchedAdvDynArray[12];
+	document.forms[0].SelIndex.value = timeSchedAdvDynArray[13];
+	document.forms[0].Page.value = timeSchedAdvDynArray[14];
+	document.forms[0].fromAdd.value =  timeSchedAdvDynArray[16]; 
+</SCRIPT>
+</BODY>
+<HEAD>
+<META http-equiv="pragma" content="no-cache">
+</HEAD>
+</HTML>

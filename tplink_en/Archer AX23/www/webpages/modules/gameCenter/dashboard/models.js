@@ -1,0 +1,1 @@
+!function(e){e.su.storeManager.define("timePeriodStore",{fields:[{name:"name"},{name:"value"}],data:[{value:"1",name:e.su.CHAR.DASHBOARD.ONE_HOUR},{value:"2",name:e.su.CHAR.DASHBOARD.TWO_HOURS},{value:"4",name:e.su.CHAR.DASHBOARD.FOUR_HOURS},{value:"-1",name:e.su.CHAR.DASHBOARD.ALWAYS}]})}(jQuery);

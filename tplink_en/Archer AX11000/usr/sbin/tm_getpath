@@ -1,0 +1,43 @@
+#!/usr/bin/lua
+
+local usbshare = require "luci.model.usbshare"
+local uci   = require "luci.model.uci"
+local dbg   = require "luci.tools.debug"
+local fs    = require "luci.fs"
+local uci_r = uci.cursor()
+
+local dirpath = "/tmp/netatalk"
+local dirfile = dirpath.."/tmppath"
+if fs.isfile(dirfile) then
+	fs.unlink(dirfile)
+end
+
+--get uuid
+local uuid  = uci_r:get("time_machine", "settings", "uuid")
+if not uuid then
+	return
+end
+
+--get mnt devname
+local volumn = usbshare.CfgParser():get_volumn(uuid)
+if not volumn then
+	return nil
+end
+
+--get real path and store in the temp file
+if not fs.isdirectory(dirpath) then
+	fs.mkdir(dirpath, true)
+end
+
+local file  = io.open(dirfile, "w+")
+if not file then
+	return nil
+end
+
+local path  = uci_r:get("time_machine", "settings", "path") or ""
+local dir = volumn.mntdir..path
+file:write(dir)
+file:close()
+
+return dir
+

@@ -1,0 +1,57 @@
+#!/bin/sh
+
+REL_PORTID_LAN1=2
+REL_PORTID_LAN2=3
+REL_PORTID_LAN3=4
+REL_PORTID_LAN4=5
+
+LAN_SET="1 2 3 4"
+lan_status=0
+
+# $1 base number
+# $2 power
+power()
+{
+	local base=$1
+	local power=$2
+	local val=1
+	[ "$base" = "0" ] && {
+	echo 1
+	return
+	}
+	for i in $(seq $power)
+	do
+		val=$(($val * $base))
+	done
+	echo $val
+}
+
+#power 2 3
+#power 0 0
+#power 0 1
+#power 1 0
+
+set_bit()
+{
+	local old_val=$1
+	local bit=$2
+	local bit_val=
+	bit_val=$(power 2 $bit)
+	local new_val=$(($old_val | $bit_val))
+	printf "%d" $new_val
+}
+
+
+for lan in $LAN_SET;do
+	[ -z "$lan" ] && continue
+	lan_var=REL_PORTID_LAN$lan
+	port_id=$(eval echo \$$lan_var)
+	status=$(ssdk_sh port linkstatus get $port_id)
+	echo $status | grep -q "ENABLE"
+	[ $? -eq 0 ] && {
+		lan_status=$(set_bit $lan_status $(($lan-1)))
+	}	
+done
+
+return $lan_status
+

@@ -1,0 +1,146 @@
+
+<link rel="stylesheet" type="text/css" href="../dynaform/widget.css"></link>
+<!--[if lte IE 8]>
+<link href="../dynaform/ie8.css", rel="stylesheet" type="text/css">
+ <![endif]-->
+<script type="text/javascript" src="../js/su/su.js"></script>
+<script type="text/javascript" src="../js/su/widget/widget.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/textbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/combobox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/checkbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/radio.js"></script>
+<SCRIPT language="javascript" src="../dynaform/custom.js" type="text/javascript"></SCRIPT>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<SCRIPT type="text/javascript">
+<!--//
+function doSubmit()
+{
+	if(document.forms[0].up_bandWidth.value == "")
+	{
+		document.forms[0].up_bandWidth.value = 0;
+	}
+	if(!is_number(document.forms[0].up_bandWidth.value))
+	{
+		alert(js_egrs_bnd="Egress bandwidth error,please input again!");
+		document.forms[0].up_bandWidth.select();
+		return false;
+	}
+	if(document.forms[0].up_bandWidth.value < QoSCfgPara[3])
+	{
+		alert(js_ingr_bnd_err="Egress bandwidth is invalid,please input again!");
+		document.forms[0].up_bandWidth.select();
+		return false;
+	}
+	if(document.forms[0].down_bandWidth.value == "")
+	{
+		document.forms[0].down_bandWidth.value = 0;
+	}
+	if(!is_number(document.forms[0].down_bandWidth.value)){
+		alert(js_egrs_ls="Ingress bandwidth error,please input again!");
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	if(document.forms[0].down_bandWidth.value < QoSCfgPara[4])
+	{
+		alert(js_inv_bd="Ingress bandwidth is invalid,please input again!");
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	return true;
+}
+//-->
+</SCRIPT>
+</HEAD>
+<BODY>
+<FORM action="QoSCfgRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+  <CENTER>
+    <TABLE border="0" cellspacing="0" cellpadding="0">
+      <TR>
+        <TD align="left" valign="middle" class="h1" id = "t_title">Bandwidth Control Settings</TD>
+      </TR>
+      <TR>
+        <TD class = "blue"></TD>
+      </TR>
+      <TR>
+        <TD><TABLE border="0" cellspacing="0" cellpadding="0">
+            <TR>
+              <TD id = "t_enb_qos" class = "Item">Enable Bandwidth Control:</TD>
+              <TD><INPUT name="QoSCtrl" id="QoSCtrl"></TD>
+            </TR>
+            <TR>
+              <TD class="Item" id="t_bandwith_type">Line Type:</TD>
+              <TD>
+				<INPUT name="userWanType" id="userWanType"/>
+               </TD>
+            </TR>
+            <TR valign=bottom>
+              <TD width="60" class = "Item" id = "t_up_band">Egress Bandwidth:</TD>
+              <TD>
+              	<INPUT name="up_bandWidth" type="text" value="" size="21" maxlength="7" class="text">
+              	&nbsp;
+              	<SPAN id = "t_kbps" name="t_kbps">Kbps</SPAN>
+              </TD>
+            </TR>
+            <TR valign=bottom>
+              <TD width="60" class = "Item" id = "t_down_band">Ingress Bandwidth:</TD>
+              <TD><INPUT name="down_bandWidth" type="text" value="" size="21" maxlength="7" class="text">
+              	&nbsp;
+              	<SPAN id = "t_kbps" name="t_kbps">Kbps</SPAN>
+              </TD>
+            </TR>
+          </TABLE></TD>
+      </TR>
+      <TR>
+        <TD class="blue"></TD>
+      </TR>
+      <TR>
+        <TD align = "center" class = "mbtn">&nbsp;
+          <INPUT name="Save" type="submit" class="button" value="Save">
+          &nbsp; </TD>
+      </TR>
+    </TABLE>
+  </CENTER>
+</FORM>
+</BODY>
+<HEAD>
+<META http-equiv="pragma" content="no-cache">
+</HEAD>
+</HTML>
+<SCRIPT type="text/javascript">
+<!--
+$("input#QoSCtrl").checkbox({
+	items: [{boxlabel: "", inputvalue: "1"}]
+});
+$("input#userWanType").radio({
+	cls: "inline",
+	columns: 2,
+	items: [
+		{boxlabel: (js_adsl = "ADSL"), inputvalue: "0"},
+		{boxlabel: (js_other = "Other"), inputvalue: "1"}
+	]
+});
+
+var QoSChecked = QoSCfgPara[0]?true:false;
+$("input#QoSCtrl").checkbox("setChecked", QoSChecked);
+
+if(QoSCfgPara[1] != 0 && QoSCfgPara[2] != 0 )
+{
+document.forms[0].up_bandWidth.value = QoSCfgPara[1];
+document.forms[0].down_bandWidth.value = QoSCfgPara[2];
+}
+else
+{
+document.forms[0].up_bandWidth.value = 100000;
+document.forms[0].down_bandWidth.value = 100000;
+}
+if (QoSCfgPara[5] == 0)
+{
+	$("input#userWanType").radio("setValue", 0);
+}
+else
+{
+	$("input#userWanType").radio("setValue", 1);
+}
+
+-->
+</SCRIPT>

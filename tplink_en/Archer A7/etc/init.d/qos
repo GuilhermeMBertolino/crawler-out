@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=99
+
+PC_LIBDIR=/lib/qos
+
+pc() {
+	. $PC_LIBDIR/core.sh
+	fw_$1
+}
+
+start() {
+	if [ ! -f /etc/config/qos_v2 ];then
+		touch /etc/config/qos_v2
+		uci set qos_v2.settings='global'
+		uci set qos_v2.settings.enable='off'
+		uci set qos_v2.settings.up_band='1000'
+		uci set qos_v2.settings.down_band='1000'
+		uci set qos_v2.settings.up_unit='mbps'
+		uci set qos_v2.settings.down_unit='mbps'
+		uci set qos_v2.settings.high='90'
+		uci set qos_v2.settings.low='10'
+		uci commit
+	fi
+	pc start
+}
+
+stop() {
+	pc stop
+}
+
+restart() {
+	pc restart
+}
+
+reload() {
+	pc reload
+}

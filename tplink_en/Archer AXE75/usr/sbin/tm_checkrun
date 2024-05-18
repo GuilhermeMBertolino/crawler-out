@@ -1,0 +1,54 @@
+#!/bin/sh
+# copyright(c) 2016-2018 Shenzhen TP-LINK Technologies Co.Ltd.
+#
+# /usr/sbin/tm_checkrun
+# Written by zengwei<zengwei@tp-link.com.cn>, Aug 2016
+#
+# This script is as shell cmd for others call
+
+SERVICE_DAEMONIZE=1
+. /lib/functions/service.sh
+. /lib/functions.sh
+
+#username from usbshare for netatalk alias
+username=$1
+
+AFPD_BIN="/usr/sbin/afpd"
+CNID_METAD_BIN="/usr/sbin/cnid_metad"
+AVAHI_DAEMON_BIN="/usr/sbin/avahi-daemon"
+
+config_load time_machine
+config_get enable settings enable "on"
+
+[ "x$enable" != "xon" ] && {
+	/etc/init.d/afpd stop
+	/etc/init.d/avahi-daemon stop
+	return
+}
+
+# get time machine directory
+tm_getpath
+
+# if time machine directory exist and the
+# avahi and afpd not start, then start
+[ -f "/tmp/netatalk/tmppath" ] && {
+	dir=`cat "/tmp/netatalk/tmppath"`
+echo "dir : $dir"  >> /dev/console
+	[ -d "$dir" ] && {
+		(service_check $AFPD_BIN && service_check $CNID_METAD_BIN) || {
+			/etc/init.d/afpd stop
+			/etc/init.d/afpd start $username
+		}
+
+		$AVAHI_DAEMON_BIN -c || \
+			/etc/init.d/avahi-daemon start
+
+		return
+	}
+}
+
+# or stop the avahi and netatalk	
+#echo "time machine dir scan not exist : stop"  >> /dev/console
+/etc/init.d/afpd stop
+/etc/init.d/avahi-daemon stop
+

@@ -1,0 +1,153 @@
+<div>
+    <div class="titleBar">
+        <a url="systemTools.mobile.htm"><span class="icon-back sprite c-arrow-blue-left" ></span></a>
+        <h1>Administration</h1>
+        <a id="tb_Save" data-status="save">Save</a>
+    </div>
+    <div class="item-list mt15">
+        <div class="section-container">
+        <!--         <div id="oldNameContainer" class="section-box">
+            <input type="text" id="curName" />
+        </div> -->
+        <div class="section-box">
+            <input type="password" id="curPwd" />
+        </div>
+        <div id="newNameContainer" class="section-box">
+            <input type="text" id="newName" />
+        </div>
+        <div class="section-box">
+            <input id="newPwd" type="password" class="has-confirm" />
+        </div>
+    </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+(function() {
+    $('.titleBar').titleBar();
+    $('.titleBar').titleBar('title', $.tpLang.menu_str.admin);
+    $('#tb_Save').titleButton('status', 'save', $.tpLang.m_str.save);
+
+    /*$('#curName').inputBoxMobile({
+        'title': $.tpLang.manageCtrl_nstr['t_oldname']
+    });*/
+
+    $('#curPwd').inputBoxMobile({
+        'title': $.tpLang.manageCtrl_nstr['t_oldpwd'],
+        'warnings': [{
+            func: function() {
+                var arg = $('#curPwd').inputBoxMobile('option', 'value');
+                if (arg === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_OLD_PWD_EMPTY]
+        }, {
+            func: function() {
+                var arg = $('#curPwd').inputBoxMobile('option', 'value');
+                if ($.asc(arg, true) !== 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_OLD_PWD_ASCII]
+        }]
+    });
+    $('#newName').inputBoxMobile({
+        'title': $.tpLang.manageCtrl_nstr['t_newname'],
+        'warnings': [{
+            func: function() {
+                var arg = $('#newName').inputBoxMobile('option', 'value');
+                if (arg === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_NAME_EMPTY]
+        }, {
+            func: function() {
+                var arg = $('#newName').inputBoxMobile('option', 'value');
+                if ($.asc(arg, true) !== 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_NAME_ASCII]
+        }]
+    });
+    $('#newPwd').inputBoxMobile({
+        'title': $.tpLang.manageCtrl_nstr['t_newpwd'],
+        'warnings': [{
+            func: function() {
+                var arg = $('#newPwd').inputBoxMobile('option', 'value');
+                if (arg === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_PWD_EMPTY]
+        }, {
+            func: function() {
+                var asciiWithoutSpace = /^(?=[^ ]+$)[\x21-\x7f]+$/;
+                var arg = $('#newPwd').inputBoxMobile('option', 'value');
+                if ($.asc(arg, true) !== 0 || asciiWithoutSpace.test(arg) == false) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_PWD_ASCII]
+        }]
+    }).passwordLevel({
+        'confirmTitle': $.tpLang.manageCtrl_nstr['t_confirm'],
+        'differentWarning': e_str[ERR_USER_NAME_PWD_CONFLICT],
+        'nullWarning': e_str[ERR_USER_NAME_PWD_CONFLICT]
+    });
+
+    (function init() {
+        if (INCLUDE_CHGINIT_PWD) {
+            // $('#oldNameContainer').hide();
+            $('#newNameContainer').hide();
+            $('#newName').inputBoxMobile({
+                'value': 'admin'
+            });
+        }
+    })();
+
+    $('#tb_Save').on('click', function() {
+        $.startWaitingMobile($.tpLang.m_str.waiting);
+        var arg;
+        var userCfg = {};
+        var asciiWithoutSpace = /^(?=[^ ]+$)[\x21-\x7f]+$/;
+        if ($('#curPwd').inputBoxMobile('option', 'value') || $('#newName').inputBoxMobile('option', 'value') || $('#newPwd').inputBoxMobile('option', 'value') || $('#cfmPwd').inputBoxMobile('option', 'value')) {
+            if (!$.checkAllInput()) return false;
+            userCfg.oldPwd = $('#curPwd').inputBoxMobile('option', 'value');
+            userCfg.name = $('#newName').inputBoxMobile('option', 'value');
+            userCfg.pwd = $('#newPwd').inputBoxMobile('option', 'value');
+        }
+
+        if (userCfg.oldPwd) {
+            $.act(ACT_CGI, '/cgi/auth', null, null, userCfg);
+        }
+
+        $.exe(function(ret) {
+            $.stopWaitingMobile();
+            if (!ret) {
+                if (userCfg.oldPwd) {
+                    $.deleteCookie('Authorization');
+                }
+                var ret = location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+                location.href = ret[1] + '://' + ret[2];
+            } else {
+                // $.errBack(ret, 'administration.mobile.htm');
+            }
+        });
+    });
+})();
+</script>

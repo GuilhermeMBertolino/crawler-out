@@ -1,0 +1,827 @@
+<script type="text/javascript">
+var oldPort;
+var aclStk;
+var remotePort = {},
+    localPort = {};
+
+var g_localHost;
+
+function initWan() {
+    var wanV4 = null,
+        wanV6 = null;
+    var wan = {};
+    var wanStk;
+    var usbStk;
+    var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode"]);
+    var wanComInfList = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+    var l3Forward = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+    if (INCLUDE_IPV6)
+        var l3ForwardIpv6 = $.act(ACT_GET, L3_IP6_FORWARDING, null, null, ["__ifAliasName"]);
+
+    if (!$.exe()) {
+        $.each(wanComInfList, function() {
+            if (this.WANAccessType == "Ethernet" && sysMode.mode == "ETH") {
+                wanStk = this.__stack;
+            }
+            if (this.WANAccessType == "USB_3G" && sysMode.mode == "USB_3G") {
+                usbStk = wanStk = this.__stack;
+            }
+            if (this.WANAccessType == "DSL" && sysMode.mode == "DSL") {
+                wanStk = this.__stack;
+            }
+        });
+    }
+
+    var wanIpConList = $.act(ACT_GS, WAN_IP_CONN, null, wanStk);
+    var wanPppConList = $.act(ACT_GS, WAN_PPP_CONN, null, wanStk);
+
+    var wanIpConListUSB = $.act(ACT_GS, WAN_IP_CONN, null, usbStk);
+    var wanPppConListUSB = $.act(ACT_GS, WAN_PPP_CONN, null, usbStk);
+
+    if (INCLUDE_L2TP) {
+        var wanL2tpConList = $.act(ACT_GS, WAN_L2TP_CONN, null, wanStk);
+    }
+    if (INCLUDE_PPTP) {
+        var wanPptpConList = $.act(ACT_GS, WAN_PPTP_CONN, null, wanStk);
+    }
+
+    if (!$.exe()) {
+        $.each(wanIpConListUSB, function() {
+            if (this.enable == 1 && this.X_TP_TransportType == "DHCP4G") {
+                if (this.name == l3Forward.__ifAliasName) {
+                    wanV4 = this.externalIPAddress;
+                }
+                if (INCLUDE_IPV6) {
+                    if (this.name == l3ForwardIpv6.__ifAliasName) {
+                        wanV6 = this.X_TP_ExternalIPv6Address;
+                    }
+                }
+            }
+        });
+        $.each(wanPppConListUSB, function() {
+            if (this.enable == 1 && this.transportType == "PPP3G") {
+                if (this.name == l3Forward.__ifAliasName) {
+                    wanV4 = this.externalIPAddress;
+                }
+                if (INCLUDE_IPV6) {
+                    if (this.name == l3ForwardIpv6.__ifAliasName) {
+                        wanV6 = this.X_TP_ExternalIPv6Address;
+                    }
+                }
+            }
+        });
+        $.each(wanIpConList, function() {
+            if (this.enable == 1) {
+                if (this.name == l3Forward.__ifAliasName) {
+                    wanV4 = this.externalIPAddress;
+                }
+                if (INCLUDE_IPV6) {
+                    if (this.name == l3ForwardIpv6.__ifAliasName) {
+                        wanV6 = this.X_TP_ExternalIPv6Address;
+                    }
+                }
+            }
+        });
+        $.each(wanPppConList, function() {
+            if (this.enable == 1) {
+                if (this.name == l3Forward.__ifAliasName) {
+                    wanV4 = this.externalIPAddress;
+                }
+                if (INCLUDE_IPV6) {
+                    if (this.name == l3ForwardIpv6.__ifAliasName) {
+                        wanV6 = this.X_TP_ExternalIPv6Address;
+                    }
+                }
+            }
+        });
+        if (INCLUDE_L2TP) {
+            $.each(wanL2tpConList, function() {
+                if (this.enable == 1) {
+                    if (this.name == l3Forward.__ifAliasName) {
+                        wanV4 = this.externalIPAddress;
+                    }
+                    if (INCLUDE_IPV6) {
+                        if (this.name == l3ForwardIpv6.__ifAliasName) {
+                            wanV6 = this.X_TP_ExternalIPv6Address;
+                        }
+                    }
+                }
+            });
+        }
+        if (INCLUDE_PPTP) {
+            $.each(wanPptpConList, function() {
+                if (this.enable == 1) {
+                    if (this.name == l3Forward.__ifAliasName) {
+                        wanV4 = this.externalIPAddress;
+                    }
+                    if (INCLUDE_IPV6) {
+                        if (this.name == l3ForwardIpv6.__ifAliasName) {
+                            wanV6 = this.X_TP_ExternalIPv6Address;
+                        }
+                    }
+                }
+            });
+        }
+    }
+    return [wanV4, wanV6];
+}
+
+function remoteHttpsSync(bool) {
+    if (bool) {
+        $('#remoteHttpsEn').prop('disabled', false).data('tpCheckbox').refresh();
+        $('#r_http_port').prop('disabled', false);
+        $('#onlyThis').prop('disabled', false).data('tpRadio').refresh();
+        $('#all').prop('disabled', false).data('tpRadio').refresh();
+        remoteHostSync($('#onlyThis').prop('checked'));
+    } else {
+        $('#remoteHttpsEn').prop('disabled', true).data('tpCheckbox').refresh();
+        $('#r_http_port').prop('disabled', true);
+        $('#onlyThis').prop('disabled', true).data('tpRadio').refresh();
+        $('#all').prop('disabled', true).data('tpRadio').refresh();
+        $('#r_host').prop('disabled', true);
+    }
+}
+
+function remoteHostSync(bool) {
+    $('#r_host').prop('disabled', !bool);
+}
+$("input#newPwd").keyup(function() {
+    $.pwdIntensityCheck($("#pwdCheck"), $(this).val());
+});
+$('#localHttpsEn').click(function(e) {
+    if ($('#localHttpsEn').prop('checked')) {
+        $('#l_https_port').prop('disabled', true);
+    } else {
+        $('#l_https_port').prop('disabled', false);
+    }
+});
+$("#r_http_en").click(function() {
+    remoteHttpsSync($("#r_http_en").prop("data-checked"));
+});
+$('#remoteHttpsEn').click(function(e) {
+    if ($('#remoteHttpsEn').prop('data-checked')) {
+        $('#r_http_port').val(remotePort.httpsPort);
+    } else {
+        $('#r_http_port').val(remotePort.httpPort);
+    }
+});
+
+$('#localAllowEn').click(function(e) {
+    if ($('#localAllowEn').prop('data-checked')) {
+        $("#localAllowAddr").removeClass("nd");
+    	$("#l_host").prop('value', g_localHost ? g_localHost : "");
+    } else {
+        $("#localAllowAddr").addClass("nd");
+    	$("#l_host").prop('value',"");
+    }
+});
+
+$('#onlyThis').click(function(e) {
+    remoteHostSync(true);
+});
+$('#all').click(function(e) {
+    remoteHostSync(false);
+    $('#r_host').val('');
+});
+$("#t_save4").click(function() {
+    $.addLoading($(this));
+    if (INCLUDE_ACL) {
+        var arg = {};
+        arg.IPStart = "0.0.0.0";
+        arg.IPEnd = "0.0.0.0";
+        arg.service = "Ping";
+        if ($("#pingRemote").prop("data-checked") == true || $("#pingLocal").prop("data-checked") == true) {
+            arg.enable = 1;
+            if ($("#pingRemote").prop("data-checked") == true && $("#pingLocal").prop("data-checked") == true) {
+                arg.location = "Both";
+            } else if ($("#pingRemote").prop("data-checked") == true) {
+                arg.location = "Remote";
+            } else {
+                arg.location = "Local";
+            }
+        } else {
+            arg.enable = 0;
+        }
+        $.act(aclStk ? ACT_SET : ACT_ADD, ACL_CFG, aclStk ? aclStk : null, null, arg);
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret)
+                $.reload('manageCtrl.htm');
+        });
+    }
+});
+$("#t_save3").click(function() {
+    $.addLoading($(this));
+    var httpCfg = {};
+    var appCfg = {};
+    var refresh = false;
+
+    if ($("#r_http_en").prop("data-checked")) {
+        httpCfg.httpRemoteEnabled = 1;
+        httpCfg.httpsRemoteEnabled = $('#remoteHttpsEn').prop('data-checked') ? 1 : 0;
+        arg = $("#r_http_port").prop('value');
+        if (httpCfg.httpsRemoteEnabled) {
+            if ($.num(arg, 443, [1024, 65535], true)) {
+                $.alert(ERR_HTTPS_REMOTE_PORT);
+				$("#r_http_port").select();
+				$("#r_http_port").focus();
+				return ;
+            }
+        } else {
+            if ($.num(arg, 80, [1024, 65535], true)) {
+                $.alert(ERR_HTTP_REMOTE_PORT);
+				$("#r_http_port").select();
+				$("#r_http_port").focus();
+				return ;
+            }
+        }
+        if (httpCfg.httpsRemoteEnabled == 1) {
+            httpCfg.httpsRemotePort = parseInt(arg, 10);
+        } else {
+            httpCfg.httpRemotePort = parseInt(arg, 10);
+        }
+
+        arg = $("#r_host").prop('value');
+        if (arg.search('-') >= 0) {
+            arg = arg.replace(/\-/g, ':');
+        }
+        if ( (!$("#r_host").prop('disabled') && arg == "") || (arg !== "" && $.ifip(arg, true) && $.mac(arg, true))) {
+			$("#r_host").focus();
+			$("#r_host").select();
+            $.alert(ERR_APP_REMOTE_HOST);
+			return ;
+        }
+        if (!$.ifip(arg, true)) {
+            appCfg.remoteHost = $.num2ip($.ip2num(arg));
+        } else {
+            appCfg.remoteHost = arg.toUpperCase();
+        }
+    } else {
+        httpCfg.httpRemoteEnabled = 0;
+        refresh = false;
+    }
+
+    var newPort = clientLocal ? 0 : ((httpCfg.httpRemoteEnabled == 1 && httpCfg.httpsRemoteEnabled == 1) ? httpCfg.httpsRemotePort : httpCfg.httpRemotePort);
+
+    if ((!clientLocal && appCfg.remoteHost && appCfg.remoteHost != clientIp && appCfg.remoteHost != clientMac)) {
+        $.confirm(c_str.cdefaults, function() {
+            refresh = true;
+            doSave(appCfg, httpCfg, refresh, newPort);
+        }, function() {
+            $.reload();
+        });
+    } else if (newPort != oldPort && newPort != 0) {
+        $.confirm(c_str.refresh, function() {
+            refresh = true;
+            doSave(appCfg, httpCfg, refresh, newPort);
+        }, function() {
+            $.reload();
+        });
+    } else {
+        doSave(appCfg, httpCfg, refresh, newPort);
+    }
+
+});
+$("#t_save2").click(function() {
+    $.addLoading($(this));
+    var httpCfg = {};
+    var appCfg = {};
+    var refresh = false;
+
+    arg = $("#l_http_port").prop('value');
+    httpCfg.httpLocalPort = parseInt(arg, 10);
+    if ($.num(arg, 80, [1024, 65535], true)) {
+        $.alert(ERR_HTTP_LOCAL_PORT);
+		$("#l_http_port").select();
+		$("#l_http_port").focus();
+		return ;
+    }
+
+    arg = $("#l_https_port").prop('value');
+    httpCfg.httpsLocalPort = parseInt(arg, 10);
+    if ($.num(arg, 443, [1024, 65535], true)) {
+        $.alert(ERR_HTTPS_LOCAL_PORT);
+		$("#l_https_port").select();
+		$("#l_https_port").focus();
+		return ;
+    }
+
+    if ($('#localHttpsEn').prop('checked')) {
+        httpCfg.httpsLocalEnabled = 1;
+    } else {
+        httpCfg.httpsLocalEnabled = 0;
+    }
+
+    arg = $("#l_host").prop('value');
+    if (arg.search('-') >= 0) {
+        arg = arg.replace(/\-/g, ':');
+    }
+    if (($('#localAllowEn').prop('data-checked') && $("#l_host").prop('value') == "") || (arg !== "" && $.ifip(arg, true) && $.mac(arg, true))) {
+		$.alert(ERR_APP_LOCAL_HOST);
+		$("#l_host").focus();
+        $("#l_host").select();
+        return ;
+    }
+    if (!$.ifip(arg, true)) {
+        appCfg.localHost = $.num2ip($.ip2num(arg));
+    } else {
+        appCfg.localHost = arg.toUpperCase();
+    }
+
+	appCfg.localHost = $('#localAllowEn').prop('data-checked') ? appCfg.localHost : "";
+
+    // var newPort = bSecured ? (clientLocal ? httpCfg.httpsLocalPort || httpCfg.httpLocalPort : 0) : (clientLocal ? httpCfg.httpLocalPort || httpCfg.httpLocalPort : 0);
+    var newPort = clientLocal ? (bSecured && (httpCfg.httpsLocalEnabled == 1) ? httpCfg.httpsLocalPort : httpCfg.httpLocalPort) : 0;
+    if (clientLocal && appCfg.localHost && appCfg.localHost != clientIp && appCfg.localHost != clientMac) {
+        $.confirm(c_str.refresh_dis, function() {
+            refresh = true;
+            doSave(appCfg, httpCfg, refresh, newPort);
+        }, function() {
+            $.reload();
+        });
+    } else if (newPort != oldPort && newPort != 0) {
+        $.confirm(c_str.refresh, function() {
+            refresh = true;
+            doSave(appCfg, httpCfg, refresh, newPort);
+        }, function() {
+            $.reload();
+        });
+    } else {
+        doSave(appCfg, httpCfg, refresh, newPort);
+    }
+
+});
+$("#t_save1").click(function() {
+    $.addLoading($(this));
+    var arg;
+    var userCfg = {};
+    var asciiWithoutSpace = /^(?=[^ ]+$)[\x21-\x7f]+$/;
+    if ($("#curPwd").prop('value') || $("#newName").prop('value') || $("#newPwd").prop('value') || $("#cfmPwd").prop('value')) {
+        arg = $("#curPwd").prop('value');
+        if (arg === "") {
+			$.alert(ERR_USER_OLD_PWD_EMPTY);
+			$("#curPwd").select();
+			$("#curPwd").focus();
+            return ;
+        }
+        if ($.asc(arg, true)) {
+            $.alert(ERR_USER_OLD_PWD_ASCII);
+			$("#curPwd").select();
+			$("#curPwd").focus();
+			return ;
+        }
+        userCfg.oldPwd = arg;
+
+        arg = $("#newName").prop('value');
+        if (arg === "") {
+            $.alert(ERR_USER_NAME_EMPTY);
+			$("#newName").select();
+			$("#newName").focus();
+			return;
+        }
+        if ($.asc(arg, true)) {
+            $.alert(ERR_USER_NAME_ASCII);
+			$("#newName").select();
+			$("#newName").focus();
+			return;
+        }
+        userCfg.name = arg;
+
+        arg = $("#newPwd").prop('value');
+        if (arg === "") {
+            $.alert(ERR_USER_PWD_EMPTY);
+			$("#newPwd").select();
+			$("#newPwd").focus();
+			return;
+        }
+        if ($.asc(arg, true) || asciiWithoutSpace.test(arg) == false) {
+            $.alert(ERR_USER_PWD_ASCII);
+			$("#newPwd").select();
+			$("#newPwd").focus();
+			return;
+        }
+        userCfg.pwd = arg;
+        if (arg !== $("#cfmPwd").prop('value')) {
+            $.alert(ERR_USER_NAME_PWD_CONFLICT);
+			$("#cfmPwd").select();
+			$("#cfmPwd").focus();
+			return;
+        }
+    }
+
+    if (userCfg.oldPwd) {
+        $.act(ACT_CGI, "/cgi/auth", null, null, userCfg);
+    }
+
+    $.exe(function(ret) {
+        $.removeLoading();
+        if (!ret) {
+            if (userCfg.oldPwd) {
+                $.deleteCookie("Authorization");
+            }
+            $.reload("manageCtrl.htm");
+        } else {
+            $.errBack(ret, "manageCtrl.htm");
+        }
+    });
+});
+
+function doSave(appCfg, httpCfg, refresh, newPort) {
+    $.act(ACT_SET, APP_CFG, null, null, appCfg);
+    $.act(ACT_SET, HTTP_CFG, null, null, httpCfg);
+    $.exe(function(ret) {
+        //$.removeLoading();
+        if (!ret) {
+            if (refresh) {
+                // $.addLoading();
+                // setTimeout(function() {
+                $.removeLoading();
+                if (clientLocal == 1) {
+                    if ((!bSecured && (httpCfg.httpsLocalEnabled == 0)) || (bSecured && httpCfg.httpsLocalEnabled == 1)) {
+                        if (oldPort != newPort) {
+                            $.refresh(null, newPort);
+                        } else {
+                            $.reload();
+                        }
+                    } else {
+                        var ret = location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+                        location.href = ('http') + "://" + ret[2] + (newPort ? ":" + newPort : (ret[3] ? ret[3] : "")) + "/";
+                    }
+                }
+                if (!clientLocal && (httpCfg.httpRemoteEnabled == 1 || httpCfg.httpsRemoteEnabled == 1)) {
+                    if ((bSecured && (httpCfg.httpRemoteEnabled == 1 && httpCfg.httpsRemoteEnabled == 1)) || (!bSecured && (httpCfg.httpRemoteEnabled == 1 && httpCfg.httpsRemoteEnabled == 0))) {
+                        if (oldPort != newPort) {
+                            $.refresh(null, newPort);
+                        } else {
+                            $.reload();
+                        }
+                    } else {
+                        $.addLoading();
+                        setTimeout(function() {
+                            $.removeLoading();
+                            var ret = location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+                            location.href = (bSecured ? 'http' : 'https') + "://" + ret[2] + (newPort ? ":" + newPort : (ret[3] ? ret[3] : "")) + "/";
+                        }, 5000);
+
+                    }
+                }
+                // }, 5000);
+
+            } else {
+            	//$.addLoading();
+            	setTimeout(function() {
+                 $.removeLoading();
+                 $.reload();}, 4000);
+            }
+        } else {
+            $.errBack(ret, "manageCtrl.htm");
+        }
+    });
+}
+
+$('#downloadCert').click(function(e) {
+    var fakeLink;
+    fakeLink = document.createElement("a");
+    if (typeof(fakeLink.click) == 'undefined') {
+        location.href = '/cgi/https?downCACert';
+    } else {
+        fakeLink.href = '/cgi/https?downCACert';
+        document.body.appendChild(fakeLink);
+        fakeLink.click();
+    }
+});
+
+function checkLength(t)
+{
+	var input = t;
+	var input_val = input.val();
+	if(input_val.length <= 15)
+	{
+		return;
+	}
+	input.blur();
+	input.val(input_val.substring(0,15));
+	$.alert(ERR_USER_PWD_LEN_INVALID);
+	input.select();
+	input.focus();
+
+}
+
+function init() {
+    if (INCLUDE_CLOUD_ACCOUNT) {
+        var userObj = $.act(ACT_GET, CURRENT_USER);
+        $.exe();
+        if (userObj.userSetting == 2) {
+            //cloud login, hide this part
+            $('#account-management-div').addClass('nd');
+            //hide corresponding help
+            $.displayHelp(false, 1);
+        } else {
+            $.displayHelp(true, 1);
+        }
+
+
+    }
+    if (INCLUDE_CHGINIT_PWD) {
+        $('#oldNameContainer').hide();
+        $('#newNameContainer').hide();
+        $('#newName').prop('value', 'admin');
+    }
+
+    $.act(ACT_CGI, "/cgi/info");
+    $.act(ACT_CGI, "/cgi/auth");
+    var httpCfg = $.act(ACT_GET, HTTP_CFG);
+    var appCfg = $.act(ACT_GET, APP_CFG);
+
+    var dynCfg = $.act(ACT_GET, DYN_DNS_CFG, null, null);
+    var noipCfg = $.act(ACT_GET, NOIP_DNS_CFG, null, null);
+    if (INCLUDE_DDNS_USERDEFINE) {
+        var userDefineCfg = $.act(ACT_GET, USERDEFINE_DDNS_CFG, null, null);
+    }
+    if (INCLUDE_CLOUD_ACCOUNT) {
+        var cloudDns = $.act(ACT_GET, CLOUD_DDNS, null, null);
+    }
+
+    if (INCLUDE_ACL) {
+        var aclList = $.act(ACT_GL, ACL_CFG, null, null);
+        $("#pingRemote").prop('checked', false);
+        $("#pingLocal").prop('checked', false);
+    }
+    $.exe();
+    if (httpCfg.httpsLocalEnabled == '1') {
+        $('#localHttpsEn').prop('checked', true);
+        $("#l_https_port").prop('disabled', false);
+    } else {
+        $('#localHttpsEn').prop('checked', false);
+        $("#l_https_port").prop('disabled', true);
+    }
+    $("#l_http_port").prop('value', httpCfg.httpLocalPort);
+    $("#l_https_port").prop('value', httpCfg.httpsLocalPort);
+
+    var port = 0;
+
+    localPort.httpPort = httpCfg.httpLocalPort;
+    localPort.httpsPort = httpCfg.httpsLocalPort;
+
+    remotePort.httpPort = httpCfg.httpRemotePort;
+    remotePort.httpsPort = httpCfg.httpsRemotePort;
+
+    if (httpCfg.httpsRemoteEnabled == 1) {
+        $('#remoteHttpsEn').prop('checked', true);
+        $('#r_http_en').prop('checked', true);
+        port = httpCfg.httpsRemotePort;
+    } else {
+        $('#r_http_en').prop('checked', true);
+        port = httpCfg.httpRemotePort;
+    }
+    $("#r_http_port").prop('value', port);
+
+    if (httpCfg.httpRemoteEnabled == 1) {
+        $("#r_http_en").prop('checked', true);
+    } else {
+        $("#r_http_en").prop('checked', false);
+        $("#r_http_port").prop("disabled", true);
+        $("#r_host").prop("disabled", true);
+    }
+    var domainDDNS = '';
+    if (INCLUDE_CLOUD_ACCOUNT && cloudDns.enable == 1) {
+        domainDDNS = cloudDns.boundDomain;
+    } else if (dynCfg.enable == 1) {
+        // $('#ddnsAddr').prop('value', 'https://' + dynCfg.userDomain + ':' + port);
+        domainDDNS = dynCfg.userDomain;
+    } else if (noipCfg.enable == 1) {
+        // $('#ddnsAddr').prop('value', 'https://' + noipCfg.userDomain + ':' + port);
+        domainDDNS = noipCfg.userDomain;
+    } else if (INCLUDE_DDNS_USERDEFINE && userDefineCfg.enable == 1) {
+        // $('#ddnsAddr').prop('value', 'https://' + userDefineCfg.userDomain + ':' + port);
+        domainDDNS = userDefineCfg.userDomain;
+    } else {
+        $('#ddns').addClass('nd');
+        $('#t_or').addClass('nd');
+    }
+    if (domainDDNS != '') {
+        if (httpCfg.httpsRemoteEnabled == 1) {
+            $('#ddnsAddr').prop('value', 'https://' + domainDDNS + ((port == 443) ? '' : (':' + port)));
+        } else {
+            $('#ddnsAddr').prop('value', 'http://' + domainDDNS + ((port == 80) ? '' : (':' + port)));
+        }
+        $('#ddnsAddr').attr('title', $('#ddnsAddr').val());
+    } else {
+        $('#ddns').addClass('nd');
+        $('#t_or').addClass('nd');
+    }
+    if (appCfg.localHost.search(':') >= 0) {
+        appCfg.localHost = appCfg.localHost.replace(/\:/g, '-');
+    }
+    if (appCfg.remoteHost.search(':') >= 0) {
+        appCfg.remoteHost = appCfg.remoteHost.replace(/\:/g, '-');
+    }
+    g_localHost= appCfg.localHost ? appCfg.localHost : "";
+    $("#l_host").prop('value', appCfg.localHost ? appCfg.localHost : "");
+    $("#r_host").prop('value', appCfg.remoteHost ? appCfg.remoteHost : "");
+
+    if (appCfg.localHost)
+    {
+    	$("#localAllowAddr").removeClass("nd");
+		$('#localAllowEn').prop('checked', true);
+    }
+
+    if (appCfg.remoteHost) {
+        $('#onlyThis').prop('checked', true);
+    } else {
+        $('#all').prop('checked', true);
+    }
+    remoteHttpsSync($("#r_http_en").prop("checked"));
+    if ((httpCfg.httpsLocalEnabled == 0) && ((httpCfg.httpRemoteEnabled == 0) || (httpCfg.httpsRemoteEnabled == 0))) {
+        $('#downloadCert').prop('disabled', true);
+        $('#cert-tips').html($.tpLang.manageCtrl_nstr.t_cert_unvalid);
+    } else {
+        $('#cert-tips').html($.tpLang.manageCtrl_nstr.t_cert_valid);
+    }
+    var ipArray = initWan(),
+        ipAddr = '';
+    if (ipArray[1]) {
+        ipAddr = ipArray[1];
+    }
+    if (ipArray[0]) {
+        ipAddr = ipArray[0];
+    }
+    if (ipAddr != '' && ipAddr != '0.0.0.0' && ipAddr != '::') {
+        if (httpCfg.httpsRemoteEnabled == 1) {
+            $('#wanIpAddr').val('https://' + ipAddr + ((port == 443) ? '' : (':' + port)));
+        } else {
+            $('#wanIpAddr').val('http://' + ipAddr + ((port == 80) ? '' : (':' + port)));
+        }
+        $('#wanIpAddr').attr('title', $('#wanIpAddr').val());
+    } else {
+        $('#wanIpAddr').val($.tpLang.manageCtrl_nstr.plsSetValidIp);
+        $('#wanIpAddr').attr('title', $('#wanIpAddr').val());
+        $('#ddns').addClass('nd');
+        $('#t_or').addClass('nd');
+    }
+    oldPort = bSecured ? (clientLocal ? httpCfg.httpsLocalPort : httpCfg.httpsRemotePort) : (clientLocal ? httpCfg.httpLocalPort : httpCfg.httpRemotePort);
+
+    if (INCLUDE_ACL) {
+        $.each(aclList, function() {
+            if (this.service == "Ping") {
+                if (this.enable == "1") {
+                    if (this.location == "Both") {
+                        $("#pingRemote").prop('checked', true);
+                        $("#pingLocal").prop('checked', true);
+                    } else if (this.location == "Local") {
+                        $("#pingLocal").prop('checked', true);
+                        $("#pingRemote").prop('checked', false);
+                    } else if (this.location == "Remote") {
+                        $("#pingLocal").prop('checked', false);
+                        $("#pingRemote").prop('checked', true);
+                    }
+                }
+                aclStk = this.__stack;
+            }
+        });
+    }
+}
+</script>
+<div id="account-management-div">
+    <h3 id="t_account">Account Management</h3>
+    <div class="content-container">
+        <form class="pure-form pure-form-aligned">
+            <div id="oldNameContainer">
+                <b class="l" id="t_oldname">Old User Name:</b>
+                <input type="text" id="curName" maxlength="15" class="secLevel" />
+            </div>
+            <div class="pure-control-group">
+                <b class="l" id="t_oldpwd">Old Password:</b>
+                <input type="password" id="curPwd" maxlength="15" class="secLevel" />
+            </div>
+            <p class="br"></p>
+            <div id="newNameContainer">
+                <b class="l" id="t_newname">New User Name: </b>
+                <input type="text" id="newName" maxlength="15" class="secLevel" />
+            </div>
+            <div id="newPwContainer">
+                <b class="l" id="t_newpwd">New Password:</b>
+                <input type="password" id="newPwd" onkeyup="checkLength($(this))" class="secLevel" />
+            </div>
+            <div class="secLevel" id="pwdCheck">
+                <span class="level1 T_low">Low</span>
+                <span class="level2 T_middle">Middle</span>
+                <span class="level3 T_high">High</span>
+            </div>
+            <div>
+                <b class="l" id="t_confirm">Confirm New Password:</b>
+                <input type="password" id="cfmPwd" maxlength="15" class="secLevel" />
+            </div>
+            <p class="br"></p>
+            <div>
+                <button type="submit" class="green T_save" id="t_save1">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+<h3 id="t_local">Local Management</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="l T_c_http_port">Local Management Port:</b>
+            <input type="text" maxlength="5" id="l_http_port" />
+        </div>
+        <div>
+            <b class='l' id='t_localHttps'>Local Management over HTTPS:</b>
+            <input type="checkbox" id='localHttpsEn'>
+            <label class='T_en'></label>
+        </div>
+        <div>
+            <b class="l T_c_https_port">Local Management Port:</b>
+            <input type="text" maxlength="5" id="l_https_port" />
+        </div>
+        <div>
+            <b class='l' id='t_localAllow'>Only Allow the Following IP/MAC:</b>
+            <input type="checkbox" id='localAllowEn'>
+            <label class='T_en'></label>
+        </div>
+        <div id="localAllowAddr" class="nd">
+            <b class="l T_c_addr">Allowed Local Management IP Address:</b>
+            <input type="text" id="l_host" />
+        </div>
+        <div>
+            <button type="submit" class="green T_save" id="t_save2">Save</button>
+        </div>
+    </form>
+</div>
+<h3 id="t_remote">Remote Management</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="l" id="t_enableremote">Remote Management:</b>
+            <input type="checkbox" id="r_http_en" />
+            <label class="T_en">Enable</label>
+        </div>
+        <div>
+            <b class='l' id='t_remoteHttps'>Remote Management over HTTPS:</b>
+            <input type="checkbox" id='remoteHttpsEn'>
+            <label class='T_en'></label>
+        </div>
+        <div>
+            <b class="l T_c_port">Web Management Port:</b>
+            <input type="text" maxlength="5" id="r_http_port" />
+        </div>
+        <div>
+            <span class='xxl' id='t_remoteAddr' style='line-height:36px;'>Remote Management Address of this Device:</span>
+        </div>
+        <div>
+            <input type="text" class='xxxl' disabled id='wanIpAddr'>
+            <span style='margin-left:20px;' id='t_or'>or</span>
+        </div>
+        <div id='ddns'>
+            <input type="text" class='xxxl' disabled id='ddnsAddr'>
+        </div>
+        <div>
+            <span class='xxl' id='t_allAddr' style='line-height:36px;'>IP Address Alled for Remote Management:</span>
+        </div>
+        <div>
+            <input type="radio" id='onlyThis' name='remoteIp' />
+            <label id='t_only'>Only this IP/MAC Address</label>
+        </div>
+        <div>
+            <input type="text" id="r_host" class='xl' />
+        </div>
+        <div>
+            <input type="radio" id='all' name='remoteIp' />
+            <label id='t_everyone'>Everyone</label>
+        </div>
+        <div>
+            <button type="submit" class="green T_save" id="t_save3">Save</button>
+        </div>
+    </form>
+</div>
+<h3 id='t_certdown'>Certificate Download</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <p id='cert-tips'></p>
+        <div>
+            <button type="submit" class="xxl green T_c_downloadCert" style='float:left' id="downloadCert">Download Certificate</button>
+            <div style='clear:both'></div>
+        </div>
+    </form>
+</div>
+<h3 id="t_icmp">ICMP Ping</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="inline">
+            <b class="l" id="t_ping_title">ICMP(ping):</b>
+            <input type="checkbox" id="pingRemote" />
+            <label id="t_ping_remote">Remote</label>
+        </div>
+        <div class="inline">
+            <input type="checkbox" id="pingLocal" />
+            <label id="t_ping_local">Local</label>
+        </div>
+        <div>
+            <button type="submit" class="green T_save" id="t_save4">Save</button>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+$.tpInit(init);
+</script>

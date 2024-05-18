@@ -1,0 +1,243 @@
+<input type="hidden" id="black-current-block" value="no-black" />
+<div class="titleBar">
+    <a id="back" url="contentRestrict.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.parentCtrl_nstr.t_blm%>
+        </script>
+    </h1>
+    <a id="edit" data-status="edit">
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.m_str.edit%>
+        </script>
+    </a>
+</div>
+
+<div class="no-item" id="no-bla">
+    <div class="sprite grid-no-list"></div>
+    <span class="text-no-item">
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.parentCtrl_nstr.t_noblack%>
+        </script>
+    </span>
+    <input type="button" class="button-mobile add-button mt10" id="btn-add-bla">
+</div>
+
+<ul id="black-l" class="nd">
+</ul>
+
+<div class="item-list add-black mt15 nd" id="add-bla">
+    <div class="section-container">
+        <div class="section-box">
+            <input id="add-new-keyword" maxlength="32" type="text" />
+        </div>
+    </div>
+</div>
+
+<div class="botP-toolBar">
+</div>
+
+<script type="text/javascript">
+    (function() {
+        var allBlackUrl, blackIndex, allBlackUrlType;
+        var isEdit = 0;
+        var tempUrl;
+
+        (function() {
+            $.tpLocal('title-string', $.tpLang);
+            $('.titleBar').titleBar();
+            $('.botP-toolBar').toolBar();
+            $('#btn-add-bla').buttonMobile({ 'text': $.tpLang.parentCtrl_nstr.c_ak});
+            init();
+
+            $('#add-new-keyword').inputBoxMobile({
+                'value': '',
+                'title': $.tpLang.parentCtrl_nstr.c_ak,
+                'warnings': [{
+                    func: function() {
+                        var val = this.inputBoxMobile('option', 'value');
+                        if (val.length === 0) {
+                            return false;
+                        }
+                        return $.isdomain(val);
+                    },
+                    text: e_str[ERR_FW_URL_INVAD]
+                }]
+            });
+            $.each($('.turn-page'), function() {
+                $.initTurnPage(this);
+            });
+            $('#black-l').editList();
+        })();
+
+        function init() {
+            blackIndex = 0;
+            allBlackUrl = [];
+            allBlackUrlType = [];
+            var blackParentCfg = $.act(ACT_GET, EXTERNAL_HOST, "1,0,0,0,0,0", null);
+            var urlCfgList = $.act(ACT_GL, URL_CFG, null, null, ["urlAddr"]);
+            if (!$.exe()) {
+                for (var i = 0; i < blackParentCfg.urlIndexs.length; i++) {
+                    if (blackParentCfg.urlIndexs.charAt(i) == 1) {
+                        var id = 'black-item'+i;
+                        allBlackUrl[blackIndex] = urlCfgList[i].urlAddr;
+                        $("#black-l").append('<li>'+
+                                '<div id="'+id+'" class="li-content-div">'+
+                                '<span class="black-item-url">'+allBlackUrl[blackIndex]+'</span>'+
+                                '<span class="black-arrow icon-r fixed-part"></span>'+
+                                '</div></li>');
+                        allBlackUrlType[blackIndex] = 1;
+                        blackIndex++;
+                    }
+                }
+                if (blackIndex > 0) {
+                    $('#no-bla').hide();
+                    $('#black-l').show();
+                }
+            }
+            setEvent();
+        }
+        function setEvent() {
+            $('#btn-add-bla').on('click', function () {
+                showAdd();
+            });
+            $('#edit').on('click', function() {
+                var status = $(this).titleButton('status');
+                if (status === 'edit') {
+                    showToolBar();
+                } else if (status === 'cancel') {
+                    hideToolBar();
+                } else if (status === 'done' || status === 'modify-done') {
+                    $.startWaitingMobile($.tpLang.m_str.waiting);
+                    if (saveKeyword()) {
+                        $('#add-bla').hide();
+                        if (blackIndex > 0) {
+                            $('#black-l').show();
+                            $('#black-current-block').val('black-l');
+                        } else {
+                            $('#no-bla').show();
+                            $('#black-current-block').val('no-bla');
+                        }
+                        $('.titleBar').titleBar('title', $.tpLang.parentCtrl_nstr.t_blm);
+                        $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+                    } else {
+                        $.stopWaitingMobile();
+                    }
+                }
+            });
+            $('#back').on('click', function() {
+                var cur = $('#black-current-block').val();
+                if (cur === 'add-bla') {
+                    isEdit = 0;
+                    $('#add-bla').hide();
+                    if (blackIndex > 0) {
+                        $('#black-l').show();
+                        $('#black-current-block').val('black-l');
+                    } else {
+                        $('#no-bla').show();
+                        $('#black-current-block').val('no-bla');
+                    }
+                    $('.titleBar').titleBar('title', $.tpLang.parentCtrl_nstr.t_blm);
+                    $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+                } else if(cur === 'no-bla' || cur === 'black-l') {
+                    $.loadPhoneMain('contentRestrict.mobile.htm');
+                }
+            });
+            $('#black-l')
+                    .on('delete.editlist', '.li-content-div', function() {
+                        deleteItem($(this).find('.black-item-url').text());
+                        $.exe(function(err) {
+                            if (!err) {
+                                $.loadPhoneMain('blackList.mobile.htm');
+                            }
+                        });
+                    })
+                    .on('click', '.li-content-div', function() {
+                        isEdit = 1;
+                        tempUrl = $(this).find('.black-item-url').text();
+                        showAlter($(this).find('.black-item-url').text());
+                    });
+            $('.botP-toolBar').on('click', '#tb-add', function() {
+                hideToolBar();
+                showAdd();
+            });
+        }
+        function saveKeyword() {
+
+            var urlAttrs = {};
+
+            if (!$('#add-new-keyword').inputBoxMobile('checkValue')) {
+                return false;
+            }
+            urlAttrs.type = 2;
+            urlAttrs.addUrl = 1;
+            urlAttrs.tmpUrl = $('#add-new-keyword').val();
+
+            if (isEdit === 0) {
+                $.act(ACT_SET, EXTERNAL_HOST, "1,0,0,0,0,0", null, urlAttrs);
+            } else if (isEdit === 1) {
+                deleteItem(tempUrl);
+                $.act(ACT_SET, EXTERNAL_HOST, "1,0,0,0,0,0", null, urlAttrs);
+            }
+
+            $.exe(function(err) {
+                if (!err) {
+                    $.loadPhoneMain('blackList.mobile.htm');
+                }
+            });
+        }
+        function showAlter(val) {
+            hideToolBar();
+            $('#no-bla').hide();
+            $('#black-l').hide();
+            $('#add-bla').show();
+            $('#add-new-keyword').inputBoxMobile({'value': val, 'title': $.tpLang.parentCtrl_nstr.t_modify});
+            $('.titleBar').titleBar('title', $.tpLang.table_str.modify);
+            $('#edit').titleButton('status', 'modify-done', $.tpLang.m_str.done);
+            $('#back').titleButton('url', '');
+            $('#black-current-block').val('add-bla');
+            $('.inputBox-mobile-div>input[type=text]').inputBoxMobile('hideWarnings');
+        }
+        function showAdd() {
+            hideToolBar();
+            $('#add-new-keyword').inputBoxMobile({'value': '', 'title': $.tpLang.parentCtrl_nstr.c_ak});
+            $('#no-bla').hide();
+            $('#black-l').hide();
+            $('#add-bla').show();
+            $('.titleBar').titleBar('title', $.tpLang.parentCtrl_nstr.c_ak);
+            $('#edit').titleButton('status', 'done', $.tpLang.m_str.done);
+            $('#back').titleButton('url', '');
+            $('#back').titleButton('show');
+            $('#black-current-block').val('add-bla');
+            $('.inputBox-mobile-div>input[type=text]').inputBoxMobile('hideWarnings');
+        }
+        function showToolBar() {
+            $('#black-l').editList({
+                'listType': 'selectList'
+            });
+            $('.black-arrow').removeClass('icon-r fixed-part');
+            $('#edit').titleButton('status', 'cancel', $.tpLang.m_str.cancel);
+            $('#btn-add-bla').hide();
+            $('.botP-toolBar').toolBar('option', {
+                'hide': false
+            });
+        }
+        function hideToolBar() {
+            $('#black-l').editList({
+                'listType': 'swipeList'
+            });
+            $('.black-arrow').addClass('icon-r fixed-part');
+            $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+            $('#btn-add-bla').show();
+            $('.botP-toolBar').toolBar('option', {
+                'hide': true
+            });
+        }
+        function deleteItem(val) {
+            var urlAttrs = {};
+            urlAttrs.addUrl = 0;
+            urlAttrs.tmpUrl = val;
+            $.act(ACT_SET, EXTERNAL_HOST, "1,0,0,0,0,0", null, urlAttrs);
+        }
+    })();
+</script>

@@ -1,0 +1,37 @@
+#!/usr/bin/lua
+
+local cloud = require "cloud_req.cloud_comm"
+local sys   = require "luci.sys"
+local nixio = require "nixio"
+local dbg   = require "luci.tools.debug"
+
+local CLOUD_TMP_DIR = "/tmp/cloud/"
+local TOKEN_VALUE_FILE = CLOUD_TMP_DIR .. "cloud_token"
+local DELETE_TOKEN_SCRIPT = "/lib/deleteToken.sh"
+
+local req = {}
+req.params = {}
+
+--req.method = "getDeviceToken"
+req.method = "getNewDeviceTokenWithServices"
+req.params.deviceId = cloud.TrimStr(sys.exec("getfirm DEV_ID"))
+req.params.serviceIds = {"eweb"}
+
+local re, data = cloud.send_request_sync(req, 5000, 1)
+
+if re ~= 0 then os.exit(-1) end
+
+-- handler err_code
+if data.error_code ~= 0 then os.exit(data.error_code) end
+
+local token = data.result.deviceToken
+local expiresIn = data.result.expiresIn
+local origin_url = data.result.serviceUrls.eweb
+
+if not nixio.fs.access(CLOUD_TMP_DIR) then
+	sys.call("mkdir -p %s" % {CLOUD_TMP_DIR})
+end
+
+sys.call("echo %s > %s" % {token, TOKEN_VALUE_FILE})
+sys.call("echo %s >> %s" % {origin_url, TOKEN_VALUE_FILE})
+sys.fork_call("sh %s %d &" % {DELETE_TOKEN_SCRIPT, expiresIn})

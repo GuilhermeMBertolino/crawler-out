@@ -1,0 +1,22 @@
+<script language="javascript">var modeArray,moduValArray={"Auto Sync-up":"Multimode","ADSL Auto Sync-up":"ADSL_Multimode","T1.413":"ADSL_ANSI_T1.413","G.lite":"ADSL_G.lite","G.dmt":"ADSL_G.dmt",ADSL2:"ADSL_G.dmt.bis","ADSL2+":"ADSL_2plus",VDSL2:"VDSL2"};function initAnnexTypeSelect(o,e){$("#annexMod").empty(),$.each(e,function(){if(this.split(":")[0]==o)for(var e=this.split(":")[1].split(","),t=0;t<e.length;t++){var n="Annex "+e[t];$("#annexMod").append("<option value='"+n+"' text='"+n+"'>"+n+"</option>")}}),$("#annexMod").tpSelect({refresh:1})}function initModuTypeSelect(e){$.each(e,function(){var e=this.split(":")[0],t=moduValArray[e];(INCLUDE_VDSLWAN||"VDSL2"!=e&&"ADSL Auto Sync-up"!=e)&&$("#adslMod").append("<option value='"+t+"' text='"+e+"'>"+e+"</option>")})}function init(){var e=$.act(ACT_GET,WAN_DSL_INTF_CFG,"1,0,0,0,0,0");$.exe()||(""===(modeArray=e.X_TP_SupportAdslMode.split(";"))[modeArray.length-1]&&modeArray.pop(),initModuTypeSelect(modeArray),$("#adslMod option[value='"+e.X_TP_AdslModulationCfg+"']").prop("selected","selected"),$("#adslMod").tpSelect({refresh:1}),$("#annexMod option[value='"+e.X_TP_AnnexType+"']").prop("selected","selected"),$("#annexMod").tpSelect({refresh:1}),"On"==e.X_TP_Bitswap&&$("#bitswap").prop("checked",!0),"On"==e.X_TP_SRA&&$("#sra").prop("checked",!0))}$("#adslMod").click(function(){initAnnexTypeSelect($(this).data("text"),modeArray)}),$("#saveCfg").click(function(){var e={enable:1,X_TP_AdslModulationCfg:$("#adslMod").data("value"),X_TP_AnnexType:$("#annexMod").data("value"),X_TP_SRA:$("#sra").prop("data-checked")?"On":"Off",X_TP_Bitswap:$("#bitswap").prop("data-checked")?"On":"Off"};$.confirm(c_str.dslcfg_ask,function(){$.addLoading($("#saveCfg")),$.act(ACT_SET,WAN_DSL_INTF_CFG,"1,0,0,0,0,0","0,0,0,0,0,0",e),$.exe(function(e){$.removeLoading(),e||$.reload()})})})</script>
+<h3 id="et">DSL Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <b class="T_dslmode">DSL Modulation Type:</b>
+        <select id="adslMod"></select>
+        <b id="t_annex">Annex Type:</b>
+        <select id="annexMod"></select>
+        <div>
+            <b id="t_enswap">Bit Swap:</b>
+            <input type="checkbox" id="bitswap">
+            <label class="T_en">Enable</label>
+        </div>
+        <div>
+            <b id="t_ensra">SRA:</b>
+            <input type="checkbox" id="sra">
+            <label class="T_en">Enable</label>
+        </div>
+        <button type="submit" class="green T_save" id="saveCfg">Save</button>
+    </form>
+</div>
+<script language="javascript">$(document).ready(function(){$.tpInit(init)})</script>

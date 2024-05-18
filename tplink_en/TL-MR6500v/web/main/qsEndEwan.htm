@@ -1,0 +1,93 @@
+<script language="javascript">var newConn={};function showParams(){var n=n_str.quicksetup,t={ppp:n.c_qsPPPoE,pppoa:n.c_qsPPPoA,dhcp:n.c_qsDynIp,staip:n.c_qsStaIp,ipoa:n.c_qsIPoA,l2tp:n.c_qsL2TP,pptp:n.c_qsPPTP,br:s_str.bridge},e=newConn.connectionStatus;$("#connType").text(t[$.qd.type]),"br"!=$.qd.type?($("#addrInfo").removeClass("nd"),INCLUDE_IPV6&&"l2tp"!=$.qd.type&&"pptp"!=$.qd.type&&(0==newConn.X_TP_IPv4Enabled&&0!=newConn.X_TP_IPv6Enabled?($("#addrInfo").addClass("nd"),$("#addr6Info").removeClass("nd"),e=newConn.X_TP_IPv6ConnStatus):0!=newConn.X_TP_IPv4Enabled&&0==newConn.X_TP_IPv6Enabled?($("#addr6Info").addClass("nd"),$("#addrInfo").removeClass("nd"),e=newConn.connectionStatus):("Connected"==newConn.X_TP_IPv6ConnStatus&&($("#addr6Info").removeClass("nd"),e=newConn.X_TP_IPv6ConnStatus),"Connected"==newConn.connectionStatus&&($("#addrInfo").removeClass("nd"),e=newConn.connectionStatus))),$("#ip").text(newConn.externalIPAddress),"ppp"==$.qd.type||"pppoa"==$.qd.type||"l2tp"==$.qd.type||"pptp"==$.qd.type?"Connected"==newConn.connectionStatus&&$("#netmask").text("255.255.255.255"):$("#netmask").text(newConn.subnetMask),$("#gw").text(newConn.defaultGateway?newConn.defaultGateway:"0.0.0.0"),$("#dns").text(newConn.DNSServers),INCLUDE_IPV6&&"l2tp"!=$.qd.type&&"pptp"!=$.qd.type&&($("#ip6").text(newConn.X_TP_ExternalIPv6Address),$("#pflen").text(newConn.X_TP_PrefixLength),$("#gw6").text(newConn.X_TP_DefaultIPv6Gateway),$("#dns6").text(newConn.X_TP_IPv6DNSServers),$("#t_ip6").text(s_str.ip6addr),$("#t_plen").text(s_str.plen),$("#t_gw").text(s_str.ip6defgw)),""==e||"Unconfigured"==e||"Disconnected"==e?$("#connStatus").text(m_str.disconnected):"Connecting"==e?$("#connStatus").text(m_str.connecting):$("#connStatus").text(m_str.connected)):$("#connStatus").text(s_str.bridge),$.qd.wl&&(1==$.qd.wl.en?($("#wl24gEnable > span").text(m_str.enabled),$("#wl24gSSID > input").prop("value",$.qd.wl.ssid),$("#wl24gPwd > input").prop("value",$.qd.wl.pwd)):($("#wl24gEnable > span").text(m_str.disabled),$("#wl24gSSID").addClass("nd"),$("#wl24gPwd").addClass("nd"))),"INCLUDE_ONEMESH"in window&&INCLUDE_ONEMESH&&($("#smartConnect").removeClass("nd"),$.qd.smartConn?($("#wl24gEnable > label").text($.tpLang.quicksetup_nstr.t_wlNet),$("#smartConnect > span").text(m_str.enabled)):$("#smartConnect > span").text(m_str.disabled)),INCLUDE_LAN_WLAN_DUALBAND&&$.qd.wl5g&&!$.qd.smartConn&&($("#wl5g").removeClass("nd"),1==$.qd.wl5g.en?($("#wl5gEnable > span").text(m_str.enabled),$("#wl5gSSID > input").prop("value",$.qd.wl5g.ssid),$("#wl5gPwd > input").prop("value",$.qd.wl5g.pwd)):($("#wl5gEnable > span").text(m_str.disabled),$("#wl5gSSID").addClass("nd"),$("#wl5gPwd").addClass("nd")))}function doFinish(){(INCLUDE_VOIP||INCLUDE_CLOUD_V2)&&"br"!=$.qd.type?$.qf.next():$("#basic").click()}</script>
+<div id="quicksetup_sum_container">
+    <form class="pure-form pure-form-aligned">
+        <div id="div_succNote" class="nd">
+            <p><span id="t_setupStatus">Internet connected. You can enjoy the Internet surfing now.</span>
+            </p>
+        </div>
+        <div class="pure-control-group group-spec" style="margin-top:40px">
+            <label class="label-title T_conntype l">Connection Type:</label>
+            <span class="text" id="connType"></span>
+        </div>
+        <div id="addrInfo" class="nd">
+            <div class="pure-control-group group-spec">
+                <label class="label-title T_c_ipaddr l">IP Address:</label>
+                <span class="text" id="ip">0.0.0.0</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T_c_mask l">Subnet Mask:</label>
+                <span class="text" id="netmask">0.0.0.0</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T_c_gw l">Gateway:</label>
+                <span class="text" id="gw">0.0.0.0</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T_c_dnsSrvs l">DNS Servers:</label>
+                <span class="text" id="dns">0.0.0.0,0.0.0.0</span>
+            </div>
+        </div>
+        <div id="addr6Info" class="nd">
+            <div class="pure-control-group group-spec">
+                <label class="label-title T l" id="t_ip6">IPv6 Address:</label>
+                <span class="text" id="ip6">::</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T l" id="t_plen">Prefix length:</label>
+                <span class="text" id="pflen">0</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T l" id="t_gw">Gateway:</label>
+                <span class="text" id="gw6">::</span>
+            </div>
+            <div class="pure-control-group group-spec">
+                <label class="label-title T_c_dnsSrvs l">DNS Servers:</label>
+                <span class="text" id="dns6">::,::</span>
+            </div>
+        </div>
+        <div class="pure-control-group group-spec">
+            <label class="label-title l" id="t_connStatus">Connection Status:</label>
+            <span class="text" id="connStatus"></span>
+        </div>
+        <div id="smartConnect" style="margin-top:40px" class="pure-control-group group-spec nd">
+            <label class="label-title l" id="t_smartConnect">Smart Connect</label>
+            <span class="text">&nbsp;</span>
+        </div>
+        <div id="wirelessParams" style="margin-top:40px">
+            <div id="wl24g">
+                <div id="wl24gEnable" class="pure-control-group group-spec">
+                    <label class="label-title T_gn24 l">Wireless Network (2.4GHz):</label>
+                    <span class="text"></span>
+                </div>
+                <div id="wl24gSSID" class="pure-control-group group-spec">
+                    <label class="label-title T_c_ssid l">Wireless Network Name (SSID):</label>
+                    <input type="text" readonly="ture" class="tp-input-text xl">
+                </div>
+                <div id="wl24gPwd" class="pure-control-group group-spec">
+                    <label class="label-title T_c_wlPwd l">Password:</label>
+                    <input type="text" readonly="ture" class="tp-input-text xl">
+                </div>
+            </div>
+            <div id="wl5g" class="nd" style="margin-top:40px">
+                <div id="wl5gEnable" class="pure-control-group group-spec">
+                    <label class="label-title T_gn5 l">Wireless Network (5GHz):</label>
+                    <span class="text"></span>
+                </div>
+                <div id="wl5gSSID" class="pure-control-group group-spec">
+                    <label class="label-title T_c_ssid l">Wireless Network Name (SSID):</label>
+                    <input type="text" readonly="ture" class="tp-input-text xl">
+                </div>
+                <div id="wl5gPwd" class="pure-control-group group-spec">
+                    <label class="label-title T_c_wlPwd l">Password:</label>
+                    <input type="text" readonly="ture" class="tp-input-text xl">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="inline-btn-right quicksetup-button-container">
+    <div class="inline">
+        <button type="submit" class="green" id="next" onclick="doFinish()">Finish</button>
+    </div>
+</div>
+<script language="javascript">function init(){var t,e,a=WAN_IP_CONN;if(e=$.qd.newConn.stack,"ETH"==$.sysMode)switch($.qd.type){case"PPPoE":$.qd.type="ppp";break;case"Dynamic IP":$.qd.type="dhcp";break;case"Static IP":$.qd.type="staip";break;case"L2TP":$.qd.type="l2tp";break;case"PPTP":$.qd.type="pptp"}"ppp"==$.qd.type||"pppoa"==$.qd.type?(a=WAN_PPP_CONN,t=["ExternalIPAddress","DefaultGateway","DNSServers","ConnectionStatus"]):"l2tp"==$.qd.type||"pptp"==$.qd.type?(a="l2tp"==$.qd.type?WAN_L2TP_CONN:WAN_PPTP_CONN,t=["ExternalIPAddress","DefaultGateway","DNSServers","ConnectionStatus"]):"br"!=$.qd.type&&(t=["ExternalIPAddress","SubnetMask","DefaultGateway","DNSServers","ConnectionStatus"]),INCLUDE_IPV6&&t&&"l2tp"!=$.qd.type&&"pptp"!=$.qd.type&&(t.push("X_TP_IPv4Enabled","X_TP_IPv6Enabled"),t.push("X_TP_IPv6ConnStatus","X_TP_ExternalIPv6Address","X_TP_DefaultIPv6Gateway","X_TP_IPv6DNSServers","X_TP_PrefixLength")),t&&(newConn=$.act(ACT_GET,a,e,null,t),$.exe())||(3==$.qd.internetDiag?$("#div_succNote").removeClass("nd"):$("#div_succNote").addClass("nd"),showParams())}INCLUDE_CLOUD_V2?$("#next").text($.tpLang.m_str.next):$("#next").text($.tpLang.m_str.finish),$.tpInit(init)</script>

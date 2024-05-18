@@ -1,0 +1,128 @@
+#!/bin/sh
+# when the connect is on/off, rmmod/insmod wportal to remind the user
+
+exit 0
+
+#废弃
+wportalctrl_insert_wan_error_mac_forever(){
+	local id=$1
+	local type
+	config_get MAC $id mac ""
+	config_get type $id TYPE ""
+	if [ $type == "wan_error_device" ] ;
+	then
+		wportalctrl -a $MAC
+	fi
+}
+
+#检测到wan口异常，准备加载wan_error或者init，
+wportalctrl_init_wan_error(){
+	local ip
+	config_load network
+	config_get ip lan ipaddr ""
+	
+	local time=`cat /etc/webpage_time`
+	local webpage_path=""
+	[ "x$time" == "x" ] || webpage_path="${time}."
+	
+#	local defcfg
+#	config_load wportal
+#	config_get defcfg defcfg defcfg "no"
+	
+#	if [ $defcfg == "yes" ] ;
+#	then
+#		#出厂状态，加载init
+#		wportalctrl -s -u http://$ip/webpages/init.${webpage_path}html -i $ip
+#		cat /tmp/wportal/status | grep -E "(init)"
+#		if [ $? -eq 0 ] ;
+#		then
+#			return
+#		fi
+#		wportalctrl -c
+#		config_load network
+#		config_get ip lan ipaddr ""
+#		local domain
+#		config_load domain_login
+#		config_get domain tp_domain domain ""
+#		local lan_ip_addr
+#		config_load network
+#		config_get lan_ip_addr lan ipaddr $domain
+#		wportalctrl -s -u http://$lan_ip_addr/webpages/init.${webpage_path}html -i $ip
+#		wportalctrl -D -Y
+#		echo "init" > /tmp/wportal/status
+#	else
+		#wan口异常，加载wan_error
+		
+		local wan_error_enable	#是否加载wan_error
+		
+		config_load wportal
+		config_get wan_error_enable wanerror enable "yes"
+		
+		if [ $wan_error_enable == "no" ] ;
+		then
+			cat /tmp/wportal/status | grep -E "(wan_error)"
+			if [ $? -eq 0 ] ;
+			then
+				echo "stop" > /tmp/wportal/status
+				wportalctrl -c
+			fi
+			return 
+		fi
+		
+		wportalctrl -s -u http://$ip/webpages/wan_error.${webpage_path}html -i $ip
+		cat /tmp/wportal/status | grep -E "(wan_error)"
+		if [ $? -eq 0 ] ;
+		then
+			return
+		fi
+		wportalctrl -c
+		local domain
+		config_load domain_login
+		config_get domain tp_domain domain ""
+		local lan_ip_addr
+		config_load network
+		config_get lan_ip_addr lan ipaddr $domain
+		wportalctrl -s -u http://$lan_ip_addr/webpages/wan_error.${webpage_path}html -i $ip
+		wportalctrl -D -Y
+		
+		local lan_mask
+		config_get lan_mask lan netmask "255.255.255.0"
+		wportalctrl -m $lan_mask
+		
+#		config_load wportal
+#		config_foreach wportalctrl_insert_wan_error_mac_forever
+		echo "wan_error" > /tmp/wportal/status
+#	fi
+}
+
+. /etc/functions.sh
+
+
+
+#每分钟调用一次，每次拨号失败或者成功调用一次，用以确定应该加载哪个模块（包括是否需要挂载）。
+
+IFC=wan
+ubus list | grep -q network.interface.internet && IFC=internet
+local connected=$1
+ubus call network.interface.$IFC status | grep '"up"' | grep true
+if [ $? -ne 0 ] ;
+then   #wan口异常
+	wportalctrl_init_wan_error
+else
+	online-test
+	if [ $? -eq 1 ] ;
+	then    #wan口异常
+		wportalctrl_init_wan_error
+	else
+		cat /tmp/wportal/status | grep -E "(wan_error)"
+		if [ $? -eq 0 ] ;
+		then
+			#wan口异常状态结束，重置状态
+			wportalctrl -c
+			echo "stop" > /tmp/wportal/status
+		fi
+		. /lib/wportal/wportal.sh 
+		#一切正常，检查是否需要加载 upgrade
+		wportalctrl_time_check
+	fi
+fi

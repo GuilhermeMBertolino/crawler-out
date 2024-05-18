@@ -1,0 +1,364 @@
+<script language="javascript" type="text/javascript">
+var ovpnClientsGetAct = 1;
+var ovpnClientConnAct = 1;
+var ovpnClientDisconnAct = 2;
+
+var pvpnClientsGetAct = 1;
+var pvpnClientConnAct = 1;
+var pvpnClientDisconnAct = 2;
+
+// var currentIndexArr = new Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+function doDisConn(type, index) {
+    if (type == "openvpn") {
+        $.addLoading($("#disconn_openvpn_" + index));
+        var ovpnClient = $.act(ACT_SET, OVPN_CLIENT, ovpnClientsList[index - 1].__stack, null, ["connAct=" + ovpnClientDisconnAct]);
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                $.reload();
+            }
+        });
+    }
+
+    if (type == "pptpvpn") {
+        $.addLoading($("#disconn_pptpvpn_" + index));
+        var pvpnClient = $.act(ACT_SET, PVPN_CLIENT, pvpnClientsList[index - 1].__stack, null, ["connAct=" + pvpnClientDisconnAct]);
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                $.reload();
+            }
+        });
+    }
+}
+
+function initOvpnClientTable() {
+    var array = new Array();
+    ovpnClientsList = $.act(ACT_GL, OVPN_CLIENT, null, null);
+    $.exe(function(err) {
+        if (err) return;
+        var index = 0;
+
+        $.each(ovpnClientsList, function() {
+
+			if (this.wanIp != ''){
+				array.push([{
+					"text": ++index,
+					"width": "20%"
+				}, /*{
+					"text": this.wanIp,
+					"width": "30%"
+				},*/ {
+					"text": this.tunIp,
+					"width": "40%"
+				}, {
+					// the icon exits, just add it in tpTable.css
+					"text": "<span class='table-grid-icon edit-trash-icon' id='disconn_openvpn_" + index + "' onclick='doDisConn(\"openvpn\", " + index + ");'></span>",
+					"width": "40%"
+				}]);
+			}
+        });
+
+        $.initTableBody($("#tableOvpnClientList"), array);
+        $.tablePages($("#tableOvpnClientList"), 5);
+        return array;
+    });
+
+}
+
+function OpenVpnInit() {
+    var ovpnClientListHeadArray = [{
+        "text": table_str.id,
+        "width": "20%"
+    }, /*{
+        "text": table_str.remoteIp,
+        "width": "30%"
+    },*/ {
+        "text": table_str.assignedIp,
+        "width": "40%"
+    }, {
+        "text": table_str.modify,
+        "width": "40%"
+    }];
+    $.initTableHead($("#tableOvpnClientList"), ovpnClientListHeadArray);
+
+    $("#tableOvpnClientList").tpTable(initOvpnClientTable);
+}
+
+
+
+function initPvpnClientTable() {
+    var array = new Array();
+    pvpnClientsList = $.act(ACT_GL, PVPN_CLIENT, null, null);
+    $.exe(function(err) {
+        if (err) return;
+        var index = 0;
+
+        $.each(pvpnClientsList, function() {
+			
+			if (this.wanIp != ''){
+				array.push([{
+					"text": ++index,
+					"width": "20%"
+				}, /*{
+					"text": this.wanIp,
+					"width": "30%"
+				},*/ {
+					"text": this.ptpIp,
+					"width": "40%"
+				}, {
+					// the icon exits, just add it in tpTable.css
+					"text": "<span class='table-grid-icon edit-trash-icon' id='disconn_pptpvpn_" + index + "' onclick='doDisConn(\"pptpvpn\", " + index + ");'></span>",
+					"width": "40%"
+				}]);
+			}
+        });
+
+        $.initTableBody($("#tablePvpnClientList"), array);
+        $.tablePages($("#tablePvpnClientList"), 5);
+        return array;
+    });
+
+}
+
+function PptpVpnInit() {
+    var pvpnClientListHeadArray = [{
+        "text": table_str.id,
+        "width": "20%"
+    }, /*{
+        "text": table_str.remoteIp,
+        "width": "30%"
+    },*/ {
+        "text": table_str.assignedIp,
+        "width": "40%"
+    }, {
+        "text": table_str.modify,
+        "width": "40%"
+    }];
+    $.initTableHead($("#tablePvpnClientList"), pvpnClientListHeadArray);
+
+    $("#tablePvpnClientList").tpTable(initPvpnClientTable);
+}
+
+function initIpsecTable() {
+    selAll = 0;
+    index = 0;
+    allStk = [];
+    var array = new Array();
+
+    var getList = $.act(ACT_GL, IPSEC_CFG, null, null, ["entryID", "connName", "remoteGWAddress", "localIPAddress", "remoteIPAddress", "enable", "status"]);
+    if (!$.exe()) {
+        $.each(getList, function() {
+            var thisStk = "[" + this.__stack + "]";
+            // currentIndexArr[this.entryID] = -1;
+
+            index++;
+
+            if (this.enable == 0) {
+                array.push([{
+                    "text": '<span><div><input type="checkbox" id="' + index + '" class="table-select-one" /><label></label></div></span>',
+                    "width": "5%"
+                }, {
+                    "text": this.connName,
+                    "width": "20%"
+                }, {
+                    "text": this.remoteGWAddress,
+                    "width": "15%"
+                }, {
+                    "text": this.localIPAddress,
+                    "width": "15%"
+                }, {
+                    "text": this.remoteIPAddress,
+                    "width": "15%"
+                }, {
+                    "text": "Disabled",
+                    "width": "10%"
+                }, {
+                    "text": "<span class='table-grid-icon disable-icon' id='en_" + index + "' onclick='doEnable(\"ip\", " + thisStk + ");'></span>",
+                    "width": "10%"
+                }, {
+                    "text": "<span class='table-grid-icon edit-trash-icon' id='del_" + index + "' onclick='doDel(\"ip\", " + thisStk + ");'></span>",
+                    "width": "10%"
+                }]);
+            } else {
+                if (this.status == 0) {
+                    array.push([{
+                        "text": '<span><div><input type="checkbox" id="' + index + '" class="table-select-one" /><label></label></div></span>',
+                        "width": "5%"
+                    }, {
+                        "text": this.connName,
+                        "width": "20%"
+                    }, {
+                        "text": this.remoteGWAddress,
+                        "width": "15%"
+                    }, {
+                        "text": this.localIPAddress,
+                        "width": "15%"
+                    }, {
+                        "text": this.remoteIPAddress,
+                        "width": "15%"
+                    }, {
+                        "text": "Down",
+                        "width": "10%"
+                    }, {
+                        "text": "<span class='table-grid-icon enable-icon' id='en_" + index + "' onclick='doEnable(\"ip\", " + thisStk + ");'></span>",
+                        "width": "10%"
+                    }, {
+                        "text": "<span class='table-grid-icon edit-trash-icon' id='del_" + index + "' onclick='doDel(\"ip\", " + thisStk + ");'></span>",
+                        "width": "10%"
+                    }]);
+                } else {
+                    array.push([{
+                        "text": '<span><div><input type="checkbox" id="' + index + '" class="table-select-one" /><label></label></div></span>',
+                        "width": "5%"
+                    }, {
+                        "text": this.connName,
+                        "width": "20%"
+                    }, {
+                        "text": this.remoteGWAddress,
+                        "width": "15%"
+                    }, {
+                        "text": this.localIPAddress,
+                        "width": "15%"
+                    }, {
+                        "text": this.remoteIPAddress,
+                        "width": "15%"
+                    }, {
+                        "text": "Up",
+                        "width": "10%"
+                    }, {
+                        "text": "<span class='table-grid-icon enable-icon' id='en_" + index + "' onclick='doEnable(" + index + " , " + thisStk + ");'></span>",
+                        "width": "10%"
+                    }, {
+                        "text": "<span class='table-grid-icon edit-trash-icon' id='del_" + index + "' onclick='doDel(" + index + ", " + thisStk + ");'></span>",
+                        "width": "10%"
+                    }]);
+                }
+            }
+            allStk[index - 1] = this.__stack;
+        });
+
+    }
+    $.initTableBody($("#tableIpvpnClientList"), array);
+    return array;
+}
+
+function doEnable(entryID, stack) {
+    var ipsecEntry = $.act(ACT_GET, IPSEC_CFG, stack, null, null);
+    $.exe();
+    if (ipsecEntry.enable == 0) {
+        $.act(ACT_SET, IPSEC_CFG, stack, null, ["enable=1"]);
+        $.exe(function(err) {
+            if (!err) {
+                $.reload();
+            }
+        });
+    } else {
+        $.act(ACT_SET, IPSEC_CFG, stack, null, ["enable=0"]);
+        $.exe(function(err) {
+            if (!err) {
+                $.reload();
+            }
+        });
+    }
+}
+
+function doDel(entryID, stack) {
+    // currentIndexArr[entryID] = entryID;
+    $.act(ACT_DEL, IPSEC_CFG, stack, null, null);
+    $.exe(function(err) {
+        if (!err) {
+            $.reload();
+        }
+    });
+}
+
+function ipSecVpnInit() {
+    var headArray = [{
+        "text": '<div><input type="checkbox" id="checkbox_st" class="table-select-all" /><label></label></div>',
+        "width": "5%"
+    }, {
+        "text": table_str.connname,
+        "width": "20%"
+    }, {
+        "text": table_str.remgateway,
+        "width": "15%"
+    }, {
+        "text": table_str.locaddr,
+        "width": "15%"
+    }, {
+        "text": table_str.remaddr,
+        "width": "15%"
+    }, {
+        "text": table_str.status,
+        "width": "10%"
+    }, {
+        "text": table_str.enable,
+        "width": "10%"
+    }, {
+        "text": table_str.modify,
+        "width": "10%"
+    }];
+
+    $.initTableHead($("#tableIpvpnClientList"), headArray);
+    $("#tableIpvpnClientList").tpTable(initIpsecTable);
+}
+
+function init() {
+    if (INCLUDE_OPENVPN_SERVER) {
+        OpenVpnInit();
+    } else {
+        $('#openvpn_div').addClass('nd');
+    }
+
+    if (INCLUDE_PPTPVPN_SERVER) {
+        PptpVpnInit();
+    } else {
+        $('#pptpvpn_div').addClass('nd');
+    }
+
+    if (INCLUDE_IPSEC) {
+        ipSecVpnInit()
+    } else {
+        $('#ipsecvpn_div').addClass('nd')
+    }
+}
+</script>
+<h3 id="t_vpnConn">VPN Connections</h3>
+<div class="content-container" id="openvpn_div">
+    <h4 id="t_ovpnConn">OpenVPN Connection</h4>
+    <form class="pure-form pure-form-aligned">
+        <table id="tableOvpnClientList">
+            <thead></thead>
+            <tbody id="tableOvpnClientListBody">
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<div class="content-container" id="pptpvpn_div">
+    <h4 id="t_pvpnConn">PPTP VPN Connection</h4>
+    <form class="pure-form pure-form-aligned">
+        <table id="tablePvpnClientList">
+            <thead></thead>
+            <tbody id="tablePvpnClientListBody">
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<div class="content-container" id="ipsecvpn_div">
+    <h4 id="t_ipvpnConn">IPsec VPN Connection</h4>
+    <form class="pure-form pure-form-aligned">
+        <table id="tableIpvpnClientList">
+            <thead></thead>
+            <tbody id="tableIpvpnClientListBody">
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<script language="javascript" type="text/javascript">
+$.tpInit(init);
+</script>

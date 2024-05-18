@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>cwmp settings</title>
+<style type="text/css">
+	
+</style>
+
+</head>
+
+<body>
+<div class="func-container">
+
+	<div id="cwmp_panel">
+
+	 	<form id="cwmp-form">
+	    	<input type="text"  id="cwmp-enable" name="enable" value="" />
+	    	<input type="text"  id="cwmp-inform-enable" name="PeriodicInformEnable" value="" />
+	    	<input type="text"  id="cwmp-inform-interval" name="PeriodicInformInterval" value="" />
+	    	<input type="text"  id="cwmp-acs-url" name="URL" value="" />
+	    	<input type="text"  id="cwmp-acs-username" name="Username" value="" />
+			<input type="text"  id="cwmp-acs-password" name="Password" value="" />
+			
+			<input type="text"  id="cwmp-auth" name="ConnectionRequestAuth" value="" />	
+	    	<input type="text"  id="cwmp-username" name="ConnectionRequestUsername" value="" />
+	    	<input type="text"  id="cwmp-password" name="ConnectionRequestPassword" value="" />
+	    	<input type="text"  id="cwmp-port" name="ConnectionRequestPort" value="" />	    	
+
+	    	<!-- <button id="cwmp_submit" type="button"></button> -->
+	    </form>
+
+	</div>
+
+	<div id="cwmp_help"></div>
+
+
+</div>
+
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	$("div.func-container").page({
+		title: $.su.CHAR.CWMP_SETTING.TITLE,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	var cwmpProxy = new $.su.Proxy({
+		url: $.su.url('/admin/cwmp?form=cwmp_setting')
+	});
+
+
+	$("div#cwmp_panel").panel({
+		title: $.su.CHAR.CWMP_SETTING.TITLE,
+		collapsible: false
+	});
+
+	$("input#cwmp-enable").switchbutton({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.CWMP,
+		proxy: cwmpProxy,
+		onValue: "on",
+		offValue: "off",
+		labelCls: 'm',
+		// cls:"form-inner",
+		field: {
+			"name": "enable"
+		}
+	});
+
+	$("input#cwmp-inform-enable").switchbutton({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.INFORM,
+		proxy: cwmpProxy,
+		onValue: "on",
+		offValue: "off",
+		labelCls: 'm',
+		field: {
+			"name": "PeriodicInformEnable"
+		}
+	});
+
+
+
+	$("input#cwmp-inform-interval").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.INFORM_INTERVAL,
+		allowBlank: false,
+		vtype: 'number',
+		tips: $.su.CHAR.CWMP_SETTING.SECONDS
+	});
+
+
+	$("input#cwmp-acs-url").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.ACS_URL,
+		allowBlank: false
+	});
+
+	$("input#cwmp-acs-username").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.ACS_USERNAME,
+		allowBlank: false
+	});
+
+	$("input#cwmp-acs-password").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.ACS_PASSWORD,
+		allowBlank: false
+	});
+	
+	$("input#cwmp-username").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.USERNAME,
+		allowBlank: false
+	});
+	
+	$("input#cwmp-password").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.PASSWORD,
+		allowBlank: false
+	});
+	
+	$("input#cwmp-port").textbox({
+		fieldLabel: $.su.CHAR.CWMP_SETTING.PORT,
+		allowBlank: false,
+		tips: $.su.CHAR.CWMP_SETTING.PORT_TIP,
+		vtype: {
+			vtype: "number",
+			max: 65535,
+			min: 1024
+		}
+	});
+
+
+	$("input#cwmp-auth").checkbox({
+		fieldLabel: '',
+		items: [
+			{boxlabel: $.su.CHAR.CWMP_SETTING.CONN_AUTH, inputValue: "on", uncheckedValue: "off", checked:true}
+		]
+	}).on("ev_change", function(e, oldValue, newValue){
+		if(newValue.length==1){
+			$("input#cwmp-username").textbox('enable');
+			$("input#cwmp-username").textbox('show');
+			$("input#cwmp-password").textbox('enable');
+			$("input#cwmp-password").textbox('show');
+		}else{
+			$("input#cwmp-username").textbox('disable');
+			$("input#cwmp-username").textbox('hide');
+			$("input#cwmp-password").textbox('disable');
+			$("input#cwmp-password").textbox('hide');
+		}
+	});	
+
+	// $('p#reboot_tips').html($.su.CHAR.LAN.REBOOT_TIP);
+
+
+	$("form#cwmp-form").form({
+		proxy: cwmpProxy,
+		fields: [
+			{name: "enable", mapping: "enable"},
+			{name: "PeriodicInformEnable", mapping: "PeriodicInformEnable"},
+			{name: "PeriodicInformInterval", mapping: "PeriodicInformInterval"},
+			{name: "URL", mapping: "URL"},
+			{name: "Username", mapping: "Username"},
+			{name: "Password", mapping: "Password"},
+			{name: "ConnectionRequestAuth", mapping: "ConnectionRequestAuth"},
+			{name: "ConnectionRequestUsername", mapping: "ConnectionRequestUsername"},
+			{name: "ConnectionRequestPassword", mapping: "ConnectionRequestPassword"},
+			{name: "ConnectionRequestPort", mapping: "ConnectionRequestPort"}
+		],
+		submitBtn: 'default',
+		validator: function(){
+			return true;
+		}
+	});
+
+
+
+
+	var helpLan = new $.su.Help({
+		container: "div#cwmp_help",
+		content: ['CWMP']
+	});
+
+});
+</script>
+</body>
+
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>3G/4G</title>
+<style type="text/css">
+	div.container.widget-container.text-container.offset{
+		position: absolute;
+		top:200px;
+		left:540px;
+	}
+</style>
+
+</head>
+
+<body>
+<div class="func-container">
+
+	<div id="g3_g4_panel">
+
+		 <div id="g3_g4_form">
+
+		 	<form id="g3_g4_setting">
+		    	<input id="g_usb_modem"  name="modemstatus"/>
+		    	<input id="g_location" name="locindex" value="" />
+		    	<input id="g_mobile_isp" name="ispindex" value="" />
+
+		    	<input id="g_mobile_set" name="setisp" value="" />
+
+		    	<input id="g_dial_num" name="dialnum" value="" />
+		    	<input id="g_mobile_apn" name="apn" value="" />
+		    	<input id="g_username" name="username" value="" />
+		    	<input id="g_password" name="password" value="" />
+
+		    	<input id="g_mtu" name="mtu" value="" />
+
+		    	<input id="g_use_dns" name="connectmode" value="" />
+		    	<input id="g_pri_dns" name="primarydns" value="" />
+		    	<input id="g_snd_dns" name="seconddns" value="" />
+		    </form>
+
+		 </div>
+
+	</div>
+
+	<div id="modem_help"></div>
+
+</div>
+
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	$("div.func-container").page({
+		title: $.su.CHAR.G3_G4.TITLE,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	$("div#g3_g4_panel").panel({
+		title: $.su.CHAR.G3_G4.TITLE,
+		collapsible: false
+	});
+
+	var dataProxy = new $.su.Proxy({
+		// url: "./data/location.json"
+		url: $.su.url('/admin/usbmodem?form=isplist')
+	});
+
+	var locationObj = {};
+
+	var locationStack = {};
+
+	var localCombo = new Array();
+
+	var regionName = '';
+	var regionSecName = '';
+
+
+	dataProxy.read({}, function(data){
+		locationObj = data;
+
+		for (var localName in data)
+		{
+			var regionNum = localName.slice(8);
+			locationStack[regionNum] = {};
+			locationStack[regionNum]['regionCode'] = regionNum;
+			locationStack[regionNum]['regionName'] = data[localName]['location_name'];
+
+			localCombo.push({name:data[localName]['location_name'], value:regionNum});
+
+			locationStack[regionNum]['ispList'] = [];
+
+			for(var ispName in data[localName]){
+
+				if(ispName.slice(0,3)=='isp'){
+					locationStack[regionNum]['ispList'].push({name:data[localName][ispName]['isp_name'], value:ispName});
+					locationStack[regionNum][ispName] = data[localName][ispName];
+				}
+
+			}
+		}
+		// console.log(locationStack)
+
+		$("input#g_location").combobox('loadData', localCombo);
+
+		formProxy.read({}, function(data){
+
+			$("form#g3_g4_setting").form('loadData', data);
+
+			switch(data.modemstatus){
+				case '0':
+					$("input#g_usb_modem").textbox('setValue', $.su.CHAR.G3_G4.UNPLUGGED);
+					break;
+				case '1':
+					$("input#g_usb_modem").textbox('setValue', $.su.CHAR.G3_G4.IDENTIFYING);
+					break;
+				case '2':
+					$("input#g_usb_modem").textbox('setValue', $.su.CHAR.G3_G4.IDENTIFY_SUCCESS);
+					break;
+			}
+
+			regionName = locationStack[data.locindex].regionName;
+			regionSecName = locationStack[data.locindex]['isp'+data.ispindex].isp_name;
+
+			$("input#g_location").textbox('setValue',  locationStack[data.locindex].regionName);
+			$("input#g_mobile_isp").textbox('setValue',  locationStack[data.locindex]['isp'+data.ispindex].isp_name);
+
+		});
+
+	});
+
+
+	var formProxy = new $.su.Proxy({
+		url: $.su.url('/admin/usbmodem?form=modemset')
+		// url: './data/g3.g4.json'
+	});
+
+	$("form#g3_g4_setting").form({
+		proxy: formProxy,
+		fields: [
+			/*{name: "locindex", mapping: "locindex"},
+			{name: "ispindex", mapping: "ispindex"},*/
+			{name: "setisp", mapping: "setisp"},
+			{name: "dialnum", mapping: "dialnum"},
+			{name: "apn", mapping: "apn"},
+			{name: "username", mapping: "username"},
+			{name: "password", mapping: "password"},
+			{name: "mtu", mapping: "mtu"},
+			{name: "connectmode", mapping: "connectmode"},
+			{name: "primarydns", mapping: "primarydns"},
+			{name: "seconddns", mapping: "seconddns"}
+		],
+		submitBtn: "default"
+	});
+
+
+
+	$("input#g_usb_modem").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.USB_MODEM,
+		labelCls: 's',
+		readOnly: true
+	});
+
+	$("input#g_location").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.LOCATION,
+		labelCls: 's',
+		readOnly: true
+	});
+
+	$("input#g_mobile_isp").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.MOBILE_ISP,
+		labelCls: 's',
+		readOnly: true
+	});
+
+	$("input#g_mobile_set").checkbox({
+		fieldLabel: "",
+		labelCls: 's',
+		cls: 'part-seperate',
+		items: [
+			{boxlabel: $.su.CHAR.G3_G4.SET_TIP, uncheckedValue:"select", inputValue: "manual", id: "set_manual"}
+		]
+	}).on('ev_change', function(item, oldValue, newValue){
+		if(newValue.length>0 && (newValue[0]=='manual' || newValue[0]=='setisp')  ){
+			$("input#g_location").textbox('setValue', '---');		
+			$("input#g_mobile_isp").textbox('setValue', '---');		
+			$("input#g_dial_num").textbox('enable');			
+			$("input#g_mobile_apn").textbox('enable');
+			$("input#g_username").textbox('enable');
+			$("input#g_password").textbox('enable');
+		}else{		
+			$("input#g_location").textbox('setValue', regionName);		
+			$("input#g_mobile_isp").textbox('setValue', regionSecName);		
+			$("input#g_dial_num").textbox('disable');			
+			$("input#g_mobile_apn").textbox('disable');
+			$("input#g_username").textbox('disable');
+			$("input#g_password").textbox('disable');
+		}
+
+	});
+
+
+	$("input#g_dial_num").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.DIAL_NUMBER,
+		labelCls: 's'
+	});
+
+	$("input#g_mobile_apn").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.APN,
+		labelCls: 's'
+	});
+
+	$("input#g_username").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.USERNAME,
+		labelCls: 's',
+		tips: $.su.CHAR.G3_G4.OPTIONAL
+	});
+
+	$("input#g_password").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.PASSWORD,
+		labelCls: 's',
+		tips: $.su.CHAR.G3_G4.OPTIONAL
+	});
+
+
+	$("input#g_mtu").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.MTU_SIZE,
+		labelCls: 's',
+		inputCls: 's',
+		allowBlank: false,
+		cls: 'part-seperate',
+		tips: $.su.CHAR.G3_G4.MTU_SIZE_TIP
+	});
+
+	$("input#g_use_dns").checkbox({
+		fieldLabel: "",
+		labelCls: 's',
+		cls: 'part-seperate',
+		items: [
+			{boxlabel: $.su.CHAR.G3_G4.USE_FOLLOW_DNS_SERVER, uncheckedValue:"off", inputValue: "on", id: "use_follow_dns"}
+		]
+	}).on('ev_change', function(item, oldValue, newValue){
+		if(newValue.length>0 && (newValue[0]=='on' || newValue[0]=='use_dns')  ){
+			$("input#g_pri_dns").textbox('enable');
+			$("input#g_snd_dns").textbox('enable');
+		}else{
+			$("input#g_pri_dns").textbox('disable');
+			$("input#g_snd_dns").textbox('disable');
+		}
+
+	});
+
+	$("input#g_pri_dns").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.PRIMARY_DNS,
+		labelCls: 's',
+		allowBlank: false
+	});
+
+	$("input#g_snd_dns").textbox({
+		fieldLabel: $.su.CHAR.G3_G4.SECOND_DNS,
+		labelCls: 's',
+		tips: $.su.CHAR.G3_G4.OPTIONAL
+	});
+
+	var helpLan = new $.su.Help({
+		container: "div#modem_help",
+		content: ['MODEM_ADVANCED']
+	});
+
+});
+</script>
+</body>
+
+</html>

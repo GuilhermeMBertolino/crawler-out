@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#flag must be the same as the var, defined in tplink_brcm.sh
+RFTEST_NEED_RUN_FILE=/tmp/rftest_need_run
+
+if [ "$(nvram kget rftestflag)" == "1" ]; then
+	rmmod wl
+	rmmod dhd
+	rmmod igs
+	rmmod emf
+	rmmod hnd
+
+	# kill acsd2, it may change the channel or stop TX.
+	# delete pid file of acsd2 at /tmp/dm/ first, or debug_monitor will start acsd2
+	acsd_pid=`pgrep acsd2|awk -F " " '{print $1}'`
+	rm -rf /tmp/dm/${acsd_pid}
+	killall acsd2
+
+	echo "yes" > $RFTEST_NEED_RUN_FILE
+	nvram kset rftestflag=0
+	wifi start
+fi

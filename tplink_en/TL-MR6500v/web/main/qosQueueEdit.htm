@@ -1,0 +1,51 @@
+<script>function init(){var e;(upQosIntf=qosIntfCfg[0],downQosIntf=qosIntfCfg[1],0<=queueEditIndex)?(queueCfg=queueList[queueEditIndex],$("#queue_name").val(queueCfg.queueName),upQosIntf.__stack==$.stkPop(queueCfg.__stack,1)?($("#qos_dir").append("<option value="+queueCfg.classInterface+">upStream</option>"),2==upQosIntf.schedulerAlgorithm?($("#sch_algm").val("SP"),e=1):$("#sch_algm").val("WRR")):($("#qos_dir").append("<option value="+queueCfg.classInterface+">downStream</option>"),2==downQosIntf.schedulerAlgorithm?($("#sch_algm").val("SP"),e=1):$("#sch_algm").val("WRR")),$("#qos_dir option[value="+queueCfg.classInterface+"]").prop("selected","selected"),$("#qos_dir").disabled=!0,$("#status_en").prop("checked",1==queueCfg.queueEnable),1==e?($("#wrr_queue").addClass("nd"),$("#sp_queue").removeClass("nd"),$("#precedence option[value="+queueCfg.queuePrecedence+"]").prop("selected","selected")):($("#sp_queue").addClass("nd"),$("#wrr_queue").removeClass("nd"),$("#weight").val(queueCfg.queueWeight),$("#force_weight_en").prop("checked",1==queueCfg.forceWeightEnable))):(1==upQosIntf.schedulerAlgorithm&&1==downQosIntf.schedulerAlgorithm?$("#sch_algm").val("SP"):(1!=downQosIntf.schedulerAlgorithm&&($("#qos_dir").append("<option value="+downQosIntf.interfaceKey+">downStream</option>"),$("#qos_dir option[value="+downQosIntf.interfaceKey+"]").prop("selected","selected"),2==downQosIntf.schedulerAlgorithm?$("#sch_algm").val("SP"):$("#sch_algm").val("WRR")),1!=upQosIntf.schedulerAlgorithm&&($("#qos_dir").append("<option value="+upQosIntf.interfaceKey+">upStream</option>"),$("#qos_dir option[value="+upQosIntf.interfaceKey+"]").prop("selected","selected"),2==upQosIntf.schedulerAlgorithm?$("#sch_algm").val("SP"):$("#sch_algm").val("WRR"))),$("#queue_name").val(""),$("#weight").val(""),"SP"==$("#sch_algm").value?($("#wrr_queue").addClass("nd"),$("#sp_queue").removeClass("nd")):($("#sp_queue").addClass("nd"),$("#wrr_queue").removeClass("nd")))}function doChgDir(){var e;if(upQosIntf=qosIntfCfg[0],downQosIntf=qosIntfCfg[1],1==$("#qos_dir").data("value"))3==upQosIntf.schedulerAlgorithm&&(e=1);else{if(2!=$("#qos_dir").data("value"))return;3==downQosIntf.schedulerAlgorithm&&(e=1)}1==e?($("#sp_queue").addClass("nd"),$("#wrr_queue").removeClass("nd"),$("#sch_algm").val("WRR")):($("#wrr_queue").addClass("nd"),$("#sp_queue").removeClass("nd"),$("#sch_algm").val("SP"))}function clickOK(){if(""==$("#qos_dir").data("value"))return $.alert(ERR_QOS_QUEUE_DIR),element=$("#qos_dir"),element&&(element.focus(),element.select()),!1;if(!$.isname($("#queue_name").val()))return $.alert(ERR_QOS_QUEUE_NAME),element=$("#queue_name"),element&&(element.focus(),element.select()),!1;if(12<$("#queue_name").val().length)return $.alert(ERR_QOS_QUEUE_NAME_LENGTH),element=$("#queue_name"),element&&(element.focus(),element.select()),!1;var e=ACT_ADD,t=null,u=null,n=1==$("#status_en").prop("data-checked")?1:0,l=$("#queue_name").val();if(upQosIntf=qosIntfCfg[0],downQosIntf=qosIntfCfg[1],0<=queueEditIndex?(e=ACT_SET,t=queueList[queueEditIndex].__stack):u=upQosIntf.interfaceKey==$("#qos_dir").data("value")?upQosIntf.__stack:downQosIntf.__stack,"SP"==$("#sch_algm").val()){var a=$("#precedence").data("value");$.act(e,QOS_QUEUE,t,u,["queueEnable="+n,"queueName="+l,"queueWeight=0","forceWeightEnable=0","queuePrecedence="+a])}else{if("WRR"!=$("#sch_algm").val())return $.alert(ERR_QOS_QUEUE_SCH),element=$("#sch_algm"),element&&(element.focus(),element.select()),!1;if(""==$("#weight").val()||!$.isnum($("#weight").val()))return $.alert(ERR_QOS_QUEUE_WEIGHT_NUM),element=$("#weight"),element&&(element.focus(),element.select()),!1;var s=parseInt($("#weight").val(),10);if(0==s||100<s)return $.alert(ERR_QOS_QUEUE_WEIGHT_NUM),element=$("#weight"),element&&(element.focus(),element.select()),!1;var o=1==$("#force_weight_en").prop("data-checked")?1:0;$.act(e,QOS_QUEUE,t,u,["queueEnable="+n,"queueName="+l,"queueWeight="+s,"forceWeightEnable="+o,"queuePrecedence=1"])}$.exe(function(e){e||$.removeLoading(),$.reload()})}function clickCancel(){$.reload()}</script>
+<div class="content-container">
+	<form class="pure-form pure-form-aligned">
+		<div>
+			<b id="dir">Direction:</b>
+			<select id="qos_dir" class="xl">
+			</select>
+		</div>
+		<div>
+			<b id="alg">Scheduler Algorithm:</b>
+			<input class="xl" type="text" maxlength="15" id="sch_algm" disabled="disabled">
+		</div>
+		<div>
+			<b id="qname">Queue Name:</b>
+			<input class="xl" type="text" maxlength="12" id="queue_name">
+		</div>
+		<div id="wrr_queue">
+			<div class="inline">
+				<b id="wght">Weight(%):</b>
+				<input class="xl" type="text" maxlength="3" id="weight">
+			</div>
+			<div class="inline">
+				<input class="xl" type="checkbox" id="force_weight_en" checked="true">
+				<label id="force_en">Forced</label>
+			</div>
+		</div>
+		<div id="sp_queue">
+			<b id="sp_pre">Precedence:</b>
+			<select id="precedence" class="xl">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+			</select>
+		</div>
+	        <div>
+	            <b></b>
+	            <input type="checkbox" id="status_en" checked="true">
+	            <label class="c_enable">Enable this entry</label>
+	        </div>
+	        <div class="inline-btn-right">
+	            <button type="submit" class="green inline T_cancel" id="editCancel">Cancel</button>
+	            <button type="submit" class="green inline T_save" id="editOK">Save</button>
+	        </div>
+	</form>
+</div>
+<script>$("#editOK").on("click",function(i){$.addLoading($(this)),clickOK()}),$("#editCancel").on("click",function(i){clickCancel()}),$("#qos_dir").on("click",function(i){doChgDir()}),$.tpInit(init)</script>

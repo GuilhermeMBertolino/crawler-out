@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="translation" class="hide">advstatistics</div>
+        <div ng-controller="advStatisticsController" ng-cloak>
+            <!--Breadscrumbs starts here -->                                                                                                      
+            <div class="row ltq_breadcrumbs">                                                                                                     
+                <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+                    <ng-switch on="$first">                                                                                                               
+                        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                            <div class="ltq_brd_home" >                                                                                                           
+                                <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                                    <i class="fa fa-home"></i>                                                                                                            
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </div>                                                                                                                                
+                        </div>                                                                                                                                
+
+                        <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                            <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                                {{breadcrumb.name}}                                                                                                               
+                            </span>                                                                                                                               
+                            <span ng-if ="breadcrumb.path != 'nothing' &&
+                                                                $last == false">                                                                                                                              
+                                <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                                    <i></i>                                                                                                                               
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </span>                                                                                                                               
+                        </div>                                                                                                                                 
+
+                    </ng-switch>                                                                                                                            
+                </div>                                                                                                                                   
+            </div>                                                                                                                                  
+            <!--Breadscrumbs ends here --> 
+            <div class="subheader">
+                <div>
+                    <img src="images/wifi.png" class="iconDetails" alt="img">
+                </div>
+                <div style="margin-left:40px;"><h4 ng-bind="'advstatistics.headername' | translate"></h4></div>
+                <p ng-bind="'advstatistics.description' | translate"></p>
+            </div>
+            <div class="row" ng-show="statisticspopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('statisticspopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="statisticspopupval"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="panel">
+                        <div class="panel-heading blu_bg"><span class="panel_heading_icon"></span><span ng-bind="'advstatistics.panelheader' | translate"></span></div>
+                        <div class="panel-body">
+                            <div class="table-responsive table-scroll-vr">                
+                                <table class="table table-bordered tableCount theme_intel">
+                                    <thead>
+                                        <tr>
+                                            <th ng-bind="'advstatistics.Statistics' | translate">Statistics</th>
+                                            <th ng-bind="'advstatistics.Value' | translate">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody> 
+                                        <tr ng-repeat="row in tableData">			
+                                            <td ng-repeat="(key,value) in row">{{key}}</td>
+                                            <td ng-repeat="(key,value) in row">{{value}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
+                    <!--Here we are using * to maintain the instance value-->
+                    <throughput-chart
+                        title="Statistics" 
+                        color="yel_bg"
+                        labels='["Last Tx PHY Rate","Last Rx PHY Rate"]'
+                        units='Mbps'
+                        fillcolors='["rgba(220,110,220,0.2)","rgba(151,80,205,0.2)"]'
+                        strokecolors='["rgba(220,110,220,1)","rgba(151,80,205,1)"]'
+                        pointcolors='["rgba(220,110,220,1)","rgba(151,80,205,1)"]'
+                        wsprotocol="protocol_eth_link_stats"
+                        wsparams="start 5 Object=* LastDataUplinkRate LastDataDownlinkRate">
+                    </throughput-chart>
+                </div>
+            </div>
+            <div class="row no-margin-hr">
+                <div class="btn-group syslog_btn">
+                    <button class="btn btn-info waves-effect waves-light" title="Back" id="Close" value="Close" ng-click="back('adv_statistics')"><span class="hidden-xs" ng-bind="'Back' | translate"></span></button>
+                </div> 
+            </div>
+        </div>
+    </body>
+</html>

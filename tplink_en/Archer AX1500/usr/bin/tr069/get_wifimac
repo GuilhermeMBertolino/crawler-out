@@ -1,0 +1,22 @@
+#/bin/sh
+ifname=$1
+
+mac="$(getfirm MAC)"
+mac=${mac//-/:}
+mac=$(lua /usr/sbin/wifimac $mac)
+mac=$(lua /usr/sbin/wifimac $mac)
+
+if [ $ifname = "2g" ]; then
+    mac="$(echo $mac | tr 'a-f' 'A-F')"
+    echo $mac
+elif [ $ifname = "5g" ];then
+    mac=$(lua /usr/sbin/wifimac $mac)
+    mac="$(echo $mac | tr 'a-f' 'A-F')"
+    echo $mac
+elif [ $ifname = "5g_2" ];then
+    mac=$(lua /usr/sbin/wifimac $mac)
+    mac=$(lua /usr/sbin/wifimac $mac)
+    mac="$(echo $mac | tr 'a-f' 'A-F')"
+    echo $mac
+fi
+

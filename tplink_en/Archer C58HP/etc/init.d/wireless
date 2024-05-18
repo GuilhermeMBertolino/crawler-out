@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=99
+mtd_name=`cat /proc/mtd | grep "ART" -iw | grep -o "mtd[0-9]*"`
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+start() {
+	[ -c /dev/dk0 ] || mknod /dev/dk0 c 63 0
+	[ -c /dev/dk1 ] || mknod /dev/dk1 c 63 1
+	[ -L /dev/caldata ] || ln -s /dev/${mtd_name} /dev/caldata
+
+	if [ "$(/sbin/is_cal)" = "true" ]; then
+		/sbin/wifi preinit &> /dev/null
+		/sbin/wifi default &> /dev/null
+		/sbin/wifi_firm
+		/sbin/wifi &
+		echo 3 > /proc/sys/vm/drop_caches
+	else
+		#cd /usr/sbin/
+		#/etc/init.d/art start
+		#cd /
+		echo "DUT has NO cal data!" > /dev/console
+	fi
+	return 0
+}
+
+restart() {
+	/sbin/wifi
+	return 0
+}
+
+shutdown() {
+	killall -9 hostapd
+	# do not call wifi down!
+	#/sbin/wifi down
+	return 0
+}
+
+stop() {
+	/sbin/wifi down
+	return 0
+}
+
+reload() {
+	/sbin/wifi reload
+	return 0
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>statistic Control</title>
+<style>
+.combobox-container.right{
+	float:right;
+}
+#device-name{
+	display:inline-block;
+}
+#chart{
+	width:660px;
+}
+.intro{
+	overflow:hidden;
+}
+.line-legend{
+	float:right;
+}
+.line-legend li{
+	display: inline-block;
+    float: left;
+	margin-left:400px;
+    min-width: 105px;
+    line-height: 20px;
+    margin: 7px 0 0 0;
+}
+.legend-icon{
+	display:block;
+	float:left;
+	width:15px;
+	height:15px;
+	margin:0 5px;
+}
+.line-legend li p{
+	line-heihgt:15px;
+}
+</style>
+</head>
+<body>
+<div class="func-container">
+	 <div id="statistic">
+	 	<form id="statistic-setting">
+	    	<input type="text"  id="statistic_statu" name="enable" value="" />
+	    	<p class="note">
+	    		<span class="title note-title"></span>
+	    		<span class="text"></span>
+	    	</p>
+	    </form>
+		<p id="device-name"></p>
+		<input id="time-interval" />
+		<input id="device-usage" />
+		<div id="chart">
+			<div>
+				<canvas id="canvas"></canvas>
+			</div>
+		</div>
+		<div id="intro">
+		</div>
+	 </div>
+	 <div id="folder">
+	 	<div id="folderGrid">
+		</div>
+	 </div>
+	<div id="help_sys_statisic"></div>
+</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}function changeX(b){var a=b;if(b>=1024*1024*1024){a=(a/(1024*1024*1024)).toFixed(1)+"G"}else{if(b>=1024*1024){a=(a/(1024*1024)).toFixed(1)+"M"}else{if(b>=1024){a=(a/(1024)).toFixed(1)+"K"}}}return a}function changeY(b){var a=b;if(b>=1000*1000*1000){a=(a/(1000*1000*1000)).toFixed(1)+"G"}else{if(b>=1000*1000){a=(a/(1000*1000)).toFixed(1)+"M"}else{if(b>=1000){a=(a/(1000)).toFixed(1)+"K"}}}return a}function initChart(b,h,c,j){var l=[],k=[],p=[];if(h&&j){h=h[j];if(!h){h=[{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0},{downs:0,ups:0}]}}var d,m,a=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],g=0;for(var f=h.length-1;f>0;f--){if(b=="hour"){d=c.time.split(":")[0];d=(d-f+1)<0?(d-f+25):(d-f+1);d=d<10?"0"+d:d;l.push(d)}else{if(b=="minute"){if(f>11){f=10}d=c.time.split(":")[0];m=c.time.split(":")[1];m=(m-f+1)<0?(d--,m-f+61):(m-f+1);d=d<0?(d+24):d;d=d<10?("0"+d*1):d;m=m<10?"0"+m:m;l.push(d+":"+m)}else{if(f>8){f=7}g=$.inArray(c.day,a);g=(g-f+1)<0?(g-f+8):(g-f+1);l.push(a[g])}}k.push(h[f-1].ups*1-h[f].ups*1);p.push(h[f-1].downs*1-h[f].downs*1)}var o={labels:l,datasets:[{label:"Downstream",fillColor:"rgba(84,199,226,0.2)",strokeColor:"rgba(84,199,226,1)",pointColor:"rgba(84,199,226,1)",pointStrokeColor:"rgba(84,199,226,0.1)",pointHighlightFill:"#fff",pointHighlightStroke:"rgba(84,199,226,1)",data:p},{label:"Upstream",fillColor:"rgba(150,204,86,0.2)",strokeColor:"rgba(150,204,86,1)",pointColor:"rgba(150,204,86,1)",pointStrokeColor:"rgba(150,204,86,0.1)",pointHighlightFill:"#fff",pointHighlightStroke:"rgba(150,204,86,1)",data:k}]};var n=document.getElementById("canvas").getContext("2d");if(!window.myLine){window.myLine=new Chart(n).Line(o,{responsive:true,scaleLabel:"<%=changeY(value)%>B",pointDotRadius:5,pointDotStrokeWidth:2,bezierCurveTension:0,multiTooltipTemplate:"<%= changeX(value)%>B",legendTemplate:'<ul class="<%=name.toLowerCase()%>-legend"><% for (var i=0; i<datasets.length; i++){%><li><span class="legend-icon" style="background-color:<%=datasets[i].strokeColor%>"></span><p><%if(datasets[i].label){%><%=datasets[i].label%><%}%></p></li><%}%></ul>'})}else{window.myLine.initialize(o)}$("#intro").html(myLine.generateLegend())}$(document).ready(function(s){var n="./data/statistic.set.json";var w="./data/statistic.grid.json";var x=$.su.url("/admin/traffic?form=status");var i=$.su.url("/admin/traffic?form=lists");var o=true;var r=false;var c=$.su.url("/admin/nat?form=setting");var p=$.su.url("/admin/traffic?form=data");var v=$.su.url("/admin/traffic?form=dev_name");var j=$.su.url("/admin/time?form=settings");var g=new $.su.Proxy({url:j});var f=new $.su.Proxy({url:c});var l=new $.su.Proxy({url:p});var b=new $.su.Proxy({url:i});var d=new $.su.Proxy({url:v});var q,m;$.getScript("js/libs/Chart.js",function(){window.myLine=null});$("div.func-container").page({title:$.su.CHAR.STATISTICS.TITLE,help:""});$("div#statistic").panel({title:$.su.CHAR.STATISTICS.TRIFFIC_STATISTICS,collapsible:false});$("div#folder").panel({title:$.su.CHAR.STATISTICS.TITLE,collapsible:false});$("#statistic-setting .note-title").text($.su.CHAR.OPERATION.NOTE);$("#statistic-setting .text").text($.su.CHAR.STATISTICS.NOTE);$("input#statistic_statu").switchbutton({fieldLabel:$.su.CHAR.STATISTICS.ENABLE_STATISTICS,tips:"",proxy:{url:x},field:{name:"enable"},labelCls:"s"}).on("ev_loadData",function(A,z,y){if(y=="off"){setTimeout(function(){$("#statistic-setting .note").show();if(window.myLine){myLine.destroy()}a.grid("removeAllData");$("#chart").hide();$("#intro").hide();$("#time-interval").combobox("hide");$("#device-usage").combobox("hide");$("#folder").combobox("hide");$("#device-name").hide();clearInterval(r)},100)}else{$("#statistic-setting .note").hide();clearInterval(r);$("#chart").show();$("#intro").show();$("#time-interval").combobox("show");$("#device-usage").combobox("show");$("#device-name").show();$("#folder").combobox("show");d.read({},function(B){q=B;h.load()});r=setInterval(function(){$("#refreshBtn").button("disable");setTimeout(k,1000);a.grid("runProgress");a.grid("getStore").load({},function(){a.grid("prompt",true)},function(){a.grid("prompt",false)},function(){a.grid("prompt",false)})},60000)}});var u=new $.su.Proxy({url:$.su.url("/admin/traffic?form=status")});$("form#statistic-setting").form({fields:[{name:"statistic_statu",mapping:"statistic_statu"}],submitBtn:null});$("#device-usage").combobox({fieldLabel:null,inputCls:"l",cls:"right inline-block"}).on("ev_change",function(B,y,A){setTimeout(function(){$("#device-name").text($.su.CHAR.STATISTICS.DEVICE_TRAFFIC+$("#device-usage").combobox("getSelectedText")+":")},50);m=A[0];if(A[0]!=="all"){$("#time-interval").combobox("disableItem",["hour","day"]);if(o||y.length==0){return}var z=$("#time-interval").combobox("getValue")[0];$("#time-interval").combobox("setValue","minute");if(z=="minute"){l.read({operation:"minutely",time:"minutely"},function(C){g.read({},function(D){initChart($("#time-interval").combobox("getValue")[0],C,D,A[0])})},function(){},function(){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],1,C,A[0])})})}}else{$("#time-interval").combobox("enableItem",["hour","day"]);if(o||y.length==0){return}if($("#time-interval").combobox("getValue")=="hour"){l.read({operation:"hourly",time:"hour"},function(C){g.read({},function(D){initChart($("#time-interval").combobox("getValue")[0],C,D)})},function(){},function(){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],1,C)})})}else{if($("#time-interval").combobox("getValue")=="day"){l.read({operation:"daily",time:"day"},function(C){g.read({},function(D){initChart($("#time-interval").combobox("getValue")[0],C,D)})},function(){},function(){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],1,C)})})}else{l.read({operation:"minutely_all",time:"min"},function(C){g.read({},function(D){initChart($("#time-interval").combobox("getValue")[0],C,D)})},function(){},function(){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],1,C)})})}}}});$("#time-interval").combobox({fieldLabel:null,inputCls:"m",cls:"right inline-block ml10",items:[{value:"minute",name:$.su.CHAR.STATISTICS.MINUTE},{value:"hour",name:$.su.CHAR.STATISTICS.HOUR},{value:"day",name:$.su.CHAR.STATISTICS.DAY}]}).on("ev_change",function(A,y,z){if(z[0]=="minute"){if($("#device-usage").combobox("getValue")=="all"){l.read({operation:"minutely_all",time:"min"},function(B){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],B,C)})},function(){},function(){g.read({},function(B){initChart($("#time-interval").combobox("getValue")[0],1,B)})})}else{l.read({operation:"minutely",time:"minutely"},function(B){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],B,C,$("#device-usage").combobox("getValue"))})},function(){},function(){g.read({},function(B){initChart($("#time-interval").combobox("getValue")[0],1,B,$("#device-usage").combobox("getValue"))})})}}else{if(z[0]=="hour"){l.read({operation:"hourly",time:"hour"},function(B){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],B,C)})},function(){},function(){g.read({},function(B){initChart($("#time-interval").combobox("getValue")[0],1,B)})})}else{l.read({operation:"daily",time:"day"},function(B){g.read({},function(C){initChart($("#time-interval").combobox("getValue")[0],B,C)})},function(){},function(){g.read({},function(B){initChart($("#time-interval").combobox("getValue")[0],1,B)})})}}});var h=new $.su.Store({proxy:{url:i},fields:[{name:"device_type"},{name:"device_name"},{name:"mac"},{name:"rerx_byte"},{name:"retx_byte"},{name:"total_byte"}],autoLoad:false});function k(){$("#refreshBtn").button("enable")}var a=$("div#folderGrid").grid({store:h,deleteConfirmMsgText:$.su.CHAR.STATISTICS.DELETE_CONFIRM,deleteAllConfirmMsgText:$.su.CHAR.STATISTICS.DELETE_ALL_CONFIRM,minLines:0,paging:{},editor:"default",columns:[{text:"",width:110,dataIndex:"device_type",renderer:function(B,y,A){for(var z=0;z<q.length;z++){if(q[z].mac==A.mac){return q[z].wire_type}}}},{text:$.su.CHAR.STATISTICS.DEVICE,width:110,dataIndex:"device_name",renderer:function(B,y,A){if(q.length){for(var z=0;z<q.length;z++){if(q[z].mac==A.mac){setTimeout(function(){$("#device"+y).textbox({inputCls:"m"});$("#device"+y).textbox("setValue",q[z].hostname);$("#device"+y).textbox("hide");$("#device-name-"+y).bind("click",function(){$("#device"+y).textbox("setValue",q[z].hostname);$("#device"+y).textbox("show");$("#device"+y).focus();$("#device-name-"+y).hide()});$("#device"+y).bind("keydown",function(C){if(C.keyCode==13){$(this).blur()}});$("#device"+y).bind("blur",function(){$("#device"+y).textbox("hide");$("#device-name-"+y).show();if($("#device"+y).textbox("getValue")==q[z].hostname){return}else{d.write({key:"key-"+y,index:y,alias:$("#device"+y).textbox("getValue"),mac:q[z].mac},function(C){$("#device-name-"+y).text($("#device"+y).textbox("getValue"));$("#device-usage").get(0).items[z+1].name=$("#device"+y).textbox("getValue");$("#device-usage").parent().find("span.text:eq("+(z+1)+")").text($("#device"+y).textbox("getValue"));$("#device-usage").parent().find(".combobox-checkbox:eq("+(z+1)+")").attr("display",$("#device"+y).textbox("getValue"));d.read({},function(D){q=D})})}})},100);return"<input id=device"+y+" device-name="+q[z].hostname+" device-mac="+q[z].mac+" /><div id=device-name-"+y+">"+q[z].hostname+"</div>"}}}else{return B}}},{text:$.su.CHAR.STATISTICS.MAC_ADDR,width:140,dataIndex:"mac"},{text:$.su.CHAR.STATISTICS.SPEED,width:110,renderer:function(y){return $.su.func.changeUnit(y)+"B↑<br/>"+$.su.func.changeUnit(arguments[2].rerx_byte)+"B↓"},dataIndex:"retx_byte"},{text:$.su.CHAR.STATISTICS.TRAFFIC,width:100,renderer:function(y){return $.su.func.changeUnit(y)},dataIndex:"total_byte"}],operation:[{xtype:"button",text:$.su.CHAR.OPERATION.REFRESH,id:"refreshBtn",iconCls:"btn-refresh",handler:function(y){y.stopPropagation();y.preventDefault();$("#refreshBtn").button("disable");setTimeout(k,1000);a.grid("runProgress");a.grid("getStore").load({},function(){a.grid("prompt",true)},function(){a.grid("prompt",false)},function(){a.grid("prompt",false)});return true}},{xtype:"button",text:$.su.CHAR.STATISTICS.CLEAN_ALL,id:"resetAllBtn",iconCls:"btn-reset-all",handler:function(){$("#resetAllBtn").button("disable");a.grid("runProgress");b.read({operation:"reset_all"},function(){$("#resetAllBtn").button("enable");h.load();a.grid("prompt",true)},function(){$("#resetAllBtn").button("enable");a.grid("prompt",false)},function(){$("#resetAllBtn").button("enable");a.grid("prompt",false)});return false}}]}).on("ev_load",function(C,B){var y=[{name:$.su.CHAR.STATISTICS.ALL_DEVICE,value:"all"}];$("#device-usage").combobox("loadData",y);for(var A=0;A<B.length;A++){for(var z=0;z<q.length;z++){if(q[z].mac==B[A].mac){y[A+1]={name:q[z].hostname,value:q[z].mac}}}$("#device-usage").combobox("loadData",y)}if(o){$("#device-usage").combobox("setValue","all");$("#time-interval").combobox("setValue","day");o=false}else{if(m!=$("#device-usage").combobox("getValue")[0]){$("#device-usage").combobox("setValue",m)}if($("#time-interval").combobox("getValue")=="minute"){if($("#device-usage").combobox("getValue")=="all"){l.read({operation:"minutely_all",time:"min"},function(D){g.read({},function(E){initChart($("#time-interval").combobox("getValue")[0],D,E)})})}else{l.read({operation:"minutely",time:"minutely"},function(D){g.read({},function(E){initChart($("#time-interval").combobox("getValue")[0],D,E,$("#device-usage").combobox("getValue")[0])})})}}else{if($("#time-interval").combobox("getValue")=="hour"){l.read({operation:"hourly",time:"hour"},function(D){g.read({},function(E){initChart($("#time-interval").combobox("getValue")[0],D,E)})})}else{l.read({operation:"daily",time:"day"},function(D){g.read({},function(E){initChart($("#time-interval").combobox("getValue")[0],D,E)})})}}}d.read({},function(D){q=D})});a.delegate("a.grid-content-btn.btn-reset","click",function(A){A.preventDefault();A.stopPropagation();var z=$(this).attr("data-key");var y=a.get(0).store;y.update(z,{operation:"reset"});return false});var t=new $.su.Help({container:"div#help_sys_statisic",content:["TRAFFIC_STATISTIC","TRAFFIC_STATISTIC_LIST"]});f.read({},function(z){if(z.boost_traffic_compatible=="no"){var y=z.hw_enable;if(y=="on"){$("input#statistic_statu").switchbutton("disable");$("input#statistic_statu").switchbutton("setTips",$.su.CHAR.ERROR["00000114"])}else{$("input#statistic_statu").switchbutton("enable");$("input#statistic_statu").switchbutton("setTips","")}}});$.su.app.runningModule.addUnloadHandler(function(){clearInterval(r)})});</script>
+</body>
+</html>

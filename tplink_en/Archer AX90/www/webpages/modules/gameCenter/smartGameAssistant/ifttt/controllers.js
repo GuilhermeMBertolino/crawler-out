@@ -1,0 +1,1 @@
+jQuery.su.moduleManager.define("ifttt",{services:[],stores:[],models:[],views:["iftttView"],listeners:{"ev_on_launch":function(i,t,e,n,s,o,f){}},init:function(i,t,e,n,s,o){this.configViews({id:"iftttView",items:[]}),this.listen({}),this.control({})}},function(i,t,e,n,s,o){return{}});

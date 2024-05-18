@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# change detect interval to 120s
+ubus call client_mgmt update '{"interval":120000}'
+
+killall switch_led
+switch_led -w 120000 -c 120000 &
+sleep 1s
+. /usr/lib/switch_led/switch_led.sh
+notify_portlink_changed	
+notify_online_test
+
+# pending
+sleep 2700s
+
+# change detect interval to 45s
+ubus call client_mgmt update '{"interval":45000}'
+
+killall switch_led
+switch_led -w 60000 -c 120000 &
+sleep 1s
+. /usr/lib/switch_led/switch_led.sh
+notify_portlink_changed	
+notify_online_test

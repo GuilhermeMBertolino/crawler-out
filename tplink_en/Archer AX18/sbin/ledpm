@@ -1,0 +1,142 @@
+#!/bin/sh
+# Copyright (C) 2011-2014 TP-LINK
+# Author Jason Guo<guodongxian@tp-link.com.cn>
+# Date   20Oct14
+
+LEDPM_RUN_PATH=/var/run
+LEDPM_LIB=/lib/led_night_mode
+
+lock /var/run/ledpm.lock
+
+. ${LEDPM_LIB}/ledpm_function.sh
+
+config_load ledpm
+
+config_get_bool en "leds" "enable" 0
+config_get tm_start "leds" "time_start"
+config_get tm_end "leds" "time_end"
+
+if [ -e "${LEDPM_RUN_PATH}/ledpm.pid" ]
+then
+    local pid match
+    pid=$(cat ${LEDPM_RUN_PATH}/ledpm.pid)
+    match=$(ps | grep "^[\t ]*$pid")
+
+    if [ -n "$match" ]
+    then
+	    kill $pid
+    fi
+    rm -f ${LEDPM_RUN_PATH}/ledpm.pid
+fi
+
+lock -u /var/run/ledpm.lock 
+
+# When nigth mode disabled, it have to call ledctrl
+[ "$en" = 0 ] && { 
+	# when system boot,$1=boot,don't need to call this.to fix bug:close LED and reboot,the LED turns on again;
+        [ $# -gt 0 ] && exit 0  
+
+	config_load ledctrl
+	ledpm_set_ledctrl_config "enable" "off"
+	uci set ledctrl.GENERAL.enable="on"
+	#ledctrl.GENERAL.enable is flag of ledonoff
+	uci commit "ledctrl"
+
+    ledpm_cli "NIGHT"
+    #ledpm_wifi
+    exit 0
+}
+
+# Save the pid
+echo $$ > /var/run/ledpm.pid
+
+while true
+do
+    [ $(uci_get_state systime core sync) -eq 1 ] && break
+    sleep 2
+done
+
+config_get interval "leds" "interval"
+
+local old_en
+local cur_en=$(ledpm_get_ledctrl_config "enable")
+[ x"$cur_en" = x"on" -o x"$cur_en" = x"off" ] && old_en=$cur_en
+
+config_load ledctrl
+config_get ledctrl_general_enable "GENERAL" "enable"
+if [ "$old_en" == "on" -a "$ledctrl_general_enable" == "on" ]; then
+        uci set ledctrl.GENERAL.enable="off"
+elif [ "$old_en" == "off" -a "$ledctrl_general_enable" == "off" ]; then
+        uci set ledctrl.GENERAL.enable="on"
+fi
+uci commit "ledctrl"
+
+ledcli NIGHT
+#ledpm_wifi
+#syncro GENERAL based on nightmode
+
+
+local run_num=0
+local dt dt_h dt_m tm_s_h tm_e_h tm_s_m tm_e_m
+local dt_min tm_s_min tm_e_min
+local new_en whole_day
+
+while [ true ]
+do
+	config_load ledctrl
+    
+    dt=$(ledpm_date)
+
+    dt_h=$(ledpm_hour "$dt")
+    dt_m=$(ledpm_mintue "$dt")  
+
+    tm_s_h=${tm_start%%:*}
+    tm_s_m=${tm_start##*:}    
+    tm_e_h=${tm_end%%:*}
+    tm_e_m=${tm_end##*:}
+    # Invalid date
+    [ -z "$dt_h" -o -z "$dt_m" -o -z "$tm_s_h" -o -z "$tm_s_m" -o -z "$tm_e_h" -o -z "$tm_e_m" ] && break
+
+    tm_s_min=$(ledpm_date_to_min $tm_s_h $tm_s_m)
+    tm_e_min=$(ledpm_date_to_min $tm_e_h $tm_e_m)
+
+    new_en="off"
+    [ -z "$old_en" ] && old_en="none"
+    
+    dt_min=$(ledpm_date_to_min $dt_h $dt_m)
+    if [ $tm_s_min -le $tm_e_min ]
+    then
+        [ $dt_min -ge $tm_s_min -a $dt_min -lt $tm_e_min ] && new_en="on"  
+        [ $tm_s_min -eq $tm_e_min ] && new_en="on"  
+    else
+        whole_day=$(ledpm_date_to_min 23 59)
+        [ $dt_min -ge $tm_s_min -a $dt_min -le $whole_day ] && new_en="on"
+        # Another day calculate
+        [ $dt_min -lt $tm_e_min ] && new_en="on"
+    fi  
+    
+    [ "$new_en" != "$old_en" ] && {    
+    	ledpm_set_ledctrl_config "enable" "$new_en"
+        ledpm_set_ledctrl_config "ledname" "NIGHT"
+        ledpm_set_ledctrl_config "map" "0"
+		#syncro GENERAL based on nightmode
+		[ "$new_en" == "off" ] && {
+                uci set ledctrl.GENERAL.enable="on"
+        }
+        [ "$new_en" == "on" ] && {
+                config_get ledctrl_general_enable "GENERAL" "enable"
+                [ "$ledctrl_general_enable" = "on" ] && {
+                        uci set ledctrl.GENERAL.enable="off"
+                }
+        }
+		
+        uci commit "ledctrl"
+        # Call ledctrl process to make led work at night
+        ledpm_cli "NIGHT"
+        # Call wifi control led
+        # ledpm_wifi
+        old_en=$new_en
+    }
+
+    sleep ${interval:-1}
+done

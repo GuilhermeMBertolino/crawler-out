@@ -1,0 +1,390 @@
+
+<SCRIPT language="javascript" type="text/javascript">
+if(window.parent != window)
+{
+	document.cookie = "Authorization=;path=/";	
+	window.parent.location.href = httpAutErrorArray[2];
+}
+</SCRIPT>
+<script type="text/javascript" src="../login/encrypt.js" /></script>
+<link rel="stylesheet"  type="text/css"  href="../login/login.css"></link>
+<!--[if lte IE 8]>
+<style>
+	.eye-icon {
+		display: none;
+	}
+</style>
+<![endif]-->
+<script type="text/javascript" src="../login/common.js"></script>
+<script type="text/javascript" src="../login/encrypt.js"></script>
+<script type="text/javascript" src="../login/dynaform_encrypt.js"></script>
+<script type="text/javascript" src="../login/cryptoJS.min.js"></script>
+<script type="text/javascript" src="../login/tpEncrypt.js"></script>
+<script type="text/javascript">
+var connection=getElesByName(document, "encryptedData");
+for(var i=0;i<connection.length;i++){
+	var rep=connection[i].getAttribute("data-name");
+	parse(window[rep]);
+}
+
+function CheckUserPswInvalid()
+{
+	var pcPassword = $("pcPassword"),
+			value = pcPassword.value;
+	
+	return true;
+}
+
+function ResetUserPsw(elementName)
+{
+	$(elementName).value = "";
+	$(elementName).focus();
+}
+
+function toggleEye (event) {
+	var eyeIcon = event.target || event.srcElement;
+	var ele = eyeIcon.previousSibling;
+	var type = ele.getAttribute("type");
+	if (type === "text") {
+		ele.setAttribute("type", "password");
+		removeClass(eyeIcon, "show");
+	} else {
+		ele.setAttribute("type", "text");
+		addClass(eyeIcon, "show");
+	}
+}
+
+function onFocusPwd(event) {
+	removeClass($("pwd-tips"), "nd");
+	for (var i = 0, len = tipArr.length; i < len; i++) {
+		var tip = tipArr[i];
+		removeClass(tip, "nd");
+		removeClass(tip, "error");
+	}
+	addClass((event.target || event.srcElement).parentNode, "focus");
+	onKeyUpPwd(event);
+}
+
+function onKeyUpPwd(event) {
+	var value = (event.target || event.srcElement).value,
+			spaceTip = tipArr[0],
+			lengthTip = tipArr[1],
+			charTip = tipArr[2];
+
+	checkSpace(value) ? addClass(spaceTip, "active") : removeClass(spaceTip, "active");
+	checkLength(value) ? addClass(lengthTip, "active") : removeClass(lengthTip, "active");
+	checkChar(value) ? addClass(charTip, "active") : removeClass(charTip, "active");
+}
+
+function onBlurPwd(event) {
+	var tips = tipArr;
+	var showBtn = true;
+	var btn = $("createBtn")
+
+	removeClass((event.target || event.srcElement).parentNode, "focus");
+	for (var i = 0, len = tips.length; i < len; i++) {
+		var tip = tips[i];
+		if(hasClass(tip, "active")) {
+			addClass(tip, "nd");
+		} else {
+			showBtn = false;
+			addClass(tip, "error");
+		}
+	}
+	showBtn ? removeClass(btn, "disabled") : addClass(btn, "disabled");
+	}
+
+function checkSpace(value) {
+	var re = /[^\x00-\x19\x21-\xff]/;
+	if (re.test(value)) return false;
+	return true;
+}
+
+function checkLength(value) {
+	if (value.length > 5 && value.length < 33) return true;
+	return false;
+}
+
+function checkChar(value) {
+	var patternNum = /[0-9]/g;
+	var patternLetter = /[A-Za-z]/g;
+	var patternSign = /[\`\~\!\@\#\$\%\^\&\*\(\)\-\=\_\+\[\]\{\}\;\:\'\"\\\|\/\?\.\,\<\>\x20]/g;
+	var level = 0;
+
+	if (patternNum.test(value)) level++;
+	if (patternLetter.test(value)) level++;
+	if (patternSign.test(value)) level++;
+
+	return level > 1;
+}
+
+function PCWin(event) {	
+	if (event.keyCode == 13) {
+		if (isFirstLogin) {
+			createPwd();
+		} else {
+			PCSubWin();
+		}
+	}
+}
+
+function createPwd() {
+	//注释下面这句，原意应该是如果create btn disabled，则不进行后面步骤，但是也考虑用户先输入confirm pwd再输入pwd再回车创建密码的情况。
+	//if (!isFirstLogin || hasClass($("createBtn"), "disabled")) return;
+	var re = /[^\x00-\x19\x21-\xff]/;
+	var password = $("change-pcPassword").value;
+	var confirmPassword = $("confirm-pcPassword").value;
+	var userName = "admin";
+	
+	if(isFirstLogin)
+	{
+		if(!checkSpace(password) || !checkLength(password) || !checkChar(password)) {
+			$("change-pcPassword").select();
+			$("change-pcPassword").focus();
+			return false;	
+		}
+	}
+
+	if (password !== confirmPassword) {
+		alert("The Confirm Password does not match the New Password!");
+		return false;
+	}
+	
+	encrypt("admin", password);
+}
+
+function encryptData(params){
+	var encrypt=getEncrypt();
+	var encryptor = encrypt.encryptManager.genEncryptor(); //生成加密器
+	var data = JSON.stringify({name: params.name, password: params.password});
+	encryptor.genAESKey(); //生成aes密码
+	encryptor.setHash(params.name, params.password);//md_5
+
+	encryptor.setRSAKey(params.rsa.nn, params.rsa.mm); //设置rsakey
+	encryptor.setSeq(params.seq);   //设置seq
+	var ret=encryptor.dataEncrypt(data, true);
+	encrypt.encryptManager.recordEncryptor();
+	return ret;
+}
+function encrypt(username, password){
+	var rsa = "";
+	var seq = "";
+	ajax({
+		url: "../login/getRsa.json",
+		success: function(ret){
+			ret = JSON.parse(ret);
+			rsa = ret.rsa;
+			seq = ret.seq;
+			var data = encryptData({
+				name: username,
+				password: password,
+				seq: seq,
+				rsa: rsa
+			});
+			
+			ajax({
+				url: "../login/login.json",
+				data:("JSONDATA: ")+JSON.stringify(data)+('\n'),
+				success: function(ret){
+					var ret = JSON.parse(ret);
+					if(ret.valid){
+						localStorage.setItem("sessionId",ret.sessionId);
+						document.cookie = "Authorization="+escape(seq)+";path=/";
+						location.href=transferURL("../userRpm/Index.htm");
+					}
+				}
+			});
+		}
+	});
+}
+
+function PCSubWin()
+	{
+	if((httpAutErrorArray[0] == 2) || (httpAutErrorArray[0] == 3))
+		{
+		if(true == CheckUserPswInvalid()) {
+			var password = $("pcPassword").value;	
+			encrypt("admin", password);
+			return true;
+		} else {
+			$("note").innerHTML = "NOTE:";
+			$("tip").innerHTML = "The password is incorrect, please input again.";
+		}
+	}
+	return false;
+}
+
+function w(str)
+{
+	document.write(str);
+}
+
+function $(id)
+{
+	return document.getElementById(id);
+}
+
+function setElementStyle(bShow)
+{
+	var unLi = $("unLi");
+	var pwLi = $("pwLi");
+	var pcPassword = $("pcPassword");
+	var loginBtn = $("loginBtn");
+
+	if(bShow)
+	{
+		$("pcPassword").style.display = "";
+	}
+	else
+	{
+		$("pcPassword").style.display = "none";
+	}
+}
+
+function pageLoad()
+{
+	var count = 14, tip = $("tip"), note = $("note");	
+	var min = 0, sec = 0;
+	document.cookie = "Authorization=;path=/";	
+		
+	if(window.parent != window)
+	{
+		window.parent.location.reload();
+	}
+	var ErrNum = httpAutErrorArray[0]; 
+	switch(ErrNum)
+	{
+		case 0:
+			note.innerHTML = "NOTE:";
+			tip.innerHTML = "The router allows only one administrator to login at the same time, please try again later.";	
+			setElementStyle(false);
+		break;
+		case 1:	
+			note.innerHTML = "NOTE:";
+			tip.innerHTML = "You have exceeded ten attempts, please try again after two hours.";	
+			setElementStyle(false);
+		break;
+		case 2:
+			note.innerHTML = "NOTE:";
+			tip.innerHTML = "The password is incorrect, please input again.";
+			setElementStyle(true);
+		break;
+		case 3:
+		default:
+			tip.innerHTML = "";
+			note.innerHTML = "";
+			setElementStyle(true);
+		break;
+	}
+}
+</script>
+</head>
+<body onkeypress="PCWin(event)" onload="pageLoad()">
+	<div class="topLogo" id="topLogo">
+	<table cellspacing=0 width="100%">
+        <tr>
+            <td>
+                <table border="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td id="first-td">
+                            <a OnClick="return NewW();" onMouseOver="return ShowUrl();" onMouseOut="return EraseUrl();">
+                                <img src="../login/logo.png">
+                            </a>
+                        </td>
+                        <td id="second-td">
+                            <table>
+                                <tr>
+                                    <td class="style1">450M Wireless N Router</td>
+                                </tr>
+                                <tr>
+                                    <td class="style2">Model No. TL-WR940N</td>
+                                </tr>
+                            </table>
+                        </td>
+						<td id="third-td">
+							<img src="../login/top-right.png">
+						</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <!--<tr>-->
+            <!--<td>-->
+                <!--<IMG height=3 src="../images/top2.jpg" width="100%" align=top border=0>-->
+            <!--</td>-->
+        <!--</tr>-->
+    </table>
+	</div>
+	<div class="loginBox" id="login-container">
+		<div class="noteDiv">
+			<span id="note"></span>
+			<span id="tip"></span>
+		</div>
+		<div class="panelThre" align="center">
+			<div align="center" class="picDiv" align="center">
+				<ul>
+					<li id="pwLi" class="pwLi"><img src="../login/password.png"><input class="text" id="pcPassword" type="password" maxlength="32" placeholder="Password"/></li>
+				</ul>
+				<label id="loginBtn" class="loginBtn" onclick="PCSubWin()"/><span>Login</span></label>
+			</div>
+		</div>
+	</div>
+
+	<div id="change-pwd-container" class="loginBox nd">
+		<div class="panelThre" align="center">
+			<div align="center" class="picDiv">
+				<div id="change-pwd-title" class="change-pwd-title">Create Login Password</div>
+				<div id="change-pwd-p" class="change-pwd-p">For security, please create a login password for management.</div>
+				<ul class="pw-ul">
+					<li id="change-pwLi" class="pwLi" style="margin-bottom: 4px;">
+						<img src="../login/password.png" class=""><input class="text" id="change-pcPassword" onfocus="onFocusPwd(event)" onkeyup="onKeyUpPwd(event)" onblur="onBlurPwd(event)" type="password" autocomplete="off" placeholder="Password" /><div class="eye-icon" onclick="toggleEye(event)"></div>
+					</li>
+					<div id="pwd-tips" class="nd">
+						<li class="pwd-tip"><span class="icon"></span><span id="pwd-tip-space">Must contain no space(s).</span></li>
+						<li class="pwd-tip"><span class="icon"></span><span id="pwd-tip-long">Must be 6-32 characters long.</span></li>
+						<li class="pwd-tip"><span class="icon"></span><span id="pwd-tip-char">Must contain at least two types of the following characters: letters, numbers and symbols.</span></li>
+					</div>
+					<li class="blank"></li>
+					<li id="confirm-pwLi" class="pwLi">
+						<img src="../login/password.png" class=""><input class="text" id="confirm-pcPassword" type="password" autocomplete="off" placeholder="Confirm Password" /><div class="eye-icon" onclick="toggleEye(event)">
+					</li>
+				</ul>
+				<label id="createBtn" class="loginBtn disabled" onclick="createPwd()"><span
+						id="createBtnText">Create</span></label>
+			</div>
+		</div>
+	</div>
+
+	<div id="frameQrCode">
+	<form action="/userRpm/LoginRpm.htm" method="get" id="loginForm" enctype="multipart/form-data">
+		<input type="hidden" value="Save" name="Save" />
+	</form>
+	<SCRIPT type="text/javascript">
+		if( frameQrPara[0] == 1 )
+		{
+			document.write("<iframe name=\"qrFrame\" marginWidth=0 marginHeight=0 frameBorder='0' src=\"../login/qr_login.htm\" noResize scrolling=no frameSpacing=0 id=\"qrFrame\" style=\"position:absolute;bottom:0;width:100%;\"></iframe>");
+		}
+	</SCRIPT>
+	</div>
+<SCRIPT type="text/javascript">
+	var isFirstLogin = httpOriginalPwd[0] != 0;
+	var loginCont = $("login-container");
+	var changePwdCont = $("change-pwd-container");
+	var tipArr = document.querySelectorAll(".pwd-tip");
+	if( frameNoteTPlogin[0] == 1 )
+	{
+		document.getElementById("topLogo").style.display = "none";
+		loginCont.style.display = "none";
+		document.getElementById("frameQrCode").style.display = "none";
+		window.location.href='../login/domain-redirect/domain-redirect.htm?oldurl='+frameNoteTPlogin[1];
+	}
+	if (isFirstLogin) {
+		removeClass(changePwdCont, "nd");
+		addClass(loginCont, "nd");
+	} else {
+		addClass(changePwdCont, "nd");
+		removeClass(loginCont, "nd");
+	}
+</SCRIPT>
+</body>
+</html>

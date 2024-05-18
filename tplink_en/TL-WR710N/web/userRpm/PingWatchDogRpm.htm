@@ -1,0 +1,140 @@
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<script language="Javascript">
+	
+var IP_regex = /^((2[0-2][0-3]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.)((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){2}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+
+function validateIP(input) 
+{
+	return IP_regex.exec(input) != null;
+}
+
+function setDisabled(element, disabled) {
+	if (!element) {
+		return false;
+	}
+	element.disabled = disabled;
+	if (element.type != undefined && element.type == "button")
+	{
+		return true;
+	}
+/*
+	if (disabled) {
+		element.style.backgroundColor = "#d0d0d0";
+	} else {
+		element.style.backgroundColor = "#FFFFFF";		
+	}
+*/
+	return true;
+}
+function setStatus(form)
+{
+	var o;
+	var sta = true;
+	o = document.getElementById('enablePingWatchDog');
+	if (o)
+	{
+		sta = !o.checked;
+		if (sta == true)
+		{
+			form.dst_addr_input.value = "";
+			form.pingInterval.value = 300;
+			form.startupDelay.value = 300;
+			form.pingFailsCount.value = 3;
+		}
+		setDisabled(form.dst_addr_input, sta);
+		setDisabled(form.pingInterval, sta);
+		setDisabled(form.startupDelay, sta);
+		setDisabled(form.pingFailsCount, sta);
+	}
+}
+function doSubmit()
+{
+	var df = document.forms[0];
+	var temp = df.dst_addr_input.value; 
+	if(df.enablePingWatchDog.checked)
+	{
+		if (!validateIP(temp) || temp == "0.0.0.0")
+		{
+			alert(js_ip_not_avail="IP address isn't available!");
+			df.dst_addr_input.focus();
+			df.dst_addr_input.select();
+			return false;
+		}
+
+		if ((document.getElementById("pingInterval").value=="") || (false==is_number(document.getElementById("pingInterval").value, 10, 300))) {
+			alert(js_inter_not_valid="Interval's value is between 10 and 300s!");
+			df.pingInterval.focus();
+			df.pingInterval.select();			
+			return false;
+		}
+		
+		if ((document.getElementById("startupDelay").value=="") || (false==is_number(document.getElementById("startupDelay").value, 60, 300))) {
+			alert(js_delay_not_valid="Delay's value is between 60 and 300s!");
+			df.startupDelay.focus();
+			df.startupDelay.select();
+			return false;
+		}
+		
+		if ((document.getElementById("pingFailsCount").value=="") || (false==is_number(document.getElementById("pingFailsCount").value, 1, 65535))) {
+			alert(js_failcount_not_valid="Fail Count's value is between 1 and 65535!");
+			df.pingFailsCount.focus();
+			df.pingFailsCount.select();
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+</script></head>
+
+<BODY onload="setTagStr(document,'ntw_wlan_pwd'); LoadHelp('PingWatchDogHelpRpm.htm'); resize(this);" onResize="resize(this);">
+	<center><form name="pingWatchDogForm" action="PingWatchDogRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+	<table id="autoWidth">
+	<TBODY>
+	<tr><td class=h1 colspan=2 id="t_pingWatchDog_title">Ping Watch Dog Utility</td></tr>
+	<tr><td class=blue colspan=2></td></tr>
+	
+		<tr><td class=Item><a id="t_pingWatchDog_enable">Enable:</a>&nbsp;</td><td><input type="checkbox" id="enablePingWatchDog" name="enablePingWatchDog" onClick="setStatus(document.pingWatchDogForm)" checked="checked"></td></tr>
+		<tr>
+			<td class=Item id="t_pingWatchDog_dstAddr">IP Address:</td>
+			<td><input type="text" id="dst_addr_input" name="dst_addr_input" maxLength="15" size="16" /></td>
+		</tr>
+		<tr>
+			<td class=Item id="t_pingWatchDog_interval">Interval:</td>
+			<td><input type="text" id="pingInterval" name="pingInterval" value="300" maxLength="3" size="5" />&nbsp;(10-300)&nbsp;<a id="t_pingWatchDog_seconds">seconds</a></td>
+		</tr>
+		<tr>
+			<td class=Item id="t_pingWatchDog_delay">Delay:</td>
+			<td><input type="text" id="startupDelay" name="startupDelay" value="300" maxLength="3" size="5" />&nbsp;(60-300)&nbsp;<a id="t_pingWatchDog_seconds">seconds</a></td>
+		</tr>
+		<tr>
+			<td class=Item id="t_pingWatchDog_count">Fail Count:</td>
+			<td><input type="text" id="pingFailsCount" name="pingFailsCount" value="5" maxLength="5" size="5" />&nbsp;(1-65535)&nbsp;</td>
+		</tr>
+	<script language="JavaScript">
+		if (wlanPwdPara[5] == 1)
+		{
+			document.write('<TR><TD></TD><TD><span style="color:#FF0000" id="t_broad_err">Broadcast IP address hasn\'t been supported yet!</span></TD></TR>');
+		}
+	</script>
+		
+	<tr><td class=blue colspan=2></td></tr>
+	<tr><td></td><td><input class="buttonBig" id="Save" name="Save" type="submit" value="Save" /></td></tr>
+	</TBODY></table>
+	</form></center></BODY>
+</html>
+<script language="JavaScript">
+var df = document.forms[0];
+df.enablePingWatchDog.checked = wlanPwdPara[0];
+if (wlanPwdPara[1] != "0.0.0.0"){
+	df.dst_addr_input.value = wlanPwdPara[1];
+}
+else{
+	df.dst_addr_input.value = "";
+}
+df.pingInterval.value = wlanPwdPara[2];
+df.startupDelay.value = wlanPwdPara[3];
+df.pingFailsCount.value = wlanPwdPara[4];
+setStatus(document.pingWatchDogForm);
+</script>

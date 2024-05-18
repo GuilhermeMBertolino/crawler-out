@@ -1,0 +1,838 @@
+<!--<script type="text/javascript" src="../localiztion/char_set.js"></script>-->
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script type="text/javascript" src="../localiztion/region_channel_table.js"></script>
+<script type="text/javascript" src="../dynaform/custom.js"></script>
+<script type="text/javascript">
+<!--
+var gwlanMode = wlanPara[34];	//0: 2.4G 1: 5G
+
+var siteSurURL = "";
+
+var TOTAL_CHANNEL = 52;
+var chan_index_map = new Array(
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 20, 30, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 56, 60, 64, 70, 80, 
+100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165, 184, 188, 192, 196);
+
+var region_chan_table_shift = 53;
+
+var transMatrixURL = new Array(
+	/%/g, "%25",
+	/#/g, "%23",
+	/&/g, "%26",
+	/;/g, "%3B",
+	/\\/g, "%5C",
+	/'/g, "%27",
+	/"/g, "%22",
+	/</g, "%3C",
+	/>/g, "%3E",
+	/ /g, "%20",
+	/\+/g, "%2B",
+	/\=/g, "%3D"
+);
+
+//add by chenlifeng
+var    IEEE80211_MODE_AUTO             = 0;    /* autoselect */
+var    IEEE80211_MODE_11A              = 1;    /* 5GHz; OFDM */
+var    IEEE80211_MODE_11B              = 2;    /* 2GHz, CCK */
+var    IEEE80211_MODE_11G              = 3;    /* 2GHz, OFDM */
+var    IEEE80211_MODE_FH               = 4;    /* 2GHz, GFSK */
+var    IEEE80211_MODE_TURBO_A          = 5;    /* 5GHz, OFDM, 2x clock dynamic turbo */
+var    IEEE80211_MODE_TURBO_G          = 6;    /* 2GHz, OFDM, 2x clock  dynamic turbo*/
+var    IEEE80211_MODE_11NA_HT20        = 7;    /* 5Ghz, HT20 */
+var    IEEE80211_MODE_11NG_HT20        = 8;    /* 2Ghz, HT20 */
+var    IEEE80211_MODE_11NA_HT40PLUS    = 9;    /* 5Ghz, HT40 (ext ch +1) */
+var    IEEE80211_MODE_11NA_HT40MINUS   = 10;   /* 5Ghz, HT40 (ext ch -1) */
+var    IEEE80211_MODE_11NG_HT40PLUS    = 11;   /* 2Ghz, HT40 (ext ch +1) */
+var    IEEE80211_MODE_11NG_HT40MINUS   = 12;   /* 2Ghz, HT40 (ext ch -1) */
+var    IEEE80211_MODE_11NG_HT40        = 13;   /* 2Ghz, Auto HT40 */
+var    IEEE80211_MODE_11NA_HT40        = 14;   /* 2Ghz, Auto HT40 */
+var	   IEEE80211_CHAN_REQUIRED_DFS	   = 15;   /* DFS channel */
+
+function getValLen(val)
+{
+	var len = 0;
+	var i = 0;
+	for (i = 0; i < val.length; i ++)
+	{
+		var c = val.charAt(i);
+		len += ((c >= ' ') && (c <= '~')) ? 1 : 2;
+	}
+	return len;
+}
+// check len of ssid
+function checkssid()
+{
+	var cf = document.forms[0];
+	return getValLen(cf.ssid1.value);
+}
+
+function checkbrlssid()
+{
+	var cf = document.forms[0];
+	return getValLen(cf.brlssid.value);
+}
+
+function transToURL(str)
+{
+	for (var i = 0; i < transMatrixURL.length; i+=2)
+	{
+		str = str.replace(transMatrixURL[i], transMatrixURL[i+1]);
+	}
+	return str;
+}
+
+function checkname(szname)
+{
+	var c;
+	var ch = "0123456789ABCDEFabcdefGHIJKLMNOPQRSTUVWXYZghijklmnopqrstuvwxyz`~!@#$%^&*()-=_+[]{};:\'\"\\|/?.,<>/ ";
+
+	for (var i = 0; i < szname.length; i++)
+	{
+		c = szname.charAt(i);
+		if (ch.indexOf(c) == -1)
+			return false;
+	}
+	return true;
+}
+
+function checkwephexkey(szkey)
+{
+	var c;
+	var ch = "0123456789ABCDEFabcdef";
+
+	for (var i = 0; i < szkey.length; i++)
+	{
+		c = szkey.charAt(i);
+		if (ch.indexOf(c) == -1)
+			return false;
+	}
+	return true;
+}
+
+function isBroadcast(macAddr)
+{
+	for (var i=0; i < macAddr.length; i++)
+	{
+		if ((i + 1) % 3 == 0)
+				continue;
+		if ((macAddr.charAt(i) != 'f')
+					&& (macAddr.charAt(i) != 'F'))
+					return false;
+	}
+	return true;
+}
+
+function isMulticast(macAddr)
+{
+	return ((macAddr.charAt(0) == '0') && (macAddr.charAt(1) == '1'));
+}
+
+function isAllzero(macAddr)
+{
+	for (var i=0; i < macAddr.length; i++)
+	{
+		if ((i + 1) % 3 == 0)
+				continue;
+		if (macAddr.charAt(i) != '0')
+					return false;
+	}
+	return true;
+}
+
+//added by songwei
+function doBrl()
+{
+	var cf = document.forms[0];
+	if (cf.wdsbrl.checked)
+	{
+		document.getElementById("wdsshow").style.display = "";
+
+		if (cf.keytype.value == 1)
+		{
+			cf.wepindex.disabled = true;
+			cf.authtype.disabled = true;
+			cf.keytext.disabled = true;
+		}
+		if ((cf.keytype.value == 2) || (cf.keytype.value == 3))
+		{
+			cf.wepindex.disabled = false;
+			cf.keytext.disabled = false;
+			cf.authtype.disabled = false;
+			cf.keytext.maxLength = (cf.keytype.value == 2)? 16:32;
+		}
+		else if(cf.keytype.value == 4)
+			{	
+				cf.keytext.disabled = false;
+				cf.wepindex.disabled = true;
+				cf.authtype.disabled = true;
+				cf.keytext.maxLength = 64;
+			}
+	}
+	else
+	{
+		document.getElementById("wdsshow").style.display = "none";
+	}
+	return true;
+}
+
+function doSelKeytype()
+{
+	var cf = document.forms[0];
+	if ((cf.keytype.value == 2) || (cf.keytype.value == 3))
+	{
+		cf.wepindex.disabled = false;
+		cf.authtype.disabled = false;
+		cf.keytext.disabled = false;
+		cf.keytext.maxLength = (cf.keytype.value == 2)? 16:32;
+	}
+	else if(cf.keytype.value == 4)
+	{
+		cf.keytext.disabled = false;
+		cf.wepindex.disabled = true;
+		cf.authtype.disabled = true;
+		cf.keytext.maxLength = 64;
+	     }
+	else
+    	    {
+		cf.keytext.disabled = true;
+        	cf.wepindex.disabled = true;
+		cf.authtype.disabled = true;
+    }
+	return true;
+}
+
+
+function doCheckPskPasswd()
+{
+	var cf = document.forms[0];
+	len = getValLen(cf.keytext.value);
+	if  (len <= 0)
+	{
+		alert(js_psk_empty="Empty PSK password, please input one!");
+		return false;
+	}
+	if ((len > 0) && (len < 8))
+	{
+		alert(js_psk_char="PSK password should not be less than 8 characters, please input again!");
+		return false;
+	}
+        if(len <= 64)
+        {
+            var ch="ABCDEFabcdef0123456789";
+            var c;
+            for(i = 0; i < len; i++)
+            {
+                c = cf.pskSecret.value.charAt(i);
+                if(ch.indexOf(c) == -1)
+                {
+                    alert(js_psk_hex="The 64 bytes PSK password include non-hexadecimal characters, please input again.");
+                    return false;
+                }
+            }
+        }
+	return true;
+}
+
+function doSurvey()
+{
+	var ss = document.forms[0].ssid1.value;
+	if(document.forms[0].wdsbrl.checked)
+		location.href = siteSurURL + "?select=" + document.forms[0].wdsbrl.checked
+									+ "&wrr=" + wlanPara[8]
+									+ "&sb=" + document.forms[0].broadcast.checked
+									+ "&ssid=" + transToURL(ss.toString())
+									+ "&curRegion=" + document.forms[0].region.value
+									+ "&channel=" + document.forms[0].channel.value
+									+ "&chanWidth=" + document.forms[0].chanWidth.value
+									+ "&mode=" + document.forms[0].mode.value;
+									/*delete MaxTxRate Fuc by baowenping
+									+ "&rate=" + document.forms[0].rate.value;
+									*/
+}
+
+function checkWEP()
+{
+	var cf = document.forms[0];
+	var APLen = getValLen(wlanPara[36]);
+	var STALen = getValLen(cf.keytext.value);
+	if (APLen != STALen)
+		return false;
+	
+	for (i=0; i<APLen; i++)
+	{
+			if (wlanPara[36].charAt(i) != cf.keytext.value.charAt(i))
+				return false;
+		} 
+		return true;
+}
+
+function doSubmit()
+{
+	var cf = document.forms[0];
+	var ressid;
+	var brlressid;
+
+	if ((cf.region.value == 54) || (cf.region.value == 69))
+	{	
+	
+			cf.chanWidth.disabled = false;
+			cf.chanWidth.value = 1;
+		}
+	ressid = checkssid();
+	if(0 == ressid)
+	{
+		alert(js_pl_ssid="Please input SSID!");
+    doSelKeytype();
+		return false;
+	}
+	if(ressid > 32)
+	{
+		alert(js_ssid_exe="The SSID cannot exceed 32 characters. Please input correctly!");
+		doSelKeytype();
+    return false;
+	}
+	if (cf.wdsbrl.checked)
+	{
+		brlressid = checkbrlssid();
+		if(brlressid > 32)
+		{
+			alert(js_ssid_exe="The SSID cannot exceed 32 characters. Please input correctly!");
+			doSelKeytype();
+      return false;
+		}
+		if(0 == brlressid)
+		{
+			alert(js_pl_ssid="Please input Bridged SSID!");
+      doSelKeytype();			
+      return false;
+		}
+		var bssid = cf.brlbssid.value;
+		if (macverify(bssid) == false)
+		{
+			doSelKeytype();
+      return false;
+		}
+
+                if (isBroadcast(bssid) == true)
+		{
+			alert(js_bridge_broadcast="The bridged BSSID is broadcast address, please input again!");
+			doSelKeytype();
+			return false;
+		}
+		
+    if (isAllzero(bssid) == true)
+		{
+			alert(js_bridge_broadcast="The bridged BSSID is invalid, please input again!");
+			doSelKeytype();
+			return false;
+		}
+		
+		if (isMulticast(bssid) == true)
+		{
+			alert(js_bridge_multicast="The bridged BSSID is multicast address, please input again!");
+			doSelKeytype();
+			return false;
+		}
+
+		if ((cf.keytype.value == 2)&&((getValLen(cf.keytext.value)!=5) && (getValLen(cf.keytext.value)!=13) && (getValLen(cf.keytext.value)!=16)))
+		{
+			alert(js_key_corret1="The ASCII key'length must be 5,13 or 16!");
+      doSelKeytype();			
+      return false;
+		}
+		else if ((cf.keytype.value == 3)&&((getValLen(cf.keytext.value)!=10) && (getValLen(cf.keytext.value)!=26) && (getValLen(cf.keytext.value)!=32)))
+		{
+			alert(js_key_corret2="The HEX key'length must be 10,26 or 32!");
+			doSelKeytype();
+      return false;
+		}
+		
+			if (cf.keytype.value == 3)
+			{ 
+				if (checkwephexkey(cf.keytext.value) == false)
+				{
+				alert(js_wepkey_corret="The hex wep key includes illegal characters!");
+				doSelKeytype();
+				return false;
+         }
+			}
+    if (cf.keytype.value == 4)
+			{
+				if ((getValLen(cf.keytext.value) == 64) && (checkwephexkey(cf.keytext.value) == false))
+				{
+					alert(js_pskkey_corret="The Hex PSK key includes illegal characters!");
+					doSelKeytype();
+					return false;
+				}
+			}
+				}
+		
+	if ((!checkname(document.forms[0].ssid.value)) || (!checkname(cf.brlssid.value)))
+	{
+		alert(js_ssid_ill="The SSID contains illegal characters, please input another one!");
+    doSelKeytype();		
+    return false;
+	}
+	
+	if (wlanPara[6] == 1 && document.forms[0].region.value != wlanPara[5])
+	{
+		alert(js_sel_country="Selecting the incorrect country may cause interference to other devices and violate the applicable law.");
+	}
+	
+	for (var i =0; i<document.forms[0].elements.length; i++)
+	{
+		cf.elements[i].disabled = false;
+	}
+	//add by weizq,2008-10-16
+	//modified by chenlifeng, 11na and 11ng both have 11n only
+	if((cf.mode.value == 3) || (cf.mode.value == 7))
+	{
+		if(wlanPara[28] == 1)//security enabled
+		{
+			//wep
+			if(wlanPara[29] == 1)
+			{
+				var bContinue = window.confirm(js_current_enc="Current encryption is WEP,which 11n only mode can not support.If you select ok,the security setting will be lost,continue?");
+				if(!bContinue)
+				{
+					doSelKeytype();
+					return false;
+				}
+			}
+			//cipher = tkip or auto
+			if(((wlanPara[29] == 2) || (wlanPara[29] == 3)) && (wlanPara[30] == 1 || wlanPara[30] == 2))
+			{
+				var bContinue = window.confirm(js_cur_tkip="Current encryption is Automatic or TKIP,which 11n only mode can not support.If you select ok,the encryption will be changed to AES,continue?");
+				if(!bContinue)
+				{
+					doSelKeytype();
+					return false;
+				}
+			}
+		}
+	}
+	//end modified by chenlifeng
+	//end add
+	if (cf.wdsbrl.checked == false)
+	{
+		cf.brlssid.value = "";
+		cf.brlbssid.value = "";
+		cf.keytype.value = 1;
+		cf.keytext.value = "";
+	}
+
+	if ((cf.wdsbrl.checked == true) && (wlanPara[31] != 0))
+	{
+		if(cf.channel.value == 15)//auto channel is invalid when enable bridge
+		{
+			var bChange = window.confirm(document.getElementById("t_bridge_cannot_auto").innerHTML);
+			if(!bChange)
+			{
+				alert( document.getElementById("t_bridge_not_same_1").innerHTML + wlanPara[31] + document.getElementById("t_bridge_not_same_2").innerHTML );
+				doSelKeytype();
+				return false;
+			}
+			else
+			{
+				cf.channel.value = wlanPara[31];
+			}
+		}
+			
+		if(cf.channel.value != wlanPara[31]) //AP's channel != Bridge AP's channel
+		{
+			var bChange = window.confirm(document.getElementById("t_bridge_not_same_3").innerHTML);
+			if(!bChange)
+			{
+				alert( document.getElementById("t_bridge_not_same_1").innerHTML + wlanPara[31] + document.getElementById("t_bridge_not_same_2").innerHTML );
+				doSelKeytype();
+				return false;
+			}
+			else
+			{
+				cf.channel.value = wlanPara[31];
+			}
+		}
+	}
+	
+	if ((cf.wdsbrl.checked==true) && (wlanPara[28]==1) && (wlanPara[29] == 1))
+	{ 
+	    if ((wlanPara[33] > 1) && (cf.keytype.value == 4))
+	    {
+					doSelKeytype();
+					alert(js_security_not_set="Your AP's security is WEP and the index isn't 1, so you can't use the wpa_psk as WDS's security.")
+					return false;
+	     }
+	     if (wlanPara[33] == cf.wepindex.value)
+	     {
+					if (((cf.keytype.value == 2) && (wlanPara[35] == 2))
+						|| ((cf.keytype.value == 3) && (wlanPara[35] == 1)))
+					{
+		       		if (checkWEP() == false)
+	{
+    doSelKeytype();		
+									alert(js_wep_notsame="If both your AP and WDS use WEP with the same index as security mode, then you should make sure the keys are the same!");
+    return false;
+	}
+					}
+					if (((cf.keytype.value == 2) && (wlanPara[35] == 1))
+						|| ((cf.keytype.value == 3) && (wlanPara[35] == 2)))
+					{
+							doSelKeytype();
+							alert(js_wep_notsame="If both your AP and WDS use WEP with the same index as security mode, then you should make sure the keys are the same!");
+							return false;
+					}
+	    }
+	}
+	//end add
+	
+	
+	if (cf.keytype.value == 4)
+	{
+		if (doCheckPskPasswd() == false)
+		{
+			doSelKeytype();
+			return false;
+	         }
+	}
+	
+	return true;
+}
+
+function updateChannelList()
+{
+	var cf = document.forms[0];
+	var chwidthValue;
+	var modeValue;
+	var regionIndex;
+	var i;
+	var mask = 0x0;
+	
+	modeValue = cf.mode.value;
+	chwidthValue = cf.chanWidth.value;
+	if (wlanPara[6] == 1)
+		regionIndex = cf.region.value;
+	else
+		regionIndex = 17;
+	regionIndex = (regionIndex) * region_chan_table_shift;
+	
+	if(modeValue == 1)//11b
+		mask = (1<<IEEE80211_MODE_11B);
+	else if((modeValue == 2) || (modeValue == 4))//11bg,11g pureg
+		mask = (1<<IEEE80211_MODE_11G);
+	else if(modeValue == 6)//11a
+		mask = (1<<IEEE80211_MODE_11A);
+	else if((modeValue == 5) || (modeValue == 3))//11ng, 11ng puren
+	{
+		if(chwidthValue == 1)//HT20
+			mask = (1<<IEEE80211_MODE_11NG_HT20);
+		else if(chwidthValue == 3)//HT40
+			mask = (1<<IEEE80211_MODE_11NG_HT40);
+		else if(chwidthValue == 2)//Auto
+			mask = (1<<IEEE80211_MODE_11NG_HT40)|(1<<IEEE80211_MODE_11NG_HT20);
+	}
+	else if((modeValue == 7) || (modeValue == 8))//11na, 11na puren
+	{
+		if(chwidthValue == 1)//HT20
+			mask = (1<<IEEE80211_MODE_11NA_HT20);
+		else if(chwidthValue == 3)//HT40
+			mask = (1<<IEEE80211_MODE_11NA_HT40);
+		else if(chwidthValue == 2)//Auto
+			mask = (1<<IEEE80211_MODE_11NA_HT40);/* when channel width is "AUTO", set mask the same with HT40. */
+	}
+	else
+		alert("wrong modeValue("+ modeValue +"), should not be here!");
+	
+	var dfs_chans = "";
+	var oldChannel = cf.channel.value;
+	cf.channel.options.length = 1;
+	var j = 1;	
+	cf.channel.value = 15;
+	for(i = 1; i <= TOTAL_CHANNEL; i++)
+	{
+		if(Region_chan_table[regionIndex+i] & mask)
+		{
+			if(Region_chan_table[regionIndex+i] & (1<<IEEE80211_CHAN_REQUIRED_DFS))//it's dfs channel
+			{
+				//dfs_chans = dfs_chans + chan_index_map[i-1]+" ";
+				continue;/* filter out dfs chans*/
+			}			
+			
+			var optionObj = new Option(chan_index_map[i-1],chan_index_map[i-1],false,false);
+			cf.channel.options[j++]=optionObj;
+			if (chan_index_map[i-1] == oldChannel)
+				cf.channel.value = chan_index_map[i-1];			
+		}
+	}
+	
+	if(dfs_chans)
+	{
+		document.getElementById("chan_notice").style.display = "block";		
+	}	
+	else
+	{
+		document.getElementById("chan_notice").style.display = "none";
+	}
+}
+
+function changeMode()
+{
+	var cf = document.forms[0];
+	var oldChanWidth = cf.chanWidth.value;
+
+	if((cf.mode.value == 1) || (cf.mode.value == 2) || (cf.mode.value == 4) || (cf.mode.value == 6))
+	{
+		cf.chanWidth.value = 1;
+		cf.chanWidth.disabled = true;
+	}
+	else if((TwoGSupportHT40 == 0) || (FiveGSupportHT40 == 0))
+	{
+		cf.chanWidth.value = 1;
+		cf.chanWidth.disabled = true;
+	}
+	else
+	{
+		cf.chanWidth.value = oldChanWidth;//wlanPara[11];
+		cf.chanWidth.disabled = false;
+	}
+	
+	updateChannelList();
+}
+
+var TwoGSupportHT40 = 0;/* a flag for in current country, 2.4G support HT40 or not */
+var FiveGSupportHT40 = 0;/* a flag for in current country, 5G support HT40 or not */
+var supportFiveG = 0;/* a flag for current country support 5G or not */
+function changeRegion()
+{
+	var cf = document.forms[0];
+
+	//check support 5G, HT40 or not
+	var regionIndex, oldBand;
+	var i, j;
+	
+	if (wlanPara[6] == 1)
+		regionIndex = cf.region.value;
+	else
+		regionIndex = 17;
+	regionIndex = (regionIndex) * region_chan_table_shift;
+
+	var mask = (1<<IEEE80211_MODE_11NA_HT20)|(1<<IEEE80211_MODE_11A)|(1<<IEEE80211_MODE_11NA_HT40);
+	var mask5GHT40 = (1<<IEEE80211_MODE_11NA_HT40);
+	var mask2GHT40 = (1<<IEEE80211_MODE_11NG_HT40);
+	FiveGSupportHT40 = 0;
+	TwoGSupportHT40 = 0;
+	supportFiveG = 0;
+	
+	for(i = 1; i <= TOTAL_CHANNEL; i++)
+	{
+		if(Region_chan_table[regionIndex+i] & mask)
+		{
+			if(!(Region_chan_table[regionIndex+i] & (1<<IEEE80211_CHAN_REQUIRED_DFS)))/* we don't support DFS chan yet*/
+				supportFiveG = 1;
+		}
+		if(Region_chan_table[regionIndex+i] & mask5GHT40)
+		{
+			FiveGSupportHT40 = 1;
+		}
+		if(Region_chan_table[regionIndex+i] & mask2GHT40)
+		{
+			TwoGSupportHT40 = 1;
+		}
+	}
+	if(supportFiveG == 0)
+	{		
+		alert(js_not_support_5g = "The country do not support 5G, please ensure you select a correct country!");	 
+		cf.region.value = 101;	/* reset to Unite State */
+		changeRegion();
+	}
+
+	changeMode(); //add by zjy
+}
+
+//-->
+</script>
+</head>
+<body onload="setTagStr(document,'ntw_wlan_network_5g'); doBrl(); LoadHelp('WlanNetworkHelpRpm.htm'); resize(this);" >
+<center>
+  <form onSubmit="return doSubmit();" action="" method="get" enctype="multipart/form-data">
+    <table id="autoWidth" border=0>
+      <tbody>
+        <tr>
+          <td class="h1" colspan=2 id="t_title">Wireless Settings (5GHz)</td>
+        </tr>
+        <tr>
+          <td class="blue" colspan=2></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_ssid">Wireless Network Name:</td>
+          <td><input class="text" id="ssid" name="ssid1" maxlength=32 size=32>&nbsp;<span id="t_ssid_tips">(Also called the SSID)</span></td>
+        </tr>
+        <script type="text/javascript">
+if (wlanPara[6] == 1)
+{
+	var regionIndex=0;
+	var oldRegion;
+	document.write('<tr><td class=Item id="t_region">Region:<\/td><td><select name=region width = 180px onChange="changeRegion();">');
+	for (var i = 0; i < wlanPara[4]; i++)
+	{
+		document.write('<option value='+i+' '+Region_chan_table[regionIndex]+ '\/option>');
+		regionIndex += region_chan_table_shift;
+	}
+	document.forms[0].region.value = wlanPara[5];
+	document.write('<\/select><\/td><\/tr><tr><td class="Item"  disabled><span id="t_warn">Warning:</span><br>&nbsp;<\/br><\/td><td disabled><span id="t_ensure_country">Ensure you select a correct country to conform local law.</span><br><span id="t_cause_if">Incorrect settings may cause interference. </span><\/td><\/tr><tr><td>&nbsp;<\/td><td>&nbsp;<\/td><\/tr>');
+}
+</script>
+        <tr id="line_wlMode">
+          <td class="Item" id="t_mode">Mode:</td>
+          <td><select id="mode" name="mode" class="listL" onChange="changeMode();">
+			<option value="1" id="t_11b_only">11b only</option>
+			<option value="2" id="t_11g_only">11g only</option>
+			<option value="3" id="t_11n_only">11n only</option>
+			<option value="4" id="t_11bg_mixed">11bg mixed</option>
+			<option value="5" id="t_11bgn_mixed">11bgn mixed</option>
+			<option value="6" id="t_11a_only">11a only</option>
+			<option value="7" id="t_11an_puren">11n only</option>
+			<option value="8" id="t_11an_mixed">11an mixed</option>
+		  </select></td>
+        </tr>
+		<tr>
+          <td class="Item" id="t_chn_width">Channel Width:</td>
+          <td><select name="chanWidth" class="listS" onChange="updateChannelList();">
+              <option value=2 id="t_auto" name="t_auto">Auto</option>
+              <option value=1>20MHz</option>
+              <option value=3>40MHz</option>
+            </select></td>
+        </tr>
+		<tr>
+          <td class="Item" id="t_chn">Channel:</td>
+          <td><select id="channel" name="channel" class="listS">
+          	<option value="15" id="t_auto" name="t_auto">Auto</option>
+            </select></td>
+        </tr>
+		<tr>
+        <td width="228"></td>
+	       <td colspan="3"><table id ="chan_notice" style="display:none;color:red;">
+            <tr>
+              <td colspan="4"><span id ="t_chan_notice_1">Notice: Radio on will take one more minute for radar detecting when choosing DFS channel</span><BR>
+                <span id ="t_chan_notice_2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DFS channels: 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140</span></td>
+            </tr>
+          </table></td>
+		</tr>
+        <tr>
+        <td></td>
+          <td><input type="checkbox" value=2 name="broadcast"><a id="t_enssid">Enable SSID Broadcast</a></td>
+        </tr>
+        <tr id="display_wds">
+          <td></td>
+          <td><input type="checkbox" value=2 name="wdsbrl" id="wdsbrl" onClick="doBrl()"><a id="t_enWdsbrl">Enable WDS Bridging</a></td>
+        </tr>
+		<tr id="wdsshow" style="display:none"><td colspan="2">
+      <table>
+        <tr>
+          <td class="Item" id="t_brlssid">SSID(to be bridged):</td>
+          <td><input class="text" id="brlssid" name="brlssid" maxlength=32 size=32></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_brlbssid">MAC Address(to be bridged):</td>
+          <td><input class="text" id="brlbssid" name="brlbssid" maxlength=17 size=17>&nbsp;<span id="t_exple">Example</span>:00-1D-0F-11-22-33</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td align="left"><input name="survey" id="survey" type="button" class="button" value="Survey" onClick="doSurvey();"></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_keytype">Key type:</td>
+          <td><select name="keytype" style = "width:180px" onChange="doSelKeytype()">
+              <option value=1 id="t_none">None</option>
+              <option value=2 id="t_wep_asc">WEP(ASCII)</option>
+              <option value=3 id="t_wep_hex">WEP(HEX)</option>
+              <option value=4 id="t_wpa">WPA-PSK/WPA2-PSK</option>
+            </select></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_wepindex">WEP Index:</td>
+          <td><select name="wepindex" style = "width:180px">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_authtype">Auth type:</td>
+          <td><select name="authtype" id="authtype" style="width:180px">
+              <option value="1" id="t_open">open</option>
+              <option value="2" id="t_shared">shared</option>
+            </select></td>
+        </tr>
+        <tr>
+          <td class="Item" id="t_keytext">Password:</td>
+          <td><input name="keytext" type=text class=text id="keytext"></td>
+        </tr>
+      </table>
+        <tr id="rebootInf"><td colspan="2"><span style="color:#FF0000" id="t_chng">The change of wireless config will not take effect until the Router reboots, please </span><a href="../userRpm/SysRebootRpm.htm" id="t_click">click here</a><span id="t_to_reboot" style="color:#FF0000"> to reboot.</span> </td></tr>
+        <tr>
+          <td class="blue" colspan="2"></td>
+        </tr>
+      <tr>
+        <td></td>
+        <td><input class="buttonBig" id="Save" type="submit" value="Save" name="Save"></td>
+      </tr>
+      </tbody>
+    </table>
+  </form>
+</center>
+<p style="display:none" id="t_bridge_not_same_1">The Bridged AP's channel is </p>
+<p style="display:none" id="t_bridge_not_same_2">, please reset your channel manually or diasble the WDS Bridging function.</p>
+<p style="display:none" id="t_bridge_not_same_3">Your AP channel is not the same as the Bridged AP's channel, do you want to change your channel to the Bridged AP's channel? </p>
+<p style="display:none" id="t_bridge_not_same_4_1">Your AP's band</p>
+<p style="display:none" id="t_bridge_not_same_4_2">is not the same as the Bridged AP's band</p>
+<p style="display:none" id="t_bridge_not_same_4_3">, do you want to change your Band to the Bridged AP's Band?</p>
+<p style="display:none" id="t_bridge_not_same_5_1">The Bridged AP's band is</p>
+<p style="display:none" id="t_bridge_not_same_5_2">, please reset your band manually or diasble the WDS Bridging function.</p>
+<p style="display:none" id="t_bridge_cannot_auto">Channel can not be auto while WDS Bridging enabled, do you want to change you channel to the Bridged AP's channel?</p>
+</body>
+</html>
+<script type="text/javascript">
+var cf = document.forms[0];
+var modeObj = document.getElementById("mode");
+
+if(gwlanMode == 0)//2.4GHz
+{
+	cf.action = "WlanNetworkRpm.htm";
+	siteSurURL = "popupSiteSurveyRpm.htm";
+	document.getElementById("t_title").innerHTML = "Wireless Settings (2.4GHz)";
+	for(var i = 0; i < 3; i++)
+	{
+		modeObj.remove(5);
+	}
+}
+else//5GHz
+{
+	cf.action = "WlanNetworkRpm_5g.htm";
+	siteSurURL = "popupSiteSurveyRpm_5g.htm";
+	document.getElementById("t_title").innerHTML = "Wireless Settings (5GHz)";
+	for(var i = 0; i < 5; i++)
+	{
+		modeObj.remove(0);
+	}
+}
+
+changeRegion();
+cf.ssid1.value = wlanPara[3];
+cf.broadcast.checked = wlanPara[9];
+
+cf.mode.value = wlanPara[7];
+cf.channel.value = wlanPara[10];
+cf.chanWidth.value = wlanPara[11];
+changeMode();
+
+cf.wdsbrl.checked = wlanPara[22];
+cf.brlssid.value  = wlanPara[23];
+cf.brlbssid.value  = wlanPara[24];
+cf.keytype.value = wlanPara[25];
+cf.keytext.value = wlanPara[26];
+cf.wepindex.value = wlanPara[27];   
+cf.authtype.value = wlanPara[32]; 
+document.getElementById("display_wds").style.display = (wlan_wds == 1)? "" : "none";
+document.getElementById("rebootInf").style.display = (wlanPara[13] == 1)?"":"none";
+</script>

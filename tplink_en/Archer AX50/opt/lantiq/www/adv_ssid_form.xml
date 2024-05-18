@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <name>SSID</name>
+    <object viewtype="form" >
+        <object name="Device.WiFi.AccessPoint.*.Security">
+            <parameter  name="ModeEnabled"  type="dropdown" validvalues="WPA-Personal,WPA2-Personal,WPA-WPA2-Personal,WPA2-Enterprise,WPA-Enterprise,WPA-WPA2-Enterprise,WEP-64,WEP-128,None" webname="Security type" Display="No" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-WPA2-Personal','WPA-WPA2-Enterprise','WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="GcmpMode" type="dropdown" validvalues="None,GCMP,GCMP256" webname="Security GCMP mode" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RekeyingInterval"  Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1.Security&amp;RekeyingInterval=" type="number" minval="0" required="false" webname="Rekey Interval" ></parameter>
+            <parameter  name="KeyPassphrase" parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" type="password" required="false" webname="Passphrase" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.*.Security&amp;KeyPassphrase=" ></parameter>
+            <parameter  parent="'WPA2-Enterprise','WPA-Enterprise','WPA-WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusServerIPAddr"  type="ipv4ipv6" webname="RADIUS Server IP" ></parameter>
+            <parameter  parent="'WPA2-Enterprise','WPA-Enterprise','WPA-WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusServerPort"  type="number" webname="RADIUS Server Port" minval="0" maxval="65535"></parameter>
+            <parameter  parent="'WPA2-Enterprise','WPA-Enterprise','WPA-WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusSecret"  type="password" webname="RADIUS Secret" ></parameter>
+            <parameter  parent="'WEP-64'" minlen="10" maxlen="10" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="WEPKey"  type="password" webname="Key(Exactly 10 Hex digits)" ></parameter>
+            <parameter  parent="'WEP-128'" minlen=" 26" maxlen="26" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="WEPKey"  type="password" webname="Key(Exactly 26 Hex digits)" ></parameter>
+        </object>
+        <object name="Device.WiFi.AccessPoint.*"  url="cgi_get_nosubobj?Object=Device.WiFi.AccessPoint" >
+            <parameter  name="IsolationEnable"  type="toggle" webname="AP Isolation"></parameter>
+	    <parameter  name="SSIDAdvertisementEnabled"  type="toggle" webname="Advertise SSID"></parameter>
+            <parameter  name="MaxAssociatedDevices"  type="number" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1&amp;MaxAssociatedDevices=" required="false" webname="Max connected STAs" ></parameter>
+            <parameter  name="UAPSDEnable"  type="toggle" webname="WMM-PS" Value="cgi_get_defval?Object=Device.WiFi.AccessPoint.1&amp;UAPSDEnable=" ></parameter>
+        </object>
+        <object name="Device.WiFi.SSID.*"  url="cgi_get_nosubobj?Object=Device.WiFi.SSID" >
+            <parameter  name="X_LANTIQ_COM_Vendor_BridgeName" type="string" Value="cgi_get_defval?Object=Device.WiFi.SSID.1&amp;X_LANTIQ_COM_Vendor_BridgeName=" required="true" webname="Bridge Name" ></parameter>
+        </object>
+    </object>
+</view>

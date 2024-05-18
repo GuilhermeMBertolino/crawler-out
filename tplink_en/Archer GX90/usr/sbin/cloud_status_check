@@ -1,0 +1,104 @@
+#!/usr/bin/lua
+
+-- revised for C5400X, wangian, 2017-07-20
+-- upload featureInfo
+
+local uci   = require "luci.model.uci"
+local sys   = require "luci.sys"
+local fs    = require "luci.fs"
+local dbg   = require "luci.tools.debug"
+--local network_mgmt = require "cloud_req.device_manage"
+local cloud_account = require("luci.controller.admin.cloud_account")
+local times = require "luci.model.app_timesetting"
+
+local ERR_CODE_UNBINDED = -20507
+
+local uci_r = uci.cursor()
+local uci_s = uci.cursor_state()
+
+local CLOUD_TMP_DIR = "/tmp/cloud"
+local CLOUD_STATUS_FILE = CLOUD_TMP_DIR .. "/cloud_status_check_done"
+
+local MAX_CHECK_TIME = 3
+local MIN_CHECK_INTERVAL = 3
+
+local CLOUD_STATUS_LOCK = "/var/run/cloud_status.lock"
+local RWLocker = require("luci.model.locker").RWLocker
+
+local function upload_feature_info()
+	-- for featureInfo, upload just once
+	if fs.access(CLOUD_STATUS_FILE) then
+		dbg.print("========== CLOUD: cloud status check is done before =========")
+		return true
+	else
+		local featureinfo_support = uci_r:get_profile("cloud", "featureinfo_support")
+		local need_unbind = uci_r:get("cloud_config", "device_status", "need_unbind") or "0"
+		local bind_status = uci_r:get("cloud_config", "device_status", "bind_status") or "0"
+		if featureinfo_support == "yes" and bind_status == "1" and need_unbind == "0" then
+			local check_done = false
+			local check_time = 0
+			local check_interval = MIN_CHECK_INTERVAL
+			while not check_done do
+				local error_code = cloud_account.cloud_upload_feature()	
+				if tonumber(error_code) == 0 then
+					check_done = true
+				elseif check_time < MAX_CHECK_TIME then
+					sys.call("sleep %d" % check_interval)
+					check_interval = check_interval * 2
+					check_time = check_time + 1
+				else
+					-- upload failed, try next time
+					return false
+				end
+			end
+		end
+	end
+
+	if not fs.isdirectory(CLOUD_TMP_DIR) then
+		fs.mkdir(CLOUD_TMP_DIR, true)
+	end
+	sys.call("touch %s" % CLOUD_STATUS_FILE)
+	return true
+end
+
+local function cloud_dst_check()
+	-- check time sync every 1 minutes.
+	local time_sync = 0
+	while true do
+		time_sync = uci_s:get("systime", "core", "sync")
+		if time_sync == "1" then
+			break
+		end
+		nixio.nanosleep(60)
+	end
+
+	local dst_rule = uci_r:get("systime", "zoneinfo", "dst_rule") or "no"
+	local ret
+
+	if dst_rule == "bycloud" then
+		local update_time = uci_r:get("systime", "zoneinfo", "update_time")
+		if update_time then
+			cur_time = os.time()
+			if cur_time - update_time > 2592000 then
+				ret = times.ts_update_dst(nil, "auto")
+				if ret == true then
+					luci.sys.exec("/etc/init.d/time_settings reload")
+				end
+			end
+		end
+	elseif dst_rule == "no" then
+		ret = times.ts_update_dst(nil, "auto")
+		if ret == true then
+			luci.sys.exec("/etc/init.d/time_settings reload")
+		end
+	end
+end
+
+-- add lock
+local locker = RWLocker(CLOUD_STATUS_LOCK)
+locker:wlock()
+
+upload_feature_info()
+cloud_dst_check()
+
+locker:ulock()

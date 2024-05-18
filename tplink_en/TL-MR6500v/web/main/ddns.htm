@@ -1,0 +1,97 @@
+<style>div.cfg-line,p.cfg-line{margin:20px 0}a.link{color:#4acbd6;text-decoration:none}table span.table-item-disabled{color:#b3b3b3}table span.table-operation{color:#4acbd6;cursor:pointer}</style>
+<h3 id="et">Dynamic DNS Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b id="t_servprov">Service Provider:</b>
+            <span id="tplinkRadioSpan" class="nd">
+                <input type="radio" name="ddns_provider" id="tplink">
+                <label class="T_tplink">tplink</label>
+            </span>
+            <input type="radio" name="ddns_provider" id="dyndns">
+            <label id="t_dns_dyndns">Dyndns</label>
+            <input type="radio" name="ddns_provider" id="noip">
+            <label id="t_dns_noip">NO-IP</label>
+            <a id="btn_go_register" target="_window" class="link" href="javascript:void(0)">Go to register..</a>
+        </div>
+        <div class="nd" id="hidedyndns">
+            <div class="pure-control-group">
+                <b class="T_c_user">Username:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="dyndns_usr">
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_pwd">Password:</b>
+                <input type="password" maxlength="64" class="tp-input-text" id="dyndns_pwd">
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_domain">Domain Name:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="dyndns_domain">
+            </div>
+            <button type="submit" class="blue inline block T_login2 tr-l" id="login_dyndns">Login</button>
+            <button type="submit" class="blue inline block T_logout tr-l" id="logout_dyndns">Logout</button>
+            <input type="text" readonly="ture" class="tp-input-text l" id="dyndns_status">
+            <button type="submit" class="green T_save" id="save_dyndns">Save</button>
+        </div>
+        <div class="nd" id="hidenoipdns">
+            <div class="pure-control-group">
+                <b class="T_c_user">Username:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="noip_usr">
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_pwd">Password:</b>
+                <input type="password" maxlength="64" class="tp-input-text" id="noip_pwd">
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_domain">Domain Name:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="noip_domain">
+            </div>
+            <button type="submit" class="blue inline block T_login2 tr-l" id="login_noip">Login</button>
+            <button type="submit" class="blue inline block T_logout tr-l" id="logout_noip">Logout</button>
+            <input type="text" readonly="ture" class="tp-input-text l" id="noip_status">
+            <button type="submit" class="green T_save" id="save_noip">Save</button>
+        </div>
+        <div class="nd" id="hidetplink">
+            <div id="tplink-noInternet" class="nd">
+                <p class="cfg-line T_ddnsUnavailable"></p>
+                <p class="cfg-line T_loginTips"></p>
+            </div>
+            <div id="tplink-form" class="nd">
+                <div class="pure-control-group">
+                    <b class="T_c_currentDomain">current Domain</b>
+                    <input type="text" readonly="true" id="currentDomain" class="xxxxl">
+                </div>
+                <div class="part-separate"></div>
+                <h3 id="t_domainNameList">domain Name List</h3>
+                <div style="position:relative">
+                    <div class="table-op">
+                        <div class="table-btn">
+                            <span id="register" class="add-icon"></span>
+                            <label class="T_register">Register</label>
+                            <span id="delDNL" class="delete-icon"></span>
+                            <label class="T_del">delete</label>
+                        </div>
+                    </div>
+                    <table id="tableDNL">
+                        <thead></thead>
+                        <tbody>
+                        <tr class="nd">
+                            <td colspan="6">
+                                <div>
+                                    <b class="T_c_domain">domain name:</b>
+                                    <input type="text" id="domainDNL" maxlength="20">
+                                    <span>.tplinkdns.com</span>
+                                </div>
+                                <div class="inline-btn-right">
+                                    <button type="submit" class="green T_cancel" id="cancelDNL">cancel</button>
+                                    <button type="submit" class="green T_save" id="saveDNL">save</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script language="javascript">!function(){var e,a,d=1,l=2,t=0,i=new Array(5);i[0]=m_str.disconnected,i[1]=m_str.connecting,i[2]=m_str.success,i[3]=s_str.auth_fail,i[4]=s_str.wrong_domain;var o,p,u,s="",r=2,_=4,c=6,b=8,D=10;function g(n){s=n,$("#"+s).prop("checked",!0)}function h(n){$.addLoading();e=$.act(ACT_GET,DYN_DNS_CFG,null,null),a=$.act(ACT_GET,NOIP_DNS_CFG,null,null),INCLUDE_CLOUD_V2&&($("#tplinkRadioSpan").removeClass("nd"),o=$.act(ACT_GET,CLOUD_DDNS,null,null),p=$.act(ACT_GET,CURRENT_USER,null,null,["userSetting","loginStatus","logInCloud"])),$.exe()||("tplink"==n||null==n&&INCLUDE_CLOUD_V2&&1==o.enable?g("tplink"):null==n?1==e.enable?g("dyndns"):1==a.enable?g("noip"):g("dyndns"):g(n),$.removeLoading())}function f(n){n==d&&$.timeout(function(){m()},5e3)}function m(){if(e=$.act(ACT_GET,DYN_DNS_CFG,null,null),a=$.act(ACT_GET,NOIP_DNS_CFG,null,null),!$.exe())if("dyndns"==s){var n=e.state;0<=n&&n<i.length?$("#dyndns_status").prop("value",i[n]):$("#dyndns_status").prop("value",i[0]),1==e.enable&&n==d?(f(n),$("#login_dyndns").prop("disabled",!0),$("#logout_dyndns").prop("disabled",!0)):1==e.enable&&n==l?($("#login_dyndns").prop("disabled",!0),$("#logout_dyndns").prop("disabled",!1)):($("#login_dyndns").prop("disabled",!1),$("#logout_dyndns").prop("disabled",!0))}else if("noip"==s){var t=a.state;0<=t-3&&t-3<i.length?$("#noip_status").prop("value",i[t-3]):$("#noip_status").prop("value",i[0]),1==a.enable&&t-3==d?(f(t-3),$("#login_noip").prop("disabled",!0),$("#logout_noip").prop("disabled",!0)):1==a.enable&&t-3==l?($("#login_noip").prop("disabled",!0),$("#logout_noip").prop("disabled",!1)):($("#login_noip").prop("disabled",!1),$("#logout_noip").prop("disabled",!0))}}function v(){if("dyndns"==s){$.helpControl.ddnsStep=1,$("#dyndns_domain").prop("value",e.userDomain),$("#dyndns_usr").prop("value",e.userName),$("#dyndns_pwd").prop("value",e.password);var n=e.state;0<=n&&n<i.length?$("#dyndns_status").prop("value",i[n]):$("#dyndns_status").prop("value",i[0]),1==e.enable&&n==d?(f(n),$("#login_dyndns").prop("disabled",!0),$("#logout_dyndns").prop("disabled",!0)):1==e.enable&&n==l?($("#login_dyndns").prop("disabled",!0),$("#logout_dyndns").prop("disabled",!1)):($("#login_dyndns").prop("disabled",!1),$("#logout_dyndns").prop("disabled",!0)),$.removeLoading()}else if("noip"==s){$.helpControl.ddnsStep=1,$("#noip_domain").prop("value",a.userDomain),$("#noip_usr").prop("value",a.userName),$("#noip_pwd").prop("value",a.password);var t=a.state;0<=t-3&&t-3<i.length?$("#noip_status").prop("value",i[t-3]):$("#noip_status").prop("value",i[0]),1==a.enable&&t-3==d?(f(t-3),$("#login_noip").prop("disabled",!0),$("#logout_noip").prop("disabled",!0)):1==a.enable&&t-3==l?($("#login_noip").prop("disabled",!0),$("#logout_noip").prop("disabled",!1)):($("#login_noip").prop("disabled",!1),$("#logout_noip").prop("disabled",!0)),$.removeLoading()}else"tplink"==s&&($.helpControl.ddnsStep=0,2==p.userSetting&&2==p.loginStatus&&1==p.logInCloud?($.addLoading(),$.helpControl.cloudLogin=1,$("#tplink-noInternet").hide(),$("#tplink-form").show(),$("#tableDNL").tpTable(T)):1==o.enable?($.addLoading(),$.helpControl.cloudLogin=1,$("#tplink-noInternet").hide(),$("#tplink-form").show(),$("#tableDNL").tpTable(T),$(".table-op").hide(),$("#checkbox_1").hide(),$("#tplink-noInternet").show()):($.helpControl.cloudLogin=0,$("#tplink-noInternet").show(),$("#tplink-form").hide(),$.removeLoading()));$.loadHelp($.curPage.replace(/\.htm$/,""))}function N(){if(0==function(){var n;if("dyndns"==s){if(""==$("#dyndns_usr").prop("value"))return $.alert(ERR_DDNS_USERNAME_EMPTY),0<(n=$("#dyndns_usr")).length&&(n.focus(),n.select()),!1;if(""==$("#dyndns_pwd").prop("value"))return $.alert(ERR_DDNS_PWD_EMPTY),0<(n=$("#dyndns_pwd")).length&&(n.focus(),n.select()),!1;if(""==$("#dyndns_domain").prop("value"))return $.alert(ERR_DDNS_DOMAIN_EMPTY),0<(n=$("#dyndns_domain")).length&&(n.focus(),n.select()),!1;if(0==$.isdomain($("#dyndns_domain").prop("value")))return $.alert(ERR_DDNS_DOMAIN_INVAD),0<(n=$("#dyndns_domain")).length&&(n.focus(),n.select()),!1}if("noip"==s){if(""==$("#noip_usr").prop("value"))return $.alert(ERR_DDNS_USERNAME_EMPTY),0<(n=$("#noip_usr")).length&&(n.focus(),n.select()),!1;if(""==$("#noip_pwd").prop("value"))return $.alert(ERR_DDNS_PWD_EMPTY),0<(n=$("#noip_usr")).length&&(n.focus(),n.select()),!1;if(""==$("#noip_domain").prop("value"))return $.alert(ERR_DDNS_DOMAIN_EMPTY),0<(n=$("#noip_domain")).length&&(n.focus(),n.select()),!1;if(0==$.isdomain($("#noip_domain").prop("value")))return $.alert(ERR_DDNS_DOMAIN_INVAD),0<(n=$("#noip_domain")).length&&(n.focus(),n.select()),!1}return!0}())return!1;!function(){var n={};"dyndns"==s?(1==t&&(n.login=1,t=0),n.userName=$("#dyndns_usr").prop("value"),n.password=$("#dyndns_pwd").prop("value"),n.userDomain=$("#dyndns_domain").prop("value"),n.enable=1,$.act(ACT_SET,DYN_DNS_CFG,e.__stack,null,n),1==a.enable&&$.act(ACT_SET,NOIP_DNS_CFG,a.__stack,null,["enable=0"])):"noip"==s&&(n.userName=$("#noip_usr").prop("value"),n.password=$("#noip_pwd").prop("value"),n.userDomain=$("#noip_domain").prop("value"),(n.enable=1)==t&&(n.login=1,t=0),$.act(ACT_SET,NOIP_DNS_CFG,a.__stack,null,n),1==e.enable&&$.act(ACT_SET,DYN_DNS_CFG,e.__stack,null,["enable=0"]));$.exe(function(n){m(),h()})}()}function L(){"dyndns"==s?$.act(ACT_SET,DYN_DNS_CFG,e.__stack,null,["login=0"]):"noip"==s&&$.act(ACT_SET,NOIP_DNS_CFG,a.__stack,null,["login=0"]),$.exe(function(n){m(),h()})}function C(n,t){if("delete"==n?$.act(ACT_SET,CLOUD_DDNS,null,null,["tmpDomainName="+t,"action=6","status=0"]):"bind"==n?$.act(ACT_SET,CLOUD_DDNS,null,null,["tmpDomainName="+t,"action=2","status=0"]):"unbind"==n?$.act(ACT_SET,CLOUD_DDNS,null,null,["tmpDomainName="+t,"action=3","status=0"]):"add"==n&&$.act(ACT_SET,CLOUD_DDNS,null,null,["tmpDomainName="+t,"action=1","status=0"]),!$.exe()){var e=0;setTimeout(function(){e++,o=$.act(ACT_GET,CLOUD_DDNS,null,null),$.exe()||("delete"==n&&o.status==D||"bind"==n&&o.status==c||"unbind"==n&&o.status==b||"add"==n&&o.status==_?"add"==n&&0==u.length?C("bind",t):$("#tableDNL").tpTable():2e4<=o.status?$.alert($.tpLang.ddns_nstr["E"+o.status]):e<10?setTimeout(arguments.callee,1e3):$.alert($.tpLang.ddns_nstr.E20002))},1e3)}}function T(){$.addLoading(),$("#currentDomain").val(""),$.act(ACT_SET,CLOUD_DDNS,null,null,["action=5","status=0"]),$.exe(function(n){if(!n){var t=0;setTimeout(function(){if(t++,o=$.act(ACT_GET,CLOUD_DDNS,null,null),!$.exe())if(o.status==r){if(u=$.act(ACT_GL,CLOUD_DDNS_ENTRY,null,null),$.exe())return;var i=[],s=0;u.sort(function(n,t){return n.isBind==t.isBind?0:1==n.isBind?-1:1}),$.each(u,function(){var n='<div><input type="checkbox" id="'+s+'_checkbox_ddns" class="table-select-one" /><label></label></div>',t=this.domainName,e=this.regDate,a=$.tpLang.ddns_nstr.free,d='<span class="table-operation bind">'+$.tpLang.ddns_nstr.bind+"</span>",l='<span class="table-grid-icon edit-trash-icon"></span>';1==this.isBind?($("#currentDomain").val(this.domainName),n='<span class="table-item-disabled">--</span>',t='<span class="table-item-disabled">'+t+"</span>",e='<span class="table-item-disabled">'+e+"</span>",a='<span class="table-item-disabled">'+$.tpLang.table_str.bound+"</span>",d='<span class="table-operation unbind">'+$.tpLang.ddns_nstr.unbind+"</span>",l='<span class="table-grid-icon edit-trash-icon disabled"></span>',l='<span class="table-item-disabled">--</span>',0==p.logInCloud&&(d='<span class="table-item-disabled">'+$.tpLang.ddns_nstr.unbind+"</span>")):0==p.logInCloud&&(n='<span class="table-item-disabled">--</span>',t='<span class="table-item-disabled">'+t+"</span>",e='<span class="table-item-disabled">'+e+"</span>",a='<span class="table-item-disabled">'+$.tpLang.ddns_nstr.free+"</span>",d='<span class="table-item-disabled">'+$.tpLang.ddns_nstr.bind+"</span>",l='<span class="table-grid-icon edit-trash-icon disabled"></span>',l='<span class="table-item-disabled">--</span>'),i.push([{text:n,width:"5%"},{text:t,width:"30%"},{text:e,width:"25%"},{text:a,width:"15%"},{text:d,width:"15%"},{text:l,width:"10%"}]),s++}),$.initTableBody($("#tableDNL"),i),$.tablePages($("#tableDNL"),8),$.removeLoading()}else 2e4<=o.status?$.checkCloudConn(function(){$.alert($.tpLang.ddns_nstr["E"+o.status])},function(){$.alert($.tpLang.ddns_nstr.internetUnavailable)}):t<10?setTimeout(arguments.callee,1e3):$.alert($.tpLang.ddns_nstr.E20002)},1e3)}})}$.helpControl.ddnsStep=void 0,$.helpControl.cloudLogin=0,$("#tplink").on("click.ddns",function(n){$("a#btn_go_register").hide(),$("div#hidetplink").show(),$("div#hidedyndns").hide(),$("div#hidenoipdns").hide(),$.act(ACT_SET,CLOUD_DDNS,null,null,["enable=1"]),$.exe(function(){}),g("tplink"),v()}),$("#dyndns").on("click.ddns",function(n){$("a#btn_go_register").attr("href","http://dyn.com/dns/").show(),$("div#hidedyndns").show(),$("div#hidenoipdns").hide(),$("div#hidetplink").hide(),INCLUDE_CLOUD_V2&&($.act(ACT_SET,CLOUD_DDNS,null,null,["enable=0"]),$.exe(function(){})),g("dyndns"),v()}),$("#noip").on("click.ddns",function(n){$("a#btn_go_register").attr("href","http://www.noip.com").show(),$("div#hidedyndns").hide(),$("div#hidenoipdns").show(),$("div#hidetplink").hide(),INCLUDE_CLOUD_V2&&($.act(ACT_SET,CLOUD_DDNS,null,null,["enable=0"]),$.exe(function(){})),g("noip"),v()}),$("#save_dyndns").on("click.ddns",function(n){n.preventDefault(),$.addLoading($(this)),N()}),$("#save_noip").on("click.ddns",function(n){n.preventDefault(),$.addLoading($(this)),N()}),$("#login_dyndns").on("click.ddns",function(n){n.preventDefault(),$.addLoading(),t=1,N()}),$("#login_noip").on("click.ddns",function(n){n.preventDefault(),$.addLoading(),t=1,N()}),$("#logout_dyndns").on("click.ddns",function(n){n.preventDefault(),$.addLoading(),L()}),$("#logout_noip").on("click.ddns",function(n){n.preventDefault(),$.addLoading(),L()}),$("#tp-link-login-btn").on("click",function(){$.goToOtherPage("cloudBasic.htm","basic")}),$("#tableDNL").on("click","span.table-operation, span.edit-trash-icon",function(){$.addLoading();var n=$(this).closest("tr").find("td:eq(1)").text();if($(this).hasClass("edit-trash-icon"))C("delete",n);else if($(this).hasClass("bind")){if(""!=$("#currentDomain").val())return void $.alert($.tpLang.ddns_nstr.unbindNote.replace("%domain%",n));C("bind",n)}else $(this).hasClass("unbind")&&C("unbind",n)}),$("#delDNL").on("click",function(){var n=$("#tableDNL tbody tr:has(.table-content span.checkbox-click)");0!=n.length&&$.confirm($.tpLang.c_str.del_choosed,function(){$.addLoading();var t="";$.each(n,function(n){1<=n&&(t+=";"),t+=$(this).find("td:eq(1)").text()}),C("delete",t)},null)}),$("#cancelDNL").on("click",function(){$("#tableDNL").tpTable()}),$("#register").on("click",function(){$("#domainDNL").val("")}),$("#saveDNL").on("click",function(){$.addLoading();var n=$("#domainDNL"),t=n.val();if(/\s/.test(t)||1!=/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]*)$/.test(t))return n.focus(),void $.alert(CMM_INVALID_PARAM_VALUE);C("add",t+=".tplinkdns.com")}),$.initTableHead($("#tableDNL"),[{text:'<div><input type="checkbox" id="checkbox_1" class="table-select-all"/><label></label></div>',width:"5%"},{text:$.tpLang.ddns_nstr.t_domain,width:"30%"},{text:$.tpLang.ddns_nstr.time,width:"25%"},{text:$.tpLang.table_str.status,width:"15%"},{text:$.tpLang.table_str.operation,width:"15%"},{text:$.tpLang.table_str.modify,width:"10%"}]),$.tpInit(h)}()</script>

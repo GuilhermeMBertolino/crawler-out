@@ -1,0 +1,363 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>UserFeedBack</title>
+<style type="text/css">
+</style>
+
+</head>
+
+<body>
+<div id="submit-promote-form-container">
+    <div id="submit-prompt-form">
+    </div>
+</div>
+<div class= "func-container">
+	<form id="feedback-form">
+		<div id="user-info-panel">
+			<input type="text" name="username" id="feedback-username"/>
+				<input type="text" name="email" id="feedback-email"/>
+			<input type="text" name="phoneNum" id="feedback-phone-number"/>
+				<input type="text" name="country" id="feedback-country"/>
+			<input type="text" name="isp" id="feedback-isp"/>
+		</div>
+
+		<div id="feedback-content">
+					<input type="text" id="feedback-cfigfile"/>
+<!-- 					<div class="feedback-hover-container left" id="hover-content-left">
+						<span id="fd-note1" class="fd-tips-cfig" ></span>
+						<div class="tips-content-container" id="tips-container-left" >
+							<span class="tips-content-delta bottom"></span>
+							<div class="position-top-left"></div>
+							<div class="position-top-center"></div>
+							<div class="position-top-right"></div>
+							<div class="position-center-left">
+								<div class="position-center-right">
+									<div class="tips-content-wrap">
+										<div class="tips-content-container-wrap">
+											<div class="tips-content">
+												<div id="tips1"></div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="position-bottom-left"></div>
+							<div class="position-bottom-center"></div>
+							<div class="position-bottom-right"></div>
+						</div>
+					</div>	 -->					
+
+				<input type="text" id="feedback-syslog"/>
+<!-- 				<div class="feedback-hover-container right" id="hover-content-right">
+					<span id="fd-note2" class="fd-tips-cfig"></span>
+					<div class="tips-content-container" id="tips-container-right">
+						<span class="tips-content-delta bottom"></span>
+						<div class="position-top-left"></div>
+						<div class="position-top-center"></div>
+						<div class="position-top-right"></div>
+						<div class="position-center-left">
+							<div class="position-center-right">
+								<div class="tips-content-wrap">
+									<div class="tips-content-container-wrap">
+										<div class="tips-content">
+										<div id="tips2"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="position-bottom-left"></div>
+						<div class="position-bottom-center"></div>
+						<div class="position-bottom-right"></div>
+					</div>
+				</div>		 -->		
+			<textarea name="content" id="feedback-description"/>
+		</div>
+		
+		<div id="feed-back-submit">
+			<input id="feedback-submit"/>
+			<input id="submit-status"/>
+		</div>
+		
+		
+	</form>
+	<div id="statement-container">
+		<p class="statement-outer">
+			<span class="text"></span>
+		</p>
+		<p class="statement-row hidden">
+			<span class="icon"></span>
+			<span class="text fst"></span>
+		</p>
+		<p class="statement-row hidden">
+			<span class="icon"></span>
+			<span class="text second"></span>
+		</p>
+		<p class="statement-row hidden">
+			<span class="icon"></span>
+			<span class="text third"></span>
+		</p>
+		<span id="internet-error" class="error-tip"></span>
+	</div>
+</div>
+
+<div id="help-feedBack"></div>
+<script type="text/javascript">
+//<![CDATA[
+try{
+	$
+}catch(e){
+	location.href = "/";
+};
+
+$(document).ready(function(e){
+	$("div.func-container").page({
+		title: $.su.CHAR.FEEDBACK.USERINFO,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	$("#internet-error").html($.su.CHAR.FEEDBACK.INTERNET_ERROR).hide();
+	$(".statement-row .fst").html($.su.CHAR.FEEDBACK.STATEMENT1);
+	$(".statement-row .second").html($.su.CHAR.FEEDBACK.STATEMENT2);
+	$(".statement-row .third").html($.su.CHAR.FEEDBACK.STATEMENT3);
+	$(".statement-outer .text").html($.su.CHAR.FEEDBACK.STATEMENT_READ);
+	$(".statement-outer .blue-style").on("click", function(){
+		$(".statement-row").hasClass("hidden") ? $(".statement-row").removeClass("hidden") : $(".statement-row").addClass("hidden");
+	});
+	var feedbackProxy = new $.su.Proxy({
+		url: $.su.url("/admin/feedback?form=content")
+	});
+
+	$("div#user-info-panel").panel({
+		title: $.su.CHAR.FEEDBACK.TITLE,
+		collapsible: false
+	});
+
+	$("input#feedback-username").textbox({
+		fieldLabel: $.su.CHAR.FEEDBACK.USERNAME,
+		allowBlank:true,
+		maxLength:128,
+		labelCls:"m",
+		vtype:"string_visible_allow_blank",
+		hint:$.su.CHAR.FEEDBACK.YOUR_NAME,
+		cls:"l",
+	});
+
+	$("input#feedback-email").textbox({
+		fieldLabel: "<span class='red-star'>*&nbsp</span>" + $.su.CHAR.FEEDBACK.EMAIL,
+		allowBlank:false,
+		maxLength:64,
+		vtype:"email",
+		labelCls:"m",
+		hint:$.su.CHAR.FEEDBACK.YOUR_EMAIL_ADDRESS,
+		cls:"xs starTips"
+	});
+
+	$("input#feedback-phone-number").textbox({
+		fieldLabel: $.su.CHAR.FEEDBACK.PHONENUM,
+		allowBlank:true,
+		maxLength:64,
+		vtype:"phone_number",
+		labelCls:"m",
+		hint:$.su.CHAR.FEEDBACK.YOUR_PHONE_NUMBER,
+		cls:"xs"
+	});
+
+
+	$("input#feedback-isp").textbox({
+		fieldLabel: $.su.CHAR.FEEDBACK.ISP,
+		allowBlank:true,
+		maxLength:64,
+		vtype:"string_visible_allow_blank",
+		hint:$.su.CHAR.FEEDBACK.YOUR_ISP,
+		labelCls:"m",
+		cls:"xs"
+	});
+
+
+	$("div#feedback-content").panel({
+		title: "",
+		collapsible: true
+	});
+
+	// $("div#tips1").html($.su.CHAR.FEEDBACK.CONFIG_NOTE);
+	// $("div#tips2").html($.su.CHAR.FEEDBACK.SYS_NOTE);
+
+	$("input#feedback-cfigfile").checkbox({
+		tips:"",
+		fieldLabel: $.su.CHAR.FEEDBACK.ATTACHMENT,
+		items: [
+			{boxlabel: $.su.CHAR.FEEDBACK.CONFIGfILE, inputValue: "on", uncheckedValue: "off"}
+		]
+	});
+	$("#feedback-cfigfile").closest(".widget-container").find(".checkbox-group-wrap-outer").append($("#hover-content-left"));
+
+	$("input#feedback-syslog").checkbox({
+		tips:"",
+		fieldLabel: "",
+		items: [
+			{boxlabel: $.su.CHAR.FEEDBACK.SYSLOG, inputValue: "on", uncheckedValue: "off"}
+		]
+	});
+	$("#feedback-syslog").closest(".widget-container").find(".checkbox-group-wrap-outer").append($("#hover-content-right"));
+
+	$("textarea#feedback-description").textarea({
+		fieldLabel: "<span class='red-star'>*&nbsp</span>" + $.su.CHAR.FEEDBACK.CONTENT,
+		inputCls:'dig xxxl fixed-height',
+		allowBlank:false,
+		labelCls:"xl",
+		hint: $.su.CHAR.FEEDBACK.SUGGESTION_NOTE,
+		cls: "starTips feedback-description",
+		blankText: $.su.CHAR.VTYPETEXT.BLANKTEXT,
+		invalidText: $.su.CHAR.FEEDBACK.FEEDBACK_CONTENT_ERROR,
+		validator: function(value){
+			if(value.length>2023){
+				return false;
+			}else{
+				return true;
+			}
+		}
+	});
+
+	var regionItem = $.su.loadComboData("./data/region.json", {}, [
+    {
+        srcKey:"name", 
+        dstKey:"name", 
+        func:function(src, para){
+            return para[src];
+        }, 
+        para:$.su.CHAR.REGION
+    },
+    	{srcKey:"value", dstKey:"value"}
+	], 'GET');
+
+	var regionCombo = $("input#feedback-country").combobox({
+	    fieldLabel: "<span class='red-star'>*&nbsp</span>" + $.su.CHAR.QUICK_SETUP.COUNTRY,
+	    noneSelectedRemind: true,
+	    allowBlank:false,
+	    inputCls:'l',
+	    labelCls:"m",
+	    items: [],
+		cls: "inline-block starTips"
+	}).on("ev_validatechange", function(e, isvalid){
+		e.stopPropagation();
+		if (isvalid){
+			$(this).combobox("setNormal");
+		}else{
+			$(this).combobox("setError");
+		};
+	});
+	regionCombo.combobox("loadData",regionItem);
+
+    $("#submit-status").status({
+        cls:"submit-status"
+    });
+
+	var feedbackData = {};
+	var feedbackContent = $("form#feedback-form").form({
+		proxy:feedbackProxy,
+		autoLoad:true,
+		fields:[
+			{name: "username"},
+			{name: "email"},
+			{name: "phoneNum"},
+			{name: "country"},
+			{name: "isp"},
+			{name: "content"}
+		]
+		// submitBtn:"#feedback-submit"
+		// submitBtn:"#submit"
+	}).on("ev_loadData", function(e, data){
+		feedbackData = data || {};
+	});
+
+	function createCORSRequest(method, url, options){
+	    var xhr = new XMLHttpRequest();
+	    if("withCredentials" in xhr){
+	        //检查XHLHttpRequest对象是否有"withCredentials"属性
+	        //"withCredentials"属性仅存在于XMLHttpReqeust2对象中
+	        if(options && options.tiomeout){
+	        	xhr.timeout = options.tiomeout;
+	        }
+	        xhr.open(method, url, true);
+	    }else if(typeof XDomainRequest !="undefined"){
+	        //否则，检查XDomainRequest
+	        //XDomainRequest仅存在IE中，且通过其发起CORS请求
+	        xhr = new XDomainRequest();
+	        if(options && options.tiomeout){
+	        	xhr.timeout = options.tiomeout;
+	        }
+	        xhr.open(method, url);
+	    }else{
+	        //否则，CORS不被该浏览器支持
+	        xhr = null;
+	    }
+	    return xhr;
+	}
+
+	$("input#feedback-submit").button({
+		text: $.su.CHAR.FEEDBACK.SEND,
+		cls: "submit",
+		handler:function(e){
+			$("form#feedback-form").form("showLoading");
+			$("#internet-error").hide();
+			if(feedbackContent.form("validate")){
+
+				$("#submit-status").status("setLoading");
+
+				var params = {};
+				var url = "http://www.tp-link.com/phppage/router_sendMessage.php";
+				var xhr = createCORSRequest("post", url, {tiomeout: 10000});	//10秒超时
+				if(!xhr){
+				    throw new Error('CORS not supported');    
+				}
+
+				xhr.onload = function(){
+					//处理响应
+					var type = xhr.getResponseHeader("Content-Type");
+					if(type === "application/json"){
+						var responseText = JSON.parse(xhr.responseText);
+						if(responseText.success){
+							$("form#feedback-form").form("prompt", true);
+						}else{
+							$("form#feedback-form").form("prompt", false);
+						}
+					}
+					setTimeout(function(){
+						$("#feed-back-container").msg("close");
+					}, 2000);
+					$("form#feedback-form").form("hideLoading");
+
+					/*按需求做的特殊处理，高亮但是不可点击*/
+					$("input#feedback-submit").button("getContainer").find("button.button-button").prop("disabled", true);
+					$("#submit-status").status("setSuccess");
+				};
+				xhr.onerror = xhr.ontimeout = function(){
+					$("#internet-error").show();
+					$("form#feedback-form").form("prompt", false);
+					$("form#feedback-form").form("hideLoading");
+
+					$("#submit-status").status("setFailed");
+				}
+				//form data
+				var userData = $("form#feedback-form").form("serialize");
+
+				$.extend(params, feedbackData, userData);
+				//whether to send config file
+				$("#feedback-cfigfile").checkbox("getValue").length > 0 ? 1: (delete params["config"], delete params["config_name"]);
+				//whether to send system log
+				$("#feedback-syslog").checkbox("getValue").length > 0 ? 1: (delete params["syslog"], delete params["log_name"]);
+				xhr.send(JSON.stringify(params));
+			}else{
+				$("form#feedback-form").form("hideLoading");
+			}
+		}
+	});
+});
+//]]>
+</script>
+</body>
+</html>

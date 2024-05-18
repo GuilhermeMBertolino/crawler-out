@@ -1,0 +1,37 @@
+#!/bin/sh
+. /lib/functions.sh
+
+# wifi button for bcm47094 (c5300)
+# this script will cover the common script of wireless-button packge.
+
+state="off"
+
+wifi_state_obtain() {
+	local disabled
+	local dev="$1"
+	config_get_bool disabled $1 disabled
+	if [ "$disabled" = "0" ]; then
+		state="on"
+		[ -f /usr/bin/ledctrl ] && {
+			ledcli WIFI2G_OFF
+			ledcli WIFI5G_OFF
+			ledcli WPS_OFF
+		}
+	else
+		[ -f /usr/bin/ledctrl ] && {
+			ledcli WIFI2G_ON
+			ledcli WIFI5G_ON
+		}
+	fi
+}
+
+wifi_state_set() {
+	local dev="$1"
+	uci set wireless.$dev.disabled=$state
+	wifi_commit
+}
+
+config_load wireless
+config_foreach wifi_state_obtain wifi-device
+config_foreach wifi_state_set wifi-device
+wifi reload

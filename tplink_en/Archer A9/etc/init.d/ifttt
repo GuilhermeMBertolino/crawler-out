@@ -1,0 +1,58 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+SERVICE_DAEMONIZE=1
+IFTTT_CFG_FILE="/etc/config/ifttt_trigger"
+PROFILE_FILE="/etc/profile.d/profile"
+
+# for old FW version uprade to new version,we need to make alexa&ifttt work without a full reset/
+# thus we need to create some config files to dut.
+prepare_for_old_version()
+{
+  if [ ! -f $IFTTT_CFG_FILE ];then  
+	  touch $IFTTT_CFG_FILE 
+		echo "config ifttt_config 'ifttt_config'" > $IFTTT_CFG_FILE
+		echo "       option factory_id '0'" >> $IFTTT_CFG_FILE
+		
+		touch /etc/config/history_list	
+		
+		if [ ! -f /etc/config/client_mgmt ];then
+			touch /etc/config/client_mgmt 
+			echo "config global 'info'" > /etc/config/client_mgmt
+		fi			
+	else
+		echo "IFTTT CFG file exists!"
+		ls -al $IFTTT_CFG_FILE
+	fi
+	
+	#write profile	
+	if [ $(cat $PROFILE_FILE |grep -c alexa) = 0 ];then 
+		echo " " >> $PROFILE_FILE
+		echo "config alexa" >> $PROFILE_FILE           
+	  echo "  option alexa_support 'yes'" >> $PROFILE_FILE
+	  echo " " >> $PROFILE_FILE                                 
+	  echo "config ifttt" >> $PROFILE_FILE                   
+	  echo "  option ifttt_support 'yes'" >> $PROFILE_FILE
+	  echo "  option max_rules '300'" >> $PROFILE_FILE
+	  echo "  option check_internal '86400'" >> $PROFILE_FILE
+	  echo "  option warning_point '0.9'" >> $PROFILE_FILE
+	  echo "  option delay_time '15'" >> $PROFILE_FILE
+	else
+		echo "alexa profile exists!"  
+		ls -al $PROFILE_FILE
+  fi
+}
+
+boot()
+{
+  prepare_for_old_version
+  start
+}
+
+start()
+{  
+	local delay_time=$(uci get profile.@ifttt[0].delay_time -c "/etc/profile.d")
+	[ ! -z "$delay_time" ] && { 
+		sleep $delay_time &&  [ "$(uci get cloud_config.device_status.bind_status)" = "1" ] && touch /tmp/ifttt_allow_upload & 
+	}
+}

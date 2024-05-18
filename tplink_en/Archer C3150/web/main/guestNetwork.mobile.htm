@@ -1,0 +1,648 @@
+﻿<div class="titleBar">
+    <h1>Guest Network</h1>
+    <a id="tb-Save" data-status="save">Save</a>
+</div>
+<div class="section-container mt15">
+    <div class="section-box">
+        <div>
+            <span ></span>
+        </div>
+        <input type="checkbox" id="seeEachOther"/>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <div>
+            <span></span>
+        </div>
+        <input type="checkbox" id="accessLocal" />
+    </div>
+</div>
+<!--div class="section-container mtNo">
+    <div class="section-box">
+        <div>
+            <span></span>
+        </div>
+        <input type="checkbox" id="accessUSB" />
+    </div>
+</div-->
+
+<div class="button-group">
+    <input type="radio" name="mode" advanced="button-group-first" id="2ghz" checked="true" />
+    <label for="2ghz"><script type="text/html" class="trans" ><%=$.tpLang.s_str.tap2g%></script></label>
+    <input type="radio" name="mode" advanced="button-group-last" id="5ghz" />
+    <label for="5ghz"><script type="text/html" class="trans" ><%=$.tpLang.s_str.tap5g%></script></label>
+</div>
+
+<div id="2gShow" class="pb26">
+    <div class="section-container" id="2gShow1">
+        <div class="section-box">
+            <div></div>
+            <input type="checkbox" id="wlEn_2g" />
+        </div>
+    </div>
+    <div id="2gEnShow">
+        <div class="section-container mtNo" id="2gShow2">
+            <div class="section-box">
+                <input id="ssid_2g" type="text" maxlength="32" />
+                <div class="mt10">
+                    <input id="hideSSID_2g" type="checkbox"/>
+                    <label for="hideSSID_2g"></label>
+                </div>
+            </div>
+        </div>
+        <div class="section-container mtNo" id="2gShow3">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="security_2g" />
+            </div>
+        </div>
+        <div class="section-container mtNo" id="2gShow4">
+            <div class="section-box">
+                <input type="text" id="pwd_2g" maxlength="64"/>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div id="5gShow" class="nd pb26">
+    <div class="section-container" id="5gShow1">
+        <div class="section-box">
+            <div></div>
+            <input type="checkbox" id="wlEn_5g" />
+        </div>
+    </div>
+    <div id="5gEnShow"><div class="section-container mtNo" id="5gShow2">
+        <div class="section-box">
+            <input id="ssid_5g" type="text" maxlength="32" />
+            <div class="mt10">
+                <input id="hideSSID_5g" type="checkbox"/>
+                <label for="hideSSID_5g"></label>
+            </div>
+        </div>
+    </div>
+        <div class="section-container mtNo" id="5gShow3">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="security_5g" />
+            </div>
+        </div>
+        <div class="section-container mtNo" id="5gShow4">
+            <div class="section-box">
+                <input type="text" id="pwd_5g" maxlength="64"/>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type="text/javascript">
+
+
+(function() {
+    $.tpLocal('trans', $.tpLang);
+    $('.titleBar').titleBar({
+        title: $.tpLang.wlGuestDulBandBasic_nstr.et
+    });
+    $('#tb-Save').titleButton('status', 'save', $.tpLang.m_str.save);
+
+    $('#seeEachOther').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.wlGuestDulBandBasic_nstr.t_allowsee + ':'
+    });
+
+    $('#accessLocal').checkboxMobile({
+        'hasTitle': true,
+        'title':$.tpLang.wlGuestDulBandBasic_nstr.t_lAccess + ':'
+    });
+
+    /*$('#accessUSB').checkboxMobile({
+        'hasTitle': true,
+        'title':$.tpLang.wlGuestDulBandBasic_nstr.t_uAccess + ':'
+    });*/
+//    2.4|5
+    $('#2ghz').radioMobile().bind('check.radioMobile', function() {
+        $('#2gShow').show();
+        $('#5gShow').hide();
+    });
+    $('#5ghz').radioMobile().bind('check.radioMobile', function() {
+        $('#2gShow').hide();
+        $('#5gShow').show();
+    });
+
+//2g init
+    $(' #wlEn_2g').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.networkMap_nstr.c_guest2g
+    }).on('check.checkboxMobile', function() {
+        $('#2gEnShow').show();
+    }).on('uncheck.checkboxMobile', function() {
+        $('#2gEnShow').hide();
+    });
+    $('#wlEn_5g').checkboxMobile({
+        'hasTitle': true,
+        'title':$.tpLang.networkMap_nstr.c_guest5g
+    }).on('check.checkboxMobile', function() {
+        $('#5gEnShow').show();
+    }).on('uncheck.checkboxMobile', function() {
+        $('#5gEnShow').hide();
+    });
+
+
+    $('#ssid_2g, #ssid_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.gnssid,
+        'warnings': [{
+            func: ssidConflict,
+            text: e_str[CMM_WLAN_SSID_CONFLICTE]
+        },{
+            func: ssidEmpty,
+            text: e_str[ERR_WLAN_SSID_IS_EMPTY]
+        }, {
+            func: ssidOutRange,
+            text: e_str[ERR_WLAN_SSID_LEN_OUTRANGE]
+        }]
+    });
+
+    $('#hideSSID_2g, #hideSSID_5g').checkboxMobile({
+        'label': $.tpLang.s_str.hidessid
+    });
+
+    $('#security_2g').checkboxMobile({
+        'hasTitle': true,
+        'title':$.tpLang.s_str.security
+    }).on('check.checkboxMobile',function() {
+        $.showBlock('pwd_2g');
+    }).on('uncheck.checkboxMobile',function() {
+        $.hideBlock('pwd_2g');
+    });
+
+    $('#pwd_2g, #pwd_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.wlpwd,
+        'warnings': [{
+				func: pwdEmpty,
+				text: e_str[ERR_WLAN_WPA_PSK_EMPTY]
+			},
+            {
+                func: pwdLenInvalid,
+                text: e_str[ERR_WLAN_WPA_PSK_LENGTH_INVALID]
+            },
+            {
+                func: pwdHexInvalid,
+                text: e_str[ERR_WLAN_WPA_PSK_HEX_INVALID]
+            },
+            {
+                func: pwdASCInvalid,
+                text: e_str[ERR_WLAN_WPA_PSK_ASCII_INVALID]
+            }]
+    });
+
+//5g init
+    $('#security_5g').checkboxMobile({
+        'hasTitle': true,
+        'title':$.tpLang.s_str.security
+    }).on('check.checkboxMobile',function() {
+        $.showBlock('pwd_5g');
+    }).on('uncheck.checkboxMobile',function() {
+        $.hideBlock('pwd_5g');
+    });
+
+
+    var wlanObj_2g,
+            wlanObj_5g,
+            vapObj_2g,
+            vapObj_5g,
+            guestnetObj_2g,
+            guestnetObj_5g,
+            mssidObj_2g,
+            mssidObj_5g,
+            vapList_2g,
+            vapList_5g;
+    var isSec_2g = 0;
+    var isSec_5g = 0;
+//检查十六进制
+    function isHex(str, arg) {
+        str = str.toLowerCase();
+        for (var i = 0; i < str.length; i++) {
+            if ((str.charAt(i) >= '0' && str.charAt(i) <= '9') || (str.charAt(i) >= 'a' && str.charAt(i) <= 'f'))
+                continue;
+            else {
+                if (arg != 0)
+                    $.alertMobile(ERR_WLAN_WEP_KEY_HEX_INVALID);
+                return false;
+            }
+        }
+        if (parseInt(str, 16) == 0) {
+            if (arg != 0)
+                $.alertMobile(ERR_WLAN_WEP_KEY_HEX_INVALID);
+            return false;
+        }
+        return true;
+    }
+//检查ssid
+    function ssidConflict() {
+        var value = this.inputBoxMobile('option', 'value');
+        if (INCLUDE_LAN_WLAN_MSSID && INCLUDE_LAN_WLAN_GUESTNETWORK &&
+                (value == wlanObj_2g.SSID || value == wlanObj_5g.SSID)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    function ssidEmpty() {
+        var value = this.inputBoxMobile('option', 'value');
+        var ssidLen = $.realLen(value);
+        if (ssidLen <= 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    function ssidOutRange() {
+        var value = this.inputBoxMobile('option', 'value');
+        var ssidLen = $.realLen(value);
+        if (ssidLen > 32) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function pwdEmpty() {
+        var pwd = this.inputBoxMobile('option', 'value');
+        if (pwd.length == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function pwdLenInvalid() {
+        var pwd = this.inputBoxMobile('option', 'value');
+        if (pwd.length < 8) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function pwdHexInvalid() {
+        var pwd = this.inputBoxMobile('option', 'value');
+        this.val(pwd.substr(0, 64));
+        if (pwd.length >= 64 && !isHex(pwd, 0)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function pwdASCInvalid() {
+        var pwd = this.inputBoxMobile('option', 'value');
+        if ($.asc(pwd, true)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+//    function checkPersonal(band) {
+//        var t = $('#pwd' + band);
+//        var pwd = t.inputBoxMobile('option', 'value');
+//
+//        if (pwd.length == 0) {
+//            $.alertMobile(ERR_WLAN_WPA_PSK_EMPTY);
+//            t.focus();
+//            t.select();
+//            return false;
+//        } else if (pwd.length < 8) {
+//            $.alertMobile(ERR_WLAN_WPA_PSK_LENGTH_INVALID);
+//            t.focus();
+//            t.select();
+//            return false;
+//        } else if (pwd.length >= 64) {
+//            if (!isHex(pwd, 0)) {
+//                $.alertMobile(ERR_WLAN_WPA_PSK_HEX_INVALID);
+//                t.focus();
+//                t.select();
+//                return false;
+//            }
+//            t.prop('value', t.prop('value').substr(0, 64));
+//        } else {
+//            if ($.asc(pwd, true)) {
+//                $.alertMobile(ERR_WLAN_WPA_PSK_ASCII_INVALID);
+//                t.focus();
+//                t.select();
+//                return false;
+//            }
+//        }
+//
+//        return true;
+//    }
+
+    function init() {
+        var basicList = $.act(ACT_GL, LAN_WLAN, null, null, ["Enable", "SSID", "X_TP_Band", "BeaconType", "BasicEncryptionModes"]);
+        if (!$.exe()) {
+            $.each(basicList, function() {
+                if ("2.4GHz" == this.X_TP_Band) {
+                    wlanObj_2g = this;
+                }
+                if ("5GHz" == this.X_TP_Band) {
+                    wlanObj_5g = this;
+                }
+            });
+
+            mssidObj_2g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_2g.__stack, null, ["MultiSSIDEnable"]);
+            mssidObj_5g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_5g.__stack, null, ["MultiSSIDEnable"]);
+            vapList_2g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_2g.__stack, ["Name", "Enable", "SSID", "SSIDAdvertisementEnable", "isolateClients", "BeaconType", "BasicAuthenticationMode", "WEPKeyIndex", "BasicEncryptionModes", "WPAEncryptionModes", "WPAAuthenticationMode", "IEEE11iEncryptionModes", "IEEE11iAuthenticationMode", "PreSharedKey", "GroupKeyUpdateInterval", "RadiusServerIP", "RadiusServerPort", "RadiusServerPassword"]);
+            vapList_5g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_5g.__stack, ["Name", "Enable", "SSID", "SSIDAdvertisementEnable", "isolateClients", "BeaconType", "BasicAuthenticationMode", "WEPKeyIndex", "BasicEncryptionModes", "WPAEncryptionModes", "WPAAuthenticationMode", "IEEE11iEncryptionModes", "IEEE11iAuthenticationMode", "PreSharedKey", "GroupKeyUpdateInterval", "RadiusServerIP", "RadiusServerPort", "RadiusServerPassword"]);
+
+            guestnetObj_2g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_2g.__stack, null, ["Enable", "Name", "IsModified", "LANAccessEnable", "USBAccessEnable", "TCEnable", "TCMaxUpBW", "TCMinUpBW", "TCMaxDownBW", "TCMinDownBW", "TCRuleID"]);
+            guestnetObj_5g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_5g.__stack, null, ["Enable", "Name", "IsModified", "LANAccessEnable", "USBAccessEnable", "TCEnable", "TCMaxUpBW", "TCMinUpBW", "TCMaxDownBW", "TCMinDownBW", "TCRuleID"]);
+
+            if (!$.exe()) {
+                $.each(vapList_2g, function(arg, index) {
+                    if (this.name == guestnetObj_2g.name)
+                        vapObj_2g = this;
+                });
+                $.each(vapList_5g, function(arg, index) {
+                    if (this.name == guestnetObj_5g.name)
+                        vapObj_5g = this;
+                });
+                if (guestnetObj_2g.enable == true) {
+                    /*                vapObj = vapObj2g;
+                     guestnetObj = guestnetObj2G;*/
+                }
+                if (guestnetObj_2g.enable == true) {
+                    /*                vapObj = vapObj5g;
+                     guestnetObj = guestnetObj_5g;*/
+                }
+            }
+            initParamShow(vapObj_2g, '_2g');
+            initParamShow(vapObj_5g, '_5g');
+            initAdvancedShow(vapObj_2g, guestnetObj_2g);
+            initSecShow(vapObj_2g, '_2g');
+            initSecShow(vapObj_5g, '_5g');
+        }
+    }
+
+    function initParamShow(vapObj, band) {
+        if (vapObj.enable == 1) {
+            $('#wlEn' + band).checkboxMobile('option','checked', true);
+            if (band == '_2g') {
+                $('#2gEnShow').show();
+            } else {
+                $('#5gEnShow').show();
+            }
+        } else {
+            $('#wlEn' + band).checkboxMobile('option','checked', false);
+            if (band == '_2g') {
+                $('#2gEnShow').hide();
+            } else {
+                $('#5gEnShow').hide();
+            }
+        }
+        if (band == '_2g') {
+            if (wlanObj_2g.enable == 0) {
+//                $('#wlEn_2g').checkboxMobile('option','disabled', true);
+//                $('#ssid_2g').inputBoxMobile('option','disabled', true);
+//                $('#hideSSID_2g').checkboxMobile('option','disabled', true);
+//                $('#security_2g').checkboxMobile('option','disabled', true);
+//                $('#pwd_2g').inputBoxMobile('option','disabled', true);
+                $.disableBlock('2gShow1');
+                $.disableBlock('2gShow2');
+                $.disableBlock('2gShow3');
+                $.disableBlock('2gShow4');
+                $.errorTipMobile('wlEn_2g', ERR_WLAN_DISABLED);
+            } /*else if ('Basic' == wlanObj_2g.beaconType && "WEPEncryption" == wlanObj_2g.basicEncryptionModes) {
+//                $('#wlEn_2g').checkboxMobile('option','disabled', true);
+//                $('#ssid_2g').inputBoxMobile('option','disabled', true);
+//                $('#hideSSID_2g').checkboxMobile('option','disabled', true);
+//                $('#security_2g').checkboxMobile('option','disabled', true);
+//                $('#pwd_2g').inputBoxMobile('option','disabled', true);
+                $.disableBlock('2gShow1');
+                $.disableBlock('2gShow2');
+                $.disableBlock('2gShow3');
+                $.disableBlock('2gShow4');
+                $.errorTipMobile('wlEn_2g', ERR_WLAN_GUESTNETWORK_WEP_CONFLICT);
+            }*/
+        } else if (band == '_5g') {
+            if (wlanObj_5g.enable == 0) {
+//                $('#wlEn_5g').checkboxMobile('option','disabled', true);
+//                $('#ssid_5g').inputBoxMobile('option','disabled', true);
+//                $('#hideSSID_5g').checkboxMobile('option','disabled', true);
+//                $('#security_5g').checkboxMobile('option','disabled', true);
+//                $('#pwd_5g').inputBoxMobile('option','disabled', true);
+                $.disableBlock('5gShow1');
+                $.disableBlock('5gShow2');
+                $.disableBlock('5gShow3');
+                $.disableBlock('5gShow4');
+                $.errorTipMobile('wlEn_5g', ERR_WLAN_DISABLED);
+            } /*else if ('Basic' == wlanObj_5g.beaconType && "WEPEncryption" == wlanObj_5g.basicEncryptionModes) {
+//                $('#wlEn_5g').checkboxMobile('option','disabled', true);
+//                $('#ssid_5g').inputBoxMobile('option','disabled', true);
+//                $('#hideSSID_5g').checkboxMobile('option','disabled', true);
+//                $('#security_5g').checkboxMobile('option','disabled', true);
+//                $('#pwd_5g').inputBoxMobile('option','disabled', true);
+                $.disableBlock('5gShow1');
+                $.disableBlock('5gShow2');
+                $.disableBlock('5gShow3');
+                $.disableBlock('5gShow4');
+                $.errorTipMobile('wlEn_5g', ERR_WLAN_GUESTNETWORK_WEP_CONFLICT);
+            }*/
+        }
+
+        $('#ssid' + band).inputBoxMobile('option','value',vapObj.SSID);
+
+        if (vapObj.SSIDAdvertisementEnable == 0) {
+            $('#hideSSID' + band).checkboxMobile('option', 'checked', true);
+        } else {
+            $('#hideSSID' + band).checkboxMobile('option', 'checked', false);
+        }
+    }
+
+    function initAdvancedShow(vapObj, guestnetObj) {
+        if (vapObj.isolateClients == 0) {
+            $('#seeEachOther').checkboxMobile('option', 'checked', 'checked');
+        }
+        if (guestnetObj.LANAccessEnable == 1) {
+            $('#accessLocal').checkboxMobile('option', 'checked', 'checked');
+        }
+        /*if (guestnetObj.USBAccessEnable == 1) {
+            $('#accessUSB').checkboxMobile('option', 'checked', 'checked');
+        }*/
+    }
+
+    function initSecShow(wlanObj, band) {
+        if (initSecType(wlanObj, band) === true) {
+            $('#security' + band).checkboxMobile('option', 'checked', true);
+            $.showBlock('pwd' + band);
+            initWpa2Personal(wlanObj, band);
+        } else {
+            $('#security' + band).checkboxMobile('option', 'checked', false);
+            $.hideBlock('pwd' + band);
+            $('#pwd' + band).val('').focus();
+        }
+
+    }
+
+    function initSecType(wlanObj, band) {
+        if (wlanObj.beaconType == 'Basic' && wlanObj.basicEncryptionModes == 'None') {
+            return false;
+        } else {
+            if (band == '_2g') {
+                isSec_2g = 1;
+            } else {
+                isSec_5g = 1;
+            }
+            return true;
+        }
+    }
+
+    function initWpa2Personal(wlanObj, band) {
+        $('#pwd' + band).inputBoxMobile('option','value', wlanObj.preSharedKey);
+    }
+
+    function check(band) {
+        if ($('#ssid' + band).inputBoxMobile('checkValue') == false) {
+            return false;
+        }
+        if (($('#security' + band).checkboxMobile('option', 'checked')) && ($('#pwd' + band).inputBoxMobile('checkValue') == false)) {
+            return false;
+        }
+    }
+
+
+    function saveCommon(wlanObj, guestnetObj, band) {
+        var wlSettings = {};
+        var guestSettings = {};
+
+        wlSettings.isolateClients = $('#seeEachOther').checkboxMobile('option','checked') ? 0 : 1;
+
+        guestSettings.LANAccessEnable = $('#accessLocal').checkboxMobile('option','checked') ? 1 : 0;
+        /*guestSettings.USBAccessEnable = $('#accessUSB').checkboxMobile('option','checked') ? 1 : 0;*/
+		guestSettings.USBAccessEnable = guestSettings.LANAccessEnable;
+
+        $.act(ACT_SET, LAN_WLAN_MSSIDENTRY, wlanObj.__stack, null, wlSettings);
+
+        $.act(ACT_SET, LAN_WLAN_GUESTNET, guestnetObj.__stack, null, guestSettings);
+
+    }
+    function clickSave(wlanObj, guestnetObj, band) {
+        var wlSettings = {};
+        var guestSettings = {};
+        var type;
+
+        wlSettings.enable = $('#wlEn' + band).checkboxMobile('option','checked') ? 1 : 0;
+        /*    if (band == '_2g' && wlanObj_2g.enable == 0) {
+         $.errorTip('wlEn_2g', ERR_WLAN_DISABLED);
+         return;
+         } else if (band == '_5g' && wlanObj_5g.enable == 0) {
+         $.errorTip('wlEn_5g', ERR_WLAN_DISABLED);
+         return;
+         }*/
+        wlSettings.SSID = $('#ssid' + band).inputBoxMobile('option', 'value');
+        wlSettings.SSIDAdvertisementEnable = $('#hideSSID' + band).checkboxMobile('option','checked') ? 0 : 1;
+        wlSettings.preSharedKey = $('#pwd' + band).inputBoxMobile('option', 'value');
+
+        if ((band == '_2g' && isSec_2g == 0 && $('#security_2g').checkboxMobile('option','checked')) ||
+                (band == '_5g' && isSec_5g == 0 && $('#security_5g').checkboxMobile('option','checked'))) {
+            if (band == '_2g') {
+                isSec_2g = 1;
+            } else {
+                isSec_5g = 1;
+            }
+            wlSettings.beaconType = '11i';
+            wlSettings.IEEE11iAuthenticationMode = 'PSKAuthentication';
+            wlSettings.IEEE11iEncryptionModes = 'TKIPandAESEncryption';
+        } else if ((band == '_2g' && isSec_2g == 1 && !$('#security_2g').checkboxMobile('option','checked')) ||
+                (band == '_5g' && isSec_5g == 1 && !$('#security_5g').checkboxMobile('option','checked'))) {
+            if (band == '_2g') {
+                isSec_2g = 0;
+            } else {
+                isSec_5g = 0;
+            }
+            wlSettings.beaconType = 'Basic';
+        }
+        wlSettings.isolateClients = $('#seeEachOther').checkboxMobile('option','checked') ? 0 : 1;
+
+        guestSettings.LANAccessEnable = $('#accessLocal').checkboxMobile('option','checked') ? 1 : 0;
+        guestSettings.USBAccessEnable = $('#accessUSB').checkboxMobile('option','checked') ? 1 : 0;
+
+//        saving the submit data in the data object for restoring
+        $.extend(wlanObj, wlSettings);
+
+        $.act(ACT_SET, LAN_WLAN_MSSIDENTRY, wlanObj.__stack, null, wlSettings);
+
+        $.act(ACT_SET, LAN_WLAN_GUESTNET, guestnetObj.__stack, null, guestSettings);
+
+        $.exe(function(err) {
+            $.stopWaitingMobile();
+            if (!err) {
+                $.toastMobile($.tpLang.c_str.saveAndReconn, 10000);
+//                $.reload();
+            }
+        });
+    }
+
+    function disableGuest() {
+        var wlSettings = {};
+        wlSettings.enable = 0;
+        $.act(ACT_SET, LAN_WLAN_MSSIDENTRY, vapObj_2g.__stack, null, wlSettings);
+        $.act(ACT_SET, LAN_WLAN_MSSIDENTRY, vapObj_5g.__stack, null, wlSettings);
+        $.exe(function() {
+//            $.removeLoading();
+            $.stopWaitingMobile();
+        });
+    }
+
+    $('#tb-Save').on('click.guestBasic', function(e) {
+        $.startWaitingMobile();
+//     点击保存?g?g都保存的写法
+//        if ($('#wlEn_2g').checkboxMobile('option', 'checked')) {
+//            if (check('_2g') == false) {
+//                $.stopWaitingMobile();
+//                return;
+//            }
+//        }
+//        if ($('#wlEn_5g').checkboxMobile('option', 'checked')) {
+//            if (check('_5g') == false) {
+//                $.stopWaitingMobile();
+//                return;
+//            }
+//        }
+//        clickSave(vapObj_2g, guestnetObj_2g, '_2g');
+//        clickSave(vapObj_5g, guestnetObj_5g, '_5g');
+//
+//     点击保存，只保存选中那个的写?
+        if ($('#2ghz').radioMobile('option', 'checked') === true) {
+        if ($('#wlEn_2g').checkboxMobile('option', 'checked')) {
+            if (check('_2g') == false) {
+                $.stopWaitingMobile();
+                return;
+            }
+        }
+//            保存公有部分?g
+            saveCommon(vapObj_5g, guestnetObj_5g, '_5g');
+            clickSave(vapObj_2g, guestnetObj_2g, '_2g');
+
+//            恢复5g部分数据
+            initParamShow(vapObj_5g, '_5g');
+            initSecShow(vapObj_5g, '_5g');
+        } else {
+        if ($('#wlEn_5g').checkboxMobile('option', 'checked')) {
+            if (check('_5g') == false) {
+                $.stopWaitingMobile();
+                return;
+            }
+        }
+//            保存公有部分?g
+            saveCommon(vapObj_2g, guestnetObj_2g, '_2g');
+            clickSave(vapObj_5g, guestnetObj_5g, '_5g');
+
+//          恢复2g部分数据
+            initParamShow(vapObj_2g, '_2g');
+            initSecShow(vapObj_2g, '_2g');
+        }
+
+    });
+
+    init();
+})();
+</script>

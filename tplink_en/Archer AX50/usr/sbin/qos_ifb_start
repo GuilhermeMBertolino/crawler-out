@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+restart_qos_ifb1()
+{	
+	# For QoS V2
+	[ -e /lib/qos/intel_SAE_QoS_conf.sh ] && {
+		. /lib/functions.sh   
+		
+		local enable
+		config_load qos_v2
+		config_get enable settings enable
+	
+		if [ "$enable" = "on" ]; then
+			/etc/init.d/qos restart
+		fi	
+	}
+
+	# For TM QoS
+	[ -e /tmp/tm-shn/intel_SAE_QoS_conf.sh ] && {
+		/etc/init.d/tm_shn_qos stop
+		/etc/init.d/tm_shn_qos start
+	}
+}
+restart_qos_ifb1

@@ -1,0 +1,369 @@
+<script>var daysPerWeek=7,first=0,IS_SHOW_REGION=INCLUDE_WEB_REGION&&0,isWait=!1;function parseFormat(e,t){for(e=e.toString();e.length<t;)e="0"+e;return e}function time_24to12(e){var t=e.split(":"),a=parseInt(t[0],10),s=parseInt(t[1],10),n=parseInt(t[2],10);return 0==a?"12:"+parseFormat(s,2)+":"+parseFormat(n,2)+" AM":a<12?a.toString()+":"+parseFormat(s,2)+":"+parseFormat(n,2)+" AM":12==a?"12:"+parseFormat(s,2)+":"+parseFormat(n,2)+" PM":(a-12).toString()+":"+parseFormat(s,2)+":"+parseFormat(n,2)+" PM"}function addAttrs(){var e,t=$("#date").prop("value").split("/"),a={},s={};return s.year=t[2],s.month=INCLUDE_DAY_MONTH_YEAR?t[1]:t[0],s.day=INCLUDE_DAY_MONTH_YEAR?t[0]:t[1],s.hours=parseInt($("#hour").data("value"),10),s.minutes=parseInt($("#minute").data("value"),10),s.seconds=parseInt($("#second").data("value"),10),a.NTPServer1=$("#ntpA").prop("value"),a.NTPServer2=$("#ntpB").prop("value"),""===s.year||$.num(s.year,[1970,2037],!0)?($.alert(ERR_TIME_YEAR_INVAD),(e=$("#date"))&&(e.focus(),e.select()),!1):""===s.month||$.num(s.month,[1,12],!0)?($.alert(ERR_TIME_MONTH_INVAD),(e=$("#date"))&&(e.focus(),e.select()),!1):""===s.day||$.num(s.day,[1,31],!0)?($.alert(ERR_TIME_DAY_INVAD),(e=$("#date"))&&(e.focus(),e.select()),!1):""===s.hours||$.num(s.hours,[0,23],!0)?($.alert(ERR_TIME_HOUR_INVAD),(e=$("#hour"))&&(e.focus(),e.select()),!1):""===s.minutes||$.num(s.minutes,[0,60],!0)?($.alert(ERR_TIME_MINUTE_INVAD),(e=$("#minute"))&&(e.focus(),e.select()),!1):""===s.seconds||$.num(s.seconds,[0,60],!0)?($.alert(ERR_TIME_SECOND_INVAD),(e=$("#second"))&&(e.focus(),e.select()),!1):""===a.NTPServer1||$.isdomain(a.NTPServer1)||INCLUDE_IPV6&&$.isValidGLUIP6Addr(a.NTPServer1)?""===a.NTPServer2||$.isdomain(a.NTPServer2)||INCLUDE_IPV6&&$.isValidGLUIP6Addr(a.NTPServer2)?[s,a]:($.alert(ERR_TIME_NTP_SERVER),(e=$("#ntpB"))&&(e.focus(),e.select()),!1):($.alert(ERR_TIME_NTP_SERVER),(e=$("#ntpA"))&&(e.focus(),e.select()),!1)}function getStatus(){var t=s_str.getgmt,a=s_str.gmtfail;$("#GetTime").prop("disabled",!0),$.auto(function(){var e=$.act(ACT_GET,TIME,null,null,["__status"]);$.exe()||(1==e.__status?$("#t_status").html("<span>"+t+"</span>"):2==e.__status?$.reload():3==e.__status&&($("#t_status").html("<span>"+a+"</span>"),$("#GetTime").prop("disabled",!1)))},1e3)}function checkDstDate(){var e=$("#dst_start_month").prop("value")+$("#dst_start_weekCount").prop("value")+$("#dst_start_weekDay").prop("value")+$("#dst_start_time").prop("value"),t=$("#dst_end_month").prop("value")+$("#dst_end_weekCount").prop("value")+$("#dst_end_weekDay").prop("value")+$("#dst_end_time").prop("value"),a=$("#date").prop("value").split("/");if($("#dst_start_year").html(a[2]),t<e){var s=parseInt(a[2],10)+1;$("#dst_end_year").html(s)}else{s=parseInt(a[2],10);$("#dst_end_year").html(s)}}function initRegionList(){for(var e=$("#region"),t=0;t<regionCodeInfo.length;t++)e.append("<option value='"+t+"'>"+regionCodeInfo[t][4]+"</option>")}function saveWlanRegion(){for(var e={},t=0;t<regionCodeInfo.length&&$("#region").data("text")!=regionCodeInfo[t][4];t++);t>=regionCodeInfo.length||(e.country=regionCodeInfo[t][1].substring(0,2),$.act(ACT_SET,LOCAL,null,null,e))}function doEnableDst(){1==$("#enableDST").prop("checked")?($("#dst_start_month").prop("disabled",!1),$("#dst_start_weekCount").prop("disabled",!1),$("#dst_start_weekDay").prop("disabled",!1),$("#dst_start_time").prop("disabled",!1),$("#dst_end_month").prop("disabled",!1),$("#dst_end_weekCount").prop("disabled",!1),$("#dst_end_weekDay").prop("disabled",!1),$("#dst_end_time").prop("disabled",!1)):($("#dst_start_month").prop("disabled",!0),$("#dst_start_weekCount").prop("disabled",!0),$("#dst_start_weekDay").prop("disabled",!0),$("#dst_start_time").prop("disabled",!0),$("#dst_end_month").prop("disabled",!0),$("#dst_end_weekCount").prop("disabled",!0),$("#dst_end_weekDay").prop("disabled",!0),$("#dst_end_time").prop("disabled",!0))}function isLeapYear(e){return e%4==0&&e%100!=0||e%400==0}function isValidDate(e,t,a){var s=new Array(31,0,31,30,31,30,31,31,30,31,30,31);return s[1]=isLeapYear(e)?29:28,a<=s[t]}function getMday(e,t,a,s){var n,d=0;return s=(s+1)%daysPerWeek,n=new Date(e,t,1),firstWday=parseInt(n.getDay(),10),d=a*daysPerWeek+s-firstWday+1,s<firstWday&&(d+=daysPerWeek),4!=a||isValidDate(e,t,d)||(d-=daysPerWeek),d<10&&(d="0"+d),d}function isEastEarthTime(){return(new Date).getTimezoneOffset()<0}function isDayLightTime(){var e=new Date,t=new Date,a=0;t.setMonth(0),t.setDate(1),t.setHours(0),t.setMinutes(0),t.setSeconds(0);var s=new Date(t.getTime());return s.setMonth(6),s.getTimezoneOffset()-t.getTimezoneOffset()!=0&&(a=1==isEastEarthTime()?Math.abs(t.getTimezoneOffset())>Math.abs(s.getTimezoneOffset())?t.getTimezoneOffset():s.getTimezoneOffset():Math.abs(t.getTimezoneOffset())<Math.abs(s.getTimezoneOffset())?t.getTimezoneOffset():s.getTimezoneOffset(),e.getTimezoneOffset()==a)}function clientTimeZone(){var e=(new Date).getTimezoneOffset(),t=parseInt(e/60);1==isDayLightTime()&&(t+=1);var a=e%60,s="-";return(t<=0||a<0)&&(s="+",t=-t,a<0&&(a=-a)),1==(t+="").length&&(t="0"+t),s+t+(a=1==(a+="").length?":0"+a:":"+a)}function doGetTime(){$.act(ACT_SET,TIME,null,null,["localTimeZone="+$("#timezone").data("value"),"NTPServer1="+$("#ntpA").prop("value"),"NTPServer2="+$("#ntpB").prop("value")]),$.act(ACT_OP,ACT_OP_NTP_REQUEST),$.exe(function(e){$.removeLoading(),e||getStatus()})}function doGetPCTime(){var e=new Date,t={},a={};isWait=!0,t.localTimeZone=clientTimeZone(),a.year=parseInt(e.getFullYear(),10),a.month=parseInt(e.getMonth()+1,10),a.day=parseInt(e.getDate(),10),a.hours=parseInt(e.getHours(),10),a.minutes=parseInt(e.getMinutes(),10),a.seconds=parseInt(e.getSeconds(),10),doSave(t,a)}function doSave(e,t){$.act(ACT_SET,TIME,null,null,e),$.act(ACT_SET,HOUR,null,null,t),$.exe(function(e){$.removeLoading(),e||$.reload()})}function init(){var e,t=$.act(ACT_GET,HOUR,null,null,["year","month","day","hours","minutes","seconds"]),l={};if(IS_SHOW_REGION){$("#region").removeClass("nd"),initRegionList();var a=$.act(ACT_GET,LOCAL,null,null,["country"])}if(l=WEB_INCLUDE_DST?($("#webIncludeDST").removeClass("nd"),$.act(ACT_GET,TIME,null,null,["localTimeZone","NTPServer1","NTPServer2","__status","daylightSavingsUsed","daylightSavingsStart","daylightSavingsEnd","X_TP_DaylightSavingsStartWeekCount","X_TP_DaylightSavingsEndWeekCount","sysMode"])):$.act(ACT_GET,TIME,null,null,["localTimeZone","NTPServer1","NTPServer2","__status","sysMode"]),!$.exe()){if(IS_SHOW_REGION){for(var s=0;s<regionCodeInfo.length&&a.country!=regionCodeInfo[s][1].substring(0,2);s++);s<regionCodeInfo.length&&$('#region option[value="'+s+'"]').prop("selected","selected")}e=INCLUDE_DAY_MONTH_YEAR?($("#t_format_dmy").removeClass("nd"),t.day+"/"+t.month+"/"+t.year):($("#t_format").removeClass("nd"),t.month+"/"+t.day+"/"+t.year),24==l.sysMode?($("#24mode_on").addClass("selected"),$("#24mode_off").removeClass("selected")):($("#24mode_on").removeClass("selected"),$("#24mode_off").addClass("selected")),$("#date").prop("value",e),$('#hour option[value="'+t.hours+'"]').prop("selected","selected"),$('#minute option[value="'+t.minutes+'"]').prop("selected","selected"),$('#second option[value="'+t.seconds+'"]').prop("selected","selected"),$("#ntpA").prop("value",l.NTPServer1?l.NTPServer1:"0.0.0.0"),$("#ntpB").prop("value",l.NTPServer2?l.NTPServer2:"0.0.0.0");var n=l.localTimeZone?l.localTimeZone:"+08:00";$('#timezone option[value="'+n+'"]').prop("selected","selected"),1==l.__status&&getStatus(),WEB_INCLUDE_DST&&(1==l.daylightSavingsUsed?$("#enableDST").prop("checked","checked"):$("#enableDST").prop("checked",!1),""!=l.daylightSavingsStart&&(startYear=parseInt(l.daylightSavingsStart.substr(0,4),10),dstStartMonth=parseInt(l.daylightSavingsStart.substr(5,2),10),dstStartMday=parseInt(l.daylightSavingsStart.substr(8,2),10),dstStartTime=parseInt(l.daylightSavingsStart.substr(11,2),10),dateTmp=new Date(startYear,dstStartMonth-1,dstStartMday),dstStartWeekCount=l.X_TP_DaylightSavingsStartWeekCount,dstStartWday=parseInt(dateTmp.getDay(),10),0==dstStartWday&&(dstStartWday=7),$("#dst_start_month").get(0).selectedIndex=dstStartMonth-1,$('#dst_start_weekCount option[value="'+dstStartWeekCount+'"]').prop("selected","selected"),$('#dst_start_weekDay option[value="'+dstStartWday+'"]').prop("selected","selected"),$("#dst_start_time").get(0).selectedIndex=dstStartTime),""!=l.daylightSavingsEnd&&(endYear=parseInt(l.daylightSavingsEnd.substr(0,4),10),dstEndMonth=parseInt(l.daylightSavingsEnd.substr(5,2),10),dstEndMday=parseInt(l.daylightSavingsEnd.substr(8,2),10),dstEndTime=parseInt(l.daylightSavingsEnd.substr(11,2),10),dateTmp=new Date(endYear,dstEndMonth-1,dstEndMday),dstEndWday=parseInt(dateTmp.getDay(),10),dstEndWeekCount=l.X_TP_DaylightSavingsEndWeekCount,0==dstEndWday&&(dstEndWday=7),$("#dst_end_month").get(0).selectedIndex=dstEndMonth-1,$('#dst_end_weekCount option[value="'+dstEndWeekCount+'"]').prop("selected","selected"),$('#dst_end_weekDay option[value="'+dstEndWday+'"]').prop("selected","selected"),$("#dst_end_time").get(0).selectedIndex=dstEndTime),checkDstDate(),doEnableDst()),$.auto(function(){var e=$.act(ACT_GET,HOUR,null,null,["year","month","day","hours","minutes","seconds"]);if(isWait)return isWait=!1;if($.exe())return!1;if(isNaN(e.month))return!1;var t=e.month;t<10&&(t="0"+t);var a,s=e.day;s<10&&(s="0"+s),a=1==INCLUDE_DAY_MONTH_YEAR?s+"/"+t+"/"+e.year:t+"/"+s+"/"+e.year;var n=e.hours;n<10&&(n="0"+n);var d=e.minutes;d<10&&(d="0"+d);var r=e.seconds;r<10&&(r="0"+r);var o=n+":"+d+":"+r,i="";i=12==l.sysMode?time_24to12(o)+", "+a:a+" "+o,$("#current_time").val(i)},1e3)}}$("select[id^='dst_']").click(function(){checkDstDate()}),$("#GetTime").click(function(){first&&($.addLoading($(this)),doGetTime())}),$("#GetPCTime").click(function(){doGetPCTime()}),$("#enableDST").click(function(){var e={refresh:1};1==$("#enableDST").prop("data-checked")?($("#dst_start_month").prop("disabled",!1),$("#dst_start_weekCount").prop("disabled",!1),$("#dst_start_weekDay").prop("disabled",!1),$("#dst_start_time").prop("disabled",!1),$("#dst_end_month").prop("disabled",!1),$("#dst_end_weekCount").prop("disabled",!1),$("#dst_end_weekDay").prop("disabled",!1),$("#dst_end_time").prop("disabled",!1)):($("#dst_start_month").prop("disabled",!0),$("#dst_start_weekCount").prop("disabled",!0),$("#dst_start_weekDay").prop("disabled",!0),$("#dst_start_time").prop("disabled",!0),$("#dst_end_month").prop("disabled",!0),$("#dst_end_weekCount").prop("disabled",!0),$("#dst_end_weekDay").prop("disabled",!0),$("#dst_end_time").prop("disabled",!0)),$("#dst_start_month").tpSelect(e),$("#dst_start_weekCount").tpSelect(e),$("#dst_start_weekDay").tpSelect(e),$("#dst_start_time").tpSelect(e),$("#dst_end_month").tpSelect(e),$("#dst_end_weekCount").tpSelect(e),$("#dst_end_weekDay").tpSelect(e),$("#dst_end_time").tpSelect(e)}),$("#timezone").click(function(){first&&($.addLoading($(this)),doGetTime())}),$("#t_save").click(function(){$.addLoading($(this));var e=addAttrs();!1!==e?(IS_SHOW_REGION&&saveWlanRegion(),doSave(e[1],e[0])):$.removeLoading()}),$("#t_save1").click(function(){$.addLoading($(this));var e,t,a,s,n=0,d="",r="";WEB_INCLUDE_DST&&(1==$("#enableDST").prop("data-checked")&&(n=1,a=getMday(e=parseInt($("#dst_start_year").html(),10),parseInt($("#dst_start_month").data("value"),10)-1,parseInt($("#dst_start_weekCount").data("value"),10)-1,parseInt($("#dst_start_weekDay").data("value"),10)-1),d=e+"-"+$("#dst_start_month").data("value")+"-"+a+"T"+$("#dst_start_time").data("value"),s=getMday(t=parseInt($("#dst_end_year").html(),10),parseInt($("#dst_end_month").data("value"),10)-1,parseInt($("#dst_end_weekCount").data("value"),10)-1,parseInt($("#dst_end_weekDay").data("value"),10)-1),(r=t+"-"+$("#dst_end_month").data("value")+"-"+s+"T"+$("#dst_end_time").data("value"))<=d&&(r=(t+=1)+"-"+$("#dst_end_month").data("value")+"-"+s+"T"+$("#dst_end_time").data("value"))));WEB_INCLUDE_DST&&(1==n?$.act(ACT_SET,TIME,null,null,["localTimeZone="+$("#timezone").data("value"),"daylightSavingsUsed="+n,"daylightSavingsStart="+d,"daylightSavingsEnd="+r,"X_TP_DaylightSavingsStartWeekCount="+$("#dst_start_weekCount").data("value"),"X_TP_DaylightSavingsEndWeekCount="+$("#dst_end_weekCount").data("value")]):$.act(ACT_SET,TIME,null,null,["daylightSavingsUsed="+n]),$.exe(function(e){$.removeLoading(),e||$.reload()}))}),$("#24mode_on").click(function(){$.addLoading($(this)),$.act(ACT_SET,TIME,null,null,["sysMode=24"]),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#24mode_off").click(function(){$.addLoading($(this)),$.act(ACT_SET,TIME,null,null,["sysMode=12"]),$.exe(function(e){$.removeLoading(),e||$.reload()})})</script>
+<h3 id="et">System Time</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="s ru-s pl-m it-xxs" id="curTime"></b>
+            <input id="current_time" readonly="readonly" type="text">
+        </div>
+        <div>
+            <b class="T_region xxxs it-xxs pl-m" id="t_region">Region:</b>
+            <select id="region" class="xxxl it-xxxl pl-xxl nd">
+                <option id="t_plssel" value="none">Please Select</option>
+            </select>
+            <b id="t_zone" class="xxxs it-xxs pl-m">Time Zone:</b>
+            <select id="timezone" class="xxxl pl-xxl it-xxxl">
+                <option value="-12:00" class="T T_city1" id="t_city1">(GMT-12:00) Enewetak, Kwajalein</option>
+                <option value="-11:00" class="T T_city2" id="t_city2">(GMT-11:00) Midway Island, Samoa</option>
+                <option value="-10:00" class="T T_city3" id="t_city3">(GMT-10:00) Hawaii</option>
+                <option value="-09:00" class="T T_city4" id="t_city4">(GMT-09:00) Alaska</option>
+                <option value="-08:00" class="T T_city5" id="t_city5">(GMT-08:00) Pacific Time (US & Canada), Tiahuana</option>
+                <option value="-07:00" class="T T_city6" id="t_city6">(GMT-07:00) Mountain Time (US & Canada), Arizona</option>
+                <option value="-06:00" class="T T_city7" id="t_city7">(GMT-06:00) Central Time (US & Canada), Central America, Mexico City</option>
+                <option value="-05:00" class="T T_city8" id="t_city8">(GMT-05:00) Eastern Time (US & Canada), Bogota, Lima</option>
+                <option value="-04:30" class="T T_city9" id="t_city9">(GMT-04:30) Caracas</option>
+                <option value="-04:00" class="T T_city10" id="t_city10">(GMT-04:00) Atlantic Time (Canada), Santiago, Asuncion</option>
+                <option value="-03:30" class="T T_city11" id="t_city11">(GMT-03:30) Newfoundland</option>
+                <option value="-03:00" class="T T_city12" id="t_city12">(GMT-03:00) Brasilia, Buenos Aires, Georgetown, Greenland</option>
+                <option value="-02:00" class="T T_city13" id="t_city13">(GMT-02:00) Mid-Atlantic</option>
+                <option value="-01:00" class="T T_city14" id="t_city14">(GMT-01:00) Azores, Cape Verde Is.</option>
+                <option value="+00:00" class="T T_city15" id="t_city15">(GMT) Greenwich Mean Time, Dublin, Edinburgh, London, Lisbon</option>
+                <option value="+01:00" class="T T_city16" id="t_city16">(GMT+01:00) Amsterdam, Berlin, Rome, Stockholm, Paris, Prague, Bratislava</option>
+                <option value="+02:00" class="T T_city17" id="t_city17">(GMT+02:00) Cairo, Athens, Istanbul, Minsk, Jerusalem, Kiev, Chisinau</option>
+                <option value="+03:00" class="T T_city18" id="t_city18">(GMT+03:00) Baghdad, Kuwait, Riyadh, Moscow, St.Petersburg</option>
+                <option value="+03:30" class="T T_city19" id="t_city19">(GMT+03:30) Tehran</option>
+                <option value="+04:00" class="T T_city20" id="t_city20">(GMT+04:00) Abu Dhabi, Muscat, Baku, Tbilisi, Yerevan</option>
+                <option value="+04:30" class="T T_city21" id="t_city21">(GMT+04:30) Kabul</option>
+                <option value="+05:00" class="T T_city22" id="t_city22">(GMT+05:00) Islamabad, Karachi, Tashkent, Ekaterinburg</option>
+                <option value="+05:30" class="T T_city23" id="t_city23">(GMT+05:30) Madras, Kolkata, Mumbai, New Delhi</option>
+                <option value="+05:45" class="T T_city24" id="t_city24">(GMT+05:45) Katmandu</option>
+                <option value="+06:00" class="T T_city25" id="t_city25">(GMT+06:00) Almaty, Astana, Dhaka, Bishkek</option>
+                <option value="+06:30" class="T T_city26" id="t_city26">(GMT+06:30) Rangoon</option>
+                <option value="+07:00" class="T T_city27" id="t_city27">(GMT+07:00) Bangkok, Jakarta, Hanoi, Novosibirsk</option>
+                <option value="+08:00" class="T T_city28" id="t_city28">(GMT+08:00) Beijing, Chongqing, Urumchi, Hong Kong, Taipei, Kuala Lumpur, Perth</option>
+                <option value="+09:00" class="T T_city29" id="t_city29">(GMT+09:00) Tokyo, Osaka, Sapporo, Seoul, Yakutsk</option>
+                <option value="+09:30" class="T T_city30" id="t_city30">(GMT+09:30) Darwin, Adelaide</option>
+                <option value="+10:00" class="T T_city31" id="t_city31">(GMT+10:00) Brisbane, Guam, Canberra, Melbourne, Sydney</option>
+                <option value="+11:00" class="T T_city32" id="t_city32">(GMT+11:00) Magadan, Solomon Is., New Caledonia</option>
+                <option value="+12:00" class="T T_city33" id="t_city33">(GMT+12:00) Fuji, Kamchatka Peninsula, Marshall Is., Wellington</option>
+                <option value="+13:00" class="T T_city34" id="t_city34">(GMT+13:00) Nukualofa</option>
+            </select>
+        </div>
+        <div>
+            <b id="t_date" class="s ru-s pl-m it-xxs">Date:</b>
+            <input type="text" class="tp-input-text xxl" id="date">
+            <span id="t_format" class="nd">(MM/DD/YY)</span>
+            <span id="t_format_dmy" class="nd">(DD/MM/YY)</span>
+        </div>
+        <b id="t_time" class="xxxs pl-m it-xxs">Time:</b>
+        <select id="hour" class="xs inline">
+            <option value="0" id="t_hour0">0</option>
+            <option value="1" id="t_hour1">1</option>
+            <option value="2" id="t_hour2">2</option>
+            <option value="3" id="t_hour3">3</option>
+            <option value="4" id="t_hour4">4</option>
+            <option value="5" id="t_hour5">5</option>
+            <option value="6" id="t_hour6">6</option>
+            <option value="7" id="t_hour7">7</option>
+            <option value="8" id="t_hour8">8</option>
+            <option value="9" id="t_hour9">9</option>
+            <option value="10" id="t_hour10">10</option>
+            <option value="11" id="t_hour11">11</option>
+            <option value="12" id="t_hour12">12</option>
+            <option value="13" id="t_hour13">13</option>
+            <option value="14" id="t_hour14">14</option>
+            <option value="15" id="t_hour15">15</option>
+            <option value="16" id="t_hour16">16</option>
+            <option value="17" id="t_hour17">17</option>
+            <option value="18" id="t_hour18">18</option>
+            <option value="19" id="t_hour19">19</option>
+            <option value="20" id="t_hour20">20</option>
+            <option value="21" id="t_hour21">21</option>
+            <option value="22" id="t_hour22">22</option>
+            <option value="23" id="t_hour23">23</option>
+        </select>
+        <b class="time-separater">:</b>
+        <select id="minute" class="xs inline">
+            <option value="0" id="t_min0">0</option>
+            <option value="1" id="t_min1">1</option>
+            <option value="2" id="t_min2">2</option>
+            <option value="3" id="t_min3">3</option>
+            <option value="4" id="t_min4">4</option>
+            <option value="5" id="t_min5">5</option>
+            <option value="6" id="t_min6">6</option>
+            <option value="7" id="t_min7">7</option>
+            <option value="8" id="t_min8">8</option>
+            <option value="9" id="t_min9">9</option>
+            <option value="10" id="t_min10">10</option>
+            <option value="11" id="t_min11">11</option>
+            <option value="12" id="t_min12">12</option>
+            <option value="13" id="t_min13">13</option>
+            <option value="14" id="t_min14">14</option>
+            <option value="15" id="t_min15">15</option>
+            <option value="16" id="t_min16">16</option>
+            <option value="17" id="t_min17">17</option>
+            <option value="18" id="t_min18">18</option>
+            <option value="19" id="t_min19">19</option>
+            <option value="20" id="t_min20">20</option>
+            <option value="21" id="t_min21">21</option>
+            <option value="22" id="t_min22">22</option>
+            <option value="23" id="t_min23">23</option>
+            <option value="24" id="t_min24">24</option>
+            <option value="25" id="t_min25">25</option>
+            <option value="26" id="t_min26">26</option>
+            <option value="27" id="t_min27">27</option>
+            <option value="28" id="t_min28">28</option>
+            <option value="29" id="t_min29">29</option>
+            <option value="30" id="t_min30">30</option>
+            <option value="31" id="t_min31">31</option>
+            <option value="32" id="t_min32">32</option>
+            <option value="33" id="t_min33">33</option>
+            <option value="34" id="t_min34">34</option>
+            <option value="35" id="t_min35">35</option>
+            <option value="36" id="t_min36">36</option>
+            <option value="37" id="t_min37">37</option>
+            <option value="38" id="t_min38">38</option>
+            <option value="39" id="t_min39">39</option>
+            <option value="40" id="t_min40">40</option>
+            <option value="41" id="t_min41">41</option>
+            <option value="42" id="t_min42">42</option>
+            <option value="43" id="t_min43">43</option>
+            <option value="44" id="t_min44">44</option>
+            <option value="45" id="t_min45">45</option>
+            <option value="46" id="t_min46">46</option>
+            <option value="47" id="t_min47">47</option>
+            <option value="48" id="t_min48">48</option>
+            <option value="49" id="t_min49">49</option>
+            <option value="50" id="t_min50">50</option>
+            <option value="51" id="t_min51">51</option>
+            <option value="52" id="t_min52">52</option>
+            <option value="53" id="t_min53">53</option>
+            <option value="54" id="t_min54">54</option>
+            <option value="55" id="t_min55">55</option>
+            <option value="56" id="t_min56">56</option>
+            <option value="57" id="t_min57">57</option>
+            <option value="58" id="t_min58">58</option>
+            <option value="59" id="t_min59">59</option>
+        </select>
+        <b class="time-separater">:</b>
+        <select id="second" class="xs inline">
+            <option value="0" id="t_sec0">0</option>
+            <option value="1" id="t_sec1">1</option>
+            <option value="2" id="t_sec2">2</option>
+            <option value="3" id="t_sec3">3</option>
+            <option value="4" id="t_sec4">4</option>
+            <option value="5" id="t_sec5">5</option>
+            <option value="6" id="t_sec6">6</option>
+            <option value="7" id="t_sec7">7</option>
+            <option value="8" id="t_sec8">8</option>
+            <option value="9" id="t_sec9">9</option>
+            <option value="10" id="t_sec10">10</option>
+            <option value="11" id="t_sec11">11</option>
+            <option value="12" id="t_sec12">12</option>
+            <option value="13" id="t_sec13">13</option>
+            <option value="14" id="t_sec14">14</option>
+            <option value="15" id="t_sec15">15</option>
+            <option value="16" id="t_sec16">16</option>
+            <option value="17" id="t_sec17">17</option>
+            <option value="18" id="t_sec18">18</option>
+            <option value="19" id="t_sec19">19</option>
+            <option value="20" id="t_sec20">20</option>
+            <option value="21" id="t_sec21">21</option>
+            <option value="22" id="t_sec22">22</option>
+            <option value="23" id="t_sec23">23</option>
+            <option value="24" id="t_sec24">24</option>
+            <option value="25" id="t_sec25">25</option>
+            <option value="26" id="t_sec26">26</option>
+            <option value="27" id="t_sec27">27</option>
+            <option value="28" id="t_sec28">28</option>
+            <option value="29" id="t_sec29">29</option>
+            <option value="30" id="t_sec30">30</option>
+            <option value="31" id="t_sec31">31</option>
+            <option value="32" id="t_sec32">32</option>
+            <option value="33" id="t_sec33">33</option>
+            <option value="34" id="t_sec34">34</option>
+            <option value="35" id="t_sec35">35</option>
+            <option value="36" id="t_sec36">36</option>
+            <option value="37" id="t_sec37">37</option>
+            <option value="38" id="t_sec38">38</option>
+            <option value="39" id="t_sec39">39</option>
+            <option value="40" id="t_sec40">40</option>
+            <option value="41" id="t_sec41">41</option>
+            <option value="42" id="t_sec42">42</option>
+            <option value="43" id="t_sec43">43</option>
+            <option value="44" id="t_sec44">44</option>
+            <option value="45" id="t_sec45">45</option>
+            <option value="46" id="t_sec46">46</option>
+            <option value="47" id="t_sec47">47</option>
+            <option value="48" id="t_sec48">48</option>
+            <option value="49" id="t_sec49">49</option>
+            <option value="50" id="t_sec50">50</option>
+            <option value="51" id="t_sec51">51</option>
+            <option value="52" id="t_sec52">52</option>
+            <option value="53" id="t_sec53">53</option>
+            <option value="54" id="t_sec54">54</option>
+            <option value="55" id="t_sec55">55</option>
+            <option value="56" id="t_sec56">56</option>
+            <option value="57" id="t_sec57">57</option>
+            <option value="58" id="t_sec58">58</option>
+            <option value="59" id="t_sec59">59</option>
+        </select>
+        <div>
+            <b class="s pl-m it-xxs" id="t_npt1">NTP Server 1:</b>
+            <input type="text" id="ntpA" class="tp-input-text xxl" size="15" maxlength="39">
+            <span class="T_c_optional">(Optional)</span>
+        </div>
+        <div>
+            <b class="s pl-m it-xxs" id="t_npt2">NTP Server 2:</b>
+            <input type="text" id="ntpB" class="tp-input-text xxl" size="15" maxlength="39">
+            <span class="T_c_optional">(Optional)</span>
+        </div>
+        <div class="part-separate-m">
+            <button type="submit" class="green left l ru-xxl pl-xl inline T_getPcTime" id="GetPCTime">Get From PC</button>
+            <button type="submit" class="green left xxl ru-xxl pl-xxl inline" id="GetTime">Get from the Internet</button>
+            <span id="t_status"></span>
+        </div>
+        <button type="submit" class="green T_save" id="t_save">Save</button>
+    </form>
+</div>
+<div id="webIncludeDST" class="nd">
+    <h3 id="t_dlsaving">Daylight Saving</h3>
+    <div class="content-container">
+        <form class="pure-form pure-form-aligned">
+            <div>
+                <b class="m" id=""></b>
+                <input type="checkbox" id="enableDST">
+                <label id="t_endlsaving">Enable Daylight Saving</label>
+            </div>
+            <div>
+                <span id="dst_start_year" class="time-daylight-year"></span>
+                <b class="m" id="t_dst_start">Start: </b>
+                <select name="dst_start_month" class="inline m" id="dst_start_month" width="15px">
+                    <option value="01" class="T_c_month1">Jan</option>
+                    <option value="02" class="T_c_month2">Feb</option>
+                    <option value="03" class="T_c_month3" selected="selected">Mar</option>
+                    <option value="04" class="T_c_month4">Apr</option>
+                    <option value="05" class="T_c_month5">May</option>
+                    <option value="06" class="T_c_month6">Jun</option>
+                    <option value="07" class="T_c_month7">Jul</option>
+                    <option value="08" class="T_c_month8">Aug</option>
+                    <option value="09" class="T_c_month9">Sep</option>
+                    <option value="10" class="T_c_month10">Oct</option>
+                    <option value="11" class="T_c_month11">Nov</option>
+                    <option value="12" class="T_c_month12">Dec</option>
+                </select>
+                <b class="time-separater"></b>
+                <select name="dst_start_day" class="inline m" id="dst_start_weekCount" width="15px">
+                    <option value="1" class="T_c_week1">1st</option>
+                    <option value="2" class="T_c_week2">2nd</option>
+                    <option value="3" class="T_c_week3">3rd</option>
+                    <option value="4" class="T_c_week4">4th</option>
+                    <option value="5" class="T_c_week5" selected="selected">Last</option>
+                </select>
+                <b class="time-separater"></b>
+                <select name="dst_start_weekday" class="inline m" id="dst_start_weekDay" width="15px">
+                    <option value="1" class="T_c_day1">Mon</option>
+                    <option value="2" class="T_c_day2">Tue</option>
+                    <option value="3" class="T_c_day3">Wed</option>
+                    <option value="4" class="T_c_day4">Thu</option>
+                    <option value="5" class="T_c_day5">Fri</option>
+                    <option value="6" class="T_c_day6">Sat</option>
+                    <option value="7" class="T_c_day7" selected="selected">Sun</option>
+                </select>
+                <b class="time-separater"></b>
+                <select name="dst_start_time" class="inline m" id="dst_start_time" width="15px">
+                    <option value="00:00:00">00:00</option>
+                    <option value="01:00:00">01:00</option>
+                    <option value="02:00:00" selected="selected">02:00</option>
+                    <option value="03:00:00">03:00</option>
+                    <option value="04:00:00">04:00</option>
+                    <option value="05:00:00">05:00</option>
+                    <option value="06:00:00">06:00</option>
+                    <option value="07:00:00">07:00</option>
+                    <option value="08:00:00">08:00</option>
+                    <option value="09:00:00">09:00</option>
+                    <option value="10:00:00">10:00</option>
+                    <option value="11:00:00">11:00</option>
+                    <option value="12:00:00">12:00</option>
+                    <option value="13:00:00">13:00</option>
+                    <option value="14:00:00">14:00</option>
+                    <option value="15:00:00">15:00</option>
+                    <option value="16:00:00">16:00</option>
+                    <option value="17:00:00">17:00</option>
+                    <option value="18:00:00">18:00</option>
+                    <option value="19:00:00">19:00</option>
+                    <option value="20:00:00">20:00</option>
+                    <option value="21:00:00">21:00</option>
+                    <option value="22:00:00">22:00</option>
+                    <option value="23:00:00">23:00</option>
+                </select>
+            </div>
+            <div>
+                <span id="dst_end_year" class="time-daylight-year"></span>
+                <b class="m" id="t_dst_end">End:</b>
+                <select name="dst_end_month" class="inline m" id="dst_end_month" width="15px">
+                    <option value="01" class="T_c_month1">Jan</option>
+                    <option value="02" class="T_c_month2">Feb</option>
+                    <option value="03" class="T_c_month3">Mar</option>
+                    <option value="04" class="T_c_month4">Apr</option>
+                    <option value="05" class="T_c_month5">May</option>
+                    <option value="06" class="T_c_month6">Jun</option>
+                    <option value="07" class="T_c_month7">Jul</option>
+                    <option value="08" class="T_c_month8">Aug</option>
+                    <option value="09" class="T_c_month9">Sep</option>
+                    <option value="10" class="T_c_month10" selected="selected">Oct</option>
+                    <option value="11" class="T_c_month11">Nov</option>
+                    <option value="12" class="T_c_month12">Dec</option>
+                </select>
+                <b class="time-separater"></b>
+                <select name="dst_end_day" class="inline m" id="dst_end_weekCount" width="15px">
+                    <option value="1" class="T_c_week1">1st</option>
+                    <option value="2" class="T_c_week2">2nd</option>
+                    <option value="3" class="T_c_week3">3rd</option>
+                    <option value="4" class="T_c_week4">4th</option>
+                    <option value="5" class="T_c_week5" selected="selected">Last</option>
+                </select>
+                <b class="time-separater"></b>
+                <select class="inline m" id="dst_end_weekDay" width="15px">
+                    <option value="1" class="T_c_day1">Mon</option>
+                    <option value="2" class="T_c_day2">Tue</option>
+                    <option value="3" class="T_c_day3">Wed</option>
+                    <option value="4" class="T_c_day4">Thu</option>
+                    <option value="5" class="T_c_day5">Fri</option>
+                    <option value="6" class="T_c_day6">Sat</option>
+                    <option value="7" class="T_c_day7" selected="selected">Sun</option>
+                </select>
+                <b class="time-separater"></b>
+                <select name="dst_end_time" class="inline m" id="dst_end_time" width="15px">
+                    <option value="00:00:00">00:00</option>
+                    <option value="01:00:00">01:00</option>
+                    <option value="02:00:00">02:00</option>
+                    <option value="03:00:00" selected="selected">03:00</option>
+                    <option value="04:00:00">04:00</option>
+                    <option value="05:00:00">05:00</option>
+                    <option value="06:00:00">06:00</option>
+                    <option value="07:00:00">07:00</option>
+                    <option value="08:00:00">08:00</option>
+                    <option value="09:00:00">09:00</option>
+                    <option value="10:00:00">10:00</option>
+                    <option value="11:00:00">11:00</option>
+                    <option value="12:00:00">12:00</option>
+                    <option value="13:00:00">13:00</option>
+                    <option value="14:00:00">14:00</option>
+                    <option value="15:00:00">15:00</option>
+                    <option value="16:00:00">16:00</option>
+                    <option value="17:00:00">17:00</option>
+                    <option value="18:00:00">18:00</option>
+                    <option value="19:00:00">19:00</option>
+                    <option value="20:00:00">20:00</option>
+                    <option value="21:00:00">21:00</option>
+                    <option value="22:00:00">22:00</option>
+                    <option value="23:00:00">23:00</option>
+                </select>
+            </div>
+            <div class="part-separate"></div>
+            <button type="submit" class="green T_save" id="t_save1">Save</button>
+        </form>
+    </div>
+</div>
+<script>$.tpInit(init),first=1</script>

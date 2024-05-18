@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body> 
+        <div id="translation" class="hide">diagnose</div>
+        <!--Breadscrumbs starts here -->                                                                                                      
+    <div class="row ltq_breadcrumbs">                                                                                                     
+        <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+            <ng-switch on="$first">                                                                                                               
+                <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                    <div class="ltq_brd_home" >                                                                                                           
+                    <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                        <i class="fa fa-home"></i>                                                                                                            
+                            {{breadcrumb.name}}                                                                                                                   
+                    </a>                                                                                                                                  
+                    </div>                                                                                                                                
+                </div>                                                                                                                                
+
+                <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                    <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>                                                                                                                               
+                    <span ng-if ="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>                                                                                                                               
+                </div>                                                                                                                                 
+
+            </ng-switch>                                                                                                                            
+        </div>                                                                                                                                   
+    </div>                                                                                                                                  
+<!--Breadscrumbs ends here --> 
+        <div class="subheader">
+            <div>
+                <img src="images/icons/diagnostictest-0.png" alt="image" class="iconDetails">
+            </div>
+            <div ng-bind="'diagnose.headername' | translate"><h4></h4></div>
+            <p ng-bind="'diagnose.headerdescription' | translate"></p>
+        </div>
+        <div ng-controller="diagnosticsController" ng-cloak>
+            <div class="row" ng-show="ippingpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('ippingpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{ippingpopupval}}</span>
+                </div>
+            </div>
+            <div class="row" ng-show="traceroutepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('traceroutepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{traceroutepopupval}}</span>
+                </div>
+            </div>
+            <div class="row" ng-show="routehopentriespopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('routehopentriespopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{routehopentriespopupval}}</span>
+                </div>
+            </div>
+            <div class="row" ng-show="traceroutedatapopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('traceroutedatapopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{traceroutedatapopupval}}</span>
+                </div>
+            </div>
+            <div class="row" ng-show="ippingformnamepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('ippingformnamepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{ippingformnamepopupval}}</span>
+                </div>
+            </div>
+            <div class="row" ng-show="startformnamepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('startformnamepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span>{{startformnamepopupval}}</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="">
+                    <form role="form" name="diagnoseform">
+                    <div class="panel">
+                        <div class="panel-heading mrn_bg"><span class="panel_heading_icon"><img src="images/icons/diagnostictest-0.png" alt="panel-icon"/></span><span ng-bind="'diagnose.Diagnose' | translate"></span></div>
+                        <div class="panel-body">
+                            <button class="btn btn-info start" id= "Modify" value="Apply" ng-click="startData()" data-diff='100' title="Start">
+                                <span class="" ng-bind="'Start' | translate"></span>
+                            </button>
+                            <div class="diagnose_content">
+                                <ul>                               
+                                    <li ng-show = "$root.message">
+                                        <div class="diagnose_tblrow">                                            
+                                            <div class="diagnose_tblcell">
+                                                <div class="diagnose_titles">                                                  
+                                                    <a class="diagnosetitle" ng-bind="'diagnose.DSL' | translate"></a> 
+                                                </div>
+                                                <ul>
+                                                    <li>
+                                                        <div ng-show="loading">                                                    
+                                                            <div class="pargraph">
+                                                                <div>
+                                                                    <span><i class="fa" ng-class="DeviceDSLLine1.LinkStatus == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>                                                
+                                                                    <span> xDSL {{DeviceDSLLine1.Name}} - </span>                                                
+                                                                    <span>{{DeviceDSLLine1.LineNumber}}</span>
+                                                                    <span> Status : {{DeviceDSLLine1.LinkStatus==""?"UNKNOWN":DeviceDSLLine1.LinkStatus}}</span>
+                                                                    <span ng-show="DeviceDSLLine1.LinkStatus == 'Up'">, Speed : {{DeviceDSLLine1.UpstreamMaxBitRate}} Kbps</span>
+                                                                    <span ng-show="DeviceDSLLine1.LinkStatus == 'Up'">and Mode : {{Linkmapping[DeviceDSLChannel1.LinkEncapsulationUsed]}}</span>
+                                                                </div>
+                                                                <span class="error" forname="DeviceDSLLine1_LinkStatus" ng-show="DeviceDSLLine1_LinkStatusresponsestatus">
+                                                                     {{DeviceDSLLine1_LinkStatusval}}
+                                                                </span>
+                                                                <span class="error" forname="DeviceDSLLine1_Name" ng-show="DeviceDSLLine1_Nameresponsestatus">
+                                                                     {{DeviceDSLLine1_Nameval}}
+                                                                </span>
+                                                                <span class="error" forname="DeviceDSLLine1_LineNumber" ng-show="DeviceDSLLine1_LineNumberresponsestatus">
+                                                                     {{DeviceDSLLine1_LineNumberval}}
+                                                                </span>
+                                                                <span class="error" forname="DeviceDSLLine1_UpstreamMaxBitRate" ng-show="DeviceDSLLine1_UpstreamMaxBitRateresponsestatus">
+                                                                     {{DeviceDSLLine1_UpstreamMaxBitRateval}}
+                                                                </span>
+                                                                <span class="error" forname="DeviceDSLChannel1_LinkEncapsulationUsed" ng-show="DeviceDSLChannel1_LinkEncapsulationUsedresponsestatus">
+                                                                     {{DeviceDSLChannel1_LinkEncapsulationUsedval}}
+                                                                </span>
+                                                            </div>
+                                                            </div>
+                                                        
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                </div>
+                                                            </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="parent_title" >
+                                            <div class="diagnose_tblrow subul">
+                                                <div class="diagnose_titles">
+                                                    <a class="diagnosetitle" ng-bind="'diagnose.LAN' | translate"></a>                                                
+                                                </div>
+                                            </div>
+                                            <ul>
+                                                <li>
+                                                    <div class="diagnose_tblrow">
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.LAN Connectivity' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceEthernetInterface1.Status == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span> ETHERNET {{DeviceEthernetInterface1.Name}}:</span> 
+                                                                        <span>{{DeviceEthernetInterface1.Status=='Up'?"LINK UP":"LINK DOWN"}}</span>
+                                                                        <span ng-show="DeviceEthernetInterface1.Status == 'Up'">, Speed : {{DeviceEthernetInterface1.MaxBitRate}} kbps</span>
+                                                                        <span ng-show="DeviceEthernetInterface1.Status == 'Up'">, Mode : {{DeviceEthernetInterface1.DuplexMode}}</span>
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceEthernetInterface1_Status" ng-show="DeviceEthernetInterface1_Statusresponsestatus">
+                                                                     {{DeviceEthernetInterface1_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface1_Name" ng-show="DeviceEthernetInterface1_Nameresponsestatus">
+                                                                     {{DeviceEthernetInterface1_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface1_MaxBitRate" ng-show="DeviceEthernetInterface1_MaxBitRateresponsestatus">
+                                                                     {{DeviceEthernetInterface1_MaxBitRateval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface1_DuplexMode" ng-show="DeviceEthernetInterface1_DuplexModeresponsestatus">
+                                                                     {{DeviceEthernetInterface1_DuplexModeval}}
+                                                                    </span>
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceEthernetInterface2.Status == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span> ETHERNET {{DeviceEthernetInterface2.Name}}:</span> 
+                                                                        <span>{{DeviceEthernetInterface2.Status=='Up'?"LINK UP":"LINK DOWN"}}</span>
+                                                                        <span ng-show="DeviceEthernetInterface2.Status == 'Up'">, Speed : {{DeviceEthernetInterface2.MaxBitRate}} kbps</span>
+                                                                        <span ng-show="DeviceEthernetInterface2.Status == 'Up'">, Mode : {{DeviceEthernetInterface2.DuplexMode}}</span>
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceEthernetInterface2_Status" ng-show="DeviceEthernetInterface2_Statusresponsestatus">
+                                                                     {{DeviceEthernetInterface2_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface2_Name" ng-show="DeviceEthernetInterface2_Nameresponsestatus">
+                                                                     {{DeviceEthernetInterface2_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface2_MaxBitRate" ng-show="DeviceEthernetInterface2_MaxBitRateresponsestatus">
+                                                                     {{DeviceEthernetInterface2_MaxBitRateval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface2_DuplexMode" ng-show="DeviceEthernetInterface2_DuplexModeresponsestatus">
+                                                                     {{DeviceEthernetInterface2_DuplexModeval}}
+                                                                    </span>
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceEthernetInterface3.Status == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span> ETHERNET {{DeviceEthernetInterface3.Name}}:</span> 
+                                                                        <span>{{DeviceEthernetInterface3.Status=='Up'?"LINK UP":"LINK DOWN"}}</span>
+                                                                        <span ng-show="DeviceEthernetInterface3.Status == 'Up'">, Speed : {{DeviceEthernetInterface3.MaxBitRate}} kbps</span>
+                                                                        <span ng-show="DeviceEthernetInterface3.Status == 'Up'">, Mode : {{DeviceEthernetInterface3.DuplexMode}}</span>
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceEthernetInterface3_Status" ng-show="DeviceEthernetInterface3_Statusresponsestatus">
+                                                                     {{DeviceEthernetInterface3_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface3_Name" ng-show="DeviceEthernetInterface3_Nameresponsestatus">
+                                                                     {{DeviceEthernetInterface3_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface3_MaxBitRate" ng-show="DeviceEthernetInterface3_MaxBitRateresponsestatus">
+                                                                     {{DeviceEthernetInterface3_MaxBitRateval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface3_DuplexMode" ng-show="DeviceEthernetInterface3_DuplexModeresponsestatus">
+                                                                     {{DeviceEthernetInterface3_DuplexModeval}}
+                                                                    </span>
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceEthernetInterface4.Status == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span> ETHERNET {{DeviceEthernetInterface4.Name}}:</span> 
+                                                                        <span>{{DeviceEthernetInterface4.Status=='Up'?"LINK UP":"LINK DOWN"}}</span>
+                                                                        <span ng-show="DeviceEthernetInterface4.Status == 'Up'">, Speed : {{DeviceEthernetInterface4.MaxBitRate}} kbps</span>
+                                                                        <span ng-show="DeviceEthernetInterface4.Status == 'Up'">, Mode : {{DeviceEthernetInterface4.DuplexMode}}</span>
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceEthernetInterface4_Status" ng-show="DeviceEthernetInterface4_Statusresponsestatus">
+                                                                     {{DeviceEthernetInterface4_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface4_Name" ng-show="DeviceEthernetInterface4_Nameresponsestatus">
+                                                                     {{DeviceEthernetInterface4_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface4_MaxBitRate" ng-show="DeviceEthernetInterface4_MaxBitRateresponsestatus">
+                                                                     {{DeviceEthernetInterface4_MaxBitRateval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface4_DuplexMode" ng-show="DeviceEthernetInterface4_DuplexModeresponsestatus">
+                                                                     {{DeviceEthernetInterface4_DuplexModeval}}
+                                                                    </span>
+                                                                </div>
+                                                                </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <div class="diagnose_tblrow">
+                                                        <div class="iconzone hide">
+                                                            <i class="{{reqstatus}} iconhide"></i>
+                                                        </div>
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.LAN Reachability' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div>
+                                                                        <span><i class="fa" ng-class="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Ping to LAN Host : {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1.Host==""?"UNKNOWN":DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1.Host}}</span>
+                                                                        <span> {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_SuccessCount" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_SuccessCountresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_SuccessCountval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_Host" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_Hostresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing1_Hostval}}
+                                                                    </span>
+                                                                </div>
+                                                                </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+
+                                            </ul>
+                                        </div>
+
+                                    </li>
+                                    <li>
+                                        <div class="parent_title" >
+                                            <div class="diagnose_tblrow subul">
+                                                <div class="diagnose_titles">
+                                                    <a class="diagnosetitle" ng-bind="'diagnose.WAN' | translate"></a>                                                
+                                                </div>
+                                            </div>
+                                            <ul>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.WAN Connectivity' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceEthernetInterface5.Status == 'Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>ETHERNET {{DeviceEthernetInterface5.Name}}:</span> 
+                                                                        <span>{{DeviceEthernetInterface5.Status=='Up'?"LINK UP":"LINK DOWN"}}</span>
+                                                                        <span ng-show="DeviceEthernetInterface5.Status == 'Up'">, Speed : {{DeviceEthernetInterface5.MaxBitRate}} kbps</span>
+                                                                        <span ng-show="DeviceEthernetInterface5.Status == 'Up'">, Mode : {{DeviceEthernetInterface5.DuplexMode}}</span>
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceEthernetInterface5_Status" ng-show="DeviceEthernetInterface5_Statusresponsestatus">
+                                                                     {{DeviceEthernetInterface5_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface5_Name" ng-show="DeviceEthernetInterface5_Nameresponsestatus">
+                                                                     {{DeviceEthernetInterface5_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface5_MaxBitRate" ng-show="DeviceEthernetInterface5_MaxBitRateresponsestatus">
+                                                                     {{DeviceEthernetInterface5_MaxBitRateval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceEthernetInterface5_DuplexMode" ng-show="DeviceEthernetInterface5_DuplexModeresponsestatus">
+                                                                     {{DeviceEthernetInterface5_DuplexModeval}}
+                                                                    </span>
+                                                                </div>
+                                                                </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>                                    
+                                    <li>
+                                        <div class="parent_title" >
+                                            <div class="diagnose_tblrow subul">
+                                                <div class="diagnose_titles">
+                                                    <a class="diagnosetitle" ng-bind="'diagnose.WLAN' | translate"></a>                                                
+                                                </div>
+                                            </div>
+                                            <ul>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.WLAN Connectivity' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceWiFiRadio1.Status=='Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>WiFi {{DeviceWiFiRadio1.SupportedFrequencyBands}}:</span> 
+                                                                        <span> {{DeviceWiFiRadio1.Name}}</span> 
+                                                                        <span> Physical Radio {{DeviceWiFiRadio1.Status=="Up"?"UP":"DOWN"}}</span>
+                                                                        <span ng-show="DeviceWiFiRadio1.Status == 'Up'">, Speed : {{DeviceWiFiRadio1.MaxBitRate}}</span>                                                                        
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceWiFiRadio1_Status" ng-show="DeviceWiFiRadio1_Statusresponsestatus">
+                                                                     {{DeviceWiFiRadio1_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio1_SupportedFrequencyBands" ng-show="DeviceWiFiRadio1_SupportedFrequencyBandsresponsestatus">
+                                                                     {{DeviceWiFiRadio1_SupportedFrequencyBandsval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio1_Name" ng-show="DeviceWiFiRadio1_Nameresponsestatus">
+                                                                     {{DeviceWiFiRadio1_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio1_MaxBitRate" ng-show="DeviceWiFiRadio1_MaxBitRateresponsestatus">
+                                                                     {{DeviceWiFiRadio1_MaxBitRateval}}
+                                                                    </span>
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceWiFiRadio2.Status=='Up' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>WiFi {{DeviceWiFiRadio2.SupportedFrequencyBands}}:</span> 
+                                                                        <span> {{DeviceWiFiRadio2.Name}}</span> 
+                                                                        <span> Physical Radio {{DeviceWiFiRadio2.Status=="Up"?"UP":"DOWN"}}</span>
+                                                                        <span ng-show="DeviceWiFiRadio2.Status == 'Up'">, Speed : {{DeviceWiFiRadio2.MaxBitRate}}</span>                                                                        
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceWiFiRadio2_Status" ng-show="DeviceWiFiRadio2_Statusresponsestatus">
+                                                                     {{DeviceWiFiRadio2_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio2_SupportedFrequencyBands" ng-show="DeviceWiFiRadio2_SupportedFrequencyBandsresponsestatus">
+                                                                     {{DeviceWiFiRadio2_SupportedFrequencyBandsval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio2_Name" ng-show="DeviceWiFiRadio2_Nameresponsestatus">
+                                                                     {{DeviceWiFiRadio2_Nameval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceWiFiRadio2_MaxBitRate" ng-show="DeviceWiFiRadio2_MaxBitRateresponsestatus">
+                                                                     {{DeviceWiFiRadio2_MaxBitRateval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>                                    
+                                    <li>
+                                        <div class="parent_title" >
+                                            <div class="diagnose_tblrow subul">
+                                                <div class="diagnose_titles">
+                                                    <a class="diagnosetitle" ng-bind="'diagnose.Internet Connectivity' | translate"></a>                                                
+                                                </div>
+                                            </div>
+                                            <ul>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.DNS  Reachability' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Ping to DNS1 Host : {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2.Host==""?"UNKNOWN":DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2.Host}}</span>
+                                                                        <span> {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_SuccessCount" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_SuccessCountresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_SuccessCountval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_Host" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_Hostresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing2_Hostval}}
+                                                                    </span>
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Ping to DNS2 Host : {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3.Host==""?"UNKNOWN":DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3.Host}}</span>
+                                                                        <span> {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_SuccessCount" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_SuccessCountresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_SuccessCountval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_Host" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_Hostresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing3_Hostval}}
+                                                                    </span>
+                                                                </div>
+                                                                </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.DNS  Resolve' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div>
+                                                                        <span><i class="fa" ng-class="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1.Status == 'Success' ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Resolve : {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1.HostNameReturned}}</span>
+                                                                        <span> {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1.IPAddresses}}</span>
+                                                                        <span> {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1.Status == 'Success'?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_Status" ng-show="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_Statusresponsestatus">
+                                                                     {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_Statusval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_HostNameReturned" ng-show="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_HostNameReturnedresponsestatus">
+                                                                     {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_HostNameReturnedval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_IPAddresses" ng-show="DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_IPAddressesresponsestatus">
+                                                                     {{DeviceDNSDiagnosticsNSLookupDiagnosticsResult1_IPAddressesval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.Default Gateway  Reachability Test' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Ping to Default Gateway ({{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4.Host==""?"UNKNOWN":DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4.Host}})</span>
+                                                                        <span> {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_SuccessCount" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_SuccessCountresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_SuccessCountval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_Host" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_Hostresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing4_Hostval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div> 
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <div class="diagnose_tblrow">                                                        
+                                                        <div class="diagnose_tblcell">
+                                                            <a class="diagnosetitle" ng-bind="'diagnose.Google  Reachability Test' | translate"></a>
+                                                            <div ng-show="loading">
+                                                                <div class="pargraph">
+                                                                    <div> 
+                                                                        <span><i class="fa" ng-class="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                        <span>Ping to: {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5.Host==""?"UNKNOWN":DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5.Host}}</span>
+                                                                        <span> {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                    </div>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_SuccessCount" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_SuccessCountresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_SuccessCountval}}
+                                                                    </span>
+                                                                    <span class="error" forname="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_Host" ng-show="DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_Hostresponsestatus">
+                                                                     {{DeviceIPDiagnosticsX_LANTIQ_COM_IPPing5_Hostval}}
+                                                                    </span>
+                                                                </div>
+                                                                </div>
+                                                            <div class="progress progress-striped active" ng-show="loading1">
+                                                                    <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>                                              
+                                </ul>
+                                <ul>
+                                    <li class="no-padding">
+                                        <div class="diagnose_tblrow">                                            
+                                            <div class="diagnose_tblcell">
+                                                <div class="input-field ind_test">
+                                                    <input id="DeviceIPDiagnostics_IPPing" type="text" ng-focus="selectIPPing()" name="ipping" value="" ng-change="textChange('IPHost')" ng-model="IPHost" placeholder="{{'diagnose.IP Ping Test.Enter IP/Host Address Here' | translate}}"/>
+                                                    <label class="diagnose_titles active" ng-bind="'diagnose.IP Ping Test' | translate"></label>
+                                                   <!-- <span class="error" forname="DeviceIPDiagnostics_IPPing" ng-show="diagnoseformstatus && diagnoseform.ipping.$error.pattern" ng-bind="'Device.IP.Diagnostics.*.IPPing.$error.pattern' | translate">
+
+                                                    </span>-->
+                                                    <div class="text-right" style="margin-top: 10px;"><button class="btn btn-info start1" id= "Modify" value="Apply" formstatus="{{diagnoseform.$valid}}" ng-click="startIPPingTest('Device.IP.Diagnostics.IPPing',$event)" ng-bind="'Ping Test' | translate"></button> </div>
+                                                </div> 
+                                                <ul>
+                                                    <li>
+                                                        <div ng-show="loadingipping">
+                                                            <div class="pargraph">
+                                                                <div ng-repeat="ipping in ippingArray"> 
+                                                                    <span><i class="fa" ng-class="ipping.SuccessCount > 0 ? 'fa-check fa-lg custom_check' : 'fa-times fa-lg custom_times'"></i></span>
+                                                                    <span>Ping to Host: {{ipping.Host==""?"UNKNOWN":ipping.Host}}</span>
+                                                                    <span> {{ipping.SuccessCount > 0?"SUCCESS":"FAILURE"}}</span>                                                
+                                                                </div>
+                                                                <span class="error" forname="ipping_SuccessCount" ng-show="ipping_SuccessCountresponsestatus">
+                                                                     {{ipping_SuccessCountval}}
+                                                                </span>
+                                                                <span class="error" forname="ipping_Host" ng-show="ipping_Hostresponsestatus">
+                                                                     {{ipping_Hostval}}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="progress progress-striped active" ng-show="loadingipping1">
+                                                                <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                </div>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>                          
+                                    <li class="no-padding">
+                                        <div class="diagnose_tblrow">                                           
+                                            <div class="diagnose_tblcell">
+                                                <div class="input-field ind_test">                                                    
+                                                    <input id="DeviceIPDiagnostics_TraceRoute" type="text" ng-focus="selectTrace()" name="TraceRoute" value="" ng-change="textChangeTracerouteTest('TraceRouteHost')" ng-model="TraceRouteHost" placeholder="{{'diagnose.Traceroute Test.Enter URL Here' | translate}}"/>
+                                                     <span class="error" ng-show="erroronvalidation" ng-bind=" 'ipv4ipv6urlerror' | translate">
+                                                                <i class="fa fa-times fa-lg custom_times"></i>
+                                                                     
+                                                      </span>
+                                                    <label class="diagnose_titles active" ng-bind="'diagnose.Traceroute Test' | translate"></label>
+                                                    <div class="text-right" style="margin-top: 10px;"><button class="btn btn-info start2" id= "Modify" value="Apply" ng-click="startTracerouteTest('Device.IP.Diagnostics.TraceRoute')" ng-bind="'Trace Route' | translate"></button> </div>
+                                                </div> 
+                                                <ul>
+                                                    <li>
+                                                        <div ng-show="loadingtrace">
+                                                            <div class="pargraph">
+                                                                <div ng-repeat="values in tracerouteArray"> 
+                                                                    <span>  {{$index + 1}}   </span>
+                                                                    <span>  {{values.Host}}  </span>                                                
+                                                                    <span>  ({{values.HostAddress}})  </span>                                                
+                                                                    <span>  {{values.RTTimes}}  </span>                                                
+                                                                </div>
+                                                        	<span class="error" ng-show="error_responsestatus">
+                                                                <i class="fa fa-times fa-lg custom_times"></i>
+                                                                     {{err_val}}
+                                                                </span>
+                                                               
+                                                                <span class="error" forname="values_Host" ng-show="values_Hostresponsestatus">
+                                                                     {{values_Hostval}}
+                                                                </span>
+                                                                <span class="error" forname="values_HostAddress" ng-show="values_HostAddressresponsestatus">
+                                                                     {{values_HostAddressval}}
+                                                                </span>
+                                                                <span class="error" forname="values_RTTimes" ng-show="values_RTTimesresponsestatus">
+                                                                     {{values_RTTimesval}}
+                                                                </span>
+                                                            </div>
+                                                            </div>
+                                                        <div class="progress progress-striped active" ng-show="loadingtrace1">
+                                                                <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                                                </div>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                            </div>
+                        </div>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

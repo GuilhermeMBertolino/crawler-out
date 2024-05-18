@@ -1,1 +1,0 @@
-function loadValue(){document.getElementsByTagName("form")[0];"failed"==ping_result?this.location.href="BRS_05_networkIssue.html":"success"==ping_result&&(this.location.href="BRS_security.html"),setTimeout("loadValue();",1e3)}addLoadEvent(loadValue);

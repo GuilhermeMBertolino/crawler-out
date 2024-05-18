@@ -1,1 +1,0 @@
-../init.d/reset_regulator_sw_control.sh

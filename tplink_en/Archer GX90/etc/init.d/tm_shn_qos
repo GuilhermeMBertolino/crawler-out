@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2016 TP-Link
+# Author: Zhu Junjie <zhujunjie@tp-link.net>
+# Date: 14Nov16
+
+START=99
+
+start() {
+
+	config_load network
+	config_get wan_type wan wan_type "dhcp"	
+
+	if [ "$wan_type" != "v6plus" -a "$wan_type" != "dslite" ];then
+		/usr/bin/tm_shn -q
+	fi
+	echo "QOS config trigger start!"
+}
+
+stop(){
+	echo "QOS config trigger stop!"
+}

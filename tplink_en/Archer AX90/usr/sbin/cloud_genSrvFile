@@ -1,0 +1,81 @@
+#!/bin/sh
+
+#generate /tmp/cloud_service.cfg which same path in cloud config file
+##{
+#  "global":{
+#    "sysmode":"RE",
+#    "account_bind":0
+#  },
+#  "service":{
+#    "account_manage":1,
+#    "tp_ddns":0,
+#    "remote_manage":1,
+#    "private_cloud":0,
+#    "ifttt":0,
+#    "alexa":0
+#  }
+#}
+
+CLOUD_SERVICE_CFG="/tmp/cloud_service.cfg"
+
+[ -n "$1" ] && CLOUD_SERVICE_CFG="$1"
+
+#section global setting#
+#Sysmode could be "ROUTER","RE","VDSL","MIFI","LTE_GATEWAY","OTHER"
+#"OTHER" means common type
+#If muti-mode, maybe need change sysmode
+sysmode="ROUTER"
+
+#When cloud account bound, need set account_bind to 1
+account_bind=0
+
+#section cloud services#
+#When service account manage is on, and set account_manage to 1
+account_manage=0
+
+#When service TP-Link ddns is on, and set tp_ddns to 1
+tp_ddns=0
+
+#When service remote control is on, and set remote_manage to 1
+remote_manage=0
+
+#When service private cloud is on, and set private_cloud to 1
+private_cloud=0
+
+#When service IFTTT is on, and set ifttt to 1
+ifttt=0
+
+#When service Alexa is on, and set alexa to 1
+alexa=0
+
+
+bind_status=$(uci get cloud_config.device_status.bind_status)
+need_unbind=$(uci get cloud_config.device_status.need_unbind)
+if [ "x$bind_status" = "x1" -o "x$need_unbind" = "x1" ]; then
+	account_bind=1
+fi
+
+if [ "x$account_bind" = "x1" ]; then
+	account_manage=1
+	tp_ddns=1
+	remote_manage=1
+fi
+
+echo "{"                > $CLOUD_SERVICE_CFG
+
+echo "  \"global\":{"  >> $CLOUD_SERVICE_CFG
+[ -n "$sysmode" ]        && echo "    \"sysmode\":\"$sysmode\","           >> $CLOUD_SERVICE_CFG
+[ -n "$account_bind" ]   && echo "    \"account_bind\":$account_bind"      >> $CLOUD_SERVICE_CFG
+echo "  },"            >> $CLOUD_SERVICE_CFG
+
+echo "  \"service\":{" >> $CLOUD_SERVICE_CFG
+[ -n "$account_manage" ] && echo "    \"account_manage\":$account_manage," >> $CLOUD_SERVICE_CFG
+[ -n "$tp_ddns" ]        && echo "    \"tp_ddns\":$tp_ddns,"               >> $CLOUD_SERVICE_CFG
+[ -n "$remote_manage" ]  && echo "    \"remote_manage\":$remote_manage,"   >> $CLOUD_SERVICE_CFG
+[ -n "$private_cloud" ]  && echo "    \"private_cloud\":$private_cloud,"   >> $CLOUD_SERVICE_CFG
+[ -n "$ifttt" ]          && echo "    \"ifttt\":$ifttt,"                   >> $CLOUD_SERVICE_CFG
+[ -n "$alexa" ]          && echo "    \"alexa\":$alexa"                    >> $CLOUD_SERVICE_CFG
+echo "  }"             >> $CLOUD_SERVICE_CFG
+
+echo "}"               >> $CLOUD_SERVICE_CFG
+

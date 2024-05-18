@@ -1,0 +1,46 @@
+#!/bin/sh
+. /lib/functions.sh
+
+# Template for wps status.
+# Use board specific script replaces this script.
+
+# This is a example of board47094 (c5300):
+
+wps_status=""
+SPLIT=";"
+EFMT="PBC Status: .+PIN Status: .+Last WPS result: .+"
+
+config_load wireless
+is_agent=0
+
+if [ "$(uci get meshd.meshd.enable)" == "on" -a "$(uci get meshd.meshd.role)" == "agent" ]; then
+	is_agent=1
+	IFACES=$(uci get profile.@wireless[0].wireless_mesh_sta_2g -c /etc/profile.d)" "$(uci get profile.@wireless[0].wireless_mesh_sta_5g -c /etc/profile.d)
+else
+	IFACES=$(uci get profile.@wireless[0].wireless_ifname_2g -c /etc/profile.d)" "$(uci get profile.@wireless[0].wireless_ifname_5g -c /etc/profile.d)
+fi
+
+for vif in ${IFACES}
+do
+	config_get device "$vif" device
+	config_get_bool soft_disabled "$device" disabled_all
+	config_get_bool wifi_disabled "$device" disabled
+	config_get_bool wps $vif wps 0
+	config_get_bool hidden $vif hidden
+	config_get encryption $vif encryption none
+	config_get psk_version $vif psk_version
+
+	if [ "$wifi_disabled" = "0" -a "$soft_disabled" = "0" ] ; then
+		if [ $is_agent -eq 1 ] || [ "$wps" = "1" -a "$hidden" = "0" -a "$psk_version" != "sae_only" ]; then
+			local status="$(wifi wps $vif status)"
+			status=$(echo "$status" | sed -e "/^[[:space:]]*$/d" -e "/wps_shell_over/d" -e "/get_wsc/d")
+			if echo $status | grep -qE "$EFMT" ;
+			then
+				wps_status="$status$SPLIT$wps_status"
+
+			fi
+		fi
+	fi
+done
+
+echo "$wps_status"

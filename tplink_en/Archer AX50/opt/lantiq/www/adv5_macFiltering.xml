@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>    
+    <header>
+        <image>images/icons/wireless.png</image>
+    <name>MAC Filtering</name>
+        <description>Configurations to block devices from connecting or allow devices to connect, based on their MAC address.</description>
+    </header>
+    <object viewtype="form" >
+         <object  name="temp"> 
+            <parameter  name="SSID"  type="dropdown" firstselect="true" ddfun="wizardDropdown" child="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" childparam="MACAddressControlMode" url="cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;LowerLayers=Device.WiFi.Radio.2.&amp;SSID=&amp;X_LANTIQ_COM_Vendor_IsEndPoint=" webname="SSID" ifparam="X_LANTIQ_COM_Vendor_IsEndPoint" ifcondition="equalsto" ifvalue="false"></parameter>
+        </object>
+        <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" url="cgi_get_subobjvals?Object=Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" >
+            <parameter  name="MACAddressControlMode" type="dropdown" validvalues="Disabled,Allow,Deny" webname="ACL Mode" xmlvalidation="true" dependsonparams=""></parameter>
+        </object>
+    </object>
+    <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" onload="false" viewtype="EditableTable" parentname="temp" depends="SSID" >
+        <parameter  name="MACAddressControlList"  type="macaddress" webname="MAC Address" ></parameter>
+        <parameter  name="Add"  action="post" type="button" webname="Add" maxlen="64"></parameter>
+        <parameter  name="delete"  action="post"   type="button" webname="delete" maxlen="64"></parameter>
+    </object>   
+    <parameter  name="Modify"  action="post" routeurl="macFilterApply($event)" type="button" webname="Apply" maxlen="64"></parameter> 
+</view>

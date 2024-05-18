@@ -1,0 +1,46 @@
+#!/bin/sh
+
+## check url and download to the file path given.
+## may return error code 0(ok)/1(inner fail)/2(connection fail)
+## or return http status code when not 200 ok
+
+###check the input param
+[ $# -lt 4 ] && echo Please input: url file capath && exit 0
+
+### download url
+URL=$1
+
+### File path to store the download contend
+FILE_PATH=$2
+
+### certificate file path for security download
+CAPATH=$3
+
+### File path for recording download process
+CLOUD_DL_PID=$4
+
+### TIMEOUT
+TIMEOUT=10
+
+### define some files
+CLOUD_DL_RESULT="${FILE_PATH}.dlresult"
+
+######################################################################################
+###	-C, --continue-at OFFSET  	Resumed transfer offset								
+### -#, --progress-bar  		Display transfer progress as a progress bar
+### -L, --location      		Follow 	redirects
+### -e, --referer       		Referer URL
+### --connect-timeout			Maximum time allowed for connection in seconds
+### -Y, --speed-limit RATE  	Stop transfers below speed-limit for 'speed-time' secs
+### -y, --speed-time SECONDS  	Time for trig speed-limit abort. Defaults to 30
+### --cacert					CA certificate to verify peer against (SSL)
+### -o, --output FILE   		Write output to <file> instead of stdout
+### -g, --globoff       		Disable URL sequences and ranges using {} and []
+### -w, --write-out      		What to output after completion
+#######################################################################################
+echo "Begin to download $FILE_PATH by $URL" >/dev/console 2>&1
+
+### download is a complete process
+curl -C - -# -L -e ';auto' --connect-timeout 20 -Y 1 -y ${TIMEOUT} --cacert "$CAPATH" -o "$FILE_PATH" -g -w %{http_code} "$URL" > ${CLOUD_DL_RESULT} 2>/dev/console &
+
+echo $! > ${CLOUD_DL_PID}

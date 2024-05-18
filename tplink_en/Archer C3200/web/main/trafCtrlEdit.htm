@@ -1,0 +1,245 @@
+<script type="text/javascript">
+function init() {
+    if (isEdit) {
+        var rule = tcRuleList[tcRuleEntryIndex];
+        $("#ipStart").val(rule.startIP == 0 ? "" : $.num2ip(parseInt(rule.startIP, 10)));
+        $("#ipEnd").val(rule.endIP == 0 ? $("#ipStart").val() : $.num2ip(parseInt(rule.endIP, 10)));
+        $("#portStart").val(rule.startPort == 0 ? "" : rule.startPort);
+        $("#portEnd").val(rule.endPort == 0 ? "" : rule.endPort);
+        $("#protocol option[value=" + rule.protocol + "]").prop("selected", "selected");
+        $("#precedence option[value=" + rule.precedence + "]").prop("selected", "selected");
+        $("#upMinBW").val(rule.upMinBW == 0 ? "" : rule.upMinBW);
+        $("#upMaxBW").val(rule.upMaxBW == 0 ? "" : rule.upMaxBW);
+        $("#downMinBW").val(rule.downMinBW == 0 ? "" : rule.downMinBW);
+        $("#downMaxBW").val(rule.downMaxBW == 0 ? "" : rule.downMaxBW);
+        $("#tc_en").prop("checked", rule.enable == 1 ? true : false);
+    }
+}
+
+function selectObj(element) {
+    if (element) {
+        element.focus();
+        element.select();
+    }
+}
+
+function checkBW(idMin, idMax) {
+    if (!INCLUDE_QOS) {
+        if (idMin.val() == "" || idMax.val() == "") {
+            $.alert(ERR_TC_NUM_INVAD);
+            selectObj(idMin.val() == "" ? idMin : idMax);
+            return false;
+        }
+    }
+
+    if (idMin.val() == "" && idMax.val() == "")
+        return true;
+
+    if ((idMin.val() == "") || (!$.isnum(idMin.val())) || (0 == parseInt(idMin.val(), 10))) {
+        $.alert(ERR_TC_NUM_INVAD);
+        selectObj(idMin);
+        return false;
+    }
+
+    if ((idMax.val() == "") || (!$.isnum(idMax.val())) || (0 == parseInt(idMax.val(), 10))) {
+        $.alert(ERR_TC_NUM_INVAD);
+        selectObj(idMax);
+        return false;
+    }
+
+    if (parseInt(idMax.val(), 10) < parseInt(idMin.val(), 10)) {
+        $.alert(ERR_TC_BW_ORDER_INVAD);
+        selectObj(idMax);
+        return false;
+    }
+    return true;
+}
+
+
+function doRuleSave() {
+
+    if (($("#ipStart").val() != "") && ($.ifip($("#ipStart").val(), true))) {
+        $.alert(ERR_IP_FORMAT);
+        selectObj($("#ipStart"));
+        return false;
+    }
+
+    if (($("#ipEnd").val() != "") && ($.ifip($("#ipEnd").val(), true))) {
+        $.alert(ERR_IP_FORMAT);
+        selectObj($("#ipEnd"));
+        return false;
+    }
+
+    if (($("#ipEnd").val() != "") && ($("#ipStart").val() != "") && (!$.isOrderIp($("#ipStart").val(), $("#ipEnd").val()))) {
+        $.alert(ERR_TC_IP_ORDER_INVAD);
+        selectObj($("#ipEnd"));
+        return false;
+    } else if ("" == $("#ipStart").val() && "" != $("#ipEnd").val()) {
+        $.alert(ERR_TC_EMPTY_START_IP);
+        selectObj($("#ipStart"));
+        return false;
+    }
+
+    if (($("#portStart").val() != "") && (!$.isnum($("#portStart").val())) || (parseInt($("#portStart").val(), 10) == 0) || (parseInt($("#portStart").val(), 10) > 65535)) {
+        $.alert(ERR_PORT_NUM_INVAD);
+        selectObj($("#portStart"));
+        return false;
+    }
+
+    if (($("#portEnd").val() != "") && (!$.isnum($("#portEnd").val())) || (parseInt($("#portEnd").val(), 10) == 0) || (parseInt($("#portEnd").val(), 10) > 65535)) {
+        $.alert(ERR_PORT_NUM_INVAD);
+        selectObj($("#portEnd"));
+        return false;
+    }
+
+    if (($("#portEnd").val() != "") && ($("#portStart").val() != "") && (parseInt($("#portEnd").val(), 10) < parseInt($("#portStart").val(), 10))) {
+        $.alert(ERR_PORT_ORDER_INVAD);
+        selectObj($("#portEnd"));
+        return false;
+    } else if ("" == $("#portStart").val() && "" != $("#portEnd").val()) {
+        $.alert(ERR_EMPTY_START_PORT);
+        selectObj($("#portStart"));
+        return false;
+    }
+
+    if (($("#ipStart").val() == "") && ($("#ipEnd").val() == "") && ($("#portStart").val() == "") && ($("#portEnd").val() == "")) {
+        $.alert(ERR_TC_IP_PORT_INVAD);
+        selectObj($("#portStart"));
+        return false;
+    }
+
+    if (!checkBW($("#upMinBW"), $("#upMaxBW")))
+        return false;
+    if (!checkBW($("#downMinBW"), $("#downMaxBW")))
+        return false;
+    if ($("#upMinBW").val() == "" && $("#downMinBW").val() == "") {
+        $.alert(ERR_TC_BW_NULL);
+        selectObj($("#upMinBW"));
+        return false;
+    }
+
+    var tmpArg = {};
+
+    tmpArg.startIP = ($("#ipStart").val() == "") ? 0 : ($.ip2num($("#ipStart").val()));
+    tmpArg.endIP = ($("#ipEnd").val() == "") ? tmpArg.startIP : ($.ip2num($("#ipEnd").val()));
+
+    tmpArg.startPort = ($("#portStart").val() == "") ? 0 : parseInt($("#portStart").val(), 10);
+    tmpArg.endPort = ($("#portEnd").val() == "") ? tmpArg.startPort : parseInt($("#portEnd").val(), 10);
+
+    tmpArg.protocol = $("#protocol").data("value");
+    tmpArg.precedence = $("#precedence").data("value");
+
+    tmpArg.upMinBW = ($("#upMinBW").val() == "") ? 0 : parseInt($("#upMinBW").val(), 10);
+    tmpArg.upMaxBW = ($("#upMaxBW").val() == "") ? 0 : parseInt($("#upMaxBW").val(), 10);
+
+    tmpArg.downMinBW = ($("#downMinBW").val() == "") ? 0 : parseInt($("#downMinBW").val(), 10);
+    tmpArg.downMaxBW = ($("#downMaxBW").val() == "") ? 0 : parseInt($("#downMaxBW").val(), 10);
+
+    tmpArg.enable = ($("#tc_en").prop("data-checked") == true) ? 1 : 0;
+    tmpArg.flag = 1;
+
+
+    if (isEdit) {
+        var tmpStack = tcRuleList[tcRuleEntryIndex].__stack;
+        $.act(ACT_SET, TC_RULE, tmpStack, null, tmpArg);
+    } else {
+        $.act(ACT_ADD, TC_RULE, null, null, tmpArg);
+    }
+
+    $.addLoading($(this));
+    if (!$.exe()) {
+        $.removeLoading();
+        $.reload();
+    }
+}
+
+function doCancel() {
+    $.reload();
+}
+</script>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b id="t_iprange">IP Range:</b>
+            <input type="text" id="ipStart" class="l" required />
+            <span>-</span>
+            <input type="text" id="ipEnd" class="l" required />
+        </div>
+
+        <div>
+            <b id="t_portrange">Port Range:</b>
+            <input type="text" id="portStart" class="l" maxlength="5" required />
+            <span>-</span>
+            <input type="text" id="portEnd" class="l" maxlength="5" required />
+        </div>
+
+        <div>
+            <b class="T_proto">Protocol:</b>
+            <select id="protocol" class="m">
+                <option value="0" class="T_all">ALL</option>
+                <option value="6">TCP</option>
+                <option value="17">UDP</option>
+            </select>
+        </div>
+
+        <div class="inline">
+            <div class="inline">
+                <b id="t_prio">Priority:</b>
+                <select id="precedence" class="m">
+                    <option id="prec0" value="1">1</option>
+                    <option id="prec1" value="2">2</option>
+                    <option id="prec2" value="3">3</option>
+                    <option id="prec3" value="4">4</option>
+                    <option id="prec4" value="5" selected>5</option>
+                    <option id="prec5" value="6">6</option>
+                    <option id="prec6" value="7">7</option>
+                    <option id="prec7" value="8">8</option>
+                </select>
+            </div>
+
+            <div class="inline" style="margin:0 30px">
+                <span id="t_prioNote">(1 means highest priority)</span>
+            </div>
+        </div>
+
+        <div>
+            <b id="t_up">Upstream:</b>
+            <input type="text" id="upMinBW" class="l" required maxlength="6" />
+            <span class="T_c_to">to</span>
+            <input type="text" id="upMaxBW" class="l" required maxlength="6" />
+        </div>
+
+        <div>
+            <b id="t_down">Downstream:</b>
+            <input type="text" id="downMinBW" class="l" required maxlength="6" />
+            <span class="T_c_to">to</span>
+            <input type="text" id="downMaxBW" class="l" required maxlength="6" />
+        </div>
+
+
+        <div>
+            <b></b>
+            <input type="checkbox" id="tc_en" checked="true" />
+            <label class="T_c_enable">Enable this entry</label>
+        </div>
+
+        <div class="inline-btn-right">
+            <div class="inline">
+                <button type="submit" class="green T_cancel" id="cancelBtn">Cancel</button>
+            </div>
+            <div class="inline">
+                <button type="submit" class="green T_ok" id="saveBtnTC">OK</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+<script type="text/javascript">
+$("#saveBtnTC").on('click', doRuleSave);
+$("#cancelBtn").on('click', doCancel);
+
+$.tpInit(init);
+</script>

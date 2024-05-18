@@ -1,0 +1,66 @@
+<div class="main-page form-container" ng-hide="form.menuItem">
+	<div form-header title="DHCP_SERVER.TITLE"></div>
+	<div class="form-content-container">
+		<div class="fieldset-container">
+			<div jump-item separator="" label="DHCP_SERVER.SETTINGS" menu-option="form.menuItem" value="setting"></div>
+			<div jump-item separator="" label="DHCP_SERVER.CLIENTSLIST" menu-option="form.menuItem" value="client"></div>
+			<div jump-item separator="" label="DHCP_SERVER.RESERVATION" menu-option="form.menuItem" value="addr"></div>
+		</div>
+	</div>
+</div>
+
+<div class="main-page" ng-switch on="form.menuItem">
+	
+	<div class="form-container" ng-controller="dhcpSetting" ng-switch-when="setting">
+		<div form-header title="DHCP_SERVER.SETTINGS">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+			<div button position="right" text="FORM.SAVE" on-click="save()" ng-model="form.submitBtn"></div>
+		</div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div display-field label="DHCP_SERVER.IP_ADDRESS" separator=":" ng-model="form.data.current_ip"></div>
+					<div checkbox-switch label="DHCP_SERVER.ENABLE_DHCP_SERVER" separator=":" ng-model="form.data.enable" class="checkbox-orange"></div>
+					<div>
+						<div class="ip-field-group">
+							<div class="widget-container">
+								<div label-field label="DHCP_SERVER.IP_ADDR_POOL" separator=":"></div>
+							</div>
+							
+							<div ip-field label="DHCP_SERVER.FROM" separator=":" ng-model="form.data.ipaddr_start"></div>
+							<div ip-field label="DHCP_SERVER.TO" separator=":" ng-model="form.data.ipaddr_end"></div>
+						</div>
+						<div text-field label="DHCP_SERVER.LEASETIME" separator=":" unit="DHCP_SERVER.LEASENOTE" tips="DHCP_SERVER.TIPS" ng-model="form.data.leasetime"></div>
+						<div ip-field placeholder="DHCP_SERVER.OPTIONAL" label="DHCP_SERVER.GATEWAY" separator=":" ng-model="form.data.gateway"></div>
+						<div ip-field placeholder="DHCP_SERVER.OPTIONAL" label="DHCP_SERVER.PRIMARYDNS" separator=":" ng-model="form.data.pri_dns"></div>
+						<div ip-field placeholder="DHCP_SERVER.OPTIONAL" label="DHCP_SERVER.SECONDARYDNS" separator=":" ng-model="form.data.snd_dns"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-container" ng-controller="dhcpClientsList" ng-switch-when="client">
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div grid="grid" config="clientGrid"></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-container" ng-controller="addrReservation" ng-switch-when="addr">
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div grid="grid" editor="form" config="addrGrid">
+					<div class="fieldset-content-container">
+						<div mac-field label="DHCP_SERVER.MAC_ADDR" ng-model="form.data.mac" ></div>
+						<div ip-field label="DHCP_SERVER.IP_ADDRESS" ng-model="form.data.ip" mask=true></div>
+						<div text-field label="DHCP_SERVER.DESCRIPTION" ng-model="form.data.name" ></div>
+						<div checkbox-switch label="DHCP_SERVER.ENABLE_RES" ng-model="form.data.enable" ></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>

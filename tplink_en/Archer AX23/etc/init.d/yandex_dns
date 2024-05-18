@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=47
+
+PC_LIBDIR=/lib/yandex_dns
+
+pc() {
+	. $PC_LIBDIR/core.sh
+	fw_$1
+}
+
+start() {
+	local sysmode
+	config_load sysmode
+	config_get sysmode sysmode mode "router"
+	local country=`getfirm SPECIAL_ID`
+	if [ "$country" != "52550000" -o "$sysmode" = "ap" ]; then
+		return 0
+	fi	
+	pc start
+}
+
+stop() {
+	local sysmode
+	config_load sysmode
+	config_get sysmode sysmode mode "router"
+	local country=`getfirm SPECIAL_ID`
+	if [ "$country" != "52550000" -o "$sysmode" = "ap" ]; then
+		return 0
+	fi	
+	pc stop
+}
+
+restart() {
+	pc restart
+}
+
+reload() {
+	pc reload
+}

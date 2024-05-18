@@ -1,0 +1,117 @@
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script type="text/javascript">
+function upperCase(obj)
+{
+	var val = obj.value;
+	obj.value = val.toUpperCase();
+}
+
+function Click()
+{
+	window.event.returnValue = false;
+}
+
+document.oncontextmenu = Click;
+var i = 0;
+function doRestore(nIndex)
+{
+	if(nIndex > macCloneInf[0])
+	{
+		return false;
+	}
+	else
+	{
+		document.forms[0].elements['mac' + nIndex].value = macCloneList[(nIndex - 1) * 2 + 1].toUpperCase();
+		return true;
+	}
+}
+
+function doClone()
+{
+	var n = document.forms[0].wan.value;
+	document.forms[0].elements['mac' + n].value = document.forms[0].pcmac.value;
+}
+
+function doSubmit()
+{
+	for( i = 1; i <= macCloneInf[0]; i++)
+	{
+		if(!is_macaddr(document.forms[0].elements['mac' + i].value))
+		{
+			var element = document.forms[0].elements['mac' + i];
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+	return true;
+}
+</script>
+</head>
+<body onLoad="LoadHelp('MacCloneCfgHelpRpm.htm');setTagStr(document,'ntw_mac_clone_cfg'); resize(this);" onResize="resize(this);">
+    <center>
+        <form action="MacCloneCfgRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+            <table id="autoWidth" border="0">
+                <tr>
+                    <td class="h1" colspan="3" id="t_title">MAC Clone</td>
+                </tr>
+                <tr>
+                    <td class="blue" colspan="3"></td>
+                </tr>
+                <script type="text/javascript">
+                    var Row;
+                    for( i = 1; i <= macCloneInf[0]; i++)
+                    {
+                        Row = (i - 1) * 2;
+                        if(macCloneInf[0] == 1)
+                        {
+                            document.write('<tr><td class=Item>' + "<span id = \"t_mac_addr\">WAN MAC Address:</span>" + '</td><td><input type=\"text\" class=\"text\" name=\"mac' + i + '\" value=\"' + macCloneList[Row] + '\" size=\"18\" maxlength=\"17\" onblur=\"upperCase(this);\">&nbsp;');
+                        }
+                        else
+                        {
+                            document.write('<tr><td class=Item>WAN' + i + " " + "<span id = \"t_mac_addr\">MAC Address:</span>" + '</td><td><input type=\"text\" class=\"text\" name =\"mac' + i + '\" value=\"' + macCloneList[Row] + '\" size=\"18\" maxlength=\"17\" onblur=\"upperCase(this);\">&nbsp;');
+                        }
+                        document.write('<input name=\"RestoreMAC\" type=\"button\" class=\"buttonL\" value=\"Restore Factory MAC\" onClick=\"doRestore(' + i + ');\"></td></tr>');
+                    }
+                </script>
+                <tr>
+                    <td class="Item" id="t_pc_mac_addr">Your PC's MAC Address:</td>
+                    <td>
+						<input id="pcmac" name="pcmac" type="text" class="text" size="18" maxlength="17" disabled>
+						<input id="cloneMAC" name="cloneMAC" type="button" class="buttonL" onClick="doClone();" value="Clone MAC Address To" >
+						<select name="wan" id = "wanList">
+							<script type="text/javascript">
+								for( i = 1; i <= macCloneInf[0]; i++)
+								{
+									document.write('<option value=\"' + i + '\">WAN' + i + '</option>');
+								}
+							</script>
+						</select>
+					</td>
+                </tr>
+                <tr>
+                    <td class="blue" colspan="3"></td>
+                </tr>
+                <tr>
+                    <td class="mbtn" colspan="3"><input name="Save" type="submit" class="buttonBig" id="Save" value="Save"></td>
+                </tr>
+                <script type="text/javascript">
+                    document.forms[0].pcmac.value = macCloneInf[1].toUpperCase();
+                    document.forms[0].cloneMAC.disabled = (macCloneInf[2] == 1) ? true : false;
+					document.getElementById("pcmac").style.backgroundColor = "#DFDFDF";
+                    if(macCloneInf[0] == 1)
+                    {
+                        var obj = document.getElementById('wanList');
+                        obj.style.display = 'none';
+                        document.getElementById('cloneMAC').value = "Clone MAC Address";
+                    }
+                </script>
+            </table>
+        </form>
+    </center>
+</body>
+</HTML> 

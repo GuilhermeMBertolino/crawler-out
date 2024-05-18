@@ -1,0 +1,105 @@
+<script language="javascript" type="text/javascript">
+var lanIPv4Cfg;
+var brLanList;
+var defaultBrStack;
+function init() {
+    var dmzCfg = $.act(ACT_GET, DMZ_HOST_CFG, null, null);
+
+	brLanList = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+
+    if (!$.exe()) {
+        $("#dmzIp").tpAddress('val', dmzCfg.IPAddress ? dmzCfg.IPAddress : "0.0.0.0");
+
+        if (dmzCfg.enable == 1) {
+            $("#dmz_en").prop('checked', true);
+        } else {
+            $("#dmz_en").prop('checked', false);
+        }
+
+		$.each(brLanList, function() {
+
+            if(this.bridgeName == 'Default')
+				defaultBrStack = this.__stack;
+        });
+    }
+}
+
+function saveDMZ() {
+    var tmpIp = $.ip2ip($("#dmzIp").tpAddress('val'));
+    var dmzSta = ($("#dmz_en").prop("data-checked")) ? 1 : 0;
+    $.act(ACT_SET, DMZ_HOST_CFG, null, null, ["enable=" + dmzSta, "IPAddress=" + tmpIp]);
+    $.exe(function(ret) {
+        $.removeLoading();
+        if (!ret) {
+            $.loadMain("dmz.htm");
+        }
+    });
+}
+
+$("#save").click(function() {
+    $.addLoading($(this));
+    if ($.ifip($("#dmzIp").tpAddress('val'), true)) {
+        $.alert(ERR_IP_FORMAT);
+        $("#dmzIp").tpAddress('focus');
+
+        return;
+    }
+
+	var tmpIp = $.ip2ip($("#dmzIp").tpAddress('val'));
+	lanIPv4Cfg = $.act(ACT_GS, LAN_IP_INTF, null, defaultBrStack, ["IPInterfaceIPAddress", "IPInterfaceSubnetMask", "X_TP_MACAddress"]);
+	if ($.exe()) {
+            return;
+    }
+
+	if(lanIPv4Cfg[0].IPInterfaceIPAddress == tmpIp)
+	{
+		$.alert(CMM_DMZ_IP_NOT_BE_LAN_IP);
+		$("#dmzIp").tpAddress('focus');
+		return;
+	}
+
+    var isConflict = false;
+
+    if (INCLUDE_USB_FTP_SERVER) {
+        var ftpServer = $.act(ACT_GET, FTP_SERVER, null, null, null);
+        if ($.exe()) {
+            return;
+        }
+
+        if ((ftpServer.enable == 1) && (ftpServer.accessFromInternet == 1)) {
+            isConflict = true;
+        }
+    }
+
+    if (isConflict && $("#dmz_en").prop("data-checked")) {
+        $.confirm(c_str.forwarding_ftp_conflict, function() {
+            $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=0"]);
+            $.exe();
+            saveDMZ();
+        }, function() {
+            $.removeLoading();
+            $.reload();
+        });
+    } else {
+        saveDMZ();
+    }
+});
+</script>
+<h3>DMZ</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="1">DMZ:</b>
+            <input type="checkbox" id="dmz_en" />
+            <label id="t_endmz">Enable DMZ</label>
+        </div>
+        <div class="pure-control-group">
+            <b id="t_hostip">DMZ Host IP Address:</b>
+            <input type="text" class="tp-input-text ip-address" id="dmzIp" />
+        </div>
+        <button type="submit" class="green T_save" id="save">Save</button>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+$.tpInit(init);
+</script>

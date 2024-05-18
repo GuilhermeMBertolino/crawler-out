@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Account</title>
+<style type="text/css">
+
+</style>
+
+</head>
+
+<body>
+<div class="func_container" id="basic-account">
+	<div id="basic-account-panel">
+		<div id="status-0" class="hidden">
+			<span id="t_wizard"></span>
+			<div class="cloud_hover_container cloud_hover_login">
+				<span class="cloud_account_icon"></span>
+				<div id="connect-area"></div>
+				<div id="cloud_account_wizard_tip" class="cloud_account_wizard_tip_cnt">
+					<div class="tips-content-container">
+						<span class="tips-content-delta"></span>
+						<div class="position-top-left"></div>
+						<div class="position-top-center"></div>
+						<div class="position-top-right"></div>
+						<div class="position-center-left">
+							<div class="position-center-right">
+								<div class="tips-content-wrap">
+									<div class="tips-content-container-wrap">
+										<div class="tips-content">
+											<span id="cloud_account_wizard_total"></span>
+											<ul>
+												<li class="cloud_account_wizard_tip">
+													<span id="cloud_account_wizard_tip1"></span>
+												</li>
+												<li class="cloud_account_wizard_tip">
+													<span id="cloud_account_wizard_tip2"></span>
+												</li>
+												<li class="cloud_account_wizard_tip">
+													<span id="cloud_account_wizard_tip3"></span>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="position-bottom-left"></div>
+						<div class="position-bottom-center"></div>
+						<div class="position-bottom-right"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="status-1" class="hidden"></div>
+		<div id="status-2" class="hidden">
+			<!-- <h3 id="offline"></h3> -->
+			<p id="offline-note-title" class="note"></p>
+			<p id="offline-note-content" class="note"></p>
+		</div>
+
+		<iframe id="cloud-login" name="cloud-login" frameborder="no" scrolling="no" src=""></iframe>
+		<div id="form-cnt" class="form-margin-left-cnt hidden">
+			<form id="form-cloud-login" class="part-separate">
+			    <div class="init-field">
+			        <label id="login-username-label">
+			            <span class="icon"></span>
+			            <span class="text"></span>
+			        </label>
+			        <input id="txt-login-email"   tabindex="1" name="username" type="text" />
+			    </div>
+			    <div class="init-field">
+			        <label id="init-password-label">
+			            <span class="icon"></span>
+			            <span class="text"></span>
+			        </label>
+			        <input id="txt-login-password"  name="password" type="password" />
+			        <div class="inline-block forget-cnt"><a href="#" class="link" id="login_forgotPassword"></a></div>
+				</div>
+			    <button type="button" tabindex="3" id="btn-cloud-login"></button>
+			    <input class="cloud_login_status" value="" />
+			    <p><span id="not-account-tip"></span></p>
+			</form>
+		</div>
+
+		<div class="own_part hidden">
+			<span id="no_account_tip"></span>
+		    <button id="register_now" tabindex="4"></button>
+		</div>
+	</div>
+
+	<div id="help_login"></div>
+</div>
+<script type="text/javascript">
+
+//<![CDATA[
+try{
+	$
+}catch(e){
+	location.href = "/";
+};
+
+$(document).ready(function(e){
+	//所有事件被点燃，触发helpLoad事件，然后加载help信息。 因为help信息显示不显示依赖于以下请求的返回数据
+	$.su.app.runningModule.addWaitingEvents("helpLoad", ["deviceInfoProxy"]);
+	var URL_CHECK_INTERNET = $.su.url("/admin/cloud_account?form=check_internet");
+	var URL_CHECK_LOGIN = $.su.url("/admin/cloud_account?form=check_login"); //"./data/basic.check_login.json";
+	var URL_CLOUD_LOGIN = $.su.url("/admin/cloud_account?form=user_login");//"./data/quicksetup.cloud_login.json";
+	var URL_LOGIN = $.su.url("/admin/cloud_account?form=user_login");//"./data/basic.login.json";
+	var URL_REGISTER = $.su.url("/admin/cloud_account?form=user_register");//"./data/basic.register.json";
+	var URL_RESET = $.su.url("/admin/cloud_account?form=cloud_reset_pwd_login_cloud");//"./data/basic.reset.json";
+	var URL_CHANGE_PWD = $.su.url("/admin/cloud_account?form=modify_cloud_password");//"./data/basic.change.json";
+	var URL_INFO = $.su.url("/admin/cloud_account?form=user_info");//"./data/basic.info.json";
+	var URL_DOMAIN_LIST = $.su.url("/admin/ddns?form=tplink");
+	var URL_RESET_SEND_MAIL = $.su.url("/admin/cloud_account?form=get_reset_pwd_verify_code");//"./data/basic.reset_send.json";
+	var URL_UPLOAD_IMAGE = $.su.url("/admin/cloud_account?form=upload_image");//"./data/basic.upload.json";
+	var URL_UPLOAD_CHECK = $.su.url("/admin/cloud_account?form=upload_check");//"./data/basic.upload_check.json";
+	var URL_CHECK_REGISTER_EMAIL = $.su.url("/admin/cloud_account?form=user_check_mail_verified");//"./data/quicksetup.register_mail.json";
+	var URL_REGISTER_LOGIN = $.su.url("/admin/cloud_account?form=cloud_register_login");//./data/quicksetup.register_login.json";
+	
+	var URL_UNBIND_ACCOUNT = $.su.url("/admin/cloud_account?form=cloud_unbind");
+
+	var unbindProxy = new $.su.Proxy({
+		url: URL_UNBIND_ACCOUNT,
+	});
+
+	var checkLoginProxy = new $.su.Proxy({
+		url: URL_CHECK_LOGIN,
+	});
+
+	var checkInternetProxy = new $.su.Proxy({
+		url: URL_CHECK_INTERNET,
+	});
+
+	var checkRegisterEmailStatusProxy = new $.su.Proxy({
+		url: URL_CHECK_REGISTER_EMAIL,
+	});
+
+	var cloudLoginProxy = new $.su.Proxy({
+		url: URL_CLOUD_LOGIN
+	});
+
+	var registerLoginProxy = new $.su.Proxy({
+		url: URL_REGISTER_LOGIN,
+	});
+
+	var disabledButton;
+
+	var registerEmailCheck = false;
+
+	var checkRegisterEmailStatusTime = 0;
+
+	var helpType = 0;
+
+	$("#t_wizard").html($.su.CHAR.BASIC_ACCOUNT.CLOUD_WIZARD);
+	$("#no_account_tip").html($.su.CHAR.BASIC_ACCOUNT.NO_ACCOUNT);
+
+	$("#cloud_account_wizard_total").html($.su.CHAR.QUICK_SETUP.ACCOUNT_DESP);
+	$("#cloud_account_wizard_tip1").html($.su.CHAR.QUICK_SETUP.ACCOUNT_DESP_SUB1);
+	$("#cloud_account_wizard_tip2").html($.su.CHAR.QUICK_SETUP.ACCOUNT_DESP_SUB2);
+	$("#cloud_account_wizard_tip3").html($.su.CHAR.QUICK_SETUP.ACCOUNT_DESP_SUB3);
+
+	$("#login_forgotPassword").html($.su.CHAR.BASIC_ACCOUNT.FORGET_PASSWORD);
+	$("#cloud-login").hide();
+	
+	$("#login_forgotPassword").on("click" ,function(){
+		onReceive({data:{eType:"ev_goto",url:"findBackPassword"},source:null,origin:"_self"});
+	});
+
+	$("#basic-account-panel").panel({
+		title: $.su.CHAR.BASIC_ACCOUNT.TPLINK_CLOUD,
+		collapsible: false
+	});
+
+	var cloudLoginForm = $("form#form-cloud-login").form({
+		proxy: cloudLoginProxy,
+		cls:"no-padding",
+		showPrompt: false,
+		fields: [
+		    {"name": "username"},
+        	{"name": "password"}
+		],
+		submitBtn: false
+	}).on("ev_beforeLoadData",function(e,data){
+		if(data){
+			$("#cloud-password-hidden").password("setValue", data.password);
+		}
+	});
+
+	$("input#txt-login-email").textbox({
+		fieldLabel: null,
+		allowBlank: false,
+		//minLength:1,
+		hint: $.su.CHAR.BASIC_ACCOUNT.EMAIL,
+		maxLength:64,
+		vtype:"cloud_email",
+		cls: "part-separate inline-block"
+	}).on("ev_change", function(){
+
+	});
+
+	$("input#txt-login-password").password({
+		fieldLabel: null,
+		allowBlank: false,
+		showLevel: false,
+		minLength: 6,
+		maxLength: 32,
+		allowVisible: true,
+		hint: $.su.CHAR.BASIC_ACCOUNT.PASSWORD,
+	    cls: "inline-block",
+		vtype: "cloud_pwd"
+	}).on("ev_change", function(e,value,key,keyCode){
+	    if(key == "Enter" || keyCode == 13){
+	        if(cloudLoginForm.form("validate")){
+	            if(!$("button#btn-cloud-login").prop('disabled')){
+	                $("button#btn-cloud-login").button("disable");
+	                var username = $("#txt-login-email").textbox("getValue");
+		            var password = $("#txt-login-password").password("getValue");
+		            $("input.cloud_login_status").status("setLoading");
+	                onReceive({data:{eType:"ev_login",account:{cloudUserName: username, cloudPassword: password}},source:null,origin:"_self"});
+	            }
+	        }
+	    }
+	});
+
+	$("input#txt-login-password").password("getContainer").find(".password-text").attr("tabindex","2");
+
+	$("input.cloud_login_status").status({
+        cls:"inline"
+    });
+
+	var cloudLoginBtn = $("button#btn-cloud-login").button({
+	    text: $.su.CHAR.QUICK_SETUP.LOGIN,
+	    cls: "submit inline-block account-login-btn",
+	    handler: function(){
+	        if(cloudLoginForm.form("validate")){
+	        	$("button#btn-cloud-login").button("disable");
+	        	var username = $("#txt-login-email").textbox("getValue");
+	            var password = $("#txt-login-password").password("getValue");
+	            $("input.cloud_login_status").status("setLoading");
+	            onReceive({data:{eType:"ev_login",account:{cloudUserName: username, cloudPassword: password}},source:null,origin:"_self"});
+	        }
+	    }
+	});
+
+
+	$("#register_now").button({
+		text: $.su.CHAR.BASIC_ACCOUNT.REGISTER_NOW,
+		cls: "submit register-account",
+		btnCls: "login-full",
+		handler: function(){
+			onReceive({data:{eType:"ev_goto",url:"register"},source:null,origin:"_self"});
+		}
+	});
+
+
+	var infoProxy = new $.su.Proxy({
+		url: URL_INFO
+	});
+	var isLogined = false;
+	$.su.loading.show("account_check");
+	checkLoginProxy.read({}, function(data){
+		if(data.islogined){
+			checkInternetProxy.read({}, function(data){
+				onReceive({data:{eType:"ev_goto",url:"devicePages&page=account"},source:null,origin:"_self"});
+			}, function(){
+				$("#basic-account-panel .panel-title-text").html($.su.CHAR.BASIC_ACCOUNT.OFFLINE_NOTE_TITLE);
+				$("#status-0").hide();
+				$("div#status-2").removeClass("hidden");
+			});
+			isLogined = true;
+		}else{
+			checkInternetProxy.read({}, function(data){
+				$("#status-0").show();
+				$("#form-cnt").show();
+				$(".own_part").show();
+			}, function(){
+				$("#basic-account-panel .panel-title-text").html($.su.CHAR.BASIC_ACCOUNT.OFFLINE_NOTE_TITLE);
+				$("#status-0").hide();
+				$("div#status-2").removeClass("hidden");
+			});
+		}
+	}, function(){
+		checkInternetProxy.read({}, function(data){
+			$("div#status-0").show();
+		},function(){
+			$("#basic-account-panel .panel-title-text").html($.su.CHAR.BASIC_ACCOUNT.OFFLINE_NOTE_TITLE);
+			$("#status-0").hide();
+			$("div#status-2").removeClass("hidden");
+		});
+	});
+
+	$(checkInternetProxy).on("ev_read ev_failed ev_error", function(){
+		$.su.loading.hide("account_check");
+	});
+	
+	var loginProxy = new $.su.Proxy({
+		url: URL_LOGIN
+	});
+
+
+	/*status 2*/
+	// $("#offline").html($.su.CHAR.BASIC_ACCOUNT.OFFLINE_NOTE_TITLE);
+	$("p#offline-note-title").html($.su.CHAR.BASIC_ACCOUNT.LOGIN_NOTE_TITLE);
+	$("p#offline-note-content").html($.su.CHAR.BASIC_ACCOUNT.LOGIN_OFFLINE_NOTE);
+
+
+	function onReceive(eObject){
+		var e = eObject.originalEvent || eObject;
+	    //console.log("parent receive from "+ e.origin, e.data, e)
+	    if(e.origin !== $.su.url.cloudOrigin && e.origin !== "_self" && e.origin != undefined){
+	        return;
+	    }
+	    var data = e.data;
+	    if(typeof(e.data) == "string"){
+	        data = $.parseJSON(data);
+	    }
+	    if(data){
+	        switch(data.eType){
+	            //module change
+	            case "ev_goto": {
+	            	// console.log("ev_goto");
+
+				    if(data.url){
+				        //getToken and set iframe's src, then set wating event(10s timeout)
+                    	$.su.func.getToken(data.url);
+
+				    }
+				    else{
+				        if(data.index == "activation"){
+				            ;
+				        }
+				    }
+				    if("login" == data.url || "login" == data.index){
+				    	$("#cloud-login").hide();
+				        $("#status-0").show();
+						$("#form-cnt").show();
+						$("div.own_part").show();
+						//about panel
+						$(".cloud_hover_container").removeClass("cloud_hover_register");
+						$(".cloud_hover_container").addClass("cloud_hover_login");
+						$("#status-0").append($(".cloud_hover_container"));
+						$("#basic-account-panel").removeClass("basic-account-panel-register");
+						$("#basic-account-panel .panel-title-text").html($.su.CHAR.BASIC_ACCOUNT.TPLINK_CLOUD);
+				    }
+				    else if("register" == data.url || "register" == data.index){
+				    	$.su.loading.show("iframeResize");
+				    	$("#status-0").hide();
+						$("#form-cnt").hide();
+						$("div.own_part").hide();
+						//about panel
+						$(".cloud_hover_container").removeClass("cloud_hover_login");
+						$(".cloud_hover_container").addClass("cloud_hover_register");
+						$("#basic-account-panel .panel-title").append($(".cloud_hover_container"));
+						$("#basic-account-panel").addClass("basic-account-panel-register");
+						$("#basic-account-panel .panel-title-text").html($.su.CHAR.BASIC_ACCOUNT.REGISTER_NEW);
+				    }
+				    else if("findBackPassword" == data.url || "findBackPassword" == data.index){
+				    	$.su.loading.show("iframeResize");
+				    	$("#status-0").hide();
+						$("#form-cnt").hide();
+						$("div.own_part").hide();
+				    }
+				    else if("devicePages&page=account" == data.url || "devicePages&page=account" == data.index){
+				    	$.su.loading.show("iframeResize");
+				    	$("#status-0").hide();
+						$("#form-cnt").hide();
+						$("div.own_part").hide();
+						//about panel
+						$("#basic-account-panel .panel-header").hide();
+				    }
+	                break;
+	            }
+	            case "ev_unbind": {
+	            	var URL_LOGOUT = $.su.url("/admin/system?form=logout"); //"./data/login.json"
+	            	var logoutProxy = new $.su.Proxy({
+						url: URL_LOGOUT,
+						autoLoad: false
+					});
+	            	var h = function(){
+						if (localStorage){
+							localStorage.setItem("token", "");
+						};
+						location.href = "/";
+					};
+					//owner----unbind & logout   user----unbind(actually delete) & logout
+            		unbindProxy.write({}, function(){
+	            		logoutProxy.write({}, h, h);
+	            	},function(errcode, others, data){
+	                    var errorcode = data.errorcode;
+	                    errorcode && (errorcode = String(errorcode).replace(/^-/, 'E'));
+	                    if(errorcode && $.su.cloudErrorCode.indexOf(errorcode) != -1){
+	                        $("span#cloud-error-msg-text").html($.su.CHAR.ERROR[errorcode]);
+	                        $("div#cloud-error-msg").msg("show");
+	                    }
+	            	},function(){
+	            	});
+					break;
+	            }
+	            //cloud login status
+	            case "ev_login": {
+				    var account = data.account;
+	                if(e.origin == $.su.url.cloudOrigin){
+	                	//cloud des decrypt
+	                    account.cloudPassword = $.su.DES3.decrypt(account.cloudPassword);
+	                }
+	                //device rsa doencrypt
+                    $("#cloud-password-hidden").password("setValue",account.cloudPassword);
+                    $("#cloud-password-hidden").password("doEncrypt");
+                    account.cloudPassword = $("#cloud-password-hidden").textbox("getValue");
+	                //send user message to server
+	                cloudLoginProxy.write({"username": account.cloudUserName, "password": account.cloudPassword},function(data){
+	                	isLogined = true;
+	                    $("#top-control-account span.icon").addClass("logined");
+                        $("#top-control-account #txt-account").html(account.cloudUserName);
+                        $("#top-control-account #top-control-account-info").html($.su.func.escapeHtml(account.cloudUserName));
+                        $("#top-control-account").show();
+						$("#top-control-logout").hide();
+
+	                    onReceive({data:{eType:"ev_goto",url:"devicePages&page=account"},source:null,origin:"_self"});
+						$("input.cloud_login_status").status("setNormal");
+	                },function(errcode, others, data){
+	                    var errorcode = data.errorcode;
+	                    errorcode && (errorcode = String(errorcode).replace(/^-/, 'E'));
+	                    if(errorcode && $.su.cloudErrorCode.indexOf(errorcode) != -1){
+	                        $("span#cloud-error-msg-text").html($.su.CHAR.ERROR[errorcode]);
+	                        $("div#cloud-error-msg").msg("show");
+	                    }
+	                    $("input.cloud_login_status").status("setNormal");
+	                    cloudLoginBtn.button("enable");
+	                },function(){
+	                    $("input.cloud_login_status").status("setNormal");
+	                    cloudLoginBtn.button("enable");
+
+	                    $("span#cloud-error-msg-text").html($.su.CHAR.ERROR["E5000"]);
+	                    $("div#cloud-error-msg").msg("show");
+	                });		    
+	                break;
+	            }
+	        }
+	    }
+	};
+
+	$(window).on("message", onReceive);
+
+	//卸载时候调用
+    $.su.app.runningModule.addUnloadHandler(function(){
+    	clearInterval(checkRegisterEmailStatusTime);
+	    //remove eventlistener
+	    $(window).off("message", onReceive);
+	});
+  
+
+	function changeHelp(type){//content: ["DDNS", "DYNAMIC_DNS", "DOMAIN_NAME_LIST"]
+		$("#help_login .BASIC_ACCOUNT_LOGIN").show();
+		if(type === 0){
+			$("#help_login .ACCOUNT_INFO").hide();
+			$("#help_login .DEVICE_INFO").hide();
+			$("#help_login .BOUND_ACCOUNT").hide();
+		}else if(type === 1){
+			$("#help_login .ACCOUNT_INFO").show();
+			$("#help_login .DEVICE_INFO").show();
+			$("#help_login .BOUND_ACCOUNT").show();
+		}else if(type === 2){
+			$("#help_login .ACCOUNT_INFO").show();
+			$("#help_login .DEVICE_INFO").show();
+			$("#help_login .BOUND_ACCOUNT").hide();
+		}
+	}
+
+	$(window).on("helpLoad", function(){
+		if(isLogined){
+			controlHelpChange();
+		}
+	});
+
+	function controlHelpChange(){
+		var role = false || $.su.deviceInfo.role;
+		if(role == 0){
+	    	helpType = 1;
+	    	changeHelp(helpType);
+	    }else if(role == 1){
+	    	helpType = 2;
+	    	changeHelp(helpType);
+	    }else{
+	    	helpType = 0;
+	    	changeHelp(helpType);
+	    }
+
+	}
+	var helpDDNS = new $.su.Help({
+		container: "div#help_login",
+		content: ["BASIC_ACCOUNT_LOGIN","ACCOUNT_INFO","DEVICE_INFO","BOUND_ACCOUNT"],
+		afterLoad: function(type){
+			var select = $("div#help_login").find("h4.title");
+			for(var i=0; i < this.content.length; ++i){
+				$(select[i]).addClass(this.content[i]);
+				var next = $(select[i]).next();
+				while(next.length && next.is("div")){
+					next.addClass(this.content[i]);
+					next = next.next();
+				}
+			}
+			changeHelp(helpType);
+		}
+	});
+
+});
+//]]>
+</script>
+</body>
+</html>

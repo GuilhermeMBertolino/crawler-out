@@ -1,0 +1,590 @@
+<style type="text/css">
+td.notice {
+    vertical-align:top;
+    width:230px;
+    margin:0;
+    text-align: left;
+    padding-top:15px
+}
+label.notice_lbl {
+    padding-top:5px;
+}
+td.value {
+    text-align: left;
+}
+</style>
+<h3 id="t_firewall">SPI Firewall</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container" id="enableFirewallV4">
+            <b id="t_v4" class="xl">IPv4 SPI Firewall:</b>
+            <ul>
+                <li>
+                    <button id="enableFirewallV4On" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="enableFirewallV4Off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div class="button-group-container" id="enableFirewallV6">
+            <b id="t_v6" class="xl">IPv6 SPI Firewall:</b>
+            <ul>
+                <li>
+                    <button id="enableFirewallV6On" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="enableFirewallV6Off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+    </form>
+</div>
+
+<h3 id="t_dos">DoS Protection</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container" id="enableDoSProtection">
+            <b id="t_en" class="xl">Enable DoS Protection</b>
+            <ul>
+                <li>
+                    <button id="enableDoSProtectionOn" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="enableDoSProtectionOff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+
+        <br />
+
+        <b id="t_icmpfilter" class="xl">ICMP-FLOOD Attack Filtering:</b>
+        <select id="ICMPFiltering">
+            <option class="T_c_off" value="0">Off</option>
+            <option class="T_c_low" value="1">Low</option>
+            <option class="T_c_mid" value="2">Middle</option>
+            <option class="T_c_hig" value="3">High</option>
+        </select>
+        <b id="t_udpfilter" class="xl">UDP-FLOOD Attack Filtering:</b>
+        <select id="UDPFiltering">
+            <option class="T_c_off" value="0">Off</option>
+            <option class="T_c_low" value="1">Low</option>
+            <option class="T_c_mid" value="2">Middle</option>
+            <option class="T_c_hig" value="3">High</option>
+        </select>
+        <b id="t_tcpfilter" class="xl">TCP-FLOOD Attack Filtering:</b>
+        <select id="TCPSYNFiltering">
+            <option class="T_c_off" value="0">Off</option>
+            <option class="T_c_low" value="1">Low</option>
+            <option class="T_c_mid" value="2">Middle</option>
+            <option class="T_c_hig" value="3">High</option>
+        </select>
+
+        <button type="submit" class="green T_save" id="saveDosProtection">Save</button>
+    </form>
+</div>
+
+<h3 id="t_list">Blocked DoS Host List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="panel-title" id="t_blockNum"></div>
+            <div class="table-btn">
+                <span id="refreshDosHostList" class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="clearDosHostList" class="delete-icon"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+
+        <table id="tableBlockedDosHostList">
+            <thead></thead>
+            <tbody id="bodyBlockedDosHostList">
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<h3 id="t_levelset">Dos Protection Level Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <table id="tblDos">
+            <tbody>
+                <tr>
+                    <td class="notice">
+                        <label id="t_icmplevel" class="notice_lbl">ICMP-FLOOD Protection Level:</label>
+                    </td>
+                    <td class="value">
+
+                        <div id="icmpLow" class="inline">
+                            <b class="T_c_lowth">Low Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="icmpMiddle" class="inline">
+                            <b class="T_c_midth">Middle Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="icmpHigh" class="inline">
+                            <b class="T_c_higth">High Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="notice">
+                        <label id="t_udplevel" class="notice_lbl">UDP-FLOOD Protection Level:</label>
+                    </td>
+                    <td class="value">
+
+                        <div id="udpLow" class="inline">
+                            <b class="T_c_lowth">Low Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="udpMiddle" class="inline">
+                            <b class="T_c_midth">Middle Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="udpHigh" class="inline">
+                            <b class="T_c_higth">High Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="notice">
+                        <label id="t_tcplevel" class="notice_lbl">TCP-SYN-FLOOD Protection Level:</label>
+                    </td>
+                    <td class="value">
+
+                        <div id="tcpLow" class="inline">
+                            <b class="T_c_lowth">Low Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="tcpMiddle" class="inline">
+                            <b class="T_c_midth">Middle Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                        <div id="tcpHigh" class="inline">
+                            <b class="T_c_higth">High Thresholds:</b>
+                            <input type="text" class="s" value="" maxlength="4" required />
+                        </div>
+                        <div class="inline">
+                            <p class="T_c_unit">(5~3600) Packets/Secs</p>
+                        </div>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="submit" class="green T_save" id="saveDosLevel">Save</button>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+(function() {
+    var hostStack;
+    $.tpInit(init);
+
+    $("#enableDoSProtectionOn").click(function() {
+        var ddosArg = {};
+        ddosArg.enable = 1;
+        $.act(ACT_SET, DDOS_CFG, null, null, ddosArg);
+        $.exe(function(ret) {
+            if (!ret) $.reload();
+        });
+    });
+
+    $("#enableDoSProtectionOff").click(function() {
+        var ddosArg = {};
+        ddosArg.enable = 0;
+        $.act(ACT_SET, DDOS_CFG, null, null, ddosArg);
+        $.exe(function(ret) {
+            if (!ret) {
+                $.reload();
+            }
+        });
+    });
+
+    $("#delete-icon").click(function() {
+        var td = $("#tableBlockedDosHostList").find("tbody tr td");
+        var tr = td.find("span.checkbox-click").parents("tr");
+        td.find("span.checkbox-click").each(function() {
+            var deleteStackIndex = $(this).parents("tr").find("td:eq(1)").text();
+
+            if (deleteStackIndex < 0 || deleteStackIndex == "") return true;
+            $.act(ACT_DEL, DOS_HOST, hostStack[deleteStackIndex], null);
+
+        });
+        tr.remove();
+        var grid = 0;
+        $("#tableBlockedDosHostList").find("thead tr th").each(function() {
+            grid++;
+        });
+        $.addEmptyBody($("#tableBlockedDosHostList"), grid);
+        $.exe(function(err) {
+            if (!err) {
+                $.reload();
+            }
+        });
+    });
+
+    $("#saveDosProtection").click(function() {
+        $.addLoading($(this));
+        doSaveDosProtection();
+    });
+
+    $("#saveDosLevel").click(function() {
+        $.addLoading($(this));
+        doSaveDosProtectionLevelSettings();
+    });
+
+    function init() {
+        hostStack = [];
+
+        var icmpMin = 5;
+        var icmpLow = $("#icmpLow").find("input").val();
+        var icmpMiddle = $("#icmpMiddle").find("input").val();
+        var icmpHigh = $("#icmpHigh").find("input").val();
+        var icmpMax = 3600;
+
+        var udpMin = 5;
+        var udpLow = $("#udpLow").find("input").val();
+        var udpMiddle = $("#udpMiddle").find("input").val();
+        var udpHigh = $("#udpHigh").find("input").val();
+        var udpMax = 3600;
+
+        var tcpMin = 5;
+        var tcpLow = $("#tcpLow").find("input").val();
+        var tcpMiddle = $("#tcpMiddle").find("input").val();
+        var tcpHigh = $("#tcpHigh").find("input").val();
+        var tcpMax = 3600;
+
+        var BlockedDoSHostListHeadArray = [{
+            "text": '<div><input type="checkbox" id="checkbox_1" /><label></label><div>',
+            "width": "5%"
+        }, {
+            "text": table_str.id,
+            "width": "5%"
+        }, {
+            "text": table_str.ip,
+            "width": "15%"
+        }, {
+            "text": table_str.mac,
+            "width": "15%"
+        }];
+
+        $.initTableHead($("#tableBlockedDosHostList"), BlockedDoSHostListHeadArray);
+        $("#tableBlockedDosHostList").tpTable(initBlockedDoSHostListTable);
+
+        $("#enableSPIFirewall_on").click(function() {
+            $(this).addClass("selected");
+            $("#enableSPIFirewall_off").removeClass("selected");
+        });
+
+        $("#enableSPIFirewall_off").click(function() {
+            $(this).addClass("selected");
+            $("#enableSPIFirewall_on").removeClass("selected");
+        });
+
+        var firewall = $.act(ACT_GET, FIREWALL, null, null, ['enableSpiFirewall']);
+        var firewall6 = $.act(ACT_GET, IP6_FIREWALL, null, null, ['enableIpv6SpiFirewall']);
+        var ddosCfg = $.act(ACT_GET, DDOS_CFG, null, null);
+
+        if (!$.exe()) {
+            var fwv4 = firewall.enableSpiFirewall;
+            var fwv6 = firewall6.enableIpv6SpiFirewall;
+
+            if (fwv4 == 1) {
+                $("#enableFirewallV4On").addClass("selected");
+            } else {
+                $("#enableFirewallV4Off").addClass("selected");
+            }
+            if (fwv6 == 1) {
+                $("#enableFirewallV6On").addClass("selected");
+            } else {
+                $("#enableFirewallV6Off").addClass("selected");
+            }
+
+            $('#enableFirewallV4').tpBtnGroup();
+            $('#enableFirewallV6').tpBtnGroup();
+
+            icmpLow = ddosCfg.icmpLevelLow;
+            icmpMiddle = ddosCfg.icmpLevelMiddle;
+            icmpHigh = ddosCfg.icmpLevelHigh;
+
+            udpLow = ddosCfg.udpLevelLow;
+            udpMiddle = ddosCfg.udpLevelMiddle;
+            udpHigh = ddosCfg.udpLevelHigh;
+
+            tcpLow = ddosCfg.synLevelLow;
+            tcpMiddle = ddosCfg.synLevelMiddle;
+            tcpHigh = ddosCfg.synLevelHigh;
+
+            $("#icmpLow").find("input").val(icmpLow);
+            $("#icmpMiddle").find("input").val(icmpMiddle);
+            $("#icmpHigh").find("input").val(icmpHigh);
+
+            $("#udpLow").find("input").val(udpLow);
+            $("#udpMiddle").find("input").val(udpMiddle);
+            $("#udpHigh").find("input").val(udpHigh);
+
+            $("#tcpLow").find("input").val(tcpLow);
+            $("#tcpMiddle").find("input").val(tcpMiddle);
+            $("#tcpHigh").find("input").val(tcpHigh);
+
+            if (ddosCfg.enable == 1)
+                $("#enableDoSProtectionOn").addClass("selected");
+            else
+                $("#enableDoSProtectionOff").addClass("selected");
+
+            if (ddosCfg.enableIcmpFilter == 1) {
+                if (ddosCfg.icmpThreshold == icmpLow)
+                    $('#ICMPFiltering option[value="1"]').prop("selected", "selected");
+                else if (ddosCfg.icmpThreshold == icmpMiddle)
+                    $('#ICMPFiltering option[value="2"]').prop("selected", "selected");
+                else if (ddosCfg.icmpThreshold == icmpHigh)
+                    $('#ICMPFiltering option[value="3"]').prop("selected", "selected");
+            } else if (ddosCfg.enableIcmpFilter == 0)
+                $('#ICMPFiltering option[value="0"]').prop("selected", "selected");
+
+            if (ddosCfg.enableUdpFilter == 1) {
+                if (ddosCfg.udpThreshold == udpLow)
+                    $('#UDPFiltering option[value="1"]').prop("selected", "selected");
+                else if (ddosCfg.udpThreshold == udpMiddle)
+                    $('#UDPFiltering option[value="2"]').prop("selected", "selected");
+                else if (ddosCfg.udpThreshold == udpHigh)
+                    $('#UDPFiltering option[value="3"]').prop("selected", "selected");
+            } else if (ddosCfg.enableUdpFilter == 0)
+                $('#UDPFiltering option[value="0"]').prop("selected", "selected");
+
+            if (ddosCfg.enableSynFilter == 1) {
+                if (ddosCfg.synThreshold == tcpLow)
+                    $('#TCPSYNFiltering option[value="1"]').prop("selected", "selected");
+                else if (ddosCfg.synThreshold == tcpMiddle)
+                    $('#TCPSYNFiltering option[value="2"]').prop("selected", "selected");
+                else if (ddosCfg.synThreshold == tcpHigh)
+                    $('#TCPSYNFiltering option[value="3"]').prop("selected", "selected");
+            } else if (ddosCfg.enableSynFilter == 0)
+                $('#TCPSYNFiltering option[value="0"]').prop("selected", "selected");
+        }
+
+        $("#refreshDosHostList").on("click", function(e) {
+            doRefresh();
+        });
+
+        $("#clearDosHostList").on("click", function(e) {
+            doClearAll();
+        });
+        $("#enableFirewallV4On").on("click", function() {
+            $.addLoading($(this));
+            $.act(ACT_SET, FIREWALL, null, null, ["enableSpiFirewall=1"]);
+            $.exe(function(err) {
+                $.removeLoading();
+                if (!err) {
+                    $.removeLoading();
+                    $.reload();
+                }
+            });
+        });
+        $("#enableFirewallV4Off").on("click", function() {
+            $.addLoading($(this));
+            $.act(ACT_SET, FIREWALL, null, null, ["enableSpiFirewall=0"]);
+            $.exe(function(err) {
+                $.removeLoading();
+                if (!err) {
+                    $.removeLoading();
+                    $.reload();
+                }
+            });
+        });
+        $("#enableFirewallV6On").on("click", function() {
+            $.addLoading($(this));
+            $.act(ACT_SET, IP6_FIREWALL, null, null, ["enableIpv6SpiFirewall=1"]);
+            $.exe(function(err) {
+                $.removeLoading();
+                if (!err) {
+                    $.removeLoading();
+                    $.reload();
+                }
+            });
+        });
+        $("#enableFirewallV6Off").on("click", function() {
+            $.addLoading($(this));
+            $.act(ACT_SET, IP6_FIREWALL, null, null, ["enableIpv6SpiFirewall=0"]);
+            $.exe(function(err) {
+                $.removeLoading();
+                if (!err) {
+                    $.removeLoading();
+                    $.reload();
+                }
+            });
+        });
+    }
+
+    function initBlockedDoSHostListTable() {
+        var array = new Array();
+        var ddosList = $.act(ACT_GL, DOS_HOST, null, null);
+        $.exe(function(err) {
+            if (err) {
+                $('#t_blockNum').append(0);
+                return;
+            }
+            $.each(ddosList, function(index) {
+                array.push([{
+                    "text": '<div><input type="checkbox" id="' + index + '"/><label></label></div>',
+                    "width": "5%"
+                }, {
+                    "text": index,
+                    "width": "5%"
+                }, {
+                    "text": $.num2ip(parseInt(this.ipAddress)),
+                    "width": "15%"
+                }, {
+                    "text": this.macAddress,
+                    "width": "15%"
+                }]);
+                hostStack[index] = this.__stack;
+            });
+
+            $.initTableBody($("#tableBlockedDosHostList"), array);
+            $.tablePages($("#tableBlockedDosHostList"), 5);
+
+            $('#t_blockNum').append(array.length);
+        });
+
+        $("span.edit-trash-icon").click(function() {
+            var deleteStackIndex = $(this).parents("tr").find("td:eq(1)").text();
+
+            if (deleteStackIndex < 0 || deleteStackIndex == "") return true;
+            $.act(ACT_DEL, DOS_HOST, hostStack[deleteStackIndex], null);
+            $.exe(function(err) {
+                if (!err) $.reload();
+            })
+        });
+    }
+
+    function doSaveDosProtection(obj) {
+        var ddosArg = {};
+
+        ddosArg.enableIcmpFilter = (($("#ICMPFiltering").data("value") == 0) ? 0 : 1);
+
+        if ($("#ICMPFiltering").data("value") == 1) {
+            ddosArg.icmpThreshold = $("#icmpLow").find("input").val();
+        } else if ($("#ICMPFiltering").data("value") == 2) {
+            ddosArg.icmpThreshold = $("#icmpMiddle").find("input").val();
+        } else if ($("#ICMPFiltering").data("value") == 3) {
+            ddosArg.icmpThreshold = $("#icmpHigh").find("input").val();
+        }
+
+
+        ddosArg.enableUdpFilter = (($("#UDPFiltering").data("value") == 0) ? 0 : 1);
+
+        if ($("#UDPFiltering").data("value") == 1) {
+            ddosArg.udpThreshold = $("#udpLow").find("input").val();
+        } else if ($("#UDPFiltering").data("value") == 2) {
+            ddosArg.udpThreshold = $("#udpMiddle").find("input").val();
+        } else if ($("#UDPFiltering").data("value") == 3) {
+            ddosArg.udpThreshold = $("#udpHigh").find("input").val();
+        }
+
+
+        ddosArg.enableSynFilter = (($("#TCPSYNFiltering").data("value") == 0) ? 0 : 1);
+
+        if ($("#TCPSYNFiltering").data("value") == 1) {
+            ddosArg.synThreshold = $("#tcpLow").find("input").val();
+        } else if ($("#TCPSYNFiltering").data("value") == 2) {
+            ddosArg.synThreshold = $("#tcpMiddle").find("input").val();
+        } else if ($("#TCPSYNFiltering").data("value") == 3) {
+            ddosArg.synThreshold = $("#tcpHigh").find("input").val();
+        }
+
+        $.act(ACT_SET, DDOS_CFG, null, null, ddosArg);
+
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                $.reload();
+            }
+        });
+    }
+
+    function doSaveDosProtectionLevelSettings() {
+        var ddosArg = {};
+
+        ddosArg.icmpLevelLow = $("#icmpLow").find("input").val();
+        ddosArg.icmpLevelMiddle = $("#icmpMiddle").find("input").val();
+        ddosArg.icmpLevelHigh = $("#icmpHigh").find("input").val();
+
+        var icmpFilter = $('#ICMPFiltering').data('value');
+        ddosArg.icmpThreshold = (icmpFilter=='1'?ddosArg.icmpLevelLow:(icmpFilter=='2'?ddosArg.icmpLevelMiddle:(icmpFilter=='3'?ddosArg.icmpLevelHigh:ddosArg.icmpLevelLow)));
+
+        ddosArg.udpLevelLow = $("#udpLow").find("input").val();
+        ddosArg.udpLevelMiddle = $("#udpMiddle").find("input").val();
+        ddosArg.udpLevelHigh = $("#udpHigh").find("input").val();
+
+        var udpFilter = $('#UDPFiltering').data('value');
+        ddosArg.udpThreshold = (udpFilter=='1'?ddosArg.udpLevelLow:(udpFilter=='2'?ddosArg.udpLevelMiddle:(udpFilter=='3'?ddosArg.udpLevelHigh:ddosArg.udpLevelLow)));
+
+        
+        ddosArg.synLevelLow = $("#tcpLow").find("input").val();
+        ddosArg.synLevelMiddle = $("#tcpMiddle").find("input").val();
+        ddosArg.synLevelHigh = $("#tcpHigh").find("input").val();
+
+        var synFilter = $('#TCPSYNFiltering').data('value');
+        ddosArg.synThreshold = (synFilter=='1'?ddosArg.synLevelLow:(synFilter=='2'?ddosArg.synLevelMiddle:(synFilter=='3'?ddosArg.synLevelHigh:ddosArg.synLevelLow)));
+
+        $.act(ACT_SET, DDOS_CFG, null, null, ddosArg);
+
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                $.reload();
+            }
+        });
+    }
+
+    function doRefresh() {
+        $.addLoading($("#refreshDosHostList"), 200, function() {
+            $.reload()
+        });
+    }
+
+    function doClearAll() {
+        $.act(ACT_SET, DDOS_CFG, null, null, ["action=1"]);
+        $.exe(function(ret) {
+            if (!ret) $.reload();
+        });
+    }
+})();
+</script>

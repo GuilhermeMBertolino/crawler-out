@@ -1,0 +1,1 @@
+jQuery.su.moduleManager.define("userExperience",{models:["improvementModel"],views:["userExperienceView"],listeners:{ev_on_launch:function(e,n,i,o,t,u,r){this.unRegisterAutoSaveData([o.improvementModel]),o.improvementModel.load()}},init:function(e,n,i,o,t,u){this.control({"#uxp-enable":{ev_view_change:function(e,n){i.improvementModel.submit()}}})}},function(e,n,i,o,t,u){});

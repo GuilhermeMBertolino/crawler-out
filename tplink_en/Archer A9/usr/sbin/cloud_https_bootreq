@@ -1,0 +1,79 @@
+#!/usr/bin/lua
+
+local cloud_https = require "cloud_req.cloud_https"
+local cloud_getFirmware = require "cloud_req.cloud_getFirmware"
+local cloud_account  = require "cloud_req.cloud_account"
+local sys   = require "luci.sys"
+local fs    = require "luci.fs"
+local uci   = require("luci.model.uci")
+local uci_r = uci.cursor()
+local dbg   = require "luci.tools.debug"
+
+local need_checkupgrade = uci_r:get("cloud_config", "device_status", "need_checkupgrade") or "0"
+local need_unbind = uci_r:get("cloud_config", "device_status", "need_unbind") or "0"
+if need_checkupgrade == "1" or need_unbind == "1" then
+	--check internet status every 5 minutes until online
+	while sys.call("online-test") ~= 0 do
+		nixio.nanosleep(300)
+	end
+
+	local base_time_s = 60 --base time 1 minute
+	local unbind_done = false
+	local checkupgrade_done = false
+	local ret, error_code
+
+	--try 100 times at most and
+	for i = 0, 99 do
+		--need to init uci every time, because the status may be changed
+		uci_r = uci.cursor()
+
+		--try 10 times and 2 minutes interval for trying to unbind
+		--time interval as 3 6 9 12 15 ... minutes
+		need_unbind = uci_r:get("cloud_config", "device_status", "need_unbind") or "0"
+		if need_unbind == "1"
+			and unbind_done == false
+			and i % 3 == 0
+		then
+			if i / 3 < 10 then
+				error_code = cloud_account.unbind_device()
+				if error_code == 0 then
+					unbind_done = true
+				end
+			else
+				unbind_done = true
+			end
+		end
+
+		--try 5 times and 5 minutes interval for checking upgrade
+		--time interval as 5 10 15 20 25 minutes
+		need_checkupgrade = uci_r:get("cloud_config", "device_status", "need_checkupgrade") or "0"
+		if need_checkupgrade == "1"
+			and checkupgrade_done == false
+			and i % 5 == 0
+		then
+			if i / 5 < 5 then
+				ret, error_code = cloud_getFirmware.get_fwlist()
+				if ret then
+					checkupgrade_done = true
+				end
+			else
+				checkupgrade_done = true
+			end
+		end
+
+		--if illgal device, just break
+		if false == cloud_https.check_device() then
+			break
+		end
+
+		--all done
+		if unbind_done == true
+			and checkupgrade_done == true
+		then
+			break
+		end
+
+		nixio.nanosleep(base_time_s)
+	end
+end
+

@@ -1,0 +1,249 @@
+	<meta charset="UTF-8">
+<SCRIPT language="javascript" src="../dynaform/common.js" type="text/javascript"></SCRIPT>
+	<script type="text/javascript" src="../dynaform/encrypt.js"></script>
+	<script type="text/javascript" src="../dynaform/cryptoJS.min.js"></script>
+	<script type="text/javascript" src="../dynaform/tpEncrypt.js"></script>
+<script type="text/javascript" language="javascript">
+var connection=getElesByName(document, "encryptedData");
+for(var i=0;i<connection.length;i++){
+	var rep=connection[i].getAttribute("data-name");
+	var unpData = window.top.parse(window[rep]);
+	try{eval(unpData);}
+	catch(exception){alert(exception);}
+}
+var runState = 0; 
+var total_time = 0, dotNum, maxY; 
+var format = new Array(0,"bps");
+var formatArray = new Array();
+var dot = new Array();
+var i; 
+var Rates = new Array(0,0,0,0,0,0);
+var maxTxRate = 0, minTxRate = 0, aveTxRate = 0, maxRxRate = 0, minRxRate = 0, aveRxRate = 0;
+var	ratesFormatArray = new Array(0,"bps");
+
+
+for (i=0;i<21;i++) 
+{
+	dot[i] = new Array();
+}
+
+function initInfo()
+{
+	var i, j; 
+	for (i=0;i<21;i++) 
+	{
+		formatArray[i] = 0;
+		for(j=0;j<6;j++) dot[i][j] = 0; 
+	}
+	total_time = 0;
+	format = [0,"bps"];
+}
+
+function setRatesInfo(time)
+{	
+	var maxRate;
+	var i, j;
+	
+	if(1 >= total_time)
+	{
+		maxTxRate = minTxRate = aveTxRate = dot[time][0];
+		maxRxRate = minRxRate = aveRxRate = dot[time][1];
+	}
+	else
+	{
+		if(maxTxRate < dot[time][0])
+		{
+			maxTxRate = dot[time][0];
+		}
+		if(maxRxRate < dot[time][1])
+		{
+			maxRxRate = dot[time][1];
+		}
+		if(minTxRate > dot[time][0])
+		{
+			minTxRate = dot[time][0];
+		}
+		if(minRxRate > dot[time][1])
+		{
+			minRxRate = dot[time][1];
+		}
+		aveTxRate += ((dot[time][0] - aveTxRate) / total_time);
+		aveRxRate += ((dot[time][1] - aveRxRate) / total_time);
+	}
+	Rates[0] = maxTxRate;
+	Rates[1] = maxRxRate;
+	Rates[2] = minTxRate;
+	Rates[3] = minRxRate;
+	Rates[4] = aveTxRate;
+	Rates[5] = aveRxRate;
+	maxRate = (maxTxRate>maxRxRate)?maxTxRate:maxRxRate;
+	ratesFormatArray = getRateFormat(maxRate);
+	for(j = 0;j < 6;j++)
+	{
+		for(i = 1;i <= ratesFormatArray[0];i++)
+		{
+			Rates[j] /= 1024;
+		}
+		Rates[j] = Math.floor(Rates[j] * 10000) / 10000;
+	}	
+}
+
+function getRateFormat(rate)
+{	
+	var times = 0
+	var format = new Array();
+	while(rate > 1023)
+	{
+		rate /= 1024;
+		times++;
+	}
+	switch(times)
+	{
+		case 0:
+			format[1] = "bps";
+			format[0] = 0;
+			break;
+		case 1:
+			format[1] = "Kbps";
+			format[0] = 1;
+			break;
+		case 2:
+			format[1] = "Mbps";
+			format[0] = 2;
+			break;
+		case 3:
+			format[1] = "Gbps";
+			format[0] = 3;
+			break;
+		default: 
+			format[0] = 0;
+			format[1] = "error"; 
+			break;
+	}
+	return format;
+}
+
+function getRateScale(num)
+{
+	var scale, temp;
+	temp = maxY / num;
+	scale = (temp - temp % 1) + 1;
+	return scale;
+}
+
+function getMaxValue(valueArray)
+{
+	var length, max = 0;
+	length = valueArray.length - 1;
+	for(;length >= 0;length--)
+	{
+		if(valueArray[length] > max)
+		{
+			max = valueArray[length];
+		}
+	}
+	return max;
+}
+
+function updateDotsInfo(txBytes,rxBytes)
+{
+	var i, j;
+	var time_now, time_last;
+	var	_format = new Array();
+	var	tempArray = new Array();
+	var max;
+	
+	time_now = total_time % 21;
+	dotNum = (total_time > 20)?21:(time_now+1);
+	time_last = time_now - 1;
+	if(time_last < 0)
+	{
+		time_last += 21;
+	}
+	dot[time_now][4] = txBytes;
+	dot[time_now][5] = rxBytes;
+	dot[time_now][0] = (dot[time_now][4] - dot[time_last][4]) * 2;//per second//1035550;//
+	dot[time_now][1] = (dot[time_now][5] - dot[time_last][5]) * 2;//333;//
+	
+	max = (dot[time_now][1] > dot[time_now][0])?dot[time_now][1]:dot[time_now][0];
+	_format = getRateFormat(max);
+	formatArray[time_now] = _format[0];
+	max = getMaxValue(formatArray);
+	if(_format[0] == max)
+	{
+		format = _format;
+	}
+	if( _format[1] == "error")
+	{
+		//alert(str_pages.ntw_wlan_throughput.js_throughput_error);
+		alert(js_throughput_error = "THROUGHPUT ERROR OCCUR!");
+		total_time = 0;
+		runState = 0;
+		return;
+	}
+	if(dot[time_now][0] < 0 ||  dot[time_now][1] < 0)
+	{
+		dot[time_now][0] = dot[time_last][0];
+		dot[time_now][1] = dot[time_last][1];
+	}
+	if(0 == total_time)
+	{
+		dot[0][0] = 0;
+		dot[0][1] = 0;
+		format = [0,"bps"];
+		formatArray[0] = [0,"bps"];
+	}
+	for(i = 0;i <= format[0];i++)
+	{
+		for(j = 0;j < dotNum;j++)
+		{
+			if(i == 0)
+			{
+				dot[j][2] = dot[j][0];
+				dot[j][3] = dot[j][1];
+			}
+			else
+			{
+				dot[j][2] /= 1024;
+				dot[j][3] /= 1024;
+			}
+			tempArray[j] = (dot[j][2] > dot[j][3])?dot[j][2]:dot[j][3];
+		}
+	}
+	maxY = getMaxValue(tempArray);
+	setRatesInfo(time_now);
+}
+
+function startTraffic()
+{
+	initInfo();
+	runState = 1;
+	frames["refresh"].doPage();
+}
+
+function stopTraffic()
+{
+	runState = 0;
+}
+</script></head>
+<body onload="setTagStr(document,'ntw_wlan_throughput');LoadHelp('WlanThroughputHelpRpm.htm');">
+<center><form action="WlanThroughputRpm.htm" enctype="multipart/form-data" method="get">
+<table>
+<div id = "t_title" class="h1" name="t_title">Throughput Monitor</div>
+<TR><TD class=blue colspan=2></TD></TR>
+</table>
+<br>
+<table>
+	<tr>
+		<iframe frameborder='no' border='0' name="refresh" src = "WlanThroughputIframe.htm" allowtransparency = "true" noResize scrolling=no id="refresh">
+		</iframe>
+	</tr>
+<tr><table>
+	<TR><TD class=blue colspan=3></TD></TR>
+	<tr><td width=40%></td><td>
+	<input type = button id = "watch_start" name = "watch_start" value = "Start" onClick = "startTraffic();">
+	<input type = button id = "watch_stop" name = "watch_stop" value = "Stop" onClick = "stopTraffic();">
+	</td></tr>
+</table></tr>                      
+</table>
+</form></center></body></html>

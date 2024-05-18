@@ -1,1 +1,0 @@
-../init.d/S36acos_mount-fs.sh

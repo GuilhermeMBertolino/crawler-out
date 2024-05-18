@@ -1,0 +1,769 @@
+﻿<style type="text/css">
+    p.cfg-line, div.cfg-line {
+        margin: 20px 0;
+    }
+    a.link {
+        color: #4acbd6;
+        text-decoration: none;
+    }
+    table span.table-item-disabled {
+        color: #b3b3b3;
+    }
+    table span.table-operation {
+        color: #4acbd6;
+        cursor: pointer;
+    }
+</style>
+<h3 id="et">Dynamic DNS Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b id="t_servprov">Service Provider:</b>
+
+            <span id="tplinkRadioSpan" class="nd">
+                <input type="radio" name="ddns_provider" id="tplink"/>
+                <label class="T_tplink">tplink</label>
+            </span>
+            <input type="radio" name="ddns_provider" id="dyndns"/>
+            <label id="t_dns_dyndns">Dyndns</label>
+            <input type="radio" name="ddns_provider" id="noip"/>
+            <label id="t_dns_noip">NO-IP</label>
+            <a id="btn_go_register" target="_window" class="link" href="javascript:void(0)">Go to register..</a>
+        </div>
+
+        <div class="nd" id="hidedyndns">
+            <div class="pure-control-group">
+                <b class="T_c_user">Username:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="dyndns_usr"/>
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_pwd">Password:</b>
+                <input type="password" maxlength="64" class="tp-input-text" id="dyndns_pwd"/>
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_domain">Domain Name:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="dyndns_domain"/>
+            </div>
+            <button type="submit" class="blue inline block T_login2 tr-l" id="login_dyndns">Login</button>
+            <button type="submit" class="blue inline block T_logout tr-l" id="logout_dyndns">Logout</button>
+            <input type="text" readonly="ture" class="tp-input-text l" id="dyndns_status"/>
+            <button type="submit" class="green T_save" id="save_dyndns">Save</button>
+        </div>
+        <div class="nd" id="hidenoipdns">
+            <div class="pure-control-group">
+                <b class="T_c_user">Username:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="noip_usr"/>
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_pwd">Password:</b>
+                <input type="password" maxlength="64" class="tp-input-text" id="noip_pwd"/>
+            </div>
+            <div class="pure-control-group">
+                <b class="T_c_domain">Domain Name:</b>
+                <input type="text" maxlength="64" class="tp-input-text" id="noip_domain"/>
+            </div>
+            <button type="submit" class="blue inline block T_login2 tr-l" id="login_noip">Login</button>
+            <button type="submit" class="blue inline block T_logout tr-l" id="logout_noip">Logout</button>
+            <input type="text" readonly="ture" class="tp-input-text l" id="noip_status"/>
+            <button type="submit" class="green T_save" id="save_noip">Save</button>
+        </div>
+        <div class="nd" id="hidetplink">
+            <div id="tplink-noInternet" class="nd">
+                <p class="cfg-line T_ddnsUnavailable"></p>
+                <p class="cfg-line T_loginTips"></p>
+            </div>
+            <div id="tplink-form" class="nd">
+                <div class="pure-control-group">
+                    <b class="T_c_currentDomain">current Domain</b>
+                    <input type="text" readonly="true" id="currentDomain" class="xxxxl"/>
+                </div>
+                <div class="part-separate"></div>
+                <h3 id="t_domainNameList">domain Name List</h3>
+
+                <div style="position: relative;">
+                    <div class="table-op">
+                        <div class="table-btn">
+                            <span id="register" class="add-icon"></span>
+                            <label class="T_register">register</label>
+                            <span id="delDNL" class="delete-icon"></span>
+                            <label class="T_del">delete</label>
+                        </div>
+                    </div>
+                    <table id="tableDNL">
+                        <thead></thead>
+                        <tbody>
+                        <tr class="nd">
+                            <td colspan="6">
+                                <div>
+                                    <b class="T_c_domain">domain name:</b>
+                                    <input type="text" id="domainDNL" maxlength="20"/>
+                                    <span>.tplinkdns.com</span>
+                                </div>
+
+                                <div class="inline-btn-right">
+                                    <button type="submit" class="green T_cancel" id="cancelDNL">cancel</button>
+                                    <button type="submit" class="green T_save" id="saveDNL">save</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script language="javascript" type="text/javascript">
+(function () {
+    var CLIENT_CONNING = 1;
+    var CLIENT_CONNED = 2;
+
+    var stateArray = new Array(5);
+    stateArray[0] = m_str.disconnected;
+    stateArray[1] = m_str.connecting;
+    stateArray[2] = m_str.success;
+    stateArray[3] = s_str.auth_fail;
+    stateArray[4] = s_str.wrong_domain;
+
+    var dynCfg;
+    var noipCfg;
+    var ddnsType = "";
+    var cloudCfg;
+    var userObj;
+    var dnsList;
+
+    var CLOUD_DDNS_DEFUALT = 0,
+            CLOUD_DDNS_QUERY_ING = 1,
+            CLOUD_DDNS_QUERY_SUCC = 2,
+            CLOUD_DDNS_REG_ING = 3,
+            CLOUD_DDNS_REG_SUCC = 4,
+            CLOUD_DDNS_BIND_ING = 5,
+            CLOUD_DDNS_BIND_SUCC = 6,
+            CLOUD_DDNS_UNBIND_ING = 7,
+            CLOUD_DDNS_UNBIND_SUCC = 8,
+            CLOUD_DDNS_DEL_ING = 9,
+            CLOUD_DDNS_DEL_SUCC = 10,
+            CLOUD_DDNS_PARAM_FAILED = 20000, /* invalid param, such as domain names is not valid */
+            CLOUD_DDNS_REGISTERED_FAILED = 20001, /* domain name has been registered. */
+            CLOUD_DDNS_TIMEOUT = 20002, /* a single device binds too many domain names. */
+            CLOUD_DDNS_BIND_TOO_MANY_FAILED = 20003, /* a single device binds too many domain names. */
+            CLOUD_DDNS_BOUND_FAILED = 20004, /* the domain has been bound to another device. */
+            CLOUD_DDNS_SYS_FAILED = 20005, /* system error, such as db operation failed. */
+            CLOUD_DDNS_FORBIDDED_FAILED = 20006, /* domain names contain fobidden words. */
+            CLOUD_DDNS_NOT_EXIST_FAILED = 20007, /* domain names is not existed. */
+            CLOUD_DDNS_REG_TOO_MANY_FAILED = 20008; /* a single device registers too many domain names. */
+
+
+    function setDdnsType(type) {
+        ddnsType = type;
+        $('#' + ddnsType).prop('checked', true);
+    }
+
+    function init(initType) {
+        $.addLoading();
+        var stateIndex = 0;
+        var sevTypeIndex = 0;
+
+        dynCfg = $.act(ACT_GET, DYN_DNS_CFG, null, null);
+        noipCfg = $.act(ACT_GET, NOIP_DNS_CFG, null, null);
+        if (INCLUDE_CLOUD) {
+            $('#tplinkRadioSpan').removeClass('nd');
+            cloudCfg = $.act(ACT_GET, CLOUD_DDNS, null, null);
+            userObj = $.act(ACT_GET, CURRENT_USER);
+        }
+
+        if (!$.exe()) {
+            if (initType == 'tplink' || (initType == undefined && INCLUDE_CLOUD && cloudCfg.enable == 1)) {
+                setDdnsType("tplink");
+            } else if (initType == undefined) {
+                if (dynCfg.enable == 1) {
+                    setDdnsType("dyndns");
+                } else if (noipCfg.enable == 1) {
+                    setDdnsType("noip");
+                } else {
+                    setDdnsType('dyndns');
+                }
+            } else {
+                setDdnsType(initType);
+            }
+            $.removeLoading();
+        }
+    }
+
+    function getRtafter5s(state) {
+        if (state == CLIENT_CONNING)
+            $.timeout(function () {
+                getStatus();
+            }, 5000);
+    }
+
+    function getStatus() {
+        dynCfg = $.act(ACT_GET, DYN_DNS_CFG, null, null);
+        noipCfg = $.act(ACT_GET, NOIP_DNS_CFG, null, null);
+
+        if (!$.exe()) {
+            if (ddnsType == 'dyndns') {
+                var stateIndex = dynCfg.state;
+
+                if ((stateIndex >= 0) && (stateIndex < stateArray.length)) {
+                    $("#dyndns_status").prop('value', stateArray[stateIndex]);
+                } else {
+                    $("#dyndns_status").prop('value', stateArray[0]);
+                }
+
+                if ((dynCfg.enable == 1) && (stateIndex == CLIENT_CONNING)) {
+                    getRtafter5s(stateIndex);
+                    $("#login_dyndns").prop("disabled", true);
+                    $("#logout_dyndns").prop("disabled", true);
+                } else if ((dynCfg.enable == 1) && (stateIndex == CLIENT_CONNED)) {
+                    $("#login_dyndns").prop("disabled", true);
+                    $("#logout_dyndns").prop("disabled", false);
+                } else {
+                    $("#login_dyndns").prop("disabled", false);
+                    $("#logout_dyndns").prop("disabled", true);
+                }
+            } else if (ddnsType == 'noip') {
+                var nstateIndex = noipCfg.state;
+
+                if (((nstateIndex - 3) >= 0) && ((nstateIndex - 3) < stateArray.length)) {
+                    $("#noip_status").prop('value', stateArray[(nstateIndex - 3)]);
+                } else {
+                    $("#noip_status").prop('value', stateArray[0]);
+                }
+
+                if ((noipCfg.enable == 1) && ((nstateIndex - 3) == CLIENT_CONNING)) {
+                    getRtafter5s((nstateIndex - 3));
+                    $("#login_noip").prop("disabled", true);
+                    $("#logout_noip").prop("disabled", true);
+                } else if ((noipCfg.enable == 1) && ((nstateIndex - 3) == CLIENT_CONNED)) {
+                    $("#login_noip").prop("disabled", true);
+                    $("#logout_noip").prop("disabled", false);
+                } else {
+                    $("#login_noip").prop("disabled", false);
+                    $("#logout_noip").prop("disabled", true);
+                }
+            }
+        }
+    }
+
+    $.helpControl.ddnsStep = undefined;
+    $.helpControl.cloudLogin = 0;
+
+    function showParams() {
+        if (ddnsType == 'dyndns') {
+            $.helpControl.ddnsStep = 1;
+            $("#dyndns_domain").prop('value', dynCfg.userDomain);
+            $("#dyndns_usr").prop('value', dynCfg.userName);
+            $("#dyndns_pwd").prop('value', dynCfg.password);
+            var stateIndex = dynCfg.state;
+
+            if ((stateIndex >= 0) && (stateIndex < stateArray.length)) {
+                $("#dyndns_status").prop('value', stateArray[stateIndex]);
+            } else {
+                $("#dyndns_status").prop('value', stateArray[0]);
+            }
+
+            if ((dynCfg.enable == 1) && (stateIndex == CLIENT_CONNING)) {
+                getRtafter5s(stateIndex);
+                $("#login_dyndns").prop("disabled", true);
+                $("#logout_dyndns").prop("disabled", true);
+            } else if ((dynCfg.enable == 1) && (stateIndex == CLIENT_CONNED)) {
+                $("#login_dyndns").prop("disabled", true);
+                $("#logout_dyndns").prop("disabled", false);
+            } else {
+                $("#login_dyndns").prop("disabled", false);
+                $("#logout_dyndns").prop("disabled", true);
+            }
+            $.removeLoading();
+
+        } else if (ddnsType == 'noip') {
+            $.helpControl.ddnsStep = 1;
+            $("#noip_domain").prop('value', noipCfg.userDomain);
+            $("#noip_usr").prop('value', noipCfg.userName);
+            $("#noip_pwd").prop('value', noipCfg.password);
+
+            var nstateIndex = noipCfg.state;
+
+            if (((nstateIndex - 3) >= 0) && ((nstateIndex - 3) < stateArray.length)) {
+                $("#noip_status").prop('value', stateArray[(nstateIndex - 3)]);
+            } else {
+                $("#noip_status").prop('value', stateArray[0]);
+            }
+
+            if ((noipCfg.enable == 1) && ((nstateIndex - 3) == CLIENT_CONNING)) {
+                getRtafter5s((nstateIndex - 3));
+                $("#login_noip").prop("disabled", true);
+                $("#logout_noip").prop("disabled", true);
+            } else if ((noipCfg.enable == 1) && ((nstateIndex - 3) == CLIENT_CONNED)) {
+                $("#login_noip").prop("disabled", true);
+                $("#logout_noip").prop("disabled", false);
+            } else {
+                $("#login_noip").prop("disabled", false);
+                $("#logout_noip").prop("disabled", true);
+            }
+            $.removeLoading();
+
+        } else if (ddnsType == 'tplink') {
+            $.helpControl.ddnsStep = 0;
+            if (userObj.userSetting == 2 && userObj.loginStatus == 2) {
+                $.addLoading();
+                //云账号已登录
+                $.helpControl.cloudLogin = 1;
+                $('#tplink-noInternet').hide();
+                $('#tplink-form').show();
+                $('#tableDNL').tpTable(initTableDNL);
+            } else{
+                $.helpControl.cloudLogin = 0;
+                $('#tplink-noInternet').show();
+                $('#tplink-form').hide();
+                $.removeLoading();
+            }
+        }
+        $.loadHelp($.curPage.replace(/\.htm$/, ''));
+    }
+
+    function doInputCheck() {
+        var element;
+
+        if (ddnsType == "dyndns") {
+
+            if ($("#dyndns_usr").prop('value') == "") {
+                $.alert(ERR_DDNS_USERNAME_EMPTY);
+                element = $("#dyndns_usr");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+            if ($("#dyndns_pwd").prop('value') == "") {
+                $.alert(ERR_DDNS_PWD_EMPTY);
+                element = $("#dyndns_pwd");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+
+            if ($("#dyndns_domain").prop('value') == "") {
+                $.alert(ERR_DDNS_DOMAIN_EMPTY);
+                element = $("#dyndns_domain");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+            if ($.isdomain($("#dyndns_domain").prop('value')) == false) {
+
+                $.alert(ERR_DDNS_DOMAIN_INVAD);
+                element = $("#dyndns_domain");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+        }
+        if (ddnsType == "noip") {
+
+            if ($("#noip_usr").prop('value') == "") {
+                $.alert(ERR_DDNS_USERNAME_EMPTY);
+                element = $("#noip_usr");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+            if ($("#noip_pwd").prop('value') == "") {
+                $.alert(ERR_DDNS_PWD_EMPTY);
+                element = $("#noip_usr");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+
+            if ($("#noip_domain").prop('value') == "") {
+                $.alert(ERR_DDNS_DOMAIN_EMPTY);
+                element = $("#noip_domain");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+
+            if ($.isdomain($("#noip_domain").prop('value')) == false) {
+                $.alert(ERR_DDNS_DOMAIN_INVAD);
+                element = $("#noip_domain");
+                if (element.length > 0) {
+                    element.focus();
+                    element.select();
+                }
+                return false;
+            }
+        }
+
+
+        return true;
+    }
+
+    function ResetStatus() {
+        window.status = " ";
+        return true;
+    }
+
+    function clickSave() {
+        if (doInputCheck() == false) {
+            return false;
+        }
+        doSave();
+    }
+
+    function doSave() {
+        var usr;
+        var pwd;
+        var domain;
+        if (ddnsType == "dyndns") {
+            usr = $('#dyndns_usr').prop('value');
+            pwd = $('#dyndns_pwd').prop('value');
+            domain = $('#dyndns_domain').prop('value');
+
+            $.act(ACT_SET, DYN_DNS_CFG, dynCfg.__stack, null, ["enable=1",
+                        "userName=" + usr,
+                        "password=" + pwd,
+                        "userDomain=" + domain,
+                "login=1"
+            ]);
+            if (noipCfg.enable == 1)
+                $.act(ACT_SET, NOIP_DNS_CFG, noipCfg.__stack, null, ["enable=0"]);
+        } else if (ddnsType == "noip") {
+            usr = $('#noip_usr').prop('value');
+            pwd = $('#noip_pwd').prop('value');
+            domain = $('#noip_domain').prop('value');
+
+            $.act(ACT_SET, NOIP_DNS_CFG, noipCfg.__stack, null, ["enable=1",
+                        "userName=" + usr,
+                        "password=" + pwd,
+                        "userDomain=" + domain,
+                "login=1"
+            ]);
+            if (dynCfg.enable == 1)
+                $.act(ACT_SET, DYN_DNS_CFG, dynCfg.__stack, null, ["enable=0"]);
+        }
+
+        $.exe(function(err) {
+            getStatus();
+            init();
+        });
+
+    }
+
+    function doLogout() {
+        if (ddnsType == "dyndns") {
+            $.act(ACT_SET, DYN_DNS_CFG, dynCfg.__stack, null, ["login=0"]);
+        } else if (ddnsType == "noip") {
+            $.act(ACT_SET, NOIP_DNS_CFG, noipCfg.__stack, null, ["login=0"]);
+        }
+
+        if (!$.exe()) {
+            init();
+        }
+    }
+
+    $('#tplink').on('click.ddns', function (e) {
+        $("a#btn_go_register").hide();
+        $("div#hidetplink").show();
+        $("div#hidedyndns").hide();
+        $("div#hidenoipdns").hide();
+        $.act(ACT_SET, CLOUD_DDNS, null, null, ['enable=1']);
+        $.exe(function() {});
+        setDdnsType('tplink');
+        showParams();
+
+    });
+    $('#dyndns').on('click.ddns', function (e) {
+        $("a#btn_go_register").attr("href", "http://dyn.com/dns/").show();
+        $("div#hidedyndns").show();
+        $("div#hidenoipdns").hide();
+        $("div#hidetplink").hide();
+        if (INCLUDE_CLOUD) {
+            $.act(ACT_SET, CLOUD_DDNS, null, null, ['enable=0']);
+            $.exe(function() {});
+        }
+        setDdnsType('dyndns');
+        showParams();
+
+    });
+
+    $('#noip').on('click.ddns', function (e) {
+        $("a#btn_go_register").attr("href", "http://www.noip.com").show();
+        $("div#hidedyndns").hide();
+        $("div#hidenoipdns").show();
+        $("div#hidetplink").hide();
+        if (INCLUDE_CLOUD) {
+            $.act(ACT_SET, CLOUD_DDNS, null, null, ['enable=0']);
+            $.exe(function() {});
+        }
+        setDdnsType('noip');
+        showParams();
+
+    });
+
+    $('#save_dyndns').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading($(this));
+        clickSave();
+    });
+
+    $('#save_noip').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading($(this));
+        clickSave();
+    });
+
+    $('#login_dyndns').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading();
+        clickSave();
+    });
+
+    $('#login_noip').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading();
+        clickSave();
+    });
+
+    $('#logout_dyndns').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading();
+        doLogout();
+    });
+
+    $('#logout_noip').on('click.ddns', function (e) {
+        e.preventDefault();
+        $.addLoading();
+        doLogout();
+    });
+
+    $('#tp-link-login-btn').on('click', function() {
+        $.goToOtherPage('cloudBasic.htm', 'basic');
+    });
+
+    $('#tableDNL').on('click', 'span.table-operation, span.edit-trash-icon', function() {
+        $.addLoading();
+        var domainName = $(this).closest('tr').find('td:eq(1)').text();
+        if ($(this).hasClass('edit-trash-icon')) {
+            itemManage('delete', domainName);
+        }else if ($(this).hasClass('bind')) {
+            if ($('#currentDomain').val() != '') {
+                $.alert($.tpLang.ddns_nstr.unbindNote.replace('%domain%', domainName));
+                return;
+            }
+            itemManage('bind', domainName);
+        } else if ($(this).hasClass('unbind')) {
+            itemManage('unbind', domainName);
+        }
+    });
+
+    $('#delDNL').on('click', function() {
+        var rows = $('#tableDNL tbody tr:has(.table-content span.checkbox-click)');
+        if (rows.length == 0) {
+            return;
+        } else {
+            $.confirm($.tpLang.c_str.del_choosed, function() {
+                $.addLoading();
+                var domainNames = '';
+                $.each(rows,  function(index) {
+                    if (index >= 1) {
+                        domainNames += ';';
+                    }
+                    domainNames += $(this).find('td:eq(1)').text();
+                });
+                itemManage('delete', domainNames);
+            }, null);
+        }
+    });
+
+    $('#cancelDNL').on('click', function() {
+        $('#tableDNL').tpTable();
+    });
+    $('#register').on('click', function() {
+        $('#domainDNL').val('');
+    });
+
+    $('#saveDNL').on('click', function() {
+        $.addLoading();
+        var input = $('#domainDNL');
+        var value = input.val();
+        if (/\s/.test(value) || /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]*)$/.test(value) != true) {
+            input.focus();
+            $.alert(CMM_INVALID_PARAM_VALUE);
+            return;
+        }
+        value = value + '.tplinkdns.com';
+        itemManage('add', value);
+    });
+
+    function itemManage(op, domain) {
+        $.doInternetDiag(function() {
+            if (op == 'delete') {
+                $.act(ACT_SET, CLOUD_DDNS, null, null, ["tmpDomainName=" + domain, "action=6", "status=0"]);
+            } else if (op == 'bind') {
+                $.act(ACT_SET, CLOUD_DDNS, null, null, ["tmpDomainName=" + domain, "action=2", "status=0"]);
+            } else if (op == 'unbind') {
+                $.act(ACT_SET, CLOUD_DDNS, null, null, ["tmpDomainName=" + domain, "action=3", "status=0"]);
+            } else if (op == 'add') {
+                $.act(ACT_SET, CLOUD_DDNS, null, null, ["tmpDomainName=" + domain, "action=1", "status=0"]);
+            }
+            if ($.exe()) {
+                return;
+            }
+            var count = 0;
+            var timesMax = 10;
+            setTimeout(function() {
+                count++;
+                cloudCfg = $.act(ACT_GET, CLOUD_DDNS, null, null);
+                if ($.exe()) {
+                    return;
+                }
+
+                if (op == 'delete' && cloudCfg.status == CLOUD_DDNS_DEL_SUCC ||
+                        op == 'bind' && cloudCfg.status == CLOUD_DDNS_BIND_SUCC ||
+                        op == 'unbind' && cloudCfg.status == CLOUD_DDNS_UNBIND_SUCC ||
+                        op == 'add' && cloudCfg.status == CLOUD_DDNS_REG_SUCC) {
+                    //获取成功
+                    if(op=='add' && dnsList.length == 0) {
+                        itemManage('bind',domain);
+                    }
+                    $('#tableDNL').tpTable();
+                } else if(cloudCfg.status >= 20000){
+                    //登录失败
+                    $.alert($.tpLang.ddns_nstr['E' + cloudCfg.status]);
+                } else if (count < timesMax) {
+                    //
+                    setTimeout(arguments.callee, 1000);
+                } else {
+                    $.alert($.tpLang.ddns_nstr['E20002']);
+                }
+            }, 1000);
+        }, function() {
+            $.alert($.tpLang.ddns_nstr.fail + '<br>' + $.tpLang.ddns_nstr.internetUnavailable);
+        });
+
+
+    }
+
+    function initTableDNL() {
+        $.addLoading();
+        $('#currentDomain').val('');
+        $.act(ACT_SET, CLOUD_DDNS, null, null, ["action=5", "status=0"]) ;
+        $.exe(function(err) {
+            if (err) {
+                return;
+            }
+            var count = 0;
+            var timesMax = 10;
+            setTimeout(function() {
+                count++;
+                cloudCfg = $.act(ACT_GET, CLOUD_DDNS, null, null);
+                if ($.exe()) {
+                    return;
+                }
+
+                if (cloudCfg.status == CLOUD_DDNS_QUERY_SUCC) {
+                    //获取成功
+                    dnsList = $.act(ACT_GL, CLOUD_DDNS_ENTRY, null, null);
+                    if($.exe()) {
+                        return;
+                    }
+                    var array = [];
+                    var index = 0;
+                    $.each(dnsList, function() {
+                        var checkbox = '<div><input type="checkbox" id="' + index + '_checkbox_ddns" class="table-select-one" /><label></label></div>';
+                        var domainName = this.domainName;
+                        var regDate = this.regDate;
+                        var status = $.tpLang.ddns_nstr.free;
+                        var operation = '<span class="table-operation bind">' + $.tpLang.ddns_nstr.bind + '</span>';
+                        var modify = '<span class="table-grid-icon edit-trash-icon"></span>';
+                        if (this.isBind == 1) {
+                            $('#currentDomain').val(this.domainName);
+                            checkbox = '<span class="table-item-disabled">--</span>';
+                            domainName = '<span class="table-item-disabled">' + domainName + '</span>';
+                            regDate = '<span class="table-item-disabled">' + regDate + '</span>';
+                            status = '<span class="table-item-disabled">' + $.tpLang.table_str.bound + '</span>';
+                            operation = '<span class="table-operation unbind">' + $.tpLang.ddns_nstr.unbind + '</span>';
+                            modify = '<span class="table-grid-icon edit-trash-icon disabled"></span>';
+                            modify = '<span class="table-item-disabled">--</span>';
+                        }
+                        array.push([{
+                            "text": checkbox,
+                            "width": "5%"
+                        }, {
+                            "text": domainName,
+                            "width": "30%"
+                        }, {
+                            "text": regDate,
+                            "width": "25%"
+                        }, {
+                            "text": status,
+                            "width": "15%"
+                        }, {
+                            "text": operation,
+                            "width": "15%"
+                        }, {
+                            "text": modify,
+                            "width": "10%"
+                        }]);
+                        index++;
+                    });
+                    $.initTableBody($("#tableDNL"), array);
+                    $.tablePages($("#tableDNL"), 8);
+                    $.removeLoading();
+                } else if(cloudCfg.status >= 20000){
+                    //登录失败
+                    $.doInternetDiag(function() {
+                        $.alert($.tpLang.ddns_nstr['E' + cloudCfg.status]);
+                    }, function() {
+                        $.alert($.tpLang.ddns_nstr.internetUnavailable);
+                    });
+
+                } else if (count < timesMax) {
+                    //
+                    setTimeout(arguments.callee, 1000);
+                } else {
+                    $.alert($.tpLang.ddns_nstr['E20002']);
+                }
+            }, 1000);
+        });
+    }
+
+    $.initTableHead($('#tableDNL'), [{
+            "text": '<div><input type="checkbox" id="checkbox_1" class="table-select-all"/><label></label></div>',
+            "width": "5%"
+    }, {
+            "text": $.tpLang.ddns_nstr.t_domain,
+            "width": "30%"
+    }, {
+            "text": $.tpLang.ddns_nstr.time,
+            "width": "25%"
+    }, {
+            "text": $.tpLang.table_str.status,
+            "width": "15%"
+    }, {
+            "text": $.tpLang.table_str.operation,
+            "width": "15%"
+    }, {
+            "text": $.tpLang.table_str.modify,
+            "width": "10%"
+    }]);
+//    $('#tableDNL').tpTable(function() {});
+    $.tpInit(init);
+})();
+</script>

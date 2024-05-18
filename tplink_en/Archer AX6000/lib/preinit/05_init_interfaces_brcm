@@ -1,0 +1,253 @@
+#!/bin/sh
+
+. /lib/switch/core_phy.sh
+
+have_module () {
+	grep "^$1" /proc/modules
+	return $?
+}
+
+check_module () {
+  module="$1"; shift; params="$*"
+
+  insmod "$module" "$params"
+  # optimize startup time
+  #sleep 1
+  grep "^$module" /proc/modules
+  return $?
+}
+
+vlan_untag () {
+	echo "$(nvram get vlan$1ports)" | grep "u" -q
+	return $?
+}
+
+init_eth () {
+	check_module et && {
+    
+        set_defaut_duplex_all_ports
+        
+		# default to link down all 5 phy ports.
+		# they will be link up when all apps is ready!
+		link_down_all_ports
+		# et driver will setup some default vlans based on nvram settings.
+		clear_all_vlans
+
+		vconfig set_name_type DEV_PLUS_VID_NO_PAD
+		vconfig add eth0 1
+	}
+}
+
+init_dpsta () {
+	check_module dpsta
+}
+
+init_ctf () {
+	#nvram set ctf_disable=0
+	#nvram set nga_enable=1
+
+	# ppp_generic depends on slhc
+	check_module slhc
+	
+	# ctf depends on ppp_generic
+	[ $? -eq 0 ] && check_module ppp_generic
+
+	[ $? -eq 0 ] && {
+        	router_ctf_disable=$(nvram get router_ctf_disable)
+        	[ ! -z ${router_ctf_disable} ] && nvram set ctf_disable="${router_ctf_disable}"     
+	
+		[ "x$(nvram get ctf_disable)" = "x0" ] && check_module ctf
+		# OR
+		[ "x$(nvram get ctf_disable)" = "x" ] && check_module ctf
+	}
+}
+
+init_emf () {
+	#2017.04.07
+	#wangxiaolong@tp-link.net
+	#for rftest，change tp_wltest to rftestflag
+	local rftestflag=`nvram get rftestflag`
+	local btntestflag=`nvram get btntestflag`
+	if [ "$rftestflag" = "1" -a "$btntestflag" = "1" ]; then
+		check_module hnd
+	else
+		insmod /lib/tp/hnd.ko
+	fi
+	check_module emf && check_module igs
+}
+	
+
+init_brcm_dev(){
+	echo ">>>>> Creating static device nodes <<<<<"
+
+	#Create standard character devices
+	mknod /dev/kmem c 1 2
+	mknod /dev/tty0 c 4 0
+	#mknod /dev/tty1 c 4 1
+	mknod /dev/ttyH0 c 4 70
+	mknod /dev/ptm c 128 1
+	mknod /dev/printer0 c 180 0
+
+	# Create Broadcom Proprietary devices   ALL major numbers not assigned by kernel.org must be > 256
+	mknod /dev/dect c 3051 0
+	mknod /dev/dectdbg c 3051 1
+	mknod /dev/slicslac c 3050 1
+	mknod /dev/ac97 c 3060 0
+
+	mknod /dev/pwrmngt c        3000 0
+	mknod /dev/bcmfap c         3001 0
+	mknod /dev/fcache c         3002 0
+	mknod /dev/ingqos c         3003 0
+	mknod /dev/bpm c            3004 0
+	mknod /dev/bcmarl c         3005 0
+	mknod /dev/chipinfo c       3006 0
+	mknod /dev/bcm_user_tod c   3007 0
+	mknod /dev/tms c            3008 0
+	mknod /dev/pktrunner c      3009 0
+	mknod /dev/otp c            3010 0
+	mknod /dev/ext_bonding c    3011 0
+	mknod /dev/fbond c          3012 0
+	mknod /dev/bcmepon c        3013 0
+	mknod /dev/laser_dev c      3014 0
+	mknod /dev/ivi c            3015 0
+	mknod /dev/bcmomcipm c      3016 0
+	mknod /dev/bcm_user_ploam c 3017 0
+	mknod /dev/bcm_omci c       3018 0
+	mknod /dev/bcm_ploam c      3019 0
+	mknod /dev/opticaldetect c  3020 0
+	mknod /dev/bdmf_shell c     3021 0
+	mknod /dev/rgs_logger c     3022 0
+	mknod /dev/bcmvlan c        3023 0
+	mknod /dev/buzzz c          3024 0
+	mknod /dev/sysperf c        3025 0
+	mknod /dev/gmac c           3026 0
+	mknod /dev/bcmtm c          3027 0
+	mknod /dev/spdsvc c         3028 0
+	mknod /dev/bcmxtmcfg0 c     3029 0
+	mknod /dev/bcmprof c        3030 0
+	mknod /dev/bcm c            3031 0
+	mknod /dev/bcmatm0 c        3032 0
+	mknod /dev/bcmadsl0 c       3033 0
+	mknod /dev/bcmadsl1 c       3033 1
+#	mknod /dev/detector c       3034 0		#will auto create by TM module
+	mknod $ROOTFS/dev/astra c   3035 0
+	mknod $ROOTFS/dev/tzioc c   3036 0
+	mknod /dev/bcmrdpa c        3037 0
+	mknod /dev/blog c           3038 0
+	mknod /dev/archer c         3039 0
+	mknod /dev/wantypedetect c  3040 0
+	mknod /dev/sotp c           3041 0
+
+	# ADD NEW PROPIETARY DEVICE NODES ABOVE THIS LINE -- ALL MAJOR NUMBERS NOT ASSIGNED BY KERNEL.ORG MUST BE > 256
+
+	# Create Broadcom Opensource devices -- ALL MAJOR NUMBERS NOT ASSIGNED BY KERNEL.ORG MUST BE > 256
+	mknod /dev/btusb0 c 180 194
+	# All NEW OPENSOURCE DRIVERS SHOULD CREATE SYSFS CLASS/DEVICE
+	# ENTRIES SO THAT MDEV CAN DYNAMICALLY CREATE DEVICE NODES 
+}
+	
+init_brcm_base() {
+	linux_ver=`grep -o "Linux version [0-9A-Za-z_.-]*" /proc/version | grep -o "[0-9A-Za-z_.-]*$"`
+	# UBUS
+	insmod /lib/modules/$linux_ver/extra/rdp_fpm.ko  
+	insmod /lib/modules/$linux_ver/extra/bdmf.ko bdmf_chrdev_major=3021 
+	
+	# RDPA
+	insmod /lib/modules/$linux_ver/extra/rdpa_gpl.ko  
+	insmod /lib/modules/$linux_ver/extra/rdpa_gpl_ext.ko  
+	insmod /lib/modules/$linux_ver/extra/rdpa.ko  
+	insmod /lib/modules/$linux_ver/extra/rdpa_mw.ko
+	
+	# General  	
+	insmod /lib/modules/$linux_ver/extra/chipinfo.ko  
+	insmod /lib/modules/$linux_ver/extra/pktflow.ko
+	
+	# enet
+	#insmod /lib/modules/$linux_ver/extra/bcm_enet.ko  
+	
+	# moving
+	#insmod /lib/modules/$linux_ver/extra/pktrunner.ko  
+	#insmod /lib/modules/$linux_ver/extra/nciTMSkmod.ko
+	
+	#load SATA/AHCI
+	
+	# other
+	insmod /lib/modules/$linux_ver/extra/bcmmcast.ko 
+	insmod /lib/modules/$linux_ver/extra/wfd.ko  
+	insmod /lib/modules/$linux_ver/extra/wlcsm.ko	
+
+	#insmod /lib/modules/$linux_ver/extra/bcmvlan.ko  
+	#insmod /lib/modules/$linux_ver/extra/pwrmngtd.ko  
+	insmod /lib/modules/$linux_ver/kernel/net/wireless/cfg80211.ko
+	# RDPA
+	#insmod /lib/modules/$linux_ver/extra/rdpa_cmd.ko
+
+	#insmod /lib/modules/$linux_ver/extra/nciTMSkmod.ko
+}
+	
+init_brcm_enet() {
+	insmod /lib/modules/$linux_ver/extra/bcm_enet.ko  
+	insmod /lib/modules/$linux_ver/extra/pktrunner.ko  
+	insmod /lib/modules/$linux_ver/extra/nciTMSkmod.ko
+ 
+#	insmod /lib/modules/$linux_ver/kernel/net/ipv4/netfilter/nf_nat_ipv4.ko
+	insmod /lib/modules/$linux_ver/kernel/net/ipv4/udp_tunnel.ko
+	insmod /lib/modules/$linux_ver/kernel/net/ipv6/ip6_udp_tunnel.ko
+	insmod /lib/modules/$linux_ver/kernel/net/ipv4/ip_tunnel.ko
+#	insmod /lib/modules/$linux_ver/kernel/net/ipv4/netfilter/nf_nat_masquerade_ipv4.ko
+
+#	insmod /lib/modules/$linux_ver/kernel/net/netfilter/nf_nat_redirect.ko
+#	insmod /lib/modules/$linux_ver/kernel/net/ipv6/netfilter/nf_reject_ipv6.ko
+
+	/bin/swmdk &
+
+	ethswctl -c wan -o enable -i eth0
+	tmctl porttminit --devtype 0 --if eth0 --flag 1
+	tmctl porttminit --devtype 0 --if eth1 --flag 1
+	tmctl porttminit --devtype 0 --if eth2 --flag 1
+	tmctl porttminit --devtype 0 --if eth3 --flag 1
+	tmctl porttminit --devtype 0 --if eth4 --flag 1
+	tmctl porttminit --devtype 0 --if eth5 --flag 1
+}
+
+init_brcm_base_config() {
+	## for basic network config
+    ifconfig lo 127.0.0.1 netmask 255.0.0.0 broadcast 127.255.255.255 up
+	brctl addbr br-lan
+	brctl setfd br-lan 0
+	brctl stp br-lan on
+	brctl addif br-lan eth1
+	brctl addif br-lan eth2
+	brctl addif br-lan eth3
+	brctl addif br-lan eth4
+    brctl addif br-lan eth5
+#    ifconfig eth0 up
+	ifconfig eth1 up
+	ifconfig eth2 up
+	ifconfig eth3 up
+	ifconfig eth4 up
+    ifconfig eth5 up
+	ifconfig br-lan 192.168.0.1 netmask 255.255.255.0 up
+}
+
+#init_br () {
+#	brctl addbr br0
+#	brctl setfd br0 0
+#	brctl stp br0 off
+#	brctl addif br0 eth0.1
+#	#wireless iface to br0
+#}
+
+#boot_hook_add preinit_main init_ctf
+#boot_hook_add preinit_main init_eth
+
+#boot_hook_add preinit_main init_dpsta
+#boot_hook_add preinit_main init_br
+
+# For bcm4908 init function 
+boot_hook_add preinit_main init_brcm_dev
+boot_hook_add preinit_main init_brcm_base
+#boot_hook_add preinit_main init_brcm_enet
+boot_hook_add preinit_main init_emf
+#boot_hook_add preinit_main init_brcm_base_config
+

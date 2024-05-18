@@ -1,0 +1,597 @@
+<div class="titleBar">
+    <a id="back">
+        <span class="icon-back sprite c-arrow-blue-left"></span>
+    </a>
+    <h1></h1>
+    <a id="next" data-status="next"></a>
+</div>
+
+<div id="qs-processFlow" class=""></div>
+<div class="stepDiv nd pb26 ">
+    <div id="wireless_2g" class="item-list">
+        <div class="section-container">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="wlEn_2g" />
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <input maxlength="32" id="ssid_2g" type="text" />
+            </div>
+            <div class="section-box">
+                <input type="text" maxlength="64" id="wpa2PersonalPwd_2g">
+            </div>
+        </div>
+    </div>
+
+    <div id="wireless_5g" class="item-list mt15">
+        <div class="section-container">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="wlEn_5g" />
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <input maxlength="32" id="ssid_5g" type="text" />
+            </div>
+            <div class="section-box">
+                <input type="text" maxlength="64" id="wpa2PersonalPwd_5g">
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+step0 = {};
+(function() {
+    $('#wlEn_2g').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.s_str.ghz24
+    });
+
+    $('#ssid_2g, #ssid_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.wlname,
+        'warnings': [{
+            func: function() {
+                var s = $(this);
+                var ssidLen = $.realLen(s.prop('value'));
+
+                if (INCLUDE_LAN_WLAN_MSSID && INCLUDE_LAN_WLAN_GUESTNETWORK) {
+                    if (s.prop('value') == guestVap_2g.SSID || s.prop('value') == guestVap_5g.SSID) {
+                        return e_str[CMM_WLAN_SSID_CONFLICTE_WITH_GUESTNET];
+                    }
+
+                }
+                if (ssidLen <= 0) {
+                    return e_str[ERR_WLAN_SSID_IS_EMPTY];
+
+                } else if (ssidLen > 32) {
+                    return e_str[ERR_WLAN_SSID_LEN_OUTRANGE];
+                }
+                return true;
+            }
+        }]
+    });
+
+    $('#wpa2PersonalPwd_2g, #wpa2PersonalPwd_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.wlpwd,
+        'warnings': [{
+            func: function() {
+                var pwd = $(this).val();
+
+                if (pwd.length == 0) {
+                    //                    return e_str[ERR_WLAN_WPA_PSK_EMPTY];
+                    return true;
+                } else if (pwd.length < 8) {
+                    return e_str[ERR_WLAN_WPA_PSK_LENGTH_INVALID];
+                } else if (pwd.length >= 64) {
+                    if (!isHex(pwd, 0)) {
+                        return e_str[ERR_WLAN_WPA_PSK_HEX_INVALID];
+                    }
+                    $(this).prop('value', $(this).prop('value').substr(0, 64));
+                } else {
+                    if ($.asc(pwd, true)) {
+                        return e_str[ERR_WLAN_WPA_PSK_ASCII_INVALID];
+                    }
+                }
+                return true;
+            }
+        }]
+    });
+    //for 5g
+    $('#wlEn_5g').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.s_str.ghz5
+    });
+    //    logical
+
+    var wlanObj_2g,
+            wlanObj_5g,
+            mssidObj_2g,
+            mssidObj_5g,
+            vapList_2g,
+            vapList_5g,
+            guestnetObj_2g,
+            guestnetObj_5g,
+            guestVap_2g,
+            guestVap_5g,
+            qssEnable_2g,
+            qssEnable_5g;
+
+    function isHex(str, arg) {
+        str = str.toLowerCase();
+        for (var i = 0; i < str.length; i++) {
+            if ((str.charAt(i) >= '0' && str.charAt(i) <= '9') || (str.charAt(i) >= 'a' && str.charAt(i) <= 'f'))
+                continue;
+            else {
+                if (arg != 0)
+                    $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+                return false;
+            }
+        }
+        if (parseInt(str, 16) == 0) {
+            if (arg != 0)
+                $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+            return false;
+        }
+        return true;
+    }
+
+    function init() {
+        var basicList = $.act(ACT_GL, LAN_WLAN, null, null, [
+            "name",
+            "Standard",
+            "SSID",
+            "X_TP_Band",
+            "Enable",
+            "RegulatoryDomain",
+            "SSIDAdvertisementEnabled",
+            "BeaconType",
+            "BasicEncryptionModes",
+            "WPAEncryptionModes",
+            "IEEE11iEncryptionModes",
+            "beaconType",
+            "BasicEncryptionModes",
+            "BasicAuthenticationMode",
+            "WPAEncryptionModes",
+            "WPAAuthenticationMode",
+            "IEEE11iEncryptionModes",
+            "IEEE11iAuthenticationMode",
+            "X_TP_PreSharedKey"
+        ]);
+        if (!$.exe()) {
+            $.each(basicList, function() {
+                if ("2.4GHz" == this.X_TP_Band) {
+                    wlanObj_2g = this;
+                } else if ( /*INCLUDE_LAN_WLAN_DUALBAND &&*/ "5GHz" == this.X_TP_Band) {
+                    wlanObj_5g = this;
+                }
+            });
+
+            wpsObj_2g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_2g.__stack, null, ["Enable"]);
+            wpsObj_5g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_5g.__stack, null, ["Enable"]);
+            mssidObj_2g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_2g.__stack, null, ["MultiSSIDEnable"]);
+            mssidObj_5g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_5g.__stack, null, ["MultiSSIDEnable"]);
+            vapList_2g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_2g.__stack, ["Name"]);
+            vapList_5g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_5g.__stack, ["Name"]);
+            guestnetObj_2g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_2g.__stack, null, ["Enable", "Name"]);
+            guestnetObj_5g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_5g.__stack, null, ["Enable", "Name"]);
+            if (!$.exe()) {
+                qssEnable_2g = wpsObj_2g.enable;
+                qssEnable_5g = wpsObj_5g.enable;
+                $.each(vapList_2g, function(arg, index) {
+                    if (this.name == guestnetObj_2g.name)
+                        guestVap_2g = this;
+                });
+                $.each(vapList_5g, function(arg, index) {
+                    if (this.name == guestnetObj_5g.name)
+                        guestVap_5g = this;
+                });
+            }
+        }
+
+        initParamShow(wlanObj_2g, '_2g');
+        initParamShow(wlanObj_5g, '_5g');
+        initWpa2Personal(wlanObj_2g, '_2g');
+        initWpa2Personal(wlanObj_5g, '_5g');
+
+    }
+
+    function initParamShow(wlanObj, band) {
+        if (wlanObj.enable == 1) {
+            $('#wlEn' + band).checkboxMobile({
+                'checked': true
+            });
+            $('#wlEn' + band).checkboxMobile({
+                'disabled': false
+            });
+        } else if ((wlanObj.regulatoryDomain == 'BD ' ||
+                wlanObj.regulatoryDomain == 'KZ ' ||
+                wlanObj.regulatoryDomain == 'SY ' ||
+                wlanObj.regulatoryDomain == 'YE ') && band == '_5g') {
+            $('#wlEn' + band).checkboxMobile({
+                'checked': false
+            });
+            $('#wlEn' + band).checkboxMobile({
+                'disabled': true
+            });
+        }
+
+        $('#ssid' + band).inputBoxMobile('option', 'value', wlanObj.SSID);
+
+    }
+
+
+    function initWpa2Personal(wlanObj, band) {
+        $('#wpa2PersonalPwd' + band).inputBoxMobile('option', 'value', wlanObj.X_TP_PreSharedKey);
+    }
+
+    function check(band) {
+        if (!$('#ssid' + band).inputBoxMobile('checkValue')) {
+            return false;
+        }
+        if (!$('#wpa2PersonalPwd' + band).inputBoxMobile('checkValue')) {
+            return false;
+        }
+    }
+    //保存数据的逻辑
+
+    function saveDM(wlanObj, band) {
+        var wlSettings = {};
+        var type;
+
+        wlSettings.enable = $('#wlEn' + band).checkboxMobile('option', 'checked') ? 1 : 0;
+        wlSettings.SSID = $('#ssid' + band).prop('value');
+        var pwd = $('#wpa2PersonalPwd' + band).prop('value');
+        if (pwd.length === 0) {
+            wlSettings.beaconType = 'Basic';
+            wlSettings.basicEncryptionModes = 'None';
+            wlSettings.basicAuthenticationMode = 'None';
+        } else {
+            wlSettings.WPAEncryptionModes = wlSettings.IEEE11iEncryptionModes = 'TKIPandAESEncryption';
+            wlSettings.WPAAuthenticationMode = wlSettings.IEEE11iAuthenticationMode = "PSKAuthentication";
+            wlSettings.X_TP_PreSharedKey = pwd;
+            wlSettings.beaconType = '11i'
+
+        }
+
+        $.act(ACT_SET, LAN_WLAN, wlanObj.__stack, null, wlSettings);
+    }
+
+    step0.init = function() {
+        init();
+    };
+    step0.check = function() {
+        if (check('_2g') == false) {
+            return false;
+        }
+        if (check('_5g') == false) {
+            return false;
+        }
+        return true;
+    };
+    step0.save = function() {
+        saveDM(wlanObj_2g, '_2g');
+        saveDM(wlanObj_5g, '_5g');
+    };
+    step0.styleInit = function() {
+        $('#next').titleButton('status', 'next', $.tpLang.m_str.next);
+        $('#back').titleButton('show');
+        $('.titleBar').titleBar('title', $.tpLang.s_str.wireless);
+    }
+})();
+</script>
+<div class="stepDiv nd pb26">
+    <div id="summaryTotal" class="summaryDiv item-list">
+        <div class="section-container">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.ghz24 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumEn2g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.networkMap_nstr.c_ssid %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumSSID2g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumPwd2g"></span>
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.ghz5 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumEn5g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.networkMap_nstr.c_ssid %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumSSID5g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumPwd5g"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="summaryDiv nd" id="summaryWireless">
+        <p class="section-note">
+            <script type="text/html" class="trans">
+                <%= $.tpLang.quicksetup_nstr.c_reconnTips %>
+            </script>
+        </p>
+        <div class="item-list mt15">
+            <div class="section-container">
+                <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.ghz24 %>
+                    </script>
+                </span>
+                    <span class="text-readonly" id="sumReSSID2g"></span>
+                </div>
+                <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                    <span class="text-readonly" id="sumRePwd2g"></span>
+                </div>
+            </div>
+            <div class="section-container mtNo">
+                <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.ghz5 %>
+                    </script>
+                </span>
+                    <span class="text-readonly" id="sumReSSID5g"></span>
+                </div>
+                <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                    <span class="text-readonly" id="sumRePwd5g"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="summaryDiv info-list nd" id="summaryFail">
+        <div class="section-container">
+            <div class="section-box">
+                <em class="qs-bigMsg">
+                    <script type="text/html" class="trans">
+                        <%= $.tpLang.quicksetup_nstr.c_failed %>
+                    </script>
+                </em>
+            </div>
+            <p class="qs section-tips">
+                <script type="text/html" class="trans">
+                    <%= $.tpLang.quicksetup_nstr.c_failTips %>
+                </script>
+            </p>
+            <div class="section-box">
+                <input type="button" id="summaryOk">
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    step1 = {};
+
+    (function() {
+        $('#summaryOk').buttonMobile({
+            text: $.tpLang.m_str.ok
+        }).on('click', function() {
+            step1.reconnect();
+        });
+
+        function setSummaryData() {
+            $('#sumEn2g').html($('#wlEn_2g').checkboxMobile('option', 'checked') ? $.tpLang.s_str.on : $.tpLang.s_str.off);
+            $('#sumSSID2g').html($('#ssid_2g').val());
+            $('#sumPwd2g').html($('#wpa2PersonalPwd_2g').val());
+            $('#sumEn5g').html($('#wlEn_5g').checkboxMobile('option', 'checked') ? $.tpLang.s_str.on : $.tpLang.s_str.off);
+            $('#sumSSID5g').html($('#ssid_5g').val());
+            $('#sumPwd5g').html($('#wpa2PersonalPwd_5g').val());
+            $('#sumReSSID2g').html($('#ssid_2g').val());
+            $('#sumRePwd2g').html($('#wpa2PersonalPwd_2g').val());
+            $('#sumReSSID5g').html($('#ssid_5g').val());
+            $('#sumRePwd5g').html($('#wpa2PersonalPwd_5g').val());
+        }
+
+
+        step1.init = function() {
+            setSummaryData();
+        };
+
+        step1.isReConnect = function(hook) {
+            var isConnected = false;
+            var count = 0;
+            var handle = function() {
+                if (count < 9 && !isConnected) {
+                    if (count++ % 3 === 0) {
+                        type = "GET";
+                        var url = "?_=" + (+new Date());
+                        var xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
+                        xhr.open(type, url, true);
+                        xhr.setRequestHeader("Content-Type", "text/plain");
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState == 4 && xhr.status == 200) {
+                                isConnected = true;
+                            }
+                        }
+                        xhr.send(null);
+                    }
+                } else {
+                    //                    $.auto_interval = 1;
+                    return false;
+                }
+            };
+
+            var newHook = function() {
+                hook(isConnected)
+            };
+
+            $.auto(handle, 1000, true, null, newHook);
+        };
+
+        step1.reconnect = function() {
+			$.startWaitingMobile();
+			step1.isReConnect(function(isConnected) {
+				$.stopWaitingMobile();
+				if (isConnected) {
+					step1.styleInitReconnectSuccess();
+
+				} else {
+					step1.styleInitFail();
+
+				}
+			});
+        };
+        step1.styleInit = function() {
+            $('#next').titleButton('status', 'unSave', $.tpLang.m_str.save);
+            $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+        };
+        step1.styleInitSaveSuccess = function() {
+            $('#back').titleButton('hide');
+            $('#next').titleButton('status', 'reconnect', $.tpLang.m_str.finish).titleButton('show');
+            $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+            $('.summaryDiv').hide();
+            $('#summaryWireless').show();
+        };
+        step1.styleInitReconnectSuccess = function() {
+            $('#next').titleButton('status', 'next', $.tpLang.m_str.finish).titleButton('show').click();
+        };
+        step1.styleInitFail = function() {
+            $('#back').titleButton('hide');
+            $('#next').titleButton('hide');
+            $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+            $('.summaryDiv').hide();
+            $('#summaryFail').show();
+        };
+
+        step1.save = function sumSave() {
+            $.startWaitingMobile();
+            step0.save();
+            $.exe(function(err) {
+                if (!err) {
+					step1.styleInitSaveSuccess();
+					$.stopWaitingMobile();
+                }
+            });
+        }
+    })();
+
+//entrance
+    (function() {
+        $.tpLocal('trans', $.tpLang);
+        $('.titleBar').titleBar();
+        $('select').selectMobile();
+
+        function showStepDiv(step) {
+            $('.stepDiv').hide();
+            $('.stepDiv:eq(' + step + ')').show();
+
+        }
+
+        function clearData() {
+            step0 = null;
+            step1 = null;
+        }
+
+        $('#next').on('click', function () {
+            var step = $('#qs-processFlow').processFlow('option', 'stepCount');
+            switch (step) {
+                case 0:
+                    if (!step0.check()) {
+                        return;
+                    }
+                    break;
+                case 1:
+                    if ($('#next').titleButton('status') == 'unSave') {
+                        step1.save();
+                        return;
+                    } else if ($('#next').titleButton('status') == 'reconnect') {
+                        step1.reconnect();
+                        return;
+                    } else if ($('#next').titleButton('status') == 'next') {
+                        clearData();
+                        $.loadPhoneMain('networkMap.mobile.htm');
+                        return;
+                    }
+                    break;
+            }
+            $('#qs-processFlow').processFlow('nextStep');
+            step = $('#qs-processFlow').processFlow('option', 'stepCount');
+            showStepDiv(step);
+            switch (step) {
+                case 0:
+                    step0.styleInit();
+                    step0.init();
+                    break;
+                case 1:
+                    step1.styleInit();
+                    step1.init();
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        $('#back').on('click', function() {
+            $('#qs-processFlow').processFlow('lastStep');
+            var step = $('#qs-processFlow').processFlow('option', 'stepCount');
+            showStepDiv(step);
+            switch (step) {
+                case 0:
+                    step0.styleInit();
+                    break;
+                case 1:
+                    step1.styleInit();
+                    step1.init();
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        function init() {
+            $('#qs-processFlow').processFlow({
+                stepsArr: ['1', '2'],
+                stepCount: 0
+            });
+            step0.styleInit();
+            step0.init();
+            showStepDiv(0);
+        }
+
+        init();
+    })();
+</script>

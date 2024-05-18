@@ -1,0 +1,64 @@
+#!/usr/bin/lua
+
+local firm = require "luci.controller.admin.firmware"
+local util = require "luci.util"
+local cry = require "luci.model.crypto"
+local configtool = require "luci.sys.config"
+local fs = require "luci.fs"
+local uci = require "luci.model.uci"
+local uci_r = uci.cursor()
+
+function backup()
+	local product_info_md5 = firm.md5_product_info()
+	local product_info_md5_file = io.open("/tmp/product_info_md5_file", "w")
+	for num in string.gmatch(product_info_md5, "%x%x") do
+		local number = "0x"..num
+		product_info_md5_file:write(string.char(number))
+	end
+	product_info_md5_file:close()
+
+	-- 备份extern分区, 如有特殊情况的分区，再特殊处理
+	local extern_partitions = uci_r:get_profile("backup_restore", "extern_partition") or nil
+	if extern_partitions ~= nil then
+		extern_partitions = util.split(extern_partitions, " ")
+		os.execute("mkdir /tmp/backup >/dev/null 2>&1")
+
+		for i, v in ipairs(extern_partitions) do
+			if v ~= nil then
+				local externname = "/tmp/backup/ori-backup-" .. v .. ".bin"
+				luci.sys.exec("nvrammanager -r " .. externname .. " -p " .. v .. " >/dev/null 2>&1")
+				local filesize = fs.stat(externname).size
+				if ( v == 'router-config' or v == 'ap-config') and filesize > 0 then
+					firm.hide_info(externname)
+				end
+			end
+		end
+
+		luci.sys.exec("nvrammanager -r /tmp/backup/ori-backup-user-config.bin -p user-config >/dev/null 2>&1")
+		firm.hide_info("/tmp/backup/ori-backup-user-config.bin")
+
+		--打包
+		os.execute("tar -cf /tmp/ori-backup-userconf.bin -C /tmp/backup . >/dev/null 2>&1")
+		luci.sys.exec("rm -rf /tmp/backup >/dev/null 2>&1")
+	else
+		luci.sys.exec("nvrammanager -r /tmp/ori-backup-userconf.bin -p user-config >/dev/null 2>&1")
+		cry.dec_file_entry("/tmp/ori-backup-userconf.bin", "/tmp/tmp-backup-userconf.xml")
+		luci.sys.exec("mkdir -p /tmp/backupcfg")
+		configtool.xmlToFile("/tmp/tmp-backup-userconf.xml", "/tmp/backupcfg")
+		-- hide cloud info config
+		local hide_files = {"accountmgnt", "cloud_config"}
+		for _, f in ipairs(hide_files) do 
+			luci.sys.exec("rm -f /tmp/backupcfg/config/" .. f)
+		end 
+		-- recreate xml config files
+		luci.sys.exec("rm -f /tmp/ori-backup-userconf.bin;rm -f /tmp/tmp-backup-userconf.xml")
+		configtool.convertFileToXml("/tmp/backupcfg/config", "/tmp/tmp-backup-userconf.xml")
+		cry.enc_file_entry("/tmp/tmp-backup-userconf.xml", "/tmp/ori-backup-userconf.bin")
+		luci.sys.exec("rm -rf /tmp/backupcfg;rm -f /tmp/tmp-backup-userconf.xml")
+	end
+
+	luci.sys.exec("cat /tmp/product_info_md5_file /tmp/ori-backup-userconf.bin > /tmp/mid-backup-userconf.bin")
+	cry.enc_file_entry("/tmp/mid-backup-userconf.bin", "/tmp/save-backup-userconf.bin")
+end
+
+backup()

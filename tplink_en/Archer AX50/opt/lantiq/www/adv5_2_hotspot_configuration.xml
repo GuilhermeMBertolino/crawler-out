@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="hotspot_configuration">
+    <helptext></helptext>
+    <header>
+        <image>images/icons/hotspot.png</image>
+        <name>Hotspot Configuration</name>
+        <description>HOTSPOT Configuration Page</description>
+    </header>  
+    <object viewtype="form"> 
+        <object name="temp">
+            <parameter  name="SSID"  type="dropdown" ddfun="wizardDropdown" firstselect="true" url="cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;LowerLayers=Device.WiFi.Radio.3.&amp;SSID=&amp;X_LANTIQ_COM_Vendor_IsEndPoint" webname="SSID" child="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OperatorFriendlyName.*,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor,Device.WiFi.AccessPoint.*.Security" ifparam="X_LANTIQ_COM_Vendor_IsEndPoint" ifcondition="equalsto" ifvalue="false"></parameter>
+        </object>
+    </object>  
+    <object viewtype="form" title="HOTSPOT" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20">
+        <row>
+            <col>
+               <parameter  name="Enable" type="dropdown" url="hotspotenable" webname="Hotspot Mode" firstselect="true" dependsonparamvalue="'true'"  dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" access="readonly"  dependsonparam="OSENEnabled"></parameter>
+               
+            </col>
+			<col>
+				<parameter  name="Enable" type="dropdown" url="hotspotenable" webname="Hotspot Mode" firstselect="true" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20"  dependsonparam="OSENEnabled" dependsonparamvalue="'false'"></parameter>
+			</col>
+            
+            <col>
+              <parameter  name="OSENEnabled" type="dropdown" url="hotspotosenenable" webname="OSEN Enable" firstselect="true"></parameter>
+            </col>
+        </row>
+        <row>
+            <col>
+            <parameter name="DgafDisabled" type="toggle" webname="Disable DGAF" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+            <col>
+            <parameter name="AnqpDomainId" type="string" required="false" webname="ANQP Domain ID" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+        </row>
+        <row>
+            <col>
+            <parameter  name="AccessNetworkType" required="false" url="hotspotaccessnetworktype" type="dropdown" firstselect="true" webname="Access Network Type" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"></parameter>
+            </col>
+            <col>
+            <parameter  name="NetworkAuthenticationType" required="false" url="hotspotnetworkauthenticationtype" type="dropdown" firstselect="true" webname="Network Authentication Type" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"></parameter>
+            </col>
+        </row>
+        <row>
+            <col>
+            <parameter name="NetworkAuthenticationURL" type="string" required="false" webname="Network Authentication URL" dependsonparamvalue="'00','02'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="NetworkAuthenticationType"/>
+            </col>
+            <col>
+            <parameter name="InternetConnectivityEnabled" type="checkbox" webname="Internet Connectivity" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+        </row>
+         <row>
+            <col>
+            <parameter name="HESSID" type="string" required="false" webname="HESSID" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+            <col>
+            <parameter  name="IPv4AddressType" required="false" url="hotspotipv4addresstype" type="dropdown" firstselect="true" webname="IPv4 Address Type" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"></parameter>
+            </col>
+         </row>
+         <row>
+            <col>
+            <parameter  name="IPv6AddressType" required="false" url="hotspotipv6addresstype" type="dropdown" firstselect="true" webname="IPv6 Address Type" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"></parameter>
+            </col>
+            <col>
+            <parameter name="ThreeGpp" type="string" required="false" webname="3gpp" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+        </row>
+         <row>
+            <col>
+            <parameter name="OperatingClass" type="string" required="false" webname="Operating class" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+             </col>
+        </row>
+    </object>
+    <object viewtype="form" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable">
+         <row>
+            <col>
+				<parameter name="GasComebackDelay" type="string" required="false" webname="Gas Comeback Delay" />
+             </col>
+             <col>
+				<parameter name="ProxyArp" type="toggle" webname="Proxy ARP"/>
+            </col>
+        </row>
+    </object>
+    <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" viewtype="EditableTable" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable" onload="false">
+        <parameter name="DomainName" type="stringA" webname="DomainName"/>
+        <parameter name="Add" action="post" type="button" webname="Add" maxlen="64"/>
+        <parameter name="delete" action="post" type="button" webname="delete" maxlen="64"/>
+    </object>
+    <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OperatorFriendlyName.*" viewtype="tablePlus" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable">
+        <parameter name="OperatorFriendlyName" type="stringA" required="false" webname="Operator Friendly Name"/>
+        <parameter name="delete" action="post" routeurl="tableplusCustomdelete($event,$index,user)" type="button" webname="delete" maxlen="64"/>
+        <parameter name="edit" action="post" routeurl="tableplusstaticedit($data,$index,user.localadd)" type="button" webname="Edit" maxlen="64"/>
+        <parameter name="Add" action="post" routeurl="localadd($event)" type="button" webname="Add" maxlen="64"/>
+    </object>
+<!--   new changes -->
+     <object viewtype="form" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="OSENEnabled" >
+         <row>
+
+             <col>
+				<parameter name="ProxyArp" Value="false" type="toggle" access="readonly" webname="Proxy ARP" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+            </col>
+        </row>
+    </object>
+     <object viewtype="form" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="OSENEnabled">
+         <row>
+            <col>
+
+                        <parameter name="DgafDisabled" access="readonly" type="toggle" Value="true" webname="Disable DGAF" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+
+             </col>
+       
+        </row>
+    
+    </object>   
+            <object viewtype="form" name="Device.WiFi.AccessPoint.*.Security" dependsonparamvalue="'true'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="OSENEnabled">
+         <row>
+            <col>
+
+                        <parameter name="RadiusServerIPAddr"  type="string" required="false" webname="Radius Server IP Address" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+                        <parameter name="RadiusServerPort" required="false"  type="string" webname="Radius Server Port" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+                        <parameter name="RadiusSecret" required="false" type="string" webname="Radius Secret" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+                        <parameter name="SecondaryRadiusServerIPAddr" required="false" type="string" webname="Secondary Radius IP address" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+                        <parameter name="SecondaryRadiusServerPort" required="false" type="string" webname="Secondary Radius Server Port" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+                         <parameter name="SecondaryRadiusSecret" required="false" type="string" webname="Secondary Radius Secret" dependsonparamvalue="'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable"/>
+
+             </col>
+       
+        </row>
+    </object>
+        
+    
+    
+    <parameter name="Modify" type="submitbutton" buttontype="true" routeurl="relationalFormsApply($event,'hotspot_conf')" webname="Apply" maxlen="64"/>
+    
+</view>

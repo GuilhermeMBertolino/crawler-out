@@ -1,0 +1,64 @@
+<html>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+	<meta charset="UTF-8">
+<SCRIPT language="javascript" src="../dynaform/common.js" type="text/javascript"></SCRIPT>
+	<script type="text/javascript" src="../dynaform/encrypt.js"></script>
+	<script type="text/javascript" src="../dynaform/cryptoJS.min.js"></script>
+	<script type="text/javascript" src="../dynaform/tpEncrypt.js"></script>
+<SCRIPT type="text/javascript">
+var connection=getElesByName(document, "encryptedData");
+for(var i=0;i<connection.length;i++){
+	var rep=connection[i].getAttribute("data-name");
+	var unpData = window.top.parse(window[rep]);
+	try{eval(unpData);}
+	catch(exception){alert(exception);}
+}
+var startUrl = "";
+var startHelpUrl = "";
+if(framePara[0] == 1)
+{
+	startUrl = "../userRpm/WzdStartRpm.htm";
+	startHelpUrl = "../help/WzdStartHelpRpm.htm";
+}
+else
+{
+	startUrl = "../userRpm/StatusRpm.htm";
+	/*changed by ZQQ, 2015.7.25, corresponding to function StatusRpmHtm*/
+	if (framePara[2] == 0x08 || framePara[2] == 0x07 || framePara[2] == 0x06 || framePara[2] == 0x03)
+	{
+		startHelpUrl = "../help/StatusHelpRpm_AP.htm";
+	}
+	else if (framePara[2] == 0x04)
+	{
+		startHelpUrl = "../help/StatusHelpRpm_APC.htm";
+	}
+	else
+	{
+		startHelpUrl = "../help/StatusHelpRpm.htm";
+	}
+}
+document.write("<FRAMESET border='0' framespacing='0' rows=96px,*>");
+document.write("<FRAME name=topFrame marginWidth=0 marginHeight=0 frameBorder='0' src=\"../frames/top.htm\" scrolling=no frameSpacing=0 frameBorder=0 id=\"topFrame\">");
+document.write("<FRAMESET border='5' framespacing='10' cols=188px,72%,*>");
+document.write("<FRAME name=bottomLeftFrame marginWidth=0 marginHeight=0 src=\"../userRpm/MenuRpm.htm\" frameBorder=0 scrolling=auto style=\"overflow-x:hidden\" id=\"bottomLeftFrame\">");
+if(framePara[0] == 1 && framePara[3]==0) //not close QRCode
+{	
+	document.write("<FRAMESET border='5' framespacing='10' rows=*,150px>");
+	document.write("<FRAME name=mainFrame marginWidth=0 marginHeight=0 src=" +startUrl+" frameBorder=0 id=\"mainFrame\">");
+	document.write("<FRAME name=qrFrame marginWidth=0 marginHeight=0 frameBorder='0' src=\"../frames/qr.htm\" scrolling=no frameSpacing=0 id=\"qrFrame\">");
+	document.write("</FRAMESET>");
+}
+else
+{
+	document.write("<FRAME name=mainFrame marginWidth=0 marginHeight=0 src=" +startUrl+" frameBorder=0 id=\"mainFrame\">");
+}
+document.write("<FRAME name=helpFrame marginWidth=0 marginHeight=0 src="+startHelpUrl+" frameBorder=0 id=\"helpFrame\">");
+document.write("</FRAMESET>");
+</SCRIPT>
+
+<noframes>
+	<body id="t_noFrame">Please upgrade to a version 4 or higher browser so that you can use this setup tool.</body>
+</noframes>
+
+<head><meta http-equiv="pragma" content="no-cache"></head>
+</FRAMESET></html>

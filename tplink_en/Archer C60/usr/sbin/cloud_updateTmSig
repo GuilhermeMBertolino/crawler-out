@@ -1,0 +1,17 @@
+#!/usr/bin/lua
+
+-- get tm signature from cloud and update.
+
+local sys   = require "luci.sys"
+local security = require "luci.model.security"
+local dbg   = require "luci.tools.debug"
+
+local FILE_TM_SIG_UP_RUNNING = "/tmp/tm-shn/tm_sig_update_running"
+if nixio.fs.access(FILE_TM_SIG_UP_RUNNING) then
+	dbg.print("Another tm sig update process is running, do nothing.")
+else
+	nixio.fs.writefile(FILE_TM_SIG_UP_RUNNING, "1")
+	security.security_update_tm_signature()
+	nixio.fs.remove(FILE_TM_SIG_UP_RUNNING)
+end
+

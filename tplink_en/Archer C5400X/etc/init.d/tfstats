@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+
+START=77
+STOP=77
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+TFSTATS_MOD_ID=269
+LOG_INF_SERVICE_START=504
+LOG_INF_SERVICE_STOP=505
+
+start() {
+	local enable
+	config_load tfstats
+	
+	config_get enable "switch" enable
+	if [ "$enable" = "on" ]; then
+		# REMOVE this when BCM fix Runner bug
+		if [ -f /lib/modules/4.1.27/extra/pktrunner.ko ] ; then
+			rmmod pktrunner
+		fi
+	fi
+
+	if [ ! -f /var/run/tfstats.pid ] ; then
+		service_start /usr/sbin/tfstats $enable
+		echo $! > /var/run/tfstats.pid
+		logx -p $$ $TFSTATS_MOD_ID $LOG_INF_SERVICE_START
+	elif [ "$enable" = "on" ]; then
+		ubus call tfstats on
+	fi
+	return 0
+}
+
+stop() {
+	ubus call tfstats off
+	if [ -f /lib/modules/4.1.27/extra/pktrunner.ko ] ; then
+    		insmod /lib/modules/4.1.27/extra/pktrunner.ko || true
+	fi
+	#local pid
+	#pid=$(cat /var/run/tfstats.pid)
+	#kill -9 $pid
+	logx -p $$ $TFSTATS_MOD_ID $LOG_INF_SERVICE_STOP
+	return 0
+}

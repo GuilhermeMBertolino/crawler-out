@@ -1,0 +1,41 @@
+#!/bin/sh
+# Copyright (c) 2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : Sharon Lin <sharon.lin@tp-link.com>
+# Date    : 3 Mar 2016
+
+[ -z "$1" ] && echo "Error: should be run by udhcpc" && exit 1
+
+. /lib/functions.sh
+. /lib/smartdhcp/smartdhcp_functions.sh
+
+lan_type=$(uci_get network lan lan_type)
+
+setup_interface () {
+	smartdhcp_debug_print "Get DHCP Offer from Server: "
+	smartdhcp_debug_print "interface=$interface ip=$ip dns=$dns router=$router subnet=$subnet mask=$mask"
+
+	setup_ipalias $interface $ip $router $subnet $mask
+}
+
+
+case "$1" in
+	renew|bound)
+		# to avoid pasing multi dns servers error, save dns to file
+		if [ -n "$dns" ] 
+		then
+			echo "$dns" > $SMARTDHCP_DNS_FILE
+		fi
+		if [ "$lan_type" == "dynamic" ]
+		then
+			setup_interface
+			restart_lan_dhcps "1" $interface
+		else
+			restart_lan_dhcps "0" $interface "1"
+		fi
+		;;
+	deconfig)
+		restart_lan_dhcps "0" $interface
+		;;
+esac
+
+exit 0

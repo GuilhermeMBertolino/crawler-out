@@ -1,0 +1,150 @@
+<script language="javascript">var errorFlag,initFlag;function showXdslType(e,a){"ATM"==e?"add"==a?($("#atm_elem_add").removeClass("nd"),$("#atm_elem_edit").addClass("nd"),INCLUDE_WAN_VLAN&&"pppoa"!=$("#link_type").data("value")&&"ipoa"!=$("#link_type").data("value")&&($("#dsl_vlan_add").removeClass("nd"),$("#vlanEn_edit").prop("checked",!1),$("#vlanid_edit").val(0)),INCLUDE_AUTO_PVC?$("#autoPVC").removeClass("nd"):$("#autoPVC").addClass("nd"),initFlag=0,showPvcParam(),initFlag=1):"edit"==a&&($("#atm_elem_edit").removeClass("nd"),$("#atm_elem_add").addClass("nd"),"bridge"==$.wd.conn[$.wd.editIndex].type&&$("#atmClick").addClass("cln"),INCLUDE_WAN_VLAN&&"pppoa"!=$.wd.conn[$.wd.editIndex].type&&"ipoa"!=$.wd.conn[$.wd.editIndex].type&&($("#dsl_vlan_edit").removeClass("nd"),$("#vlanEn_edit").prop("checked",1==$.wd.conn[$.wd.editIndex].obj.X_TP_8021QEnabled),$("#vlanEn_edit").prop("disabled",!0),$("#vlanid_edit").val($.wd.conn[$.wd.editIndex].obj.X_TP_VlanID),1==$.wd.conn[$.wd.editIndex].obj.X_TP_8021QEnabled&&($("#vlanidText").html($.wd.conn[$.wd.editIndex].obj.X_TP_VlanID),$("#vlan_div_view").removeClass("nd")),"bridge"==$.wd.conn[$.wd.editIndex].type&&($("#t_enVid_edit").addClass("nd"),$("#vlanEn_edit").addClass("nd"))),initATM()):INCLUDE_VDSLWAN&&"PTM"==e&&("add"==a?($("#ptm_elem_add").removeClass("nd"),$("#ptm_elem_edit").addClass("nd")):"edit"==a&&($("#ptm_elem_add").addClass("nd"),$("#ptm_elem_edit").removeClass("nd"),initPTM()))}function initDsl(){if(INCLUDE_RU_IPTV)var e={};dsllinkcfglist=$.act(ACT_GS,WAN_DSL_LINK_CFG,null,$.wd.pStk),INCLUDE_VDSLWAN&&(ptmlinkcfglist=$.act(ACT_GS,WAN_PTM_LINK_CFG,null,$.wd.pStk),INCLUDE_RU_IPTV&&(iptvCfg=$.act(ACT_GET,DSL_IPTV_CFG,null,null,null),e=$.act(ACT_GET,LOCAL,null,null,null))),$.exe()||(INCLUDE_VDSLWAN&&INCLUDE_RU_IPTV&&(country=e.country),curSupIsPtm="PTM"==$.wd.curSupXtmType?1:0,null==$.wd.conn[$.wd.editIndex].type?INCLUDE_VDSLWAN?($("#xdsl_type_add").removeClass("nd"),$("#xdsl_type_edit").addClass("nd"),1==curSupIsPtm?$("#vdslRadio").prop("checked",!0):$("#adslRadio").prop("checked",!0),$("#adslRadio").tpRadio({refresh:1}),$("#vdslRadio").tpRadio({refresh:1})):($("#atm_elem_add").removeClass("nd"),$("#xdsl_type_add").addClass("nd"),$("#atm_elem").removeClass("nd"),$("#ptm_elem").addClass("nd")):(INCLUDE_VDSLWAN&&$("#xdsl_type_edit").removeClass("nd"),$("#xdsl_type_add").addClass("nd"),INCLUDE_VDSLWAN&&1==$.wd.conn[$.wd.editIndex].ptm.X_TP_Used?(curSetIsPtm=1,$("#xdslTypeText").html("VDSL"),$("#ptm_elem").removeClass("nd"),$("#atm_elem").addClass("nd"),showXdslType("PTM","edit")):(curSetIsPtm=0,$("#xdslTypeText").html("ADSL"),$("#atm_elem").removeClass("nd"),$("#ptm_elem").addClass("nd"),showXdslType("ATM","edit"))))}function onVlanClick(e){0==e?$("#vlanEn_add").prop("data-checked")?$("#vlan_div_add").removeClass("nd"):$("#vlan_div_add").addClass("nd"):1==e&&($("#vlanEn_edit").prop("data-checked")?$("#vlan_div_edit").removeClass("nd"):$("#vlan_div_edit").addClass("nd"))}function onVidClick(){$("#vidEn").prop("data-checked")?$("#vid_div").removeClass("nd"):$("#vid_div").addClass("nd")}function checkVidValid(){var e=$("#vidEn").prop("data-checked")?parseInt($("#vid").val(),10):0,a=1==$("#vidEn").prop("data-checked")?1:0;if(INCLUDE_RU_IPTV)var t=$("#link_type").val();if($("#vidEn").prop("data-checked")&&$.num(e,[1,4094],!0))return $.alert(ERR_WAN_VLAN_ID_INVALID),$("#vid").focus().select(),!1;for(var d=0;d<ptmlinkcfglist.length;d++)if(1==ptmlinkcfglist[d].X_TP_Used&&(ptmlinkcfglist[d].X_TP_VID==e||0==ptmlinkcfglist[d].X_TP_VlanEnabled&&0==a)&&(!INCLUDE_RU_IPTV||"RU"!=country||"1"!=iptvCfg.enable||"Bridge"!=iptvCfg.connectionType||"bridge"==t||iptvCfg.iptvVLANEnabled!=a||iptvCfg.iptvVLANID!=e||1!=ptmlinkcfglist[d].X_TP_CreatedByIPTV))return $.alert(ERR_WAN_VLAN_ID_CONFLICT),$("#vidEn").prop("data-checked")&&$("#vid").focus().select(),!1;return!0}function checkVlanIdValid(e){if(0==e){var a=1==$("#vlanEn_add").prop("data-checked")?parseInt($("#vlanid_add").val(),10):0;if($("#vlanEn_add").prop("data-checked")&&$.num(a,[0,4094],!0))return $.alert(ERR_WAN_VLAN_ID_INVALID),$("#vlanid_add").focus().select(),!1}else if(1==e){a=1==$("#vlanEn_edit").prop("data-checked")?$("#vlanid_edit").val():0;if($("#vlanEn_edit").prop("data-checked")&&$.num(a,[0,4094],!0))return $.alert(ERR_WAN_VLAN_ID_INVALID),$("#vlanid_edit").focus().select(),!1}return!0}function showPvcParam(){var e="PVC:"+parseInt($("#vpi").val(),10)+"/"+parseInt($("#vci").val(),10),a=!1;$.each(dsllinkcfglist,function(){if(this.destinationAddress==e)return $("#atm_encapsulation option[value="+this.ATMEncapsulation+"]").prop("selected","selected"),"UBR"==this.ATMQoS?($("#atm_qos option[value='ubr']").prop("selected","selected"),$("#pcr").val(this.ATMPeakCellRate),$("#scr").val(""),$("#mbs").val(""),$("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0)):($("#atm_qos option[value="+this.ATMQoS.toLowerCase()+"]").prop("selected","selected"),$("#pcr").val(this.ATMPeakCellRate),$("#scr").prop("disabled",!1),$("#mbs").prop("disabled",!1),$("#scr").val(this.ATMSustainableCellRate),$("#mbs").val(this.ATMMaximumBurstSize)),tmpWanCon=$.act(ACT_GET,WAN_CONN_DEVICE,this.__stack,null),$.exe()||(0<tmpWanCon.WANIPConnectionNumberOfEntries||0<tmpWanCon.WANPPPConnectionNumberOfEntries)&&disablePvcParam(this.linkType),!(a=!0)}),0==a&&($("#atm_encapsulation").prop("disabled",!1),$("#atm_qos").prop("disabled",!1),$("#atm_qos").tpSelect({refresh:1}),$("#pcr").prop("disabled",!1),"pppoa"==$("#link_type").data("value")?$("#atm_encapsulation option[value='VCMUX']").prop("selected","selected"):$("#atm_encapsulation option[value='LLC']").prop("selected","selected"),$("#atm_encapsulation").tpSelect({refresh:1}),$("#atm_qos option[value='ubr']").prop("selected","selected"),$("#pcr").val(0),$("#scr").val(""),$("#mbs").val(""),$("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0),$("#p_note").addClass("nd"),errorFlag=0)}function initATM(){var e=$.wd.conn[$.wd.editIndex].dsl;$("#vpiText").html(e.destinationAddress.split(":")[1].split("/")[0]),$("#vciText").html(e.destinationAddress.split(":")[1].split("/")[1]),$("#atm_encapsulationText").html("VCMUX"==e.ATMEncapsulation?"VC-Mux":e.ATMEncapsulation),$("#atm_qosText").html(e.ATMQoS),"ubr"==e.ATMQoS?($("#pcrText").html(e.ATMPeakCellRate),$("#atm_qos_div").addClass("nd")):($("#atm_qos_div").removeClass("nd"),$("#pcrText").html(e.ATMPeakCellRate),$("#scrText").html(e.ATMSustainableCellRate),$("#mbsText").html(e.ATMMaximumBurstSize))}function initPTM(){var e=$.wd.conn[$.wd.editIndex].ptm;-1==e.X_TP_VID?$("#vidText").html("N/A"):$("#vidText").html(e.X_TP_VID)}function ATMClick(e){e.id.indexOf("Text")<0?$(e).hasClass("cln")?($("#atmDiv").addClass("nd"),$(e).removeClass("cln")):($("#atmDiv").removeClass("nd"),$(e).addClass("cln")):$(e).hasClass("cln")?($("#atmDivText").addClass("nd"),$(e).removeClass("cln")):($("#atmDivText").removeClass("nd"),$(e).addClass("cln"))}function disablePvcParam(e){if($("#atm_encapsulation").prop("disabled",!0),$("#atm_qos").prop("disabled",!0),$("#pcr").prop("disabled",!0),$("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0),$("#p_note").removeClass("nd"),$("#atm_encapsulation").tpSelect({refresh:1}),$("#atm_qos").tpSelect({refresh:1}),errorFlag=0,1==initFlag){if("ipoa"==$("#link_type").data("value"))return errorFlag=1,$.alert(ERR_IPOA_PVC_INVAD),void $("#vpi").focus().select();if("pppoa"==$("#link_type").data("value"))return errorFlag=1,$.alert(ERR_PPPOA_PVC_INVAD),void $("#vpi").focus().select();if("IPoA"==e)return errorFlag=1,$.alert(ERR_IPOA_PVC_INVAD),void $("#vpi").focus().select();if("PPPoA"==e)return errorFlag=1,$.alert(ERR_PPPOA_PVC_INVAD),void $("#vpi").focus().select()}}function doAutoPVC(){$("#autoPVC_en").prop("data-checked")?($("#vpi").val(""),$("#vci").val(""),$("#vpi").prop("disabled",!0),$("#vci").prop("disabled",!0),$("#atm_encapsulation option[value='LLC']").prop("selected","selected"),$("#atm_encapsulation").prop("disabled",!1),$("#atm_qos option[value='ubr']").prop("selected","selected"),$("#atm_qos").prop("disabled",!1),$("#pcr").val("0"),$("#scr").val(""),$("#mbs").val(""),$("#pcr").prop("disabled",!1),$("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0),$("#p_note").addClass("nd")):($("#vpi").val("0"),$("#vci").val("32"),$("#vpi").prop("disabled",!1),$("#vci").prop("disabled",!1),$("#p_note").removeClass("nd"),showPvcParam())}function saveAttr(){var e,a,t,d,l,s=$("#link_type").data("value");if(INCLUDE_VDSLWAN&&1==curSetIsPtm){if(0==checkVidValid())return!1;errorFlag=0}else{if(detectPvcConflict(),1==errorFlag)return!1;if($.num($("#vpi").val(),[0,255],!0)||$.num($("#vci").val(),[1,65535],!0))return $.alert(ERR_WAN_VPI_VCI_INVAD),$("#vpi").focus().select(),!1;if(a="PVC:"+parseInt($("#vpi").val(),10)+"/"+parseInt($("#vci").val(),10),"ipoa"==$("#link_type").data("value")&&!$("#p_note").hasClass("nd"))return $.alert(ERR_IPOA_PVC_INVAD),$("#vpi").focus().select(),!1;var n=$("#atm_encapsulation").data("value"),i=$("#atm_qos").data("text");if(""==$("#pcr").val())return $.alert(ERR_WAN_PCR_EMPTY),$("#pcr").focus().select(),!1;if(t=$("#pcr").val(),!($.isnum(t)&&0<=t&&t<=5500))return $.alert(ERR_WAN_PCR_INVAD),$("#pcr").focus().select(),!1;if(t=parseInt(t,10),0==$("#scr").prop("disabled")){if(""==$("#scr").val())return $.alert(ERR_WAN_SCR_EMPTY),$("#scr").focus().select(),!1;if(d=$("#scr").val(),!($.isnum(d)&&0<=d&&d<=5500))return $.alert(ERR_WAN_SCR_INVAD),$("#scr").focus().select(),!1;if(t<(d=parseInt(d,10)))return $.alert(ERR_WAN_SCR_LARGER_THAN_PCR),$("#scr").focus().select(),!1}else d=0;if(0==$("#mbs").prop("disabled")){if(""==(l=$("#mbs").val()))return $.alert(ERR_WAN_MBS_EMPTY),$("#mbs").focus().select(),!1;if(!(1==$.isnum(l)&&0<=l&&l<=65535))return $.alert(ERR_WAN_MBS_INVAD),$("#mbs").focus().select(),!1;l=parseInt(l,10)}else l=0}if("staticIp"==s)"IP_Routed",e="EoA","Static";else if("dynamicIp"==s)"IP_Routed",e="EoA","DHCP";else if("ipoa"==s)"IP_Routed",e="IPoA","Static";else if("bridge"==s)"IP_Bridged",e="EoA","Static";else if("pppoe"==s)"IP_Routed",e="EoA",transportType="PPPoE";else{if("pppoa"!=s)return $.alert(ERR_WAN_CONNECTIONTYPE_INVAD),$("#link_type").focus().select(),!1;"IP_Routed",e="PPPoA",transportType="PPPoA"}return INCLUDE_VDSLWAN&&1==curSetIsPtm?(wanPtm.enable=1,wanPtm.X_TP_Used=1,wanPtm.X_TP_VlanEnabled=1==$("#vidEn").prop("data-checked")?1:0,wanPtm.X_TP_VID=wanPtm.X_TP_VlanEnabled?parseInt($("#vid").val(),10):0):(wanDsl.linkType=e,wanDsl.destinationAddress=a,wanDsl.aTMPeakCellRate=t,wanDsl.aTMMaximumBurstSize=l,wanDsl.aTMSustainableCellRate=d,wanDsl.ATMEncapsulation=n,wanDsl.ATMQoS=i,wanDsl.enable=1,INCLUDE_WAN_VLAN&&null==$.wd.conn[$.wd.editIndex].type&&"pppoa"!=s&&"ipoa"!=s&&(wanArg.X_TP_8021QEnabled=1==$("#vlanEn_add").prop("data-checked")?1:0,wanArg.X_TP_VlanID=wanArg.X_TP_8021QEnabled?parseInt($("#vlanid_add").val(),10):0)),!0}function addDslVlanAttrs(){if(INCLUDE_WAN_VLAN){if(null==$.wd.conn[$.wd.editIndex].type||"pppoa"==$.wd.conn[$.wd.editIndex].type||"ipoa"==$.wd.conn[$.wd.editIndex].type)return!1;wanArg.X_TP_8021QEnabled=1==$("#vlanEn_edit").prop("data-checked")?1:0,wanArg.X_TP_VlanID=wanArg.X_TP_8021QEnabled?$("#vlanid_edit").val():0}return!0}function addDslCfgAttrs(){var e=!0;if(INCLUDE_AUTO_PVC){var t=1;if($("#autoPVC_en").prop("data-checked")){t=0;var a={};a.type=$("#atm_encapsulation").data("value");var d=$("#link_type").val();if("staticIp"==d){if(a.linkType="Static",$.ifip($("#ip_address").val(),!0))return $.alert(ERR_IP_FORMAT),void $("#ip_address").focus().select();if($.ifip($("#ip_gateway").val(),!0))return $.alert(ERR_AUTOPVC_IP_FORMAT),void $("#ip_gateway").focus().select();a.ipAddr=$.ip2ip($("#ip_address").val()),a.gwAddr=$.ip2ip($("#ip_gateway").val())}else"bridge"==d?a.linkType="Bridge":"dynamicIp"==d?a.linkType="DHCP":"pppoe"==d?a.linkType="PPPoE":"pppoa"==d&&(a.linkType="PPPoA");$.act(ACT_CGI,"/cgi/pvc",null,null,a),$.exe()||$.auto(function(){var e=$.act(ACT_GET,WAN_DSL_AUTOPVC,pStk,null,["searchState"]);if(!$.exe()){if(e.searchState<=1)return;if(2==e.searchState){var a=$.act(ACT_GET,WAN_DSL_AUTOPVC,pStk,null,["detectedVpi","detectedVci"]);$.exe()||($("#vpi").val(a.detectedVpi),$("#vci").val(a.detectedVci),t=1)}else 3==e.searchState&&$.alert(ERR_AUTOPVC_INVAD);return 1==t&&saveAttr(),!1}},500,!0)}else saveAttr()}else e=saveAttr();return e}function showQoS(){"UBR"==$("#atm_qos").data("text")?($("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0),$("#scr").val(""),$("#mbs").val("")):($("#scr").prop("disabled",!1),$("#mbs").prop("disabled",!1),$("#scr").val("0"),$("#mbs").val("0"))}$("input[id$='dslRadio']").click(function(){var e="ATM";$("#xdsl_type_add").hasClass("nd")||(INCLUDE_VDSLWAN?($("#adslRadio").prop("checked")?($("#atm_elem").removeClass("nd"),$("#ptm_elem").addClass("nd"),curSetIsPtm=0):$("#vdslRadio").prop("checked")&&($("#atm_elem").addClass("nd"),$("#ptm_elem").removeClass("nd"),curSetIsPtm=1),e=1==curSetIsPtm?"PTM":"ATM",initConnTypeSelect(e),showXdslType(e,"add")):(initConnTypeSelect("ATM"),showXdslType("ATM","add")),(dftGtw||dftGtw6)&&(initDefaultGwDNS(),dftGtw.tpSelect({refresh:1}),INCLUDE_IPV6&&dftGtw6&&dftGtw6.tpSelect({refresh:1})))}),$("#atm_qos").click(function(){"UBR"==$("#atm_qos").data("text")?($("#scr").prop("disabled",!0),$("#mbs").prop("disabled",!0),$("#scr").val(""),$("#mbs").val("")):($("#scr").prop("disabled",!1),$("#mbs").prop("disabled",!1),$("#scr").val("0"),$("#mbs").val("0"))})</script>
+<h3 id="et1">ISP Configuration</h3>
+<div id="xdsl_type" class="nd">
+    <div id="xdsl_type_add">
+        <b class="T_dslmode">DSL Modulation Type:</b>
+        <input type="radio" name="radio_name_dslMode" id="vdslRadio" checked="checked">
+        <label>VDSL</label>
+        <input type="radio" name="radio_name_dslMode" id="adslRadio">
+        <label>ADSL</label>
+    </div>
+    <div id="xdsl_type_edit" class="pure-control-group cfg-line nd">
+        <label class="label-title T_dslmode">DSL Modulation Type:</label>
+        <span class="text" id="xdslTypeText"></span>
+    </div>
+</div>
+<div id="atm_elem" class="nd">
+    <div id="atm_elem_add" class="bdr nd">
+        <div><b class="T_vpi">VPI:</b>
+            <input type="text" id="vpi" value="8" onchange="showPvcParam()" maxlength="3">
+            <span>(0-255)</span>
+        </div>
+        <div><b class="T_vci">VCI:</b>
+            <input type="text" id="vci" value="35" onchange="showPvcParam()" maxlength="5">
+            <span>(1-65535)</span>
+        </div>
+        <div id="dsl_vlan_add" class="nd">
+            <div><b class="T_vlan">VLAN ID:</b>
+                <input type="checkbox" id="vlanEn_add" onclick="onVlanClick(0)">
+                <label class="T_enable">Enable</label>
+            </div>
+            <div id="vlan_div_add" class="nd">
+                <div><b class="T_vlanrange">VLAN ID (1-4094):</b>
+                    <input type="text" id="vlanid_add" value="7" onchange="checkVlanIdValid(0)" maxlength="4">
+                </div>
+            </div>
+        </div>
+        <div id="autoPVC" class="nd"><b id="t_autoPvc">Enable PVC Auto-detection</b>
+            <input type="checkbox" id="autoPVC_en" onclick="doAutoPVC()">
+        </div>
+        <div class="nd" id="p_note">
+            <span id="t_note1">Notice: The current PVC has a plurality of connection,the following parameters prohibiting to modify!</span>
+        </div>
+        <div class="advanced-block">
+            <span class="advanced-icon advanced-hide-icon" id="atmClick" onclick="ATMClick(this)"></span>
+            <span class="T_adv">Advanced</span>
+        </div>
+        <div id="atmDiv" class="nd">
+            <p id="t_note2">Notice: Do not change the parameters below unless necessary!</p>
+            <b class="T_encapmod">Encapsulation Mode:</b>
+            <select id="atm_encapsulation" class="l">
+                <option id="llc" value="LLC" selected="selected">LLC</option>
+                <option id="vcmux" value="VCMUX">VC-Mux</option>
+            </select>
+            <b class="T_atmqos">ATM QoS Type:</b>
+            <select id="atm_qos" class="l" onchange="showQoS()">
+                <option id="ubr" value="ubr" selected="selected">UBR</option>
+                <option id="cbr" value="cbr">CBR</option>
+                <option id="vbr_nrt" value="vbr_nrt">VBR-nrt</option>
+                <option id="vbr_rt" value="vbr_rt">VBR-rt</option>
+            </select>
+            <div><b class="T_pcr">PCR:</b>
+                <input type="text" id="pcr" value="0" maxlength="4">
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div><b class="T_scr">SCR:</b>
+                <input type="text" id="scr" value="" disabled="disabled" maxlength="4">
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div><b class="T_mbs">MBS:</b>
+                <input type="text" id="mbs" value="" disabled="disabled" maxlength="5">
+                <span class="T_fps">frames/s</span>
+            </div>
+        </div>
+    </div>
+    <div id="atm_elem_edit" class="bdr nd">
+        <div class="pure-control-group cfg-line">
+            <label class="label-title">VPI(0-255):</label>
+            <span class="text" id="vpiText"></span>
+        </div>
+        <div class="pure-control-group cfg-line">
+            <label class="label-title">VCI(32-65535):</label>
+            <span class="text" id="vciText"></span>
+        </div>
+        <div id="dsl_vlan_edit" class="nd">
+            <div><b id="t_enVid_edit" class="T_vlan">VLAN ID:</b>
+                <input type="checkbox" id="vlanEn_edit" onclick="onVlanClick(1)">
+                <label class="T_enable"></label>
+            </div>
+            <div id="vlan_div_edit" class="nd">
+                <div><b class="T_vlanrange">VLAN ID (1-4094):</b>
+                    <input type="text" id="vlanid_edit" value="7" onchange="checkVlanIdValid(1)" maxlength="4">
+                </div>
+            </div>
+            <div id="vlan_div_view" class="nd">
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title T_vlan">VLAN ID:</label>
+                    <span class="text" id="vlanidText"></span>
+                </div>
+            </div>
+        </div>
+        <div class="advanced-block" type="button" id="atmClickText" onclick="ATMClick(this)">
+            <span class="advanced-icon advanced-hide-icon"></span>
+            <span class="T_adv">Advanced</span>
+        </div>
+        <div id="atmDivText" class="nd">
+            <div class="pure-control-group cfg-line">
+                <label class="label-title T_encapmod">Encapsulation Mode:</label>
+                <span class="text" id="atm_encapsulationText"></span>
+            </div>
+            <div class="pure-control-group cfg-line">
+                <label class="label-title T_atmqos">ATM QoS Type:</label>
+                <span class="text" id="atm_qosText"></span>
+            </div>
+            <div class="pure-control-group cfg-line">
+                <label class="label-title T_pcr">PCR:</label>
+                <span class="text" id="pcrText"></span>
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div id="atm_qos_div">
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title T_scr">SCR:</label>
+                    <span class="text" id="scrText"></span>
+                    <span class="T_fps">frames/s</span>
+                </div>
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title T_mbs">MBS:</label>
+                    <span class="text" id="mbsText"></span>
+                    <span class="T_fps">frames/s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="ptm_elem" class="nd">
+    <div id="ptm_elem_add">
+        <div><b class="T_vlan">VLAN ID:</b>
+            <input type="checkbox" id="vidEn" onclick="onVidClick()">
+            <label class="T_enable">Eable</label>
+        </div>
+        <div id="vid_div" class="nd">
+            <b class="T_vlanrange">VLAN ID (1-4094):</b>
+            <input type="text" id="vid" value="1" onchange="checkVidValid()" maxlength="4">
+        </div>
+    </div>
+    <div id="ptm_elem_edit" class="pure-control-group cfg-line nd">
+        <label class="label-title T_vlan">VLAN ID:</label>
+        <span class="text" id="vidText"></span>
+    </div>
+</div>
+<script language="javascript">INCLUDE_VDSLWAN&&($("#xdsl_type").removeClass("nd"),$("#ptm_elem").removeClass("nd")),INCLUDE_GERMANY_SPEC&&($("#vid").prop("value","7"),$("#vpi").prop("value","1"),$("#vci").prop("value","32")),$.tpInit(initDsl)</script>

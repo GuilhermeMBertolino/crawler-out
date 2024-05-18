@@ -1,0 +1,32 @@
+<script>function clrtbl(){$("#table-log").find("tbody tr:not(.nd)").remove()}function bldtbl(){clrtbl();for(var e=$("#module").data("text"),t=$("#severity").data("value"),l=1,o=[],a=0,s=logs.length;a<s;a++)""!=logs[a]&&null!=logs[a]&&(0==$("#module").data("value")||e==logs[a][3])&&parseInt(logs[a][2],10)<=t&&(o.push([{text:l,width:"7%"},{text:logs[a][1],width:"13%"},{text:logs[a][3],width:"10%"},{text:severities[logs[a][2]],width:"13%"},{text:logs[a][4].replace(/&/g,"&amp;").replace(/</g,"&lt;"),width:"57%"}]),l++);$.initTableBody($("#table-log"),o),$.tablePages($("#table-log"),8)}function init(){for(var e,t,l="",o=0,a=severities.length;o<a;o++)l+="<option value='"+(e=o)+"' text='"+(t=severities[o])+"' >"+t+"</option>";$("#severity").empty().append(l),$.mainParam?$('#severity option[value="'+$.mainParam[1]+'"]').prop("selected","selected"):$('#severity option[value="'+e+'"]').prop("selected","selected");var s={refresh:1};$("#severity").tpSelect(s),logs=$.local||$.sim?$.io("./xml/log.txt",!1).split("\r\n"):$.io("/cgi/log",!1).split("\r\n");var i=parseInt(logs.shift(),10);logs.pop(),logs.reverse();var r=[];if(i)return $.alert(i);for(var o=0,a=logs.length;o<a;o++)""!=logs[o]&&null!=logs[o]&&(logs[o]=logs[o].match(/([\d-]+\s[\d:]+)\s\[(\d)\]\s(\w+):\s(.*)/),""!=logs[o]&&null!=logs[o]&&(logs[o][3]=logs[o][3].toUpperCase(),$.inArray(logs[o][3],r)||r.push(logs[o][3])));r.sort();for(var o=0,a=r.length;o<a;o++)t=r[o],e=o+1,$("#module").append("<option value='"+e+"' text='"+t+"' >"+t+"</option>");$.mainParam?$('#module option[value="'+$.mainParam[0]+'"]').prop("selected","selected"):$("#module option[value='0']").prop("selected","selected"),$("#module").tpSelect(s)}var logs,first=0,severities=[s_str.emerg,s_str.alert,s_str.crit,m_str.err,m_str.warn,s_str.notice,s_str.info,s_str.debug];$("#t_setting").click(function(){var e=[$("#module").data("value"),$("#severity").data("value")];$.loadMain("logConf.htm",e)}),$("#freshAll").click(function(){$.addLoading($(this),200,function(){var e=[$("#module").data("value"),$("#severity").data("value")];$.loadMain("log.htm",e)})}),$("#module").click(function(){first&&bldtbl()}),$("#severity").click(function(){first&&bldtbl()}),$("#delAll").click(function(){$.cgi("/cgi/log","clr");var e=[$("#module").data("value"),$("#severity").data("value")];$.loadMain("log.htm",e)}),$("#t_save").click(function(){var e=document.createElement("a");void 0===e.click?location.href="/cgi/log?down":(e.href="/cgi/log?down",document.body.appendChild(e),e.click())})</script>
+<h3 id="et">System Log</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <b id="t_logtype">Type:</b>
+        <select class="inline" id="module">
+            <option value="0" class="T_all">ALL</option>
+        </select>
+        <div>
+            <b id="t_loglevel">Level:</b>
+            <select class="inline" id="severity">
+            </select>
+        </div>
+        <div class="table-op part-separate" id="addItem">
+            <div class="table-btn">
+                <span id="freshAll" class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="delAll" class="delete-all-icon"></span>
+                <label class="T_delall">Delete All</label>
+            </div>
+        </div>
+        <table id="table-log">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </form>
+    <div class="part-separate-m">
+        <button type="submit" class="green inline left xl" id="t_setting">Log Settings</button>
+        <button type="submit" class="green inline left xl" id="t_save">Save Log</button>
+    </div>
+</div>
+<script>var headArray=[{text:table_str.id,width:"7%"},{text:table_str.time,width:"13%"},{text:table_str.type,width:"10%"},{text:table_str.lvl,width:"13%"},{text:table_str.logcont,width:"57%"}];$.tpInit(init),$.initTableHead($("#table-log"),headArray),$("#table-log").tpTable(bldtbl),first=1</script>

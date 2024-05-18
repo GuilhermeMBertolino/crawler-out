@@ -1,0 +1,61 @@
+﻿<script language="javascript" type="text/javascript">var showNum=10;var dualparam={"2g":{},"5g":{}};var authMode=new Array(s_str.opensys,s_str.sharekey,s_str.auto,"WPA","WPA-PSK","WPA-None","WPA2","WPA2-PSK","WPA/WPA2","WPA/WPA2-PSK");var wepStatus=new Array("WEP","EncryptionDisabled","KeyAbsent","EncryptionNotSupported","TKIP","TKIP KeyAbsent","AES","AES KeyAbsent","TKIP or AES mix","TKIP or AES mix KeyAbsent","GroupWEP40","GroupWEP104");var wepStatus2;if(INCLUDE_WIFI_5G_CHIP_MT7613){wepStatus2=new Array("WEP","EncryptionDisabled","KeyAbsent","EncryptionNotSupported","TKIP","TKIP KeyAbsent","AES","CCMP256","GCMP128","GCMP256","AES KeyAbsent","TKIP or AES mix","TKIP or AES mix KeyAbsent","GroupWEP40","GroupWEP104")}function removeTbl(){var tlb=$.id("apTbl");while(tlb.rows.length>1){tlb.deleteRow(-1)}}function removeTbl5g(){var tlb5g=$.id("apTbl5g");while(tlb5g.rows.length>1){tlb5g.deleteRow(-1)}}function connect(apObj,band){var param={};param.wdsExist=0;if(apObj!=null){param.wdsExist=1;param.SSID=apObj.SSID;param.BSSID=apObj.BSSID;param.channel=apObj.channel;param.authMode=apObj.authMode;param.wepStatus=apObj.wepStatus;param.band=band}$.qf.next($.qd.sysMode,param)}function getClassName(clsName,parent){if(!document.getElementsByClassName){var oParent=document.getElementById(parent)||document;var elements=oParent.getElementsByTagName("*");var ele=[];for(var i=0;i<elements.length;i++){if(elements[i].className==clsName){ele.push(elements[i])}}return ele}else{return document.getElementsByClassName(clsName)}}function doSelect(apObj,band,obj){dualparam[band].wdsExist=0;if(obj.checked){var checkobjs=getClassName("check"+band);for(var i=0;i<checkobjs.length;i++){if(checkobjs[i]!=obj){checkobjs[i].checked=false}}if(apObj!=null){dualparam[band].wdsExist=1;dualparam[band].SSID=apObj.SSID;dualparam[band].BSSID=apObj.BSSID;dualparam[band].channel=apObj.channel;dualparam[band].authMode=apObj.authMode;dualparam[band].wepStatus=apObj.wepStatus}}}function wdsGoNext(){if($.hasClass($.id("tab2g"),"nd")){if(dualparam["2g"].wdsExist==null){dualparam["2g"].wdsExist=0}if(dualparam["5g"].wdsExist==null){dualparam["5g"].wdsExist=0}$.qf.next($.qd.sysMode,dualparam)}else{optSel("5g")}}function wdsGoBack(){if(INCLUDE_WDS_DUALBAND_DYNSWITCH&&$.hasClass($.id("tab2g"),"nd")){optSel("2g")}else{$.qf.prev()}}function getTbl(band){var tbl=$.id("apTbl");if(!INCLUDE_WDS_DUALBAND_DYNSWITCH||!band||band=="2g"){removeTbl();$.each(apList,function(arg,index){row=tbl.insertRow(-1);cell=row.insertCell(-1);cell.innerHTML=index+1;cell.width="26px";cell=row.insertCell(-1);cell.innerHTML="2.4GHz";cell.width="26px";cell=row.insertCell(-1);cell.innerHTML=this.BSSID;cell.width="117px";cell=row.insertCell(-1);cell.innerHTML=this.SSID.replace(/\&/g,"&amp;").replace(/</g,"&lt;").replace(/ /g,"&nbsp;");cell.width="240px";cell=row.insertCell(-1);cell.innerHTML=this.RSSI;cell.width="100px";cell=row.insertCell(-1);cell.innerHTML=this.channel;cell.width="65px";cell=row.insertCell(-1);if(0==this.securityEnable){cell.innerHTML="<span class='T T_none'>"+m_str.none+"</span>"}else{var encryptType=authMode[this.authMode]+"/"+wepStatus[this.wepStatus];cell.innerHTML="<span>"+encryptType+"</span>"}cell.width="80px";cell=row.insertCell(-1);if(INCLUDE_WDS_DUALBAND_DYNSWITCH){cell.innerHTML="<input type='checkbox' class='check2g' onclick=doSelect(apList["+index+"],'2g',this)>"}else{cell.innerHTML="<span class=a onclick=connect(apList["+index+"],'2.4GHz')><span class='T T_conn'>"+m_str.conn+"</span></span>"}cell.width="65px"})}if(!INCLUDE_WDS_DUALBAND_DYNSWITCH||!band||band=="5g"){if(INCLUDE_WDS_DUALBAND_DYNSWITCH){var tbl5g=$.id("apTbl5g");removeTbl5g()}$.each(ap5gList,function(arg,index){if(INCLUDE_WDS_DUALBAND_DYNSWITCH){row=tbl5g.insertRow(-1)}else{row=tbl.insertRow(-1)}cell=row.insertCell(-1);if(INCLUDE_WDS_DUALBAND_DYNSWITCH){cell.innerHTML=index+1}else{cell.innerHTML=index+apList.length+1}cell.width="26px";cell=row.insertCell(-1);cell.innerHTML="5GHz";cell.width="26px";cell=row.insertCell(-1);cell.innerHTML=this.BSSID;cell.width="117px";cell=row.insertCell(-1);cell.innerHTML=this.SSID.replace(/\&/g,"&amp;").replace(/</g,"&lt;").replace(/ /g,"&nbsp;");cell.width="240px";cell=row.insertCell(-1);cell.innerHTML=this.RSSI;cell.width="100px";cell=row.insertCell(-1);cell.innerHTML=this.channel;cell.width="65px";cell=row.insertCell(-1);if(0==this.securityEnable){cell.innerHTML="<span class='T T_none'>"+m_str.none+"</span>"}else{if(INCLUDE_WIFI_5G_CHIP_MT7613){var encryptType=authMode[this.authMode]+"/"+wepStatus2[this.wepStatus]}else{var encryptType=authMode[this.authMode]+"/"+wepStatus[this.wepStatus]}cell.innerHTML="<span>"+encryptType+"</span>"}cell.width="80px";cell=row.insertCell(-1);if(INCLUDE_WDS_DUALBAND_DYNSWITCH){cell.innerHTML="<input type='checkbox' class='check5g' onclick=doSelect(ap5gList["+index+"],'5g',this)>"}else{cell.innerHTML="<span class=a onclick=connect(ap5gList["+index+"],'5GHz')><span class='T T_conn'>"+m_str.conn+"</span></span>"}cell.width="65px"})}}function renewApList(band,cb){var stack=(band=="2g")?wlanObj.__stack:wlan5gObj.__stack;$.act(ACT_OP,ACT_OP_WLAN_SCAN,stack);$.exe(function(ret){if(ret){return}if(band=="2g"){apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"])}else{ap5gList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"])}$.exe(function(ret){if(cb){cb()}})})}function refresh(obj){$.addLoading(obj);var refreshBand;function refreshCb(refreshBand){if(INCLUDE_WDS_DUALBAND_DYNSWITCH){if($.hasClass($.id("tab2g"),"nd")){setTip(ap5gList.length)}else{setTip(apList.length)}}else{setTip(apList.length+ap5gList.length)}getTbl(refreshBand);$.removeLoading()}if(INCLUDE_WDS_DUALBAND_DYNSWITCH){if($.hasClass($.id("tab2g"),"nd")){refreshBand="5g";dualparam["5g"]={}}else{refreshBand="2g";dualparam["2g"]={}}renewApList(refreshBand,function(){refreshCb(refreshBand)})}else{renewApList("2g",function(){renewApList("5g",refreshCb())})}}function setTip(apNum){$.h($.id("tip"),apNum)}function optSel(band){if(band=="2g"){$.addClass($.id("sel2g"),"optsel");$.addClass($.id("sel5g"),"optunsel");$.removeClass($.id("sel2g"),"optunsel");$.removeClass($.id("sel5g"),"optsel");$.addClass($.id("tab5g"),"nd");$.removeClass($.id("tab2g"),"nd");setTip(apList.length)}else{$.addClass($.id("sel2g"),"optunsel");$.addClass($.id("sel5g"),"optsel");$.removeClass($.id("sel2g"),"optsel");$.removeClass($.id("sel5g"),"optunsel");$.addClass($.id("tab2g"),"nd");$.removeClass($.id("tab5g"),"nd");setTip(ap5gList.length)}};</script>
+<style>
+span.a span {
+    cursor: pointer;
+}
+.optsel {
+    color: #4ACBD6;
+}
+.optunsel {
+    color: black;
+}
+</style>
+<p class="et T" id="et">AP List</p>
+<div class="con1 L">
+    <p class="ct"></p>
+    <p class="bl"></p>
+    <div class="con2">
+        <p class="line">
+            <span class="T" id="t_info">The scanned APs are as follows</span>
+        </p>
+        <p align="left" style="white-space:normal;">
+            <span class="T" id="t_aps">AP numbers:</span> <i class="bd" id="tip"></i>
+            <input type="button" class="button L ml T T_refresh" id="refresh" value="Refresh" onclick="refresh(this)" />
+        </span></span>
+        </p>
+        <div class="thead" id="tab2g">
+            <table class="XL bdr tc" id="apTbl">
+                <tr>
+                    <th width="26px">ID</th>
+                    <th width="26px" id="apBand" class="T T_band">BAND</th>
+                    <th width="117px">BSSID</th>
+                    <th width="240px">SSID</th>
+                    <th width="100px" class="T" id="t_signal">Signal strength</th>
+                    <th width="65px" class="T T_channel">Channel</th>
+                    <th width="80px" class="T T_encryption">Encryption</th>
+                    <th width="65px" class="T T_conn">Connect</th>
+                </tr>
+            </table>
+        </div>
+        <div class="thead nd"  id="tab5g">
+            <table class="XL bdr tc" id="apTbl5g">
+                <tr>
+                    <th width="26px">ID</th>
+                    <th width="26px" id="apBand5g" class="T T_band">BAND</th>
+                    <th width="117px">BSSID</th>
+                    <th width="240px">SSID</th>
+                    <th width="100px" class="T" id="t_signal5g">Signal strength</th>
+                    <th width="65px" class="T T_channel">Channel</th>
+                    <th width="80px" class="T T_encryption">Encryption</th>
+                    <th width="65px" class="T T_conn">Connect</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <p class="bl"></p>
+    <p class="tail">
+        <input type="button" id="backBtn" class="button L T T_back" onclick="wdsGoBack()" value="Back" />
+        <input type="button" id="nextBtn" class="button L T T_next nd" onclick="wdsGoNext()" value="Next" />
+    </p>
+</div>
+<script language="javascript" type="text/javascript">$.loadHelpFrame("QsWlScanClientHelpRpm.htm");var apList,wlanList,wlanObj;var ap5gList,wlan5gObj;if(INCLUDE_WDS_DUALBAND_DYNSWITCH){$.removeClass($.id("nextBtn"),"nd")}wlanList=$.act(ACT_GL,LAN_WLAN,null,null,["name","X_TP_Band"]);if(!$.exe()){$.each(wlanList,function(){if("2.4GHz"==this.X_TP_Band){wlanObj=this}else{if("5GHz"==this.X_TP_Band){wlan5gObj=this}}})}$.act(ACT_OP,ACT_OP_WLAN_SCAN,wlanObj.__stack);$.addLoading($.id("refresh"));$.exe(function(ret){if(ret){$.removeLoading($.id("refresh"));return}apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlanObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"]);$.exe(function(ret){if(ret){return}$.act(ACT_OP,ACT_OP_WLAN_SCAN,wlan5gObj.__stack);$.exe(function(ret){if(ret){$.removeLoading($.id("refresh"));return}ap5gList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlan5gObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"]);$.exe(function(ret){if(ret){return}if(INCLUDE_WDS_DUALBAND_DYNSWITCH){setTip(apList.length)}else{setTip(apList.length+ap5gList.length)}getTbl();$.removeLoading()})})})});</script>

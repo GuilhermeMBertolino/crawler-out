@@ -1,0 +1,212 @@
+#!/bin/sh
+append DRIVERS "brcmwifi"
+
+WL=/usr/sbin/wl
+NVRAM=/usr/sbin/nvram
+WLCONF=/usr/sbin/wlconf
+
+STDOUT=/dev/null
+
+#DEBUG=1
+[ -n "${DEBUG}" ] && STDOUT="/dev/console"
+#!/bin/sh
+. /lib/functions.sh
+. /lib/wifi/brcmwifi.sh
+
+STDOUT="/dev/null"
+DEV_NUM=3
+VAP_NUM=3
+#DEV_NAME=("6" "7")
+
+DEV_NUM_START=6
+DEV_NUM_END=8
+
+VAP_NUM_START=0
+VAP_NUM_END=2
+
+DEV_2G_NAME="eth7"
+DEV_5G1_NAME="eth8"
+DEV_5G2_NAME="eth6"
+
+# define for brcm
+DEV=eth
+VAP=wl
+
+wifi_firm_info(){
+	local mac=""
+	local cfgmac=""
+	local wps_pin=""
+	local ssid=""
+	local change_flag=""
+	#for i in $(seq $DEV_NUM); do
+	for i in $(seq $DEV_NUM_START $DEV_NUM_END); do
+		cfgmac="`uci get wireless.${DEV}$(($i)).macaddr`"
+		if [ "${DEV}$(($i))" = ${DEV_2G_NAME} ]; then
+			mac=$(network_get_firm "lan_dec1")
+		elif [ "${DEV}$(($i))" = ${DEV_5G1_NAME} ]; then
+			mac=$(network_get_firm "lan_dec3")
+		else
+			#5G_MAC = 2G_MAC - 1
+			mac=$(network_get_firm "lan_dec2")
+		fi
+		mac="`echo $mac | tr '[a-f]' '[A-F]'`"
+		cfgmac="`echo $cfgmac | tr '[a-f]' '[A-F]'`"
+		if [ -z ${cfgmac} ]; then
+			uci set wireless.${DEV}$(($i)).macaddr="$mac"
+			change_flag="1"
+		elif [ "${mac}" != "${cfgmac}" ]; then
+			uci set wireless.${DEV}$(($i)).macaddr="$mac"
+			change_flag="1"
+		else
+			: 
+		fi
+
+		if [ -z "$(config_get ${DEV}$(($i)) hwmode)" ]; then
+			if [ "${DEV}$(($i))" = ${DEV_2G_NAME} ]; then
+				hwmode="bgnax"
+			else
+				hwmode="anacax_5"
+			fi
+			uci set wireless.${DEV}$(($i)).hwmode="$hwmode"
+			change_flag="1"
+		fi
+
+		if [ -z "$(config_get ${DEV}$(($i)) band)" ]; then
+			if [ "${DEV}$(($i))" = ${DEV_2G_NAME} ]; then
+				band="2g"
+			elif [ "${DEV}$(($i))" = ${DEV_5G1_NAME} ]; then
+				band="5g"
+			else
+				band="5g_2"
+			fi
+			uci set wireless.${DEV}$(($i)).band="$band"
+			change_flag="1"
+		fi
+
+		for j in $(seq $VAP_NUM); do
+			#set default pin for vap
+			if [ ! -z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) wps_label)" -a \
+				-z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) wps_pin)" ]; then
+				if [ -z "$wps_pin" ]; then
+				wps_pin="$(getfirm PIN)"
+				fi
+				uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).wps_pin="${wps_pin}"
+				change_flag="1"
+			fi
+
+			#set default ssid and security for home network
+			local ssid_get
+			if [ -z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) guest)" -a \
+				"$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) mode)" = "ap" ]; then
+				config_get ssid_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) ssid
+				
+				if [ -z "${ssid_get}" ]; then
+					ssid="$(getfirm SSID)"
+					local suffix
+					#suffix=$(uci get wireless.${DEV}$(($i)).macaddr|awk -F '-' '{printf $5$6}'|tr 'a-f' 'A-F')
+					suffix=$(getfirm MAC|awk -F '-' '{printf $5$6}'|tr 'a-f' 'A-F')
+					[ "$band" = "5g_2" -a "${DEV}$(($i))" = ${DEV_5G2_NAME} ] && suffix="${suffix}_5G_Gaming"
+					[ "$band" = "5g" -a "${DEV}$(($i))" = ${DEV_5G1_NAME} ] && suffix="${suffix}_${band//g/G}"
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).ssid="${ssid}_${suffix}"
+					change_flag="1"
+				fi
+
+				if [ -z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) encryption)" ]; then
+					if [ -z "$wps_pin" ]; then
+						wps_pin="$(getfirm PIN)"
+					fi
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).encryption="psk"
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).psk_key="${wps_pin}"
+					change_flag="1"
+				fi
+			fi
+
+			#default security of guest network is none.
+			if [ "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) guest)" = "on" ]; then
+				config_get ssid_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) ssid
+				if [ -z "${ssid_get}" ]; then
+					ssid="$(getfirm SSID)"
+					local suffix
+					#suffix=$(uci get wireless.${DEV}$(($i)).macaddr|awk -F '-' '{printf $5$6}'|tr 'a-f' 'A-F')
+					suffix=$(getfirm MAC|awk -F '-' '{printf $5$6}'|tr 'a-f' 'A-F')
+					[ "$band" = "5g_2" -a "${DEV}$(($i))" = ${DEV_5G2_NAME} ] && suffix="${suffix}_5G_Gaming"
+					[ "$band" = "5g" -a "${DEV}$(($i))" = ${DEV_5G1_NAME} ] && suffix="${suffix}_${band//g/G}"
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).ssid="${ssid}_Guest_${suffix}"
+					change_flag="1"
+				fi
+				
+				if [ -z "$wps_pin" ]; then
+					wps_pin="$(getfirm PIN)"
+				fi
+				if [ -z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) encryption)" ]; then
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).encryption="none"
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).psk_key="${wps_pin}"
+					change_flag="1"
+				fi
+				if [ -z "$(config_get ${VAP}$(($i-$DEV_NUM_START))$(($j)) psk_key)" ]; then
+					uci set wireless.${VAP}$(($i-$DEV_NUM_START))$(($j)).psk_key="${wps_pin}"
+					change_flag="1"
+				fi
+			fi
+		done
+	done
+
+	if [ -z "$(config_get wps model_name)" ]; then
+		local model="$(getfirm MODEL)"
+		uci set wireless.wps.model_name="${model}"
+		change_flag="1"
+	fi
+
+	if [ -z "$(config_get wps wps_manufacturer)" -o -z "$(config_get wps wps_manufacturer_url)" ]; then
+		local firm="$(getfirm FIRM)"
+		local website="$(getfirm WEBSITE)"
+		uci set wireless.wps.wps_manufacturer="${firm}"
+		uci set wireless.wps.wps_manufacturer_url="${website}"
+		change_flag="1"
+	fi
+	if [ "$change_flag" = "1" ]; then
+		wifi_commit
+	fi
+}
+
+config_load wireless
+wifi_firm_info
+
+nvram() {
+	[ -n "${DEBUG}" ] && echo nvram "$@" >$STDOUT
+	$NVRAM "$@"
+}
+
+wl() {
+	[ -n "${DEBUG}" ] && echo wl "$@" >$STDOUT
+	$WL "$@"
+}
+
+wlconf() {
+	[ -n "${DEBUG}" ] && echo wlconf "$@" > $STDOUT
+	$WLCONF "$@"
+}
+
+kill_nas() {
+	echo "kill_nas" >$STDOUT
+}
+
+# parse the /etc/config/wireless and make sure there are no configuration incompatibilities.
+scan_brcmwifi() {
+	echo "=====>>>>> scan_brcmwifi" >$STDOUT
+}
+
+# bring up the wifi device and create application specific configuration files.
+enable_brcmwifi() {
+	echo "=====>>>>> enable_brcmwifi" >$STDOUT
+}
+
+# bring down the wifi device and all its virtual interfaces
+disable_brcmwifi() {
+	echo "=====>>>>> disable_brcmwifi" >$STDOUT
+}
+
+# looks for interfaces that are usable with the driver
+detect_brcmwifi() {
+	echo "=====>>>>> detect_brcmwifi" >$STDOUT
+}

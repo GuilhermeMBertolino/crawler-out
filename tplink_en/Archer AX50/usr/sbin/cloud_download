@@ -1,0 +1,35 @@
+#!/usr/bin/lua
+
+-- download firmware from cloud.
+local cloud_getFirmware = require "cloud_req.cloud_getFirmware"
+local dbg   = require "luci.tools.debug"
+
+--download url reserved
+local download_url = arg[1]
+
+--download path for firmwaware
+local download_path = arg[2]
+if not download_path then
+	dbg("No download path input for firmware")
+	os.exit(1)
+end
+
+--first renew the download url, because maybe the url path or token in url cached is invalid
+cloud_getFirmware.get_fwlist()
+
+--retry 5 times when fail(api only solve server busy fail)
+local retrycount = 5
+local ret, error_code = cloud_getFirmware.download_firmware(download_path, retrycount)
+
+-- exit with 2 or 0
+if not ret then
+	if error_code == -1000 then
+		os.exit(1)
+	elseif error_code == -5000 then
+		os.exit(2)
+	else
+		os.exit(3)
+	end
+else
+	os.exit(0)
+end

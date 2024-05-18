@@ -1,0 +1,43 @@
+<script language="javascript">function initEditIPoA(){var a=$.wd.conn[$.wd.editIndex].obj;$("#ipoa_ip").tpAddress("val",a.externalIPAddress),$("#ipoa_mask").tpAddress("val",a.subnetMask),$("#ipoa_gateway").tpAddress("val",a.defaultGateway),1==a.NATEnabled?$("#ipoa_nat_en").prop("checked",!0):0==a.NATEnabled&&$("#ipoa_nat_en").prop("checked",!1),$("#ipoamtu").val(a.maxMTUSize),$("#ipoa_igmp_en").prop("checked",1==a.X_TP_IGMPProxyEnabled?1:0),1==a.DNSOverrideAllowed&&($("#ipoa_dns1").tpAddress("val",a.DNSServers.split(",")[0]),$("#ipoa_dns2").tpAddress("val",a.DNSServers.split(",")[1]?a.DNSServers.split(",")[1]:"0.0.0.0"))}function showIPoA(){$("#ipoa_elem_basic").removeClass("nd"),$("#ipoaClick").removeClass("nd"),$("#ipoaClick").removeClass("cln"),$("#ipoa_elem_adv").addClass("nd")}function initIPoA(){showIPoA(),"ipoa"==$.wd.conn[$.wd.editIndex].type&&initEditIPoA(),dftGtw=$("#defaut_gateway_ipoa"),initDefaultGwDNS(),$("#divMacClone").addClass("nd")}function IPOAClick(a){$(a).hasClass("cln")?($("#ipoa_elem_adv").addClass("nd"),$(a).removeClass("cln")):($("#ipoa_elem_adv").removeClass("nd"),$(a).addClass("cln"))}function ipoaNatClick(){$("#ipoa_nat_en").prop("data-checked")}function addIPoAAttrs(){var a=$("#ipoa_ip").tpAddress("val"),e=$("#ipoa_mask").tpAddress("val"),d=$("#ipoa_gateway").tpAddress("val");if($.ifip(a))return $("#ipoa_ip").tpAddress("focus"),!1;if($.mask(e))return $("#ipoa_mask").tpAddress("focus"),!1;if($.ipmask(a,e))return $("#ipoa_ip").tpAddress("focus"),!1;if($.ifip(d,!0))return $.alert(ERR_IP_FORMAT),$("#ipoa_gateway").tpAddress("focus"),!1;if(!$.isSameLan(d,e,a,e))return $.alert(ERR_GATEWAY_INVAD),$("#ipoa_gateway").tpAddress("focus"),!1;if(wanArg.defaultGateway=d?$.ip2ip(d):"0.0.0.0",wanArg.externalIPAddress=$.ip2ip(a),wanArg.subnetMask=$.ip2ip(e),!(576<=parseInt($("#ipoamtu").val(),10)&&parseInt($("#ipoamtu").val(),10)<=1500))return $.alert(ERR_WAN_MTU_INVAD),$("#ipoamtu").focus().select(),!1;wanArg.maxMTUSize=parseInt($("#ipoamtu").val(),10),wanArg.NATEnabled=$("#ipoa_nat_en").prop("data-checked")?1:0,wanArg.X_TP_IGMPProxyEnabled=$("#ipoa_igmp_en").prop("data-checked")?1:0;var i,s=$("#ipoa_dns1").tpAddress("val"),p=$("#ipoa_dns2").tpAddress("val");return $.ifip(s,!0)?($.alert(ERR_WAN_DNSADDR_INVAD),$("#ipoa_dns1").tpAddress("focus"),!1):""!=s&&"0.0.0.0"!=s&&$.ifip(s,!0)?($.alert(ERR_WAN_DNSADDR_INVAD),$("#ipoa_dns1").tpAddress("focus"),!1):""!=p&&"0.0.0.0"!=p&&$.ifip(p,!0)?($.alert(ERR_WAN_SECDNS_INVAD),$("#ipoa_dns2").tpAddress("focus"),!1):(i=(s=s?$.ip2ip(s):"0.0.0.0")+","+(p=p?$.ip2ip(p):"0.0.0.0"),wanArg.DNSOverrideAllowed="0.0.0.0,0.0.0.0"==i?0:1,wanArg.DNSServers=i,wanArg.enable=1,wanArg.connectionType="IP_Routed",wanArg.addressingType="Static",INCLUDE_IPV6&&(wanArg.X_TP_IPv4Enabled=1,wanArg.X_TP_IPv6Enabled=0),"ipoa"==$.wd.conn[$.wd.editIndex].type&&($.wd.l3ForwardingObj.__ifAliasName=dftGtw.data("text")),!0)}</script>
+<div id="ipoa_elem_basic">
+    <div><b class="T_ipaddr">IP Address:</b>
+        <input type="text" id="ipoa_ip" value="0.0.0.0" maxlength="15" class="ip-address">
+    </div>
+    <div><b class="T_netmask">Subnet Mask:</b>
+        <input type="text" id="ipoa_mask" value="0.0.0.0" maxlength="15" class="ip-address">
+    </div>
+    <div><b class="T_gateway">GateWay:</b>
+        <input type="text" id="ipoa_gateway" value="0.0.0.0" maxlength="15" class="ip-address">
+    </div>
+    <div><b class="T_dns">DNS Server:</b>
+        <input type="text" id="ipoa_dns1" value="0.0.0.0" maxlength="15" class="ip-address">
+    </div>
+    <div><b class="T_secdns">Secondary DNS server:</b>
+        <input type="text" id="ipoa_dns2" value="0.0.0.0" maxlength="15" class="ip-address">
+        <span class="T_optional">(optional)</span>
+    </div>
+</div>
+<b class="T_defgw">Default Gateway:</b>
+<select id="defaut_gateway_ipoa" class="l"></select>
+<div class="advanced-block">
+    <span class="advanced-icon advanced-hide-icon" id="ipoaClick" onclick="IPOAClick(this)"></span>
+    <span class="T_adv">Advanced</span>
+</div>
+<div id="ipoa_elem_adv" class="nd">
+    <div class="nd"><b class="T_mtuSize">bytes</b>
+        <input type="text" id="ipoamtu" size="5" maxlength="4" value="1480">
+        <div class="textbox-tips">
+            <span class="T_mtu1480">The default is 1480</span>,
+            <span class="T_nochg">do not change unless necessary.</span>
+        </div>
+    </div>
+    <div><b class="T_ennat">Enable NAT</b>
+        <input type="checkbox" id="ipoa_nat_en" checked="true" onclick="ipoaNatClick()">
+        <label class="T_enable">&nbsp;</label>
+    </div>
+    <div><b class="T_enigmp">Enable IGMP Proxy</b>
+        <input type="checkbox" id="ipoa_igmp_en" checked="true">
+        <label class="T_enable">&nbsp;</label>
+    </div>
+</div>
+<script language="JavaScript">$.tpInit(initIPoA)</script>

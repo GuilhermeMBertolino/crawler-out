@@ -1,1 +1,0 @@
-../init.d/load_evtlog.sh

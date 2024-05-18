@@ -1,0 +1,28 @@
+#!/bin/sh
+
+if [ "$ACTION" = "add" -a "$SUBSYSTEM" = "bdi" ]; then	
+	`usbp mount $DEVPATH`
+	`echo 1 > /tmp/ab`
+	`echo 1 > /tmp/usb_mount_notify`
+fi
+
+# for apple device
+if [ "$ACTION" = "add" -a "$SUBSYSTEM" = "usb_device" ]; then	
+	`usbp apple_check`
+fi
+
+if [ "$ACTION" = "remove" -a "$1" = "scsi_host" ] ; then
+	`usbp umount`
+	`echo 2 > /tmp/ab`
+fi
+
+# for usbip device
+if [ "$ACTION" = "add" -a "$1" = "usb_device" ] ; then
+	if [ -e "/sys/bus/usb/drivers/usbip/1-1:1.0" ] ; then
+		`usbp notStorage led_on`
+	fi
+fi
+if [ "$ACTION" = "remove" -a "$1" = "usb_device" ] ; then
+	`usbp notStorage led_off`	
+fi
+exit 0

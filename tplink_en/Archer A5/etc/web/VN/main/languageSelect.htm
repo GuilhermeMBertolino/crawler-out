@@ -1,0 +1,20 @@
+<script type="text/javascript">function init(){var langObj=$.act(ACT_GET,IGD_DEV_INFO,null,null,["X_TP_SupportedLanguages","X_TP_CurrentLanguage","X_TP_LanguageSetByUser"]);var langSelect=document.getElementById("languageSelect");if(!$.exe()){var lang;var langList=langObj.X_TP_SupportedLanguages.split(",");if(INCLUDE_MULTILOCALCOEX){var ruList={en_US:"en_US",ru_RU:"ru_RU",uk_UA:"uk_UA"};var caList={en_US:"en_US",fr_CA:"fr_CA"};var vnList={en_US:"en_US",vi_VN:"vi_VN"};var langResultList=[];for(var i=0;i<langList.length;i++){if(INCLUDE_RUSSIA_SPEC){if(ruList[langList[i]]){langResultList.push(ruList[langList[i]])}}if(INCLUDE_CANADA_SPEC){if(caList[langList[i]]){langResultList.push(caList[langList[i]])}}if(INCLUDE_VN_SPEC){if(vnList[langList[i]]){langResultList.push(vnList[langList[i]])}}}langList=langResultList}var len=langList.length;langSelect.innerHTML="";for(var i=0;i<len;i++){lang=langList[i].replace(/(^\s*)|(\s*$)/g,"");if(lang.match(/\S+/)){var opt=$.c("option");opt.innerText=localLanguageName[lang];opt.value=lang;langSelect.appendChild(opt)}}}currentLanguage=langObj.X_TP_CurrentLanguage;langSelect.value=currentLanguage}function doSave(){var newLanguage=document.getElementById("languageSelect").value;if(newLanguage==currentLanguage){return}$.act(ACT_SET,IGD_DEV_INFO,null,null,["X_TP_CurrentLanguage="+newLanguage]);$.exe(function(err){if(!err){parent.window.location.reload()}})};</script>
+
+<p class="et T" id="et">Language</p>
+<div class="con1 XL" id="languageSelectContainer">
+<p class="bl"></p>
+
+<p class="L2">
+    <b class="fl M T" id="t_language">Language:</b>
+    <select id="languageSelect">
+        <option value="en_US">English</option>
+    </select>
+</p>
+
+<p class="bl"></p>
+<p class="tail">
+<input id="saveLangBtn" class="button L T T_save" value="Save" type="button" onclick="doSave();" />
+</p>
+</div>
+
+<script type="text/javascript">$.loadHelpFrame("languageHelp.htm");init();</script>

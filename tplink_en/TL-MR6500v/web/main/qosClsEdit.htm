@@ -1,0 +1,139 @@
+<script>var wanIpConList,wanPppConList,lanEthIntfList,lanIntfLocal=[],wanIntfLocal=[],lanIntfNum=0,wanIntfNum=0,upQueueList=[],downQueueList=[],upQueueNum=0,downQueueNum=0,ip_addr="",mask_addr="",ether_div=-1,queue_div=-1;if(INCLUDE_LAN_WLAN){var wlanIntfList;if(INCLUDE_LAN_WLAN_WDS)var wlanWdsIntf;if(INCLUDE_LAN_WLAN_MSSID)var wlanMultiSsid,wlanMultiSsidIntfList}var dscp_list=new Array(["AF13","56"],["AF12","48"],["AF11","40"],["CS1","32"],["AF23","88"],["AF22","80"],["AF21","72"],["CS2","64"],["AF33","120"],["AF32","112"],["AF31","104"],["CS3","96"],["AF43","152"],["AF42","144"],["AF41","136"],["CS4","128"],["EF","184"],["CS5","160"],["CS6","192"],["CS7","224"]),ethtype_list=new Array(["","-1"],["IP","2048"],["ARP","2054"],["802.1Q","33024"],["PPP_DISC","34915"],["PPP_SES","34916"]),ip_proto_list=new Array(["TCP","6"],["UDP","17"],["ICMP","1"]),src_ip_option=new Array(["Source IP Address[/Mask]         :","1"]),lan_phy_intf={eth0:["LAN0","eth0"],"eth0.2":["LAN1","eth0.2"],"eth0.3":["LAN2","eth0.3"],"eth0.4":["LAN3","eth0.4"],"eth0.5":["LAN4","eth0.5"],wlan0:["Wi-Fi_2.4G","ra0"],wds0:["WIFI_WDS_2.4G","apcli0"],wlan1:["WIFI_GUEST_2.4G","ra1"],wlan2:["SSID_2.4G_03","ra2"],wlan3:["SSID_2.4G_04","ra3"],wlan5:["Wi-Fi_5G","rai0"],wds1:["WIFI_WDS_5G","apclii0"],wlan6:["WIFI_GUEST_5G","rai1"],wlan7:["SSID_5G_03","rai2"],wlan8:["SSID_5G_04","rai3"]};function draw_one_option(e,t,a){$("#"+e).append("<option value="+a+">"+t+"</option>")}function draw_lan_intf_option(){if(draw_one_option("ing_intf","LAN","LAN"),lanIntfLocal[lanIntfNum++]="LAN",$.each(lanEthIntfList,function(){this.enable&&"Up"==this.status&&(draw_one_option("ing_intf",lan_phy_intf[this.__ifName][0],lan_phy_intf[this.__ifName][1]),lanIntfLocal[lanIntfNum++]=lan_phy_intf[this.__ifName][1])}),INCLUDE_LAN_WLAN){var a=0;if($.each(wlanIntfList,function(){0!=this.enable&&(draw_one_option("ing_intf",lan_phy_intf[this.name][0],lan_phy_intf[this.name][1]),lanIntfLocal[lanIntfNum++]=lan_phy_intf[this.name][1]),a++}),INCLUDE_LAN_WLAN_WDS&&$.each(wlanWdsIntf,function(){for(var e=0;e<a;e++)this.__stack==wlanIntfList[e].__stack&&0!=wlanIntfList[e].enable&&0!=this.bridgeEnable&&(draw_one_option("ing_intf",lan_phy_intf[this.bridgeName][0],lan_phy_intf[this.bridgeName][1]),lanIntfLocal[lanIntfNum++]=lan_phy_intf[this.bridgeName][1])}),INCLUDE_LAN_WLAN_MSSID){var n=0;$.each(wlanMultiSsid,function(){n++}),$.each(wlanMultiSsidIntfList,function(){if(0!=this.enable)for(var e=0;e<a;e++)if(wlanIntfList[e].__stack==$.stkPop(this.__stack,1)&&0!=wlanIntfList[e].enable)for(var t=0;t<n;t++)wlanIntfList[e].__stack==wlanMultiSsid[t].__stack&&0!=wlanMultiSsid[t].multiSSIDEnable&&(draw_one_option("ing_intf",lan_phy_intf[this.name][0],lan_phy_intf[this.name][1]),lanIntfLocal[lanIntfNum++]=lan_phy_intf[this.name][1])})}}}function draw_wan_intf_option(){draw_one_option("ing_intf","WAN","WAN"),wanIntfLocal[wanIntfNum++]="WAN",$.each(wanIpConList,function(){if(0!=this.enable&&"Connected"==this.connectionStatus){var e=this.X_TP_IfName;"IP_Bridged"==this.connectionType?e+="(Bridged)":e+="(Routed)",draw_one_option("ing_intf",e,this.X_TP_IfName),wanIntfLocal[wanIntfNum++]=this.X_TP_IfName}}),$.each(wanPppConList,function(){0!=this.enable&&"Connected"==this.connectionStatus&&(draw_one_option("ing_intf",this.X_TP_IfName+"(Routed)",this.X_TP_IfName),wanIntfLocal[wanIntfNum++]=this.X_TP_IfName)})}function draw_ether_type_option(e){ether_div<0&&(draw_one_option("etherType_0",ethtype_list[1][0],ethtype_list[1][1]),$.each(ethtype_list,function(){draw_one_option("etherType_1",this[0],this[1])})),0==e?($("#div_etherType_1").addClass("nd"),$("#div_etherType_0").removeClass("nd")):($("#div_etherType_0").addClass("nd"),$("#div_etherType_1").removeClass("nd")),ether_div=e}function draw_cos_option(e){for(var t=0;t<8;t++)draw_one_option(e,t,t)}function draw_dscp_option(e){$.each(dscp_list,function(){draw_one_option(e,this[0],this[1])})}function draw_ip_proto_option(){$.each(ip_proto_list,function(){draw_one_option("ip_proto",this[0],this[1])})}function draw_queue_option(e){if(queue_div<0){for(var t=0;t<upQueueNum;t+=2)draw_one_option("qos_queue_0",upQueueList[t],upQueueList[t+1]);for(t=0;t<downQueueNum;t+=2)draw_one_option("qos_queue_1",downQueueList[t],downQueueList[t+1])}0==e?($("#div_qos_queue_1").addClass("nd"),$("#div_qos_queue_0").removeClass("nd")):($("#div_qos_queue_0").addClass("nd"),$("#div_qos_queue_1").removeClass("nd")),queue_div=e}function doChangeEtherType(){2048==$("#etherType_"+ether_div).data("value")?("WAN"==$("#ing_intf").data("value")||-1!=$("#ing_intf").data("text").search("Rou")?$("#destMac").addClass("nd"):$("#destMac").removeClass("nd"),$("#layer3").removeClass("nd"),"6"==$("#ip_proto").data("value")||"17"==$("#ip_proto").data("value")?$("#layer4").removeClass("nd"):$("#layer4").addClass("nd"),$("#8021q").addClass("nd")):($("#destMac").removeClass("nd"),33024==$("#etherType_"+ether_div).data("value")?$("#8021q").removeClass("nd"):$("#8021q").addClass("nd"),$("#layer3").addClass("nd"),$("#layer4").addClass("nd"))}function doChangeIpProto(){"6"==$("#ip_proto").data("value")||"17"==$("#ip_proto").data("value")?$("#layer4").removeClass("nd"):$("#layer4").addClass("nd")}function showAccordingtoEtherType(e){doChangeEtherType(),$("#src_mac").val(e.sourceMACAddress),$("#src_mac_mask").val(e.sourceMACMask),$("#dest_mac").val(e.destMACAddress),$("#dest_mac_mask").val(e.destMACMask),2048==e.ethertype?(""!=e.sourceIP&&(""!=e.sourceMask?$("#src_ip").val(e.sourceIP+"/"+e.sourceMask):$("#src_ip").val(e.sourceIP)),""!=e.destIP&&(""!=e.destMask?$("#dest_ip").val(e.destIP+"/"+e.destMask):$("#dest_ip").val(e.destIP)),$("#dscp_check option[value="+e.DSCPCheck+"]").prop("selected","selected"),$("#ip_proto option[value="+e.protocol+"]").prop("selected","selected"),-1!=e.protocol&&(doChangeIpProto(),6!=e.protocol&&17!=e.protocol||(-1!=e.sourcePort&&$("#src_port").val(e.sourcePort),-1!=e.sourcePortRangeMax&&$("#src_port_end").val(e.sourcePortRangeMax),-1!=e.destPort&&$("#dest_port").val(e.destPort),-1!=e.destPortRangeMax&&$("#dest_port_end").val(e.destPortRangeMax)))):33024==e.ethertype&&$("#cos_check option[value="+e.ethernetPriorityCheck+"]").prop("selected","selected")}function init(){if(wanIpConList=$.act(ACT_GL,WAN_IP_CONN,null,null,["enable","connectionStatus","X_TP_IfName","connectionType"]),wanPppConList=$.act(ACT_GL,WAN_PPP_CONN,null,null,["enable","connectionStatus","X_TP_IfName","connectionType"]),lanEthIntfList=$.act(ACT_GL,LAN_ETH_INTF,null,null,["enable","status","__ifName"]),INCLUDE_LAN_WLAN&&(wlanIntfList=$.act(ACT_GL,LAN_WLAN,null,null,["enable","name"]),INCLUDE_LAN_WLAN_WDS&&(wlanWdsIntf=$.act(ACT_GL,LAN_WLAN_WDSBRIDGE,null,null,["BridgeName","BridgeEnable"])),INCLUDE_LAN_WLAN_MSSID&&(wlanMultiSsid=$.act(ACT_GL,LAN_WLAN_MULTISSID,null,null,["multiSSIDEnable"]),wlanMultiSsidIntfList=$.act(ACT_GL,LAN_WLAN_MSSIDENTRY,null,null,["enable","name"]))),!$.exe()){var e=0;if($.each(flowClsList,function(){draw_one_option("order",this.classificationOrder,this.classificationOrder),e<this.classificationOrder&&(e=this.classificationOrder)}),$.each(queueList,function(){qosIntfCfg[0].__stack==$.stkPop(this.__stack,1)?(upQueueList[upQueueNum++]=this.queueName,upQueueList[upQueueNum++]=this.queueKey):(downQueueList[downQueueNum++]=this.queueName,downQueueList[downQueueNum++]=this.queueKey)}),draw_ip_proto_option(),draw_cos_option("cos_mark"),draw_cos_option("cos_check"),draw_dscp_option("dscp_mark"),draw_dscp_option("dscp_check"),0<=flowClsEditIndex){var t=flowClsList[flowClsEditIndex];$("#cls_name").val(t.X_TP_ClassName),$("#status_en").prop("checked",1==t.classificationEnable),$("#order option[value="+t.classificationOrder+"]").prop("selected","selected"),t.X_TP_ClassInterface==qosIntfCfg[0].interfaceKey?(draw_lan_intf_option(),$("#qos_dir").val("Upstream"),draw_queue_option(0)):(draw_wan_intf_option(),$("#qos_dir").val("Downstream"),draw_queue_option(1)),$("#qos_queue_"+queue_div+" option[value="+t.classQueue+"]").prop("selected","selected"),$("#ing_intf option[value='"+t.classInterface+"']").prop("selected","selected"),t.X_TP_ClassInterface!=qosIntfCfg[0].interfaceKey?draw_ether_type_option(0):draw_ether_type_option(1),$("#etherType_"+ether_div+" option[value="+t.ethertype+"]").prop("selected","selected"),showAccordingtoEtherType(t),$("#cos_mark option[value="+t.ethernetPriorityMark+"]").prop("selected","selected"),$("#dscp_mark option[value="+t.DSCPMark+"]").prop("selected","selected")}else draw_one_option("order","Last",++e),$("#order option[value="+e+"]").prop("selected","selected"),draw_lan_intf_option(),draw_wan_intf_option(),$("#ing_intf option[value='LAN']").prop("selected","selected"),draw_ether_type_option(1),$("#etherType_"+ether_div+" option[value=-1]").prop("selected","selected"),$("#destMac").removeClass("nd"),$("#8021q").addClass("nd"),$("#layer3").addClass("nd"),$("#layer4").addClass("nd"),$("#qos_dir").val("Upstream"),draw_queue_option(0),$("#qos_queue_"+queue_div+" option[value=-1]").prop("selected","selected"),$("#cos_mark option[value=-1]").prop("selected","selected"),$("#cos_check option[value=-1]").prop("selected","selected"),$("#dscp_mark option[value=-1]").prop("selected","selected"),$("#dscp_check option[value=-1]").prop("selected","selected"),$("#ip_proto option[value=-1]").prop("selected","selected")}}function doChangeIngIntf(){var e=0;if(flowClsEditIndex<0)for(;e<lanIntfNum;e++)if($("#ing_intf").data("value")==lanIntfLocal[e])return $("#qos_dir").val("Upstream"),draw_queue_option(0),draw_ether_type_option(1),doChangeEtherType(),void $("#destMac").removeClass("nd");for(e=0;e<wanIntfNum;e++)if($("#ing_intf").data("value")==wanIntfLocal[e])return flowClsEditIndex<0&&($("#qos_dir").val("Downstream"),draw_queue_option(1)),"WAN"==$("#ing_intf").data("value")||-1!=$("#ing_intf").data("text").search("Rou")?($("#destMac").addClass("nd"),draw_ether_type_option(0)):($("#destMac").removeClass("nd"),draw_ether_type_option(1)),void doChangeEtherType()}function get_ip_mask(e){if(""!=e&&e.length){var t=e.search("/");if(-1==t)return void(ip_addr=e);ip_addr=e.substring(0,t),mask_addr=e.substring(t+1,e.length)}}function check_ip_mask(e){var t;return mask_addr=ip_addr="",get_ip_mask($("#"+e).val()),""!=ip_addr&&$.ifip(ip_addr)||""==ip_addr&&""!=mask_addr?($.alert(ERR_IP_FORMAT),(t=$("#"+e))&&(t.focus(),t.select()),!1):""!=mask_addr&&$.mask(mask_addr)?($.alert(ERR_IP_MASK_FORMAT),(t=$("#"+e))&&(t.focus(),t.select()),!1):""==ip_addr||""==mask_addr||!$.ipmask(ip_addr,mask_addr)||($.alert(ERR_IP_MASK_FORMAT),(t=$("#"+e))&&(t.focus(),t.select()),!1)}function check_port(e,t){var a,n=$("#"+e).val(),s=$("#"+t).val();return""!=$("#"+e).val()&&(!$.isnum(n)||0==parseInt(n,10)||65535<parseInt(n,10))?($.alert(ERR_PORT_NUM_INVAD),(a=$("#"+e))&&(a.focus(),a.select()),!1):""!=$("#"+t).val()&&(!$.isnum(s)||parseInt(0==s,10)||65535<parseInt(s,10))?($.alert(ERR_PORT_NUM_INVAD),(a=$("#"+t))&&(a.focus(),a.select()),!1):""!=$("#"+e).val()&&""!=$("#"+t).val()&&parseInt(n,10)>parseInt(s,10)?($.alert(ERR_PORT_ORDER_INVAD),(a=$("#"+t))&&(a.focus(),a.select()),!1):""!=$("#"+e).val()||""==$("#"+t).val()||($.alert(ERR_EMPTY_START_PORT),(a=$("#"+e))&&(a.focus(),a.select()),!1)}function selectObj(e){var t=$("#"+e);t&&(t.focus(),t.select())}function getLeftMostZeroBitPos(e){var t=0,a=[128,64,32,16,8,4,2,1];for(t=0;t<a.length;t++)if(0==(e&a[t]))return t;return a.length}function isValidMacMask(e){var t="",a=0,n=0,s=0,_=0,r=0,o=8,i=!1;if(maskParts=e.split(":"),6!=maskParts.length)return!1;for(n=0;n<6;n++){if(""==maskParts[n])return!1;for(s=0;s<maskParts[n].length;s++)if(!("0"<=(t=maskParts[n].toLowerCase().charAt(s))&&t<="9"||"a"<=t&&t<="f"))return!1;if(NaN==(a=parseInt(maskParts[n],16))||a<0||255<a)return!1;if(1==i&&0!=a)return!1;if(0!=a){if(o=8-$.getrightfirstonebitpos(a),(r=getLeftMostZeroBitPos(a))<8&&(i=!0),8!=o&&r!=o)return!1}else _++}return 6!=_}function doSave(){}function clickOK(){var e={};if(!$.isname($("#cls_name").val()))return $.alert(ERR_QOS_CLS_NAME),selectObj("cls_name"),!1;if(12<$("#cls_name").val().length)return $.alert(ERR_QOS_CLS_NAME_LENGTH),selectObj("cls_name"),!1;if(""==$("#ing_intf").data("value"))return $.alert(ERR_QOS_CLS_INTF_INVAD),selectObj("ing_intf"),!1;if(e.X_TP_ClassName=$("#cls_name").val(),e.classificationEnable=1==$("#status_en").prop("data-checked")?1:0,e.classificationOrder=$("#order").data("value"),e.classInterface=$("#ing_intf").data("value"),e.sourceMACAddress=$("#src_mac").val(),""!=e.sourceMACAddress&&$.mac(e.sourceMACAddress,!0))return $.alert(ERR_MAC_FORMAT),selectObj("src_mac"),!1;if(e.sourceMACMask="",e.destMACAddress="",e.destMACMask="","Upstream"==$("#qos_dir").val()||"WAN"!=$("#ing_intf").data("value")&&-1==$("#ing_intf").data("text").search("Rou")){if(e.sourceMACMask=$("#src_mac_mask").val(),""!=e.sourceMACMask&&!isValidMacMask(e.sourceMACMask))return $.alert(ERR_MAC_MASK_INVAD),selectObj("src_mac_mask"),!1;if(e.destMACAddress=$("#dest_mac").val(),""!=e.destMACAddress&&$.mac(e.destMACAddress,!0))return $.alert(ERR_MAC_FORMAT),selectObj("dest_mac"),!1;if(e.destMACMask=$("#dest_mac_mask").val(),""!=e.destMACMask&&!isValidMacMask(e.destMACMask))return $.alert(ERR_MAC_MASK_INVAD),selectObj("dest_mac_mask"),!1}if(e.sourceIP="",e.sourceMask="",e.sourceVendorClassID="",e.sourceUserClassID="",e.destIP="",e.destMask="",e.DSCPCheck=-1,e.protocol=-1,e.sourcePort=-1,e.sourcePortRangeMax=-1,e.destPort=-1,e.destPortRangeMax=-1,e.ethernetPriorityCheck=-1,e.ethertype=$("#etherType_"+ether_div).data("value"),2048==e.ethertype){if(""!=$("#src_ip").val()){if(mask_addr=ip_addr="",!check_ip_mask("src_ip"))return!1;e.sourceIP=ip_addr,e.sourceMask=mask_addr}if((mask_addr=ip_addr="")!=$("#dest_ip").val()&&!check_ip_mask("dest_ip"))return!1;if(e.destIP=ip_addr,e.destMask=mask_addr,e.DSCPCheck=parseInt($("#dscp_check").data("value"),10),e.protocol=parseInt($("#ip_proto").data("value"),10),6==e.protocol||17==e.protocol){if(!check_port("src_port","src_port_end"))return!1;if(e.sourcePort=""!=$("#src_port").val()?parseInt($("#src_port").val(),10):-1,e.sourcePortRangeMax=""!=$("#src_port_end").val()?parseInt($("#src_port_end").val(),10):-1,!check_port("dest_port","dest_port_end"))return!1;e.destPort=""!=$("#dest_port").val()?parseInt($("#dest_port").val(),10):-1,e.destPortRangeMax=""!=$("#dest_port_end").val()?parseInt($("#dest_port_end").val(),10):-1}}else 33024==e.ethertype&&(e.ethernetPriorityCheck=parseInt($("#cos_check").data("value"),10));if(-1==$("#qos_queue_"+queue_div).data("value")||""==$("#qos_queue_"+queue_div).data("value"))return $.alert(ERR_QOS_EMPTY_QUEUE),selectObj("qos_queue_"+queue_div),!1;e.classQueue=$("#qos_queue_"+queue_div).data("value"),"Upstream"==$("#qos_dir").val()?e.X_TP_ClassInterface=qosIntfCfg[0].interfaceKey:e.X_TP_ClassInterface=qosIntfCfg[1].interfaceKey,e.DSCPMark=parseInt($("#dscp_mark").data("value"),10),e.ethernetPriorityMark=parseInt($("#cos_mark").data("value"),10);var t=ACT_ADD,a=null;0<=flowClsEditIndex&&(t=ACT_SET,a=flowClsList[flowClsEditIndex].__stack),$.act(t,CLASSIFICATION,a,null,e),$.exe(function(e){e||$.removeLoading(),$.reload()})}function clickCancel(){$.reload()}</script>
+<div class="content-container">
+	<form class="pure-form pure-form-aligned">
+		<div>
+			<p class="br"></p>
+			<span id="t_note1">Note: A blank criteria indicates no operation.</span>
+			<p class="br"></p>
+		</div>
+		<div>
+			<b id="str_cls_name">Class Name:</b>
+			<input class="xl" type="text" maxlength="12" id="cls_name">
+		</div>
+		<div>
+			<b id="cls_order">Order:</b>
+			<select id="order" class="xl">
+			</select>
+		</div>
+		<div>
+			<b id="cls_intf">Ingress Interface:</b>
+			<select id="ing_intf" class="xl">
+			</select>
+		</div>
+		<div id="div_etherType_0">
+			<b id="ether_type">Ether Type:</b>
+			<select id="etherType_0" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div id="div_etherType_1" class="nd">
+			<b id="ether_type">Ether Type:</b>
+			<select id="etherType_1" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div id="srcMac">
+			<div>
+				<b id="source_mac">Source MAC Address:</b>
+				<input class="xl" type="text" id="src_mac"> <span>(XX:XX:XX:XX:XX:XX)</span>
+			</div>
+			<div>
+				<b id="source_mask">Source MAC Mask:</b>
+				<input class="xl" type="text" id="src_mac_mask"> <span>(XX:XX:XX:XX:XX:XX)</span>
+			</div>
+		</div>
+		<div id="destMac">
+			<div>
+				<b id="destination_mac">Destination MAC Address:</b>
+				<input class="xl" type="text" id="dest_mac"> <span>(XX:XX:XX:XX:XX:XX)</span>
+			</div>
+			<div>
+				<b id="destination_mask">Destination MAC Mask:</b>
+				<input class="xl" type="text" id="dest_mac_mask"> <span>(XX:XX:XX:XX:XX:XX)</span>
+			</div>
+		</div>
+		<div id="8021q">
+			<b id="str_cos_check">802.1P Priority Check:</b>
+			<select id="cos_check" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div id="layer3">
+			<div>
+				<b id="source_ip">Source IP Address[/Mask]:</b>
+				<input class="xl" type="text" id="src_ip">
+			</div>
+			<div>
+				<b id="destination_ip">Destination IP Address[/Mask]:</b>
+				<input class="xl" type="text" id="dest_ip">
+			</div>
+			<div>
+				<b id="str_dscp_check">Differentiated Service Code Point (DSCP) Check:</b>
+				<select id="dscp_check" class="xl">
+					<option value="-1"></option>
+				</select>
+			</div>
+			<div>
+				<b id="proto">Protocol:</b>
+				<select id="ip_proto" class="xl">
+					<option value="-1">&nbsp;</option>
+				</select>
+			</div>
+		</div>
+		<div id="layer4">
+			<div>
+				<b id="source_port">Source Port Range:</b>
+				<input type="text" id="src_port" class="l" maxlength="5">
+				<span>-</span>
+				<input type="text" id="src_port_end" class="l" maxlength="5">
+			</div>
+			<div>
+				<b id="destination_port">Destination Port Range:</b>
+				<input type="text" id="dest_port" class="l" maxlength="5">
+				<span>-</span>
+				<input type="text" id="dest_port_end" class="l" maxlength="5">
+			</div>
+		</div>
+		<div>
+			<h4 id="cls_result">Classification Results</h4>
+		</div>
+		<div>
+			<b id="dir">Direction:</b>
+			<input class="xl" type="text" id="qos_dir" disabled="disabled">
+		</div>
+		<div id="div_qos_queue_0">
+			<b id="queue">Queue:</b>
+			<select id="qos_queue_0" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div id="div_qos_queue_1" class="nd">
+			<b id="queue">Queue:</b>
+			<select id="qos_queue_1" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div>
+			<b id="str_dscp_mark">Mark Differentiated Service Code Point (DSCP):</b>
+			<select id="dscp_mark" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+		<div id="8021p_mark">
+			<b id="str_cos_mark">Mark 802.1P Priority:</b>
+			<select id="cos_mark" class="xl">
+				<option value="-1">&nbsp;</option>
+			</select>
+		</div>
+	        <div>
+			<b></b>
+			<input type="checkbox" id="status_en" checked="true">
+			<label class="c_enable">Enable this entry</label>
+	        </div>
+	        <div class="inline-btn-right">
+	            <button type="submit" class="green inline T_cancel" id="editCancel">Cancel</button>
+	            <button type="submit" class="green inline T_save" id="editOK">Save</button>
+	        </div>
+	</form>
+</div>
+<script>$("#editOK").on("click",function(n){$.addLoading($(this)),clickOK()}),$("#editCancel").on("click",function(n){clickCancel()}),$("#ip_proto").on("click",function(n){doChangeIpProto()}),$("#etherType_0").on("click",function(n){doChangeEtherType()}),$("#etherType_1").on("click",function(n){doChangeEtherType()}),$("#ing_intf").on("click",function(n){doChangeIngIntf()}),$.tpInit(init)</script>

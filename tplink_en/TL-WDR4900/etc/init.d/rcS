@@ -1,0 +1,22 @@
+#! /bin/sh
+
+/bin/mount -a
+
+#
+# exec rc.loacl
+#
+/etc/init.d/rc.modules
+
+/etc/rc.local
+
+#
+# net config
+#
+ifconfig eth0 up
+ifconfig lo 127.0.0.1
+
+httpd &
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+echo 16384 > /proc/sys/net/netfilter/nf_conntrack_max
+

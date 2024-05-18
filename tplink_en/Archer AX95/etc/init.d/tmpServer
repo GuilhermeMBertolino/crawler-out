@@ -1,0 +1,53 @@
+#!/bin/sh /etc/rc.common
+
+START=50
+
+#SERVICE_DAEMONIZE=1
+start()
+{
+	echo "[tmp-server exec] === start ==="
+	echo "[tmp-server exec] === check if tmpserver exists ==="
+	local tmpserver=$(pgrep tmpServer| wc -l)
+	if [ "$tmpserver" -ge 1 ]; then
+		echo "[tmp-server exec] === tmpserver exists, just return ==="
+		return 1
+	fi
+	"/bin/nice" -n -5 /usr/bin/tmpServer &>/dev/null &
+	"/bin/nice" -n -5 /usr/bin/tdpServer &>/dev/null &
+	if [ -f "/usr/bin/pfclient" ]; then
+		"/bin/nice" -n -5 /usr/bin/pfclient &>/dev/null &
+	fi
+	echo "[tmp-server exec] === start end ==="
+}
+
+stop()
+{
+	echo "[tmp-server exec] === stop ==="
+	local pfclient_pid=`pgrep /usr/bin/pfclient`
+	local tdpServer_pid=`pgrep /usr/bin/tdpServer`
+	local tmpServer_pid=`pgrep /usr/bin/tmpServer`
+
+	if [ -n "$pfclient_pid" ];then
+		for pid in $pfclient_pid; do
+			kill -9 "$pid"
+		done
+	fi
+	if [ -n "$tdpServer_pid" ];then
+		for pid in $tdpServer_pid; do
+			kill -9 "$pid"
+		done
+	fi
+	if [ -n "$tmpServer_pid" ];then
+		for pid in $tmpServer_pid; do
+			kill -9 "$pid"
+		done
+	fi
+	echo "[tmp-server exec] === stop end ==="
+}
+
+restart()
+{
+	stop
+	sleep 1
+	start
+}

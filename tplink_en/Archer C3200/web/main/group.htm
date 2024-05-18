@@ -1,0 +1,348 @@
+<script type="text/javascript">
+var tmpWanIf = [];
+var tmpLanIf = [];
+var brlist;
+var filterlist;
+
+function virtualPortsEnableClick(isEnable, obj) {
+    if ($("#groupBtn").hasClass("disabled")) {
+        return;
+    }
+
+    $.addLoading($(obj));
+    $.act(ACT_SET, ETH_SWITCH, null, null, ["enableVirtualPorts=" + isEnable]);
+    $.exe(function(ret) {
+        if (!ret) {
+            $.removeLoading();
+            $.reload();
+        }
+    });
+}
+
+function doConfig() {
+    $.loadMain("groupAdd.htm");
+}
+
+function doDelete(obj, i) {
+    for (var j = 0; j < filterlist.length; j++) {
+        if ((obj.bridgeName == filterlist[j].__filterBridgeRefName) && (filterlist[j].__filterBridgeName != "Default")) {
+            $.act(ACT_SET, L2_BRIDGING_FILTER, filterlist[j].__stack, null, ["__filterBridgeRefName=Default"]);
+        }
+    }
+
+    if (obj.bridgeName != "Default") {
+        $.act(ACT_DEL, L2_BRIDGING_ENTRY, obj.__stack, null);
+    }
+
+    $.exe(function(ret) {
+        if (!ret) $.reload();
+    });
+}
+
+function doDeleteNullBr(obj) {
+    if (obj.bridgeName != "Default") {
+        $.act(ACT_DEL, L2_BRIDGING_ENTRY, obj.__stack, null);
+    }
+    if (!$.exe()) {
+        $.reload();
+    }
+}
+
+function buildTable() {
+    var k = 0;
+    var rownum = 1;
+    var groupnum = [];
+    var existFilterlist = 0;
+
+
+    var grouptable = $.id("tableGrouping");
+
+    if (INCLUDE_WAN_MODE) {
+        var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode"]);
+    }
+    var vlan = $.act(ACT_GET, ETH_SWITCH, null, null, ["enableVirtualPorts"]);
+
+    brlist = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+
+    filterlist = $.act(ACT_GL, L2_BRIDGING_FILTER, null, null, ["filterKey", "X_TP_IfAliasName", "__filterBridgeRefName", "filterEnable"]);
+
+    var availableIf = $.act(ACT_GL, L2_BRIDGING_INTF, null, null, ["availableInterfaceKey", "interfaceType"]);
+
+    if (INCLUDE_IPTV)
+        var iptvCfg = $.act(ACT_GET, DSL_IPTV_CFG, null, null, ["enable"]);
+
+    var wanTypes = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+
+    if (INCLUDE_ETHERNET_WAN)
+        var ethWan = $.act(ACT_GL, WAN_ETH_INTF, null, null, ["enable"]);
+
+    var wanIpConns = $.act(ACT_GL, WAN_IP_CONN, null, null, ["enable", "connectionType", "name"]);
+
+    var wanPppConns = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["enable", "transportType", "name"]);
+    var l3ForwardingName = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+    var ethStk;
+    var wanIfNum = 0;
+    var lanIfNum = 0;
+    var gwIndex = -1;
+
+    var bHasEthWan = 0;
+    var bDisAddBtn = 0;
+
+    if (!$.exe()) {
+        if (INCLUDE_WAN_MODE) {
+
+            if (sysMode.mode == "ETH") {
+                bDisAddBtn = 1;
+            }
+        }
+
+        if (bDisAddBtn) {
+            $("#add").css("display", "none");
+        }
+
+        $.each(wanTypes, function() {
+            if (this.WANAccessType == "Ethernet")
+                ethStk = this.__stack;
+        });
+
+        $("#vlan_note").addClass("nd");
+
+        if (INCLUDE_ETHERNET_WAN) {
+            $.each(ethWan, function() {
+                if (this.__stack == ethStk) {
+                    if (this.enable == 1) {
+                        $("#groupBtn").addClass("disabled");
+                        bHasEthWan = 1;
+                    }
+                }
+            });
+        }
+
+        if ((INCLUDE_IPTV) && (iptvCfg.enable == 1)) {
+            $("#groupBtn").addClass("disabled");
+        }
+
+        if ($("#groupBtn").hasClass("disabled")) {
+            $("#vlan_note").removeClass("nd");
+            if (vlan.enableVirtualPorts != 1) {
+                $.act(ACT_SET, ETH_SWITCH, null, null, ["enableVirtualPorts=1"]);
+                $.exe(function(ret) {
+                    if (!ret) {
+                        $.reload();
+                    }
+                });
+            }
+        }
+
+        if (vlan.enableVirtualPorts == 1) {
+            $("#vlanEn").addClass("selected");
+        } else {
+            $("#vlanDis").addClass("selected");
+        }
+
+
+        for (var j = 0; j < brlist.length; j++) {
+            tmpWanIf = [];
+            tmpLanIf = [];
+            wanIfNum = 0;
+            lanIfNum = 0;
+            existFilterlist = 0;
+            groupnum[j] = 0;
+
+            for (var i = 0; i < filterlist.length; i++) {
+                if (filterlist[i].filterEnable == false)
+                    continue;
+                var notShow = 0;
+                if (INCLUDE_ROUTE_BINDING) {
+                    for (var index = 0; index < wanIpConns.length; index++) {
+                        if (wanIpConns[index].name == filterlist[i].X_TP_IfAliasName &&
+                            wanIpConns[index].enable == 0) {
+                            notShow = 1;
+                            break;
+                        }
+                    }
+
+                    for (var index = 0; index < wanPppConns.length; index++) {
+                        if (wanPppConns[index].name == filterlist[i].X_TP_IfAliasName &&
+                            (wanPppConns[index].enable == 0 || wanPppConns[index].transportType == "PPP3G")) {
+                            notShow = 1;
+                            break;
+                        }
+                    }
+                } else {
+                    for (var index = 0; index < wanIpConns.length; index++) {
+                        if (wanIpConns[index].name == filterlist[i].X_TP_IfAliasName &&
+                            (wanIpConns[index].connectionType == "IP_Routed" ||
+                                (wanIpConns[index].connectionType == "IP_Bridged" &&
+                                    wanIpConns[index].enable == 0))) {
+                            notShow = 1;
+                            break;
+                        }
+                    }
+                }
+
+                if (notShow == 1) {
+                    continue;
+                }
+
+                if (filterlist[i].__filterBridgeRefName == brlist[j].bridgeName) {
+                    for (var n = 0; n < availableIf.length; n++) {
+                        if (filterlist[i].filterKey == availableIf[n].availableInterfaceKey) {
+                            if (availableIf[n].interfaceType == "WANInterface") {
+                                tmpWanIf[wanIfNum] = filterlist[i].X_TP_IfAliasName;
+                                if (tmpWanIf[wanIfNum] == l3ForwardingName.__ifAliasName) {
+                                    gwIndex = wanIfNum;
+                                }
+                                wanIfNum++;
+
+                            }
+                            if (availableIf[n].interfaceType == "LANInterface") {
+                                tmpLanIf[lanIfNum] = filterlist[i].X_TP_IfAliasName;
+                                lanIfNum++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var tmpRowNum = (wanIfNum > lanIfNum) ? wanIfNum : lanIfNum;
+
+            for (var m = 0; m < tmpRowNum; m++) {
+                var newrow = grouptable.insertRow(-1);
+                newrow.insertCell(0).innerHTML = brlist[j].bridgeName;
+
+
+                if (tmpLanIf[m]) {
+                    newrow.insertCell(1).innerHTML = tmpLanIf[m];
+                } else {
+                    newrow.insertCell(1).innerHTML = "&nbsp;";
+                }
+
+
+                if (tmpWanIf[m] && (m == gwIndex) && (brlist[j].bridgeName == "Default") && (l3ForwardingName.__ifAliasName != "NO_INTERFACE")) {
+                    newrow.insertCell(2).innerHTML = "<font color='red'>" + tmpWanIf[m] + "</font>";
+                } else if (tmpWanIf[m]) {
+                    newrow.insertCell(2).innerHTML = tmpWanIf[m];
+                } else {
+                    newrow.insertCell(2).innerHTML = "&nbsp;";
+                }
+
+                if ((brlist[j].bridgeName == "Default") || (brlist[j].bridgeName == "IPTV_Group"))
+                    newrow.insertCell(3).innerHTML = "&nbsp;";
+                else {
+                    newrow.insertCell(3).innerHTML = "<a href='' onclick='doDelete(brlist[" + j + "]," + j + ");return false;'><span class='table-grid-icon edit-trash-icon'></span></a>";
+                }
+                groupnum[j]++;
+                existFilterlist = 1;
+            }
+
+            if (existFilterlist == 0) {
+                var newrow = grouptable.insertRow(-1);
+                newrow.insertCell(0).innerHTML = brlist[j].bridgeName;
+
+                newrow.insertCell(1).innerHTML = "&nbsp;";
+                newrow.insertCell(2).innerHTML = "&nbsp;";
+
+                if (brlist[j].bridgeName == "Default")
+                    newrow.insertCell(3).innerHTML = "&nbsp;";
+                else
+                    newrow.insertCell(3).innerHTML = "<a href='' onclick='doDeleteNullBr(brlist[" + j + "]);return false;'><span class='table-grid-icon edit-trash-icon'></span></a>";
+
+                groupnum[j]++;
+            }
+        }
+
+        while (k < brlist.length && grouptable.rows[rownum]) {
+            while (groupnum[k] == 0) {
+                k++;
+            }
+            grouptable.rows[rownum].cells[0].rowSpan = groupnum[k];
+            grouptable.rows[rownum].cells[3].rowSpan = groupnum[k];
+
+            for (var x = 1; x < groupnum[k]; x++) {
+                grouptable.rows[rownum + x].deleteCell(0);
+                grouptable.rows[rownum + x].deleteCell(2);
+            }
+            rownum += groupnum[k];
+            k++;
+        }
+    }
+}
+
+function initGroupingTable() {
+    var tableGroupingHeadArray = [{
+        "text": table_str.group,
+        "width": "30%"
+    }, {
+        "text": table_str.lanif,
+        "width": "30%"
+    }, {
+        "text": table_str.wanif,
+        "width": "30%"
+    }, {
+        "text": table_str.del,
+        "width": "10%"
+    }];
+
+    $.initTableHead($("#tableGrouping"), tableGroupingHeadArray);
+    buildTable();
+}
+
+function init() {
+    $("#tableGrouping").tpTable(initGroupingTable);
+}
+</script>
+<h3 id="t_grouptitle">Interface Grouping</h3>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+
+        <div class="button-group-container" id="groupBtn">
+            <b class="xl" id="t_note4">Enable the Virtual Lan Ports feature:</b>
+            <ul>
+                <li>
+                    <button id="vlanEn" class="fst T_on" value="on">On</button>
+                </li>
+                <li>
+                    <button id="vlanDis" class="lst T_off" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+
+        <div id="vlan_note">
+            <p class="br"></p>
+            <span id="t_note1">Note: You cannot disable VLAN functionality with an IPTV or Ethernet WAN Connection enabled.</span>
+            <p class="br"></p>
+        </div>
+
+        <div class="table-op" id="tableGroupingUpper">
+            <div class="table-btn" id="add">
+                <span class="add-icon"></span>
+                <label id="T_add" class="T_add">Add</label>
+            </div>
+        </div>
+
+        <table id="tableGrouping">
+            <thead></thead>
+            <tbody id="tableGroupingBody"></tbody>
+        </table>
+    </form>
+</div>
+
+<script type="text/javascript">
+$("#add").on('click', function(e) {
+    doConfig();
+});
+
+$("#vlanEn").on('click', function(e) {
+    virtualPortsEnableClick(1, this);
+});
+
+$("#vlanDis").on('click', function(e) {
+    virtualPortsEnableClick(0, this);
+});
+
+$(document).ready(function() {
+    $.tpInit(init);
+});
+</script>

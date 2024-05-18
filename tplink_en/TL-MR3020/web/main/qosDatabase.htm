@@ -1,0 +1,61 @@
+<div id="tcHeader">
+    <h3 id="t_et">Database Upgrade</h3>
+</div>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" method="post" action="/cgi/dbup" enctype="multipart/form-data" id="database-form" >
+        <div class="file-container">
+            <b id="t_file">New Database File: </b>
+            <input type="file" name="filename" id="filename" />
+        </div>
+    </form>
+    <form class="pure-form pure-form-aligned" >
+        <div class="pure-control-group">
+            <b class="l" id="t_dbver">Database version:</b>
+            <input type="text" readonly="ture" class="tp-input-text xxxl" id="up_dver" />
+        </div>
+
+        <button type="submit" class="green l" id="t_upgrade" value="Upgrade">Upgrade</button>
+    </form>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+    var qosEntry;
+    function init() {
+        qosEntry = $.act(ACT_GET, IQOS, null, null);
+        if(!$.exe()) {
+            $("#up_dver").prop("value", qosEntry.version);
+        }
+    }
+
+    $('#t_upgrade').on('click', function() {
+        if ($("#up_dver").val() == "") {
+            $.alert(ERR_FIRM_FILE_NONE);
+            return false;
+        }
+
+        var formObj = $('#database-form')[0];
+        try {
+            formObj.target = "up_frame";
+            formObj.action = "/cgi/dbup";
+            formObj.submit();
+        } catch (e) {}
+
+        $.guage(["<span class='T T_uploading'>" + s_str.uploading + "</span>", "<span class='T T_wait_upload'>" + s_str.wait_upload + "</span>..."], 10, 300, function() {
+            $.cgi("/cgi/iqosbnr", null, function(ret) {
+                if (ret && ret != ERR_NETWORK && ret != ERR_EXIT && ret != ERR_NONE_FILE) {
+                    $.alert(ret);
+                } else {
+                    $("div.alert-container").tpMsg('hide');
+                    $.reload();
+                }
+            }, false, true);
+
+
+        });
+    });
+    $.tpInit(init);
+});
+</script>

@@ -1,0 +1,32 @@
+#!/bin/sh
+# function of get client latency via ping tools
+# get_client_latency 	 -- get all client latency
+# get_client_latency ip  -- get latency of client ip
+
+if [ $# == 1 ]; then
+	action="client"
+	result_file="/tmp/one_client_latency"
+else
+	action="all"
+	result_file="/tmp/client_latency"
+fi
+
+if [ "$action" == "client" ];then
+	iplist=$1
+else
+	# ubus call get client list
+	iplist=`ubus call client_mgmt get_hist_list '{"request_type":1}' | sed -nr 's/.*"ip":.*"(.*)",/\1/p'`	
+fi
+
+# set client_latency file empty
+rm -f $result_file
+touch $result_file
+
+# get ping result
+for ip in $iplist
+do
+	ping -c 1 -w 1 $ip | sed -nr 's/[0-9]+[[:space:]]bytes[[:space:]]from[[:space:]](.*):[[:space:]]seq=0[[:space:]]ttl=[0-9]+[[:space:]]time=(.*)[[:space:]]ms/\1:\2/p' >> $result_file &
+done
+
+sleep 1
+

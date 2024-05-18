@@ -1,0 +1,763 @@
+<style type="text/css">
+    #wps_container {
+        position: relative;
+        height: 100px;
+        margin-bottom: 50px;
+    }
+
+    #wps_button, #wps_mask {
+        width: 84px;
+        height: 84px;
+        position: absolute;
+        left: 50%;
+        margin-left: -42px;
+        background: #4acbd6;
+        cursor: pointer;
+        border-radius: 42px;
+        -webkit-border-radius: 42px;
+        -ms-border-radius: 42px;
+        -moz-border-radius: 42px;
+        -o-border-radius: 42px;
+    }
+
+    #wps_button.disabled,  #wps_button.disabled:hover{
+        background: #b2b2b2;
+        cursor: not-allowed;
+    }
+
+    #wps_button.starting, #wps_button.starting:hover {
+        background: #ffcb00;
+    }
+
+    #wps_button.starting #wps_title_op {
+        display: none;
+    }
+
+    #wps_button.starting #wps_title {
+        margin-top: -9px;
+    }
+
+    #wps_mask.starting {
+        background: #ffcb00;
+        opacity: 0.5;
+        animation: Breathing 1.5s ease-out infinite alternate;
+        -webkit-animation: Breathing 1.5s ease-out infinite alternate;
+        -moz-animation: Breathing 1.5s ease-out infinite alternate;
+        -o-animation: Breathing 1.5s ease-out infinite alternate;
+        -ms-animation: Breathing 1.5s ease-out infinite alternate;
+    }
+
+    #wps_button:hover {
+        background: #23c4c4;
+    }
+
+    #wps_title {
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        margin-top: -18px;
+        width: 100%;
+    }
+
+    #wps_title span.wps {
+        color: #fff;
+        font-size: 16px;
+        display: block;
+    }
+
+    #wps_title span {
+        font-size: 13px;
+        color: #fff;
+    }
+
+    @-webkit-keyframes Breathing {
+        0% {
+            -webkit-transform: scale(1);
+        }
+        100% {
+            -webkit-transform: scale(1.36);
+        }
+    }
+    @-moz-keyframes Breathing {
+        0% {
+            -webkit-transform: scale(1);
+        }
+        100% {
+            -webkit-transform: scale(1.36);
+        }
+    }
+    @-o-keyframes Breathing {
+        0% {
+            -webkit-transform: scale(1);
+        }
+        100% {
+            -webkit-transform: scale(1.36);
+        }
+    }
+    @-ms-keyframes Breathing {
+        0% {
+            -webkit-transform: scale(1);
+        }
+        100% {
+            -webkit-transform: scale(1.36);
+        }
+    }
+    @keyframes Breathing {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(1.36);
+        }
+    }
+
+    #wps_container .status-container {
+        position: absolute;
+        top: 100px;
+    }
+
+    div#page-message-container {
+        position: absolute;
+        bottom: -35px;
+    }
+
+    div#page-message-container span.fail-icon, div#page-message-container span.success-icon {
+        margin-right: 4px;
+    }
+
+    div#pin-conn-result {
+        position: relative;
+        margin-left: 29px;
+    }
+
+    div#pin-conn-result span.fail-icon, div#pin-conn-result span.success-icon {
+        position: absolute;
+        left: -25px;
+        top: 0;
+        bottom: 0;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+</style>
+<h3 id="et">wps method</h3>
+<div class="content-container">
+    <div>
+        <p class="cfg-line T_methodOne">method one</p>
+
+        <div id="wps_container" class="part-separate">
+            <div id="wps_mask">
+            </div>
+            <div id="wps_button" class="">
+                <div id="wps_title">
+                    <span id="wps_title_op">start</span>
+                    <span class="wps">WPS</span>
+                </div>
+            </div>
+            <div id="page-message-container">
+                <p id="push-conn-result"></p>
+            </div>
+        </div>
+        <p id="page-message"></p>
+    </div>
+    <div class="advanced-block part-separate" type="button">
+        <span class="advanced-icon advanced-hide-icon" id="methodTwoClick"></span>
+        <span class="T_methodTwo">method two</span>
+    </div>
+
+    <div class="nd" id="methodTwoDiv">
+        <form class="pure-form pure-form-aligned">
+            <div>
+                <input type="radio" name="methodTwoType" id="routerPinRadio" checked/>
+                <label class="T_routerpin">router</label>
+                <input type="radio" name="methodTwoType" id="clientPinRadio"/>
+                <label class="T_clientPin">client</label>
+            </div>
+            <div id="routerPinDiv">
+                <div class="button-group-container">
+                    <b class="T_routerpin">Enable Router's PIN:</b>
+                    <ul>
+                        <li>
+                            <button id="pinEn" class="fst" value="on">On</button>
+                        </li>
+                        <li>
+                            <button id="pinDis" class="lst" value="off">Off</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="inline">
+                    <b class="T_c_curpin">Current PIN:</b>
+                    <input type="text" disabled="disabled" id="pinNum" class="m"/>
+                </div>
+                <div class="inline" style="margin-left: 10px;">
+                    <button type="submit" class="blue inline l" id="genPin">Generate</button>
+                    <button type="submit" class="blue inline l" id="defPin">Default</button>
+                </div>
+            </div>
+
+
+            <div class="nd" id="clientPinDiv">
+                <b class="T_client">Enter the client's PIN:</b>
+                <input type="text" id="clientPinInput" maxlength="8"/>
+
+                <div>
+                    <button type="submit" class="blue inline left T_conn" id="pinConn">Connect</button>
+                    <div class='inline' id="pin-conn-result">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+(function () {
+    var wlanObj_2g, wlanObj_5g, wpsObj_2g, wpsObj_5g, wlanEn_2g, wlanChanged_2g, devPIN_2g, qssEnable_2g, SSIDAdvEnabled_2g, setupLock_2g, wlanEn_5g, wlanChanged_5g, devPIN_5g, qssEnable_5g, SSIDAdvEnabled_5g, setupLock_5g;
+    var wpsTimer = undefined;
+
+    //method two的箭头按钮  
+    $('#methodTwoClick').on('click', function () {
+        $('#methodTwoDiv').toggleClass('nd');
+    });
+
+    $('#routerPinRadio').on('click', function () {
+        $('#routerPinDiv').show();
+        $('#clientPinDiv').hide();
+    });
+
+    $('#clientPinRadio').on('click', function () {
+        $('#routerPinDiv').hide();
+        $('#clientPinDiv').show();
+    });
+
+    $('#pinEn').on('click.wps', function (e) {
+        $.addLoading($(this));
+        pinOnOff(0);
+    });
+    $('#pinDis').on('click.wps', function (e) {
+        $.addLoading($(this));
+        pinOnOff(1);
+    });
+
+    $('#genPin').on('click.wps', function (e) {
+        $.addLoading($('#defPin'));
+        genNewPin();
+    });
+
+    $('#defPin').on('click.wps', function (e) {
+        $.addLoading($(this));
+        defaultPin();
+    });
+
+    //会呼吸的按钮 
+    $("#wps_button").on("click", function () {
+        if ($(this).hasClass('starting') || $(this).hasClass('disabled')) {
+            return;
+        }
+
+        //wpsBreathing('InProgress', 0);
+        //wpsPinConnectButton ('InProgress', 0);
+
+        connect(0);
+    });
+
+    //client pin connect按钮 
+    $('#pinConn').on('click', function() {
+        var pinNum = $('#clientPinInput').val();
+        if (true === checkPIN(pinNum)) {
+            pinNum = parseInt(pinNum, 10);
+        } else {
+            $('#clientPinInput').focus().select();
+            return;
+        }
+
+        //wpsBreathing('InProgress', pinNum);
+        //wpsPinConnectButton ('InProgress', pinNum);
+
+        connect(pinNum);
+    });
+
+
+    var isIE = ( navigator.appName == "Microsoft Internet Explorer" && navigator.appVersion.split(";")[1].replace(/[ ]/g, "") == "MSIE8.0" );
+    var wpsIEAnimation;
+    $('#wps_title_op').html(m_str.start);
+    $("#wps_button").corner("round 42px");
+
+    /**
+     * 根据wpsState，更新按钮状态
+     * @params wpsState wps状态
+     * @params wpsPeerPw 0表示使用push button，1表示使用client Pin
+     */
+    function wpsBreathing(wpsState, wpsPeerPw) {
+        var p = $('p#push-conn-result');
+        if (wpsState == 'Idle' || wpsState == 'Success' || wpsState == 'fail') {
+            //
+            $("#wps_button").removeClass("starting");
+            $("#wps_mask").removeClass("starting");
+            if (wifiStatus != 'close') {
+                $("#wps_button").removeClass('disabled');
+            }
+            $("#wps_title_op").text(m_str.start);
+            if (isIE) {
+                clearInterval(wpsIEAnimation);
+            }
+            if (wpsPeerPw == 0) {
+                if (wpsState == 'Idle') {
+                    p.html('');
+                } else if (wpsState == 'Success') {
+                    p.html('<span class="success-icon"></span><span>' + s_str.qss_ok + '</span>');
+                } else if (wpsState == 'fail') {
+                    p.html('<span class="fail-icon"></span><span>' + s_str.qss_fail + '</span>');
+                }
+            } else {
+                p.html('');
+            }
+        } else if (wpsState == 'InProgress') {
+            if (wpsPeerPw == 0) {
+                if ($("#wps_button").hasClass("starting")) {
+                    return;
+                }
+                $("#wps_button").addClass("starting");
+                $("#wps_mask").addClass("starting");
+                $("#wps_title_op").text(m_str.cancel);
+                if (isIE) {
+                    clearInterval(wpsIEAnimation);
+                    wpsIEAnimation = setInterval((function () {
+                        var count = 0;
+                        //无等待执行 
+                        $("#wps_button").animate({
+                            opacity: .3
+                        }, 1000, function () {
+                            $("#wps_button").css({
+                                "filter": "alpha(opacity=30)"
+                            });
+                        });
+                        return function () {
+                            if ($.curPage != 'wps.htm') {
+                                clearInterval(wpsIEAnimation);
+                                return;
+                            }
+                            if (count % 2) {
+                                $("#wps_button").animate({
+                                    opacity: .3
+                                }, 1000, function () {
+                                    $("#wps_button").css({
+                                        "filter": "alpha(opacity=30)"
+                                    });
+                                });
+                            } else {
+                                $("#wps_button").animate({
+                                    opacity: 1
+                                }, 1000, function () {
+                                    $("#wps_button").css({
+                                        "filter": "alpha(opacity=100)"
+                                    });
+                                });
+                            }
+                            count++;
+                        }
+                    })(), 1000);
+                }
+            } else {
+                $("#wps_button").addClass('disabled');
+            }
+            p.html('');
+        }
+    }
+
+    function wpsPinConnectButton (wpsState, wpsPeerPw) {
+        var p = $('#pin-conn-result');
+        var button= $('#pinConn');
+//        wpsPeerPw = 1
+//        wpsState='Success'
+        if (wpsState == 'Idle' || wpsState == 'Success' || wpsState == 'fail') {
+            //
+            button.nextAll('div:has(span.load)').remove();
+            button.prop('disabled', wifiStatus == 'close');
+
+            if (wpsPeerPw > 0) {
+                if (wpsState == 'Idle') {
+                    p.html('');
+                } else if (wpsState == 'Success') {
+                    p.html('<span class="success-icon"></span>' + s_str.qss_ok);
+                } else if (wpsState == 'fail') {
+                    p.html('<span class="fail-icon"></span>' + s_str.qss_fail);
+                }
+            } else {
+                p.html('');
+            }
+        } else if (wpsState == 'InProgress') {
+            button.prop('disabled', true);
+
+            if (wpsPeerPw > 0) {
+                $.addLoading(button, null, null, 1);
+                p.html(m_str.connecting)
+            } else {
+                p.html('');
+            }
+
+        }
+    }
+
+
+    //router’s pin开关 
+    function pinOnOff(isEnable) {
+        $.act(ACT_SET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["SetupLock=" + isEnable]);
+	if (INCLUDE_LAN_WLAN_DUALBAND)
+		$.act(ACT_SET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["SetupLock=" + isEnable]);
+        $.exe(function () {
+            $.removeLoading();
+        });
+    }
+
+    function checkPIN(pinStr) {
+        if (pinStr.length == 0) {
+            $.alert(ERR_WLAN_PIN_EMPTY);
+        } else if (ret = $.num(pinStr, [0, 99999999], true)) {
+            if (ret == ERR_NUM_INVAD) {
+                $.alert(ERR_WLAN_PIN_INVALID);
+            } else {
+                $.alert(ERR_WLAN_PIN_LEGNTH_INVALID);
+            }
+            if (pinStr.length < 8) {
+                $.alert(ERR_WLAN_PIN_LEGNTH_INVALID);
+            }
+        } else if (false == pinCheckSum(pinStr)) {
+            $.alert(ERR_WLAN_PIN_CHECKSUM_FAIL);
+        } else {
+            return true;
+        }
+
+        return false;
+    }
+
+    function pinCheckSum(pinStr) {
+        var pinNum = parseInt(pinStr, 10);
+        if (pinNum == 0) {
+            return false;
+        }
+        var accum = 0;
+        accum += 3 * (Math.floor((pinNum / 10000000)) % 10);
+        accum += 1 * (Math.floor((pinNum / 1000000)) % 10);
+        accum += 3 * (Math.floor((pinNum / 100000)) % 10);
+        accum += 1 * (Math.floor((pinNum / 10000)) % 10);
+        accum += 3 * (Math.floor((pinNum / 1000)) % 10);
+        accum += 1 * (Math.floor((pinNum / 100)) % 10);
+        accum += 3 * (Math.floor((pinNum / 10)) % 10);
+        accum += 1 * (pinNum % 10);
+        if (accum % 10 == 0)
+            return true;
+        else
+            return false;
+    }
+
+    function connect(pinNum) {
+
+        pinNum = pinNum || 0;
+        //由于页面隐藏了wps开关，当wps功能被关闭时要主动把它打开。 
+        switch (wifiStatus) {
+            case 'both':
+                $.act(ACT_SET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["X_TP_State=InProgress", "X_TP_PeerPassword=" + pinNum]);
+				if (INCLUDE_LAN_WLAN_DUALBAND)
+                	$.act(ACT_SET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["X_TP_State=InProgress", "X_TP_PeerPassword=" + pinNum]);
+                break;
+            case '2':
+                $.act(ACT_SET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["X_TP_State=InProgress", "X_TP_PeerPassword=" + pinNum]);
+				if (INCLUDE_LAN_WLAN_DUALBAND)
+					$.act(ACT_SET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["X_TP_State=Idle", "X_TP_PeerPassword=0"]);
+                break;
+            case '5':
+				if (INCLUDE_LAN_WLAN_DUALBAND)
+					$.act(ACT_SET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["X_TP_State=InProgress", "X_TP_PeerPassword=" + pinNum]);
+                $.act(ACT_SET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["X_TP_State=Idle", "X_TP_PeerPassword=0"]);
+                break;
+            default :
+                break;
+        }
+        $.exe(function (ret) {
+            if (!ret) {
+				wpsBreathing('InProgress', pinNum);
+				wpsPinConnectButton ('InProgress', pinNum);
+            }
+        });
+        updateWPS();
+    }
+
+    function updateWPS() {
+        clearTimeout(wpsTimer);
+
+        var wpsObjNew_2g = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["Enable", "X_TP_State", "X_TP_PeerPassword"]);
+        if (INCLUDE_LAN_WLAN_DUALBAND)
+        var wpsObjNew_5g = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["Enable", "X_TP_State", "X_TP_PeerPassword"]);
+        $.exe(function (err) {
+            if (err) {
+                return;
+            }
+            wpsStateShow(wpsObjNew_2g, wpsObjNew_5g);
+        });
+    }
+
+    /**
+     * 更新wps状态
+     * @param wpsObj
+     * @param wpsObj5g
+     */
+    function wpsStateShow(wpsObj, wpsObj5g) {
+        var wpsState = "Idle";
+	var wps5gState = "Idle";
+	if (INCLUDE_LAN_WLAN_DUALBAND)
+		wps5gState=wpsObj5g.X_TP_State;
+		
+        /**
+         * 状态由2.4g和5g共同决定，状态表如下
+         * 2g\5g         Idle        InProgress        Success        Other
+         *---------------------------------------------------------------------
+         * Idle          Idle        InProgress        Success         fail
+         * InProgress    InProgress  InProgress        Success         fail
+         * Success       Success     Success           Success         Success
+         * Other         fail        fail              Success         fail
+         */
+        if (wpsObj.X_TP_State == 'Idle' && wps5gState == 'Idle') {
+            wpsState = 'Idle';
+        } else if (wpsObj.X_TP_State == 'Idle' && wps5gState == 'InProgress' ||
+                wpsObj.X_TP_State == 'InProgress' && wps5gState == 'Idle' ||
+                wpsObj.X_TP_State == 'InProgress' && wps5gState == 'InProgress') {
+            wpsState = 'InProgress';
+        } else if (wpsObj.X_TP_State == 'Success' || wps5gState == 'Success') {
+            wpsState = 'Success';
+        } else {
+            wpsState = 'fail';
+        }
+
+        var wpsPeerPw = wpsObj.X_TP_PeerPassword;
+        if (wpsObj.X_TP_PeerPassword > 0) {
+            wpsPeerPw = wpsObj.X_TP_PeerPassword;
+        } else if (INCLUDE_LAN_WLAN_DUALBAND && wpsObj5g.X_TP_PeerPassword > 0) {
+            wpsPeerPw = wpsObj5g.X_TP_PeerPassword;
+        }
+
+        wpsBreathing(wpsState, wpsPeerPw);
+        wpsPinConnectButton(wpsState, wpsPeerPw);
+
+        if (wpsState == 'InProgress') {
+            clearTimeout(wpsTimer);
+            wpsTimer = $.timeout(updateWPS, 5000);
+        }
+
+    }
+
+    function pinChange(devicePassword) {
+        var pinStr = devicePassword.toString();
+        var hasFrontZero = "";
+        for (var i = pinStr.length + 1; i <= 8; i++) {
+            hasFrontZero += "0";
+        }
+        hasFrontZero += pinStr;
+        return hasFrontZero;
+    }
+
+    function genNewPin() {
+        $.act(ACT_OP, ACT_OP_WLAN_GET_NEW_PIN, wpsObj_2g.__stack);
+//        $.act(ACT_OP, ACT_OP_WLAN_GET_NEW_PIN, wpsObj_5g.__stack);
+
+        $.exe(function (ret) {
+            if (!ret) {
+                var wpsObjNew = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["DevicePassword"]);
+//                var wpsObjNew5g = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["DevicePassword"]);
+                $.exe(function (ret) {
+                    if (!ret) {
+                        var tempPin = pinChange(wpsObjNew.devicePassword);
+                        $('#pinNum').prop('value', tempPin);
+                    }
+                    $.removeLoading();
+                });
+            }
+        });
+    }
+
+    function defaultPin() {
+        $.act(ACT_OP, ACT_OP_WLAN_RESTORE_PIN, wpsObj_2g.__stack);
+//        $.act(ACT_OP, ACT_OP_WLAN_RESTORE_PIN, wpsObj_5g.__stack);
+        $.exe(function (ret) {
+            if (!ret) {
+                var wpsObjNew = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_2g.__stack, null, ["DevicePassword"]);
+//                var wpsObjNew5g = $.act(ACT_GET, LAN_WLAN_WPS, wpsObj_5g.__stack, null, ["DevicePassword"]);
+                $.exe(function (ret) {
+                    if (!ret) {
+                        var tempPin = pinChange(wpsObjNew.devicePassword);
+                        $('#pinNum').prop('value', tempPin);
+                    }
+                    $.removeLoading();
+                });
+            }
+        });
+    }
+
+    function initWPSShow(wpsObj, wlanObj, wpsObj5g, wlanObj5g) {
+        //页面不处理这个参数 
+//        if (wpsObj.enable == 1) {
+//            $('#wpsEn' + band).addClass('selected');
+//            $('#wpsWizard' + band).removeClass('nd');
+//        } else {
+//            $('#wpsDis' + band).addClass('selected');
+//            $('#wpsWizard' + band).addClass('nd');
+//        }
+        //Router's PIN开关，此参数不与无线开关关联，逻辑独立。页面开关打开时。双频同时设置。0对应页面的开，1对应页面的关。 
+        if (wpsObj.setupLock == 0 || 
+            (INCLUDE_LAN_WLAN_DUALBAND && wpsObj5g.setupLock == 0)) {
+            $('#pinEn').addClass('selected');
+        } else {
+            $('#pinDis').addClass('selected');
+        }
+
+        //Router's PIN码。2.4g的开启则用2.4g，5g开启则用5g，都没开用2.4g。通常情况下，双频都应该是打开的。使用2.4g的。 
+        var devicePassword = wpsObj.devicePassword;
+        if (wpsObj.setupLock == 0) {
+            devicePassword = wpsObj.devicePassword;
+        } 
+        else if (INCLUDE_LAN_WLAN_DUALBAND && wpsObj5g.setupLock == 0) {
+            devicePassword = wpsObj5g.devicePassword;
+        }
+        $('#pinNum').prop('value', pinChange(devicePassword));
+
+        if (wpsObj.enable == 0) {
+            //wps开关关闭，提示不可用，隐藏 
+            wifiStatus = 'close';
+            errText = '<span class="green">' + $.tpLang.m_str.note + ': </span>' + ($.tpLang.wps_nstr.c_closeNote || "To use WPS Wizard, you should go to <a href='#'>Advanced > Wireless > Advanced Settings</a> to enable WPS first.");
+        } else {
+            var available2 = isWPSAvailable(wlanObj_2g);
+            var available5 = false;
+			if (INCLUDE_LAN_WLAN_DUALBAND)
+				available5=isWPSAvailable(wlanObj_5g);
+            var errText = '';
+            if (available2 === true && available5 === true) {
+                //两个都可用 
+                wifiStatus = 'both';
+            } else if (available2 === true) {
+                //只有2g可用 
+                wifiStatus = '2';
+            } else if (available5 === true) {
+                //只有5g可用 
+                wifiStatus = '5';
+            } else {
+                //两个都不可用 
+                wifiStatus = 'close';
+                if (available2 === available5) {
+                    //两个的不可用的原因一样 
+                    errText = e_str[available2];
+                } else {
+                    errText = $.tpLang.s_str.ghz24 + ' ' + e_str[available2];
+                    if (INCLUDE_LAN_WLAN_DUALBAND)
+                    	errText = errText  + '<br>' + $.tpLang.s_str.ghz5 + ' ' + e_str[available5];
+                }
+            }
+        }
+
+
+        //两频wifi都关闭，禁用wps method one和method two的client pin
+        if (wifiStatus == 'close') {
+            //禁用wps method one
+            $('#wps_button').addClass('disabled');
+            //method two的client pin
+            $('#pinConn').prop('disabled', true);
+//            $('#wpsWizard' + band).addClass('nd');
+//            $('#wpsSwitch' + band).addClass('disabled');
+            $('p#page-message').html(errText);
+        }
+
+        //当只有一个频段打开时，会把另一个的X_TP_PeerPassword置为0，所以 
+        var wpsPeerPw = wpsObj.X_TP_PeerPassword;
+        if (wpsObj.X_TP_PeerPassword > 0) {
+            wpsPeerPw = wpsObj.X_TP_PeerPassword;
+        } else if (INCLUDE_LAN_WLAN_DUALBAND && wpsObj5g.X_TP_PeerPassword > 0) {
+            wpsPeerPw = wpsObj5g.X_TP_PeerPassword;
+        }
+        //该值大于0表示使用clientPin的方式 
+        if (wpsPeerPw > 0) {
+            $('#methodTwoClick').click();   //显示method two的内容 
+            var tempPIN = "";
+            var pinStr = wpsPeerPw.toString();
+            for (var i = pinStr.length + 1; i <= 8; i++) {
+                tempPIN += "0";
+            }
+            tempPIN += pinStr;
+            $('#clientPinRadio').prop('checked', true);
+            $('#clientPinInput').prop('value', tempPIN);
+        }
+
+        if (wpsObj.enable == 1) {
+            updateWPS();
+        } else {
+            $('p#page-message').find('a').on('click', function(e) {
+                e.preventDefault();
+                $.goToOtherPage('wirelessAdv.htm', 'advanced');
+
+            });
+        }
+    }
+
+    //检查wps是否可用，不可用返回相应提示 
+    function isWPSAvailable(wlanObj, wpsObj) {
+        //当主ap关闭是禁用 
+        if (wlanObj.enable == 0) {
+            return ERR_WLAN_DISABLED;
+        }
+        //当无线的加密方式是wep或wap/wpa2 tkip时，禁用wps开关。 
+        if ("Basic" == wlanObj.beaconType) {
+            if ("WEPEncryption" == wlanObj.basicEncryptionModes) {
+                return ERR_WLAN_QSS_CONFLICT;
+            }
+        } else if ("WPA" == wlanObj.beaconType) {
+            if ("PSKAuthentication" != wlanObj.WPAAuthenticationMode || wlanObj.WPAEncryptionModes == "TKIPEncryption") {
+                return ERR_WLAN_QSS_CONFLICT;
+            }
+        } else if ("11i" == wlanObj.beaconType || "WPAand11i" == wlanObj.beaconType) {
+            if ("PSKAuthentication" != wlanObj.IEEE11iAuthenticationMode || wlanObj.IEEE11iEncryptionModes == "TKIPEncryption") {
+                return ERR_WLAN_QSS_CONFLICT;
+            }
+        }
+
+        return true;
+    }
+
+    var wifiStatus; //记录无线的开启情况，‘both'表示都打开'2'表示2.4g打开，5表示5g打开，close表示都关闭 
+    function init() {
+        var wlanList = $.act(ACT_GL, LAN_WLAN, null, null, ["name",
+            "Enable",
+            "SSIDAdvertisementEnabled",
+            "X_TP_Configuration_Modified",
+            "BeaconType",
+            "WPAAuthenticationMode",
+            "WPAEncryptionModes",
+            "IEEE11iEncryptionModes",
+            "IEEE11iAuthenticationMode",
+            "BasicEncryptionModes",
+            "X_TP_Band"
+        ]);
+
+        if (!$.exe()) {
+            $.each(wlanList, function () {
+                if ("2.4GHz" == this.X_TP_Band) {
+                    wlanObj_2g = this;
+                } else if (INCLUDE_LAN_WLAN_DUALBAND && "5GHz" == this.X_TP_Band) {
+                    wlanObj_5g = this;
+                }
+            });
+
+            wpsObj_2g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_2g.__stack, null, ["Enable", "DevicePassword", "SetupLock", "X_TP_State", "X_TP_PeerPassword"]);
+            if (!$.exe()) {
+            }
+            if (INCLUDE_LAN_WLAN_DUALBAND)
+            {
+	            wpsObj_5g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_5g.__stack, null, ["Enable", "DevicePassword", "SetupLock", "X_TP_State", "X_TP_PeerPassword"]);
+	            if (!$.exe()) {}
+            }
+        }
+        initWPSShow(wpsObj_2g, wlanObj_2g, wpsObj_5g, wlanObj_5g);
+
+    }
+
+    $.tpInit(init);
+
+})();
+</script>

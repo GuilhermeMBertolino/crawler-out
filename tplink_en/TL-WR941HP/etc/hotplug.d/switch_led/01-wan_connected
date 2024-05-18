@@ -1,0 +1,44 @@
+. /lib/functions.sh
+
+WAN_CONNECTED_PID="/var/run/switch_led"
+SMARTDHCP_STATUS_FILE="/tmp/smartdhcp_current_status"
+
+local ifname
+local interface=wan
+local sysmode
+config_load /etc/config/network
+config_load /etc/config/sysmode
+config_load /etc/config/iptv
+config_get sysmode sysmode mode
+config_get iptv_enable "iptv" enable
+
+if [ "$iptv_enable" = "on" ]; then
+	config_get ifname "iptv" wan
+else
+	config_get ifname $interface ifname
+fi
+
+if [ "$sysmode" == "ap" -a $DEVICE == $ifname -a $ACTION == 'ifdown' ]; then
+	if [ -e ${SMARTDHCP_STATUS_FILE} ]; then
+		local current=$(cat ${SMARTDHCP_STATUS_FILE})
+		[ "$current" == "1" ] && /etc/init.d/smartdhcp restart
+	fi
+fi
+
+if [ "$sysmode" != "router" -o $DEVICE != $ifname ]; then
+	return
+fi
+
+[ -e ${WAN_CONNECTED_PID} ] && {
+	local pid=$(cat ${WAN_CONNECTED_PID})
+	echo "$ACTION:$DEVICE: Kill pid $pid." > /dev/console
+	[ -n "$pid" ] && kill -9 $pid
+	rm -f ${WAN_CONNECTED_PID}
+	ledcli WAN0_OFF
+	ledcli WAN1_OFF
+}
+
+if [ $ACTION == 'ifup' ]; then
+	/usr/bin/switch_led &
+fi
+

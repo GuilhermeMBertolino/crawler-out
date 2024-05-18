@@ -1,0 +1,117 @@
+﻿<script language="javascript" type="text/javascript">
+var showNum=10;
+function removeAll()
+{
+	var tlb=$.id("apTbl");
+	while(tlb.rows.length>0)
+		tlb.deleteRow(-1);
+}
+function connect(apObj)
+{
+	var param = new Object();
+	
+	param.ssid=$.mainParam.ssid;
+	param.standard=$.mainParam.standard;
+	param.channel=$.mainParam.channel;
+	param.autoChannel=$.mainParam.autoChannel;
+	param.bandWidth=$.mainParam.bandWidth;
+	param.apEn=$.mainParam.apEn;
+	param.SSIDAdvertisementEnabled=$.mainParam.SSIDAdvertisementEnabled;
+	param.wdsExist=0;
+	if(apObj!=null)
+	{
+		param.wdsExist=1;
+		param.SSID=apObj.SSID;
+		param.BSSID=apObj.BSSID;
+		param.channel=apObj.channel;
+	}
+	$.addLoading($.id("backBtn"),500,function(){$.loadMain('wlBasic.htm',param);});
+}
+
+function getTbl(apTable, page)
+{
+	var tbl = $.id("apTbl");
+	removeAll();
+	$.each(apList,function(arg,index){
+		row = tbl.insertRow(-1);
+		cell = row.insertCell(-1);
+		cell.innerHTML=index+1;
+		cell.width="5%";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.BSSID;
+		cell.width="15%";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.SSID.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;");
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.RSSI;
+		cell.width="15%";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.channel;
+		cell.width="10%";
+		cell=row.insertCell(-1);
+		if(0==this.securityEnable)
+			cell.innerHTML="<span class='T T_none'>"+ m_str.none + "</span>";
+		else
+			cell.innerHTML="<span class='T T_encryption'>"+ s_str.encryption + "</span>";
+		cell.width="12%";
+		cell=row.insertCell(-1);
+		cell.innerHTML="<span class=a onclick=connect(apList["+index+"]);><span class='T T_conn'>"+m_str.conn+"</span><\/span>";
+		cell.width="10%";
+	});
+	$.resize(tbl,showNum);
+}
+function refresh(obj)
+{
+	$.addLoading(obj);
+	$.act(ACT_OP, ACT_OP_WLAN_SCAN, wlanObj.__stack);
+	$.exe(function(ret){
+		if (ret) return;
+		apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlanObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI"]);
+		$.exe(function(ret){
+			if (ret) return;
+			setTip(apList.length);
+			getTbl(apList);
+			$.removeLoading();
+		});
+	});
+}
+function setTip(apNum)
+{
+	$.h($.id("tip"),apNum);
+}
+</script>
+<p class="et T" id="et">AP List</p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="line">
+<span class="T" id="t_info">The scanned APs are as follows</span>
+</p>
+<p align="left"><span class="T" id="t_aps">AP numbers:</span> <i class="bd" id="tip"></i><input type="button" class="button L ml T T_refresh" id="refresh" value="Refresh" onclick="refresh(this)" /></p>
+<div class="XL thead"><table class="XL bdr tc"><tr><th width="5%">ID</th><th width="15%">BSSID</th><th>SSID</th><th width="15%" class="T" id="t_signal">Signal strength</th><th width="10%" class="T T_channel">Channel</th><th width="12%" class="T T_encryption">Encryption</th><th width="10%" class="T T_conn">Connect</th></tr></table></div>
+<div class="XL tbody"><table class="XL bdr tc" id="apTbl"></table></div>
+</div>
+<p class="bl"></p>
+<p class="tail"><input type="button" id="backBtn" class="button L T T_back" onclick="connect(null);" value="Back"/></p>
+</div>
+<script language="javascript" type="text/javascript">
+var apList, wlanList, wlanObj;
+wlanList=$.act(ACT_GL,LAN_WLAN,null,null,["name","X_TP_Band"]);
+if (!$.exe())
+{
+	$.each(wlanList,function()
+	{
+		if("2.4GHz"==this.X_TP_Band)
+		{
+			wlanObj = this;
+		}
+	});
+}
+apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlanObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI"]);
+if (!$.exe())
+{
+    setTip(apList.length);
+    getTbl(apList, 1);
+}
+</script>

@@ -1,0 +1,65 @@
+﻿<script language="javascript" type="text/javascript">
+function doCollect() {
+	$.qd.ipoa.ip = $.id("ip").value;
+	$.qd.ipoa.mask = $.id("mask").value;
+	$.qd.ipoa.gw = $.id("gw").value;
+	$.qd.ipoa.dns = $.id("dns").value;
+	$.qd.ipoa.dns2 = $.id("dns2").value;
+}
+function goNext() {
+	doCollect();
+	
+	if ($.ifip($.qd.ipoa.ip, true))
+		return $.alert(ERR_STAIP_IP_INVAD);
+	if ($.mask($.qd.ipoa.mask, true))
+		return $.alert(ERR_STAIP_MASK_INVAD);
+	if ($.ipmask($.qd.ipoa.ip, $.qd.ipoa.mask, true))
+		return $.alert(ERR_STAIP_IP_MASK_CONFLICT);	
+	if ($.ifip($.qd.ipoa.gw, true))
+		return $.alert(ERR_STAIP_GW_INVAD);
+	if ($.ipmask($.qd.ipoa.gw, $.qd.ipoa.mask, true))
+		return $.alert(ERR_STAIP_GW_MASK_CONFLICT);
+	if ($.ipmaskgw($.qd.ipoa.ip, $.qd.ipoa.mask, $.qd.ipoa.gw, true))
+		return $.alert(ERR_STAIP_IP_GW_CONFLICT);
+	if ($.qd.ipoa.dns && $.ip2num($.qd.ipoa.dns) !== 0 && $.ifip($.qd.ipoa.dns, true))
+		return $.alert(ERR_STAIP_DNS1_INVAD);
+	if ($.qd.ipoa.dns2 && $.ip2num($.qd.ipoa.dns2) !== 0 && $.ifip($.qd.ipoa.dns2, true))
+		return $.alert(ERR_STAIP_DNS2_INVAD);
+
+	$.qf.next();
+}
+function goPrev() {
+	doCollect();
+	$.qf.prev();
+}
+</script>
+<p class="et T" id="et">Quick Setup - IPoA</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="T" id="t_info">Please enter the basic parameters provided by your ISP. If you forget, please ask your ISP.</p>
+<p class="br"></p>
+<p><b class="item T T_ipaddr">IP Address:</b><input type="text" class="text" size="15"  maxlength="15" id="ip" value="0.0.0.0" /></p>
+<p><b class="item T T_netmask">Subnet Mask:</b><input type="text" class="text" size="15"  maxlength="15" id="mask" value="0.0.0.0" /></p>
+<p><b class="item T T_gateway">Gateway:</b><input type="text" class="text" size="15" maxlength="15" id="gw" value="0.0.0.0" /></p>
+<p><b class="item T T_dns">DNS Server:</b><input type="text" class="text" size="15"  maxlength="15" id="dns" value="0.0.0.0" /><span class="T T_optional">(optional)</span></p>
+<p><b class="item T T_secdns">Secondary DNS Server:</b><input type="text" class="text" size="15"  maxlength="15" id="dns2" value="0.0.0.0" /><span class="T T_optional">(optional)</span></p>
+</div>
+<p class="bl"></p>
+<p class="tail ctr">
+<input type="button" class="button L T T_back" value="Back" onclick="goPrev()" />
+<input type="button" class="button L T T_next" value="Next" onclick="goNext()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+(function(){
+	if (!$.mainParam) return $.loadMain("qsStart.htm");
+	if (!$.qd.ipoa) $.qd.ipoa = {};
+	if ($.qd.ipoa.ip !== undefined) $.id("ip").value = $.qd.ipoa.ip;
+	if ($.qd.ipoa.mask !== undefined) $.id("mask").value = $.qd.ipoa.mask;
+	if ($.qd.ipoa.gw !== undefined) $.id("gw").value = $.qd.ipoa.gw;
+	if ($.qd.ipoa.dns !== undefined) $.id("dns").value = $.qd.ipoa.dns;
+	if ($.qd.ipoa.dns2 !== undefined) $.id("dns2").value = $.qd.ipoa.dns2;
+})();
+</script>

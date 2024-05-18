@@ -1,0 +1,133 @@
+﻿<script language="javascript" type="text/javascript">
+function doSync() {
+	if (INCLUDE_AUTO_PVC && $.id("auto").checked) {
+		$.id("vpi").disabled = true;
+		$.id("vci").disabled = true;
+	}
+	else {
+		$.id("vpi").disabled = false;
+		$.id("vci").disabled = false;
+	}
+}
+function doCollect() {
+	$.qd.dsl.vpi = $.id("vpi").value;
+	$.qd.dsl.vci = $.id("vci").value;
+	if (INCLUDE_AUTO_PVC)
+		$.qd.dsl.auto = $.id("auto").checked;
+}
+function goNext() {
+	doCollect();
+	
+	if ($.num($.qd.dsl.vpi, [0, 255], true))
+		return $.alert(ERR_WAN_VPI_VCI_INVAD);
+	if ($.num($.qd.dsl.vci, [1, 65535], true))
+		return $.alert(ERR_WAN_VPI_VCI_INVAD);
+
+	var pvc = "PVC:" + parseInt($.qd.dsl.vpi, 10) + "/" + parseInt($.qd.dsl.vci, 10);
+	$.each(dsls, function(){ if (this.destinationAddress === pvc) $.qd.vc = this; });
+	$.qf.next();
+}
+function goPrev() {
+	doCollect();
+	$.qf.prev();
+}
+</script>
+<p class="et T" id="et">Quick Setup - DSL</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p><span class="T" id="t_info1">Please enter the VPI/VCI provided by your ISP(Internet Service Provider).</span> <span class="T nd" id="t_info2">Or you can enable the PVC Auto-detection.</span></p>
+<p class="br"></p>
+<p class="nd" id="auto_con"><input type="checkbox" id="auto" onclick="doSync()" checked /><span class="T" id="t_auto">Enable PVC Auto-detection</span></p>
+<p><b class="item S">VPI:</b><input type="text" class="text" size="5" maxlength="3" value="8" id="vpi" /> (0-255)</p>
+<p><b class="item S">VCI:</b><input type="text" class="text" size="5" maxlength="5" value="35" id="vci" /> (1-65535)</p>
+</div>
+<p class="bl"></p>
+<p class="tail ctr">
+<input type="button" class="button L T T_back" value="Back" onclick="goPrev()" />
+<input type="button" class="button L T T_next" value="Next" onclick="goNext()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+var dsls;
+(function(){
+	if (!$.mainParam) return $.loadMain("qsStart.htm");
+	if (INCLUDE_AUTO_PVC) { $.removeClass($.id("pvc_auto"), "nd"); $.removeClass($.id("auto_con"), "nd"); }
+	
+	if (!$.qm[$.curPage].__v) {
+		var l3f = {};
+		var wans = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+		dsls = $.act(ACT_GL, WAN_DSL_LINK_CFG, null,null, ["autoConfig", "destinationAddress", "linkType"]);
+		var ips = $.act(ACT_GL, WAN_IP_CONN, null, null, ["name", "connectionType", "addressingType", "externalIPAddress", "subnetMask", "defaultGateway", "DNSServers"]);
+		var ppps = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["name", "transportType", "username", "password"]);
+
+		if (!INCLUDE_WAN_MODE || $.qd.realMode == "DSL")
+		{
+			l3f = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+			if ($.exe()) return;
+		}
+		else if (INCLUDE_WAN_MODE && ($.qd.realMode == "ETH" || $.qd.realMode == "USB_3G"))
+		{
+			var lastMode = $.act(ACT_GET, SYS_MODE, null, null, ["DSLL3ForwardingName"]);
+			if ($.exe()) return;
+			l3f.__ifAliasName = lastMode.DSLL3ForwardingName;
+		}
+		
+		if ($.local) {
+			l3f = {__ifAliasName: "gw"};
+			wans = [{WANAccessType: "DSL", __stack: "1,0,0,0,0,0"}];
+			dsls = [{autoConfig: "1", destinationAddress: "PVC:0/35", __stack: "1,1,0,0,0,0"}, {autoConfig: "1", destinationAddress: "PVC:8/35", __stack: "1,2,0,0,0,0"}];
+			ips = [ {name: "br", __stack: "1,1,1,0,0,0", connectionType: "IP_Bridged", addressingType: undefined, externalIPAddress: undefined, subnetMask: undefined, defaultGateway: undefined, DNSServers: undefined},
+					{name: "gw", __stack: "1,2,1,0,0,0", connectionType: "IP_Routed", addressingType: "Static", externalIPAddress: "192.168.2.100", subnetMask: "255.255.255.0", defaultGateway: "192.168.2.1", DNSServers: "0.0.0.0,0.0.0.0"},
+					{name: "dhcp", __stack: "1,2,2,0,0,0", connectionType: "IP_Routed", addressingType: "DHCP", externalIPAddress: "0.0.0.0", subnetMask: "0.0.0.0", defaultGateway: "0.0.0.0", DNSServers: "0.0.0.0"}];
+			ppps = [{name: "ppp", __stack: "1,1,1,0,0,0", transportType: "PPPoE", username: "abc", password: "bcd"}];
+		}
+		
+		$.merge(ips, ppps);
+		$.qd.conns = [];
+		$.each(ips, function(){
+			var obj;
+			var dns;
+			if ($.arr2obj(wans, "__stack")[$.stkPop(this.__stack, 2)].WANAccessType === "DSL"){
+				$.qd.conns.push(this);
+				if (this.name === l3f.__ifAliasName) {
+					$.qd.gw = this;
+					obj = $.arr2obj(dsls, "__stack")[$.stkPop(this.__stack)];
+					var pvcs = obj.destinationAddress.split(":")[1].split("/");
+					$.qd.dsl = { vpi: pvcs[0], vci: pvcs[1], auto: obj.autoConfig == 1 ? true : false, wan: $.stkPop(this.__stack, 2) };
+					if (obj.linkType == "EoA") {
+						if (this.connectionType == "IP_Routed") {
+							if (this.addressingType == "Static") {
+								$.qd.type = "staip";
+								dns = this.DNSServers.split(",");
+								$.qd.staip = {ip: this.externalIPAddress, mask: this.subnetMask, gw: this.defaultGateway, dns: dns[0], dns2: dns[1]};
+							}
+							else if (this.addressingType == "DHCP") $.qd.type = "dhcp";
+						}
+						else if (this.transportType == "PPPoE") {
+							$.qd.type = "ppp";
+							$.qd.ppp = {usr: this.username, pwd: this.password, cfm: this.password};					
+						}
+					}
+					else if (obj.linkType == "IPoA") {
+						$.qd.type = "ipoa";
+						dns = this.DNSServers.split(",");
+						$.qd.ipoa = {ip: this.externalIPAddress, mask: this.subnetMask, gw: this.defaultGateway, dns: dns[0], dns2: dns[1]};
+					}
+					else if (obj.linkType == "PPPoA") {
+						$.qd.type = "pppoa";
+						$.qd.pppoa = {usr: this.username, pwd: this.password, cfm: this.password};
+					}
+				}
+			}
+		});
+		if (!$.qd.dsl) { $.qd.dsl = {}; $.each(wans, function(){if (this.WANAccessType === "DSL") $.qd.dsl.wan = this.__stack; })}
+	}
+	
+	if ($.qd.dsl.vpi !== undefined) $.id("vpi").value = $.qd.dsl.vpi;
+	if ($.qd.dsl.vci !== undefined) $.id("vci").value = $.qd.dsl.vci;
+	if ($.qd.dsl.auto !== undefined) $.id("auto").checked = $.qd.dsl.auto;
+	doSync();
+})();
+</script><script language="javascript" type="text/javascript">$.styleInputElements();</script>

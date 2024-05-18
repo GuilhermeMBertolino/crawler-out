@@ -1,0 +1,502 @@
+
+
+<SCRIPT language="javascript" src="../js/su/su.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" src="../js/su/widget/widget.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" src="../js/su/widget/form/button.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" src="../js/su/widget/form/checkbox.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" src="../js/su/widget/form/buttongroup.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" src="../js/su/widget/form/textbox.js" type="text/javascript"></SCRIPT>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="../dynaform/reset.css"></link>
+<link rel="stylesheet" href="../dynaform/widget.css"></link>
+<link rel="stylesheet" href="../dynaform/style.css"></link>
+
+<script type="text/javascript">
+
+function getValLen(val)
+{
+	var len = 0;
+	var i = 0;
+	for (i = 0; i < val.length; i ++)
+	{
+		var c = val.charAt(i);
+		len += ((c >= ' ') && (c <= '~')) ? 1 : 2;
+	}
+	return len;
+}
+
+function checkSsidLength(ssidName)
+{
+    ssidLenght = getValLen(ssidName);
+
+    if (ssidLenght <= 0 || ssidLenght > 32)
+    {
+        if (0 == ssidLenght)
+        {
+            alert(js_empty_ssid="Please enter your SSID");
+            return false;
+        }
+        if (ssidLenght > 32)
+        {
+            alert(js_exceed_ssid="SSID cannot exceed 32 characters. Please try again.");
+            return false;
+        }
+        return false;
+    }
+    return true;
+}
+
+function checkPasswordLength(password)
+{
+    ssidLenght = getValLen(password);
+	
+	if (ssidLenght == 0)
+	{
+		if(confirm(js_disable_security="The operation will disable Guest Network wireless security. Are you sure to continue?"))
+		{
+			return true;
+		}
+		return false;
+	}
+	else if (ssidLenght < 8 || ssidLenght > 64)
+    {
+        if (ssidLenght < 8)
+        {
+			alert(js_psk_char="Wireless password should have at least 8 characters. Please try again.");
+            return false;
+        }
+        if (ssidLenght > 64)
+        {
+            alert(js_exceed_password="Password cannot exceed 64 characters. Please try again.");
+            return false;
+        }
+        return false;
+    }
+    return true;
+}
+
+function checkSsidname(ssidName,ssidNum)
+{
+	var c;
+	var ch = "0123456789ABCDEFabcdefGHIJKLMNOPQRSTUVWXYZghijklmnopqrstuvwxyz`~!@#$%^&*()-=_+[]{};:\'\"\\|/?.,<>/ ";
+
+	for (var i = 0; i < ssidName.length; i++)
+	{
+		c = ssidName.charAt(i);
+		if (ch.indexOf(c) == -1)
+		{
+			if(ssidNum == 1)
+				alert(js_invalid_ssid="The SSID contains invalid characters. Please try again.");
+			else if(ssidNum == 5)
+				alert(js_invalid_bridgessid="The Bridge SSID contains invalid characters. Please try again.");
+			else
+				alert(document.getElementById("t_illegal_ssid1").innerHTML + ssidNum + document.getElementById("t_illegal_ssid2").innerHTML);
+			return false;
+		}
+	}
+	return true;
+}
+
+function checkPasswordname(password)
+{
+	var c;
+	var ch = "0123456789ABCDEFabcdefGHIJKLMNOPQRSTUVWXYZghijklmnopqrstuvwxyz`~!@#$%^&*()-=_+[]{};:\'\"\\|/?.,<>/ ";
+    for (var i = 0; i < password.length; i++)
+    {
+        c = password.charAt(i);
+        if (ch.indexOf(c) == -1)
+        {
+            alert(js_invalid_password="The password contains invalid characters, please try again.");
+            return false;
+        }
+    }
+
+    if (password.length === 64)
+    {
+        var ch = "0123456789ABCDEFabcdef";
+        var c;
+	for (var i = 0; i < password.length; i++)
+	{
+		c = password.charAt(i);
+		if (ch.indexOf(c) == -1)
+		{
+                alert(js_psk_hex="Wireless password should contain 8 to 63 characters or 64 hexadecimal digits.");
+                return false;
+		}
+	}
+    }
+	return true;
+}
+
+
+function checkSsidValid()
+{
+    var cf = document.forms[0];
+    
+    if (!checkSsidLength(cf.SSID_2G.value) ||
+        !checkSsidname(cf.SSID_2G.value, 1))
+    {
+        cf.SSID_2G.focus();
+        cf.SSID_2G.select();
+        return false;
+    }
+	/*
+    if (!checkSsidLength(cf.SSID_5G.value) ||
+        !checkSsidname(cf.SSID_5G.value, 1))
+    {
+        cf.SSID_5G.focus();
+        cf.SSID_5G.select();
+        return false;
+    }
+	*/
+    return true;
+}
+
+
+function checkPasswordValid()
+{
+    var cf = document.forms[0];
+
+    if ( wlanPara[4] == 1 || cf.password_2G.value != "") //5 ->4
+    {
+        if (!checkPasswordLength(cf.password_2G.value) || 
+            !checkPasswordname(cf.password_2G.value))
+        {
+            cf.password_2G.focus();
+            cf.password_2G.select();
+            return false;
+        }
+    }
+	/*
+    if (wlanPara[10] == 1 || cf.password_5G.value !="")  //6 -> 10
+    {
+        if (!checkPasswordLength(cf.password_5G.value) ||
+            !checkPasswordname(cf.password_5G.value))
+        {
+            cf.password_5G.focus();
+            cf.password_5G.select();
+			return false;
+		}
+    }
+	*/
+    return true;
+}
+
+function doSubmit()
+{
+    //检查ssid合法性
+    if (!checkSsidValid())
+        return false;
+
+    if (!checkPasswordValid())
+        return false;
+	
+	$("input#trans_SSID_2G").textbox("setValue", document.getElementById("SSID_2G").value);
+	$("input#trans_password_2G").textbox("setValue", document.getElementById("password_2G").value);
+
+    return true;
+}
+
+</script>
+<style type="text/css">
+    td.colunmn2Ex{
+        text-align: left;
+        padding-left: 10px;
+    }
+</style>
+</HEAD>
+<BODY>
+
+<div id="mainContent">
+    <div class="titleCnt">
+        <span class="pageTitle" id="t_title">Guest Network</span>
+    </div>
+
+    <div class="sectionContent">
+
+        <form id="form-wireless" action="BasicGuestNetworkRpm.htm" method="get" enctype="multipart/form-data" onSubmit="return doSubmit();">
+            <table id="autoWidth"  width="562" border="0" cellspacing="0" cellpadding="0">
+                <tr class="cfg_line">
+                    <td colspan="3">
+                        <table border="0" cellspacing="0" cellpadding="0">
+                            <!--
+							<tr class="cfg_line">
+                                <td class="td_title" id="t_alloc_access">Allow Guests To See Each Other</td>
+                                <td class="colunmn2Ex"><input id="seeOther" name="seeOther" /></td>
+                            </tr>
+							-->
+                            <tr class="cfg_line">
+                                <td class="td_title" id="t_allow_local">Allow Guests To Access My Local Network</td>
+                                <td class="colunmn2Ex"><input id="accLocal" name="accLocal"></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr class="cfg_line">
+                    <td colspan="3">&nbsp;</td>
+                </tr>
+                <tr class="cfg_line">
+                    <td class="td_title" id="t_2g_note">Wireless 2.4GHz:</td>
+                    <td class="column2" colspan="2">
+                        <input id="radioSwitch_2G" name="radioSwitch_2G"/>
+                        &nbsp;
+                        <label class="warning" id="isWlanEnable_2G">Note:Enable 2.4GHz Band before enable GuestNetwork!</label>
+                    </td>
+                </tr>
+                <tr class="cfg_line">
+                    <td class="td_title" id="t_2g_ssid">Network Name(SSID):</td>
+                    <td class="column2"><input type="text" class="text textLL" id="SSID_2G" name="SSID_2G" maxlength="32"/></td>
+                    <td class="column3">&nbsp;</td>
+                </tr>
+                <tr class="cfg_line">
+                    <td class="td_title" id="t_2g_pwd">Password:</td>
+                    <td class="column2"><input type="text" class="text textLL" id="password_2G" name="password_2G" maxlength="64"/></td>
+                    <td class="column3">&nbsp;</td>
+                </tr>
+                <tr class="cfg_line" id="encryptEnable2GTr">
+                    <td class="td_title"></td>
+                    <td class="warning" colspan="2">
+                        <label class="tips">The Security Mode is disabled currently, if you configure the password, the Security Mode will be set to the strongest type automatically.</label>
+                    </td>
+                </tr>
+                <tr class="cfg_line">
+                    <td colspan="3">&nbsp;</td>
+                </tr>
+                <!--
+				<tr class="cfg_line">
+                    <td class="td_title" id="t_5g_note">Wireless 5GHz:</td>
+                    <td class="column2" colspan="2">
+                        <input id="radioSwitch_5G" name="radioSwitch_5G"/>
+                        &nbsp;
+                        <label class="warning" id="isWlanEnable_5G">Note:Enable 5GHz Band before enable GuestNetwork!</label>
+                    </td>
+                </tr>
+                <tr class="cfg_line">
+                    <td class="td_title" id="t_5g_ssid">Network Name(SSID):</td>
+                    <td class="column2"><input type="text" class="text textLL" id="SSID_5G" name="SSID_5G" maxlength="32"/></td>
+                    <td class="column3">&nbsp;</td>
+                </tr >
+                <tr class="cfg_line">
+                    <td class="td_title" id="t_5g_pwd">Password:</td>
+                    <td class="column2"><input type="text" class="text textLL" id="password_5G" name="password_5G" maxlength="64"/></td>
+                    <td class="column3">&nbsp;
+                    </td>
+                </tr>
+                <tr class="cfg_line" id="encryptEnable5GTr">
+                    <td class="td_title"></td>
+                    <td class="warning" colspan="2">
+                        <label class="tips">The Security Mode is disabled currently, if you configure the password, the Security Mode will be set to the strongest type automatically.</label>
+                    </td>
+                </tr>
+                <tr class="cfg_line">
+                    <td colspan="3">&nbsp;</td>
+                </tr>
+				 -->
+				<tr id="summary" style="display:none">
+					<td><input id="trans_SSID_2G" name="trans_SSID_2G"/></td>
+					<td><input id="trans_password_2G" name="trans_password_2G"/></td>
+				<tr>
+                <tr class="cfg_line">
+                    <td colspan="2">&nbsp;</td>
+                    <td class="btn-save"><div><input class="button" type="submit" id="btn-save" name="Save" value="Save"/></div></td>
+                </tr>
+            </table>
+
+            <!--<input type="submit" value="Save" id="Save"> -->
+        </form>
+    </div>
+</div>
+
+</BODY>
+</HTML>
+
+<script type="text/javascript">
+	/*
+    var seeother = $('input#seeOther').buttongroup({
+        fieldLabel: null,
+        onHandler: function(c) {
+        //    wlanPara[0] = 1;
+        },
+        offHandler: function(c) {
+        //    wlanPara[0] = 0;
+        }
+    });
+	*/
+    var acclocal = $("input#accLocal").buttongroup({fieldLabel: null});
+
+    var radio_24g = $('input#radioSwitch_2G').buttongroup({
+        fieldLabel: null,
+        cls: "inline" ,
+        onHandler: function(c) {
+            //$('input#seeOther').buttongroup("enable");
+            $('input#accLocal').buttongroup("enable");
+			document.getElementById("SSID_2G").disabled =false;
+			document.getElementById("password_2G").disabled =false;
+        },
+        offHandler: function(c) {
+            wlanPara[1] = 0;             // 1 -> 1
+                /*
+				if ($('input#radioSwitch_5G').buttongroup("getValue") == "off")
+                {
+                    $('input#seeOther').buttongroup("disable");
+					$('input#accLocal').buttongroup("disable");
+				}
+				*/
+				//insert of the code before 
+				$('input#accLocal').buttongroup("disable");
+				document.getElementById("SSID_2G").disabled =true;
+				document.getElementById("password_2G").disabled =true;
+			
+        }
+    });
+	/*
+    var radio_5g = $('input#radioSwitch_5G').buttongroup({
+        fieldLabel: null,
+        cls: "inline",
+        onHandler: function(c) {
+            $('input#seeOther').buttongroup("enable");
+            $('input#accLocal').buttongroup("enable");
+        }, 
+        offHandler: function(c) {
+                if ($('input#radioSwitch_2G').buttongroup("getValue") == "off")
+                {
+                    $('input#seeOther').buttongroup("disable");
+                $('input#accLocal').buttongroup("disable");
+                }
+        }
+    });
+	*/
+/*
+    var button_save = $('input#btn-save').button({
+        text: "Save",
+        cls: "btn-saved",
+        handler: function(e){
+            document.getElementById("form-wireless").submit();
+        }
+    });
+    */
+
+    //设置 ON/OFF
+	/*
+    if (wlanPara[0] === 0)
+    {
+        seeother.buttongroup("setValue", "off");
+    }
+    else
+    {
+        seeother.buttongroup("setValue", "on");
+    }
+	*/
+	$("input#trans_SSID_2G").textbox({
+		cls:"inline"
+	});
+
+	$("input#trans_password_2G").textbox({
+		cls:"inline"
+	});
+
+    if (wlanPara[0] === 0)     // 13-> 0 accLocal
+    {
+        acclocal.buttongroup("setValue", "off");
+    }
+    else
+    {
+        acclocal.buttongroup("setValue", "on");
+    }
+
+    if (wlanPara[1] === 0)    // 1->1  guest_2_4_Siwtch
+    {
+        radio_24g.buttongroup("setValue", "off");
+    }
+    else
+    {
+        radio_24g.buttongroup("setValue", "on");
+    }
+
+    if (wlanPara[6] === 1)  // 11 -> 6  wdsEnable2G
+    {
+         radio_24g.buttongroup("disable");
+    }
+	/*
+    if (wlanPara[12] === 1)			// 12 -> 12 wdsEnable5G
+    {
+          radio_5g.buttongroup("disable");
+    }
+	*/
+
+    $("label#isWlanEnable_2G").hide();
+    if (wlanPara[2] === 0)			// 9 -> 2
+    {
+        radio_24g.buttongroup("disable");
+        $("label#isWlanEnable_2G").show();
+    }
+	/*
+    if (wlanPara[7] === 0)   // 2-> 7
+    {
+        radio_5g.buttongroup("setValue", "off");
+    }
+    else
+    {
+        radio_5g.buttongroup("setValue", "on");
+    }
+
+    $("label#isWlanEnable_5G").hide();
+    if (wlanPara[8] === 0)    // 10->8
+    {
+        radio_5g.buttongroup("disable");
+        $("label#isWlanEnable_5G").show();
+        //var tmp = wlanPara[7];   // 2->7 
+        //radio_5g.buttongroup("setValue", "off");
+        //wlanPara[7] = tmp;     //2->7 
+    }
+	*/
+
+    //设置checkbox
+/*
+    if (wlanPara[2] === 1)    //no  used
+    {
+        hide_2g.checkbox("setChecked", true);
+    }
+    else
+    {
+        hide_2g.checkbox("setChecked", false);
+    }
+    
+    if (wlanPara[6] === 1)
+    {
+        hide_5g.checkbox("setChecked", true);
+    }
+    else
+    {
+        hide_5g.checkbox("setChecked", false);
+    }
+    */
+    
+
+//处理加密
+    $("tr#encryptEnable2GTr").hide();
+    if (wlanPara[4] === 0)					//5 -> 4
+    {
+        $("tr#encryptEnable2GTr").show();
+    }
+    /*
+    $("tr#encryptEnable5GTr").hide();
+    if (wlanPara[10] === 0)					// 6 -> 10
+    {
+        $("tr#encryptEnable5GTr").show();
+    }
+	*/
+    //联动
+    //if (wlanPara[2] === 0 && wlanPara[8] === 0) // 9-> 2 10->8
+    if (wlanPara[2] === 0 ) // 9-> 2 
+    {
+        //seeother.buttongroup("disable");
+        acclocal.buttongroup("disable");
+    }
+
+    document.getElementById("SSID_2G").value = wlanPara[3];   // 3-> 3 guest_2_4_SSID
+    //document.getElementById("SSID_5G").value = wlanPara[9];   // 4 -> 9 guest_5_SSID
+    document.getElementById("password_2G").value = wlanPara[5];  //7 -> 5  guest_2_4_Password
+    //document.getElementById("password_5G").value = wlanPara[11];  //8 -> 11 guest_5_Password
+</script>
+

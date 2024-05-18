@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+#启动脚本，只判断是否为init状态，并初始化crond
+#START=99
+
+start()
+{
+	local if_def_cfg
+	local domain
+	local ip
+	mkdir /tmp/wportal
+	echo "stop" > /tmp/wportal/status	
+	
+#	local defcfg
+#	config_load wportal
+#	config_get defcfg defcfg defcfg "no"
+	
+#	if [ $defcfg == "yes" ] ;
+#	then
+#		config_load domain_login
+#		config_get domain tp_domain domain ""
+#		config_load network
+#		config_get ip lan ipaddr ""
+#		local lan_ip_addr
+#		config_load network
+#		config_get lan_ip_addr lan ipaddr $domain
+#		wportalctrl -s -u http://$lan_ip_addr/webpages/init.html -i $ip
+#		wportalctrl -D -Y
+#		. /lib/wportal/wportal.sh 
+#		wportalctrl_update_init
+#		echo "init" > /tmp/wportal/status
+#	else
+		/etc/hotplug.d/iface/99-wportal
+		. /lib/wportal/wportal.sh 
+		wportalctrl_update_init
+#		/lib/wportal/wportal.sh wportalctrl_update_start
+#	fi
+}
+
+
+
+stop()
+{
+	wportalctrl -c
+	echo "stop" > /tmp/wportal/status
+}

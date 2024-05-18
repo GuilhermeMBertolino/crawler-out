@@ -1,0 +1,20 @@
+#!/bin/sh
+
+get_backhaul_status()
+{
+	local result
+	local mode=`uci get sysmode.sysmode.mode`
+	
+	if [ "$mode" = "repeater" ];then
+		result=`cat /tmp/wireless_connected`
+        if [ "$result" == "1" ]; then
+                return 0
+        else
+                return 1
+        fi
+	fi
+	return 1
+}
+
+get_backhaul_status
+

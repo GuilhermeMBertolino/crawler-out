@@ -1,0 +1,192 @@
+<script language="javascript" type="text/javascript">
+var usb3gLinkCfgStk;
+var usbModemParams;
+var usb3gList;
+
+function escapeStr(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function init() {
+
+}
+
+$("#back").click(function() {
+    $.loadMain("usb3g.htm");
+});
+
+$("#AddBtn").click(function() {
+    $.loadMain("usb3gUpload.htm");
+});
+
+function doDel(idx) {
+    $.act(ACT_DEL, USB_MODEM_PARAM, usbModemParams[idx].__stack, null, null);
+    if (!$.exe()) {
+        $.reload();
+    }
+}
+
+function confirmOK() {
+    $.addLoading($("#DelBtn"));
+    $.each(usbModemParams, function() {
+        $.act(ACT_DEL, USB_MODEM_PARAM, this.__stack, null, null);
+    });
+    $.exe(function(ret) {
+        if (!ret) {
+            $.reload();
+        }
+        $.removeLoading();
+    });
+}
+
+$("#DelBtn").click(function() {
+    $.confirm(c_str.usb3g_del_all, confirmOK, function() {
+        $.reload();
+    });
+});
+
+function initAccessTab() {
+    var array = new Array();
+    usb3gList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["enable"]);
+    if (!$.exe()) {
+        $.each(usb3gList, function() {
+            if (this.enable == 1) {
+                usb3gLinkCfgStk = this.__stack;
+                usbModemParams = $.act(ACT_GS, USB_MODEM_PARAM, null, this.__stack, null);
+                return false;
+            }
+        });
+        if (!$.exe()) {
+            var i = 0;
+            $.each(usbModemParams, function() {
+                i++;
+
+                array.push([{
+                    "text": i,
+                    "width": "16%"
+                }, {
+                    "text": escapeStr(this.vendorName),
+                    "width": "28%"
+                }, {
+                    "text": escapeStr(this.productName),
+                    "width": "28%"
+                }, {
+                    "text": "<span class='table-grid-icon edit-trash-icon' onClick='doDel(" + (i - 1) + ");'></span>",
+                    "width": "28%"
+                }]);
+            });
+
+            if (i == 0) {
+                $("#DelBtn").prop("disabled", true);
+            } else if (i >= 4) {
+                $("#AddBtn").prop("disabled", true);
+            }
+        }
+    }
+
+    $.initTableBody($('#modem_tbl'), array);
+    $.tablePages($('#modem_tbl'), 8);
+    return array;
+}
+
+function doBack() {
+    $.loadMain("usb3gModemList.htm");
+}
+
+function doUpload() {
+    if ($("#filename").val() == "") {
+        $.alert(ERR_USB_3G_FILE_NONE);
+        return false;
+    }
+
+    $("#upload").prop("disabled", true);
+    $("#back").prop("disabled", true);
+
+    var formObj = $.d.forms[0];
+    try {
+        formObj.target = "up_frame";
+        formObj.action = "/cgi/usb3gup";
+        formObj.submit();
+    } catch (e) {}
+
+    $.guage(["<span class='T T_uploading'>" + s_str.uploading + "</span>", "<span class='T T_wait_upload'>" + s_str.wait_upload + "</span>"], 10, 100, function() {
+        doBack();
+        $.cgi("/cgi/usb3gupburn", null, function(ret) {
+            if (ret && ret != ERR_NETWORK && ret != ERR_EXIT && ret != ERR_NONE_FILE) {
+                $.alert(ret);
+            } else {
+                $('#alert-container').hide();
+                $.removeLoading();
+            }
+        }, false, true);
+    });
+}
+
+$("#upload").click(function() {
+    doUpload();
+});
+
+$("#edit-cancel").click(function() {
+    $.reload();
+});
+</script>
+
+<h3 id="t_ums">3G/4G USB Modem Settings</h3>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" action="/cgi/usb3gup" enctype="multipart/form-data" method="post">
+        <div class='table-op'>
+            <div class='table-btn'>
+                <span class='add-icon'></span>
+                <label class="T_add">Add</label>
+                <span class="delete-icon" id="DelBtn"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id='modem_tbl'>
+            <thead></thead>
+            <tbody>
+                <tr class="nd">
+                    <td colspan="4">
+                        <div class="file-container">
+                            <b id="t_file">File:</b> 
+                            <input type="file" name="filename" id="filename" />
+                        </div>
+                        <div>
+                            <p class="cfg-line" id="t_3g_modem">Note: If you restore the Device's factory setting, the bin file will be lost.In the event that you do lose the bin file, you will need to re-upload it, or download our latest firmware from TP-Link offical website(www.tp-link.com). The updated firmware will be installed into your 3G/4G Device and restore all of its functions.</p>
+                        </div>
+                        <div class="inline-btn-right">
+                            <button type="submit" class="green T_cancel" id="edit-cancel">Cancel</button>
+                            <button type="submit" class="green" id="upload">Upload</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <form class="pure-form pure-form-aligned">
+        <div class="part-separate">
+            <button type="submit" class="blue" id="back">Back</button>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+var headArray = [{
+    "text": table_str.id,
+    "width": "16%"
+}, {
+    "text": table_str.vendor,
+    "width": "28%"
+}, {
+    "text": table_str.model,
+    "width": "28%"
+}, {
+    "text": table_str.del,
+    "width": "28%"
+}];
+$.initTableHead($('#modem_tbl'), headArray);
+$('#modem_tbl').tpTable(initAccessTab);
+
+$.tpInit(init);
+</script>

@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+start() {
+	/etc/init.d/url_class start
+	/etc/init.d/aviraserviceselector restart
+}
+
+stop() {
+	local state=`uci -q get avira.info.state`
+
+	/etc/init.d/avirawatchdog stop
+	/etc/init.d/aviraserviceselector stop
+	
+	if [ "x$state" == "xpaid" ];then
+		/etc/init.d/avirasentinelfull disable
+		/etc/init.d/avirasentinelfull stop
+	else 
+		/etc/init.d/avirasentinellite disable
+		/etc/init.d/avirasentinellite stop
+	fi
+
+	/etc/init.d/url_class stop
+
+	/etc/init.d/avirawatchdog restart
+	/etc/init.d/aviraserviceselector restart	
+}

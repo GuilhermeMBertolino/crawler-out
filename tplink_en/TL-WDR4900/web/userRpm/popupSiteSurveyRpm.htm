@@ -1,0 +1,194 @@
+<script type="text/javascript">
+<!--
+var g_reqURL = (pagePara[9] == 0) ? "/userRpm/WlanNetworkRpm.htm" : "/userRpm/WlanNetworkRpm_5g.htm";
+var g_siteSurURL = (pagePara[9] == 0) ? "/userRpm/popupSiteSurveyRpm.htm" : "/userRpm/popupSiteSurveyRpm_5g.htm";
+
+function doBack()
+{
+	location.href = g_reqURL + "?newBridgessid=&ssid=" + transToURL(pagePara[0].toString())
+					+ "&curRegion=" + pagePara[1]
+					+ "&channel=" + pagePara[2] 
+					+ "&chanWidth=" + pagePara[3]	
+					+ "&mode=" + pagePara[4] 
+					+ "&wrr=" + pagePara[5] 
+					+ "&sb=" + pagePara[6]
+					+ "&select=" + pagePara[7]
+					+ "&rate=" + pagePara[8];
+}
+function doRefresh(rescan)
+{
+	location.href = g_siteSurURL + "?refresh=" + rescan
+					+ "&ssid=" + transToURL(pagePara[0].toString())
+					+ "&curRegion=" + pagePara[1]
+					+ "&channel=" + pagePara[2]
+					+ "&chanWidth=" + pagePara[3]
+					+ "&mode=" + pagePara[4]
+					+ "&wrr=" + pagePara[5]
+					+ "&sb=" + pagePara[6]
+					+ "&select=" + pagePara[7]
+					+ "&rate=" + pagePara[8];
+}
+var transMatrixHTML = new Array(
+	/&/g, "&amp;",
+	/\\/g, "&#92;",
+	/'/g, "&#39;",
+	/"/g, "&quot;",
+	/</g, "&lt;",
+	/>/g, "&gt;",
+	/ /g, "&nbsp;"
+);
+function transToHTML(str)
+{
+	for (var i = 0; i < transMatrixHTML.length; i+=2)
+	{
+		str = str.replace(transMatrixHTML[i], transMatrixHTML[i+1]);
+	}
+	return str;
+}
+var transMatrixURL = new Array(
+	/%/g, "%25",
+	/#/g, "%23",
+	/&/g, "%26",
+	/;/g, "%3B",
+	/\\/g, "%5C",
+	/'/g, "%27",
+	/"/g, "%22",
+	/</g, "%3C",
+	/>/g, "%3E",
+	/ /g, "%20",
+	/\+/g, "%2B",
+	/\=/g, "%3D"
+);
+function transToURL(str)
+{
+	for (var i = 0; i < transMatrixURL.length; i+=2)
+	{
+		str = str.replace(transMatrixURL[i], transMatrixURL[i+1]);
+	}
+	return str;
+}
+var bssidName = new Array(
+	"<span id=\"t_none\">none<\/span>",
+	"apBssid",
+	"staBssid",
+	"staBssid",
+	"rptBssid",
+	"pptBssid",
+	"mptBssid",
+	"rptBssid"
+);
+var ssidName = new Array(
+	"<span id=\"t_none\">none<\/span>",
+	"apSsid",
+	"staSsid",
+	"staSsid",
+	"rptSsid",
+	"pptSsid",
+	"mptSsid",
+	"rptSsid"
+);
+//-->
+</script>
+<meta http-equiv="pragma" content="no-cache">
+</head>
+<body onLoad="setTagStr(document,'ntw_sit_survey'); LoadHelp('SiteSurveyHelpRpm.htm'); resize(this);" >
+	<form action="SiteSurveyRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td class="h1" colspan=2 id="t_title">AP List</td>
+			</tr>
+			<tr>
+				<td class="blue" colspan=2></td>
+			</tr>
+			<tr>
+				<td colspan="2"><table border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td rowspan="15" class="vline"><BR></td>
+				<td><table align="center" border="0" cellpadding="0" cellspacing="0" class="space">
+					<tr>
+						<td>
+							<table border="0">
+								<tr>
+									<td>&nbsp;<span id="t_ap_num">AP Count:</span>  &nbsp;
+									<script type="text/javascript">document.write(siteSurveyPara[1]);</script>
+									</td>
+								</tr>
+									<table border="0" align="center" class="space" cellspacing="0" cellpadding="0">
+										<tr>
+											<td colspan=2><table border=1 align="center" cellspacing="0" cellpadding="0">
+										<tr align="center">
+											<td style="FONT-WEIGHT:bold;" id="t_id">&nbsp;ID</td>
+											<td style="FONT-WEIGHT:bold;" id="t_bssid">&nbsp;BSSID</td>
+											<td style="FONT-WEIGHT:bold;" id="t_ssid">&nbsp;SSID</td>
+											<td style="FONT-WEIGHT:bold;" id="t_signal">&nbsp;Signal</td>
+											<td style="FONT-WEIGHT:bold;" id="t_channel">&nbsp;Channel</td>
+											<td style="FONT-WEIGHT:bold;" id="t_security">&nbsp;Security</td>
+											<td style="FONT-WEIGHT:bold;" id="t_choose">&nbsp;Choose</td>
+										</tr>
+                              <script type="text/javascript">
+var listLen = siteSurveyPara[1];
+if (listLen >0)
+{
+	var row = 0;
+	var statusIndex;
+	var idStart = 0;
+	for(var i = 0; i < listLen; i++)
+	{
+		row = i * 5;
+		idStart ++;
+		document.write('<tr align="center"><td>' + idStart + '<\/td>');
+		for (var j = 0; j <= 4; j++)
+		{
+			var content = siteList[row+j].toString() ? siteList[row+j] : " ";
+			if (j == 4)
+			{
+				document.write('<td>' + (content == 0 ? 'OFF' : 'ON') + '<\/td>');
+			}
+			else if (j == 2)
+			{
+				document.write('<td>' + transToHTML(content.toString()) + 'dB<\/td>');
+			}
+			else
+			{
+				document.write('<td>' + transToHTML(content.toString()) + '<\/td>');
+			}
+		}
+		if ((0 == siteSurveyPara[0]) || (1 == siteSurveyPara[0]))
+		{
+			document.write('<td>&nbsp;<\/td><\/tr>');
+		}
+		else
+		{
+			document.write('<td><a href="'+ g_reqURL +'?newBridgessid=' + transToURL(siteList[row + 1].toString())+ '&newBrdgeBssid=' + transToURL(siteList[row + 0].toString()) + '&ssid=' + transToURL(pagePara[0].toString())+ '&curRegion=' + pagePara[1]+ '&channel=' + pagePara[2]+ '&BrlChannel=' + siteList[row+3] + '&chanWidth=' + pagePara[3]+ '&mode=' + pagePara[4]+ '&wrr=' + pagePara[5]+ '&sb=' + pagePara[6]+ '&select=' + pagePara[7] + '&rate=' + pagePara[8]+ '" id="t_conn" name="t_conn">Connect<\/a><\/td><\/tr>');}
+	}
+}
+else
+{
+	document.write('<tr align="center"><td>&nbsp;<\/td><td>&nbsp;<\/td><td>&nbsp;<\/td><td>&nbsp;<\/td><td>&nbsp;<\/td><td>&nbsp;<\/td><td>&nbsp;<\/td><\/tr>');
+}
+</script>								
+											</table>
+										</td>
+									</tr>
+								</table>
+							<tr>
+								<td height="10"></td>
+							</tr>
+						</table>
+					</td>
+					<td class="vline" rowspan="15"><BR></td>
+				</tr>
+				</table></td>
+			</tr>
+			<tr>
+				 <td colspan=2 class=blue>&nbsp;</td>
+			</tr>
+			<tr>
+				<td class="Item">&nbsp;</td>
+				<td> <input name="Back" type="button" class="button" value="Back" onClick="doBack();">
+				<input name="Reflesh" type="button" class="button" value="Refresh" onClick="doRefresh(1);"></td>
+			</tr>
+		</table>
+	</form>
+</body>
+</HTML>

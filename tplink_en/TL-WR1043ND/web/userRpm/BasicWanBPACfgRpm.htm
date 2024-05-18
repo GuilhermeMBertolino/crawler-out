@@ -1,0 +1,250 @@
+
+<link rel="stylesheet" type="text/css" href="../dynaform/widget.css"></link>
+<link rel="stylesheet" href="../dynaform/style.css"></link>
+<!--[if lte IE 8]>
+<link href="../dynaform/ie8.css", rel="stylesheet" type="text/css"></link>
+<![endif]-->
+<script type="text/javascript" src="../js/su/su.js"></script>
+<script type="text/javascript" src="../js/su/widget/widget.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/textbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/combobox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/radio.js"></script>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<SCRIPT type="text/javascript">
+<!--
+var wanType = new Array(
+"id=\"t_dyma_ip\" name=\"t_dyma_ip\">Dynamic IP<",	//	WAN_TYPE_DHCP = 0,
+"id=\"t_stat_ip\" name=\"t_stat_ip\">Static IP<",	//	WAN_TYPE_STATIC_IP, 
+"id=\"t_pppoe\" name=\"t_pppoe\">PPPoE/Russia PPPoE<",	//	WAN_TYPE_PPPOE, 
+"id=\"t_dhcp\" name=\"t_dhcp\">802.1x DHCP<",	//	WAN_TYPE_802_1X_DHCP,
+"id=\"t_802_stat_ip\" name=\"t_802_stat_ip\">802.1x Static IP<",	//	WAN_TYPE_802_1X_STATIC_IP,
+"id=\"t_bpa\" name=\"t_bpa\">BigPond Cable<",	//	WAN_TYPE_BPA,
+"id=\"t_l2tp\" name=\"t_l2tp\">L2TP/Russia L2TP<",	//	WAN_TYPE_L2TP,
+"id=\"t_pptp\" name=\"t_pptp\">PPTP/Russia PPTP<",	//	WAN_TYPE_PPTP,
+""	//	WAN_TYPE_END
+);
+
+function doSubmit()
+{
+	var element = document.forms[0].usr;
+	if (element && element.value == "")
+	{
+		alert(js_usrname_req = "User Name is required.");
+		element.focus();
+		element.select();
+		return false;
+	}
+	
+	element = document.forms[0].pwd;
+	if (element && element.value == "")
+	{
+		alert(js_passwd_req = "Password is required.");
+		element.focus();
+		element.select();
+		return false;
+	}
+	return true;
+}
+function doChange()
+{
+	var n = 0;
+	if(bpaData[0] > 1)
+		n = document.forms[0].wan.value;
+	s = "wan="+n;
+	var t = document.forms[0].wantype.selectedIndex;
+	location.href = "../userRpm/"+wantypeinfo[t*2+2]+"?"+s;
+}
+function doWanChange()
+{
+	var n = document.forms[0].wan.selectedIndex;
+	var s = "wan="+n;
+	location.href = "../userRpm/WanCfgRpm.htm"+"?"+s;
+}
+var stopRefresh=0;
+function doClick()
+{
+	stopRefresh=1;
+	return true;
+}
+function doRefresh()
+{
+	if (0==stopRefresh)
+		location.href="BasicWanBPACfgRpm.htm";
+	return true;
+}
+function doOnblur()
+{
+	stopRefresh=1;
+	return true;
+}
+
+function doJudgeDisableAll()
+{
+	if (bpaData[15] == 1)
+	{
+		disableTag(document, "INPUT");
+		disableTag(document, "SELECT");
+		document.getElementById("dis_3gonly").style.display = "";
+	}
+	else if (bpaData[15] == 0 || bpaData[15] == 2)
+	{
+		var modeStr;
+		if (bpaData[15] == 0)
+		{
+			document.getElementById("curmode").innerHTML = '<SPAN id="t_note_auto2">3G/4G Preferred</SPAN>';
+		}
+		else if (bpaData[15] == 2)
+		{
+			document.getElementById("curmode").innerHTML = '<SPAN id="t_note_auto3">WAN Preferred</SPAN>';
+		}
+		disableTag(document, "INPUT", "radio");
+		document.getElementById("connect").disabled = true;
+		document.getElementById("disconnect").disabled = true;
+	}
+}
+
+-->
+</SCRIPT>
+
+<style text="text/css">
+    caption, th, td {
+        text-align: left;
+    }
+    body {
+        margin:0;
+        padding:0;
+    }
+</style>
+
+</HEAD>
+<BODY onLoad="LoadHelp('BasicWanBpaCfgHelpRpm.htm');doJudgeDisableAll();">
+
+<div class="titleCnt">
+    <span class="pageTitle">Internet</span>
+</div>
+<CENTER>
+
+  <FORM action="BasicWanBPACfgRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+    <TABLE id="autoWidth">
+	<TR id="dis_3gonly" style="display:none">
+		<TD colspan=2 style="padding-left:20"><SPAN id="t_note_wanonly1">WAN settings is unavailable as the <B>Internet Access</B> is <B>3G/4G Only</B>.</SPAN><BR>
+		<SPAN id="t_note_wanonly2">Please change settings on </SPAN><a href="ConnModeCfgRpm.htm"><SPAN id="t_note_wanonly3" style="font-weight:bold">Internet Access</SPAN></a><SPAN id="t_note_wanonly4"> if you want to use WAN.</SPAN><BR>
+		&nbsp;</TD>
+	</TR>
+      <SCRIPT type="text/javascript">
+if(bpaData[0] > 1)
+{
+	document.write('<TR><TD class=Item id = \"t_wan_port\">WAN Port:</TD><TD><select name=\"wan\" id=\"wan\" onChange=\"doWanChange()\" onblur = \"doOnbulr()\" onFocus = \"doFocus()\">');
+	for(var i=0;i<dhcpInf[0];i++)
+		document.write('<option value=\"'+i+'\">WAN'+(i+1)+'</option>');
+	document.write('</select>');
+}
+//added by ZQQ,08.12.10 , if one wan, it should be exist but not display
+else
+{	
+	document.write('<TR style ="display:none"><TD class=Item id = \"t_wan_port\">WAN Port:</TD><TD><select name=\"wan\" id=\"wan\" onChange=\"doWanChange()\">')
+	document.write('<option value=0>WAN1</option>');
+    document.write('</select>');
+}
+</SCRIPT>
+      <TR>
+        <TD class=Item id="t_wan_con_type">WAN Connection Type:</TD>
+        <TD><SELECT name="wantype" id="wantype" onchange="doChange()" onFocus="doClick();">
+            <SCRIPT type="text/javascript">
+for ( var t=0; t < wantypeinfo[0]; t++)
+{
+    document.write('<option value="'+wantypeinfo[t*2+1]+'" '+wanType[wantypeinfo[t*2+1]]+'/option>');
+}
+		</SCRIPT>
+          </SELECT></TD>
+        <TD colspan=2></TD>
+      </TR>
+      <TR>
+        <TD></TD>
+      </TR>
+      <TR>
+        <TD class=Item id="t_usrname">User Name:</TD>
+        <TD><INPUT name="usr" type="text" class="textS" value="" size="25" maxlength="15" onFocus="doClick();"></TD>
+      </TR>
+      <TR>
+        <TD class=Item id="t_pwd">Password:</TD>
+        <TD><INPUT name="pwd" type="password" class="textS" value="" size="25" maxlength="15" onFocus="doClick();"></TD>
+      </TR>
+      <TR>
+        <TD class=Item>&nbsp;</TD>
+        <TD>&nbsp;</TD>
+      </TR>
+      <TR>
+        <TD class=Item id="t_auth_srv">Auth Server:</TD>
+        <TD><INPUT name="AuthSrv" type="text" class="text" value="sm-server" size="32" maxlength="32" onFocus="doClick();"></TD>
+      </TR>
+      <TR>
+        <TD class=Item id="t_auth_domain">Auth Domain:</TD>
+        <TD><INPUT name="AuthDomain" type="text" class="text" value="" size="32" maxlength="32" onFocus="doClick();"></TD>
+      </TR>
+	  <TR><TD></TD></TR>
+      <TR>
+        <TD class=Item>&nbsp;</TD>
+        <TD class=emp><INPUT name="Connect" id="connect" type="submit" class="buttonBig" value="Connect">
+          &nbsp;&nbsp;
+          <INPUT name="Disconnect" id="disconnect" type="submit" class="buttonBig" value="Disconnect">
+          <SCRIPT type="text/javascript">
+		switch(bpaData[10])
+		{
+		case 0:
+			document.write('&nbsp;&nbsp;<span id = "t_disconnected">Disconnected!</span>');
+			break;
+		case 1:
+			document.write('&nbsp;&nbsp;<span id = "t_connected">Connected!</span>');
+			break;
+		case 2:
+			document.write('&nbsp;&nbsp;<span id = "t_Connecting">Connecting...</span>');
+			break;
+		default:
+			document.write('&nbsp;&nbsp;--');
+			break;
+		}
+		</SCRIPT></TD>
+      </TR>
+      <TR>
+        <TD colspan=2></TD>
+      </TR>
+      <TR>
+        <TD></TD>
+        <TD class="btn-save"><INPUT name="Save" type="submit" class="button" value="Save"></TD>
+      </TR>
+    </TABLE>
+  </FORM>
+</CENTER>
+</BODY>
+</HTML>
+<script type="text/javascript">
+document.forms[0].wantype.value = bpaData[2];
+$("select#wantype").combobox({cls: "inline"});
+</script>
+<SCRIPT type="text/javascript">
+if(bpaData[14])
+	window.setTimeout("doRefresh()",10000);
+if(bpaData[0] != 1)
+	document.forms[0].wan.selectedIndex = bpaData[1];
+
+document.forms[0].usr.value=bpaData[3];
+document.forms[0].pwd.value=bpaData[4];
+document.forms[0].AuthSrv.value=bpaData[5];
+document.forms[0].AuthDomain.value=bpaData[6];
+
+if(0==bpaData[11])
+	document.forms[0].Disconnect.disabled=true;
+else
+	document.forms[0].Connect.disabled=true;
+if(5!=bpaData[2])
+{
+	document.forms[0].Connect.disabled=true;
+	document.forms[0].Disconnect.disabled=true;
+}
+if(bpaData[0] > 1)
+{
+	document.forms[0].IngressBandwidth.value = bpaData[12];
+	document.forms[0].EgressBandwidth.value = bpaData[13];
+}
+</SCRIPT>

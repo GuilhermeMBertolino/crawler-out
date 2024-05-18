@@ -1,0 +1,33 @@
+<script language="javascript">function sysModeInit(){INCLUDE_LTEWAN&&$("#lteMode").removeClass("nd"),INCLUDE_USB_3G_DONGLE&&($("#mode3gOnly").removeClass("nd"),INCLUDE_EWAN_BACKUP&&$("#mode3gPrefer").removeClass("nd"),INCLUDE_USB_3G_BACKUP&&$("#ethPrefer").removeClass("nd")),INCLUDE_VDSLWAN&&$("#modeDsl").removeClass("nd");var e=$.act(ACT_GET,SYS_MODE,null,null);$.exe()||(curEwanBackup=INCLUDE_EWAN_BACKUP?e.ewanBackup:0,cur3gBackup=INCLUDE_USB_3G_BACKUP?e.usb3gBackup:0,"DSL"==(curMode=e.mode)?$("#DSL").prop("checked",!0):"USB_3G"==curMode?($("#USB_3G_only").prop("checked",!0),1==curEwanBackup&&$("#USB_3G_prefer").prop("checked",!0)):INCLUDE_LTEWAN&&"LTE"==curMode?$("#LTE").prop("checked",!0):($("#ETH_only").prop("checked",!0),1==cur3gBackup&&$("#ETH_prefer").prop("checked",!0)))}function saveUsb3gBackup(e){var c=$.act(ACT_GL,WAN_USB_3G_LINK_CFG,null,null,["backupEnable"]);$.exe()||$.each(c,function(){e!=this.backupEnable&&$.act(ACT_SET,WAN_USB_3G_LINK_CFG,this.__stack,null,["backupEnable="+e])})}function doSave(){var e={},c=0,o=0;if($("#DSL").prop("checked")?e.mode="DSL":INCLUDE_LTEWAN&&$("#LTE").prop("checked")?e.mode="LTE":$("#USB_3G_only").prop("checked")?(e.mode="USB_3G",c=0,o=0):INCLUDE_EWAN_BACKUP&&$("#USB_3G_prefer").prop("checked")?(e.mode="USB_3G",c=1,o=0):$("#ETH_only").prop("checked")?(e.mode="ETH",o=0,c=0):INCLUDE_USB_3G_BACKUP&&(e.mode="ETH",o=1,c=0),e.mode!=curMode||o!=cur3gBackup||c!=curEwanBackup){if(INCLUDE_USB_3G_BACKUP&&(e.usb3gBackup=o),INCLUDE_EWAN_BACKUP&&(e.ewanBackup=c),e.mode==curMode)return $.addLoading($("#b_save")),$.act(ACT_SET,SYS_MODE,null,null,e),INCLUDE_USB_3G_DONGLE&&saveUsb3gBackup(o),void $.exe(function(e){$.removeLoading(),e||(initIndex(),$.guage(["<span class='T_rebooting'>changing mode</span>","<span class='T T_wait_reboot'>The device is changing mode. Please wait...</span>"],20,80,function(){$.refresh()}))});$.confirm(c_str.chgmod,function(){$.addLoading($("#b_save")),$.act(ACT_SET,SYS_MODE,null,null,e),INCLUDE_USB_3G_DONGLE&&saveUsb3gBackup(o),$.exe(function(e){$.removeLoading(),e||doReboot()})},function(){$.reload()})}}function doReboot(){$.guage(["<span class='T_rebooting'>"+s_str.rebooting+"</span>","<span class='T T_wait_reboot'>"+s_str.wait_reboot+"</span>"],100,$.guageInterval,function(){$.refresh()}),$.act(ACT_OP,ACT_OP_REBOOT),$.exe(!0)}var curMode,curEwanBackup,cur3gBackup</script>
+<h3 id="et">Operation Mode</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <p id="t_mode">Choose Operation Mode:</p>
+        <div id="modeDsl" class="nd">
+            <input type="radio" name="sysMode" id="DSL" value="DSL">
+            <label id="t_sysmod1">ADSL Modem Router Mode</label>
+        </div>
+		<div id="lteMode" class="nd">
+            <input type="radio" name="sysMode" id="LTE" value="LTE">
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+        <div id="mode3gOnly" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G_only" value="USB_3G">
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+         <div id="mode3gPrefer" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G_prefer" value="USB_3G">
+            <label id="t_sysmod4">3G/4G Router Mode With Ewan Backup</label>
+        </div>
+        <div id="ethOnly">
+            <input type="radio" name="sysMode" id="ETH_only" value="ETH">
+            <label id="t_sysmod3">Wireless Router Mode</label>
+        </div>
+        <div id="ethPrefer" class="nd">
+            <input type="radio" name="sysMode" id="ETH_prefer" value="ETH">
+            <label id="t_sysmod5">Wireless Router Mode With 3G/4G Backup</label>
+        </div>
+        <button type="submit" class="green T_save" value="Save" id="b_save" onclick="doSave()">Save</button>
+    </form>
+</div>
+<script language="javascript">$.tpInit(sysModeInit)</script>

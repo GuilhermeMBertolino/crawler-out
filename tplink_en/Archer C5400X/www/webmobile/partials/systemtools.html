@@ -1,0 +1,193 @@
+<div class="main-page form-container" ng-hide="form.menuItem">
+	<div form-header title="SYSTEM_TOOLS.TITLE"></div>
+	<div class="form-content-container">
+		<div class="fieldset-container">
+			<!-- <div jump-item separator="" label="SYSTEM_TOOLS.LED_CTR" menu-option="form.menuItem" value="led"></div> -->
+			<!-- <div jump-item separator="" label="SYSTEM_TOOLS.TIME_SET" menu-option="form.menuItem" value="time"></div> -->
+			<div jump-item separator="" label="SYSTEM_TOOLS.ADMIN" menu-option="form.menuItem" value="admin" ng-show="islogined"></div>
+			<div jump-item separator="" label="SYSTEM_TOOLS.LAN" menu-option="form.menuItem" value="lang"></div>
+		</div>
+		<div class="fieldset-container">
+			<div class="fieldset-content-container">
+				<div button text="SYSTEM_TOOLS.FACTORY_DEFAULT" cls="button-block" btn-cls="btn" on-click="reset()"></div>
+				<div button text="SYSTEM_TOOLS.REBOOT" cls="button-block" btn-cls="btn" on-click="reboot()"></div>
+			</div>
+		</div>
+		<div class="fieldset-container">
+			<div class="fieldset-content-container">
+				<div button text="SYSTEM_TOOLS.LOGOUT" cls="button-block button-logout" btn-cls="btn" on-click="logout()"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="main-page" ng-switch on="form.menuItem">
+	<div class="form-container"  ng-switch-when="led" ng-controller="led-control">
+		<div form-header title="SYSTEM_TOOLS.LED_CTR">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+			<div button position="right" text="FORM.SAVE" ng-model="form.submitBtn" btn-cls="btn" on-click="submit()"></div>
+		</div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div checkbox-switch label="SYSTEM_TOOLS.ENABLE_LED" separator=":" default-option="off" ng-model="form.data.enable" class="checkbox-orange"></div>
+					<div su-show="form.data.enable.data == 'on' ? true : false">
+						<div class="widget-container clearfix">
+							<div label-field label="SYSTEM_TOOLS.OFF_TIME" separator=":"></div>
+							
+							<div combo-field label="SYSTEM_TOOLS.FROM" separator="space" ng-model="form.data.time_start" class="inline led-control-start-time" type="time"></div>
+							<div combo-field label="SYSTEM_TOOLS.TO" separator="space" ng-model="form.data.time_end" class="inline led-control-end-time" type="time"></div>
+							
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>	
+	</div>
+
+
+	<div class="form-container"  ng-switch-when="time"  ng-controller="time-settings">
+		<div form-header title="SYSTEM_TOOLS.TIME_SET">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+			<div button position="right" text="FORM.SAVE" ng-model="form.submitBtn" btn-cls="btn" on-click="submit()"></div>
+		</div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div display-field class="display-border-bottom" separator=":" label="SYSTEM_TOOLS.CURRENT_TIME" ng-model="form.data.current_time" ></div>
+					<div combo-field separator=":" label="SYSTEM_TOOLS.SET_TIME" ng-model="form.data.type"></div>
+				</div>
+			</div>
+			<div class="fieldset-container" ng-show="form.data.type.data=='auto'">
+				<div class="fieldset-content-container">
+					<div combo-field separator=":" label="SYSTEM_TOOLS.ZONE" ng-model="form.data.timezone"></div>
+					<div text-field separator=":" label="SYSTEM_TOOLS.NTP1" ng-model="form.data.ntp_svr1"></div>
+					<div text-field separator=":" label="SYSTEM_TOOLS.NTP2" ng-model="form.data.ntp_svr2"></div>
+					<div button text="SYSTEM_TOOLS.AUTOMATIC_BTN" cls="button" ng-model="getGmtBtn" on-click="obtain()"></div>						
+				</div>
+			</div>
+			<div class="fieldset-container" ng-show="form.data.type.data=='manual'">
+				<div class="fieldset-content-container">
+					<div text-field separator=":" label="SYSTEM_TOOLS.DATE" placeholder="SYSTEM_TOOLS.DATEFORMAT" name="date" ng-model="form.data.date"></div>
+					<div timer-field separator=":" label="SYSTEM_TOOLS.TIME" ng-model="form.data.time"></div>
+				</div>
+			</div>
+			<div class="fieldset-container">
+				<div class="fieldset-content-container clearfix">
+					<div checkbox-switch label="SYSTEM_TOOLS.ENABLE_DAYLIGHT" default-option="off" name="dst_enable" ng-model="form.data.dst_enable" class="checkbox-orange"></div>
+					<div su-show="form.data.dst_enable.data == 'on' ? true : false">
+						<div display-field separator=":" label="SYSTEM_TOOLS.START" ng-model="form.data.start_year"></div>
+						<div class="sys-daylight clearfix">
+							<div combo-field class="inline quarter" ng-model="form.data.start_month"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.start_week"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.start_day"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.start_hour"></div>
+						</div>
+						<div display-field separator=":" label="SYSTEM_TOOLS.END" ng-model="form.data.end_year"></div>
+						<div class="sys-daylight clearfix">
+							<div combo-field class="inline quarter" ng-model="form.data.end_month"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.end_week"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.end_day"></div>
+							<div combo-field class="inline quarter" ng-model="form.data.end_hour"></div>
+						</div>
+						<div display-field class="column column-4" separator=":" label="SYSTEM_TOOLS.RUNNING_STATUS" ng-model="form.data.dst_status" ></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+				
+	<div ng-controller="administration" ng-switch-when="admin">
+		<div class="form-container" ng-hide="menuItem" >
+			<div form-header title="SYSTEM_TOOLS.ADMIN">
+				<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+			</div>
+
+			<div class="form-content-container">
+				<div class="fieldset-container">
+					<div jump-item separator="" label="SYSTEM_TOOLS.ACCOUNT_MANAGE" menu-option="menuItem" value="admin"></div>
+					<!-- <div jump-item separator="" label="SYSTEM_TOOLS.RECOVERYINFO" menu-option="menuItem" value="recovery"></div> -->
+				</div>
+			</div>
+		</div>
+		<div class="form-container" ng-switch on="menuItem">
+			<form novalidate name="administration" class="form-horizontal" ng-switch-when="admin"  ng-controller="account">
+				<div form-header title="SYSTEM_TOOLS.ACCOUNT_MANAGE">
+					<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="back"></div>
+					<div button position="right" text="FORM.SAVE" ng-model="form.submitBtn" btn-cls="btn" on-click="submit()"></div>
+				</div>
+				<div class="form-content-container">
+					<div class="fieldset-container">
+						<div class="fieldset-content-container">
+							<!-- <div text-field label="SYSTEM_TOOLS.OLDUSER" separator=":" ng-model="form.data.old_acc"></div> -->
+							<div password label="SYSTEM_TOOLS.OLDPWD" separator=":" ng-model="form.data.old_pwd" vtype="password" btn-visible="false" level-visible="false"></div>
+							<!-- <div text-field label="SYSTEM_TOOLS.NEWUSER" separator=":" ng-model="form.data.new_acc"></div> -->
+							<div password label="SYSTEM_TOOLS.NEWPWD" separator=":" ng-model="form.data.new_pwd" vtype="password" btn-visible="false" level-visible="true"></div>
+							<div password label="SYSTEM_TOOLS.CONFIRM" separator=":" ng-model="form.data.cfm_pwd" vtype="password" btn-visible="false" level-visible="false"></div>
+						</div>
+					</div>
+				</div>
+			</form>
+			<form novalidate name="pwdRecovery" class="form-horizontal" ng-switch-when="recovery"  ng-controller="recovery">
+				<div form-header title="SYSTEM_TOOLS.RECOVERYINFO">
+					<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="back"></div>
+					<div button position="right" text="FORM.SAVE" ng-model="form.submitBtn" btn-cls="btn" on-click="submit()"></div>
+				</div>
+				<div class="form-content-container">
+					<div class="fieldset-container">
+						<div class="fieldset-content-container"  on="form.data.enable_rec.data" ng-switch>
+							<div checkbox-switch label="SYSTEM_TOOLS.ENABLE_PASSWORD_RECOVERY" separator=":" default-option="off" ng-model="form.data.enable_rec" class="checkbox-orange"></div>
+							<div su-show="form.data.enable_rec.data == 'on' ? true : false">
+							<div on="form.data.enable_auth.data" ng-switch>
+								<div text-field label="SYSTEM_TOOLS.FROM" separator=":" ng-model="form.data.from"></div>
+								<div text-field label="SYSTEM_TOOLS.TO" separator=":" ng-model="form.data.to"></div>
+								<div text-field label="SYSTEM_TOOLS.SMTP_SERVER" separator=":" ng-model="form.data.smtp"></div>
+								<div checkbox-switch label="SYSTEM_TOOLS.ENABLE_AUTHENTICATION" separator=":" ng-model="form.data.enable_auth" class="checkbox-orange"></div>
+								<div ng-switch-when="on">
+									<div text-field label="SYSTEM_TOOLS.USERNAME" separator=":" ng-model="form.data.username"></div>
+									<div password label="SYSTEM_TOOLS.PASSWORD" separator=":" ng-model="form.data.password" vtype="password" btn-visible="false" level-visible="false"></div>
+									
+								</div>
+								<div button text="SYSTEM_TOOLS.TEST_MAIL" cls="button" ng-model="testMailBtn" on-click="testMail()"></div>
+							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>						
+	
+	<div class="form-container" ng-switch-when="lang" ng-controller="language" >
+		<div form-header title="SYSTEM_TOOLS.LAN">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+			<div button position="right" text="FORM.SAVE" btn-cls="btn" ng-model="form.submitBtn" on-click="submit()"></div>
+		</div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div combo-field label="SYSTEM_TOOLS.SELECT_LAN" separator=":" ng-model="form.data.locale"></div>
+				</div>
+			</div>
+		</div>			
+	</div>
+	
+
+	<div class="page-msg">
+		<div message id="reboot-confirm-msg">
+			
+			<div progress-bar ng-model="rebootProgressBar" class="bar1"></div> 
+		</div>
+		<div message id="logout-confirm-msg">
+			<p translate >SYSTEM_TOOLS.LOGOUT_ALERT</p>
+		</div>
+		<div message id="reset-confirm-msg">
+			<div progress-bar ng-model="resetProgressBar" class="bar1"></div> 
+		</div>
+		
+
+		<!-- <div message id="test-mail-msg">
+		</div> -->
+
+	</div>
+</div>

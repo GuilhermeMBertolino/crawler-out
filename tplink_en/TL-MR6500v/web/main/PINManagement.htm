@@ -1,0 +1,101 @@
+<script>var lteLinkCfg,simLock,simLockStk,simStatusNum,SIMLOCK_ACTION_ENABLE_PIN=1,SIMLOCK_ACTION_DISABLE_PIN=2,SIMLOCK_ACTION_MODIFY_PIN=3,SIMLOCK_ACTION_UNLOCK_PIN=4,SIMLOCK_ACTION_UNLOCK_PUK=5,SIMLOCK_ACTION_AUTOUNLOCK=6,MAX_PIN_LEN=8,MIN_PIN_LEN=4,MAX_PUK_LEN=8,MIN_PUK_LEN=8;function isValidPinLen(n){return n.length>=MIN_PIN_LEN&&n.length<=MAX_PIN_LEN}function isValidPukLen(n){return n.length>=MIN_PUK_LEN&&n.length<=MAX_PUK_LEN}function simStatusNum2Str(n){return n>simStatusString.length-1||n<0?simStatusString[0]:simStatusString[n]}function selectObj(n){n&&(n.focus(),n.select())}function pinManageShow(n){switch(n){case"3":$("#pin_unlock_div").addClass("nd"),$("#pin_enable_div").removeClass("nd"),$("#pin_disableModify_div").addClass("nd"),$("#puk_unlock_div").addClass("nd"),$("#refreshBtn_div").addClass("nd"),$("#pinLockDis").click();break;case"4":$("#pin_unlock_div").removeClass("nd"),$("#pin_enable_div").addClass("nd"),$("#pin_disableModify_div").addClass("nd"),$("#puk_unlock_div").addClass("nd"),$("#refreshBtn_div").addClass("nd"),1==simLock.autoUnlockPin?$("#autoUnlockEn_u").addClass("selected"):$("#autoUnlockDis_u").addClass("selected"),$("#pinRemainingNumber_u").text(simLock.remainPinUnlockTime);break;case"5":$("#pin_unlock_div").addClass("nd"),$("#pin_enable_div").addClass("nd"),$("#pin_disableModify_div").removeClass("nd"),$("#puk_unlock_div").addClass("nd"),$("#refreshBtn_div").addClass("nd"),$("#radioDisable").click(),$("#pinRemainingNumber_m").text(simLock.remainPinUnlockTime),1==simLock.autoUnlockPin?$("#autoUnlockEn_m").addClass("selected"):$("#autoUnlockDis_m").addClass("selected");break;case"6":$("#pin_unlock_div").addClass("nd"),$("#pin_enable_div").addClass("nd"),$("#pin_disableModify_div").addClass("nd"),$("#puk_unlock_div").removeClass("nd"),$("#refreshBtn_div").addClass("nd"),$("#pukRemainingNumber").text(simLock.remainPukUnlockTime);break;default:$("#pin_unlock_div").addClass("nd"),$("#pin_enable_div").addClass("nd"),$("#pin_disableModify_div").addClass("nd"),$("#puk_unlock_div").addClass("nd"),$("#saveBtn_div").addClass("nd")}}function init(){var i,n=$.act(ACT_GL,WAN_LTE_LINK_CFG,null,null,null),e=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),a=0;$.exe()||($.each(e,function(){"LTE"==this.WANAccessType&&(i=this.__stack)}),$.each(n,function(){var n=$.stkPop(this.__stack,1);if(i==n)return simStatusNum=this.simStatus,simLockStk=this.__stack,simLock=$.act(ACT_GET,LTE_SIMLOCK,this.__stack,null,null),!(a=1)}),(0==a||$.exe())&&(simStatusNum=0),$("#simStatus").text(simStatusNum2Str(simStatusNum)),pinManageShow(simStatusNum))}function checkParam(n){switch(n){case"3":var i=$("#pinInput_e").val();if(!$("#pinLockEn").hasClass("selected"))return!1;if(!i)return $.alert(ERR_LTE_PIN_EMPTY),selectObj($("#pinInput_e")),!1;if(!isValidPinLen(i))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#pinInput_e")),!1;if(!$.isnum(i))return $.alert(ERR_LTE_PIN_ILLEGAL_CHAR),selectObj($("#pinInput_e")),!1;break;case"4":if(!(e=$("#pinInput_u").val()))return $.alert(ERR_LTE_PIN_EMPTY),selectObj($("#pinInput_u")),!1;if(!isValidPinLen(e))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#pinInput_u")),!1;if(!$.isnum(e))return $.alert(ERR_LTE_PIN_ILLEGAL_CHAR),selectObj($("#pinInput_u")),!1;break;case"5":if($("#radioDisable").prop("checked")){var e;if(!(e=$("#pinInput_d").val()))return $.alert(ERR_LTE_PIN_EMPTY),selectObj($("#pinInput_d")),!1;if(!isValidPinLen(e))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#pinInput_d")),!1;if(!$.isnum(e))return $.alert(ERR_LTE_PIN_ILLEGAL_CHAR),selectObj($("#pinInput_d")),!1}else{var a=$("#pinInput_m").val(),_=(i=$("#newPinInput_m").val(),$("#confirmPinInput_m").val());if(0!=a.length||0!=i.length||0!=_.length){if(!isValidPinLen(a))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#pinInput_m")),!1;if(!$.isnum(a))return $.alert(ERR_LTE_PIN_ILLEGAL_CHAR),selectObj($("#pinInput_m")),!1;if(!isValidPinLen(i))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#newPinInput_m")),!1;if(!$.isnum(i))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#newPinInput_m")),!1;if(i!=_)return $.alert(ERR_LTE_PIN_CONFIRM_VALUE_ERROR),selectObj($("#confirmPinInput_m")),!1}}break;case"6":var t=$("#pukInput").val();i=$("#newPinInput_p").val();if(!t)return $.alert(ERR_LTE_PUK_EMPTY),selectObj($("#pukInput")),!1;if(!isValidPukLen(t))return $.alert(ERR_LTE_PUK_LENGTH_ERROR),selectObj($("#pukInput")),!1;if(!$.isnum(t))return $.alert(ERR_LTE_PUK_ILLEGAL_CHAR),selectObj($("#pukInput")),!1;if(!i)return $.alert(ERR_LTE_PIN_EMPTY),selectObj($("#newPinInput_p")),!1;if(!isValidPinLen(i))return $.alert(ERR_LTE_PIN_LENGTH_ERROR),selectObj($("#newPinInput_p")),!1;if(!$.isnum(i))return $.alert(ERR_LTE_PIN_ILLEGAL_CHAR),selectObj($("#newPinInput_p")),!1}return!0}$("#pinLockEn").click(function(){$("#pinRemainingNumber_e").text(simLock.remainPinUnlockTime),$("#enablePinPara").removeClass("nd")}),$("#pinLockDis").click(function(){$("#enablePinPara").addClass("nd")}),$("#radioDisable").click(function(){$("#pinRemainingNumber_d").text(simLock.remainPinUnlockTime),$("#pin_disable_div").removeClass("nd"),$("#pin_modify_div").addClass("nd")}),$("#radioModify").click(function(){$("#pin_modify_div").removeClass("nd"),$("#pin_disable_div").addClass("nd")}),$("#refreshBtn").click(function(){$.reload()}),$("#saveBtn").click(function(){var n={};if(0==checkParam(simStatusNum))return!1;switch(simStatusNum){case"3":var i=$("#pinInput_e").val();n.simAction=SIMLOCK_ACTION_ENABLE_PIN,n.pin=i,n.autoUnlockPin=$("#autoUnlockEn_e").hasClass("selected")?1:0;break;case"4":i=$("#pinInput_u").val();var e=$("#autoUnlockEn_u").hasClass("selected")?1:0;n.simAction=SIMLOCK_ACTION_UNLOCK_PIN,n.autoUnlockPin=e,n.pin=i;break;case"5":if($("#radioDisable").prop("checked")){i=$("#pinInput_d").val();n.simAction=SIMLOCK_ACTION_DISABLE_PIN,n.pin=i}else{var a=$("#pinInput_m").val(),_=$("#newPinInput_m").val(),t=$("#confirmPinInput_m").val();e=$("#autoUnlockEn_m").hasClass("selected")?1:0;!0,n.simAction=SIMLOCK_ACTION_AUTOUNLOCK,n.autoUnlockPin=e,0!=a.length&&0!=_.length&&0!=t.length&&(n.simAction=SIMLOCK_ACTION_MODIFY_PIN,n.pin=a,n.newPin=_)}break;case"6":var s=$("#pukInput").val();_=$("#newPinInput_p").val();n.simAction=SIMLOCK_ACTION_UNLOCK_PUK,n.puk=s,n.newPin=_;break;default:return!1}$.act(ACT_SET,LTE_SIMLOCK,simLockStk,null,n),$.addLoading($(this)),$.exe(function(n){$.removeLoading(),$.reload()})})</script>
+<h3 id="t_sett">PIN Management</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+		<div id="SIMStatus" class="pure-control-group">
+				<label class="label-title l" id="t_simCardStatus">SIM Card Status:</label>
+				<span class="T" id="simStatus">ready</span>
+		</div>
+		<div id="pin_enable_div" class="pure-control-group">
+			<div id="enablePinSwitch" class="button-group-container">
+				<label class="label-title l T_pinLock">PIN Lock:</label>
+				<ul><li><button id="pinLockEn" class="fst" value="on">On</button></li>
+					<li><button id="pinLockDis" class="lst" value="off">Off</button></li>
+				</ul>
+			</div>
+			<div id="enablePinPara">
+				<div class="button-group-container">
+					<label class="label-title l T_autoUnlockPin">Auto-unlock PIN:</label>
+					<ul><li><button id="autoUnlockEn_e" class="fst" value="on">On</button></li>
+						<li><button id="autoUnlockDis_e" class="lst" value="off">Off</button></li>
+					</ul>
+				</div>
+				<div>
+					<label class="label-title l T_pin">PIN:</label>
+					<input type="text" id="pinInput_e" required>
+					<span id="pinRemainingLbl_e" class="T_remainingTry">Remaining Attempts:</span>
+					<span id="pinRemainingNumber_e">3</span>
+				</div>
+			</div>
+		</div>
+    	<div id="pin_unlock_div" class="pure-control-group">
+			<div>
+				<label class="label-title l T_pin">PIN:</label>
+				<input type="text" id="pinInput_u" required>
+				<span id="pinRemainingLbl_u" class="T_remainingTry">Remaining Attempts:</span>
+				<span id="pinRemainingNumber_u">2</span>
+			</div>
+			<div class="button-group-container">
+				<label class="label-title l T_autoUnlockPin">Auto-unlock PIN:</label>
+				<ul><li><button id="autoUnlockEn_u" class="fst" value="on">On</button></li>
+					<li><button id="autoUnlockDis_u" class="lst" value="off">Off</button></li>
+				</ul>
+			</div>
+		</div>
+		<div id="pin_disableModify_div">
+			<div id="pin_disableModifySel">
+				<input type="radio" name="pinActionType" id="radioDisable">
+				<label id="t_disable">Disable</label>
+				<input type="radio" name="pinActionType" id="radioModify">
+				<label id="t_modify">Modify</label>
+			</div>
+			<div id="pin_disable_div" class="pure-control-group">
+				<label class="label-title l T_pin">PIN:</label>
+				<input type="text" id="pinInput_d" required>
+				<span id="pinRemainingLbl_d" class="T_remainingTry">Remaining Attempts:</span>
+				<span id="pinRemainingNumber_d">3</span>
+			</div>
+			<div id="pin_modify_div" class="pure-control-group">
+				<div class="button-group-container">
+					<label class="label-title l T_autoUnlockPin">Auto-unlock PIN:</label>
+					<ul><li><button id="autoUnlockEn_m" class="fst" value="on">On</button></li>
+						<li><button id="autoUnlockDis_m" class="lst" value="off">Off</button></li>
+					</ul>
+				</div>
+				<div>
+					<label class="label-title l T_pin">PIN:</label>
+					<input type="text" id="pinInput_m" required>
+					<span id="pinRemainingLbl_m" class="T_remainingTry">Remaining Attempts:</span>
+					<span id="pinRemainingNumber_m">3</span>
+				</div>
+				<div>
+					<label class="label-title l T_newPin">New PIN:</label>
+					<input type="text" id="newPinInput_m" required>
+				</div>
+				<div>
+					<label class="label-title l" id="t_confirmPin">Confirm PIN:</label>
+					<input type="text" id="confirmPinInput_m" required>
+				</div>
+			</div>
+		</div>
+		<div id="puk_unlock_div" class="pure-control-group">
+			<div>
+				<label class="label-title l" id="t_puk">PUK:</label>
+				<input type="text" id="pukInput" required>
+				<span id="pukRemainingLbl" class="T_remainingTry">Remaining Attempts:</span>
+				<span id="pukRemainingNumber">10</span>
+			</div>
+			<div>
+				<label class="label-title l T_newPin">New PIN:</label>
+				<input type="text" id="newPinInput_p" required>
+			</div>
+		</div>
+         <div id="saveBtn_div" style="text-align:right" class="part-separate">
+            <button type="submit" class="green inline T_save" id="saveBtn">Save</button>
+        </div>
+		<div id="refreshBtn_div" style="text-align:right" class="part-separate">
+            <button type="submit" class="green inline T_refresh" id="refreshBtn">Refresh</button>
+        </div>
+    </form>
+</div>
+<script>$.tpInit(init)</script>

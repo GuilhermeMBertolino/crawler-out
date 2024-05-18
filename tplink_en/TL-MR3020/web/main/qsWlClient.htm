@@ -1,0 +1,752 @@
+﻿<script type="text/javascript">
+var wlanObj_2g,
+    wlanObj_5g,
+    mssidObj_2g,
+    mssidObj_5g,
+    vapList_2g,
+    vapList_5g,
+    guestnetObj_2g,
+    guestnetObj_5g,
+    guestVap_2g,
+    guestVap_5g,
+    qssEnable_2g,
+    qssEnable_5g,
+    wdsObj_2g,
+    wdsObj_5g,
+	sysMode,
+	wlclientcfgList;
+var dmReList = {};
+var wlSettings = {};
+wlSettings.band2g = {};
+wlSettings.band5g = {};
+
+var wepListTmp2g = [{}, {}, {}, {}];
+var wepListTmp5g = [{}, {}, {}, {}];
+
+
+function isHex(str, arg) {
+    str = str.toLowerCase();
+    for (var i = 0; i < str.length; i++) {
+        if ((str.charAt(i) >= '0' && str.charAt(i) <= '9') || (str.charAt(i) >= 'a' && str.charAt(i) <= 'f'))
+            continue;
+        else {
+            if (arg != 0)
+                $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+            return false;
+        }
+    }
+    if (parseInt(str, 16) == 0) {
+        if (arg != 0)
+            $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+        return false;
+    }
+    return true;
+}
+
+/*add by xieping */
+$('#noSec_2g').on('click.wlAdv', function(e) {
+        $('#hideWpaSec_2g').hide('fast');
+        $('#hideWep_2g').hide('fast');
+    });
+    $('#wpaSec_2g').on('click.wlAdv', function(e) {
+        $('#hideWpaSec_2g').show('fast');
+        $('#hideWep_2g').hide('fast');
+    });
+    $('#wepSec_2g').on('click.wlAdv', function(e) {
+        $('#hideWpaSec_2g').hide('fast');
+        $('#hideWep_2g').show('fast');
+    });
+    $('#survey_2g').on('click.wlAdv', function(e) {
+        $.addLoading($(this));
+        surveyAp(wlanObj_2g, '_2g');
+    });
+    $('#wdsSave_2g').on('click.wlAdv', function() {
+        $.addLoading($(this));
+        wdsSave(wdsObj_2g, '_2g');
+    });
+	
+	function checkWds(wdsObj, band) {
+        var ssidLen = $.realLen($('#wdsSsid' + band).prop('value'));
+        if (ssidLen <= 0) {
+            $.alert(ERR_WLAN_WDS_SSID_IS_EMPTY);
+            $('#wdsSsid' + band).focus().select();
+            return false;
+        } else if (ssidLen > 32) {
+            $.alert(ERR_WLAN_WDS_SSID_LEN_OUTRANGE);
+            $('#wdsSsid' + band).focus().select();
+            return false;
+        }
+        var bssid = $("#wdsMac" + band).tpAddress('val');
+        if (bssid.length == 0) {
+            $.alert(ERR_WLAN_WDS_BSSID_IS_EMPTY);
+            $("#wdsMac" + band).tpAddress('focus');
+            return false;
+        } else if ($.mac(bssid, true)) {
+            $.alert(ERR_WLAN_WDS_BSSID_INVALID);
+            $("#wdsMac" + band).tpAddress('focus');
+            return false;
+        }
+        if ($('#wepSec' + band).prop('checked') == true) {
+            var wepKey = $('#wepKeyValue' + band).prop('value');
+            if ($('#keyFormatAscii' + band).prop('checked') == true) {
+                if (wepKey.length != 5 && wepKey.length != 13 && wepKey.length != 16) {
+                    $.alert(ERR_WLAN_WDS_ASCII_KEY_OUTRANGE);
+                    return false;
+                } else if ($.asc(wepKey, true)) {
+                    $.alert(ERR_WLAN_WDS_ASCII_KEY_INVALID);
+                    return false;
+                }
+            } else if ($('#keyFormatHex' + band).prop('checked') == true) {
+                if (wepKey.length != 10 && wepKey.length != 26 && wepKey.length != 32) {
+                    $.alert(ERR_WLAN_WDS_HEX_KEY_OUTRANGE);
+                    return false;
+                } else if (!isHex(wepKey)) {
+                    return false;
+                }
+            }
+        } else if ($('#wpaSec' + band).prop('checked') == true) {
+            var wpaKey = $('#passwd' + band).prop('value');
+            if (wpaKey.length > 64 || wpaKey.length < 8) {
+                $.alert(ERR_WLAN_WDS_PSK_OUTRANGE);
+                return false;
+            } else if (wpaKey.length == 64) {
+                if (!isHex(wpaKey)) {
+                    return false;
+                }
+            } else {
+                if ($.asc(wpaKey, true)) {
+                    $.alert(ERR_WLAN_WDS_ASCII_KEY_INVALID);
+                    return false;
+                }
+            }
+        }
+		/*
+        if ($.mainParam != null && $.mainParam.wdsExist == 1 && ($.mainParam.band == band && $.mainParam.channel != eval('wlanObj' + band).channel)) {
+            $.alert(ERR_WLAN_WDS_CHANNEL, $.mainParam.channel);
+            return false;
+        }*/
+
+        return true
+    }
+	
+    function wdsSave(wdsObj, band) {
+        if ($('#wds' + band).prop('data-checked') == true && checkWds(wdsObj, band) == false) {
+            return false;
+        }
+        var wdsEn, authMode, encryptMode, pwd;
+        wdsEn = $('#wds' + band).prop('data-checked') ? 1 : 0;
+        if ($('#noSec' + band).prop('checked') == true) {
+            authMode = 'Open';
+            encryptMode = 'None'
+            pwd = '';
+        } else if ($('#wepSec' + band).prop('checked') == true) {
+            encryptMode = 'WEPEncryption';
+            if ($('#typeOpenSys' + band).prop('checked') == true)
+                authMode = 'Open';
+            else if ($('#typeSharedKey' + band).prop('checked') == true)
+                authMode = 'SharedAuthentication';
+            pwd = $('#wepKeyValue' + band).prop('value');
+        } else if ($('#wpaSec' + band).prop('checked') == true) {
+            if ($('#wpaVersion' + band).prop('checked') == true) {
+                authMode = 'PSKAuthentication';
+            } else if ($('#wpa2Version' + band).prop('checked') == true) {
+                authMode = 'PSK2Authentication';
+            }
+            if ($('#tkipEncryption' + band).prop('checked') == true)
+                encryptMode = 'TKIPEncryption';
+            else if ($('#aesEncryption' + band).prop('checked') == true)
+                encryptMode = 'AESEncryption';
+            pwd = $('#passwd' + band).prop('value');
+        }
+		
+		/*add by xieping */
+		//var apopttyp = $('select#ap_mode_type').data('value');
+		//$.act(ACT_SET, SYS_MODE, null, null, ["ApModeType=" + apopttyp]);
+		/*add end*/
+		if (!$.qd.wds) $.qd.wds = {};
+        if (wdsEn == 1) {
+			$.qd.wds.bridgeEnable = wdsEn;
+			$.qd.wds.bridgeBSSID = $('#wdsMac' + band).tpAddress('val');
+			$.qd.wds.bridgeSSID = $('#wdsSsid' + band).prop('value');
+			$.qd.wds.bridgeAuthMode = authMode;
+			$.qd.wds.bridgeEncryptMode = encryptMode;
+			$.qd.wds.bridgeKey = pwd;
+			$.qd.wds.bridgeWepKeyIndex = $("#wepShareKey" + band).data('value');
+        } else {
+           // $.act(ACT_SET, LAN_WLAN_WDSBRIDGE, wdsObj.__stack, null, ["BridgeEnable=" + wdsEn]);
+			$.qd.wds.bridgeEnable = wdsEn;
+		}
+		
+		$.qd.wdsStack = wdsObj_2g.__stack;
+        
+		return true;
+    }
+
+
+function surveyAp(wlanObj, band) {
+        $.act(ACT_OP, ACT_OP_WLAN_SCAN, wlanObj.__stack);
+        var param = {};
+        param.wdsEn = $('#wds' + band).prop('data-checked') ? 1 : 0;
+        param.scrollTop = $('#scroll').scrollTop();
+		param.apModeType = '3';
+		$.mainParam = param;
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                if (band == '_2g') {
+                    loadSubPage("qsWlApModeScan_2G.htm");
+                } else if (INCLUDE_LAN_WLAN_DUALBAND) {
+                    loadSubPage("qsWlApModeScan_2G.htm");
+                }
+            }
+        });
+    }
+
+$('#wds_2g').on('click.wlAdv', function(e) {
+        if ($('#wds_2g').prop('data-checked')) {
+            $('#wdsInfo_2g').show('fast');
+        } else {
+            $('#wdsInfo_2g').hide('fast');
+        }
+    });
+
+
+function changeWlClientType(ap_type)
+{
+	var wlClientCfg;
+	$.each(wlclientcfgList, function() {
+            if (ap_type == this.bridgeClientType) {
+                wlClientCfg = this;
+				
+			}
+           
+        });
+	initWDS(wlanObj_2g, wlClientCfg, '_2g');
+}	
+function clickApOptMode(band) {
+
+	
+    switch ($('select#ap_mode_type').data('value')) {
+        case '0':
+			/*AP*/
+            $('div#wds_show').fadeOut(1);
+			$('div#div_ap_settings').fadeIn(1);
+			
+			$('div#ap_ssid').fadeIn(1);
+			$('div#ap_hide_ssid').fadeIn(1);
+			$('div#ap_security').fadeIn(1);
+			$('div#ap_channel').fadeIn(1);
+            break;
+        case '1':
+			/*Client*/
+			changeWlClientType('1');
+            $('div#div_ap_settings').fadeOut(1);
+            $('div#wds_show').fadeIn(1);
+			$('button#wdsSave_2g').fadeIn(1);
+            break;
+        case '2':
+			changeWlClientType('2');
+            $('div#div_ap_settings').fadeIn(1);
+            $('div#wds_show').fadeIn(1);
+
+			$('div#ap_ssid').fadeOut(1);
+			$('div#ap_hide_ssid').fadeOut(1);
+			$('div#ap_security').fadeOut(1);
+			$('div#ap_channel').fadeOut(1);
+			$('button#wdsSave_2g').fadeOut(1);
+            break;
+        case '3':
+			changeWlClientType('3');
+            $('div#div_ap_settings').fadeIn(1);
+            $('div#wds_show').fadeIn(1);
+			
+			$('div#ap_ssid').fadeIn(1);
+			$('div#ap_hide_ssid').fadeIn(1);
+			$('div#ap_security').fadeIn(1);
+			$('div#ap_channel').fadeOut(1);
+			$('button#wdsSave_2g').fadeOut(1);
+			
+            break;
+    }
+}
+
+	
+function initWDS(wlanObj, wdsObj, band) {
+		/* no need to check wlan status
+        if (wlanObj.enable == 0) {
+            $('#wds' + band).prop('disabled', true);
+            $('#wds' + band).prop('checked', false);
+            $('#wdsInfo' + band).hide();
+            $('#wdsSave' + band).prop('disabled', true);
+            $.errorTip('wds' + band, ERR_WLAN_DISABLED);
+            return;
+        }*/
+        
+	if(1)
+	{
+			
+            $('#wdsInfo' + band).show();
+            $('#wds' + band).prop('checked', wdsObj.bridgeEnable);
+            $('#wdsSsid' + band).prop('value', wdsObj.bridgeSSID);
+            $('#wdsMac' + band).tpAddress('val', wdsObj.bridgeBSSID);
+
+            if (wdsObj.bridgeAuthMode == "Open" && wdsObj.bridgeEncryptMode == "None") {
+                $('#noSec' + band).prop('checked', true).data('tpRadio').refresh();
+				$('#wepSec' + band).prop('checked', false).data('tpRadio').refresh();
+				$('#wpaSec' + band).prop('checked', false).data('tpRadio').refresh();
+            } else if (wdsObj.bridgeEncryptMode == "WEPEncryption") {
+
+                $('#noSec' + band).prop('checked', false).data('tpRadio').refresh();
+				$('#wepSec' + band).prop('checked', true).data('tpRadio').refresh();
+				$('#wpaSec' + band).prop('checked', false).data('tpRadio').refresh();
+
+                if (wdsObj.bridgeAuthMode == "SharedAuthentication") {
+                    $('#typeSharedKey' + band).prop('checked', true);
+                } else if (wdsObj.bridgeAuthMode = "Open") {
+                    $('#typeOpenSys' + band).prop('checked', true);
+                }
+
+                $('#wepKeyValue' + band).prop('value', wdsObj.bridgeKey);
+
+                if (wdsObj.bridgeKey.length == 5 || wdsObj.bridgeKey.length == 13 || wdsObj.bridgeKey.length == 16) {
+                    $('#keyFormatAscii' + band).prop('checked', true);
+                } else if (wdsObj.bridgeKey.length == 10 || wdsObj.bridgeKey.length == 26 || wdsObj.bridgeKey.length == 32) {
+                    $('#keyFormatHex' + band).prop('checked', true);
+                }
+
+                $('#key' + wdsObj.bridgeWepKeyIndex + band).prop('selected', true);
+            } else {
+                $('#noSec' + band).prop('checked', false).data('tpRadio').refresh();
+				$('#wepSec' + band).prop('checked', false).data('tpRadio').refresh();
+				$('#wpaSec' + band).prop('checked', true).data('tpRadio').refresh();
+
+                if (wdsObj.bridgeAuthMode == "PSKAuthentication")
+                    $('#wpaVersion' + band).prop('checked', true);
+                else
+                    $('#wpa2Version' + band).prop('checked', true);
+
+                if (wdsObj.bridgeEncryptMode == "TKIPEncryption")
+                    $('#tkipEncryption' + band).prop('checked', true);
+                else
+                    $('#aesEncryption' + band).prop('checked', true);
+
+            $('#passwd' + band).prop('value', wdsObj.bridgeKey)
+        }
+    
+        if (band == "_2g")
+        {
+            $('#wds_5g').prop('disabled', true);
+            $('#enwds_5g_warn').removeClass("nd");
+			if($.sysMode != "WISP")
+				if (wdsObj.bridgeEnable == 1) {
+					$('#wds_2g').prop('checked', true);
+					$('#wdsInfo_2g').show();
+				} else {
+					$('#wds_2g').prop('checked', false);
+					$('#wdsInfo_2g').hide();
+				}
+
+        }
+        else
+        {
+            $('#wds_2g').prop('disabled', true);
+            $('#enwds_2g_warn').removeClass("nd");
+        }
+    
+    } else {
+        $('#wds' + band).prop('checked', false);
+        $('#wdsInfo' + band).hide();
+    }
+}
+/*add end*/
+
+function initDM() {
+    var basicList = $.act(ACT_GL, LAN_WLAN, null, null, ["Name",
+        "Standard",
+        "SSID",
+        "X_TP_Band",
+        "RegulatoryDomain",
+        "PossibleChannels",
+        "AutoChannelEnable",
+        "Channel",
+        "X_TP_Bandwidth",
+        "Enable",
+        "SSIDAdvertisementEnabled",
+        "BeaconType",
+        "BasicEncryptionModes",
+        "X_TP_Configuration_Modified",
+        "WMMEnable",
+        "X_TP_FragmentThreshold",
+        "WEPEncryptionLevel",
+        "WEPKeyIndex",
+        "BasicAuthenticationMode",
+        "WPAEncryptionModes",
+        "WPAAuthenticationMode",
+        "IEEE11iEncryptionModes",
+        "IEEE11iAuthenticationMode",
+        "X_TP_PreSharedKey",
+        "X_TP_GroupKeyUpdateInterval",
+        "TransmitPowerSupported",
+        "TransmitPower",
+        "X_TP_RadiusServerIP",
+        "X_TP_RadiusServerPort",
+        "X_TP_RadiusServerPassword"
+    ]);
+	
+	/*add by xieping */
+	sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["ApModeType"]);
+	/*add end*/
+	
+    if (!$.exe()) {
+        $.each(basicList, function() {
+            if ("2.4GHz" == this.X_TP_Band) {
+                wlanObj_2g = this;
+            } else if (INCLUDE_LAN_WLAN_DUALBAND && "5GHz" == this.X_TP_Band) {
+                wlanObj_5g = this;
+            }
+        });
+
+        wpsObj_2g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_2g.__stack, null, ["Enable"]);
+        mssidObj_2g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_2g.__stack, null, ["MultiSSIDEnable"]);
+        vapList_2g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_2g.__stack, ["Name", "Enable", "SSID", "SSIDAdvertisementEnable", "isolateClients", "BeaconType", "BasicAuthenticationMode", "WEPKeyIndex", "BasicEncryptionModes", "WPAEncryptionModes", "WPAAuthenticationMode", "IEEE11iEncryptionModes", "IEEE11iAuthenticationMode", "PreSharedKey", "GroupKeyUpdateInterval", "RadiusServerIP", "RadiusServerPort", "RadiusServerPassword"]);
+        guestnetObj_2g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_2g.__stack, null, ["Enable", "Name"]);
+		
+        if($.qd.curApModeType == '0' && $.qd.setApModeType == '3')
+		{
+			dmReList = $.act(ACT_GL, MULTIMODE_RE, null, null, ["BridgeEnable","BridgeAddrMode", "BridgeBSSID", "BridgeSSID", "BridgeAuthMode", "BridgeEncryptMode", "BridgeKey", "BridgeWepKeyIndex"]);
+		}
+		else
+			wdsObj_2g = $.act(ACT_GET, LAN_WLAN_WDSBRIDGE, wlanObj_2g.__stack, null, ["BridgeEnable","BridgeAddrMode", "BridgeBSSID", "BridgeSSID", "BridgeAuthMode", "BridgeEncryptMode", "BridgeKey", "BridgeWepKeyIndex"]);
+		//wlclientcfgList = $.act(ACT_GS, LAN_WLANCLIENTCFG, null, wlanObj_2g.__stack,  ["BridgeClientType","BridgeEnable","BridgeAddrMode", "BridgeBSSID", "BridgeSSID", "BridgeAuthMode", "BridgeEncryptMode", "BridgeKey", "BridgeWepKeyIndex"]);
+        if (INCLUDE_LAN_WLAN_DUALBAND) {
+			wpsObj_5g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_5g.__stack, null, ["Enable"]);
+			mssidObj_5g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_5g.__stack, null, ["MultiSSIDEnable"]);
+			vapList_5g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_5g.__stack, ["Name", "Enable", "SSID", "SSIDAdvertisementEnable", "isolateClients", "BeaconType", "BasicAuthenticationMode", "WEPKeyIndex", "BasicEncryptionModes", "WPAEncryptionModes", "WPAAuthenticationMode", "IEEE11iEncryptionModes", "IEEE11iAuthenticationMode", "PreSharedKey", "GroupKeyUpdateInterval", "RadiusServerIP", "RadiusServerPort", "RadiusServerPassword"]);
+			guestnetObj_5g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_5g.__stack, null, ["Enable", "Name"]);
+            wdsObj_5g = $.act(ACT_GET, LAN_WLAN_WDSBRIDGE, wlanObj_5g.__stack, null, ["BridgeEnable","BridgeAddrMode", "BridgeBSSID", "BridgeSSID", "BridgeAuthMode", "BridgeEncryptMode", "BridgeKey", "BridgeWepKeyIndex"]);
+		 }
+        if (!$.exe()) {
+            qssEnable_2g = wpsObj_2g.enable;
+            $.each(vapList_2g, function(arg, index) {
+                if (this.name == guestnetObj_2g.name)
+                    guestVap_2g = this;
+            });
+            if (INCLUDE_LAN_WLAN_DUALBAND)
+            {
+            	qssEnable_5g = wpsObj_5g.enable;
+	            $.each(vapList_5g, function(arg, index) {
+	                if (this.name == guestnetObj_5g.name)
+	                    guestVap_5g = this;
+	            });
+            }
+			
+			$.each(dmReList, function() {
+				if (this.__stack == "1,0,0,0,0,0") {
+					wdsObj_2g = this;
+				}				
+				else if (INCLUDE_LAN_WLAN_DUALBAND && this.__stack == "2,0,0,0,0,0") {
+					wdsObj_5g = this;
+				}
+			});
+        }
+    }
+}
+
+
+
+function init() {
+	
+    initDM();
+	//initApMode();
+    //initParamShow(wlanObj_2g, '_2g');
+    //initSecShow(wlanObj_2g, '_2g');
+	var qsWds = {};
+	
+	if (!$.qd.wds)
+		qsWds = wdsObj_2g;
+	else
+		qsWds = $.qd.wds;
+	
+	if($.sysMode == "WISP")
+		$("#wds_enable_div").hide();
+		
+	if (!INCLUDE_LAN_WLAN_DUALBAND)
+	{
+		$('#load_5g').addClass('nd');
+	}
+
+	if ($.mainParam !== undefined) {
+            var param = new Object();
+            param = $.mainParam;
+            $('#scroll').scrollTop(param.scrollTop);
+            if (param.band == "_5g") {
+                $('#wds_mode').find('span.second-mode').trigger('click');
+                $('#wds_mode').find('span').first().removeClass('mode-select').next().addClass('mode-select');
+            }
+
+            if (param.wdsExist == 1) {
+                $('#wdsSsid' + param.band).prop('value', param.SSID);
+                $('#wdsMac' + param.band).tpAddress('val', param.BSSID);
+				qsWds.bridgeBSSID = param.BSSID;
+				qsWds.bridgeSSID = param.SSID;
+				
+				//qsWds.bridgeKey = '';
+				if (param.band == "_2g")
+				{
+					wdsObj_2g.bridgeEnable = $.mainParam.wdsEn;
+					if($.mainParam.authMode=='0'/*"Open"*/ && $.mainParam.wepStatus=='1'/*"None"*/)
+					{
+						qsWds.bridgeAuthMode = "Open";
+						qsWds.bridgeEncryptMode = "None";
+					}
+					else if($.mainParam.wepStatus=='0'/*"WEPEncryption"*/ || $.mainParam.authMode=='2')
+					{
+						qsWds.bridgeEncryptMode = "WEPEncryption";
+						if($.mainParam.authMode=='1'/*"SharedAuthentication"*/)
+						{
+							qsWds.bridgeAuthMode = "SharedAuthentication";
+						}
+						else if($.mainParam.authMode='0'/*"Open"*/)
+							qsWds.bridgeAuthMode = "Open";
+
+					}
+					else
+						{
+							if($.mainParam.authMode=='3' || $.mainParam.authMode=='5' || $.mainParam.authMode=='4'/*"PSKAuthentication"*/)
+								qsWds.bridgeAuthMode = "PSKAuthentication";
+							else
+								qsWds.bridgeAuthMode = "PSK2Authentication";
+							
+							if($.mainParam.wepStatus=='4'/*"TKIPEncryption"*/)
+								qsWds.bridgeEncryptMode = "TKIPEncryption";
+							else
+								qsWds.bridgeEncryptMode = "AESEncryption";
+							/*$.id("keyText").value=wdsObj.bridgeKey;*/
+						}
+				}
+				
+        }
+		
+		
+        if (param.wdsEn == 1) {
+            $('#wds' + param.band).prop('checked', true);
+            $('#wdsInfo' + param.band).show();
+        } else {
+            $('#wds' + param.band).prop('checked', false);
+            $('#wdsInfo' + param.band).hide();
+        }
+    }
+	
+	initWDS(wlanObj_2g, qsWds, '_2g');
+}
+
+function goPrev() {
+    //var connType = $("#" + $.qd.dslType + "ConnectionType option:selected").val();
+    //$.qd.type = connType; 
+    $.qf.prev();
+   
+}
+
+function goNext(){
+	var wdsset = {};
+	if(wdsSave(wdsset,'_2g') == true)
+	{
+		if($.sysMode == 'WISP')
+		{
+			loadSubPage("qsEwanType.htm");
+		}
+		else
+			if($.sysMode == 'AP' && (($.qd.curApModeType == '0' && $.qd.setApModeType == '3') || ($.qd.curApModeType == '3' && $.qd.setApModeType == '3')))	
+				loadSubPage("qsWl.htm");
+			else
+				$.qf.next();
+	}
+}
+
+</script>
+<div class="content-container">
+<div id="wds_show" class="">
+<!--
+<h3 id="wds_title" class="">WDS</h3>
+-->
+<br>
+<div id="wds_all" class="content-container">
+	
+    <div id="wds_mode" class="mode-change nd">
+        <span class="mode-select T_modeghz24">2.4GHz</span>
+        <span class="T_modeghz5">5GHz</span>
+    </div>
+	
+    <form class="pure-form pure-form-aligned">
+        <div id ="wds_enable_div">
+            <b id="t_wds_2g">2.4GHz Network:</b>
+            <input type="checkbox" id="wds_2g"/>
+            <label id="t_enwds_2g">Connect to 2.4GHz Network</label>
+        </div>
+        <div id="wdsInfo_2g">
+            <div class="pure-control-group inline">
+                <b class="">Host 2.4GHz SSID:</b>
+                <input type="text" maxlength="32" class="tp-input-text" id="wdsSsid_2g"/>
+            </div>
+            <button type="submit" class="blue inline T_scan" id="survey_2g">Survey</button>
+            <div class="pure-control-group">
+                <b class="">Host 2.4GHz MAC:</b>
+                <input type="text" maxlength="17" class="tp-input-text mac-address" id="wdsMac_2g"/>
+            </div>
+            <div>
+                <b class="T_wlsec">Security:</b>
+                <input type="radio" name="security_2g" id="noSec_2g" checked="checked"/>
+                <label class="T_wldissec">No Security</label>
+                <input type="radio" name="security_2g" id="wpaSec_2g"/>
+                <label class="T_wlsecpersonal">WPA/WPA2 Personal</label>
+                <input type="radio" name="security_2g" id="wepSec_2g"/>
+                <label>WEP</label>
+            </div>
+            <div id="hideWpaSec_2g" class="nd">
+                <div>
+                    <b class="T_version">Version:</b>
+                    <input type="radio" name="version_2g" id="wpaVersion_2g"/>
+                    <label>WPA-PSK</label>
+                    <input type="radio" name="version_2g" id="wpa2Version_2g" checked="checked"/>
+                    <label>WPA2-PSK</label>
+                </div>
+
+                <div>
+                    <b class="T_encryption">Encryption:</b>
+                    <input type="radio" name="encryption_2g" id="tkipEncryption_2g"/>
+                    <label>TKIP</label>
+                    <input type="radio" name="encryption_2g" id="aesEncryption_2g" checked="checked"/>
+                    <label>AES</label>
+                </div>
+                <div class="pure-control-group">
+                    <label class="label_title"><b class="T_wlpwd">Wireless Password:</b>
+                    </label>
+                    <input type="text" class="tp-input-text" id="passwd_2g"/>
+                </div>
+            </div>
+            <div id="hideWep_2g" class="">
+                <div>
+                    <b class="T_type">Type:</b>
+                    <input type="radio" name="wepType_2g" id="typeOpenSys_2g" checked="checked"/>
+                    <label class="T_opensys">Open System</label>
+                    <input type="radio" name="wepType_2g" id="typeSharedKey_2g"/>
+                    <label class="T_sharekey">Shared Key</label>
+                </div>
+                <div>
+                    <b class="T_weptype">Key Format:</b>
+                    <input type="radio" name="keyFormat_2g" id="keyFormatAscii_2g" checked="checked"/>
+                    <label>ASCII</label>
+                    <input type="radio" name="keyFormat_2g" id="keyFormatHex_2g"/>
+                    <label class="T_hex">Hexadecimal</label>
+                </div>
+                <b class="T_wepkeyindex">Key Index:</b>
+                <select id="wepShareKey_2g" class="xl">
+                    <option value="1" id="key1_2g" class="T_wepkey1">Key 1</option>
+                    <option value="2" id="key2_2g" class="T_wepkey2">Key 2</option>
+                    <option value="3" id="key3_2g" class="T_wepkey3">key 3</option>
+                    <option value="4" id="key4_2g" class="T_wepkey4">Key 4</option>
+                </select>
+
+                <div>
+                    <b class="T_keyvalue">Key Value:</b>
+                    <input type="text" class="tp-input-text xl" name="wepKeyValue_2g" id="wepKeyValue_2g"/>
+                </div>
+            </div>
+        </div>
+        <div class="inline-btn-right quicksetup-button-container">
+			<div class="inline">
+				<button type="submit" class="green T_back" id="back" onclick="goPrev()">Back</button>
+			</div>
+			<div class="inline">
+				<button type="submit" class="green T_next" id="next" onclick="goNext()">Next</button>
+			</div>
+		</div>
+    </form>
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b id="t_wds_5g">WDS Bridging:</b>
+            <input type="checkbox" id="wds_5g"/>
+            <label id="t_enwds_5g">Enable WDS Bridging</label>
+        </div>
+        <div id="wdsInfo_5g">
+            <div class="pure-control-group inline">
+                <b class="">Name(SSID):</b>
+                <input type="text" maxlength="32" class="tp-input-text" id="wdsSsid_5g"/>
+            </div>
+            <button type="submit" class="blue inline T_scan" id="survey_5g">Survey</button>
+            <div class="pure-control-group">
+                <b class="T_c_mac_bridge">MAC Address(to be bridged):</b>
+                <input type="text" maxlength="17" class="tp-input-text mac-address" id="wdsMac_5g"/>
+            </div>
+            <div>
+                <b class="T_wlsec">Security:</b>
+                <input type="radio" name="security_5g" id="noSec_5g" checked="checked"/>
+                <label class="T_wldissec">No Security</label>
+                <input type="radio" name="security_5g" id="wpaSec_5g"/>
+                <label class="T_wlsecpersonal">WPA/WPA2 Personal</label>
+                <input type="radio" name="security_5g" id="wepSec_5g"/>
+                <label>WEP</label>
+            </div>
+            <div id="hideWpaSec_5g" class="nd">
+                <div>
+                    <b class="T_version">Version:</b>
+                    <input type="radio" name="version_5g" id="wpaVersion_5g"/>
+                    <label>WPA-PSK</label>
+                    <input type="radio" name="version_5g" id="wpa2Version_5g" checked="checked"/>
+                    <label>WPA2-PSK</label>
+                </div>
+
+                <div>
+                    <b class="T_encryption">Encryption:</b>
+                    <input type="radio" name="encryption_5g" id="tkipEncryption_5g"/>
+                    <label>TKIP</label>
+                    <input type="radio" name="encryption_5g" id="aesEncryption_5g" checked="checked"/>
+                    <label>AES</label>
+                </div>
+                <div class="pure-control-group">
+                    <label class="label_title"><b class="T_wlpwd">Wireless Password:</b>
+                    </label>
+                    <input type="text" class="tp-input-text" id="passwd_5g"/>
+                </div>
+            </div>
+            <div id="hideWep_5g" class="">
+                <div>
+                    <b class="T_type">Type:</b>
+                    <input type="radio" name="wepType_5g" id="typeOpenSys_5g" checked="checked"/>
+                    <label class="T_opensys">Open System</label>
+                    <input type="radio" name="wepType_5g" id="typeSharedKey_5g"/>
+                    <label class="T_sharekey">Shared Key</label>
+                </div>
+                <div>
+                    <b class="T_weptype">Key Format:</b>
+                    <input type="radio" name="keyFormat_5g" id="keyFormatAscii_5g" checked="checked"/>
+                    <label>ASCII</label>
+                    <input type="radio" name="keyFormat_5g" id="keyFormatHex_5g"/>
+                    <label class="T_hex">Hexadecimal</label>
+                </div>
+                <b class="T_wepkeyindex">Key Index:</b>
+                <select id="wepShareKey_5g" class="xl">
+                    <option value="1" id="key1_5g" class="T_wepkey1">Key 1</option>
+                    <option value="2" id="key2_5g" class="T_wepkey2">Key 2</option>
+                    <option value="3" id="key3_5g" class="T_wepkey3">key 3</option>
+                    <option value="4" id="key4_5g" class="T_wepkey4">Key 4</option>
+                </select>
+
+                <div>
+                    <b class="T_keyvalue">Key Value:</b>
+                    <input type="text" class="tp-input-text xl" name="wepKeyValue_5g" id="wepKeyValue_5g"/>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="green T_save" id="wdsSave_5g">Save</button>
+    </form>
+</div>
+
+</div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $.tpInit(init);
+});
+</script>

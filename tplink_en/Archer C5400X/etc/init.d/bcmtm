@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+. /lib/bcmenet/bcmenet_c5400s.sh
+. /sbin/portset
+
+start() {
+	c5400s_get_interface_group
+	local speedname=$(uci get portspeed.wan.current)
+	# note: `ethctl eth0 media-type auto' will power on wan phy
+	if [ "$speedname" != "auto" ] ; then
+		bcm_4908_set_wan_phy_mode ${speedname}
+	fi
+	bcm_4908_set_wan_port ${int_wan}
+	bcm_4908_port_tm_init ${int_wan} ${lan_ifs}
+	echo 0x0f0f01 0x0f0f01 > /tmp/phypower_control
+	echo "bcm tm init done" > /dev/console
+}

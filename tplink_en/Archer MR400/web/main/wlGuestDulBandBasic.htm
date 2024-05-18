@@ -1,0 +1,71 @@
+<script>function isHex(e,a){e=e.toLowerCase();for(var c=0;c<e.length;c++)if(!(e.charAt(c)>="0"&&e.charAt(c)<="9"||e.charAt(c)>="a"&&e.charAt(c)<="f"))return 0!=a&&$.alert(ERR_WLAN_WEP_KEY_HEX_INVALID),!1;return 0!=parseInt(e,16)||(0!=a&&$.alert(ERR_WLAN_WEP_KEY_HEX_INVALID),!1)}function checkSSID(e){var a=$("#ssid"+e),c=$.realLen(a.prop("value")),n=!!INCLUDE_LAN_WLAN_DUALBAND&&a.prop("value")==wlanObj_5g.SSID;return INCLUDE_LAN_WLAN_MSSID&&INCLUDE_LAN_WLAN_GUESTNETWORK&&(a.prop("value")==wlanObj_2g.SSID||n)?($.alert(CMM_WLAN_SSID_CONFLICTE),a.focus(),a.select(),!1):c<=0?($.alert(ERR_WLAN_SSID_IS_EMPTY),a.focus(),a.select(),!1):!(c>32)||($.alert(ERR_WLAN_SSID_LEN_OUTRANGE),a.focus(),a.select(),!1)}function checkPersonal(e){var a=$("#wpa2PersonalPwd"),c=a.prop("value");if(0==c.length)return $.alert(ERR_WLAN_WPA_PSK_EMPTY),a.focus(),a.select(),!1;if(c.length<8)return $.alert(ERR_WLAN_WPA_PSK_LENGTH_INVALID),a.focus(),a.select(),!1;if(c.length>=64){if(!isHex(c,0))return $.alert(ERR_WLAN_WPA_PSK_HEX_INVALID),a.focus(),a.select(),!1;a.prop("value",a.prop("value").substr(0,64))}else{if($.asc(c,!0))return $.alert(ERR_WLAN_WPA_PSK_ASCII_INVALID),a.focus(),a.select(),!1;if(1==/[ ]/.test(c))return $.alert(ERR_WLAN_WPA_PSK_SPACE_INVALID),a.focus(),a.select(),!1}return!0}function init(){INCLUDE_LAN_WLAN_DUALBAND&&($("#5ghz_guest_enable").removeClass("nd"),$("#hideGuest_5g").removeClass("nd")),INCLUDE_USB_STORAGE&&$("#usb_access").removeClass("nd");var e=$.act(ACT_GL,LAN_WLAN,null,null,["Enable","SSID","X_TP_Band","BeaconType","BasicEncryptionModes"]);$.exe()||($.each(e,function(){"2.4GHz"==this.X_TP_Band&&(wlanObj_2g=this),"5GHz"==this.X_TP_Band&&(wlanObj_5g=this)}),mssidObj_2g=$.act(ACT_GET,LAN_WLAN_MULTISSID,wlanObj_2g.__stack,null,["MultiSSIDEnable"]),vapList_2g=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_2g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BeaconType","BasicAuthenticationMode","WEPKeyIndex","BasicEncryptionModes","WPAEncryptionModes","WPAAuthenticationMode","IEEE11iEncryptionModes","IEEE11iAuthenticationMode","PreSharedKey","GroupKeyUpdateInterval","RadiusServerIP","RadiusServerPort","RadiusServerPassword"]),guestnetObj_2g=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_2g.__stack,null,["Enable","Name","IsModified","LANAccessEnable","USBAccessEnable","EachOtherAccessEnable","TCEnable","TCMaxUpBW","TCMinUpBW","TCMaxDownBW","TCMinDownBW","TCRuleID"]),INCLUDE_LAN_WLAN_DUALBAND&&(mssidObj_5g=$.act(ACT_GET,LAN_WLAN_MULTISSID,wlanObj_5g.__stack,null,["MultiSSIDEnable"]),vapList_5g=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_5g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BeaconType","BasicAuthenticationMode","WEPKeyIndex","BasicEncryptionModes","WPAEncryptionModes","WPAAuthenticationMode","IEEE11iEncryptionModes","IEEE11iAuthenticationMode","PreSharedKey","GroupKeyUpdateInterval","RadiusServerIP","RadiusServerPort","RadiusServerPassword"]),guestnetObj_5g=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_5g.__stack,null,["Enable","Name","IsModified","LANAccessEnable","USBAccessEnable","EachOtherAccessEnable","TCEnable","TCMaxUpBW","TCMinUpBW","TCMaxDownBW","TCMinDownBW","TCRuleID"])),$.exe()||($.each(vapList_2g,function(e,a){this.name==guestnetObj_2g.name&&(vapObj_2g=this)}),INCLUDE_LAN_WLAN_DUALBAND&&$.each(vapList_5g,function(e,a){this.name==guestnetObj_5g.name&&(vapObj_5g=this)}),guestnetObj_2g.enable,guestnetObj_2g.enable),initParamShow(vapObj_2g,"_2g"),initAdvancedShow(vapObj_2g,guestnetObj_2g),initSecShow(vapObj_2g,"_2g"),INCLUDE_LAN_WLAN_DUALBAND&&(initParamShow(vapObj_5g,"_5g"),initSecShow(vapObj_5g,"_5g")))}function initParamShow(e,a){1==vapObj_2g.enable&&$("#wlEn_2g").prop("checked",!0),INCLUDE_LAN_WLAN_DUALBAND&&1==vapObj_5g.enable&&$("#wlEn_5g").prop("checked",!0),"_2g"==a?0==wlanObj_2g.enable&&($("#wlEn_2g").prop("disabled",!0),$("#ssid_2g").prop("disabled",!0),$("#hideSSID_2g").prop("disabled",!0),$.errorTip("wlEn_2g",ERR_WLAN_DISABLED)):"_5g"==a&&0==wlanObj_5g.enable&&($("#wlEn_5g").prop("disabled",!0),$("#ssid_5g").prop("disabled",!0),$("#hideSSID_5g").prop("disabled",!0),$.errorTip("wlEn_5g",ERR_WLAN_DISABLED)),$("#ssid"+a).prop("value",e.SSID),0==e.SSIDAdvertisementEnable&&$("#hideSSID"+a).prop("checked","checked")}function initAdvancedShow(e,a){0==e.isolateClients&&$("#seeEachOther").prop("checked","checked"),1==a.LANAccessEnable&&$("#accessLocal").prop("checked","checked"),1==a.USBAccessEnable&&$("#accessUSB").prop("checked","checked")}function initSecShow(e,a){!1===initSecType(e,a)?$("#noSec").prop("checked",!0):($("#wpaSec").prop("checked",!0),initWpa2Personal(e,a))}function initSecType(e,a){return("Basic"!=e.beaconType||"None"!=e.basicEncryptionModes)&&("_2g"==a?isSec_2g=1:isSec_5g=1,!0)}function initWpa2Personal(e,a){$("#wpa2PersonalPwd").prop("value",e.preSharedKey)}function check(e){return 0!=checkSSID(e)&&((!$("#wpaSec").prop("checked")||0!=checkPersonal(e))&&void 0)}function clickSave(e,a,c,n){var _={},t={};_.enable=$("#wlEn"+c).prop("data-checked")?1:0,_.SSID=$("#ssid"+c).prop("value"),_.SSIDAdvertisementEnable=$("#hideSSID"+c).prop("data-checked")?0:1,_.preSharedKey=$("#wpa2PersonalPwd").prop("value"),"_2g"==c&&0==isSec_2g&&$("#wpaSec").prop("checked")||"_5g"==c&&0==isSec_5g&&$("#wpaSec").prop("checked")?("_2g"==c?isSec_2g=1:isSec_5g=1,_.beaconType="11i",_.IEEE11iAuthenticationMode="PSKAuthentication",_.IEEE11iEncryptionModes="AESEncryption"):("_2g"==c&&1==isSec_2g&&$("#noSec").prop("checked")||"_5g"==c&&1==isSec_5g&&$("#noSec").prop("checked"))&&("_2g"==c?isSec_2g=0:isSec_5g=0,_.beaconType="Basic"),_.isolateClients=$("#seeEachOther").prop("data-checked")?0:1,t.LANAccessEnable=$("#accessLocal").prop("data-checked")?1:0,t.USBAccessEnable=$("#accessUSB").prop("data-checked")?1:0,t.eachOtherAccessEnable=$("#seeEachOther").prop("data-checked")?1:0,$.act(ACT_SET,LAN_WLAN_MSSIDENTRY,e.__stack,null,_),$.act(ACT_SET,LAN_WLAN_GUESTNET,a.__stack,null,t),n?$.showGuage({rate:3,updateInterval:900,callback_complete:function(){$.removeLoading()}}):$.exe(function(){})}function disableGuest(){var e={};e.enable=0,$.act(ACT_SET,LAN_WLAN_MSSIDENTRY,vapObj_2g.__stack,null,e),INCLUDE_LAN_WLAN_DUALBAND&&$.act(ACT_SET,LAN_WLAN_MSSIDENTRY,vapObj_5g.__stack,null,e),$.exe(function(){$.removeLoading()})}var wlanObj_2g,wlanObj_5g,vapObj_2g,vapObj_5g,guestnetObj_2g,guestnetObj_5g,isSec_2g=0,isSec_5g=0;$("#save").on("click.guestBasic",function(e){if($.addLoading($(this)),!$("#wlEn_2g").prop("data-checked")||0!=check("_2g")){if(INCLUDE_LAN_WLAN_DUALBAND){if($("#wlEn_5g").prop("data-checked")&&0==check("_5g"))return;clickSave(vapObj_5g,guestnetObj_5g,"_5g")}clickSave(vapObj_2g,guestnetObj_2g,"_2g",!0)}}),$("#wpaSec").on("click.guestNetwork",function(e){$("#hideWpaSec").show("fast")}),$("#noSec").on("click.guestNetwork",function(e){$("#hideWpaSec").hide("fast")}),$("#wpaSec").on("click.guestNetwork",function(e){$("#hideWpaSec").show("fast")}),$("#noSec").on("click.guestNetwork",function(e){$("#hideWpaSec").hide("fast")})</script>
+<h3 id="et">Settings</h3>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="l ru-hide"></b>
+            <input type="checkbox" id="seeEachOther">
+            <label id="t_allowsee">Allow guests to see each other</label>
+        </div>
+        <div>
+            <b class="l ru-hide"></b>
+            <input type="checkbox" id="accessLocal">
+            <label id="t_lAccess">Allow guests to access to my local network</label>
+        </div>
+        <div id="usb_access" class="nd">
+            <b class="l ru-hide"></b>
+            <input type="checkbox" id="accessUSB">
+            <label id="t_uAccess">Allow guests to access my USB Storage Sharing</label>
+        </div>
+        <div class="part-separate">
+            <b class="T_gn24 l">2.4GHz:</b>
+            <input type="checkbox" id="wlEn_2g">
+            <label class="T_wlradioenGuest">Enable Guest Network</label>
+        </div>
+        <div id="hideGuest_2g">
+            <div class="inline">
+                <b class="T_gnssid l">Name(SSID):</b>
+                <input type="text" maxlength="32" oninput="$.maxlength(this)" class="xl" id="ssid_2g">
+            </div>
+            <div class="inline">
+                <input type="checkbox" id="hideSSID_2g">
+                <label class="T_hidessid">Hide SSID</label>
+            </div>
+        </div>
+        <div id="5ghz_guest_enable" class="nd">
+            <b class="T_gn5 l">5GHz:</b>
+            <input type="checkbox" id="wlEn_5g">
+            <label class="T_wlradioenGuest">Enable Guest Network</label>
+        </div>
+        <div id="hideGuest_5g" class="nd">
+            <div class="inline">
+                <b class="T_gnssid l">Name(SSID):</b>
+                <input type="text" maxlength="32" oninput="$.maxlength(this)" class="xl" id="ssid_5g">
+            </div>
+            <div class="inline">
+                <input type="checkbox" id="hideSSID_5g">
+                <label class="T_hidessid">Hide SSID</label>
+            </div>
+        </div>
+        <div id="secArea" class="part-separate">
+            <div>
+                <b class="T_wlsec l">Security:</b>
+                <input type="radio" name="security" id="noSec">
+                <label class="T_wldissec">No Security</label>
+                <input type="radio" name="security" id="wpaSec">
+                <label class="T_c_setpwd">Set Password</label>
+            </div>
+            <div id="hideWpaSec">
+                <div class="pure-control-group inline">
+                    <b class="T_passwd l">Password:</b>
+                    <input type="text" maxlength="64" oninput="$.maxlength(this)" class="tp-input-text xl" id="wpa2PersonalPwd">
+                </div>
+            </div>    
+        </div>
+        
+        <button type="submit" class="green T_save" id="save">Save</button>
+    </form>
+</div>
+
+<script>$.tpInit(init)</script>

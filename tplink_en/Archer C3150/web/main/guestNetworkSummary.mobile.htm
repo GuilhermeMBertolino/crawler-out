@@ -1,0 +1,129 @@
+<div class="titleBar">
+    <a url="networkMap.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>Guest Network</h1>
+    <a id="edit" url="guestNetwork.mobile.htm" data-status="edit">Edit</a>
+</div>
+<div class="info-list mt15">
+    <div class="section-container">
+    <div class="section-box">
+        <span>
+            <script type="text/html" class="trans" >
+                <%=$.tpLang.wlGuestDulBandBasic_nstr.t_allowsee%>:
+            </script>
+        </span>
+        <span class="text-readonly" id="seeEachOther"></span>
+    </div>
+</div>
+</div>
+<h2 class="section-title mt15">
+    <script type="text/html" class="trans" >
+        <%=$.tpLang.networkMap_nstr.c_guest2g%>
+    </script>
+</h2>
+<div class="info-list">
+<div class="section-container">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.wlradio%></script></span>
+        <span class="text-readonly" id="wlEn_2g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wlGuestDulBandBasic_nstr.t_ssid%></script></span>
+        <span class="text-readonly" id="ssid_2g">123</span>
+    </div>
+</div>
+</div>
+
+<h2 class="section-title mt15">
+    <script type="text/html" class="trans" >
+        <%=$.tpLang.networkMap_nstr.c_guest5g%>
+    </script>
+</h2>
+<div class="info-list">
+<div class="section-container">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.wlradio%></script></span>
+        <span class="text-readonly" id="wlEn_5g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wlGuestDulBandBasic_nstr.t_ssid%></script></span>
+        <span class="text-readonly" id="ssid_5g">123</span>
+    </div>
+</div>
+</div>
+<div class="pb26"></div>
+<script type="text/javascript">
+
+    (function() {
+        $.tpLocal('trans', $.tpLang);
+        $('.titleBar').titleBar({
+            title: $.tpLang.wlGuestDulBandBasic_nstr.et
+        });
+        $('#edit').titleButton('status','edit', $.tpLang.m_str.edit);
+        //    logical
+        var wlanObj_2g,
+                wlanObj_5g,
+                vapObj_2g,
+                vapObj_5g,
+                guestnetObj_2g,
+                guestnetObj_5g,
+                vapList_2g,
+                vapList_5g;
+        var isSec_2g = 0;
+        var isSec_5g = 0;
+        init();
+        function init() {
+            var basicList = $.act(ACT_GL, LAN_WLAN, null, null, ["X_TP_Band"]);
+            if (!$.exe()) {
+                $.each(basicList, function() {
+                    if ("2.4GHz" == this.X_TP_Band) {
+                        wlanObj_2g = this;
+                    }
+                    if ("5GHz" == this.X_TP_Band) {
+                        wlanObj_5g = this;
+                    }
+                });
+
+                vapList_2g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_2g.__stack, ["Name", "Enable", "SSID",  "isolateClients"]);
+                vapList_5g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_5g.__stack, ["Name", "Enable", "SSID", "isolateClients"]);
+
+                guestnetObj_2g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_2g.__stack, null, ["Enable", "Name"]);
+                guestnetObj_5g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_5g.__stack, null, ["Enable", "Name"]);
+
+                if (!$.exe()) {
+                    $.each(vapList_2g, function(arg, index) {
+                        if (this.name == guestnetObj_2g.name)
+                            vapObj_2g = this;
+                    });
+                    $.each(vapList_5g, function(arg, index) {
+                        if (this.name == guestnetObj_5g.name)
+                            vapObj_5g = this;
+                    });
+                }
+                initParamShow(vapObj_2g, '_2g');
+                initParamShow(vapObj_5g, '_5g');
+                initAdvancedShow(vapObj_2g, guestnetObj_2g);
+            }
+        }
+
+        function initParamShow(vapObj, band) {
+            if (vapObj.enable == 1) {
+                $('#wlEn' + band).html($.tpLang.m_str.en);
+            } else {
+                $('#wlEn' + band).html($.tpLang.m_str.dis);
+            }
+            $('#ssid' + band).html(vapObj.SSID);
+        }
+
+        function initAdvancedShow(vapObj, guestnetObj) {
+            if (vapObj.isolateClients == 0) {
+                $('#seeEachOther').html($.tpLang.m_str.en);
+            } else {
+                $('#seeEachOther').html($.tpLang.m_str.dis);
+            }
+        }
+    })();
+</script>

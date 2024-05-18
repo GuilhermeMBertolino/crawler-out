@@ -1,0 +1,125 @@
+﻿<script language="javascript" type="text/javascript">
+var moduValArray = 
+{
+	"Auto Sync-up": "Multimode",
+	"T1.413":"ADSL_ANSI_T1.413" ,
+	"G.lite": "ADSL_G.lite",
+	"G.dmt":"ADSL_G.dmt" ,
+	"ADSL2": "ADSL_G.dmt.bis",
+	"ADSL2+": "ADSL_2plus"
+};
+
+function initAnnexTypeSelect(val, strArray)
+{
+	if((val =="") || (strArray == ""))
+		return;
+	
+	$.each(strArray, function()
+	{
+		if(this.split(':')[0] == val)
+		{
+			var annexArray = this.split(':')[1].split(',');
+			for(var index = 0; index < annexArray.length; index++)
+			{
+				var opt = $.c("option");
+				opt.text = opt.value = "Annex "+annexArray[index];
+				try{$.id("annexMod").add(opt, null);}catch(e){$.id("annexMod").add(opt);}
+			}
+			return;
+		}
+	});
+	return;
+}
+
+function initModuTypeSelect(strArray)
+{	
+	if(strArray == "")
+		return;
+	$.each(strArray, function()
+	{
+		var opt = $.c("option");
+		opt.text = this.split(':')[0];
+		opt.value = moduValArray[opt.text];
+		try{$.id("adslMod").add(opt, null);}catch(e){$.id("adslMod").add(opt);}
+		
+	});
+
+	return;
+}
+
+function showModType(val)
+{
+	$.id("annexMod").options.length = 0;
+	initAnnexTypeSelect(val, modeArray);
+}
+
+function btnSave(obj)
+{
+	var sra = '';
+	var bitswap = '';
+	var dslcfg = {};
+	
+	dslcfg.enable = 1;
+	dslcfg.X_TP_AdslModulationCfg = $.id("adslMod").value;
+	dslcfg.X_TP_AnnexType = $.id("annexMod").value;
+	
+	dslcfg.X_TP_SRA = $.id("sra").checked ? "On" : "Off";
+	dslcfg.X_TP_Bitswap = $.id("bitswap").checked ? "On" : "Off";
+
+	if (!confirm(c_str.dslcfg_ask))
+		return;
+	$.addLoading(obj);
+	$.act(ACT_SET, WAN_DSL_INTF_CFG, "1,0,0,0,0,0", "0,0,0,0,0,0", dslcfg);
+	$.exe(function(ret){
+		if (!ret) $.reload();
+	}) ;
+}
+	
+function init()
+{
+	var dslcfg = {};
+	dslcfg = $.act(ACT_GET, WAN_DSL_INTF_CFG, "1,0,0,0,0,0");
+	if (!$.exe())
+	{
+		modeArray = dslcfg.X_TP_SupportAdslMode.split(';');
+		if(modeArray[modeArray.length - 1] === "")
+		{
+			modeArray.pop();
+		}
+		initModuTypeSelect(modeArray);
+		$.id("adslMod").value = dslcfg.X_TP_AdslModulationCfg;
+
+		initAnnexTypeSelect($.id("adslMod").options[$.id("adslMod").selectedIndex].text, modeArray);
+		$.id("annexMod").value = dslcfg.X_TP_AnnexType;
+
+		if (dslcfg.X_TP_Bitswap == "On")
+			$.id("bitswap").checked = true;
+
+		if (dslcfg.X_TP_SRA == "On")
+			$.id("sra").checked = true;
+	}
+}
+</script>
+<p class="et T" id="et">DSL Settings</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p><b class="item T" id="t_mode">DSL Modulation Type</b>
+<select id="adslMod" class="L" onchange="showModType(this.options[this.selectedIndex].text)"></select></p>
+<p><b class="item T" id="t_annex">Annex Type</b><select id="annexMod" class="L">
+</select></p>
+<p class="br"></p>
+<p><b class="item">&nbsp;</b><input type="checkbox" class="T" id="bitswap" name="adslBitswap"  /><b class="T" id="t_enswap">Enable Bit Swap</b></p>
+<p><b class="item">&nbsp;</b><input type="checkbox" id="sra" name="adslSra"  /><b class="T" id="t_ensra">Enable SRA</b></p>
+</div>
+<p class="bl"></p>
+<p class="tail" id="tail">
+<input type="button" class="button L T T_save"   value="Save"  onclick='btnSave(this)'/>
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+var modeArray;
+$.loadHelp();
+init();
+</script>

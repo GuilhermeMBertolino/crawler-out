@@ -1,0 +1,75 @@
+#!/usr/bin/lua
+
+local clientmgmt = require "luci.model.app_clientmgmt"
+local sys       = require "luci.sys"
+
+local dbg    = require "luci.tools.debug"
+local json	 = require "luci.json"
+
+local appcloud = require "luci.model.app_cloudfirm"
+local sync = require "luci.model.sync"
+
+local MAX_CHECK_TIME = 3
+local MIN_CHECK_INTERVAL = 3
+
+local function retry_several_times(func)
+    local check_time = 0
+    local check_interval = MIN_CHECK_INTERVAL
+    while true do
+        local ret = func()
+        if ret then
+            return true
+        elseif check_time < MAX_CHECK_TIME then
+            sys.call("sleep %d" % check_interval)
+            check_interval = check_interval * 2
+            check_time = check_time + 1
+        else
+            return false
+        end
+    end
+end
+
+function get_sn_from_cloud() 
+    local sn
+
+    local network_mgmt = require "cloud_req.device_manage"
+    local res, errorcode = network_mgmt.get_deviceSn()
+    if not res or (type(res) == "number" and res ~= 0) then
+        dbg.print(" ======= ERROR: get sn from cloud failed ====== ") 
+        return false, errorcode              
+    elseif type(res) ~= "number" then            
+        dbg.print(" ======= get_sn_from_cloud res " .. json.encode(res))
+        sn = res.sn
+        return true, sn
+    end
+
+    return false
+end
+
+function check_cloud_sn()
+    local res, sn = get_sn_from_cloud()
+
+	if res then
+        --check success--
+        -- check whether sn is valid --
+        dbg.print("========= get_sn_from_cloud success =======")
+        if sn and type(sn) == "string" and string.len(sn) > 0 then
+            local old_sn = sync.read_device_sn()
+            if old_sn ~= sn then
+                dbg.print("========= old_sn: " .. tostring(old_sn) .. " new_sn: " .. tostring(sn))
+                sync.write_device_sn(sn)
+                os.execute("/etc/init.d/cwmp restart")
+            end
+        end
+        return true
+	else
+        --check fail--
+        dbg.print("========= get_sn_from_cloud fail =======")
+        return false
+	end
+end
+
+
+
+-- do not have sn --
+retry_several_times(check_cloud_sn)

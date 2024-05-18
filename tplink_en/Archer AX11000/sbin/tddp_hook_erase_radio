@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# first set rftestflag = 0
+nvram set rftestflag=0
+nvram set btntestflag=0
+nvram unset bt_rftestflag
+nvram commit
+# copy the radio and radio_bk block to the temp files
+nvrammanager -r /tmp/radio -p radio_bk
+
+# get the file size of /tmp/radio
+size=$(ls -l /tmp/radio | awk '{print $5}')
+# create the empty content file, the size is the same with the radio block 
+dd if=/dev/zero of=/tmp/zero bs=1 count=$size
+
+# erase the radio_bk block
+nvrammanager -w /tmp/zero -p radio_bk
+
+# copy the radio and bt_radiobk block to the temp files
+nvrammanager -r /tmp/radio -p bt_radiobk
+
+# get the file size of /tmp/radio
+size=$(ls -l /tmp/radio | awk '{print $5}')
+# create the empty content file, the size is the same with the radio block 
+dd if=/dev/zero of=/tmp/zero bs=1 count=$size
+
+#erase bt_radio_bk block
+nvrammanager -w /tmp/zero -p bt_radiobk
+
+
+

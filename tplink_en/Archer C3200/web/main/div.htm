@@ -1,0 +1,591 @@
+﻿<script language="JavaScript" type="text/javascript">
+var dftGtw;
+var currGtwIndex = null;
+var dftGtw6 = null;
+var currGtw6Index = null;
+var curSupIsPtm = 0;
+var curSetIsPtm = 0;
+
+var wanArg = {};
+var wanDsl = {};
+
+function initConnTypeSelect(val) {
+    var optionVal = $("#link_type").data("value");
+    var opt = "<option value='staticIp' text='" + s_str.staip + "'>" + s_str.staip + "</option><option value='dynamicIp' text='" + s_str.dynip + "'>" + s_str.dynip + "</option><option value='pppoe' text='PPPoE'>PPPoE</option>";
+
+    if (val == "ATM") {
+        opt += "<option value='pppoa' text='PPPoA'>PPPoA</option><option value='ipoa' text='IPoA'>IPoA</option>";
+    }
+    opt += "<option value='bridge' text='" + s_str.bridge + "'>" + s_str.bridge + "</option>";
+    $("#link_type").empty().append(opt);
+    if (optionVal)
+        $("#link_type option[value='" + optionVal + "']").prop("selected", "selected");
+
+    var options = {
+        refresh: 1
+    };
+    $("#link_type").tpSelect(options);
+}
+
+function initDiv() {
+    if (INCLUDE_VDSLWAN) {
+        $("#link_type option[value='pppoa']").remove();
+        $("#link_type option[value='ipoa']").remove();
+    }
+    $.loadPage("divDslCfg", "dsl.htm");
+    $("#divDslCfg").removeClass("nd");
+    var optVal = ($.wd.editIndex == $.wd.conn.length) ? "pppoe" : $.wd.conn[$.wd.editIndex].type;
+    $("#link_type option[value='" + optVal + "']").prop("selected", "selected");
+    if ($.wd.editIndex == $.wd.conn.length) {
+        $("#addLinkType").removeClass("nd");
+        var connObj = {
+            type: null,
+            obj: {},
+            dsl: {},
+            ptm: {}
+        };
+        $.wd.conn.push(connObj);
+    } else {
+        $("#editLinkType").removeClass("nd");
+        if ($.wd.conn[$.wd.editIndex].type == "bridge") {
+            $("#saveBtn").prop("disabled", true);
+        }
+    }
+    $("#link_type").tpSelect({
+        refresh: 1
+    });
+    doSync(optVal);
+    initMacClone();
+}
+
+function detectPvcConflict() {
+    var tmpWanCon;
+    var tmpPvc = "PVC:" + $("#vpi").val() + "/" + $("#vci").val();
+    var wan_alldsl = $.act(ACT_GL, WAN_DSL_LINK_CFG, null, null, ["destinationAddress", "linkType", "ATMPeakCellRate", "ATMMaximumBurstSize", "ATMSustainableCellRate", "ATMEncapsulation", "ATMQoS"]);
+    if (!$.exe()) {
+        for (var i = 0; i < wan_alldsl.length; i++) {
+            if (wan_alldsl[i].destinationAddress == tmpPvc) {
+                tmpWanCon = $.act(ACT_GET, WAN_CONN_DEVICE, wan_alldsl[i].__stack, null);
+
+                if (!$.exe()) {
+                    if ((tmpWanCon.WANIPConnectionNumberOfEntries > 0) || (tmpWanCon.WANPPPConnectionNumberOfEntries > 0)) {
+                        disablePvcParam(wan_alldsl[i].linkType);
+                    }
+                }
+                return;
+            }
+        }
+    }
+}
+
+function doSync(val) {
+    switch (val) {
+        case "staticIp":
+            //$("#divStaIp").show("fast");
+            $.loadPage("divStaIp", "staticIp.htm", function() {}, function() {
+                $("#divStaIp").show("fast");
+            });
+            $("#divDynIp").hide("fast");
+            $("#divPPPoE").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("Static IP");
+            break;
+        case "dynamicIp":
+            //$("#divDynIp").show("fast");
+            $.loadPage("divDynIp", "dynamicIp.htm", function() {}, function() {
+                $("#divDynIp").show("fast");
+            });
+            $("#divStaIp").hide("fast");
+            $("#divPPPoE").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("Dynamic IP");
+            break;
+        case "pppoe":
+            //$("#divPPPoE").show("fast");
+            $.loadPage("divPPPoE", "pppoe.htm", function() {}, function() {
+                $("#divPPPoE").show("fast");
+            });
+            $("#divStaIp").hide("fast");
+            $("#divDynIp").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("PPPoE");
+            break;
+        case "pppoa":
+            //$("#divPPPoA").show("fast");
+            $.loadPage("divPPPoA", "pppoa.htm", function() {}, function() {
+                $("#divPPPoA").show("fast");
+            });
+            $("#divStaIp").hide("fast");
+            $("#divDynIp").hide("fast");
+            $("#divPPPoE").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("PPPoA");
+            break;
+        case "ipoa":
+            //$("#divIPoA").show("fast");
+            $.loadPage("divIPoA", "ipoa.htm", function() {}, function() {
+                $("#divIPoA").show("fast");
+            });
+            $("#divStaIp").hide("fast");
+            $("#divDynIp").hide("fast");
+            $("#divPPPoE").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#linkTypeText").html("IPoA");
+            break;
+        case "bridge":
+            $("#divStaIp").hide("fast");
+            $("#divDynIp").hide("fast");
+            $("#divPPPoE").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("Bridge");
+            break;
+        default:
+            //$("#divPPPoE").show("fast");
+            $.loadPage("divPPPoE", "pppoe.htm", function() {}, function() {
+                $("#divPPPoE").show("fast");
+            });
+            $("#divStaIp").hide("fast");
+            $("#divDynIp").hide("fast");
+            $("#divPPPoA").hide("fast");
+            $("#divIPoA").hide("fast");
+            $("#linkTypeText").html("PPPoE");
+            break;
+    }
+
+    if ($.wd.conn[$.wd.editIndex].type == null && (!INCLUDE_VDSLWAN || curSetIsPtm == 0)) {
+        if ($("#atm_encapsulation")) {
+            detectPvcConflict();
+
+            if (($("#p_note")) && (!$("#p_note").hasClass("nd"))) {
+                $("#vpi").focus().select();
+                return;
+            }
+            var tmpAtmOpt = (val == "pppoa") ? "VCMUX" : "LLC";
+            $("#atm_encapsulation option[value='" + tmpAtmOpt + "']").prop("selected", "selected");
+            $("#atm_encapsulation").tpSelect({ 
+                refresh : 1
+            });
+        }
+    }
+}
+
+function isConnDeviceExist() {
+    var length = ($.wd.conn[$.wd.editIndex].type == null) ? ($.wd.conn.length - 1) : $.wd.conn.length;
+
+    for (var i = 0; i < length; i++) {
+        if (INCLUDE_VDSLWAN && curSetIsPtm == 1) {
+            if ($.wd.conn[i].ptm.X_TP_Used == 1 && $.wd.conn[i].ptm.X_TP_VID == wanPtm.X_TP_VID)
+                return i;
+        } else if ($.wd.conn[i].dsl.destinationAddress == wanDsl.destinationAddress) {
+            return i;
+        }
+    }
+    return (-1);
+}
+
+$("#saveConnBtn").click(function() {
+    $.addLoading($(this));
+    var newConnect;
+    var linkType = $.wd.conn[$.wd.editIndex].type;
+    if (linkType == null) {
+        linkType = $("#link_type").data("value");
+    }
+    wanDsl = {};
+    wanPtm = {};
+    wanArg = {};
+
+    var result = addAttrs(linkType);
+    if (result == false) {
+        return;
+    }
+
+    $.wd.l3ForwardingObj.__ifName = "";
+    $.wd.l3ForwardingObj.defaultConnectionService = "";
+    if (INCLUDE_IPV6) {
+        $.wd.l3Ip6ForwardingObj.__ifName = "";
+        $.wd.l3Ip6ForwardingObj.defaultConnectionService = "";
+    }
+    if ($.wd.conn[$.wd.editIndex].type == null) {
+        var wanDevice = {};
+        var index = isConnDeviceExist();
+        if (index < 0) {
+            wanDevice = $.act(ACT_ADD, WAN_CONN_DEVICE, null, $.wd.pStk);
+            if ($.exe()) return;
+        } else {
+            wanDevice.__stack = (INCLUDE_VDSLWAN && curSetIsPtm == 1) ? $.wd.conn[index].ptm.__stack : $.wd.conn[index].dsl.__stack;
+        }
+
+        if (INCLUDE_VDSLWAN && curSetIsPtm == 1)
+            $.act(ACT_SET, WAN_PTM_LINK_CFG, wanDevice.__stack, null, wanPtm);
+        else
+            $.act(ACT_SET, WAN_DSL_LINK_CFG, wanDevice.__stack, null, wanDsl);
+        newConnect = $.act(ACT_ADD, (linkType.indexOf("ppp") < 0) ? WAN_IP_CONN : WAN_PPP_CONN, null,
+            wanDevice.__stack, wanArg);
+
+        $.exe(function(ret) {
+            if (ret) {
+                if (index < 0) {
+                    $.act(ACT_DEL, WAN_CONN_DEVICE, wanDevice.__stack, null);
+                    $.exe(function() {
+                        $.removeLoading();
+                    });
+                }
+                return;
+            } else {
+                if (linkType == "bridge") {
+                    $.removeLoading();
+                    $.loadMain("wan.htm");
+                    return;
+                }
+
+                conn = $.act(ACT_GET, (linkType.indexOf("ppp") < 0) ? WAN_IP_CONN : WAN_PPP_CONN, newConnect.__stack, null, ["name"]);
+
+                $.exe(function(ret) {
+                    if (!ret) {
+                        if (s_str.cur_con == dftGtw.data("text")) {
+                            $.wd.l3ForwardingObj.__ifAliasName = conn.name;
+                            $.act(ACT_SET, LOCAL, null, null, {
+                                ispIndex: -1
+                            });
+                        } else {
+                            $.wd.l3ForwardingObj.__ifAliasName = dftGtw.data("text");
+                        }
+
+                        if (!INCLUDE_IPV6 || wanArg.X_TP_IPv4Enabled == 1) {
+                            $.act(ACT_SET, L3_FORWARDING, null, null, $.wd.l3ForwardingObj);
+                        }
+
+                        if (INCLUDE_IPV6 && (dftGtw6 != null)) {
+                            if (s_str.cur_con == dftGtw6.data("text")) {
+                                $.wd.l3Ip6ForwardingObj.__ifAliasName = conn.name;
+                            } else {
+                                $.wd.l3Ip6ForwardingObj.__ifAliasName = dftGtw6.data("text");
+                            }
+
+                            if (wanArg.X_TP_IPv6Enabled == 1) {
+                                $.act(ACT_SET, L3_IP6_FORWARDING, null, null, $.wd.l3Ip6ForwardingObj);
+                            }
+                        }
+                        $.exe(function(ret) {
+                            if (!ret) {
+                                $.removeLoading();
+                                $.loadMain("wan.htm");
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } else {
+        $.act(ACT_SET, (linkType.indexOf("ppp") < 0) ? WAN_IP_CONN : WAN_PPP_CONN, $.wd.conn[$.wd.editIndex].obj.__stack, null, wanArg);
+
+        if (linkType != "bridge" && (!INCLUDE_IPV6 || wanArg.X_TP_IPv4Enabled == 1)) {
+            if (s_str.cur_con == dftGtw.data("text") || $.wd.conn[$.wd.editIndex].obj.name == dftGtw.data("text")) {
+                $.wd.l3ForwardingObj.__ifAliasName = $.wd.conn[$.wd.editIndex].obj.name;
+                $.act(ACT_SET, LOCAL, null, null, {
+                    ispIndex: -1
+                });
+            } else {
+                $.wd.l3ForwardingObj.__ifAliasName = dftGtw.data("text");
+            }
+            $.act(ACT_SET, L3_FORWARDING, null, null, $.wd.l3ForwardingObj);
+        }
+
+        if (INCLUDE_IPV6 && (dftGtw6 != null)) {
+            if (s_str.cur_con == dftGtw6.data("text") || $.wd.conn[$.wd.editIndex].obj.name == dftGtw6.data("text")) {
+                $.wd.l3Ip6ForwardingObj.__ifAliasName = $.wd.conn[$.wd.editIndex].obj.name;
+            } else {
+                $.wd.l3Ip6ForwardingObj.__ifAliasName = dftGtw6.data("text");
+            }
+
+            if (linkType != "bridge" && wanArg.X_TP_IPv6Enabled == 1) {
+                $.act(ACT_SET, L3_IP6_FORWARDING, null, null, $.wd.l3Ip6ForwardingObj);
+            }
+        }
+        $.exe(function(ret) {
+            if (!ret) {
+                $.removeLoading();
+                $.loadMain("wan.htm");
+            }
+        });
+    }
+});
+
+function addAttrs(linkType) {
+    var retCntCfg = true;
+
+    if ($.wd.conn[$.wd.editIndex].type == null) {
+        if (false == addDslCfgAttrs()) {
+            return false;
+        }
+    } else {
+        if (INCLUDE_WAN_VLAN && (false == addDslVlanAttrs())) {
+            //return false;
+        }
+    }
+
+    if (false == addMacCloneAttrs()) return false;
+
+    switch (linkType) {
+        case "staticIp":
+            retCntCfg = addStaIpAttrs();
+            break;
+        case "dynamicIp":
+            retCntCfg = addDynIpAttrs();
+            break;
+        case "pppoe":
+            retCntCfg = addPPPoEAttrs();
+            break;
+        case "pppoa":
+            retCntCfg = addPPPoAAttrs();
+            break;
+        case "ipoa":
+            retCntCfg = addIPoAAttrs();
+            break;
+        case "bridge":
+            wanArg.NATEnabled = 0;
+            wanArg.X_TP_FullconeNATEnabled = 0;
+            wanArg.X_TP_FirewallEnabled = 0;
+            wanArg.X_TP_IGMPProxyEnabled = 0;
+            wanArg.maxMTUSize = 1500;
+            wanArg.enable = 1;
+            wanArg.connectionType = "IP_Bridged";
+            retCntCfg = true;
+            break;
+    }
+
+    return retCntCfg;
+}
+
+function showIPv6() {
+    $("p").each(function() {
+        if ($(this).hasClass("IPv6")) $(this).removeClass("nd");
+    });
+    $("div").each(function() {
+
+        if ($(this).hasClass("IPv6")) $(this).removeClass("nd");
+    });
+}
+
+function initDefaultGwDNS() {
+    var index = 0;
+    var opt1;
+    var connType = $.wd.conn[$.wd.editIndex].type;
+    var length = (connType == null) ? ($.wd.conn.length - 1) : $.wd.conn.length;
+
+    if (INCLUDE_WAN_MODE && INCLUDE_VDSLWAN) {
+        var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode", "DSLL3ForwardingName", "VDSLL3ForwardingName", "DSLL3IPv6ForwardingName", "VDSLL3IPv6ForwardingName"]);
+        $.exe();
+    }
+
+    if (INCLUDE_USB_3G_DONGLE && INCLUDE_WAN_MODE) {
+        if ($.wd.l3ForwardingObj.__ifAliasName.match("USB_3G") != null) {
+            var pStack;
+            var wanUsb3g;
+            var wanTypes = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+            var usb3gList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["backupEnable"]);
+            if (INCLUDE_WAN_MODE) {
+                var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode"]);
+            }
+
+            if (!$.exe()) {
+                $.each(wanTypes, function() {
+                    if (this.WANAccessType == "USB_3G") {
+                        pStack = this.__stack;
+                    }
+                });
+
+                $.each(usb3gList, function() {
+                    var tmpStk = $.stkPop(this.__stack, 1);
+                    if (pStack == tmpStk) {
+                        wanUsb3g = $.act(ACT_GET, WAN_USB_3G_LINK_CFG, this.__stack, null, ["mainConnObjName"]);
+                    }
+                });
+
+                if (!$.exe()) {
+                    if (INCLUDE_WAN_MODE && sysMode.mode != "USB_3G") {
+                        $.wd.l3ForwardingObj.__ifAliasName = wanUsb3g.mainConnObjName;
+                    }
+                }
+            }
+        }
+    }
+
+    for (var i = 0; i < length; i++) {
+        if (($.wd.conn[i].type != "bridge") && (!INCLUDE_IPV6 || $.wd.conn[i].obj.X_TP_IPv4Enabled == 1)) {
+            if (INCLUDE_VDSLWAN && (curSetIsPtm != $.wd.conn[i].ptm.X_TP_Used))
+                continue;
+
+            opt1 = "<option value='" + $.wd.conn[i].obj.name + "' text='" + $.wd.conn[i].obj.name + "''>" + $.wd.conn[i].obj.name + "</option>";
+            dftGtw.append(opt1);
+
+            if ($.wd.conn[i].obj.name == (INCLUDE_VDSLWAN ? (curSetIsPtm ? sysMode.VDSLL3ForwardingName : sysMode.DSLL3ForwardingName) : $.wd.l3ForwardingObj.__ifAliasName)) {
+
+                dftGtw.find('option[value="' + $.wd.conn[i].obj.name + '"]').prop('selected', 'selected');
+            }
+            index++;
+        }
+    }
+
+    if ((connType == null) || (index == 0) ||
+        (!INCLUDE_IPV6 || $.wd.conn[$.wd.editIndex].obj.X_TP_IPv4Enabled == 0)) {
+        opt1 = "<option text='" + s_str.cur_con + "''>" + s_str.cur_con + "</option>";
+        dftGtw.append(opt1);
+        currGtwIndex = index;
+        index++;
+    }
+
+    if (INCLUDE_IPV6 && (dftGtw6 != null)) {
+        index = 0;
+
+        for (var i = 0; i < length; i++) {
+            if (($.wd.conn[i].type != "bridge") && ($.wd.conn[i].obj.X_TP_IPv6Enabled == 1)) {
+                if (INCLUDE_VDSLWAN && (curSetIsPtm != $.wd.conn[i].ptm.X_TP_Used))
+                    continue;
+
+                opt1 = "<option value='" + $.wd.conn[i].obj.name + "' text='" + $.wd.conn[i].obj.name + "''>" + $.wd.conn[i].obj.name + "</option>";
+                dftGtw6.append(opt1);
+
+                if ($.wd.conn[i].obj.name == (INCLUDE_VDSLWAN ? (curSetIsPtm ? sysMode.VDSLL3IPv6ForwardingName : sysMode.DSLL3IPv6ForwardingName) : $.wd.l3Ip6ForwardingObj.__ifAliasName)) {
+                    dftGtw6.find('option[value="' + $.wd.conn[i].obj.name + '"]').prop('selected', 'selected');
+
+                }
+                index++;
+            }
+        }
+
+        if ((connType == null) || ($.wd.conn[$.wd.editIndex].obj.X_TP_IPv6Enabled == 0) || (index == 0)) {
+            opt1 = "<option text='" + s_str.cur_con + "''>" + s_str.cur_con + "</option>";
+            dftGtw6.append(opt1);
+            currGtw6Index = index;
+            index++;
+        }
+    }
+
+}
+
+$("#link_type").click(function() {
+    if ($("#link_type").data("value") == "bridge") {
+        $("#divMacClone").addClass("nd");
+    } else {
+        $("#divMacClone").removeClass("nd");
+    }
+
+    if ($("#addLinkType").hasClass("nd")) {
+        return;
+    }
+    if (!INCLUDE_WAN_VLAN || $("#link_type").data("value") == "ipoa" || $("#link_type").data("value") == "pppoa") {
+        $("#dsl_vlan_add").addClass("nd");
+    } else {
+        $("#dsl_vlan_add").removeClass("nd");
+    }
+
+    doSync($("#link_type").data("value"));
+});
+
+$("#cancelBtn").click(function() {
+    $.loadMain("wan.htm");
+});
+
+var pcMacAddr;
+
+function addMacCloneAttrs() {
+    var macAddr;
+    if ($("#dftMac").prop("checked")) {
+        wanArg.MACAddressOverride = 0;
+        return true;
+    } else if ($("#pcMac").prop("checked")) {
+        macAddr = pcMacAddr;
+    } else if ($("#customMac").prop("checked")) {
+        if ($.mac($("#customMacAddr").val())) {
+            $("#customMacAddr").focus().select();
+            return false;
+        }
+        macAddr = $("#customMacAddr").val();
+    }
+    wanArg.MACAddressOverride = 1;
+    wanArg.X_TP_ClonedMACAddress = macAddr;
+    return true;
+}
+
+function initMacClone() {
+    $.act(ACT_CGI, "/cgi/info");
+    if ($.exe()) return false;
+    pcMacAddr = clientMac;
+
+    if ($.wd.conn[$.wd.editIndex].type != null) {
+        var wanConn = $.wd.conn[$.wd.editIndex].obj;
+        if (wanConn.MACAddressOverride == 1) {
+            if (wanConn.X_TP_ClonedMACAddress == pcMacAddr) {
+                $("#pcMac").prop("checked", true);
+                $("#customMac").prop("checked", false);
+                $("#dftMac").prop("checked", false);
+            } else {
+                $("#customMac").prop("checked", true);
+                $("#customMacAddr").val(wanConn.X_TP_ClonedMACAddress);
+
+                $("#pcMac").prop("checked", false);
+                $("#dftMac").prop("checked", false);
+            }
+        }
+    }
+}
+</script>
+
+<div id="divDslCfg" class="nd"></div>
+<div class="part-separate"></div>
+<!-- <h3 class="T_service">WAN Service Setup</h3>  -->
+<div id="addLinkType" class="nd"><b class="T_conntype">Connection Type</b>
+    <select id="link_type" class="xl">
+        <option class="T_staip" value="staticIp">Static IP</option>
+        <option class="T_dynip" value="dynamicIp">Dynamic IP</option>
+        <option value="pppoe">PPPoE</option>
+        <option value="pppoa">PPPoA</option>
+        <option value="ipoa">IPoA</option>
+        <option class="T_bridge" value="bridge">Bridge</option>
+    </select>
+</div>
+
+<div class="pure-control-group cfg-line nd" id="editLinkType">
+    <label class="label-title T_conntype">Connection Type:</label>
+    <span class="text" id="linkTypeText"></span>
+</div>
+
+<div id="divStaIp" class="nd"></div>
+<div id="divDynIp" class="nd"></div>
+<div id="divPPPoE" class="nd"></div>
+<div id="divPPPoA" class="nd"></div>
+<div id="divIPoA" class="nd"></div>
+
+<div id="divMacClone" class="part-separate">
+    <h3 id="et2">MAC Clone</h3>
+    <div>
+        <input type="radio" name="macClone" id="dftMac" checked="checked" />
+        <label id="t_defMac">Use Default MAC Address</label>
+    </div>
+    <div>
+        <input type="radio" name="macClone" id="pcMac" />
+        <label id="t_computerMac">Use Current Computer MAC Address</label>
+    </div>
+    <div>
+        <input type="radio" name="macClone" id="customMac" />
+        <label id="t_customMac">Use Custom MAC Address</label>
+        <input type="text" id="customMacAddr" />
+    </div>
+</div>
+
+<div class="inline-btn-right part-separate">
+    <div class="inline">
+        <button type="submit" class="green T_cancel" id="cancelBtn">Cancel</button>
+    </div>
+    <div class="inline">
+        <button type="submit" class="green T_ok" id="saveConnBtn">OK</button>
+    </div>
+</div>
+<script language="JavaScript" type="text/javascript">
+initDiv();
+</script>

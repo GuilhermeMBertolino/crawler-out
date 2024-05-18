@@ -1,0 +1,30 @@
+#!/bin/sh
+
+### return when loopback
+if [ "$INTERFACE" = "lan" -o "$INTERFACE" = "loopback" ]; then
+    exit 0
+fi
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+ 
+if [ "$ACTION" = "ifup" ]; then
+    local wanif
+    if [ "$INTERFACE" != "wan" -a "$INTERFACE" != "internet" ]; then
+	/usr/sbin/systime_sync &
+	#check upgrade
+	[ -f /usr/sbin/cloud_https_bootreq ] && {
+		ps -w |grep -v grep |grep "/usr/sbin/cloud_https_bootreq" > /dev/null 2>&1
+		[ $? -eq 0 ] || /usr/sbin/cloud_https_bootreq &
+	}
+    elif network_find_wan wanif; then
+        if [ "$INTERFACE" = "$wanif" ]; then
+		/usr/sbin/systime_sync &
+		#check upgrade
+		[ -f /usr/sbin/cloud_https_bootreq ] && {
+			ps -w |grep -v grep |grep "/usr/sbin/cloud_https_bootreq" > /dev/null 2>&1
+			[ $? -eq 0 ] || /usr/sbin/cloud_https_bootreq &
+		}
+        fi
+    fi
+fi

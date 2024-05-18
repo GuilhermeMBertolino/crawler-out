@@ -1,0 +1,87 @@
+<script language="javascript">var pushServiceObj,emailFormat=/^[a-zA-Z0-9\.\!\#\$\%\&\'\*\+\/\=\?\^\_\`\{\|\}\~\-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$/,domainFormat=/[A-Za-z0-9\-]{1,20}\.[A-Za-z0-9\-]{1,26}/,pwdChanged=0;function showTestResult(e){200==e?$.toast(!0,$.tpLang.pushService_nstr.t_testOk):500==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_GERNERAL]):501==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_TIMEOUT]):502==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_RESOLVE]):503==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_CONNECT]):504==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_SSL]):505==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_STARTTLS]):506==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_USER]):507==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_EMAIL]):508==e?$.toast(!1,e_str[ERR_PUSHSVC_TEST_IO]):509==e&&$.toast(!1,e_str[ERR_PUSHSVC_TEST_RES])}function init(){pushServiceObj=$.act(ACT_GET,MAIL_CFG,null,null),$.exe()||(0!=(1&pushServiceObj.enableFlags)?($("#pushEmail_on").addClass("selected"),$("#pushEmail_off").removeClass("selected"),$("#div_Enabled").removeClass("nd")):($("#div_Enabled").addClass("nd"),$("#pushEmail_on").removeClass("selected"),$("#pushEmail_off").addClass("selected")),$("#senderAddr").prop("value",pushServiceObj.from),$("#div_AuthNeeded").removeClass("nd"),$("#authUser").prop("value",pushServiceObj.username),$("#authPwd").prop("value",pushServiceObj.password),$("#smtpServAddr").prop("value",pushServiceObj.smtpServerAddr),$("#smtpPort").prop("value",pushServiceObj.port),1==pushServiceObj.useSSL?($("#useSSL").prop("checked",!0),$("#useTLS").prop("checked",!1),$("#useTLS").prop("disabled",!0)):2==pushServiceObj.useSSL&&($("#useTLS").prop("checked",!0),$("#useSSL").prop("checked",!1),$("#useSSL").prop("disabled",!0)),$("#receiverAddr").prop("value",pushServiceObj.to.replace(/\s/g,";")),0!=(2&pushServiceObj.enableFlags)?$("#en_missedCalls").prop("checked",!0):$("#en_missedCalls").prop("checked",!1),0!=(4&pushServiceObj.enableFlags)?$("#en_voiceMail").prop("checked",!0):$("#en_voiceMail").prop("checked",!1),0!=pushServiceObj.checkConnectionStatus&&$.auto(function(){var e=$.act(ACT_GET,MAIL_CFG,null,null,["checkConnectionStatus"]);if(!$.exe()){var a=e.checkConnectionStatus;if(1==a)$("#t_test").prop("disabled",!0),$.addLoading($("#t_cancel"),null,null,1),$("#t_cancel").removeClass("nv");else{if(0==a)return $.removeLoading(),$("#t_cancel").addClass("nv"),$("#t_test").prop("disabled",!1),!1;if(0!=a){$.removeLoading(),$("#t_cancel").addClass("nv"),showTestResult(a),$("#t_test").prop("disabled",!1);var t={password:"",checkConnectionStatus:0};return $.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,t),$.exe(),!1}}}},1e3))}function doSave(a){var e,t,s,r,d,o,l;if(e=$("#senderAddr").prop("value"),0==emailFormat.test(e))return $.alert(CMM_EMAILADDR_INVAD),$("#senderAddr").focus(),$("#senderAddr").select(),a&&$("#t_test").prop("disabled",!1),!1;if(!(t=$("#authUser").prop("value")))return $.alert(CMM_AUTH_USER_EMPTY),$("#authUser").focus(),$("#authUser").select(),a&&$("#t_test").prop("disabled",!1),!1;if(!(s=$("#authPwd").prop("value")))return $.alert(CMM_AUTH_PWD_EMPTY),$("#authPwd").focus(),$("#authPwd").select(),a&&$("#t_test").prop("disabled",!1),!1;if("******"==s&&0==pwdChanged&&(s=""),r=$("#smtpServAddr").prop("value"),!$.isdomain(r)&&$.ifip(r,!0)||""==r)return $.alert(CMM_SMTPSERV_ADDR_INVAD),$("#smtpServAddr").focus(),$("#smtpServAddr").select(),a&&$("#t_test").prop("disabled",!1),!1;if(""==(d=$("#smtpPort").prop("value"))||""!=d&&!$.isnum(d)||0==parseInt(d,10)||65535<parseInt(d,10))return $.alert(ERR_PORT_NUM_INVAD),$("#smtpPort").focus(),$("#smtpPort").select(),a&&$("#t_test").prop("disabled",!1),!1;if(o=1==$("#useSSL").prop("data-checked")?1:1==$("#useTLS").prop("data-checked")?2:0,1!=a){if(!(l=$("#receiverAddr").prop("value")))return $.alert(CMM_RECEIVER_EMAILADDR_INVAD),$("#receiverAddr").focus(),$("#receiverAddr").select(),!1;for(var n="",c=l.split(";"),p=0;p<c.length;p++)if(""!=c[p]){var u=c[p].replace(/(^\s*)|(\s*$)/g,"");if(0==emailFormat.test(u))return $.alert(CMM_RECEIVER_EMAILADDR_INVAD),$("#receiverAddr").focus(),$("#receiverAddr").select(),!1;n+=(0<p?" ":"")+u}}var i={from:e,smtpServerAddr:r,port:d,username:t,password:s,useSSL:o};1!=a&&$.extend(i,{to:n}),$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,i),$.exe(function(e){e||(1==a?($.act(ACT_OP,ACT_MAIL_SEND_TEST_MAIL),$.exe(function(e){e||$.auto(function(){var e=$.act(ACT_GET,MAIL_CFG,null,null,["checkConnectionStatus"]);if(!$.exe()){var a=e.checkConnectionStatus;if(1==a);else{if(0==a)return $.removeLoading(),$("#t_cancel").addClass("nv"),$("#t_test").prop("disabled",!1),!1;if(0!=a){$.removeLoading(),$("#t_cancel").addClass("nv"),showTestResult(a),$("#t_test").prop("disabled",!1);var t={password:"",checkConnectionStatus:0};return $.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,t),$.exe(),!1}}}},1e3)})):($.removeLoading(),$.reload()))})}$("#useSSL").click(function(){1==$("#useSSL").prop("data-checked")?$("#useTLS").prop("disabled",!0):$("#useTLS").prop("disabled",!1),$("#useTLS").tpCheckbox()}),$("#useTLS").click(function(){1==$("#useTLS").prop("data-checked")?$("#useSSL").prop("disabled",!0):$("#useSSL").prop("disabled",!1),$("#useSSL").tpCheckbox()}),$("#pushEmail_on").click(function(){$.addLoading($(this));var e={};e.password=$("#authPwd").prop("value"),"******"==$("#authPwd").prop("value")&&0==pwdChanged&&(e.password=""),e.enableFlags=1|pushServiceObj.enabled,$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,e),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#pushEmail_off").click(function(){$.addLoading($(this));var e={};e.password=$("#authPwd").prop("value"),"******"==$("#authPwd").prop("value")&&0==pwdChanged&&(e.password=""),e.enableFlags=-2&pushServiceObj.enabled,$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,e),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#authPwd").click(function(){"******"==$("#authPwd").val()&&$("#authPwd").val("")}),$("#t_save").click(function(){$.addLoading($(this)),doSave()}),$("#save2").click(function(){$.addLoading($(this));var e=$.act(ACT_GET,MAIL_CFG,null,null,["EnableFlags"]);0==$.exe()&&(e.password=$("#authPwd").prop("value"),"******"==$("#authPwd").prop("value")&&0==pwdChanged&&(e.password=""),1==$("#en_missedCalls").prop("data-checked")?e.enableFlags|=2:e.enableFlags&=-3,1==$("#en_voiceMail").prop("data-checked")?e.enableFlags|=4:e.enableFlags&=-5,$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,e),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()}))}),$("#t_test").click(function(){$("#t_test").prop("disabled",!0),$.addLoading($("#t_cancel"),null,null,1),$("#t_cancel").removeClass("nv"),doSave(!0)}),$("#t_cancel").click(function(){var e={checkConnectionStatus:0};$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,e),$.exe()})</script>
+<style>.boldTitle{font-weight:700}#t_test{margin-left:408px}</style>
+<h3 id="et">Push Service</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container">
+            <b class="T xxl" id="t_enPushService">Push Notification via E-mail: </b>
+            <ul>
+                <li>
+                    <button id="pushEmail_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="pushEmail_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <br>
+        <br>
+        <div id="div_Enabled" class="nd">
+            <span class="boldTitle" id="t_senderTitle">Sender Account Settings</span>
+            <div>
+                <b class="xxl" id="t_senderAddr">Sender E-mail Address: </b>
+                <input class="xl" type="text" size="120" id="senderAddr">
+            </div>
+            <div id="div_AuthNeeded" class="nd">
+                <div>
+                    <b class="xxl" id="t_authUser">Authentication Username:</b>
+                    <input class="xl" type="text" size="120" id="authUser">
+                </div>
+                <div>
+                    <b class="xxl" id="t_authPwd">Sender E-mail Password:</b>
+                    <input class="xl" type="password" size="64" id="authPwd">
+                </div>
+            </div>
+            <div>
+                <b class="xxl" id="t_smtpServAddr">SMTP Server Address:</b>
+                <input class="xl" type="text" size="120" id="smtpServAddr">
+            </div>
+            <div class="">
+                <b class="xxl" id="t_smtpPort">Sender E-mail Port:</b>
+                <input class="xl" type="text" size="5" id="smtpPort">
+            </div>
+            <div class="inline">
+                <b class="xxl" id="d2"></b>
+                <input type="checkbox" id="useSSL">
+                <label id="t_sslEn">SSL</label>
+            </div>
+            <div class="inline">
+                <input type="checkbox" id="useTLS">
+                <label id="t_tlsEn">STARTTLS</label>
+            </div>
+            <div class="">
+                <button type="submit" id="t_test" class="blue left T inline">Test</button>
+				<button type="submit" id="t_cancel" class="blue left inline T_cancel nv">Cancel</button>
+            </div>
+            <br>
+            <br>
+            <br>
+            <span class="boldTitle" id="t_receiverTitle">Receiver Account Settings</span>
+            <div>
+                <b class="xxl" id="t_receiverAddr">Receiver E-mail Address: </b>
+                <input class="xl" type="text" size="320" id="receiverAddr">
+            </div>
+            <div class="part-separate">
+                <button type="submit" id="t_save" class="green T_save">Save</button>
+            </div>
+            <br>
+            <br>
+            <br>
+            <span class="boldTitle" id="t_selectEvent">Select the Notification of Event Pushed via E-mail</span>
+            <div>
+                <b id="t_missedCalls" class="xxl">Missed Calls</b>
+                <input type="checkbox" id="en_missedCalls">
+                <label class="T_en">enable</label>
+            </div>
+            <div>
+                <b id="t_voiceMail" class="xxl">Voice Mail</b>
+                <input type="checkbox" id="en_voiceMail">
+                <label class="T_en">enable</label>
+            </div>
+            <div class="part-separate">
+                <button type="submit" id="save2" class="green T_save">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script language="javascript">$.tpInit(init)</script>

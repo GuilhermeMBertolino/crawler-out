@@ -1,0 +1,31 @@
+#!/usr/bin/lua
+
+local asycrypto = require("luci.model.asycrypto").Crypto("rsa")
+local accmgnt = require "luci.model.accountmgnt"
+local sys = require "luci.sys"
+local uci = require "luci.model.uci"
+
+local uci_r = uci.cursor()
+
+local nvram_rsa_keys = {}
+nvram_rsa_keys.e = uci_r:get("accountmgnt", "keys", "e")
+nvram_rsa_keys.d = uci_r:get("accountmgnt", "keys", "d")
+nvram_rsa_keys.n = uci_r:get("accountmgnt", "keys", "n")
+
+local username
+local password_aes
+uci_r:foreach("accountmgnt", "account",
+    function(section)
+        username = section["username"]
+        password_aes = section["password"]
+    end
+)
+local password_dersa = accmgnt.aes_decrypt(password_aes)
+local password_rsa = asycrypto.encrypt(password_dersa, nvram_rsa_keys)
+local password_md5_result = luci.sys.exec("echo -n " .. password_dersa .. " | md5sum")
+local password_md5 = string.upper(string.match(password_md5_result, "%x%x%x%x+"))
+
+luci.sys.exec("nvram set username=" .. username)
+luci.sys.exec("nvram set pwd_rsa=" .. password_rsa)
+luci.sys.exec("nvram set pwd_md5=" .. password_md5)
+luci.sys.exec("nvram commit")

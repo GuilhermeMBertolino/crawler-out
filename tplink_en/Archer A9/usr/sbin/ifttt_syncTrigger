@@ -1,0 +1,151 @@
+#!/usr/bin/lua
+
+local AppsError = require "cloud.tp_apps.tp_app_error"
+local sys   = require "luci.sys"
+local nixio = require "nixio"
+local dbg   = require "luci.tools.debug"
+local json  = require "luci.json"
+local io    = require "io"
+local form  = require "luci.tools.form"
+local uci_r = uci.cursor()
+form = form.Form(uci_r, {"time"})
+
+local TRIGGER_CFG = "ifttt_trigger"
+local TRIGGER_CFG_NAME = "trigger"
+local oldest_propotion = 0.3
+local content_type = "Content-type: application/json;charset=utf-8"
+local url_postfix = "/cloudDevice"
+local CLOUD_NBU_TOKEN_FILE = "/tmp/cloud/cloud_token_nbu"
+
+local retry_count = 0
+local token
+local origin_url
+local fp
+local flag = false
+
+local function get_trigger_list()
+	local all_list = {}
+	local count = 0
+    uci_r:foreach(TRIGGER_CFG, TRIGGER_CFG_NAME,
+        function(section)
+            all_list[#all_list+1] = uci_r:get_all(TRIGGER_CFG, section[".name"])
+            count = count + 1
+        end
+    )
+    return all_list, count
+end
+
+local function sort_list_by_timestamp(a, b)
+	return tonumber(a.time) < tonumber(b.time)
+end
+
+local function tableCopy(st)  
+    local tab = {}  
+    for k, v in pairs(st or {}) do  
+        if type(v) ~= "table" then  
+            tab[k] = v  
+        else  
+            tab[k] = copyTab(v)  
+        end  
+    end  
+    return tab  
+end 
+
+while(retry_count <= 2)
+do
+	retry_count = retry_count + 1
+	flag = false
+
+	if not nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+		sys.call("cloud_getDevToken nbu")
+	end
+
+	if nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+		fp = io.open(CLOUD_NBU_TOKEN_FILE, "r")
+		token = fp:read("*line")
+		origin_url = fp:read("*line")..url_postfix
+		fp:close()
+	else
+		-- try again when not get the nbu token
+		sys.call("cloud_getDevToken nbu")
+		if nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+			fp = io.open(CLOUD_NBU_TOKEN_FILE, "r")
+			token = fp:read("*line")
+			origin_url = fp:read("*line") .. url_postfix
+			fp:close()
+		else		
+			break
+		end
+	end
+		
+	local data = {
+		["method"] = "syncTriggers",
+		["params"] = {
+			["deviceToken"] = token,
+			["deviceId"] = string.match(sys.exec("getfirm DEV_ID"), "%w+"),
+			["triggerIdList"] = {}
+		}
+	}
+
+	local trigger_list,total = get_trigger_list()
+	
+	if total < 1 then
+		break
+	end
+	
+	table.sort(trigger_list, sort_list_by_timestamp)
+
+	for i=1, total*oldest_propotion, 1 do
+		data.params.triggerIdList[#data.params.triggerIdList+1] = tonumber(trigger_list[i].id)
+	end
+	
+	sys.call("echo `date` >/var/log/ifttt_sync.result; echo '%s' >>/var/log/ifttt_sync.result" % {json.encode(data)})
+	dbg.print("ifttt request:",json.encode(data))
+
+	local ret
+	fp = io.popen("curl -S -l -H \"%s\" -X POST -k -d \'%s\' --connect-timeout 8 %s --retry 3 --retry-delay 1 2>>/var/log/ifttt_sync.result" % {content_type, json.encode(data), origin_url})
+	if fp then                                    
+		ret = fp:read("*all")                    
+		fp:close()                             
+	end
+
+	dbg.print("ifttt response:",ret)
+	ret = json.decode(ret)
+
+	local old = {}
+	local new = {}
+	if ret ~= nil then
+		if tonumber(ret.error_code) == AppsError.ERROR_MSG.ERROR_INVAILD_TOKEN[1] then
+			--refresh token and upload again
+			sys.call("rm " .. CLOUD_NBU_TOKEN_FILE)
+			flag = true
+		else
+			--delete or update the appointed trigger. 
+		    uci_r:foreach(TRIGGER_CFG, TRIGGER_CFG_NAME,
+		        function(section)
+		            old = uci_r:get_all(TRIGGER_CFG, section[".name"])
+
+					for _, triggerId in ipairs(ret.result.deleteTriggerIdList) do
+						if tonumber(triggerId) == tonumber(old.id) then
+							uci_r:delete(TRIGGER_CFG, section[".name"])
+						end
+					end
+					for _, list in ipairs(ret.result.remainTriggerIdList) do
+						if tonumber(list.triggerId) == tonumber(old.id) then
+							new = tableCopy(old)
+							new.time = list.timestamp
+							form:update(TRIGGER_CFG, TRIGGER_CFG_NAME, old, new)
+						end
+					end					
+		        end
+		    )
+
+			uci_r:commit(TRIGGER_CFG)
+		end
+	end
+
+	if flag == false then
+		break
+	end
+
+end

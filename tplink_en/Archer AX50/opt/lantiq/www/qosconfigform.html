@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+
+<head>
+	<title>TODO supply a title</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style type="text/css">
+		/*.custom_heading{background:#bdc3c7 !important;}
+            .custom_heading .panel-title{width: 100%;height:30px;}           
+            .qos_content .panel-body table{margin:15px 0px 15px 0px }
+            .queue_txt{font-size:14px;color:#252525;margin-right:8px;}
+            .custom_heading .panel-title .label-info{font-weight:normal;cursor:pointer;  }
+            .panel-heading-btn-align{display: inline-block; width: 100%; line-height: 26px;}
+            .qos_panelgroup{margin-bottom:15px;}
+            .acc-active{background:#d24d57!important;}
+            .acc-active .queue_txt{color:#ffffff!important;}
+            .acc-inactive{background:#ffffff !important;}
+            .qos_content .panel-body form {margin: 15px 0;}
+            .ltq-button-group{margin:15px 0px 0px 0px; }
+            .lantiq-form-text .form-group{margin-left:0px;margin-right:0px;}
+            .form-group.required .control-label:after { content:" *";color:red;}
+            .classifier_body .form-group{padding-top:15px; }
+            .custom_btn_add{margin-left: 10px;}*/
+	</style>
+</head>
+
+<body>
+	<div id="translation" class="hide">qosclassifiers</div>
+	<div ng-controller="qosClassifiersController" ng-cloak>
+		<!--Breadscrumbs starts here -->
+		<div class="row ltq_breadcrumbs">
+			<div ng-repeat="breadcrumb in $root.breadcrumbs">
+				<ng-switch on="$first">
+					<div class="btn-group btn-breadcrumb1" ng-switch-when="true">
+						<div class="ltq_brd_home">
+							<a class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">
+								<i class="fa fa-home"></i> {{breadcrumb.name}}
+							</a>
+						</div>
+					</div>
+
+					<div class="btn-group btn-breadcrumb" ng-switch-when="false">
+
+						<span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true">                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>
+						<span ng-if="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>
+					</div>
+
+				</ng-switch>
+			</div>
+		</div>
+		<!--Breadscrumbs ends here -->
+		<div class="subheader">
+			<div>
+				<img src="images/qos-1.png" class="iconDetails" alt="img">
+			</div>
+			<div>
+				<h4 ng-bind="'qosclassifiers.headername' | translate"></h4></div>
+			<p ng-bind="'qosclassifiers.headerdescription' | translate"></p>
+		</div>
+		<div class="row" ng-show="getformnamepopup">
+			<div class="alert alert-danger">
+				<a class="close" aria-label="close" ng-click="popupclose('getformnamepopup')">&times;</a>
+				<strong ng-bind="'Warning!' | translate"></strong><span ng-bind="getformnamepopupval"></span>
+			</div>
+		</div>
+		<div class="row" ng-show="postformnamepopup">
+			<div class="alert alert-danger">
+				<a class="close" aria-label="close" ng-click="popupclose('postformnamepopup')">&times;</a>
+				<strong ng-bind="'Warning!' | translate"></strong><span ng-bind="postformnamepopupval"></span>
+			</div>
+		</div>
+		<div class="help_toggle helpshow" ng-class="$root.scopevariable ? 'helpshow' : 'helphide'" ng-init="$root.scopevariable=true">
+			<div class="help_txtcontent">
+				<a helpfile="languages/*/{{'qosclassifiers.helpkey' | translate}}" ng-click="helpTextDetails($event)" href="">
+					<i class="fa fa-info circle_bg"></i>
+				</a>
+				<div class="help_content" ng-include="$root.helpfile"></div>
+			</div>
+		</div>
+		<div class="row no-margin-hr">
+			<form class="form-horizontal lantiq-form-text row" role="form" name="classfierform" novalidate>
+				<div class="col-lg-12 col-md-12">
+					<div class="panel">
+						<div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span ng-bind="'qosclassifiers.QOSClass' | translate"></div>
+                            <div class="panel-body"> 
+                                <div class="row">
+                                    <div class="form-group required col-lg-6 col-md-6">
+                                        <div class="input-field col-sm-12"> 
+                                            <input id="DeviceQoSClassification_Alias" ng-required="true" type="text" class="form-control" name='classifiername'  ng-model="DeviceQoSClassification.Alias" ng-change="textChange('DeviceQoSClassificationAlias')" placeholder="{{'Device.QoS.Classification.*.Classifier Name.Enter valid classifier name' | translate}}">
+                                            <label class="required active" ng-bind="'Device.QoS.Classification.*.Classifier Name' | translate"></label>
+                                            <span class="error" forname="DeviceQoSClassification_Alias" ng-show="qosclassifiersformstatus && classfierform.classifiername.$error.required" ng-bind="'Device.QoS.Classification.*.Alias.$error.required' | translate">
+                                            </span>
+							<span class="error" forname="DeviceQoSClassification_Alias" ng-show="DeviceQoSClassification_Aliasresponsestatus" ng-bind="DeviceQoSClassification_Aliasval">
+                                            </span>
+						</div>
+					</div>
+					<div class="form-group required col-lg-6 col-md-6">
+						<div class="input-field  col-sm-12">
+							<input id="DeviceQoSClassification_Order" ng-required="true" type="text" class="form-control string-to-number" name='order' ng-model="DeviceQoSClassification.Order" ng-change="textChange('DeviceQoSClassificationOrder')" ng-pattern="/^\d{0,}$/" placeholder="{{'Device.QoS.Classification.*.Order.Enter Order value' | translate}}" >
+							<label class="required active" ng-bind="'Device.QoS.Classification.*.Order' | translate"></label>
+							<span class="error" forname="DeviceQoSClassification_Order" ng-show="qosclassifiersformstatus && classfierform.order.$error.required" ng-bind="'Device.QoS.Classification.*.Order.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceQoSClassification_Order" ng-show="qosclassifiersformstatus && classfierform.order.$error.pattern"  ng-bind="'Device.QoS.Classification.*.Order.$error.pattern' | translate">  
+                                            </span>
+                                            <span class="error" forname="DeviceQoSClassification_Order" ng-show="qosclassifiersformstatus && classfierform.order.$error.min" ng-bind="'Device.QoS.Classification.*.Order.$error.min' | translate">
+                                            </span>
+							<span class="error" forname="DeviceQoSClassification_Order" ng-show="DeviceQoSClassification_Orderresponsestatus" ng-bind="DeviceQoSClassification_Orderval">
+                                            </span>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group required col-lg-6 col-md-6">
+						<label class="control-label col-lg-12 col-md-12 col-sm-12" ng-bind="'Device.QoS.Classification.*.Classifier Interface' | translate"></label>
+						<div class="col-sm-12">
+							<!--<input ng-required="true" type="text" class="form-control" name='classifierinterface' ng-model="DeviceQoSClassification.X_LANTIQ_COM_LowerLayers" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_LowerLayers')">-->
+							<select id="DeviceQoSClassification_X_LANTIQ_COM_LowerLayers" class="form-control" name='classifierinterface' ng-required="true" ng-model="DeviceQoSClassification.X_LANTIQ_COM_LowerLayers" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_LowerLayers')" ng-options="obj.id as obj.name for obj in X_LANTIQ_COM_LowerLayers" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'X_LANTIQ_COM_LowerLayers', 'cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=bridge&Name=&Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true&Name=Object=Device.WiFi.SSID&Status=Up&Name=')">
+							</select>
+							<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_LowerLayers" ng-show="qosclassifiersformstatus && classfierform.classifierinterface.$error.required" ng-bind="'Device.QoS.Classification.*.X_LANTIQ_COM_LowerLayers.$error.required' | translate">
+
+                                            </span>
+							<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_LowerLayers" ng-show="DeviceQoSClassification_X_LANTIQ_COM_LowerLayersresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_LowerLayersval">
+
+                                            </span>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-lg-6 col-md-6">
+							<label class="control-label col-lg-12 col-md-12 col-sm-12" ng-bind="'Device.QoS.Classification.*.Queuing Interface' | translate"></label>
+							<div class="col-sm-12">
+								<!--<input ng-required="true" type="text" class="form-control" name='queuinginterface' ng-model="DeviceQoSClassification.X_LANTIQ_COM_OutInterface" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_OutInterface')">-->
+								<select id="DeviceQoSClassification_X_LANTIQ_COM_OutInterface" class="form-control" name='queuinginterface' ng-model="DeviceQoSClassification.X_LANTIQ_COM_OutInterface" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_OutInterface')" ng-options="obj.id as obj.name for obj in X_LANTIQ_COM_OutInterface" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'X_LANTIQ_COM_OutInterface', 'cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=bridge&Name=&Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true&Name=Object=Device.WiFi.SSID&Status=Up&Name=')">
+								</select>
+
+								</span>
+								<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_OutInterface" ng-show="DeviceQoSClassification_X_LANTIQ_COM_OutInterfaceresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_OutInterfaceval">
+
+                                            </span>
+							</div>
+						</div>
+						<div class="form-group col-lg-6 col-md-6 switchblock ">
+							<div class="form-group col-lg-6 col-md-6 switchblock ">
+								<label class="control-label" style="padding-left:11px;" ng-bind="'Device.QoS.Classification.*.Enable' | translate"></label>
+								<div class="text-left">
+									<span ng-class="{checked:DeviceQoSClassification.Enable}" ng-click="DeviceQoSClassification.Enable = !DeviceQoSClassification.Enable;
+                                                                toggleClick('DeviceQoSClassification.Enable')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.Enable" ng-model="DeviceQoSClassification.Enable" off="Off" on="On" id="Enable">
+                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.Enable" name="DeviceQoSClassification.Enable" id="Enable" class="ng-pristine ng-untouched ng-valid">
+                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+									</span>
+									<span class="error" forname="DeviceQoSClassification_Enable" ng-show="DeviceQoSClassification_Enableresponsestatus" ng-bind="DeviceQoSClassification_Enableval">
+
+                                            </span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-lg-6 col-md-6">
+								<div class="form-group col-lg-6 col-md-6 switchblock ">
+									<label class="control-label" style="padding-left:11px;" ng-bind="'Device.QoS.Classification.*.X_LANTIQ_COM_MPTCP' | translate"></label>
+									<div class="text-left">
+										<span ng-class="{checked:DeviceQoSClassification.X_LANTIQ_COM_MPTCP}" ng-click="DeviceQoSClassification.X_LANTIQ_COM_MPTCP = !DeviceQoSClassification.X_LANTIQ_COM_MPTCP;
+                                 toggleClick('DeviceQoSClassification.X_LANTIQ_COM_MPTCP')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.X_LANTIQ_COM_MPTCP" ng-model="DeviceQoSClassification.X_LANTIQ_COM_MPTCP" off="Off" on="On" id="X_LANTIQ_COM_MPTCP">
+                                 <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.X_LANTIQ_COM_MPTCP" name="DeviceQoSClassification.X_LANTIQ_COM_MPTCP" id="X_LANTIQ_COM_MPTCP" class="ng-pristine ng-untouched ng-valid">
+                                            <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+										</span>
+										<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_MPTCP" ng-show="DeviceQoSClassification_X_LANTIQ_COM_MPTCPresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_MPTCPval">                          
+                                     </span>
+									</div>
+								</div>
+
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group required col-lg-6 col-md-6">
+								<label class="control-label col-lg-12 col-md-12 col-sm-12" ng-bind="'Device.QoS.Classification.*.Queue ID' | translate"></label>
+								<div class="col-sm-12">
+									<select id="DeviceQoSClassification_TrafficClass" class="form-control" ng-required="true" name="queueid" ng-model="DeviceQoSClassification.TrafficClass" ng-change="textChange('DeviceQoSClassificationTrafficClass')" ng-options="obj.id as obj.name for obj in TrafficClass" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'TrafficClass', 'cgi_get_fillparams?Object=Device.QoS.Queue&amp;Alias=')">
+									</select>
+									<span class="error" forname="DeviceQoSClassification_TrafficClass" ng-show="qosclassifiersformstatus && classfierform.queueid.$error.required" ng-bind="'Device.QoS.Classification.*.TrafficClass.$error.required' | translate">
+
+                                            </span>
+									<span class="error" forname="DeviceQoSClassification_TrafficClass" ng-show="DeviceQoSClassification_TrafficClassresponsestatus" ng-bind="DeviceQoSClassification_TrafficClassval">
+
+                                            </span>
+								</div>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="qos_content col-lg-6 col-md-6">
+								<div class="panel custom_panel" ng-init="parentIndex = 0">
+									<div class="panel-heading custom_heading" ng-class="activePosition == 0? 'acc-active':'acc-inactive'">
+										<div class="panel-title">
+											<div class="col-md-4 col-sm-4 no-padding-hr"><span class="queue_txt" ng-bind="'qosclassifiers.Layer-2' | translate"></span></div>
+											<button class="btn btn-info pull-right" ng-click="toggleDetails(0)">
+												{{activePosition == 0? 'Less':'More' | translate}}
+												<i class="fa fa-angle-up" ng-class="activePosition == 0? 'fa-angle-up':'fa-angle-down'"></i>
+											</button>
+										</div>
+									</div>
+									<div class="panel-body no-padding-vr classifier_body">
+										<div class="form-horizontal lantiq-form-text" role="form" ng-show="activePosition == 0">
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourceMACAddress" type="text" class="form-control" ng-pattern="/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/" name='clsourcemacaddress' value="" ng-model="DeviceQoSClassification.SourceMACAddress" ng-change="textChange('DeviceQoSClassificationSourceMACAddress')" placeholder="{{'Device.QoS.Classification.*.Source MAC.Enter MAC Address Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Source MAC' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourceMACAddress" ng-show="qosclassifiersformstatus && classfierform.clsourcemacaddress.$error.pattern" ng-bind="'Device.QoS.Classification.*.SourceMACAddress.$error.pattern' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourceMACAddress" ng-show="DeviceQoSClassification_SourceMACAddressresponsestatus" ng-bind="DeviceQoSClassification_SourceMACAddressval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourceMACMask" type="text" class="form-control" ng-pattern="/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/" name='clsourcemacmask' value="" ng-model="DeviceQoSClassification.SourceMACMask" ng-change="textChange('DeviceQoSClassificationSourceMACMask')" placeholder="{{'Device.QoS.Classification.*.Source MAC Mask.Enter MAC Address Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Source MAC Mask' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourceMACMask" ng-show="qosclassifiersformstatus && classfierform.clsourcemacmask.$error.pattern" ng-bind="'Device.QoS.Classification.*.SourceMACMask.$error.pattern' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourceMACMask" ng-show="DeviceQoSClassification_SourceMACMaskresponsestatus" ng-bind="DeviceQoSClassification_SourceMACMaskval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Source MAC Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.SourceMACExclude}" ng-click="DeviceQoSClassification.SourceMACExclude = !DeviceQoSClassification.SourceMACExclude;
+                                                                                toggleClick('DeviceQoSClassification.SourceMACExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.SourceMACExclude" ng-model="DeviceQoSClassification.SourceMACExclude" off="Off" on="On" id="SourceMACExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.SourceMACExclude" name="DeviceQoSClassification.SourceMACExclude" id="SourceMACExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_SourceMACExclude" ng-show="DeviceQoSClassification_SourceMACExcluderesponsestatus" ng-bind="DeviceQoSClassification_SourceMACExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestMACAddress" type="text" class="form-control" ng-pattern="/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/" name='cldestmac' value="" ng-model="DeviceQoSClassification.DestMACAddress" ng-change="textChange('DeviceQoSClassificationDestMACAddress')" placeholder="{{'Device.QoS.Classification.*.Dest MAC.Enter MAC Address Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Dest MAC' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestMACAddress" ng-show="qosclassifiersformstatus && classfierform.cldestmac.$error.pattern" ng-bind="'Device.QoS.Classification.*.DestMACAddress.$error.pattern' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestMACAddress" ng-show="DeviceQoSClassification_DestMACAddressresponsestatus" ng-bind="DeviceQoSClassification_DestMACAddressval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestMACMask" type="text" class="form-control" ng-pattern="/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/" name='cldestmacmask' value="" ng-model="DeviceQoSClassification.DestMACMask" ng-change="textChange('DeviceQoSClassificationDestMACMask')" placeholder="{{'Device.QoS.Classification.*.Dest MAC Mask.Enter MAC Address Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Dest MAC Mask' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestMACMask" ng-show="qosclassifiersformstatus && classfierform.cldestmacmask.$error.pattern" ng-bind="'Device.QoS.Classification.*.DestMACMask.$error.pattern' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestMACMask" ng-show="DeviceQoSClassification_DestMACMaskresponsestatus" ng-bind="DeviceQoSClassification_DestMACMaskval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Dest MAC Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.DestMACExclude}" ng-click="DeviceQoSClassification.DestMACExclude = !DeviceQoSClassification.DestMACExclude;
+                                                                                toggleClick('DeviceQoSClassification.DestMACExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.DestMACExclude" ng-model="DeviceQoSClassification.DestMACExclude" off="Off" on="On" id="DestMACExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.DestMACExclude" name="DeviceQoSClassification.DestMACExclude" id="DestMACExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_DestMACExclude" ng-show="DeviceQoSClassification_DestMACExcluderesponsestatus" ng-bind="DeviceQoSClassification_DestMACExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_VLANIDCheck" type="number" max='4095' class="form-control string-to-number custom-hidden-dom-removal" name='vlanidrange' value="" ng-model="DeviceQoSClassification.VLANIDCheck" ng-change="textChange('DeviceQoSClassificationVLANIDCheck')" placeholder="{{'Device.QoS.Classification.*.VLAN Id Range[2-4095].Enter Number Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.VLAN Id Range[2-4095]' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_VLANIDCheck" ng-show="qosclassifiersformstatus && classfierform.vlanidrange.$error.max" ng-bind="'Device.QoS.Classification.*.VLANIDCheck.$error.max' | translate">
+
+                                                            </span>
+													<!--<span class="error" forname="DeviceQoSClassification_VLANIDCheck" ng-show="qosclassifiersformstatus && classfierform.vlanidrange.$error.min" ng-bind="'Device.QoS.Classification.*.VLANIDCheck.$error.min' | translate">
+
+                                                            </span>-->
+													<span class="error" forname="DeviceQoSClassification_VLANIDCheck" ng-show="qosclassifiersformstatus && classfierform.vlanidrange.$error.number" ng-bind="'Device.QoS.Classification.*.VLANIDCheck.$error.number' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_VLANIDCheck" ng-show="DeviceQoSClassification_VLANIDCheckresponsestatus" ng-bind="DeviceQoSClassification_VLANIDCheckval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.VLAN Id Exclude' | translate"></label>
+												<div class=" col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.VLANIDExclude}" ng-click="DeviceQoSClassification.VLANIDExclude = !DeviceQoSClassification.VLANIDExclude;
+                                                                                toggleClick('DeviceQoSClassification.VLANIDExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.VLANIDExclude" ng-model="DeviceQoSClassification.VLANIDExclude" off="Off" on="On" id="VLANIDExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.VLANIDExclude" name="DeviceQoSClassification.VLANIDExclude" id="VLANIDExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_VLANIDExclude" ng-show="DeviceQoSClassification_VLANIDExcluderesponsestatus" ng-bind="DeviceQoSClassification_VLANIDExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-12" ng-bind="'Device.QoS.Classification.*.Incoming 802.1P' | translate"></label>
+												<div class="col-sm-12">
+													<select id="DeviceQoSClassification_EthernetPriorityCheck" name="EthernetPriorityCheck" class="form-control" ng-model="DeviceQoSClassification.EthernetPriorityCheck" ng-change="textChange('DeviceQoSClassificationEthernetPriorityCheck')" ng-options="obj.id as obj.name for obj in EthernetPriorityCheck" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'EthernetPriorityCheck', 'EthernetPriorityCheck')">
+														<!--  <select class="form-control" ng-model="DeviceQoSClassification.EthernetPriorityCheck=''" ng-change="textChange('DeviceQoSClassificationEthernetPriorityCheck')">
+                                                                <option value="" >Select</option>
+                                                                <option value="0" >0</option>   
+                                                                <option value="1" >1</option>   
+                                                                <option value="2" >2</option>   
+                                                                <option value="3" >3</option>   
+                                                                <option value="4" >4</option>   
+                                                                <option value="5" >5</option>   
+                                                                <option value="6" >6</option>   
+                                                                <option value="7" >7</option>   -->
+													</select>
+													<span class="error" forname="DeviceQoSClassification_EthernetPriorityCheck" ng-show="DeviceQoSClassification_EthernetPriorityCheckresponsestatus" ng-bind="DeviceQoSClassification_EthernetPriorityCheckval">
+                                                            </span>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.EthernetPriorityExclude}" ng-click="DeviceQoSClassification.EthernetPriorityExclude = !DeviceQoSClassification.EthernetPriorityExclude;
+                                                                                toggleClick('DeviceQoSClassification.EthernetPriorityExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.EthernetPriorityExclude" ng-model="DeviceQoSClassification.EthernetPriorityExclude" off="Off" on="On" id="EthernetPriorityExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.EthernetPriorityExclude" name="DeviceQoSClassification.EthernetPriorityExclude" id="EthernetPriorityExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_EthernetPriorityExclude" ng-show="DeviceQoSClassification_EthernetPriorityExcluderesponsestatus" ng-bind="DeviceQoSClassification_EthernetPriorityExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<!--											new  parameters-->
+
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Ethertype' | translate"></label>
+												<div class="col-sm-6">
+													<select id="DeviceQoSClassification_EthernetType" name="EthernetType" class="form-control" ng-model="DeviceQoSClassification.Ethertype" ng-change="textChange('DeviceQoSClassificationEthertype')" ng-options="obj.id as obj.name for obj in Ethertype" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'Ethertype', 'Ethertype')">
+														
+													</select>
+													<span class="error" forname="DeviceQoSClassification_EthernetType" ng-show="DeviceQoSClassification_EthernetTyperesponsestatus" ng-bind="DeviceQoSClassification_EthernetTypeval">
+
+                                                            </span>
+												</div>
+											</div>
+											
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.EthertypeExclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.EthertypeExclude}" ng-click="DeviceQoSClassification.EthertypeExclude = !DeviceQoSClassification.EthertypeExclude;
+                                                                                toggleClick('DeviceQoSClassification.EthertypeExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.EthertypeExclude" ng-model="DeviceQoSClassification.EthernetPriorityExclude" off="Off" on="On" id="EthernetPriorityExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.EthertypeExclude" name="DeviceQoSClassification.EthertypeExclude" id="EthertypeExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_EthertypeExclude" ng-show="DeviceQoSClassification_EthertypeExcluderesponsestatus" ng-bind="DeviceQoSClassification_EthertypeExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											
+<!--end of new changes-->
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="qos_content col-lg-6 col-md-6">
+								<div class="panel custom_panel" ng-init="parentIndex = 1">
+									<div class="panel-heading custom_heading" ng-class="activePosition == 1? 'acc-active':'acc-inactive'">
+										<div class="panel-title">
+											<div class="col-md-4 col-sm-4 no-padding-hr"><span class="queue_txt" ng-bind="'qosclassifiers.Layer-3' | translate"></span></div>
+											<button class="btn btn-info pull-right" ng-click="toggleDetails(1)">
+												{{activePosition == 1? 'Less':'More' | translate}}
+												<i class="fa fa-angle-up" ng-class="activePosition == 1? 'fa-angle-up':'fa-angle-down'"></i>
+											</button>
+										</div>
+									</div>
+									<div class="panel-body no-padding-vr classifier_body">
+										<div class="form-horizontal lantiq-form-text" role="form" ng-show="activePosition == 1">
+                                            <div class="form-group">
+												<label class="control-label col-sm-12" ng-bind="'Device.QoS.Classification.*.Incoming DSCP' | translate"></label>
+												<div class="col-sm-12">
+													<select id="DeviceQoSClassification_DSCPCheck" name="DSCPCheck" class="form-control" ng-model="DeviceQoSClassification.DSCPCheck" ng-change="textChange('DeviceQoSClassificationDSCPCheck')" ng-options="obj.id as obj.name for obj in DSCPCheck" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'DSCPCheck', 'DSCPCheck')">
+														<!--                                                        <option value="on" selected="selected">On</option>
+                                                                                                                        <option value="off" >Off</option>   -->
+													</select>
+													<span class="error" forname="DeviceQoSClassification_DSCPCheck" ng-show="DeviceQoSClassification_DSCPCheckresponsestatus" ng-bind="DeviceQoSClassification_DSCPCheckval">
+
+                                                            </span>
+												</div>
+											</div>
+											
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestIP" type="text" class="form-control" name='destip' value="" ng-model="DeviceQoSClassification.DestIP" ng-change="textChange('DeviceQoSClassificationDestIP')" placeholder="{{'Device.QoS.Classification.*.Destination IP V4/V6.Enter IP Address Here' | translate}}" ng-pattern="/^((\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*)|((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))$/">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Destination IP V4/V6' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestIP" ng-show="DeviceQoSClassification_DestIPresponsestatus" ng-bind="DeviceQoSClassification_DestIPval">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestIP" ng-show="qosclassifiersformstatus && classfierform.destip.$error.pattern" ng-bind="'Device.QoS.Classification.*.DestIP.$error.pattern' | translate">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestMask" type="text" class="form-control" name='destiationmask' value="" ng-model="DeviceQoSClassification.DestMask" ng-change="textChange('DeviceQoSClassificationDestMask')" placeholder="{{'Device.QoS.Classification.*.Destination Mask.Enter Netmask Address' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Destination Mask' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestMask" ng-show="DeviceQoSClassification_DestMaskresponsestatus" ng-bind="DeviceQoSClassification_DestMaskval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Destination IP Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.DestIPExclude}" ng-click="DeviceQoSClassification.DestIPExclude = !DeviceQoSClassification.DestIPExclude;
+                                                                                toggleClick('DeviceQoSClassification.DestIPExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.DestIPExclude" ng-model="DeviceQoSClassification.DestIPExclude" off="Off" on="On" id="DestIPExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.DestIPExclude" name="DeviceQoSClassification.DestIPExclude" id="DestIPExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_DestIPExclude" ng-show="DeviceQoSClassification_DestIPExcluderesponsestatus" ng-bind="DeviceQoSClassification_DestIPExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourceIP" type="text" class="form-control" name='sourceip' value="" ng-model="DeviceQoSClassification.SourceIP" ng-change="textChange('DeviceQoSClassificationSourceIP')" placeholder="{{'Device.QoS.Classification.*.Souce IP V4/V6.Enter IP Address Here' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Souce IP V4/V6' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourceIP" ng-show="DeviceQoSClassification_SourceIPresponsestatus" ng-bind="DeviceQoSClassification_SourceIPval">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourceIP" ng-show="qosclassifiersformstatus && classfierform.sourceip.$error.pattern" ng-bind="'Device.QoS.Classification.*.SourceIP.$error.pattern' | translate">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourceMask" type="text" class="form-control" name='sourcemask' value="" ng-model="DeviceQoSClassification.SourceMask" ng-change="textChange('DeviceQoSClassificationSourceMask')" placeholder="{{'Device.QoS.Classification.*.Souce Mask.Enter Netmask Address' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Souce Mask' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourceMask" ng-show="DeviceQoSClassification_SourceMaskresponsestatus" ng-bind="DeviceQoSClassification_SourceMaskval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Source Ip Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.SourceIPExclude}" ng-click="DeviceQoSClassification.SourceIPExclude = !DeviceQoSClassification.SourceIPExclude;
+                                                                                toggleClick('DeviceQoSClassification.SourceIPExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.SourceIPExclude" ng-model="DeviceQoSClassification.SourceIPExclude" off="Off" on="On" id="SourceIPExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.SourceIPExclude" name="DeviceQoSClassification.SourceIPExclude" id="SourceIPExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_SourceIPExclude" ng-show="DeviceQoSClassification_SourceIPExcluderesponsestatus" ng-bind="DeviceQoSClassification_SourceIPExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="qos_content col-lg-6 col-md-6">
+								<div class="panel custom_panel" ng-init="parentIndex = 2">
+									<div class="panel-heading custom_heading" ng-class="activePosition == 2? 'acc-active':'acc-inactive'">
+										<div class="panel-title">
+											<div class="col-md-4 col-sm-4 no-padding-hr"><span class="queue_txt" ng-bind="'qosclassifiers.Layer-4' | translate"></span></div>
+											<button class="btn btn-info pull-right" ng-click="toggleDetails(2)">
+												{{activePosition == 2? 'Less':'More' | translate}}
+												<i class="fa fa-angle-up" ng-class="activePosition == 2? 'fa-angle-up':'fa-angle-down'"></i>
+											</button>
+										</div>
+									</div>
+									<div class="panel-body no-padding-vr classifier_body">
+										<div class="form-horizontal lantiq-form-text" role="form" ng-show="activePosition == 2">
+											<div class="form-group">
+												<label class="control-label col-sm-12" ng-bind="'Device.QoS.Classification.*.L4 Protocol' | translate"></label>
+												<div class="col-sm-12">
+													<select id="DeviceQoSClassification_Protocol" name="Protocol" class="form-control" ng-model="DeviceQoSClassification.Protocol" ng-change="textChange('DeviceQoSClassificationProtocol')" ng-options="obj.id as obj.name for obj in Protocol" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'Protocol', 'L4_Protocol')">
+														<!--                                                        <option value="on" selected="selected">On</option>
+                                                                                                                        <option value="off" >Off</option>   -->
+													</select>
+													<span class="error" forname="DeviceQoSClassification_Protocol" ng-show="DeviceQoSClassification_Protocolresponsestatus" ng-bind="DeviceQoSClassification_Protocolval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Protocol Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.ProtocolExclude}" ng-click="DeviceQoSClassification.ProtocolExclude = !DeviceQoSClassification.ProtocolExclude;
+                                                                                toggleClick('DeviceQoSClassification.ProtocolExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.ProtocolExclude" ng-model="DeviceQoSClassification.ProtocolExclude" off="Off" on="On" id="ProtocolExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.ProtocolExclude" name="DeviceQoSClassification.ProtocolExclude" id="ProtocolExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_ProtocolExclude" ng-show="DeviceQoSClassification_ProtocolExcluderesponsestatus" ng-bind="DeviceQoSClassification_ProtocolExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestPort" type="number" min='-1' max='65535' class="form-control string-to-number custom-hidden-dom-removal" name='destportstartrange' value="" ng-model="DeviceQoSClassification.DestPort" ng-change="textChange('DeviceQoSClassificationDestPort')" placeholder="{{'Device.QoS.Classification.*.Dest Port Start Range[-1-65535].Enter valid Port number' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Dest Port Start Range[-1-65535]' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestPort" ng-show="qosclassifiersformstatus && classfierform.destportstartrange.$error.max" ng-bind="'Device.QoS.Classification.*.DestPort.$error.max' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPort" ng-show="qosclassifiersformstatus && classfierform.destportstartrange.$error.min" ng-bind="'Device.QoS.Classification.*.DestPort.$error.min' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPort" ng-show="qosclassifiersformstatus && classfierform.destportstartrange.$error.number" ng-bind="'Device.QoS.Classification.*.DestPort.$error.number' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPort" ng-show="DeviceQoSClassification_DestPortresponsestatus" ng-bind="DeviceQoSClassification_DestPortval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_DestPortRangeMax" type="number" min='-1' max='65535' class="form-control string-to-number custom-hidden-dom-removal" name='destportendrange' value="" ng-model="DeviceQoSClassification.DestPortRangeMax" ng-change="textChange('DeviceQoSClassificationDestPortRangeMax')" placeholder="{{'Device.QoS.Classification.*.Dest Port end Range[-1-65535].Enter Port Number' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Dest Port end Range[-1-65535]' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_DestPortRangeMax" ng-show="qosclassifiersformstatus && classfierform.destportendrange.$error.max" ng-bind="'Device.QoS.Classification.*.DestPortRangeMax.$error.max' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPortRangeMax" ng-show="qosclassifiersformstatus && classfierform.destportendrange.$error.min" ng-bind="'Device.QoS.Classification.*.DestPortRangeMax.$error.min' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPortRangeMax" ng-show="qosclassifiersformstatus && classfierform.destportendrange.$error.number" ng-bind="'Device.QoS.Classification.*.DestPortRangeMax.$error.number' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_DestPortRangeMax" ng-show="DeviceQoSClassification_DestPortRangeMaxresponsestatus" ng-bind="DeviceQoSClassification_DestPortRangeMaxval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Dest Port Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.DestPortExclude}" ng-click="DeviceQoSClassification.DestPortExclude = !DeviceQoSClassification.DestPortExclude;
+                                                                                toggleClick('DeviceQoSClassification.DestPortExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.DestPortExclude" ng-model="DeviceQoSClassification.DestPortExclude" off="Off" on="On" id="DestPortExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.DestPortExclude" name="DeviceQoSClassification.DestPortExclude" id="DestPortExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_DestPortExclude" ng-show="DeviceQoSClassification_DestPortExcluderesponsestatus" ng-bind="DeviceQoSClassification_DestPortExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourcePort" type="number" min='-1' max='65535' class="form-control string-to-number custom-hidden-dom-removal" name='sourceportstartrange' value="" ng-model="DeviceQoSClassification.SourcePort" ng-change="textChange('DeviceQoSClassificationSourcePort')" placeholder="{{'Device.QoS.Classification.*.Source Port Start Range[-1-65535].Enter Port Number' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Source Port Start Range[-1-65535]' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourcePort" ng-show="qosclassifiersformstatus && classfierform.sourceportstartrange.$error.max" ng-bind="'Device.QoS.Classification.*.SourcePort.$error.max' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePort" ng-show="qosclassifiersformstatus && classfierform.sourceportstartrange.$error.min" ng-bind="'Device.QoS.Classification.*.SourcePort.$error.min' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePort" ng-show="qosclassifiersformstatus && classfierform.sourceportstartrange.$error.number" ng-bind="'Device.QoS.Classification.*.SourcePort.$error.number' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePort" ng-show="DeviceQoSClassification_SourcePortresponsestatus" ng-bind="DeviceQoSClassification_SourcePortval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_SourcePortRangeMax" type="number" min='-1' max='65535' class="form-control string-to-number custom-hidden-dom-removal" name='sourceportendrange' value="" ng-model="DeviceQoSClassification.SourcePortRangeMax" ng-change="textChange('DeviceQoSClassificationSourcePortRangeMax')" placeholder="{{'Device.QoS.Classification.*.Source Port End Range[-1-65535].Enter Port Number' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Source Port End Range[-1-65535]' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_SourcePortRangeMax" ng-show="qosclassifiersformstatus && classfierform.sourceportendrange.$error.max" ng-bind="'Device.QoS.Classification.*.SourcePortRangeMax.$error.max' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePortRangeMax" ng-show="qosclassifiersformstatus && classfierform.sourceportendrange.$error.min" ng-bind="'Device.QoS.Classification.*.SourcePortRangeMax.$error.min' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePortRangeMax" ng-show="qosclassifiersformstatus && classfierform.sourceportendrange.$error.number" ng-bind="'Device.QoS.Classification.*.SourcePortRangeMax.$error.number' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_SourcePortRangeMax" ng-show="DeviceQoSClassification_SourcePortRangeMaxresponsestatus" ng-bind="DeviceQoSClassification_SourcePortRangeMaxval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group" ng-if="DeviceQoSClassification.Protocol !== ''">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Source Port Exclude' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.SourcePortExclude}" ng-click="DeviceQoSClassification.SourcePortExclude = !DeviceQoSClassification.SourcePortExclude;
+                                                                                toggleClick('DeviceQoSClassification.SourcePortExclude')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.SourcePortExclude" ng-model="DeviceQoSClassification.SourcePortExclude" off="Off" on="On" id="SourcePortExclude">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.SourcePortExclude" name="DeviceQoSClassification.SourcePortExclude" id="SourcePortExclude" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_SourcePortExclude" ng-show="DeviceQoSClassification_SourcePortExcluderesponsestatus" ng-bind="DeviceQoSClassification_SourcePortExcludeval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.TCP Ack' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.TCPACK}" ng-click="DeviceQoSClassification.TCPACK = !DeviceQoSClassification.TCPACK;
+                                                                                toggleClick('DeviceQoSClassification.TCPACK')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.TCPACK" ng-model="DeviceQoSClassification.TCPACK" off="Off" on="On" id="TCPACK">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.TCPACK" name="DeviceQoSClassification.TCPACK" id="TCPACK" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_TCPACK" ng-show="DeviceQoSClassification_TCPACKresponsestatus" ng-bind="DeviceQoSClassification_TCPACKval">
+
+                                                            </span>
+												</div>
+											</div>
+										</div>
+									</div>
+
+								</div>
+							</div>
+							<div class="qos_content col-lg-6 col-md-6">
+								<div class="panel custom_panel" ng-init="parentIndex = 3">
+									<div class="panel-heading custom_heading" ng-class="activePosition == 3? 'acc-active':'acc-inactive'">
+										<div class="panel-title">
+											<div class="col-md-4 col-sm-4 no-padding-hr"><span class="queue_txt">Layer-7</span></div>
+											<button class="btn btn-info pull-right" ng-click="toggleDetails(3)">
+												{{activePosition == 3? 'Less':'More' | translate}}
+												<i class="fa fa-angle-up" ng-class="activePosition == 3? 'fa-angle-up':'fa-angle-down'"></i>
+											</button>
+										</div>
+									</div>
+									<div class="panel-body no-padding-vr classifier_body">
+										<div class="form-horizontal lantiq-form-text" role="form" ng-show="activePosition == 3">
+											<div class="form-group">
+												<label class="control-label col-sm-12" ng-bind="'Device.QoS.Classification.*.Application Name' | translate"></label>
+												<div class="col-sm-12">
+													<select id="DeviceQoSClassification_X_LANTIQ_COM_L7Protocol" name="X_LANTIQ_COM_L7Protocol" class="form-control" ng-model="DeviceQoSClassification.X_LANTIQ_COM_L7Protocol" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_L7Protocol')" ng-options="obj.id as obj.name for obj in X_LANTIQ_COM_L7Protocol" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'X_LANTIQ_COM_L7Protocol', 'X_LANTIQ_COM_L7Protocol')">
+													</select>
+													<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_L7Protocol" ng-show="DeviceQoSClassification_X_LANTIQ_COM_L7Protocolresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_L7Protocolval">
+
+                                                                </span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</div>
+							<div class="qos_content col-lg-6 col-md-6">
+								<div class="panel custom_panel" ng-init="parentIndex = 4">
+									<div class="panel-heading custom_heading" ng-class="activePosition == 4 ? 'acc-active':'acc-inactive'">
+										<div class="panel-title">
+											<div class="col-md-4 col-sm-4 no-padding-hr"><span class="queue_txt" ng-bind="'qosclassifiers.Actions' | translate"></span></div>
+											<button class="btn btn-info pull-right" ng-click="toggleDetails(4)">
+												{{activePosition == 4? 'Less':'More' | translate}}
+												<i class="fa fa-angle-up" ng-class="activePosition == 4? 'fa-angle-up':'fa-angle-down'"></i>
+											</button>
+										</div>
+									</div>
+									<div class="panel-body no-padding-vr classifier_body">
+										<div class="form-horizontal lantiq-form-text" role="form" ng-show="activePosition == 4">
+											<!--                                                    <div class="form-group required">
+                                                                                                            <label class="control-label col-sm-6">Queue ID</label>
+                                                                                                            <div class="col-sm-6">
+                                                                                                                <select class="form-control" ng-required="true" name="queueid" ng-model="DeviceQoSClassification.TrafficClass" ng-change="textChange('DeviceQoSClassificationTrafficClass')" ng-options="obj.id as obj.name for obj in TrafficClass" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'TrafficClass', 'cgi_get_fillparams?Object=Device.QoS.Queue&amp;Alias=')">                                                                
+                                                                                                                </select>
+                                                                                                                <span class="error" forname="DeviceQoSClassification_TrafficClass" ng-show="qosclassifiersformstatus && classfierform.queueid.$error.required">
+                                                                                                                    Queue ID is required
+                                                                                                                </span>
+                                                                                                            </div>                                                
+                                                                                                        </div>                                            -->
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Outgoing DSCP' | translate"></label>
+												<div class="col-sm-6">
+													<select id="DeviceQoSClassification_DSCPMark" name="DSCPMark" class="form-control" ng-model="DeviceQoSClassification.DSCPMark" ng-change="textChange('DeviceQoSClassificationDSCPMark')" ng-options="obj.id as obj.name for obj in DSCPMark" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'DSCPMark', 'DSCPMark')">
+													</select>
+													<span class="error" forname="DeviceQoSClassification_DSCPMark" ng-show="DeviceQoSClassification_DSCPMarkresponsestatus" ng-bind="DeviceQoSClassification_DSCPMarkval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Outgoing 802.1P' | translate"></label>
+												<div class="col-sm-6">
+													<select id="DeviceQoSClassification_EthernetPriorityMark" name="EthernetPriorityMark" class="form-control" ng-model="DeviceQoSClassification.EthernetPriorityMark" ng-change="textChange('DeviceQoSClassificationEthernetPriorityMark')" ng-options="obj.id as obj.name for obj in EthernetPriorityMark" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'EthernetPriorityMark', 'EthernetPriorityMark')">
+														<!--  <select class="form-control" ng-model="DeviceQoSClassification.EthernetPriorityMark=''" ng-change="textChange('DeviceQoSClassificationEthernetPriorityMark')">
+                                                                <option value="">Select</option>
+                                                                <option value="0" >0</option>
+                                                                <option value="1" >1</option>   
+                                                                <option value="2" >2</option>   
+                                                                <option value="3" >3</option>   
+                                                                <option value="4" >4</option>   
+                                                                <option value="5" >5</option>   
+                                                                <option value="6" >6</option>   
+                                                                <option value="7" >7</option>  -->
+													</select>
+													<span class="error" forname="DeviceQoSClassification_EthernetPriorityMark" ng-show="DeviceQoSClassification_EthernetPriorityMarkresponsestatus" ng-bind="DeviceQoSClassification_EthernetPriorityMarkval">
+
+                                                            </span>
+												</div>
+											</div>
+<!--											new parameter InnerEthernetPriorityMark
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Inner 802.1P' | translate"></label>
+												<div class="col-sm-6">
+													<select id="DeviceQoSClassification_InnerEthernetPriorityMark" name="InnerEthernetPriorityMark" class="form-control" ng-model="DeviceQoSClassification.InnerEthernetPriorityMark" ng-change="textChange('DeviceQoSClassificationInnerEthernetPriorityMark')" ng-options="obj.id as obj.name for obj in EthernetPriorityMark" ng-init="dropdownUrlRequest('DeviceQoSClassification', 'InnerEthernetPriorityMark', 'InnerEthernetPriorityMark')">
+														
+													</select>
+													<span class="error" forname="DeviceQoSClassification_InnerEthernetPriorityMark" ng-show="DeviceQoSClassification_InnerEthernetPriorityMarkresponsestatus" ng-bind="DeviceQoSClassification_InnerEthernetPriorityMarkval">
+
+                                                            </span>
+												</div>
+											</div>
+											end new parameter InnerEthernetPriorityMark -->
+											<div class="form-group">
+												<label class="control-label col-sm-6" ng-bind="'Device.QoS.Classification.*.Acceleration disable' | translate"></label>
+												<div class="col-sm-6">
+													<span ng-class="{checked:DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration}" ng-click="DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration = !DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration;
+                                                                                toggleClick('DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration')" class="switch" ng-change="toggleClick" name="DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration" ng-model="DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration" off="Off" on="On" id="X_LANTIQ_COM_DisableAcceleration">
+                                                                <small></small><input type="checkbox" style="display:none" ng-model="DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration" name="DeviceQoSClassification.X_LANTIQ_COM_DisableAcceleration" id="X_LANTIQ_COM_DisableAcceleration" class="ng-pristine ng-untouched ng-valid">
+                                                                <span class="switch-text"><span class="on">On</span><span class="off">Off</span></span>
+													</span>
+													<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_DisableAcceleration" ng-show="DeviceQoSClassification_X_LANTIQ_COM_DisableAccelerationresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_DisableAccelerationval">
+
+                                                            </span>
+												</div>
+											</div>
+											<div class="form-group">
+
+												<div class="input-field col-sm-12">
+													<input id="DeviceQoSClassification_X_LANTIQ_COM_LimitRate" ng-min="-1" type="number" class="form-control string-to-number custom-hidden-dom-removal" name='limitrange' value="" ng-model="DeviceQoSClassification.X_LANTIQ_COM_LimitRate" ng-change="textChange('DeviceQoSClassificationX_LANTIQ_COM_LimitRate')" placeholder="{{'Device.QoS.Classification.*.Rate Limit(In kbps).Enter Rate limit value' | translate}}">
+													<label class="active" ng-bind="'Device.QoS.Classification.*.Rate Limit(In kbps)' | translate"></label>
+													<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_LimitRate" ng-show="qosclassifiersformstatus && classfierform.limitrange.$error.number ||
+                                                            qosclassifiersformstatus && classfierform.limitrange.$error.min " ng-bind="'DeviceQoSClassification.X_LANTIQ_COM_LimitRate.$error.min' | translate">
+
+                                                            </span>
+													<span class="error" forname="DeviceQoSClassification_X_LANTIQ_COM_LimitRate" ng-show="DeviceQoSClassification_X_LANTIQ_COM_LimitRateresponsestatus" ng-bind="DeviceQoSClassification_X_LANTIQ_COM_LimitRateval">
+
+                                                            </span>
+												</div>
+											</div>
+
+										</div>
+
+									</div>
+
+								</div>
+
+							</div>
+
+							<div class="row">
+								<div class="col-lg-12 text-right">
+									<div class="btn-align custom_btn_add">
+										<input id="Add" formstatus="{{classfierform.$valid}}" class="btn btn-info waves-effect waves-light" type="button" ng-click="Modify($event)" value="{{'Save'|translate}}">
+										<input id="Modify" formstatus="{{classfierform.$valid}}" class="btn btn-info waves-effect waves-light" type="button" ng-click="Modify($event)" value="{{'Modify'|translate}}">
+									</div>
+									<div class="btn-group text-center">
+										<button class="btn btn-info waves-effect waves-light" id="Close" value="Close" ng-click="Cancel('qospage')" title="Cancel"><span class="hidden-xs" ng-bind="'Cancel' | translate"></span></button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</body>
+
+</html>

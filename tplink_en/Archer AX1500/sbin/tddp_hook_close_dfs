@@ -1,0 +1,43 @@
+#!/bin/sh
+# Author: fujunxin@tp-link.com.hk
+# Content:
+# (1) Search uci text: wireless.wlx/ethx.band=5g ; wireless.wlx/ethx.band=5g_2
+# (2) Turn off 5g/5g2 DFS CAC: wl -i wlx/ethx dfs_preism 0; nvram set wlx/ethx_dfs_preism=0
+
+# 5g/5g2 DFS CAC changes status
+DFS_CAC_CHANGE_TRUE=1
+DFS_CAC_CHANGE_FALSE=0
+dfs_cac_change_status=0
+
+# BCM CAC time on:-1 off:0
+DFS_CAC_TIME_OFF=0
+
+# Obtain 5g/5g2 interface
+interface_5g=$(uci show | awk -F'[.=]' '/wireless\./ && $3 == "band" && $4 == "5g" {print $2}')
+interface_5g2=$(uci show | awk -F'[.=]' '/wireless\./ && $3 == "band" && $4 == "5g_2" {print $2}')
+if [ -n "$interface_5g" ]; then
+	wl -i ${interface_5g} dfs_preism 0;nvram set ${interface_5g}_dfs_preism=0
+	# check whether the dfs cac time has been closed
+	if [ $(wl -i ${interface_5g} dfs_preism) -eq ${DFS_CAC_TIME_OFF} ]; then
+		echo "Turn off 5g DFS success!"
+		dfs_cac_change_status=$DFS_CAC_CHANGE_TRUE
+	else
+        echo "ERROR: Turn off 5g DFS fail!"
+    fi
+fi
+
+if [ -n "$interface_5g2" ]; then
+	wl -i ${interface_5g2} dfs_preism 0;nvram set ${interface_5g2}_dfs_preism=0
+	# check whether the dfs cac time has been closed
+	if [ $(wl -i ${interface_5g} dfs_preism) -eq ${DFS_CAC_TIME_OFF} ]; then
+		echo "Turn off 5g2 DFS success!"
+		dfs_cac_change_status=$DFS_CAC_CHANGE_TRUE
+	else
+        echo "ERROR: Turn off 5g2 DFS fail!"
+    fi
+fi
+
+# If nothing to do, output relevant prompts
+if [ ${dfs_cac_change_status} -eq ${DFS_CAC_CHANGE_FALSE} ]; then
+    echo "ERROR: Failt to turn off 5g or 5g2 DFS CAC time!"
+fi

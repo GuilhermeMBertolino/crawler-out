@@ -1,0 +1,215 @@
+<script language="javascript">var conns=[],ethParam=null,ethWan=null,wanParam=null,gw=null,pStk=null,ethIptvParam={},current_conn_type=null;function initPPPoEAttrs(){$.qd.ppp||($.qd.ppp={}),$.qd.ppp.usr&&$("#ppp_username").val($.qd.ppp.usr),$.qd.ppp.pwd&&($("#ppp_password").tpInput("val",$.qd.ppp.pwd),$("#ppp_cfmpassword").tpInput("val",$.qd.ppp.pwd))}function addPPPoEAttrs(){$.qd.ppp.usr=$("#ppp_username").val(),$.qd.ppp.pwd=$("#ppp_password").tpInput("val"),$.qd.ppp.cfm=$("#ppp_cfmpassword").tpInput("val")}function chkPPPoEAttrs(){return""==$.qd.ppp.usr?($.alert(ERR_USERNAME_INVAD),$("#ppp_username").focus(),$("#ppp_username").select(),!1):$.qd.ppp.pwd!==$.qd.ppp.cfm?($.alert(ERR_PWD_INVAD),$("#ppp_password").focus(),$("#ppp_password").select(),!1):void 0}function initStaticIpAttrs(){$.qd.staip||($.qd.staip={}),$.qd.staip.ip&&$("#staip").val($.qd.staip.ip),$.qd.staip.mask&&$("#staipmask").val($.qd.staip.mask),$.qd.staip.gw&&$("#staipgw").val($.qd.staip.gw),$.qd.staip.dns&&$("#staipdns1").val($.qd.staip.dns),$.qd.staip.dns2&&$("#staipdns2").val($.qd.staip.dns2)}function addStaticIpAttrs(){$.qd.staip.ip=$("#staip").val(),$.qd.staip.mask=$("#staipmask").val(),$.qd.staip.gw=$("#staipgw").val(),$.qd.staip.dns=$("#staipdns1").val(),$.qd.staip.dns2=$("#staipdns2").val()}function chkStaticIpAttrs(){return $.ifip($.qd.staip.ip,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staip").focus(),$("#staip").select(),!1):$.mask($.qd.staip.mask,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipmask").focus(),$("#staipmask").select(),!1):$.ipmask($.qd.staip.ip,$.qd.staip.mask,!0)?($.alert(ERR_IPMASK_HOST_INVAD),$("#staipmask").focus(),$("#staipmask").select(),!1):$.ifip($.qd.staip.gw,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipgw").focus(),$("#staipgw").select(),!1):$.ipmask($.qd.staip.gw,$.qd.staip.mask,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipgw").focus(),$("#staipgw").select(),!1):$.ipmaskgw($.qd.staip.ip,$.qd.staip.mask,$.qd.staip.gw,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipgw").focus(),$("#staipgw").select(),!1):$.ifip($.qd.staip.dns,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipdns1").focus(),$("#staipdns1").select(),!1):$.qd.staip.dns2&&0!==$.ip2num($.qd.staip.dns2)&&$.ifip($.qd.staip.dns2,!0)?($.alert(ERR_STAIP_IP_INVAD),$("#staipdns2").focus(),$("#staipdns2").select(),!1):void 0}function initDynamicIPAttrs(){}function initL2tpAttrs(){$.qd.l2tp||($.qd.l2tp={}),$.qd.l2tp.usr&&$("#l2tp_username").val($.qd.l2tp.usr),$.qd.l2tp.pwd&&$("#l2tp_pwd").val($.qd.l2tp.pwd),$.qd.l2tp.serip&&$("#l2tp_srvAddrName").val($.qd.l2tp.serip),$.qd.l2tp.addrType&&"Static"==$.qd.l2tp.addrType?($("#l2tp_ipType_dyn").prop("checked",!1),$("#l2tp_ipType_dyn").data("tpRadio").refresh(),$("#l2tp_ipType_stc").prop("checked",!0),$("#l2tp_ipType_stc").data("tpRadio").refresh(),$("#l2tp_stc_ip_elem").removeClass("nd"),$("#l2tp_isp_ip_stc").tpAddress("val",$.qd.l2tp.ip?$.qd.l2tp.ip:"0.0.0.0"),$("#l2tp_isp_net_mask_stc").tpAddress("val",$.qd.l2tp.mask?$.qd.l2tp.mask:"0.0.0.0"),$("#l2tp_isp_gw_stc").tpAddress("val",$.qd.l2tp.gw?$.qd.l2tp.gw:"0.0.0.0"),$("#l2tp_isp_dns_1_stc").tpAddress("val",$.qd.l2tp.dns?$.qd.l2tp.dns:"0.0.0.0"),$("#l2tp_isp_dns_2_stc").tpAddress("val",$.qd.l2tp.dns2?$.qd.l2tp.dns2:"0.0.0.0")):($("#l2tp_ipType_stc").prop("checked",!1),$("#l2tp_ipType_stc").data("tpRadio").refresh(),$("#l2tp_ipType_dyn").prop("checked",!0),$("#l2tp_ipType_dyn").data("tpRadio").refresh(),$("#l2tp_stc_ip_elem").addClass("nd"))}function initPptpAttrs(){$.qd.pptp||($.qd.pptp={}),$.qd.pptp.usr&&$("#pptp_username").val($.qd.pptp.usr),$.qd.pptp.pwd&&$("#pptp_pwd").val($.qd.pptp.pwd),$.qd.pptp.serip&&$("#pptp_srvAddrName").val($.qd.pptp.serip),$.qd.pptp.addrType&&"Static"==$.qd.pptp.addrType?($("#pptp_ipType_dyn").prop("checked",!1),$("#pptp_ipType_dyn").data("tpRadio").refresh(),$("#pptp_ipType_stc").prop("checked",!0),$("#pptp_ipType_stc").data("tpRadio").refresh(),$("#pptp_stc_ip_elem").removeClass("nd"),$("#pptp_isp_ip_stc").tpAddress("val",$.qd.pptp.ip?$.qd.pptp.ip:"0.0.0.0"),$("#pptp_isp_net_mask_stc").tpAddress("val",$.qd.pptp.mask?$.qd.pptp.mask:"0.0.0.0"),$("#pptp_isp_gw_stc").tpAddress("val",$.qd.pptp.gw?$.qd.pptp.gw:"0.0.0.0"),$("#pptp_isp_dns_1_stc").tpAddress("val",$.qd.pptp.dns?$.qd.pptp.dns:"0.0.0.0"),$("#pptp_isp_dns_2_stc").tpAddress("val",$.qd.pptp.dns2?$.qd.pptp.dns2:"0.0.0.0")):($("#pptp_ipType_stc").prop("checked",!1),$("#pptp_ipType_stc").data("tpRadio").refresh(),$("#pptp_ipType_dyn").prop("checked",!0),$("#pptp_ipType_dyn").data("tpRadio").refresh(),$("#pptp_stc_ip_elem").addClass("nd"))}function addL2tpAttrs(){$.qd.l2tp.usr=$("#l2tp_username").val(),$.qd.l2tp.pwd=$("#l2tp_pwd").val(),$.qd.l2tp.serip=$("#l2tp_srvAddrName").val(),$("#l2tp_ipType_stc").prop("checked")?($.qd.l2tp.addrType="Static",$.qd.l2tp.ip=$("#l2tp_isp_ip_stc").tpAddress("val"),$.qd.l2tp.mask=$("#l2tp_isp_net_mask_stc").tpAddress("val"),$.qd.l2tp.gw=$("#l2tp_isp_gw_stc").tpAddress("val"),$.qd.l2tp.dns=$("#l2tp_isp_dns_1_stc").tpAddress("val"),$.qd.l2tp.dns2=$("#l2tp_isp_dns_2_stc").tpAddress("val")):$.qd.l2tp.addrType="DHCP"}function addPptpAttrs(){$.qd.pptp.usr=$("#pptp_username").val(),$.qd.pptp.pwd=$("#pptp_pwd").val(),$.qd.pptp.serip=$("#pptp_srvAddrName").val(),$("#pptp_ipType_stc").prop("checked")?($.qd.pptp.addrType="Static",$.qd.pptp.ip=$("#pptp_isp_ip_stc").tpAddress("val"),$.qd.pptp.mask=$("#pptp_isp_net_mask_stc").tpAddress("val"),$.qd.pptp.gw=$("#pptp_isp_gw_stc").tpAddress("val"),$.qd.pptp.dns=$("#pptp_isp_dns_1_stc").tpAddress("val"),$.qd.pptp.dns2=$("#pptp_isp_dns_2_stc").tpAddress("val")):$.qd.pptp.addrType="DHCP"}function chkL2tpAttrs(){if(""==$.qd.l2tp.serip)return $.alert(ERR_WAN_DA_SERVER_NAME_EMPTY),$("#l2tp_srvAddrName").focus().select(),!1;if($("#l2tp_ipType_stc").prop("checked")){if($.ifip($.qd.l2tp.ip,!0))return $.alert(ERR_IP_FORMAT),$("#l2tp_isp_ip_stc").focus(),$("#l2tp_isp_ip_stc").select(),!1;if($.mask($.qd.l2tp.mask,!0))return $.alert(ERR_IP_FORMAT),$("#l2tp_isp_net_mask_stc").focus(),$("#l2tp_isp_net_mask_stc").select(),!1;if($.ipmask($.qd.l2tp.ip,$.qd.l2tp.mask,!0))return $.alert(ERR_IPMASK_HOST_INVAD),$("#l2tp_isp_ip_stc").focus(),$("#l2tp_isp_ip_stc").select(),!1;if($.ifip($.qd.l2tp.gw,!0))return $.alert(ERR_GATEWAY_INVAD),$("#l2tp_isp_gw_stc").focus(),$("#l2tp_isp_gw_stc").select(),!1;if($.ipmask($.qd.l2tp.gw,$.qd.l2tp.mask,!0))return $.alert(ERR_GATEWAY_INVAD),$("#l2tp_isp_gw_stc").focus(),$("#l2tp_isp_gw_stc").select(),!1;if($.ipmaskgw($.qd.l2tp.ip,$.qd.l2tp.mask,$.qd.l2tp.gw,!0))return $.alert(ERR_GATEWAY_INVAD),$("#l2tp_isp_gw_stc").focus(),$("#l2tp_isp_gw_stc").select(),!1;if($.ifip($.qd.l2tp.dns,!0))return $.alert(ERR_WAN_DNSADDR_INVAD),$("#l2tp_isp_dns_1_stc").focus(),$("#l2tp_isp_dns_1_stc").select(),!1;if($.qd.l2tp.dns2&&0!==$.ip2num($.qd.l2tp.dns2)&&$.ifip($.qd.l2tp.dns2,!0))return $.alert(ERR_WAN_DNSADDR_INVAD),$("#l2tp_isp_dns_2_stc").focus(),$("#l2tp_isp_dns_2_stc").select(),!1}}function chkPptpAttrs(){if(""==$.qd.pptp.serip)return $.alert(ERR_WAN_DA_SERVER_NAME_EMPTY),$("#pptp_srvAddrName").focus().select(),!1;if($("#pptp_ipType_stc").prop("checked")){if($.ifip($.qd.pptp.ip,!0))return $.alert(ERR_IP_FORMAT),$("#pptp_isp_ip_stc").focus(),$("#pptp_isp_ip_stc").select(),!1;if($.mask($.qd.pptp.mask,!0))return $.alert(ERR_IP_FORMAT),$("#pptp_isp_net_mask_stc").focus(),$("#pptp_isp_net_mask_stc").select(),!1;if($.ipmask($.qd.pptp.ip,$.qd.pptp.mask,!0))return $.alert(ERR_IPMASK_HOST_INVAD),$("#pptp_isp_ip_stc").focus(),$("#pptp_isp_ip_stc").select(),!1;if($.ifip($.qd.pptp.gw,!0))return $.alert(ERR_GATEWAY_INVAD),$("#pptp_isp_gw_stc").focus(),$("#pptp_isp_gw_stc").select(),!1;if($.ipmask($.qd.pptp.gw,$.qd.pptp.mask,!0))return $.alert(ERR_GATEWAY_INVAD),$("#pptp_isp_gw_stc").focus(),$("#pptp_isp_gw_stc").select(),!1;if($.ipmaskgw($.qd.pptp.ip,$.qd.pptp.mask,$.qd.pptp.gw,!0))return $.alert(ERR_GATEWAY_INVAD),$("#pptp_isp_gw_stc").focus(),$("#pptp_isp_gw_stc").select(),!1;if($.ifip($.qd.pptp.dns,!0))return $.alert(ERR_WAN_DNSADDR_INVAD),$("#pptp_isp_dns_1_stc").focus(),$("#pptp_isp_dns_1_stc").select(),!1;if($.qd.pptp.dns2&&0!==$.ip2num($.qd.pptp.dns2)&&$.ifip($.qd.pptp.dns2,!0))return $.alert(ERR_WAN_DNSADDR_INVAD),$("#pptp_isp_dns_2_stc").focus(),$("#pptp_isp_dns_2_stc").select(),!1}}function switchType(t){switch(t){case"PPPoE":ctype="ppp";break;case"Dynamic IP":ctype="dhcp";break;case"Static IP":ctype="staip";break;case"L2TP":ctype="l2tp";break;case"PPTP":ctype="pptp";break;default:return!1}return ctype}function showConnType(t){ctype=switchType(t),$("#div_connType").children().css("display","none"),$("#div_"+ctype).trigger("initAttrs"),$("#div_"+ctype).fadeIn(200),$("#ethConnectionType").prop("value",t)}function initConnType(){var t="Other"==$.qd.eth.isp?$.qd.type?$.qd.type:"PPPoE":$.qd.type;current_conn_type=switchType(t),showConnType(t),"Other"!=$.qd.eth.isp&&$("#ethConnectionType").attr("disabled",!0)}function getVlanParam(){var t={};if(t.X_TP_VLanEnabled=$("#vlantag-en").prop("data-checked")?"1":"0","1"===t.X_TP_VLanEnabled){if(!0!==$("#vlan-tag").tpInput("validate"))return null;t.X_TP_VID=parseInt($("#vlan-tag").prop("value"),10)}else t.X_TP_VID="-1";return t}function getWanParam(){var t=$("#ethConnectionType").data("value"),p={};if(ctype=switchType(t),$.qd.type=ctype,$("#div_"+ctype).triggerHandler("addAttrs"),0==$("#div_"+ctype).triggerHandler("chkValidation"))return!1;switch(t){case"PPPoE":p={enable:1,transportType:"PPPoE",username:$.qd.ppp.usr,password:$.qd.ppp.pwd};break;case"Static IP":temp_dnsaddr=$.qd.staip.dns?$.ip2ip($.qd.staip.dns):"0.0.0.0",temp_secdnsaddr=$.qd.staip.dns2?$.ip2ip($.qd.staip.dns2):"0.0.0.0",temp_dnsServers=temp_dnsaddr+","+temp_secdnsaddr,p={enable:1,connectionType:"IP_Routed",addressingType:"Static",NATEnabled:1,externalIPAddress:$.qd.staip.ip,subnetMask:$.qd.staip.mask,defaultGateway:$.qd.staip.gw,DNSOverrideAllowed:"0.0.0.0,0.0.0.0"==temp_dnsServers?0:1,DNSServers:temp_dnsServers};break;case"Dynamic IP":p={enable:1,connectionType:"IP_Routed",addressingType:"DHCP",NATEnabled:1,X_TP_Hostname:$.getDefaultHostname()};break;case"L2TP":temp_dnsaddr=$.qd.l2tp.dns?$.ip2ip($.qd.l2tp.dns):"0.0.0.0",temp_secdnsaddr=$.qd.l2tp.dns2?$.ip2ip($.qd.l2tp.dns2):"0.0.0.0",temp_dnsServers=temp_dnsaddr+","+temp_secdnsaddr,p="Static"==$.qd.l2tp.addrType?{enable:1,MACAddressOverride:0,connectionTrigger:"AlwaysOn",maxMRUSize:1460,username:$.qd.l2tp.usr,password:$.qd.l2tp.pwd,serverIpOrName:$.qd.l2tp.serip,addressingType:"Static",externalIPAddressIP:$.ip2ip($.qd.l2tp.ip),subnetMaskIP:$.ip2ip($.qd.l2tp.mask),defaultGatewayIP:$.ip2ip($.qd.l2tp.gw),DNSServersIP:temp_dnsServers}:{enable:1,MACAddressOverride:0,connectionTrigger:"AlwaysOn",maxMRUSize:1460,username:$.qd.l2tp.usr,password:$.qd.l2tp.pwd,serverIpOrName:$.qd.l2tp.serip,addressingType:"DHCP"};break;case"PPTP":temp_dnsaddr=$.qd.pptp.dns?$.ip2ip($.qd.pptp.dns):"0.0.0.0",temp_secdnsaddr=$.qd.pptp.dns2?$.ip2ip($.qd.pptp.dns2):"0.0.0.0",temp_dnsServers=temp_dnsaddr+","+temp_secdnsaddr,p="Static"==$.qd.pptp.addrType?{enable:1,MACAddressOverride:0,connectionTrigger:"AlwaysOn",maxMRUSize:1420,username:$.qd.pptp.usr,password:$.qd.pptp.pwd,serverIpOrName:$.qd.pptp.serip,addressingType:"Static",externalIPAddressIP:$.ip2ip($.qd.pptp.ip),subnetMaskIP:$.ip2ip($.qd.pptp.mask),defaultGatewayIP:$.ip2ip($.qd.pptp.gw),DNSServersIP:temp_dnsServers}:{enable:1,MACAddressOverride:0,connectionTrigger:"AlwaysOn",maxMRUSize:1460,username:$.qd.pptp.usr,password:$.qd.pptp.pwd,serverIpOrName:$.qd.pptp.serip,addressingType:"DHCP"}}return null!=p&&p}function doCollect(){var t=getVlanParam(),p=getWanParam();return t&&p?[t,p]:null}function getParam(){var t,p,s=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]);if(INCLUDE_WAN_VLAN){if(t=INCLUDE_MER?$.act(ACT_GL,WAN_IP_CONN,null,null,["name","connectionType","addressingType","externalIPAddress","subnetMask","defaultGateway","DNSServers","X_TP_8021QEnabled","X_TP_VlanID","X_TP_MerEnabled","X_TP_Username","X_TP_Password"]):$.act(ACT_GL,WAN_IP_CONN,null,null,["name","connectionType","addressingType","externalIPAddress","subnetMask","defaultGateway","DNSServers","X_TP_8021QEnabled","X_TP_VlanID"]),p=$.act(ACT_GL,WAN_PPP_CONN,null,null,["name","transportType","username","password","X_TP_8021QEnabled","X_TP_VlanID"]),INCLUDE_L2TP)var a=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["enable","addressingType","transportType"]);if(INCLUDE_PPTP)var e=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["enable","addressingType","transportType"])}else{if(t=INCLUDE_MER?$.act(ACT_GL,WAN_IP_CONN,null,null,["name","connectionType","addressingType","externalIPAddress","subnetMask","defaultGateway","DNSServers","X_TP_MerEnabled","X_TP_Username","X_TP_Password"]):$.act(ACT_GL,WAN_IP_CONN,null,null,["name","connectionType","addressingType","externalIPAddress","subnetMask","defaultGateway","DNSServers"]),p=$.act(ACT_GL,WAN_PPP_CONN,null,null,["name","transportType","username","password"]),INCLUDE_L2TP)a=$.act(ACT_GL,WAN_L2TP_CONN,null,null,null);if(INCLUDE_PPTP)e=$.act(ACT_GL,WAN_PPTP_CONN,null,null,null)}var n=$.act(ACT_GET,L3_FORWARDING,null,null,["__ifAliasName"]);if(INCLUDE_IPV6)var _=$.act(ACT_GET,L3_IP6_FORWARDING,null,null,["__ifAliasName"]);$.exe(),$.each(t,function(){if("Ethernet"===$.arr2obj(s,"__stack")[$.stkPop(this.__stack,2)].WANAccessType&&"ewan_iptv"!=this.name){if(conns.push(this),this.name===n.__ifAliasName||INCLUDE_IPV6&&this.name===_.__ifAliasName||"LTE"===n.__ifAliasName){var t,p=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)];gw=this,ethParam={X_TP_VLanEnabled:p.X_TP_VLanEnabled,X_TP_VID:p.X_TP_VID,stack:p.__stack,wan:this},"Static"==this.addressingType?(t="Static IP",dns=this.DNSServers.split(","),wanParam={linkType:t,ip:this.externalIPAddress,mask:this.subnetMask,gw:this.defaultGateway,dns:dns[0],dns2:dns[1]},$.qd.staip||($.qd.staip={}),$.qd.staip.ip=wanParam.ip,$.qd.staip.mask=wanParam.mask,$.qd.staip.gw=wanParam.gw,$.qd.staip.dns=wanParam.dns,$.qd.staip.dns2=wanParam.dns2):(t="Dynamic IP",wanParam=INCLUDE_MER?{linkType:"Dynamic IP",merEnabled:this.X_TP_MerEnabled,merUsername:this.X_TP_Username,merPassword:this.X_TP_Password}:{linkType:"Dynamic IP"})}}else if("ewan_iptv"==this.name){var a=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)];ethIptvParam={stack:a.stack,wan:this}}}),$.each(p,function(){if("Ethernet"===$.arr2obj(s,"__stack")[$.stkPop(this.__stack,2)].WANAccessType){if(conns.push(this),"PPPoE"==this.transportType&&(this.name===n.__ifAliasName||INCLUDE_IPV6&&this.name===_.__ifAliasName||"LTE"===n.__ifAliasName)){var t=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)];gw=this,ethParam={X_TP_VLanEnabled:t.X_TP_VlanEnabled,X_TP_VID:t.X_TP_VID,stack:t.__stack,wan:this},wanParam={linkType:this.transportType,usr:this.username,pwd:this.password},$.qd.ppp||($.qd.ppp={}),$.qd.ppp.usr=wanParam.usr,$.qd.ppp.pwd=wanParam.pwd}}else if("ewan_iptv"==this.name){var p=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)];ethIptvParam={stack:p.stack,wan:this}}}),INCLUDE_L2TP&&$.each(a,function(){if("Ethernet"===$.arr2obj(s,"__stack")[$.stkPop(this.__stack,2)].WANAccessType&&(conns.push(this),this.name===n.__ifAliasName||"LTE"==n.__ifAliasName)){var t,p=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)],a="L2TP";gw=this,ethParam={X_TP_VLanEnabled:p.X_TP_VLanEnabled,X_TP_VID:p.X_TP_VID,stack:p.__stack,wan:this},$.qd.l2tp||($.qd.l2tp={}),"Static"==this.addressingType?(dns=this.DNSServersIP.split(","),t="Static IP",wanParam={usr:this.username,pwd:this.password,linkType:a,addrType:t,ip:this.externalIPAddressIP,mask:this.subnetMaskIP,gw:this.defaultGatewayIP,serip:this.serverIpOrName,dns:dns[0],dns2:dns[1]},$.qd.l2tp.addrType="Static",$.qd.l2tp.ip=wanParam.ip,$.qd.l2tp.mask=wanParam.mask,$.qd.l2tp.gw=wanParam.gw,$.qd.l2tp.dns=wanParam.dns,$.qd.l2tp.dns2=wanParam.dns2):(t="Dynamic IP",wanParam={usr:this.username,pwd:this.password,serip:this.serverIpOrName,linkType:a,addrType:t},$.qd.l2tp.addrType="DHCP"),$.qd.l2tp.usr=wanParam.usr,$.qd.l2tp.pwd=wanParam.pwd,$.qd.l2tp.serip=wanParam.serip}}),INCLUDE_PPTP&&$.each(e,function(){if("Ethernet"===$.arr2obj(s,"__stack")[$.stkPop(this.__stack,2)].WANAccessType&&"ewan_iptv"!=this.name){if(conns.push(this),this.name===n.__ifAliasName||"LTE"==n.__ifAliasName){var t,p=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)],a="PPTP";gw=this,ethParam={X_TP_VLanEnabled:p.X_TP_VLanEnabled,X_TP_VID:p.X_TP_VID,stack:p.__stack,wan:this},$.qd.pptp||($.qd.pptp={}),"Static"==this.addressingType?(dns=this.DNSServersIP.split(","),t="Static IP",wanParam={usr:this.username,pwd:this.password,linkType:a,addrType:t,ip:this.externalIPAddressIP,mask:this.subnetMaskIP,gw:this.defaultGatewayIP,serip:this.serverIpOrName,dns:dns[0],dns2:dns[1]},$.qd.pptp.addrType="Static",$.qd.pptp.ip=wanParam.ip,$.qd.pptp.mask=wanParam.mask,$.qd.pptp.gw=wanParam.gw,$.qd.pptp.dns=wanParam.dns,$.qd.pptp.dns2=wanParam.dns2):(t="Dynamic IP",wanParam={usr:this.username,pwd:this.password,serip:this.serverIpOrName,linkType:a,addrType:t},$.qd.pptp.addrType="DHCP"),$.qd.pptp.usr=wanParam.usr,$.qd.pptp.pwd=wanParam.pwd,$.qd.pptp.serip=wanParam.serip}}else if("ewan_iptv"==this.name){var e=$.arr2obj(ethWan,"__stack")[$.stkPop(this.__stack)];ethIptvParam={stack:e.stack,wan:this}}}),wanParam||(wanParam={linkType:"Dynamic IP"}),ethParam||(ethParam={X_TP_VLanEnabled:0,X_TP_VID:0}),0<ethParam.X_TP_VID&&($.qd.eth.vid=ethParam.X_TP_VID),$.qd.type=wanParam.linkType}function doSave(t,p){ethParam.stack||doAddEth(t,p);for(var a=!1,e=[],s=null,n=0;n<ethWan.length;n++)t[0].X_TP_VID==ethWan[n].X_TP_VID&&ethWan[n].X_TP_VID!=ethParam.X_TP_VID&&(a=!0,e.push(ethWan[n].__stack));if(a){var _=[];for(n=0;n<conns.length;n++)for(var d=0;d<e.length;d++)$.stkPop(conns[n].__stack,1)==e[d]&&_.push(conns[n]);for(n=0;n<e.length;n++)if(ethIptvParam.wan&&$.stkPop(ethIptvParam.wan.__stack,1)==e[n]&&($.act(ACT_SET,ETH_IPTV_CFG,null,null,["enable=0"]),$.exe()))return void $.removeLoading();if(INCLUDE_RU_IPTV){var i=$.act(ACT_GET,ETH_IPTV_CFG,null,null,null);if($.exe(function(t){t&&$.removeLoading()}),1==i.conflictToWanConn&&(t[0].X_TP_VID==i.vlanTag||0==t[0].X_TP_VLanEnabled&&0==i.enableVlanTag)&&($.act(ACT_SET,ETH_IPTV_CFG,null,null,["enable=0"]),$.exe()))return void $.removeLoading()}for(var r=[],l=[];instance=_.shift();)stack=$.stkPop(instance.__stack),instance.transportType?INCLUDE_L2TP&&"L2TP"==instance.transportType?$.act(ACT_DEL,WAN_L2TP_CONN,instance.__stack):INCLUDE_PPTP&&"PPTP"==instance.transportType?$.act(ACT_DEL,WAN_PPTP_CONN,instance.__stack):$.act(ACT_DEL,WAN_PPP_CONN,instance.__stack):$.act(ACT_DEL,WAN_IP_CONN,instance.__stack),$.inArray(stack,r)||r.push(stack);for(;stack=r.shift();)l.push($.act(ACT_GET,WAN_CONN_DEVICE,stack,null));if($.exe())return $.removeLoading(),!1;for(;instance=l.shift();)"L2TP"!=instance.transportType&&"PPTP"!=instance.transportType?0==instance.WANIPConnectionNumberOfEntries&&0==instance.WANPPPConnectionNumberOfEntries&&$.act(ACT_DEL,WAN_CONN_DEVICE,instance.__stack):$.act(ACT_DEL,WAN_CONN_DEVICE,instance.__stack);if("L2TP"==p||"PPTP"==p){var c={},P={};if(INCLUDE_L2TP)c=$.act(ACT_GL,WAN_L2TP_CONN,null,null);if(INCLUDE_PPTP)P=$.act(ACT_GL,WAN_PPTP_CONN,null,null);if((INCLUDE_L2TP||INCLUDE_PPTP)&&0==$.exe()&&"pptp"!==current_conn_type&&"l2tp"!==current_conn_type&&(0<c.length||0<P.length))return $.alert(CMM_WAN_L2TP_ALREADY_EXIST),!1}$.exe(),(s="1"==t[0].X_TP_VLanEnabled?{X_TP_VID:t[0].X_TP_VID,X_TP_VLanEnabled:t[0].X_TP_VLanEnabled}:{X_TP_VLanEnabled:t[0].X_TP_VLanEnabled}).enable=1,$.act(ACT_SET,WAN_ETH_LINK_CFG,ethParam.stack,null,s),doSaveWan(p,t[1]),INCLUDE_EWAN_IPTV&&doSaveIptv()}else{if("L2TP"==p||"PPTP"==p){c={},P={};if(INCLUDE_L2TP)c=$.act(ACT_GL,WAN_L2TP_CONN,null,null);if(INCLUDE_PPTP)P=$.act(ACT_GL,WAN_PPTP_CONN,null,null);if((INCLUDE_L2TP||INCLUDE_PPTP)&&0==$.exe()&&"pptp"!==current_conn_type&&"l2tp"!==current_conn_type&&(0<c.length||0<P.length))return $.alert(CMM_WAN_L2TP_ALREADY_EXIST),!1}if(INCLUDE_RU_IPTV){i=$.act(ACT_GET,ETH_IPTV_CFG,null,null,null);if($.exe())return void $.removeLoading();if(1==i.conflictToWanConn&&(t[0].X_TP_VID==i.vlanTag||0==t[0].X_TP_VLanEnabled&&0==i.enableVlanTag)&&($.act(ACT_SET,ETH_IPTV_CFG,null,null,["enable=0"]),$.exe()))return void $.removeLoading()}(s="1"==t[0].X_TP_VLanEnabled?{X_TP_VID:t[0].X_TP_VID,X_TP_VLanEnabled:t[0].X_TP_VLanEnabled}:{X_TP_VLanEnabled:t[0].X_TP_VLanEnabled}).enable=1,$.act(ACT_SET,WAN_ETH_LINK_CFG,ethParam.stack,null,s),doSaveWan(p,t[1]),INCLUDE_EWAN_IPTV&&doSaveIptv()}return!0}function doSaveWan(p,t){var a,e={__ifAliasName:ethParam.wan&&ethParam.wan.name,__ifName:"",defaultConnectionService:""};if("PPTP"!=p&&"L2TP"!=p&&(t.X_TP_IPv4Enabled=1),p==wanParam.linkType&&ethParam.wan){if("L2TP"==p?$.act(ACT_SET,WAN_L2TP_CONN,ethParam.wan.__stack,null,t):"PPTP"==p?$.act(ACT_SET,WAN_PPTP_CONN,ethParam.wan.__stack,null,t):$.act(ACT_SET,p.indexOf("PPP")<0?WAN_IP_CONN:WAN_PPP_CONN,ethParam.wan.__stack,null,t),0!=$.exe())return $("#vlan-tag").val(""),!1;$.qd.newConn={stack:ethParam.wan.__stack,ifName:ethParam.wan&&ethParam.wan.name}}else{if(ethParam.wan&&("L2TP"==wanParam.linkType?$.act(ACT_DEL,WAN_L2TP_CONN,ethParam.wan.__stack,null):"PPTP"==wanParam.linkType?$.act(ACT_DEL,WAN_PPTP_CONN,ethParam.wan.__stack,null):$.act(ACT_DEL,wanParam.linkType.indexOf("PPP")<0?WAN_IP_CONN:WAN_PPP_CONN,ethParam.wan.__stack,null)),a="L2TP"==p?$.act(ACT_ADD,WAN_L2TP_CONN,null,ethParam.stack,t):"PPTP"==p?$.act(ACT_ADD,WAN_PPTP_CONN,null,ethParam.stack,t):$.act(ACT_ADD,p.indexOf("PPP")<0?WAN_IP_CONN:WAN_PPP_CONN,null,ethParam.stack,t),0!=$.exe())return $("#vlan-tag").val(""),!1;if("L2TP"==p)var s=$.act(ACT_GET,WAN_L2TP_CONN,a.__stack,null,["name"]);else if("PPTP"==p)s=$.act(ACT_GET,WAN_PPTP_CONN,a.__stack,null,["name"]);else s=$.act(ACT_GET,p.indexOf("PPP")<0?WAN_IP_CONN:WAN_PPP_CONN,a.__stack,null,["name"]);$.exe(),e.__ifAliasName=s.name,$.qd.newConn={stack:s.__stack,ifName:s.name}}$.act(ACT_SET,L3_FORWARDING,null,null,e),$.exe(function(t){t||("L2TP"==p?($.act(ACT_OP,ACT_OP_L2TP_CONN,$.qd.newConn.stack),$.exe()):"PPTP"==p&&($.act(ACT_OP,ACT_OP_PPTP_CONN,$.qd.newConn.stack),$.exe()),$.removeLoading())})}function doAddEth(t,p){var a=$.act(ACT_ADD,WAN_CONN_DEVICE,null,pStk);$.exe()||(ethParam.stack=a.__stack)}function doSaveIptv(){var t=$.qd.eth.ispIdx;if(-1!=t){var p=t.substr(0,t.length-2),a=$.ewanRegionIndex[p],e=null,s=null,n=null;if($.ewanProfile.iptv[a]){for(var _=0;_<$.ewanProfile.isp[a].length;_++)if($.ewanProfile.isp[a][_].ispIndex==t){s=$.ewanProfile.isp[a][_].name;break}if(s)for(_=0;_<$.ewanProfile.iptv[a].length;_++)if($.ewanProfile.iptv[a][_].name==s){e=$.ewanProfile.iptv[a][_];break}e&&("Bridge"==(n={enable:1,vlanTag:e.vlanTag,priority:e.priority,enableVlanTag:e.enableVlanTag,connectionType:e.connectionType,ispIndex:e.ispIndex}).connectionType&&(n={ispIndex:"-1"}),$.act(ACT_SET,ETH_IPTV_CFG,null,null,n),$.exe())}}}function goPrev(){var t=$("#ethConnectionType").data("value");switch($.qd.internetDiag){case 1:loadSubPage("qsIsp.htm");break;case 2:loadSubPage("qsDiag.htm");break;default:ctype=switchType(t),$("#div_"+ctype).triggerHandler("addAttrs"),$.qf.prev()}}function goNext(){$.addLoading();for(var t=0;t<regionCodeInfo.length&&$.qd.country!=regionCodeInfo[t][4];t++);if(t>=regionCodeInfo.length)$.removeLoading();else{$.act(ACT_SET,LOCAL,null,null,{Country:regionCodeInfo[t][1].substring(0,2)}),$.act(ACT_SET,LOCAL,null,null,{ewanIspIndex:$.qd.eth.ispIdx,ispName:$.qd.eth.isp}),$.act(ACT_SET,TIME,null,null,["localTimeZone="+$.qd.timezone]),$.exe(function(t){t&&$.removeLoading()});var p=$("#ethConnectionType").data("value"),a=doCollect();if(a)if($.qd.type=p,$.qd.eth.vid=a[0].X_TP_VID,doSave(a,p))if(INCLUDE_WEB_REGION)2==$.qd.internetDiag?loadSubPage("qsDiagEwan.htm"):$.qf.next();else switch($.qd.internetDiag){case 1:case 2:"ETH"==$.sysMode?loadSubPage("qsDiagEwan.htm"):loadSubPage("qsDiag.htm");break;default:$.qf.next()}else $.removeLoading();else $.removeLoading()}}function showDyn(t){"l2tp"==t?$("#l2tp_stc_ip_elem").addClass("nd"):$("#pptp_stc_ip_elem").addClass("nd")}function showStc(t){"l2tp"==t?$("#l2tp_stc_ip_elem").removeClass("nd"):$("#pptp_stc_ip_elem").removeClass("nd")}$("#vlan-tag").tpInput({allowBlank:!1,vtype:{vtype:"number",max:4094,min:1},suffix:"(1-4094)",validator:function(t){return!(t<1||4094<t)},invalidText:s_str.vlanTagChk})</script>
+<div id="quicksetup_dsl_container">
+    <form class="pure-form pure-form-aligned">
+        <p id="t_dslSettingNote">Enter the parameters if your ISP provided some. Otherwise, click Next directly to continue.</p>
+		<div id="div_ethTag" class="nd">
+			<div>
+				<b class="T T_c_vlantag">VLAN Tag:</b>
+				<input type="checkbox" id="vlantag-en">
+				<label for="" class="T T_en"></label>
+			</div>
+			<div id="vlanTag-ctn" class="nd">
+				<b class="T T_c_vlantag">VLAN Tag:</b>
+				<input type="text" class="xl" maxlength="4" id="vlan-tag">
+			</div>
+		</div>
+		<div id="div_ethConnType">
+			<b class="T_conntype">Connection Type:</b>
+			<select id="ethConnectionType" class="xl">
+				<option class="T_c_qsPPPoE" value="PPPoE">PPPoE</option>
+				<option class="T_c_qsDynIp" value="Dynamic IP">Dynamic IP</option>
+				<option class="T_c_qsStaIp" value="Static IP">Static IP</option>
+				<option class="T_c_qsL2tp" value="L2TP">L2TP</option>
+				<option class="T_c_qsPptp" value="PPTP">PPTP</option>
+			</select>
+        </div>
+        <div id="div_connType">
+            <div id="div_ppp">
+                <div>
+                    <b class="T_pppoeusr">User Name:</b>
+                    <input type="text" class="xl" id="ppp_username" maxlength="255">
+                </div>
+                <div>
+                    <b class="T_pppoepwd">Password:</b>
+                    <input type="password" class="xl" id="ppp_password" maxlength="255">
+                </div>
+                <div>
+                    <b class="T_cfmpwd">Confirm Password:</b>
+                    <input type="password" class="xl" id="ppp_cfmpassword" maxlength="255">
+                </div>
+            </div>
+			<div id="div_dhcp">
+            </div>
+			<div id="div_staip">
+                <div>
+                    <b class="T_c_ipaddr">IP Address:</b>
+                    <input type="text" class="xl" maxlength="15" value="0.0.0.0" id="staip">
+                </div>
+                <div>
+                    <b class="T_c_mask">Subnet Mask:</b>
+                    <input type="text" class="xl" maxlength="15" value="0.0.0.0" id="staipmask">
+                </div>
+                <div>
+                    <b class="T_c_gw">Gateway:</b>
+                    <input type="text" class="xl" maxlength="15" value="0.0.0.0" id="staipgw">
+                </div>
+                <div>
+                    <b class="T_c_priDns">DNS Server:</b>
+                    <input type="text" class="xl" maxlength="15" value="0.0.0.0" id="staipdns1">
+                </div>
+                <div>
+                    <b class="T_c_secDns">Secondary DNS Server:</b>
+                    <input type="text" class="xl" maxlength="15" value="0.0.0.0" id="staipdns2">
+                    <span class="T_optional">(Optional)</span>
+                </div>
+            </div>
+			<div id="div_pptp">
+				<div><b class="T_username">Username:</b>
+					<input type="text" size="15" id="pptp_username" maxlength="255" class="xl">
+				</div>
+				<div><b class="T_passwd">Password:</b>
+					<input type="password" size="15" id="pptp_pwd" maxlength="255" class="xl">
+				</div>
+				<div><b class="T_addrType">Addressing Type:</b>
+					<input type="radio" name="ipType" id="pptp_ipType_dyn" onclick='showDyn("pptp")' checked="checked">
+					<label class="T_dynip">Dynamic IP</label>
+					<input type="radio" name="ipType" id="pptp_ipType_stc" onclick='showStc("pptp")'>
+					<label class="T_staip">Static IP</label>
+				</div>
+				<div><b class="T_srvIpName">Server IP Address/Name:</b>
+					<input type="text" size="15" id="pptp_srvAddrName" maxlength="80">
+				</div>
+				<div id="pptp_stc_ip_elem">
+					<div><b class="T_ipaddr">IP Address:</b>
+						<input type="text" id="pptp_isp_ip_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_netmask">Subnet Mask:</b>
+						<input type="text" id="pptp_isp_net_mask_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_gateway">Gateway:</b>
+						<input type="text" id="pptp_isp_gw_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_dns">DNS Server:</b>
+						<input type="text" id="pptp_isp_dns_1_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_secdns">Secondary DNS:</b>
+						<input type="text" id="pptp_isp_dns_2_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+						<span class="T_optional">(Optional)</span>
+					</div>
+				</div>
+			</div>
+			<div id="div_l2tp">
+				<div><b class="T_username">Username:</b>
+					<input type="text" size="15" id="l2tp_username" maxlength="255" class="xl">
+				</div>
+				<div><b class="T_passwd">Password:</b>
+					<input type="password" size="15" id="l2tp_pwd" maxlength="255" class="xl">
+				</div>
+				<div><b class="T_addrType">Addressing Type:</b>
+					<input type="radio" name="ipType" id="l2tp_ipType_dyn" onclick='showDyn("l2tp")' checked="checked">
+					<label class="T_dynip">Dynamic IP</label>
+					<input type="radio" name="ipType" id="l2tp_ipType_stc" onclick='showStc("l2tp")'>
+					<label class="T_staip">Static IP</label>
+				</div>
+				<div><b class="T_srvIpName">Server IP Address/Name:</b>
+					<input type="text" size="15" id="l2tp_srvAddrName" maxlength="80">
+				</div>
+				<div id="l2tp_stc_ip_elem">
+					<div><b class="T_ipaddr">IP Address:</b>
+						<input type="text" id="l2tp_isp_ip_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_netmask">Subnet Mask:</b>
+						<input type="text" id="l2tp_isp_net_mask_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_gateway">Gateway:</b>
+						<input type="text" id="l2tp_isp_gw_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_dns">DNS Server:</b>
+						<input type="text" id="l2tp_isp_dns_1_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+					</div>
+					<div><b class="T_secdns">Secondary DNS:</b>
+						<input type="text" id="l2tp_isp_dns_2_stc" value="0.0.0.0" size="15" maxlength="15" class="ip-address">
+						<span class="T_optional">(Optional)</span>
+					</div>
+				</div>
+			</div>
+        </div>
+    </form>
+</div>
+<div class="inline-btn-right quicksetup-button-container">
+    <div class="inline">
+        <button type="submit" class="green T_back" id="back" onclick="goPrev()">Back</button>
+    </div>
+    <div class="inline">
+        <button type="submit" class="green T_next" id="next" onclick="goNext()">Next</button>
+    </div>
+</div>
+<script type="text/javscript" language="javascript">
+function init(){
+	$("#div_ppp").bind("initAttrs", initPPPoEAttrs);
+    $("#div_ppp").bind("addAttrs", addPPPoEAttrs);
+    $("#div_ppp").bind("chkValidation", chkPPPoEAttrs);
+	$("#div_staip").bind("initAttrs", initStaticIpAttrs);
+    $("#div_staip").bind("addAttrs", addStaticIpAttrs);
+    $("#div_staip").bind("chkValidation", chkStaticIpAttrs);
+	$("#div_dhcp").bind("initAttrs", initDynamicIPAttrs);
+	$("#div_l2tp").bind("initAttrs", initL2tpAttrs);
+    $("#div_l2tp").bind("addAttrs", addL2tpAttrs);
+    $("#div_l2tp").bind("chkValidation", chkL2tpAttrs);
+	$("#div_pptp").bind("initAttrs", initPptpAttrs);
+    $("#div_pptp").bind("addAttrs", addPptpAttrs);
+    $("#div_pptp").bind("chkValidation", chkPptpAttrs);
+    if ($.qd.internetDiag == 2) {
+		$("#back").hide();
+	}
+	if(INCLUDE_EWAN_VLAN){
+		if (!INCLUDE_WEB_REGION || INCLUDE_LTEWAN) {
+			if (!$.qd.eth) {
+				$.qd.eth = {};
+				$.qd.eth.isp = "Other";
+				$.qd.eth.ispIdx = -1;
+				$.qd.eth.vid = -1;
+				$.qd.eth.iptv = undefined;
+			}
+		}
+		$("#div_ethTag").removeClass("nd");
+		$("#vlantag-en").on("click", function(e){
+			if($("#vlantag-en").prop("data-checked")){
+				$("#vlanTag-ctn").removeClass("nd");
+			}else{
+				$("#vlanTag-ctn").addClass("nd");
+			}
+		});
+	}
+	var wanTypes = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+    if (!$.exe()) {
+        $.each(wanTypes, function() {
+            if (this.WANAccessType == "Ethernet")
+                pStk = this.__stack;
+        });
+        ethWan = $.act(ACT_GS, WAN_ETH_LINK_CFG, null, pStk, null);
+        $.exe();
+    }
+	getParam();
+	if (INCLUDE_EWAN_VLAN) {
+			if($.qd.eth.vid != -1){
+			$("#vlantag-en").prop("checked", true).data("tpCheckbox").refresh();
+			$("#vlantag-en").click();
+			$("#vlantag-en").prop("checked", true).data("tpCheckbox").refresh();
+			$("#vlan-tag").val($.qd.eth.vid);
+			if($.qd.eth.isp != "Other"){
+				$("#vlantag-en").prop("disabled", true);
+				$("#vlan-tag").prop("disabled", true);
+			}
+		}
+	}
+	$("#ethConnectionType").click(function() {
+        showConnType($("#ethConnectionType").data("value"));
+    });
+	initConnType();
+	$.removeLoading();
+}
+(function(){
+	$.tpInit(init);
+})();
+</script>

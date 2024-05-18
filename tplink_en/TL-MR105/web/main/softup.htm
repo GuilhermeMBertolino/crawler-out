@@ -1,0 +1,55 @@
+<script>function showUpgradeError(e){var t;switch(e=parseInt(e,10)){case 2e4:t=strDownLoadFail;break;case 20001:t=strCheckFail,$("#t_onLineUpgrade").html("<span>"+strCheckForUpgrade+"</span>").data("operation","check").addClass("xl");break;case 20002:case 20003:t=strInternetUnavailable;break;case 20004:t=strDownLoadFail}alertButton("t_onLineUpgrade",t)}function showDownLoadProgress(){var e,t,n=0,a=60,r=0,o=3;alertButton("t_onLineUpgrade"),$.guageWithRateControl({text:strDownLoad,note:strKeepPowerOn,updateInterval:1e3,rateControl:function(s,l){0==n?(e=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null),$.exe(function(r){r||(e.progress<100&&l(parseInt(3*e.progress/5,10)),2==(t=parseInt(e.status,10))&&(n=1,e=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null),$.exe(function(n){3==(t=parseInt(e.status,10))&&FW_UPGRADE_TIME>0&&(o=parseInt(FW_UPGRADE_TIME/(100-a),10))})))})):(3!=t&&(e=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null),$.exe(),3==(t=parseInt(e.status,10))&&FW_UPGRADE_TIME>0&&(o=parseInt(FW_UPGRADE_TIME/(100-a),10))),++r%o==0&&l(a++),a>=99&&(l(100),t=4))},isComplete:function(e,n,a){4==t?n&&n():t>=2e4&&(a&&a(t),$.removeLoading(),showUpgradeError(t))},callback_complete:function(){$.guage(["<span class='T T_upgrading'>"+s_str.upgrading+"</span>","<span class='T T_wait_upgrade'>"+s_str.wait_upgrade+"</span>"],100,$.guageInterval,function(){$.refresh()},null,null,null,strKeepPowerOn)},callback_error:function(e){}})}function getFwUpgradeStatu(){var e=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null),t=$.act(ACT_GET,CLOUD_SERVICE,null,null,["legality"]);return $.exe(),1==t.legality?($.removeLoading(),void alertButton("t_onLineUpgrade",strIllegalDevice)):e.status>=2e3?(online=!1,$.removeLoading(),void showUpgradeError(e.status)):5==e.status?(""==e.version?(alertButton("t_onLineUpgrade",strUpToDate),$("#t_onLineUpgrade").html("<span>"+strCheckForUpgrade+"</span>").data("operation","check").addClass("xl")):($("#onlie_up_sver").prop("value",e.version),$("#online_release_log").html(e.releaseLog),$("#t_onLineUpgrade").html("<span>"+n_str.softup.c_upgrade+"</span>").data("operation","upgrade").removeClass("xl"),$("#topUpdate").removeClass("nd"),$.adjustTop()),$.removeLoading(),void(online=!0)):void setTimeout(function(){getFwUpgradeStatu()},500)}function init(){var e=$.act(ACT_GET,IGD_DEV_INFO,null,null,["hardwareVersion","softwareVersion"]);if("INCLUDE_QTL_AT"in window&&1==INCLUDE_QTL_AT)var t=$.act(ACT_GET,X_TP_LTE,null,null,["LTE_SerialNumber","LTE_SoftwareVersion"]);else $("#up_mver_div").addClass("nd"),$("#up_msn_div").addClass("nd");if("INCLUDE_CLOUD"in window&&1==INCLUDE_CLOUD)var n=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null);$.exe()||($("#up_sver").prop("value",e.softwareVersion),$("#up_hver").prop("value",e.hardwareVersion),"INCLUDE_QTL_AT"in window&&1==INCLUDE_QTL_AT&&($("#up_mver").prop("value",t.LTE_SoftwareVersion),$("#up_msn").prop("value",t.LTE_SerialNumber)),"INCLUDE_CLOUD"in window&&1==INCLUDE_CLOUD&&($("#onlineUpgrade-block").removeClass("nd"),1==n.status&&showDownLoadProgress(),n.version?($("#onlie_up_sver").prop("value",n.version),$("#t_onLineUpgrade").html("<span>"+n_str.softup.c_upgrade+"</span>").data("operation","upgrade")):($("#onlie_up_sver").prop("value",e.softwareVersion),$("#t_onLineUpgrade").html("<span>"+strCheckForUpgrade+"</span>").data("operation","check")),$("#online_release_log").html(n.releaseLog),$.addLoading(),checkWanLinkStatus()?($.act(ACT_OP,ACT_CLOUD_CHECKNEWFWINFO_BY_USER,null),$.exe(null,!0),getFwUpgradeStatu()):(online=!1,$.removeLoading(),alertButton("t_onLineUpgrade",strInternetUnavailable))))}function checkWanLinkStatus(){var e,t,n,a=$.act(ACT_GET,L3_FORWARDING,null,null,["__ifAliasName"]),r=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),o=$.act(ACT_GL,LTE_WAN_CFG,null,null,["dataSwitchStatusBackup"]);if($.exe(),"LTE"==a.__ifAliasName)t="LTE";else{if("NO_INTERFACE"==a.__ifAliasName)return!1;t="Ethernet"}if($.each(r,function(){if(this.WANAccessType==t)return e=this.__stack,!1}),"Ethernet"==t){if(ethIntfConfig=$.act(ACT_GET,WAN_ETH_INTF,e,null,["Status"]),$.exe(),INCLUDE_EWAN_VLAN&&("NoLink"==ethIntfConfig.status||"Error"==ethIntfConfig.status||"Disabled"==ethIntfConfig.status)||"Unavailable"==ethIntfConfig.ethernetLinkStatus||"Down"==ethIntfConfig.ethernetLinkStatus)return!1}else if("LTE"==t&&($.each(o,function(){var t=$.stkPop(this.__stack,1);if(e==t)return e=this.__stack,n=this.dataSwitchStatusBackup,!1}),lteLinkCfg=$.act(ACT_GET,WAN_LTE_LINK_CFG,e,null,null),$.exe(),3!=lteLinkCfg.simStatus&&5!=lteLinkCfg.simStatus||1!=n))return!1;return!0}function alertButton(e,t){"string"==typeof e&&-1==e.search("#")&&(e="#"+e);var n=$(e);setTimeout(function(){(n.prev(".button-err-text").length>0?n.prev(".button-err-text"):$('<span class="button-err-text">').insertBefore(n)).html(t||"")},0)}var strUpToDate=n_str.softup.upTodate||"Your firmware is up to date",strDownLoad=n_str.softup.downLoad||"Downloading...",strKeepPowerOn=n_str.softup.keepPowerOn||"To avoid any damage, keep the device powered on.",strInternetUnavailable=n_str.softup.internetUnavailable||"Internet is unavailable.",strCheckFail=n_str.softup.checkFail||"Invalid firmware. Please download the new firmware again.",strDownLoadFail=n_str.softup.downLoadFailed||"Download failed.",strCheckForUpgrade=n_str.softup.checkForUpgrade||"Check for Upgrades",strConfirmContent=n_str.softup.confirmContent||"Are you sure you want to upgrade the firmware?",strRestoreTipContent=n_str.softup.restoreTipContent||"The router will restore to its factory default settings after firmware upgrade.<br>Are you sure you want to upgrade the firmware?",strIllegalDevice=n_str.softup.illegalDevice||"Your device does not support TP-Link cloud service. Please contact TP-Link technical support if you want to continue.",strUpgrade=n_str.softup.c_upgrade||"Upgrade",strUpLoad=s_str.uploading||"Uploading...",online=!1;$("#t_upgrade").click(function(){if(""==$("#filename").val())return $.alert(ERR_FIRM_FILE_NONE),!1;var e=$("#filename").closest("form")[0];try{e.target="up_frame",e.action="/cgi/softup",e.submit()}catch(e){}var t=0,n=0,a=-100,r=!1;$.guageWithRateControl({text:strUpLoad,note:strKeepPowerOn,updateInterval:1e3,rateControl:function(e,o){if(0==a)return t+=10,t=t>100?100:t,void o(t);t>0&&!r&&($.tpAjax({url:"/cgi/softburn",async:!0,bScript:!0,success:function(e){!e&&(e=$.ret)&&$.err("cgi",$.ret),a=$.ret},error:function(e,t,n){a=0}}),r=!0),t<=20?(o(t),t+=2):t<=50?o(t++):t<=60?++n%2==0&&o(t++):t<=70?++n%3==0&&o(t++):t<=80?++n%5==0&&o(t++):t<90?++n%8==0&&o(t++):t>=90&&t<=100&&++n%12==0&&o(t++)},isComplete:function(e,t,n){0==a?t&&t():-100!=a&&(n&&n(a),$.removeLoading(),showUpgradeError(a))},callback_complete:function(){$.guage(["<span class='T T_upgrading'>"+s_str.upgrading+"</span>","<span class='T T_wait_upgrade'>"+s_str.wait_upgrade+"</span>"],100,$.guageInterval,function(){$.refresh()},null,null,null,strKeepPowerOn)},callback_error:function(e){}})}),$("#t_onLineUpgrade").click(function(){var e=$("#t_onLineUpgrade").data("operation");if("check"==e)alertButton("t_onLineUpgrade"),$.addLoading($("#t_onLineUpgrade")),$.act(ACT_OP,ACT_CLOUD_CHECKNEWFWINFO_BY_USER,null),$.exe(function(e){if(e)$.removeLoading();else var t=setInterval(function(){var n=$.act(ACT_GET,FW_UPGRADE_INFO,null,null,null),a=$.act(ACT_GET,CLOUD_SERVICE,null,null,["legality"]);$.exe(function(){return e?($.removeLoading(),void clearInterval(t)):1==a.legality?(clearInterval(t),$.removeLoading(),void alertButton("t_onLineUpgrade",strIllegalDevice)):void(4!=n.status&&11!=n.status&&(5==n.status?($.removeLoading(),clearInterval(t),""==n.version?(alertButton("t_onLineUpgrade",strUpToDate),$("#t_onLineUpgrade").html("<span>"+strCheckForUpgrade+"</span>").data("operation","check").addClass("xl")):($("#onlie_up_sver").prop("value",n.version),$("#online_release_log").html(n.releaseLog),$("#t_onLineUpgrade").html("<span>"+n_str.softup.c_upgrade+"</span>").data("operation","upgrade").removeClass("xl"),$("#topUpdate").removeClass("nd"),$.adjustTop())):($.removeLoading(),clearInterval(t),showUpgradeError(n.status))))})},1e3)},!0);else if("upgrade"==e){var t="",n=parseInt($("#up_sver").val().split(".")[0]),a=parseInt($("#onlie_up_sver").val().split(".")[0]);if(!online)return void alertButton("t_onLineUpgrade",strInternetUnavailable);t=a>n?strRestoreTipContent:strConfirmContent,$.confirm(t,function(){$.addLoading($("#t_onLineUpgrade")),$.act(ACT_SET,FW_UPGRADE_INFO,null,null,["start=1"]),$.exe(function(e){e?$.removeLoading():showDownLoadProgress()})})}})</script>
+<h3 id="et1">Device information</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="pure-control-group">
+            <b class="l T_swver">Firmware version:</b>
+            <input type="text" readonly="ture" class="tp-input-text xxxl" id="up_sver">
+        </div>
+
+        <div class="pure-control-group">
+            <b class="l T_hwver">Hardware version:</b>
+            <input type="text" readonly="ture" class="tp-input-text xxxl" id="up_hver">
+        </div>
+        <div class="pure-control-group" id="up_mver_div">
+            <b class="l T_mdver">Module version:</b>
+            <input type="text" readonly="ture" class="tp-input-text xxxl" id="up_mver">
+        </div>
+
+		<div class="pure-control-group" id="up_msn_div">
+            <b class="l T_mdsn">Module SN:</b>
+            <input type="text" readonly="ture" class="tp-input-text xxxl" id="up_msn">
+        </div>
+    </form>
+</div>
+
+<div id="onlineUpgrade-block" class="nd">
+    <h3 id="et2">Online Upgrade</h3>
+    <div class="content-container">
+        <form id="softup-online" class="pure-form pure-form-aligned">
+            <div class="pure-control-group">
+                <b class="l T_c_latest">Latest version:</b>
+                <input type="text" readonly="ture" class="tp-input-text xxxl" id="onlie_up_sver">
+            </div>
+
+            <p class="cfg-line release-log" id="online_release_log"></p>
+
+            <button type="submit" class="green l T_c_upgrade l_auto" id="t_onLineUpgrade" value="Upgrade">upgrade</button>
+        </form>
+    </div>
+</div>
+
+
+<h3 id="et3">Local upgrade</h3>
+<div class="content-container">
+    <form id="softup-local" class="pure-form pure-form-aligned" action="/cgi/softup" enctype="multipart/form-data" method="post">
+        <div class="file-container">
+            <b id="t_file">New firmware file: </b>
+            <input type="file" name="filename" id="filename">
+        </div>
+    </form>
+    <form class="pure-form pure-form-aligned">
+        <button type="submit" class="green l T_c_upgrade l_auto" id="t_upgrade" value="Upgrade">upgrade</button>
+    </form>
+</div>
+<script>$.tpInit(init)</script>

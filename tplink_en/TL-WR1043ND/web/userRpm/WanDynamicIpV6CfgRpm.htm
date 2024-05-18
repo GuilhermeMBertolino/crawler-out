@@ -1,0 +1,560 @@
+
+		<link rel="stylesheet" href="../dynaform/widget.css"></link>
+<!--[if lte IE 8]>
+<link href="../dynaform/ie8.css", rel="stylesheet" type="text/css">
+ <![endif]-->
+<script type="text/javascript" src="../js/su/su.js"></script>
+<script type="text/javascript" src="../js/su/widget/widget.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/textbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/combobox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/checkbox.js"></script>
+<script type="text/javascript" src="../js/su/widget/form/radio.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script type="text/javascript">
+var wanType = new Array(
+"id=\"t_disable_ipv6\" name=\"t_disable_ip\">Enable/Disable IPv6<", //	WAN_TYPE_DISABE = 0,
+"id=\"t_slaac\" name=\"t_slaac_ip\">SLAAC<",              //	WAN_TYPE_SLAAC = 1,
+"id=\"t_dyma_ip\" name=\"t_dyma_ip\">DHCPv6<",              //	WAN_TYPE_DHCP = 2,
+"id=\"t_stat_ip\" name=\"t_stat_ip\">Static IPv6<",         //	WAN_TYPE_STATIC_IP,
+"id=\"t_pppoev6\" name=\"t_pppoev6\">PPPoEv6<",               //	WAN_TYPE_PPPOEv6,
+"id=\"t_6to4\" name=\"t_6to4\">Tunnel 6to4<",              //	WAN_TYPE_6TO4,
+"id=\"t_lla\" name=\"t_link_local\">Link local<",         //	WAN_TYPE_LINK_LOCAL,
+""	                                                        //	WAN_TYPE_END
+);
+var Dhcpv6LinkStat = new Array(
+		"<span id=\"t_disconnect\">Disconnected!<\/span>",
+		"<span id=\"t_connect\">Connected<\/span>",
+		"<span id=\"t_connecting\">Connecting...<\/span>"
+	);
+	function doWanSubmit()
+	{
+		var obj;
+
+		if ($("input#dnsType").radio("getValue") == 1)
+		{
+			val = document.getElementById("dnsserver1").value;
+			if(val != "" && false == isGlobalIPv6Addr(val))
+			{
+				obj = document.getElementById("dnsserver1");
+				obj.focus();
+				obj.select();
+				return false;
+			}
+			val = document.getElementById("dnsserver2").value;
+			if(val != "" && false == isGlobalIPv6Addr(val))
+			{
+				obj = document.getElementById("dnsserver2");
+				obj.focus();
+				obj.select();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	function doChange()
+	{
+		var t = document.forms[0].wantype.selectedIndex;
+		location.href = "../userRpm/" + wantypeinfo[t * 2 + 2];
+	}
+
+	var timerId = 0;
+	var bRefreshFlag = 1;
+	function doRefresh()
+	{
+		if (1==bRefreshFlag)
+		{
+			location.href = "WanDynamicIpV6CfgRpm.htm";
+		}
+		window.clearTimeout(timerId);
+		timerId = window.setTimeout("doRefresh()",30000);
+	}
+	
+	function doFocus()
+	{
+		bRefreshFlag = 0;
+	}
+	
+	function doOnblur()
+	{
+		bRefreshFlag = 1;
+		window.clearTimeout(timerId);
+		timerId = window.setTimeout("doRefresh()",30000);
+	}
+
+	function doSet()
+	{
+		if ($("input#dnsType").radio("getValue") == 0)
+		{
+			document.getElementById("dns1").style.display = "";
+			document.getElementById("dns2").style.display = "";
+			document.getElementById("dns3").style.display = "none";
+			document.getElementById("dns4").style.display = "none";
+		}
+		else if ($("input#dnsType").radio("getValue") == 1)
+		{
+			document.getElementById("dns1").style.display = "none";
+			document.getElementById("dns2").style.display = "none";
+			document.getElementById("dns3").style.display = "";
+			document.getElementById("dns4").style.display = "";
+			document.forms[0].dnsserver1.disabled = false;
+			document.forms[0].dnsserver2.disabled = false;
+		}
+		else
+		{
+			;
+		}
+	}
+	function doJudgeDisableAll()
+	{
+		disableTag(document, "SELECT");
+		disableTag(document, "INPUT");
+	}
+	function doJudgeEnableAll()
+	{
+		enableTag(document, "SELECT");
+		enableTag(document, "INPUT");         
+	}
+	function doIpv6OnClick()
+	{
+		if($("input#ipv6Enable").checkbox("getChecked") == true)
+		{
+			doJudgeEnableAll();
+			if(dhcpv6Info[1] == 1)/*DHCPV6_SUCCESS*/
+			{
+				document.forms[0].RenewIp.disabled = true;
+				document.forms[0].ReleaseIp.disabled = false;
+			}
+			if(dhcpv6Info[1] == 2)/*DHCPV6_PROCESS*/
+			{
+				document.forms[0].RenewIp.disabled = false;
+				document.forms[0].ReleaseIp.disabled = false;
+			}
+			if(dhcpv6Info[1] == 3)/*DHCPV6_SUSPEND*/
+			{
+				document.forms[0].RenewIp.disabled = false;
+				document.forms[0].ReleaseIp.disabled = true;
+			}
+			if(dhcpv6Info[1] == 4)/*DHCPV6_STOPPED*/
+			{
+				document.forms[0].RenewIp.disabled = false;
+				document.forms[0].ReleaseIp.disabled = true;
+			}
+			if($("input#ipType").radio("getValue") == 2 && (dhcpv6Info[15] != "/0" && dhcpv6Info[15] != "::/0"))
+			{
+				if (lanIpv6Info[0] == 0)
+				{
+					document.getElementById("ipDhcp6sPrefix").disabled = true;
+					document.getElementById("time").disabled = true;	
+					document.getElementById("ipAssignType").disabled = true;
+				}
+				if (lanIpv6Info[0] == 1)
+				{
+					document.getElementById("ipAssignType").disabled = true;
+					document.getElementById("ipRadvdPrefix").disabled = true;
+				}
+			}
+		}
+		else
+		{
+			doJudgeDisableAll();
+			//document.forms[0].ipv6Enable.disabled = false;
+			$("input#ipv6Enable").checkbox("enable");
+			document.forms[0].Save.disabled = false;
+		}
+	}
+
+	function doOnClick()
+	{
+		if ($("input#ipType").radio("getValue") == 2)
+		{
+			document.getElementById("show_prefix").style.display = "";
+		}
+		else
+		{
+			document.getElementById("show_prefix").style.display = "none";
+		}
+	}
+
+	function doSubmit()
+	{
+		if($("input#ipv6Enable").checkbox("getChecked") == false)
+		{
+			return true;
+		}
+
+		if(doWanSubmit() == false)
+		{
+			return false;
+		}
+		
+		return doLanv6CfgSubmit();
+	}
+	function doLanv6CfgSubmit()
+	{
+		var startIP;
+		var endIp;
+		var prefixIp;
+		var element;
+		var prefixLen;
+		var releaseTime;
+		
+		//if(document.forms[0].ipAssignType[1].checked == true)/*DHCPS*/
+		if($("input#ipAssignType").radio("getValue") == 1)
+		{
+			startIp = document.getElementById("ipStart").value;
+			if (false == isValidPart(startIp))
+			{
+				alert("\"" + startIp + "\"" + " is a valid value, please fill up a valid address.");
+				element = document.getElementById("ipStart");
+				element.focus();
+				element.select();
+				return false;
+			}
+			
+			endIp = document.getElementById("ipEnd").value;   
+			if (false == isValidPart(endIp))
+			{
+				alert("\"" + endIp + "\"" + " is a valid value, please fill up a valid address.");
+				element = document.getElementById("ipEnd");
+				element.focus();
+				element.select();
+				return false;
+			}					
+			releaseTime = document.getElementById("time").value;
+			
+			if(false == is_number(releaseTime, 1, 691200))
+			{
+				alert(js_rl_tm_err = "Release time should be between 1~691200, 86400 is default.")
+				element = document.getElementById("time");
+				element.focus();
+				element.select();
+				return false;
+			}
+		}            
+		
+		if ($("input#ipPrefixType").radio("getValue") == 1)
+		{
+			if (false == isValidIPv6Prefix(document.forms[0].staticPrefix.value))
+			{
+				element = document.getElementById("staticPrefix");
+				element.focus();
+				element.select();
+				return false;
+			}
+			
+			if (false == is_number(document.forms[0].staticPrefixLength.value,1,128))
+			{
+				element = document.getElementById("staticPrefixLength");
+				element.focus();
+				element.select();
+				alert(js_prefix_len_error="The prefix length is invalid, please input another one(1-128), 64 is default!");
+				return false;
+			}
+		}
+		return true;
+	}
+			
+	function doRenew()
+	{
+	   location.href="../userRpm/WanDynamicIpV6CfgRpm.htm?RenewIp=Renew";
+	}
+
+	function doRelease()
+	{
+		location.href="../userRpm/WanDynamicIpV6CfgRpm.htm?ReleaseIp=Release";
+	}
+	
+	function doAssignTypeOnClick()
+	{
+		if($("input#ipAssignType").radio("getValue") == 0)
+		{
+			document.getElementById("dhcps1").style.display = "none";
+			document.getElementById("dhcps2").style.display = "none";
+			document.getElementById("dhcps3").style.display = "none";
+		}
+		else
+		{
+			document.getElementById("dhcps1").style.display = "";
+			document.getElementById("dhcps2").style.display = "";
+			document.getElementById("dhcps3").style.display = "";
+		}
+	}
+	function doPrefixTypeOnClick()
+	{
+		if ($("input#ipPrefixType").radio("getValue") == 0)
+		{
+			document.getElementById('static_prefix').style.display = "none";
+			document.getElementById('static_prefix_length').style.display = "none";
+		}
+		else
+		{
+			document.getElementById('static_prefix').style.display = "";
+			document.getElementById('static_prefix_length').style.display = "";
+		}
+	}
+        </script>
+    </head>
+    <body>
+        <form action="WanDynamicIpV6CfgRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+            <table id="autoWidth">
+				<tr><td class="h1" colspan="2">IPv6 Setup</td></tr>
+                <tr><td class="blue" colspan="2"></td></tr>
+                <tr>
+				<td class="h2" colspan="2" id="t_title">WAN Setup</td>
+                </tr>
+				<tr>
+					<!--<td class="Item" id="t_enable_tunnel">
+					Enable IPv6:
+					</td>-->
+					<td class="Item">
+					<input name="ipv6Enable" id="ipv6Enable">
+					</td>
+				</tr>
+                <tr>
+                    <td class="Item" id = "t_wan_conn_tp">WAN Connection Type:</td>
+                    <td>
+                    <select name="wantype" id="wantype" onChange="doChange()">
+                        <script type="text/javascript">
+                            for(var t = 0; t < wantypeinfo[0]; t++)
+                            {
+                                document.write('<option value="' + wantypeinfo[t * 2 + 1] + '" ' + wanType[wantypeinfo[t * 2 + 1]] + '\/option>');
+                            }
+                        </script>
+                    </select>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                </tr>
+                <tr style="display:none">
+				<td><input name="ipType" id="ipType"/></td>
+				<td></td>
+                 </tr> 
+                <tr>
+                    <td class="Item" id="t_ip_addr">IPv6 Address:</td>
+                    <td><div id="ip"></div></td>
+                </tr>
+                <tr id="show_prefix" style="display:none">
+                    <td class="Item" id="t_ipv6_addr_prefix" name="t_ipv6_addr_prefix">IPv6 Address Prefix:</td>
+                    <td><div id="prefix"></div></td>
+                </tr>
+                <tr style="display:none" >
+                    <td class="Item" id="t_ipv6_prefix_len">IPv6 Prefix Length:</td>
+                    <td><div id="prefixLength"></div></td>
+                </tr>
+                <tr>
+				<td class="Item" id="t_def_gw">Default Gateway:</td>
+				<td><div id="gateway"></div></td>
+			   
+				</tr>
+                <tr>
+                    <td></td>
+                    <!--<td class="emp"><input name="RenewIp" type="button" class="button" value="Renew" onClick="doRenew();">-->
+					<td class="emp"><input name="RenewIp" type="submit" class="button" value="Renew">
+					&nbsp;&nbsp;<input name="ReleaseIp" type="button" class="button" value="Release" onClick="doRelease();">&nbsp;&nbsp;<span id="linkStat"></td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                </tr>
+			
+                <tr style="display:none">
+                    <td class="Item" id="t_mtu_size">MTU Size (in bytes):</td>
+                    <td><input name="mtu" id="mtu" type="text" class="text" value="" size="4" maxlength="4"><span id = "t_desc">&nbsp;(The default is 1280, do not change unless necessary.)</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+						<input name="dnsType" id="dnsType"/>
+						<table id="dnsTypeAutoContent" border="0" cellpadding="0" cellspacing="0">
+						<tr id="dns1">
+							<td class="Item" id="t_ipv6_pri_dns">Primary IPv6 DNS:</td>
+							<td><div id="pri_dns"></div></td>
+						</tr>
+						<tr id="dns2">
+							<td class="Item" id="t_ipv6_sec_dns">Secondary IPv6 DNS:</td>
+							<td><div id="sec_dns"></div></td>
+						</tr>
+						</table>
+						<table id="dnsTypeManuContent" border="0" cellpadding="0" cellspacing="0">
+						<tr id="dns3">
+							<td class="Item" id="t_pri_dns">Primary IPv6 DNS:</td>
+							<td><input name="dnsserver1" id="dnsserver1" type="text" class="text" value="" size="40" maxlength="40" onFocus="doFocus()" onBlur="doOnblur()"><span id="t_opt" name="t_opt">&nbsp;(Optional)</span></td>
+						</tr>
+						<tr id="dns4">
+							<td class="Item" id="t_sec_dns">Secondary IPv6 DNS:</td>
+							<td><input name="dnsserver2" id="dnsserver2" type="text" class="text" value="" size="40" maxlength="40" onFocus="doFocus()" onBlur="doOnblur()"><span id="t_opt" name="t_opt">&nbsp;(Optional)</span></td>
+						</tr>
+						</table>
+					</td>
+				</tr>
+                <tr><td class="blue" colspan="2"></td></tr>
+				<tr>
+				<td class="h2" colspan="2" id="t_sub_title">LAN Setup</td>
+                </tr>
+                <tr>
+                    <td class="Item" id="t_ipv6_addr_type">Address Autoconfiguration Type:</td>
+                    <td><input name = "ipAssignType" id="ipAssignType"/></td>
+                </tr>
+				<tr id="dhcps1">
+                    <td class="Item" id="t_ipv6_addr_start">Start IPv6 Address</td>
+                    <td>::<input type="text" name="ipStart" id="ipStart" maxlength="4" size="4" onFocus="doFocus()" onBlur="doOnblur()">(1~FFFE)</td>
+                </tr>
+                <tr id="dhcps2">
+                    <td class="Item" id="t_ipv6_addr_end">End IPv6 Address</td>
+                    <td>::<input type="text" name="ipEnd" id="ipEnd" maxlength="4" size="4" onFocus="doFocus()" onBlur="doOnblur()">(1~FFFE)</td>
+                </tr>
+                <tr id="dhcps3">
+                    <td class="Item" id="t_rl_tm">Release Time:</td>
+                    <td><input type="text" name="time" id="time" maxlength="6" size="6" onFocus="doFocus()" onBlur="doOnblur()"><span id="t_rl_tm_desc">Seconds(The default is 86400, do not change unless necessary.)</span></td>
+                </tr>
+				 <tr>
+                    <td class="Item" id="t_site_prefix_type">Site Prefix Configuration Type:</td>
+                    <td><input name="ipPrefixType" id="ipPrefixType" /></td>
+                </tr>
+                <tr id="static_prefix">
+                    <td class="Item" id="t_static_prefix">Site Prefix:</td>
+                    <td><input type="text" name="staticPrefix" id="staticPrefix" maxlength="40" size="40" onFocus="doFocus()" onBlur="doOnblur()"></td>
+                </tr>
+				<tr id="static_prefix_length">
+                    <td class="Item" id="t_static_prefix_length">Site Prefix Length:</td>
+                    <td><input type="text" name="staticPrefixLength" id="staticPrefixLength" maxlength="3" size="3" onFocus="doFocus()" onBlur="doOnblur()"><span id="t_default">(The default is 64, do not change unless necessary)</span></td>
+                </tr>
+				 <tr id="">
+                    <td class="Item" id="t_lan_ip">Lan IPV6 Address:</td>
+                    <td><div id="lanIpAdress"></div></td>
+                </tr>
+                <tr>
+                    <td class="blue" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input name="Save" type="submit" class="buttonBig" value="Save"></td>
+                </tr>
+            </table>
+        </form>
+		<script type="text/javascript">
+		 document.forms[0].wantype.selectedIndex = dhcpv6Info[0] - 1;
+		 $("select#wantype").combobox({inputCls: "xl", cls: "inline"});
+		 
+		 $("input#dnsType").radio({
+			cls: "title_label",
+			items: [
+				{boxlabel: (js_dns_auto = "Get IPv6 DNS Server Automatically"), inputvalue: "0", content: "table#dnsTypeAutoContent"},
+				{boxlabel: (js_dns_manual = "Use the following IPv6 DNS Servers"), inputvalue: "1", content: "table#dnsTypeManuContent"}
+			]
+		}).on("ev_click", doSet).radio("showItem", 0);
+		
+		$("input#ipType").radio({
+			cls: "title_label",
+			items: [
+				{boxlabel: (js_ipv6_prmnnt_addr = "Get non-temporary IPv6 address"), inputvalue: "0"},
+				{boxlabel: (js_ipv6_tmp_addr = "Identity association for temporary address"), inputvalue: "1"},
+				{boxlabel: (js_ipv6_dlgt = "Get IPv6 prefix delegation"), inputvalue: "2"}
+			]
+		}).on("ev_change", doOnClick);
+		
+		$("input#ipAssignType").radio({
+			cls: "inline",
+			columns: 2,
+			items: [
+				{boxlabel: (js_radvd="RADVD"), inputvalue: "0", id: "ipAssignType1"},
+				{boxlabel: (js_dhcps_erver= "DHCPv6 Server"), inputvalue: "1", id: "ipAssignType2"}
+			]
+		}).on("ev_change", doAssignTypeOnClick);
+		
+		$("input#ipPrefixType").radio({
+			cls: "inline",
+			columns: 2,
+			items: [
+				{boxlabel: (js_delegate="Delegated"), inputvalue: "0", id: "ipPrefixType1"},
+				{boxlabel: (js_static= "Static"), inputvalue: "1", id: "ipPrefixType2"}
+			]
+		}).on("ev_change", doPrefixTypeOnClick);
+		
+		$("input#ipv6Enable").checkbox({
+			items: [
+			//{boxlabel: (t_enable_tunnel = "Enable IPv6"), inputvalue: "1"}
+			{boxlabel: "Enable IPv6:", inputvalue: "1"}
+			]
+		}).on("ev_change", doIpv6OnClick);
+		</script>
+        <script type="text/javascript">
+            
+			document.getElementById("linkStat").innerHTML = Dhcpv6LinkStat[dhcpv6Info[1]];
+            if(dhcpv6Info[1] == 0)/*down*/
+            {
+                document.forms[0].RenewIp.disabled = false;
+                document.forms[0].ReleaseIp.disabled = true;
+            }
+            if(dhcpv6Info[1] == 1 || dhcpv6Info[1] == 2)/*up or linking*/
+            {
+				document.forms[0].RenewIp.disabled = true;
+				document.forms[0].ReleaseIp.disabled = false;
+            }
+
+        
+            document.getElementById('ip').innerHTML = dhcpv6Info[2];
+             document.getElementById('gateway').innerHTML = dhcpv6Info[4];
+            document.forms[0].mtu.value = dhcpv6Info[5];
+            
+            if(dhcpv6Info[6] == 1)
+            {
+				document.forms[0].dnsserver1.disabled = false;
+                document.forms[0].dnsserver2.disabled = false;
+            }
+            else
+            {
+				document.forms[0].dnsserver1.disabled = true;
+                document.forms[0].dnsserver2.disabled = true;
+            }
+			document.forms[0].dnsserver1.value = dhcpv6Info[7];
+            document.forms[0].dnsserver2.value = dhcpv6Info[8];
+
+			$("input#ipType").radio("setValue", dhcpv6Info[11]);
+			$("input#dnsType").radio("setValue", dhcpv6Info[12]);
+        
+            doSet();
+            //doOnClick();
+            document.getElementById('pri_dns').innerHTML = dhcpv6Info[13];
+            document.getElementById('sec_dns').innerHTML = dhcpv6Info[14];
+            document.getElementById('prefix').innerHTML = dhcpv6Info[15];
+            document.getElementById('prefixLength').innerHTML = dhcpv6Info[16];
+            
+            if(dhcpv6Info[2] == "::" || dhcpv6Info[2] == "")
+            {
+                timerId = window.setTimeout("doRefresh()", 30000);
+            }		
+			
+            if(lanIpv6Info[0] == 0)
+            {
+                document.getElementById("dhcps1").style.display = "none";
+                document.getElementById("dhcps2").style.display = "none";
+                document.getElementById("dhcps3").style.display = "";
+            }
+            if(lanIpv6Info[0] == 1)
+            {
+                document.getElementById("dhcps1").style.display = "none";        
+				document.getElementById("dhcps2").style.display = "none";
+                document.getElementById("dhcps3").style.display = "none";
+            }
+			
+			$("input#ipAssignType").radio("setValue", lanIpv6Info[0]);
+			document.getElementById("ipStart").value = lanIpv6Info[1];
+            document.getElementById("ipEnd").value = lanIpv6Info[2];
+			document.getElementById("time").value = lanIpv6Info[3];
+			$("input#ipPrefixType").radio("setValue", lanIpv6Info[4]);
+			document.forms[0].staticPrefix.value = lanIpv6Info[5];
+			document.forms[0].staticPrefixLength.value = lanIpv6Info[6];
+			document.getElementById('lanIpAdress').innerHTML = lanIpv6Info[7];
+			doAssignTypeOnClick();
+			doPrefixTypeOnClick();
+                        if (lanIpv6Info[8] == 1)
+				alert("Lan duplicated address detected,please get or input another prefix.");
+			$("input#ipv6Enable").checkbox("setChecked", dhcpv6Info[17] == 1 ? true:false);
+			if ($("input#ipv6Enable").checkbox("getChecked") == false)
+			{
+				doJudgeDisableAll();
+				//document.forms[0].ipv6Enable.disabled = false;
+				$("input#ipv6Enable").checkbox("enable");
+				document.forms[0].Save.disabled = false;		
+			}
+</SCRIPT>

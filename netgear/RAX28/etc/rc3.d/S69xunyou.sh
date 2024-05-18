@@ -1,1 +1,0 @@
-../init.d/xunyou.sh

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+#insert usbhost & scsi modules
+ 
+insmod_usbhost_scsi() {
+	#insmod /lib/modules/*/kernel/drivers/usb/host/ehci-hcd.ko  
+	#insmod /lib/modules/*/kernel/drivers/usb/host/ehci-platform.ko  
+	#insmod /lib/modules/*/kernel/drivers/usb/host/ohci-hcd.ko  
+	#insmod /lib/modules/*/kernel/drivers/usb/host/ohci-platform.ko  
+	#insmod /lib/modules/*/kernel/drivers/usb/host/xhci-hcd.ko  
+	#insmod /lib/modules/*/kernel/drivers/usb/host/xhci-plat-hcd.ko  
+	#insmod /lib/modules/*/extra/bcm_usb.ko  
+	insmod /lib/modules/*/kernel/drivers/usb/class/usblp.ko  
+	insmod /lib/modules/*/kernel/drivers/usb/storage/usb-storage.ko
+
+	insmod sd_mod
+	insmod scsi_wait_scan
+
+	insmod crc16
+	insmod mbcache
+	insmod jbd2
+	insmod fat
+	insmod vfat
+	insmod ntfs
+	insmod hfs
+	insmod hfsplus
+	insmod ext4
+	insmod msdos
+
+	insmod fuse
+}
+
+boot_hook_add preinit_main insmod_usbhost_scsi 
+

@@ -1,0 +1,83 @@
+<script>var voipAccounts,telContacts,editFlag=0,curMatchType=-1,curFwdVia=-1,curDestNum="",curFwdType=-1,curStatus=-1,curStk=new Array(-1,-1,-1,-1,-1,-1),radioId=new Array(["forward_0",""],["forward_1","for1"],["forward_2","for2"],["forward_3","for3"],["forward_4","for4"]),telType=new Array(["type1","number1"],["type2","number2"],["type3","number3"],["type4","number4"],["type5","number5"]);function enterCheck(){var e,t,a={};try{if($("#forward_1").prop("checked")){if(a=$("#for1"),-1==$("#for1").data("value"))throw a&&($.alert(ERR_VOIP_FORWARD_SELECT_ERROR),a.focus(),a.select()),!1}else if($("#forward_2").prop("checked")){if(a=$("#for2"),-1==$("#for2").data("value"))throw a&&($.alert(ERR_VOIP_FORWARD_SELECT_ERROR),a.focus(),a.select()),!1}else if($("#forward_3").prop("checked")){if(a=$("#for3"),-1==$("#for3").data("value"))throw a&&($.alert(ERR_VOIP_FORWARD_SELECT_ERROR),a.focus(),a.select()),!1}else $("#forward_4").prop("checked")&&(e=n_str.voice_callforward.t_telphonenum,t="for4",a=$("#for4"),retv=getValue(t,e,3,32),a.get(0).value=retv,checkNum(a,e));if(a=$("#t_destNum"),e=n_str.voice_callforward.t_destnumlabel,t="t_destNum",retv=getValue(t,e,3,32),a.get(0).value=retv,checkNum(a,e),-1==$("#via").data("value"))throw(a=$("#via"))&&($.alert(ERR_VOIP_FORWARD_SELECT_ERROR),a.focus(),a.select()),!1}catch(e){if(!1===e)return!1;throw e}return!0}function initSel(e,t){var a=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiProfileName","multiExtension","multiIndexing"]),o=$.act(ACT_GL,VOICE_PROF_LINE,null,null,["X_TP_PhoneName","X_TP_PhoneType","status","enable"]),l=0,r="";if(!$.exe()){t?(r="<option value='-1' text='Please select'>"+showtype[1]+"</option>",$.each(o,function(){if("Enabled"==this.enable&&"FXS"==this.X_TP_PhoneType){var e=this.X_TP_PhoneName;r+="<option value='"+l+"' text='"+e+"' >"+e+"</option>"}else if("Enabled"==this.enable&&"DECT"==this.X_TP_PhoneType){var t=$.act(ACT_GET,XTP_DECT_HANDSET_INFO,this.__stack,null,["Status"]);if(0!=$.exe())return;if(1==t.status){e=this.X_TP_PhoneName;r+="<option value='"+l+"' text='"+e+"' >"+e+"</option>"}}l++})):(r="via"==e?"<option value='auto' text='auto'>"+showtype[0]+"</option>":"<option value='-1' text='Please select'>"+showtype[1]+"</option>",$.each(a,function(){if(this.multiExtension&&""!=this.multiExtension){var e=this.multiProfileName,t=this.multiIndexing;r+="<option value='"+t+"' text='"+e+"' >"+e+"</option>"}})),$("#"+e).empty().append(r);$("#"+e).tpSelect({refresh:1})}}function initSelBook(e,t){for(var a="<option value='-1' text='Please Select'>"+showtype[1]+"</option>",o="",l=0;l<e.length;l++)if(0==e[l].internal)for(var r=0;r<telType.length;r++)""!=e[l][telType[r][1]]&&(8==e[l][telType[r][0]]?(o=e[l].firstName+"."+e[l].lastName+","+phone[0]+","+e[l][telType[r][1]],a+="<option value='"+(e[l].firstName+"."+e[l].lastName+showtype[2])+"' text='"+o+"' >"+o+"</option>"):4==telContacts[l][telType[r][0]]?(o=e[l].firstName+"."+e[l].lastName+","+phone[2]+","+e[l][telType[r][1]],a+="<option value='"+(e[l].firstName+"."+e[l].lastName+showtype[3])+"' text='"+o+"' >"+o+"</option>"):2==telContacts[l][telType[r][0]]&&(o=e[l].firstName+"."+e[l].lastName+","+phone[1]+","+e[l][telType[r][1]],a+="<option value='"+(e[l].firstName+"."+e[l].lastName+showtype[4])+"' text='"+o+"' >"+o+"</option>"));$("#"+t).empty().append(a);$("#"+t).tpSelect({refresh:1})}function doEnable(e){$.addLoading($(this));var t=$.act(ACT_GET,XTP_CALL_FWD_LIST,e,null);$.exe()||(1==t.enable?$.act(ACT_SET,XTP_CALL_FWD_LIST,e,null,["Enable=0"]):0==t.enable&&$.act(ACT_SET,XTP_CALL_FWD_LIST,e,null,["Enable=1"])),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}function doDel(e){$.confirm(c_str.voice_del_con,function(){$.act(ACT_DEL,XTP_CALL_FWD_LIST,e,null),actForSendMsg(),$.exe()||$.reload()})}function doEdit(e){$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiProfileName","multiExtension","multiIndexing"]);var t=$.act(ACT_GET,XTP_CALL_FWD_LIST,e,null);if(telContacts=$.act(ACT_GL,XTP_TELE_CONTACT,null,null,null),!$.exe()){editFlag=1,curStk=e,curMatchType=t.matchType,curFwdVia=t.outgoingViaSipAcctIdx,curDestNum=t.destNumber,curFwdType=t.fwdType,curStatus=t.enable,initSel("for1",0),initSel("for2",1),initSelBook(telContacts,"for3"),initSel("for5",0),initSel("via",0),0==t.enable?$("#forward_en").prop("checked",!1):$("#forward_en").prop("checked",!0),$("#forward_0").prop("checked",!1),$("#forward_0").tpRadio();var a={refresh:1};if(0==t.matchType)$("#forward_0").prop("checked",!0),$("#forward_0").tpRadio();else if(1==t.matchType)$("#forward_1").prop("checked",1==t.matchType),$('#for1 option[value="'+t.incomingSipAcctIdx+'"]').prop("selected","selected"),$("#forward_1").tpRadio(),$("#for1").tpSelect(a);else if(2==t.matchType)$("#forward_2").prop("checked",2==t.matchType),$('#for2 option[value="'+t.phoneIdx+'"]').prop("selected","selected"),$("#forward_2").tpRadio(),$("#for2").tpSelect(a);else if(3==t.matchType){for(var o=0;o<telContacts.length;o++){for(var l=0,r=0;r<telType.length;r++)if(telContacts[o][telType[r][1]]==t.callerNumber){if(l=1,$("#forward_3").prop("checked",!0),$("#forward_3").tpRadio(),8==telContacts[o][telType[r][0]]){var i=telContacts[o].firstName+"."+telContacts[o].lastName+showtype[2];$('#for3 option[value="'+i+'"]').prop("selected","selected"),$("#for3").tpSelect(a);break}if(4==telContacts[o][telType[r][0]]){i=telContacts[o].firstName+"."+telContacts[o].lastName+showtype[3];$('#for3 option[value="'+i+'"]').prop("selected","selected"),$("#for3").tpSelect(a);break}if(2==telContacts[o][telType[r][0]]){i=telContacts[o].firstName+"."+telContacts[o].lastName+showtype[4];$('#for3 option[value="'+i+'"]').prop("selected","selected"),$("#for3").tpSelect(a);break}}if(l)break}o>=telContacts.length&&($("#forward_4").prop("checked",!0),$("#forward_4").tpRadio(),$("#for4").prop("value",t.callerNumber))}var c=t.destNumber.split("@");$("#t_destNum").prop("value",c[0]),$('#forwardType option[value="'+t.fwdType+'"]').prop("selected","selected"),$('#via option[value="'+c[1]+'"]').prop("selected","selected"),$("#forward_en").prop("checked",1==t.enable),$("#forward_en").tpCheckbox(),$("#forwardType").tpSelect(a),$("#via").tpSelect(a)}}function getContact(e){for(var t="",a=0;a<telContacts.length;a++){for(var o=0,l=0;l<telType.length;l++)telContacts[a][telType[l][1]]==e&&(o=1,t=telContacts[a].firstName+"."+telContacts[a].lastName);if(o)break}return t}function initTable(){voipAccounts=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiProfileName","multiExtension","multiIndexing"]);var n=$.act(ACT_GL,VOICE_PROF_LINE,null,null,["X_TP_PhoneName"]);callList=$.act(ACT_GL,XTP_CALL_FWD_LIST,null,null,null),telContacts=$.act(ACT_GL,XTP_TELE_CONTACT,null,null,null);var s=new Array,p="";if(!$.exe()){var d=0;$.each(callList,function(){var e="["+this.__stack+"]",t=callsArray[this.matchType];switch(this.matchType){case"0":t=callsArray[this.matchType];break;case"1":var a=this.incomingSipAcctIdx-1;t=callsArray[this.matchType]+voipAccounts[a].multiProfileName;break;case"2":t=callsArray[this.matchType]+n[this.phoneIdx].X_TP_PhoneName;break;case"3":t=callsArray[this.matchType],t+=""!=(p=getContact(this.callerNumber))?p:this.callerNumber;break;case"4":t=callsArray[this.matchType]+this.callerNumber;break;case"5":a=this.incomingSipAcctIdx-1;t=callsArray[this.matchType]+voipAccounts[a].multiProfileName}var o,l,r=this.destNumber.split("@");o="auto"==r[1]?showtype[5]:(l=r[1]-1,voipAccounts[l].multiProfileName);var i=r[0],c=fwArray[this.fwdType];1==this.enable?s.push([{text:t,width:"20%"},{text:o,width:"20%"},{text:i,width:"20%"},{text:c,width:"15%"},{text:"<span class='table-grid-icon enable-icon' id='en_"+d+"' onclick='doEnable("+e+");'></span>",width:"5%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+d+"' onclick='doEdit("+e+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+d+"' onclick='doDel("+e+");'></span>",width:"20%"}]):s.push([{text:t,width:"20%"},{text:o,width:"20%"},{text:i,width:"20%"},{text:c,width:"15%"},{text:"<span class='table-grid-icon disable-icon' id='en_"+d+"' onclick='doEnable("+e+");'></span>",width:"5%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+d+"' onclick='doEdit("+e+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+d+"' onclick='doDel("+e+");'></span>",width:"20%"}]),d++}),$.initTableBody($("#table-forward"),s)}}$("#delAll").click(function(){$.confirm(c_str.voice_del_allcon,function(){$.addLoading($(this)),$.each(callList,function(){$.act(ACT_DEL,XTP_CALL_FWD_LIST,this.__stack,null)}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})})}),$("#cancel").click(function(){curDestNum="",curStatus=curFwdType=curFwdVia=curMatchType=-1;for(var e=editFlag=0;e<curStk.length;e++)curStk[e]=-1;$.reload()}),$("#add").click(function(){initSel("for1",0),initSel("for2",1),initSelBook(telContacts,"for3"),initSel("for5",0),initSel("via",0)}),$("#save").click(function(){if($.addLoading($(this)),0==enterCheck())return!1;var e={};if(e.destNumber=$("#t_destNum").prop("value")+"@"+$("#via").data("value"),e.callerNumber=$("#for4").prop("value"),e.fwdType=$("#forwardType").data("value"),$("#forward_0").prop("checked"))e.matchType=0;else if($("#forward_1").prop("checked"))e.matchType=1,e.incomingSipAcctIdx=$("#for1").data("value");else if($("#forward_2").prop("checked"))e.matchType=2,e.phoneIdx=$("#for2").data("value");else if($("#forward_3").prop("checked")){e.matchType=3;var t=$("#for3").data("text").split(",");e.callerNumber=t[2]}else $("#forward_4").prop("checked")&&(e.matchType=3,e.callerNumber=$("#for4").prop("value"));editFlag?(e.enable=$("#forward_en").prop("data-checked")?1:0,$.act(ACT_SET,XTP_CALL_FWD_LIST,curStk,null,e)):(e.enable=1,$.act(ACT_ADD,XTP_CALL_FWD_LIST,null,null,e)),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})})</script>
+<h3 class="T" id="t_et">Call Forward</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span id="add" class="add-icon"></span>
+                <label class="T_add">Add</label>
+                <span id="delAll" class="delete-all-icon"></span>
+                <label class="T_delall">Delete All</label>
+            </div>
+        </div>
+        <table id="table-forward">
+            <thead></thead>
+            <tbody id="body-forward">
+                <tr id="edit-container-forward" class="nd">
+                    <td colspan="6">
+                        <p class="cfg-line green" id="t_info1" style="margin:15px 0 10px">Which calls should be forwarded ?</p>
+                        <div>
+                            <input type="radio" class="xs" name="forward" id="forward_0" checked="checked">
+                            <label class="xl T" id="t_label1">All incoming calls</label>
+                        </div>
+                        <div>
+                            <input type="radio" class="inline xs" name="forward" id="forward_1">
+                            <label class="xl pl-xxl T" id="t_label2">Calls to a telephone number</label>
+                            <select class="inline l" id="for1">
+                            </select>
+                        </div>
+                        <div>
+                            <input type="radio" class="inline xs" name="forward" id="forward_2">
+                            <label class="xl pl-xxl T" id="t_label3">Calls to a phone</label>
+                            <select class="inline l" id="for2">
+                            </select>
+                        </div>
+                        <div>
+                            <input type="radio" class="inline xs" name="forward" id="forward_3">
+                            <label class="xl pl-xxl T" id="t_label4">Calls from a person in the telephone book</label>
+                            <select class="inline l" id="for3">
+                            </select>
+                        </div>
+                        <div>
+                            <input type="radio" class="inline xs" name="forward" id="forward_4">
+                            <label class="xl pl-xxl T" id="t_label5">Calls from the telephone number</label>
+                            <input type="text" id="for4">
+                        </div>
+                        <div class="nd">
+                            <input type="radio" class="inline xs" name="forward" id="forward_5">
+                            <label class="xl T" id="t_label6">All anonymous calls to the number</label>
+                            <select class="inline l" id="for5">
+                            </select>
+                        </div>
+                        <p class="cfg-line green" id="t_info2" style="margin:15px 0 10px">Set forward calls:</p>
+                        <div>
+                            <b class="l pl-xl T" id="t_destnumlabel">Destination telephone number: </b>
+                            <input type="text" id="t_destNum">
+                        </div>
+                        <div>
+                            <b class="l pl-xl T" id="t_fwdlabel">Forward the calls via: </b>
+                            <select id="via" class="l">
+                            </select>
+                            <b class="l pl-xl T" id="t_fwdtypelabel">Forward type: </b>
+                            <select id="forwardType" class="l">
+                                <option class="T" id="t_undion" value="0">Unconditionally</option>
+                                <option class="T" id="t_noanswer" value="1">No Answer</option>
+                            </select>
+                        </div>
+                        <br>
+                        <div class="nd">
+                            <input type="checkbox" id="forward_en">
+                            <label class="T" id="t_enfwdlabel">Enable this call forward rule</label>
+                        </div>
+                        <br>
+                        <div class="btn-right">
+                            <button type="submit" class="green T_cancel" id="cancel">Cancel</button>
+                            <button type="submit" class="green T_save" id="save">Save</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<script>var headArray=[{text:table_str.call,width:"20%"},{text:table_str.fwd,width:"20%"},{text:table_str.dstnum,width:"20%"},{text:table_str.fwdtype,width:"15%"},{text:table_str.status,width:"5%"},{text:table_str.modify,width:"20%"}];$.tpInit(),$.initTableHead($("#table-forward"),headArray),$("#table-forward").tpTable(initTable)</script>

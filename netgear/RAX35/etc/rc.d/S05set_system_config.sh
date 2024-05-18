@@ -1,1 +1,0 @@
-../init.d/set_system_config.sh

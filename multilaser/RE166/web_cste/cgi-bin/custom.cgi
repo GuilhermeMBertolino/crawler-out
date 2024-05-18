@@ -1,1 +1,0 @@
-/var/custom.cgi

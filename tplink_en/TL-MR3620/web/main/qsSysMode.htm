@@ -1,0 +1,137 @@
+﻿<script language="javascript" type="text/javascript">
+var curMode = "USB_3G";
+var curEwanBackup = 0;
+var cur3gBackup = 0;
+function sysModeInit() {
+    if (INCLUDE_USB_3G_DONGLE) {
+        $("#mode3gOnly").removeClass("nd");
+    }
+	if (INCLUDE_EWAN_BACKUP) {
+        $("#mode3gPrefer").removeClass("nd");
+    }
+	if (INCLUDE_USB_3G_BACKUP) {
+        $("#ethPrefer").removeClass("nd");
+    }
+	if (INCLUDE_VDSLWAN) {
+        $("#modeDsl").removeClass("nd");
+    }
+    var sysMode = $.act(ACT_GET, SYS_MODE, null, null);
+    if (!$.exe()) {
+		curMode = sysMode.mode;
+		curEwanBackup = INCLUDE_EWAN_BACKUP?sysMode.ewanBackup:0;
+		cur3gBackup = INCLUDE_USB_3G_BACKUP?sysMode.usb3gBackup:0;
+        if (curMode == "DSL") {
+            $("#DSL").prop("checked", true);
+        } else if (curMode == "USB_3G") {
+	        $("#USB_3G_only").prop("checked", true);
+        	if (curEwanBackup == 1)
+			{
+	            $("#USB_3G_prefer").prop("checked", true);
+			}
+        } else {
+	        $("#ETH_only").prop("checked", true);
+        	if (cur3gBackup == 1)
+			{
+	            $("#ETH_prefer").prop("checked", true);
+			}
+        }
+    }
+}
+function realNext()
+{
+	if ($.qd.setMode == "USB_3G")
+		loadSubPage("qsUsb3G.htm");
+    else if ($.qd.setMode == "ETH")
+        loadSubPage("qsEwanType.htm");
+	else 
+		$.qf.next();
+}
+
+function goNext() {
+    var sysModeArg = {};
+	var ewanBackup = 0;
+	var usb3gBackup= 0;
+    if ($("#DSL").prop("checked")) {
+        $.qd.setMode = "DSL";
+    } else if ($("#USB_3G_only").prop("checked")) {
+         $.qd.setMode = "USB_3G";
+		  $.qd.modeName = "3G/4G Router Mode";
+		ewanBackup = 0;
+		usb3gBackup = 0;
+	} else if (INCLUDE_EWAN_BACKUP && $("#USB_3G_prefer").prop("checked")) {
+         $.qd.setMode = "USB_3G";
+		  $.qd.modeName = "3G/4G Router Mode With Ewan Backup";
+		ewanBackup = 1;
+		usb3gBackup = 0;
+	}
+    else if ($("#ETH_only").prop("checked")) {
+         $.qd.setMode = "ETH";
+		  $.qd.modeName = "Wireless Router Mode"
+		usb3gBackup = 0;
+		ewanBackup = 0;
+    } else  if (INCLUDE_USB_3G_BACKUP){
+         $.qd.setMode = "ETH";
+		  $.qd.modeName = "Wireless Router Mode With 3G/4G Backup"
+		usb3gBackup = 1;
+		ewanBackup = 0;
+    }
+	$.qd.sysModeChg = 1;
+	if ($.qd.setMode == curMode && curEwanBackup == ewanBackup 
+		&& usb3gBackup == cur3gBackup)
+		$.qd.sysModeChg = 0;
+	
+	$.qd.curMode = curMode;
+	if (INCLUDE_USB_3G_BACKUP)
+		$.qd.usb3gBackup = usb3gBackup;
+	if (INCLUDE_EWAN_BACKUP)
+		$.qd.ewanBackup = ewanBackup;
+
+	if ($.qd.setMode != $.qd.curMode)
+	{
+		$.confirm(c_str.qschgmod,
+	        function() {realNext();},
+	        function() {return;}
+	    );
+	}
+	else
+		realNext();
+}
+</script>
+<div class="quicksetup_sysMode_container">
+    <form class="pure-form pure-form-aligned">
+        <div id="modeDsl" class="nd">
+            <input type="radio" name="sysMode" id="DSL" value="DSL" />
+            <label id="t_sysmod1">ADSL Modem Router Mode</label>
+        </div>
+        <div id="mode3gOnly">
+            <input type="radio" name="sysMode" id="USB_3G_only" value="USB_3G" />
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+         <div id="mode3gPrefer" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G_prefer" value="USB_3G" />
+            <label id="t_sysmod4">3G/4G Router Mode With Ewan Backup</label>
+        </div>
+        <div id="ethOnly">
+            <input type="radio" name="sysMode" id="ETH_only" value="ETH" />
+            <label id="t_sysmod3">Wireless Router Mode</label>
+        </div>
+        <div id="ethPrefer" class="nd">
+            <input type="radio" name="sysMode" id="ETH_prefer" value="ETH" />
+            <label id="t_sysmod5">Wireless Router Mode With 3G/4G Backup</label>
+        </div>
+        <!--
+        <button type="submit" class="green T_save" value="Save" id="b_save" onclick="doSave()">Save</button>
+		-->
+    </form>
+</div>
+<div class="inline-btn-right quicksetup-button-container">
+	<div class="inline">
+		<button type="submit" class="green T_back" id="back" onclick="$.qf.prev()">Back</button>
+	</div>
+	<div class="inline">
+		<button type="submit" class="green T_next" id="next" onclick="goNext()">Next</button>
+	</div>
+</div>
+<script language="javascript" type="text/javascript">
+$.tpInit(sysModeInit);
+</script>

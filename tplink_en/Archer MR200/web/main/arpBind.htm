@@ -1,0 +1,76 @@
+<script language="javascript">function init(){index=0,opt=0,arpStack=[],bindingListStack=[];var t=[{text:'<div><input type="checkbox" id="checkbox_arp_1" class="table-select-all" /><label></label></div>',width:"10%"},{text:table_str.id,width:"10%"},{text:table_str.mac,width:"25%"},{text:table_str.ip,width:"20%"},{text:table_str.bound,width:"20%"},{text:table_str.modify,width:"15%"}],i=[{text:'<div><input type="checkbox" id="checkbox_bind_1" class="table-select-all" /><label></label></div>',width:"5%"},{text:table_str.id,width:"5%"},{text:table_str.mac,width:"20%"},{text:table_str.ip,width:"20%"},{text:table_str.status,width:"10%"},{text:table_str.enable,width:"10%"},{text:table_str.modify,width:"10%"}];$.initTableHead($("#table_arpList"),t),$("#table_arpList").tpTable(initArpTable),$.initTableHead($("#table_bindingList"),i),$("#table_bindingList").tpTable(initBindingTable);var e=$.act(ACT_GL,ARP_ENTRY,null,null),n=$.act(ACT_GL,ARP_BIND_ENTRY,null,null),a=$.act(ACT_GET,ARP_BIND,null,null,["enable"]);$.exe()||(1==a.enable?$("#enArpBindOn").addClass("selected"):$("#enArpBindOff").addClass("selected"),$.each(n,function(){bindingListStack[++index-1]=this.__stack}),index=0,$.each(e,function(){arpStack[++index-1]=this.__stack})),$("#addBindingList").click(function(){opt=0}),$("#editCancel").click(function(){$.reload()}),$("#editOk").on("click",function(t){$.addLoading($(this)),doSave(bindingListStack)}),$("#del_testIcon").on("click",function(t){$.confirm(c_str.del_choosed,doDel,null)}),$("#add_testIcon").on("click",function(t){$("#enableThisEntry").prop("checked",!0),$("#enableThisEntry").data("tpCheckbox").refresh()}),$("span.edit-modify-icon").on("click",function(t){$(this).parents("tr")}),$("#enArpBindOn").click(function(){$.act(ACT_SET,ARP_BIND,null,null,["enable=1"]),$.exe(function(t){t||$.reload()})}),$("#enArpBindOff").click(function(){$.act(ACT_SET,ARP_BIND,null,null,["enable=0"]),$.exe(function(t){t||$.reload()})})}function initArpTable(){function t(t){return t.replace(/\:/g,"-").toUpperCase()}var i={},e={},n={},a={},d=[],s=$.act(ACT_GL,ARP_ENTRY,null,null);if(INCLUDE_ONEMESH)var l=$.act(ACT_GL,ONEMESH_RELIST,null,null),c=$.act(ACT_GL,ONEMESH_MAC,null,null),r=$.act(ACT_GL,LAN_HOST_ENTRY,null,null,["MACAddress","IPAddress"]),o=0;else r=$.act(ACT_GL,LAN_HOST_ENTRY,null,null,["X_TP_ConnType","MACAddress","hostName","IPAddress"]);return $.exe(function(p){if(!p){if(INCLUDE_ONEMESH){$.each(l,function(){i[t(this.mac.substring(0,8))]=1}),$.each(c,function(){0==this.devtype&&(e[t(this.proxy)]=t(this.mac))}),$.each(r,function(){n[t(this.MACAddress)]=this.IPAddress});for(var b=0;b<s.length;b++){var h=t(s[b].mac),u="";if(e[h]&&(h=e[h],!a[h]&&(a[h]=1,!i[h.substring(0,8)]))){u=n[h]?n[h]:$.num2ip(parseInt(s[b].ip,10)),o++;var _;0==s[b].flag?_=m_str.unloaded:1==s[b].flag?_=m_str.loaded:2==s[b].flag&&(_=m_str.bound),d.push([{text:'<div><input type="checkbox" id="'+o+'_checkbox_arpList" class="table-select-one" /><label></label></div>',width:"10%"},{text:o,width:"10%"},{text:h,width:"25%"},{text:u,width:"20%"},{text:_,width:"20%"},{text:"<span class='table-grid-icon edit-trash-icon arp-list'></span>",width:"15%"}])}}}else $.each(s,function(i){var e,n,a=this.mac;0==this.flag?e=m_str.unloaded:1==this.flag?e=m_str.loaded:2==this.flag&&(e=m_str.bound),$.each(r,function(){this.MACAddress!=a||(n=this.hostName)}),n=void 0==n?m_str.unknown:n,d.push([{text:'<div><input type="checkbox" id="'+(i+1)+'_checkbox_arpList" class="table-select-one" /><label></label></div>',width:"10%"},{text:i+1,width:"10%"},{text:t(this.mac),width:"25%"},{text:$.num2ip(parseInt(this.ip,10)),width:"20%"},{text:e,width:"20%"},{text:"<span class='table-grid-icon edit-trash-icon arp-list'></span>",width:"15%"}])});$.initTableBody($("#table_arpList"),d),$.tablePages($("#table_arpList"),5),$("span.edit-trash-icon.arp-list").click(function(){var t=$(this).parents("tr").find("td").eq(1).text();$.act(ACT_DEL,ARP_ENTRY,arpStack[t-1],null),$.exe(function(t){t||$.reload()})})}}),$("#bind").click(function(){$.addLoading($(this)),doBind()}),d}function checkBind(t,i){var e=0;return $.each(t,function(t){$.num2ip(parseInt(this.ip,10))==i&&(e=1)}),e}function doBind(){var t,i,e=$("#table_arpList").find("tbody tr td"),n=0,a=0,d=$.act(ACT_GL,ARP_BIND_ENTRY,null,null);$.exe(),e.find("span.checkbox-click").each(function(){var e=$(this).parents("tr").find("td:eq(2)").text().replace(/\-/g,":"),s=$(this).parents("tr").find("td:eq(3)").text();checkBind(d,s)?(n=1,t=e,i=s):($.act(ACT_ADD,ARP_BIND_ENTRY,null,null,["state=1","ip="+$.ip2num(s),"mac="+e]),a=1)}),1==n&&$.act(ACT_ADD,ARP_BIND_ENTRY,null,null,["state=1","ip="+$.ip2num(i),"mac="+t]),$.exe(function(t){$.removeLoading(),a&&$.reload()})}function initBindingTable(){var t=[],i=$.act(ACT_GL,ARP_BIND_ENTRY,null,null);$.exe(function(e){if(!e)return $.each(i,function(i){var e;0==this.state?e=m_str.unbound:1==this.state&&(e=m_str.bound),t.push([{text:'<div><input type="checkbox" id="'+i+'_checkbox_bindList" class="table-select-one" /><label></label></div>',width:"5%"},{text:i+1,width:"5%"},{text:this.mac.toUpperCase().replace(/\:/g,"-"),width:"20%"},{text:$.num2ip(parseInt(this.ip,10)),width:"20%"},{text:e,width:"10%"},{text:"<span class='table-grid-icon enable-icon'></span>",width:"10%"},{text:"<span class='table-grid-icon edit-modify-icon'></span><span class='table-grid-icon edit-trash-icon arp-bind'></span>",width:"10%"}])}),$.initTableBody($("#table_bindingList"),t),$.tablePages($("#table_bindingList"),8),$.each(i,function(t){1==this.state?($("#body_bindingList").find("tr:eq("+(t+1)+")").find("td:eq(5) span").removeClass("disable-icon"),$("#body_bindingList").find("tr:eq("+(t+1)+")").find("td:eq(5) span").addClass("enable-icon")):0==this.state&&($("#body_bindingList").find("tr:eq("+(t+1)+")").find("td:eq(5) span").removeClass("enable-icon"),$("#body_bindingList").find("tr:eq("+(t+1)+")").find("td:eq(5) span").addClass("disable-icon"))}),$("span.edit-trash-icon.arp-bind").click(function(){var t=$(this).parents("tr").find("td:eq(1)").text()-1;$.act(ACT_DEL,ARP_BIND_ENTRY,bindingListStack[t],null),$.exe(function(t){t||$.reload()})}),$("span.edit-modify-icon").click(function(){var t=$(this).parents("tr").find("td:eq(1)").text()-1,i=$(this).parents("tr").find("td:eq(2)").text(),e=$(this).parents("tr").find("td:eq(3)").text();arpEntryEditStack=bindingListStack[t],opt=1,$("#macAddress").tpAddress("val",i),$("#ipAddress").tpAddress("val",e);var n=$.act(ACT_GET,ARP_BIND_ENTRY,arpEntryEditStack,null);$.exe(),1==n.state?($("#enableThisEntry").prop("checked",!0),$("#enableThisEntry").data("tpCheckbox").refresh()):0==arpInfo.state&&($("#enableThisEntry").prop("checked",!1),$("#enableThisEntry").data("tpCheckbox").refresh())}),$("span.enable-icon").click(function(){var t=$(this).parents("tr").find("td:eq(1)").text()-1;arpEntryEditStack=bindingListStack[t],$.act(ACT_SET,ARP_BIND_ENTRY,arpEntryEditStack,null,["state=0"]),$.exe(function(t){t||$.reload()})}),$("span.disable-icon").click(function(){var t=$(this).parents("tr").find("td:eq(1)").text()-1;arpEntryEditStack=bindingListStack[t],$.act(ACT_SET,ARP_BIND_ENTRY,arpEntryEditStack,null,["state=1"]),$.exe(function(t){t||$.reload()})}),t})}function doSave(){var t=$("#enableThisEntry").prop("checked")?1:0,i=$("#ipAddress").tpAddress("val"),e=$("#macAddress").tpAddress("val");return $.ifip(i,!0)?($.alert(ERR_IP_FORMAT),$("#ipAddress").tpAddress("focus"),!1):$.mac(e,!0)?($.alert(ERR_MAC_FORMAT),$("#macAddress").tpAddress("focus"),!1):(0==opt?$.act(ACT_ADD,ARP_BIND_ENTRY,null,null,["state="+t,"ip="+$.ip2num(i),"mac="+e]):1==opt&&$.act(ACT_SET,ARP_BIND_ENTRY,arpEntryEditStack,null,["state="+t,"ip="+$.ip2num(i),"mac="+e]),void $.exe(function(t){$.removeLoading(),t||$.reload()}))}function doDel(){$("#table_bindingList").find("tbody tr td").find("span.checkbox-click").each(function(){var t=$(this).parents("tr").find("td:eq(1)").text()-1;if(t<0)return!0;$.act(ACT_DEL,ARP_BIND_ENTRY,bindingListStack[t],null),$.exe(function(t){t||$.reload()})})}var index,arpStack,bindingListStack,arpEntryEditStack,opt</script>
+<h3 id="t_title1">Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container" id="enArpBind">
+            <b id="t_en">ARP Binding</b>
+            <ul>
+                <li>
+                    <button id="enArpBindOn" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="enArpBindOff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+    </form>
+</div>
+<h3 id="t_title3">Binding List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addBindingList">
+            <div class="table-btn">
+                <span id="add_testIcon" class="add-icon"></span>
+                <label class="T_add">Add</label>
+                <span id="del_testIcon" class="delete-icon"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="table_bindingList">
+            <thead></thead>
+            <tbody id="body_bindingList">
+                <tr id="editContainer_bindingList" class="nd">
+                    <td colspan="7">
+                        <div>
+                            <b id="t_macaddr">MAC Address: </b>
+                            <input type="text" id="macAddress" maxlength="17" required class="mac-address">
+                        </div>
+                        <div>
+                            <b id="t_ipaddr">IP Address: </b>
+                            <input type="text" id="ipAddress" maxlength="15" required class="ip-address">
+                        </div>
+                        <div>
+                            <b></b>
+                            <input type="checkbox" id="enableThisEntry">
+                            <label id="t_enentry">Enable</label>
+                        </div>
+                        <div class="inline-btn-right">
+                            <button type="submit" class="green T_cancel" id="editCancel">Cancel</button>
+                            <button type="submit" class="green T_save" id="editOk">Save</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<h3 id="t_title2">ARP List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-btn">
+                <span class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="bind" class="block-icon"></span>
+                <label class="T_bind">Bind</label>
+            </div>
+        </div>
+        <table id="table_arpList">
+            <thead></thead>
+            <tbody id="body_arpList">
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<script language="javascript">$.tpInit(init)</script>

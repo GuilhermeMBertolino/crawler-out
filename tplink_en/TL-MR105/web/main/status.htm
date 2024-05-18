@@ -1,0 +1,461 @@
+<script>function getWanAccessType(){var n="",a=!1,e=$.act(ACT_GET,L3_FORWARDING,null,null,["__ifAliasName"]),t=$.act(ACT_GL,WAN_IP_CONN,null,null,["Enable","Name","ConnectionType"]),s=$.act(ACT_GL,WAN_PPP_CONN,null,null,["Enable","Name"]),i=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]);if(INCLUDE_IPV6)var r=$.act(ACT_GET,L3_IP6_FORWARDING,null,null,["__ifAliasName"]);if(INCLUDE_PPTP)var l=$.act(ACT_GL,WAN_PPTP_CONN,null,null,["Enable","Name"]);if(INCLUDE_L2TP)var _=$.act(ACT_GL,WAN_L2TP_CONN,null,null,["Enable","Name"]);if(INCLUDE_WAN_MODE)var o=$.act(ACT_GET,SYS_MODE,null,null,["Mode"]);$.exe()||(0==a&&$.each(t,function(){if(1==this.enable&&INCLUDE_IPV6&&this.name==r.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=1,n=$.stkPop(defaultConnStack,2),!1;1==this.enable&&"IP_Bridged"==this.connectionType&&(defaultConnStack=this.__stack,defaultConnType=1,n=$.stkPop(defaultConnStack,2))}),0==a&&$.each(s,function(){if(1==this.enable&&INCLUDE_IPV6&&this.name==r.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=2,n=$.stkPop(defaultConnStack,2),!1}),0==a&&$.each(t,function(){if(1==this.enable&&this.name==e.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=1,n=$.stkPop(defaultConnStack,2),!1}),0==a&&$.each(s,function(){if(1==this.enable&&this.name==e.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=2,n=$.stkPop(defaultConnStack,2),!1}),INCLUDE_PPTP&&0==a&&$.each(l,function(){if(1==this.enable&&this.name==e.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=4,n=INCLUDE_EWAN_VLAN?$.stkPop(defaultConnStack,2):$.stkPop(defaultConnStack,1),!1}),INCLUDE_L2TP&&0==a&&$.each(_,function(){if(1==this.enable&&this.name==e.__ifAliasName)return a=!0,defaultConnStack=this.__stack,defaultConnType=3,n=INCLUDE_EWAN_VLAN?$.stkPop(defaultConnStack,2):$.stkPop(defaultConnStack,1),!1}),0==a?INCLUDE_WAN_MODE&&("DSL"==o.mode?wanAccessType="DSL":"ETH"==o.mode?wanAccessType="Ethernet":INCLUDE_USB_3G_DONGLE&&"USB_3G"==o.mode?wanAccessType="USB_3G":INCLUDE_LTEWAN&&"LTE"==o.mode&&(wanAccessType="LTE")):$.each(i,function(){if(this.__stack==n)return wanAccessType=this.WANAccessType,!1}),$.workMode=wanAccessType)}function initWan(){var n,a,e,t={},s=$.act(ACT_GET,SYS_MODE,null,null,["mode"]),i=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),r=$.act(ACT_GET,L3_FORWARDING,null,null,["__ifAliasName"]);if(INCLUDE_IPV6)var l=$.act(ACT_GET,L3_IP6_FORWARDING,null,null,["__ifAliasName"]);$.exe()||$.each(i,function(){INCLUDE_LTEWAN||"Ethernet"==this.WANAccessType&&"ETH"==s.mode&&(n=this.__stack),"USB_3G"==this.WANAccessType&&"USB_3G"==s.mode&&(a=this.__stack),"DSL"==this.WANAccessType&&"DSL"==s.mode&&(n=this.__stack)});var _=$.act(ACT_GS,WAN_IP_CONN,null,n),o=$.act(ACT_GS,WAN_PPP_CONN,null,n),c=$.act(ACT_GS,WAN_IP_CONN,null,a),d=$.act(ACT_GS,WAN_PPP_CONN,null,a);if(INCLUDE_L2TP)var u=$.act(ACT_GS,WAN_L2TP_CONN,null,n);if(INCLUDE_PPTP)var A=$.act(ACT_GS,WAN_PPTP_CONN,null,n);$.exe()||($.each(c,function(){if(1==this.enable&&"DHCP4G"==this.X_TP_TransportType){e="4G",t.name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask=this.subnetMask||"255.255.255.255",t.dfgw="Bridge"!=e?""==this.defaultGateway?"0.0.0.0":this.defaultGateway:"";var n=this.DNSServers.split(",");t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",INCLUDE_IPV6?(this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.X_TP_ExternalIPv6Address,t.mask="",t.dfgw=this.X_TP_DefaultIPv6Gateway,n=this.X_TP_IPv6DNSServers.split(","),t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanV6Array.unshift(t):wanV6Array.push(t)):this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),t={}}}),$.each(d,function(){if(1==this.enable&&"PPP3G"==this.transportType){e="3G",t.name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask=this.subnetMask||"255.255.255.255",t.dfgw="Bridge"!=e?""==this.defaultGateway?"0.0.0.0":this.defaultGateway:"";var n=this.DNSServers.split(",");t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",INCLUDE_IPV6?(this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.X_TP_ExternalIPv6Address,t.mask="",t.dfgw=this.X_TP_DefaultIPv6Gateway,n=this.X_TP_IPv6DNSServers.split(","),t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanV6Array.unshift(t):wanV6Array.push(t)):this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),t={}}}),$.each(_,function(){if(1==this.enable&&"DHCP4G"!=this.X_TP_TransportType){if("IP_Bridged"==this.connectionType)e=s_str.bridge;else if("IP_Routed"==this.connectionType){var n=$.stkPop(this.__stack,1),a=$.stkPop(this.__stack,2),s=$.act(ACT_GET,WAN_COMMON_INTF_CFG,a,null,null),i=INCLUDE_VDSLWAN?$.act(ACT_GET,WAN_DSL_LINK_CFG,n,null,null):{};$.exe()||("DSL"==s.WANAccessType&&"IPoA"==i.linkType?e="IPoA":"DHCP"==this.addressingType?e=s_str.dynip:"Static"==this.addressingType&&(e=s_str.staip))}t.name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask=this.subnetMask,t.dfgw="IP_Bridged"!=this.connectionType?""==this.defaultGateway?"0.0.0.0":this.defaultGateway:"";var _=this.DNSServers.split(",");t.primDns=_[0],2==_.length?t.secDns=_[1]:t.secDns="",0==this.X_TP_IPv4Enabled&&(t.ip="",t.mask="",t.dfgw="",t.secDns="",t.primDns=""),INCLUDE_IPV6?(this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.connType=e,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.X_TP_ExternalIPv6Address,t.mask="",t.dfgw=this.X_TP_DefaultIPv6Gateway,_=this.X_TP_IPv6DNSServers.split(","),t.primDns=_[0],2==_.length?t.secDns=_[1]:t.secDns="",0==this.X_TP_IPv6Enabled&&(t.ip="::",t.mask="",t.dfgw="::",t.secDns="::",t.primDns="::"),this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanV6Array.unshift(t):wanV6Array.push(t)):this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),t={}}}),$.each(o,function(){if(1==this.enable&&"PPP3G"!=this.transportType){t.name=this.name,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask="255.255.255.255",t.dfgw=""==this.defaultGateway?"0.0.0.0":this.defaultGateway;var n=this.DNSServers.split(",");t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",0==this.X_TP_IPv4Enabled&&(t.ip="",t.mask="",t.dfgw="",t.secDns="",t.primDns=""),t.connType=this.transportType,INCLUDE_IPV6?(this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.connType=this.transportType,t.mac=1==this.MACAddressOverride?this.X_TP_ClonedMACAddress:this.MACAddress,t.ip=this.X_TP_ExternalIPv6Address,t.mask="",t.dfgw=this.X_TP_DefaultIPv6Gateway,n=this.X_TP_IPv6DNSServers.split(","),t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",0==this.X_TP_IPv6Enabled&&(t.ip="::",t.mask="",t.dfgw="::",t.secDns="::",t.primDns="::"),this.name==r.__ifAliasName||"NO_INTERFACE"==r.__ifAliasName&&this.name==l.__ifAliasName?wanV6Array.unshift(t):wanV6Array.push(t)):this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),t={}}}),INCLUDE_L2TP&&$.each(u,function(){if(1==this.enable){t.name=this.name,t.mac=1==this.MACAddressOverride?this.clonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask="255.255.255.255",t.dfgw=""==this.defaultGateway?"0.0.0.0":this.defaultGateway;var n=this.DNSServers.split(",");t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",t.connType="L2TP",this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.mac=1==this.MACAddressOverride?this.clonedMACAddress:this.MACAddress,t.ip="::",t.mask="",t.dfgw="::",t.secDns="::",t.primDns="::",t.connType="L2TP",wanV6Array.push(t),t={}}}),INCLUDE_PPTP&&$.each(A,function(){if(1==this.enable){t.name=this.name,t.mac=1==this.MACAddressOverride?this.clonedMACAddress:this.MACAddress,t.ip=this.externalIPAddress,t.mask="255.255.255.255",t.dfgw=""==this.defaultGateway?"0.0.0.0":this.defaultGateway;var n=this.DNSServers.split(",");t.primDns=n[0],2==n.length?t.secDns=n[1]:t.secDns="",t.connType="PPTP",this.name==r.__ifAliasName?wanArray.unshift(t):wanArray.push(t),(t={}).name=this.name,t.mac=1==this.MACAddressOverride?this.clonedMACAddress:this.MACAddress,t.ip="::",t.mask="",t.dfgw="::",t.secDns="::",t.primDns="::",t.connType="PPTP",wanV6Array.push(t),t={}}})),wanArray.length>0&&clickWanV4(0),wanV6Array.length>0&&clickWanV6(0)}function clickWanV4(n){$("#nameV4").prop("value",wanArray[n].name),$("#macAddrV4").prop("value",wanArray[n].mac),$("#IPV4").prop("value",wanArray[n].ip),$("#maskV4").prop("value",wanArray[n].mask),$("#gateV4").prop("value",wanArray[n].dfgw),$("#DNS1V4").prop("value",wanArray[n].primDns),$("#DNS2V4").prop("value",wanArray[n].secDns),$("#connTypeV4").prop("value",wanArray[n].connType),0==n?$("#leftWanIpv4").addClass("gray"):$("#leftWanIpv4").removeClass("gray"),n==wanArray.length-1?$("#rightWanIpv4").addClass("gray"):$("#rightWanIpv4").removeClass("gray")}function clickWanV6(n){$("#nameV6").prop("value",wanV6Array[n].name),$("#macAddrV6").prop("value",wanV6Array[n].mac),$("#IPV6").prop("value",wanV6Array[n].ip),$("#span_IPV6").html($.htmlEncodeStr(wanV6Array[n].ip)),$("#maskV6").prop("value",wanV6Array[n].mask),$("#gateV6").prop("value",wanV6Array[n].dfgw),$("#DNS1V6").prop("value",wanV6Array[n].primDns),$("#DNS2V6").prop("value",wanV6Array[n].secDns),$("#connTypeV6").prop("value",wanV6Array[n].connType),0==n?$("#leftWanIpv6").addClass("gray"):$("#leftWanIpv6").removeClass("gray"),n==wanV6Array.length-1?$("#rightWanIpv6").addClass("gray"):$("#rightWanIpv6").removeClass("gray")}function initWireless(){var n=$.act(ACT_GL,LAN_WLAN,null,null,["name","Standard","SSID","BSSID","X_TP_Band","PossibleChannels","AutoChannelEnable","Channel","X_TP_Bandwidth","Enable","BasicEncryptionModes","BeaconType"]);$.exe()||($.each(n,function(){"2.4GHz"==this.X_TP_Band?wlanObj_2g=this:INCLUDE_LAN_WLAN_DUALBAND&&"5GHz"==this.X_TP_Band&&(wlanObj_5g=this)}),initWirelessParam(wlanObj_2g,"_2g"),INCLUDE_LAN_WLAN_DUALBAND&&initWirelessParam(wlanObj_5g,"_5g"));var a=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_2g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BasicEncryptionModes","BeaconType"]),e=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_2g.__stack,null,["Enable","Name"]);if(INCLUDE_LAN_WLAN_DUALBAND)var t=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_5g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BasicEncryptionModes","BeaconType"]),s=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_5g.__stack,null,["Enable","Name"]);else $("#showWireless_5g").addClass("nd"),$("#showGuest_5g").addClass("nd");$.exe()||($.each(a,function(n,a){this.name==e.name&&(vapObj_2g=this)}),INCLUDE_LAN_WLAN_DUALBAND&&$.each(t,function(n,a){this.name==s.name&&(vapObj_5g=this)}),initGuestParam(vapObj_2g,"_2g",wlanObj_2g),INCLUDE_LAN_WLAN_DUALBAND&&initGuestParam(vapObj_5g,"_5g",wlanObj_5g))}function initWirelessParam(n,a){$("#ssid"+a).prop("value",n.SSID),$("#span_ssid"+a).html($.htmlEncodeStr(n.SSID)),1==n.enable?($("#radio"+a).prop("value",s_str.on),"None"==n.basicEncryptionModes&&"Basic"==n.beaconType?$("#conn_status_wireless"+a).addClass("no-sec"):$("#conn_status_wireless"+a).removeClass("no-sec")):($("#radio"+a).prop("value",s_str.off),$("#conn_status_wireless"+a).removeClass("no-sec"),$("#conn_status_wireless"+a).addClass("disconn"));for(var e in strMode)e==n.standard&&$("#mode"+a).prop("value",strMode[e]);$("#channelWidth"+a).prop("value","Auto"==n.X_TP_Bandwidth?m_str.auto:n.X_TP_Bandwidth+"Hz"),1==n.autoChannelEnable?$("#channel"+a).prop("value",s_str.auto+"("+n.channel+")"):$("#channel"+a).prop("value",n.channel),$("#mac"+a).prop("value",n.BSSID)}function initGuestParam(n,a,e){$("#guestSSID"+a).prop("value",n.SSID),$("#span_guestSSID"+a).html($.htmlEncodeStr(n.SSID)),1==n.enable&&1==e.enable?($("#guestRadio"+a).prop("value",s_str.on),"None"==n.basicEncryptionModes&&"Basic"==n.beaconType?$("#conn_status_guest"+a).addClass("no-sec"):$("#conn_status_guest"+a).removeClass("no-sec")):($("#guestRadio"+a).prop("value",s_str.off),$("#conn_status_guest"+a).removeClass("no-sec"),$("#conn_status_guest"+a).addClass("disconn")),$("#HideSSID"+a).prop("value",1==n.SSIDAdvertisementEnable?s_str.off:s_str.on),$("#guestComm"+a).prop("value",1==n.isolateClients?s_str.off:s_str.on)}function initLan(){var n,a={},e={},t=$.act(ACT_GL,L2_BRIDGING_ENTRY,null,null,["bridgeName"]);if(!$.exe()){for(n=0;n<t.length;n++){var s=$.act(ACT_GET,LAN_HOST_CFG,t[n].__stack,null,null),i=$.act(ACT_GS,LAN_IP_INTF,null,t[n].__stack,["IPInterfaceIPAddress","IPInterfaceSubnetMask","X_TP_MACAddress"]),r=$.act(ACT_GET,LAN_IP6_HOST_CFG,t[n].__stack,null,null),l=$.act(ACT_GS,LAN_IP6_INTF,null,t[n].__stack,["IPv6InterfaceAddress","IPv6InterfaceAddressPrefixLength","IPv6InterfaceAddressingType"]);$.exe()||(s.IPInterfaceNumberOfEntries>=1&&(a.IPInterfaceIPAddress=i[0].IPInterfaceIPAddress,a.IPInterfaceSubnetMask=i[0].IPInterfaceSubnetMask,a.X_TP_MACAddress=i[0].X_TP_MACAddress,a.DHCPServerEnable=s.DHCPServerEnable,lanArray[n]=a,a={}),1==r.IPv6InterfaceNumberOfEntries&&(e.X_TP_MACAddress=i[0].X_TP_MACAddress,e.IPv6LanAddress=l[0].IPv6InterfaceAddress,e.IPv6SitePrefixLength=r.IPv6SitePrefixLength,"Static"==r.IPv6SitePrefixConfigType?e.IPv6SitePrefixConfigType=s_str.staip:"Delegated"==r.IPv6SitePrefixConfigType&&(e.IPv6SitePrefixConfigType=n_str.dhcp.t_delegated),lanV6Array[n]=e,e={}))}clickLanV4(0),clickLanV6(0)}}function clickLanV6(n){$("#macAddrLanV6").prop("value",lanV6Array[n].X_TP_MACAddress),$("#IPLanV6").prop("value",lanV6Array[n].IPv6LanAddress),$("#prefixLanV6").prop("value",lanV6Array[n].IPv6SitePrefixLength),$("#assignedLanV6").prop("value",lanV6Array[n].IPv6SitePrefixConfigType),0==n?$("#leftLanIpv6").addClass("gray"):$("#leftLanIpv6").removeClass("gray"),n==lanV6Array.length-1?$("#rightLanIpv6").addClass("gray"):$("#rightLanIpv6").removeClass("gray")}function clickLanV4(n){$("#macAddrLanV4").prop("value",lanArray[n].X_TP_MACAddress),$("#IPLanV4").prop("value",lanArray[n].IPInterfaceIPAddress),$("#maskLanV4").prop("value",lanArray[n].IPInterfaceSubnetMask),$("#dhcpLanV4").prop("value",1==lanArray[n].DHCPServerEnable?s_str.on:s_str.off),0==n?$("#leftLanIpv4").addClass("gray"):$("#leftLanIpv4").removeClass("gray"),n==lanArray.length-1?$("#rightLanIpv4").addClass("gray"):$("#rightLanIpv4").removeClass("gray")}function checkInternetStatus(){if($.checkAsync(id)){var n={};0==bStart&&(bStart=!0,$.act(ACT_OP,ACT_OP_DIAG_STARTDIAG,n.__stack)),n=$.act(ACT_GET,DIAG_TOOL,null,null,["LastResult"]),$.exe(function(){INCLUDE_L2TP&&3==defaultConnType?wanConn=$.act(ACT_GET,WAN_L2TP_CONN,defaultConnStack,null,["ConnectionStatus","ConnectionStatusIP"]):INCLUDE_PPTP&&4==defaultConnType&&(wanConn=$.act(ACT_GET,WAN_PPTP_CONN,defaultConnStack,null,["ConnectionStatus","ConnectionStatusIP"])),$.exe(function(){if(INCLUDE_L2TP&&3==defaultConnType){if("Disconnected"==wanConn.connectionStatusIP||"Disconnected"==wanConn.connectionStatus)return $("#conn_status_internet").removeClass("conn-status conn-internet-connecting"),void $("#conn_status_internet").addClass("conn-status conn-internet-disconn");if("Connecting"==wanConn.connectionStatusIP||"Connecting"==wanConn.connectionStatus||"Connected"==wanConn.connectionStatusIP&&"Unconfigured"==wanConn.connectionStatus)return $("conn_status_internet").hasClass("conn-status conn-internet-connecting")||$("#conn_status_internet").addClass("conn-status conn-internet-connecting"),void setTimeout(checkInternetStatus,1e3)}else if(INCLUDE_PPTP&&4==defaultConnType){if("Disconnected"==wanConn.connectionStatusIP||"Disconnected"==wanConn.connectionStatus)return $("#conn_status_internet").removeClass("conn-status conn-internet-connecting"),void $("#conn_status_internet").addClass("conn-status conn-internet-disconn");if("Connecting"==wanConn.connectionStatusIP||"Connecting"==wanConn.connectionStatus||"Connected"==wanConn.connectionStatusIP&&"Unconfigured"==wanConn.connectionStatus)return $("conn_status_internet").hasClass("conn-status conn-internet-connecting")||$("#conn_status_internet").addClass("conn-status conn-internet-connecting"),void setTimeout(checkInternetStatus,1e3)}if(1==n.lastResult)return $("#conn_status_internet").removeClass("conn-status conn-internet-connecting"),void $("#conn_status_internet").addClass("conn-status conn-internet-connected");tryTime>0?(tryTime--,$("conn_status_internet").hasClass("conn-status conn-internet-connecting")||$("#conn_status_internet").addClass("conn-status conn-internet-connecting"),setTimeout(checkInternetStatus,1e3)):($("#conn_status_internet").removeClass("conn-status conn-internet-connecting"),$("#conn_status_internet").addClass("conn-status conn-internet-disconn"))})})}}function dataTranslate(n){return n<FLOW_UNIT_KB?n+"B":n<FLOW_UNIT_MB?(n/FLOW_UNIT_KB).toFixed(FLOAT_DIGIT)+"KB":n<FLOW_UNIT_GB?(n/FLOW_UNIT_MB).toFixed(FLOAT_DIGIT)+"MB":(n/FLOW_UNIT_GB).toFixed(FLOAT_DIGIT)+"GB"}function fastReturnInitLte(){setTimeout(initLte,10)}function initLte(){if("LTE"==wanAccessType){var n=$.stkPop(defaultConnStack,1),a=$.stkPop(defaultConnStack,2),e=$.act(ACT_GET,WAN_LTE_LINK_CFG,n,null,null),t=$.act(ACT_GET,WAN_LTE_INTF_CFG,a,null,["dataLimit","enablePaymentDay","curStatistics","totalStatistics","enableDataLimit","limitation","curRxSpeed","curTxSpeed"]),s=$.act(ACT_GET,LTE_NET_STATUS,n,null,null),i=$.act(ACT_GET,LTE_PROF_STAT,n,null,null);$.exe(function(){if($("#simCardStatus").html(simStatusArray_str[e.simStatus]),1==e.roamingStatus&&$("#roam_status_icon").css("display","inline-block"),1==s.regStat){$("#signalStrength").prop("value",25*e.signalStrength+"%"),""!=i.ispName?$("#isp").prop("value",i.ispName):""!=i.spn?$("#isp").prop("value",i.spn):$("#isp").prop("value","Can’t connect to any ISPs");var n=255&s.rfInfoBand,a=(65280&s.rfInfoBand)>>8&255;-1!=s.rfInfoBand&&n?0==a?$("#band").prop("value",bandInfoList[n]):$("#band").prop("value",bandInfoList[n]+","+bandInfoList[a]):$("#band").prop("value","--"),$("#networkType").prop("value",networkType_str[e.networkType]),e.networkType>=3?($("#lteRsrq").prop("value",s.rfInfoRsrq+"dB"),$("#lteRsrp").prop("value",s.rfInfoRsrp+"dBm"),$("#lteSnr").prop("value",(.1*s.rfInfoSnr).toFixed(1)+"dB")):1!=e.networkType&&2!=e.networkType||($("#lteRsrq").parent().addClass("nd"),$("#lteRsrp").parent().addClass("nd"),$("#lteSnr").parent().addClass("nd"),$("#lteRssi").parent().removeClass("nd"),$("#lteRssi").prop("value",s.rfInfoRssi+"dBm"))}if(4==e.connectStatus?checkInternetStatus():$("#conn_status_internet").addClass("conn-status conn-internet-disconn"),3==e.simStatus||5==e.simStatus){1==t.enableDataLimit?(0!=t.dataLimit&&$("#data").css("color","#ff0000"),(r=Math.ceil(t.limitation-t.totalStatistics))>0?$("#data").prop("value",dataTranslate(r)+$.tpLang.m_str.data_left):(r=Math.abs(r),$("#data").prop("value",dataTranslate(r)+$.tpLang.m_str.data_overused)),r=Math.ceil(t.limitation),$("#dataSecond").parent().removeClass("nd"),$("#dataSecond").prop("value",dataTranslate(r)+$.tpLang.m_str.data_total)):1==t.enablePaymentDay?(r=Math.ceil(t.totalStatistics),$("#data").prop("value",dataTranslate(r)+$.tpLang.m_str.monthly_used)):(r=Math.ceil(t.totalStatistics),$("#data").prop("value",dataTranslate(r)+$.tpLang.m_str.total_used));var r=Math.ceil(t.curTxSpeed);$("#uploadSpeed").prop("value",dataTranslate(r)+"/s"),r=Math.ceil(t.curRxSpeed),$("#downSpeed").prop("value",dataTranslate(r)+"/s")}})}else $("#lteContent").hide()}function initDsl(){if("DSL"==$.sysMode){var n,a=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]);$.exe(function(){$.each(a,function(){"DSL"==this.WANAccessType&&(n=this.__stack)});var e=$.act(ACT_GET,WAN_DSL_INTF_CFG,n,null,["status","modulationType","X_TP_AdslModulationCfg","upstreamCurrRate","downstreamCurrRate","X_TP_AnnexType","upstreamMaxRate","downstreamMaxRate","upstreamNoiseMargin","downstreamNoiseMargin","upstreamAttenuation","downstreamAttenuation","X_TP_UpTime"]),t=$.act(ACT_GET,WAN_DSL_INTF_STATS_TOTAL,n,null,["ATUCCRCErrors","CRCErrors","ATUCFECErrors","FECErrors","SeverelyErroredSecs","X_TP_US_SeverelyErroredSecs","erroredSecs","X_TP_US_ErroredSecs"]);$.exe(function(){if("Initializing"==e.status||"EstablishingLink"==e.status){$("#dslLink").prop("value",m_str.initing),$("#dslMode").prop("value",m_str.obtaining);n="0 "+s_str.days+" 0 "+s_str.hours+" 0 "+s_str.minute;$("#dslTime").prop("value",n)}else if("Up"==e.status){$("#dslLink").prop("value",m_str.connected),$("#dslMode").prop("value","Multimode"==e.modulationType?s_str.multimode:e.modulationType);n=parseInt(e.X_TP_UpTime/86400)+" "+s_str.days+" "+parseInt(e.X_TP_UpTime/3600)%24+" "+s_str.hours+" "+parseInt(e.X_TP_UpTime/60)%60+" "+s_str.minute;$("#dslTime").prop("value",n)}else{$("#dslLink").prop("value",m_str.disconnected),$("#dslMode").prop("value","Multimode"==e.X_TP_AdslModulationCfg?s_str.multimode:e.X_TP_AdslModulationCfg);var n="0 "+s_str.days+" 0 "+s_str.hours+" 0 "+s_str.minute;$("#dslTime").prop("value",n)}e.X_TP_AnnexType&&$("#annex").prop("value",e.X_TP_AnnexType),e.upstreamCurrRate&&$("#upstreamCurrRate").html(e.upstreamCurrRate),e.downstreamCurrRate&&$("#downstreamCurrRate").html(e.downstreamCurrRate),e.upstreamMaxRate&&$("#upstreamMaxRate").html(e.upstreamMaxRate),e.downstreamMaxRate&&$("#downstreamMaxRate").html(e.downstreamMaxRate),e.upstreamNoiseMargin&&$("#upstreamNoiseMargin").html(e.upstreamNoiseMargin/10),e.downstreamNoiseMargin&&$("#downstreamNoiseMargin").html(e.downstreamNoiseMargin/10),e.upstreamAttenuation&&$("#upstreamAttenuation").html(e.upstreamAttenuation/10),e.downstreamAttenuation&&$("#downstreamAttenuation").html(e.downstreamAttenuation/10),$("#UCRC").html(t.ATUCCRCErrors),$("#DCRC").html(t.CRCErrors)})})}else $("#dslContent").hide()}var wanArray=[],wanV6Array=[],wanIndex=0,wanV6Index=0,lanArray=[],lanV6Array=[],lanIndex=0,lanV6Index=0,wanAccessType=INCLUDE_LTEWAN?"LTE":"Ethernet",defaultConnStack="",defaultConnType=1,id=$.getAsync();if($("#leftWanIpv4").on("click.status",function(n){wanIndex>0&&(wanV6Index=wanIndex-=1,clickWanV4(wanIndex),clickWanV6(wanV6Index))}),$("#rightWanIpv4").on("click.status",function(n){wanIndex<wanArray.length-1&&(wanV6Index=wanIndex+=1,clickWanV4(wanIndex),clickWanV6(wanV6Index))}),$("#leftWanIpv6").on("click.status",function(n){wanV6Index>0&&(clickWanV4(wanIndex=wanV6Index-=1),clickWanV6(wanV6Index))}),$("#rightWanIpv6").on("click.status",function(n){wanV6Index<wanV6Array.length-1&&(clickWanV4(wanIndex=wanV6Index+=1),clickWanV6(wanV6Index))}),INCLUDE_LTE_NET_STATISTICS)var tryTime=10,wanConn={},bStart=!1;if(INCLUDE_LTEWAN)var FLOW_UNIT_KB=1024,FLOW_UNIT_MB=1048576,FLOW_UNIT_GB=1073741824,FLOAT_DIGIT=3,tmpData,bandInfoList={40:"450MHz",41:"480MHz",42:"750MHz",43:"850MHz",44:"900MHz",45:"900MHz",46:"900MHz",47:"1800MHz",48:"1900MHz",80:"1",81:"2",82:"3",83:"4",84:"5",85:"6",86:"7",87:"8",88:"9",90:"11",91:"12",120:"1",121:"2",122:"3",123:"4",124:"5",125:"6",126:"7",127:"8",128:"9",129:"10",130:"11",131:"12",132:"13",133:"14",134:"17",135:"33",136:"34",137:"35",138:"36",139:"37",140:"38",141:"39",142:"40",143:"18",144:"19",145:"20",146:"21",147:"24",148:"25",149:"41",150:"42",151:"43",152:"23",153:"26",154:"32",155:"125",156:"126",157:"127",158:"28",159:"29",160:"30",200:"A",201:"B",202:"C",203:"D",204:"E",205:"F"};INCLUDE_ADSLWAN,$("#leftLanIpv4").on("click.status",function(n){lanIndex>0&&clickLanV4(lanIndex-=1)}),$("#rightLanIpv4").on("click.status",function(n){lanIndex<lanArray.length-1&&clickLanV4(lanIndex+=1)}),$("#leftLanIpv6").on("click.status",function(n){lanV6Index>0&&clickLanV6(lanV6Index-=1)}),$("#rightLanIpv6").on("click.status",function(n){lanV6Index<lanV6Array.length-1&&clickLanV6(lanV6Index+=1)}),$("#showWireless_2g").on("click.status",function(n){$("#conn_status_wireless_5g").addClass("hidden"),$("#conn_status_wireless_2g").removeClass("hidden")}),$("#showWireless_5g").on("click.status",function(n){$("#conn_status_wireless_2g").addClass("hidden"),$("#conn_status_wireless_5g").removeClass("hidden")}),$("#showGuest_2g").on("click.status",function(n){$("#conn_status_guest_5g").addClass("hidden"),$("#conn_status_guest_2g").removeClass("hidden")}),$("#showGuest_5g").on("click.status",function(n){$("#conn_status_guest_2g").addClass("hidden"),$("#conn_status_guest_5g").removeClass("hidden")})</script>
+
+
+<div id="" class="map-panel-cnt">
+    <div class="pure-g" id="lteContent">
+        <div class="pure-u-1-1">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon-lte"></span>
+                    <span id="status_lte_title" id="t_lte">3G/4G</span>
+                    <span id="roam_status_icon" class="status-icon-roaming nd"></span>
+                </h4>
+
+                <div class="pure-g status-panel-main" style="margin-bottom:0;padding-bottom:0;height:260px">
+                   <div class="pure-u-1-2">
+                       <form class="pure-form pure-form-aligned">
+                           <div class="pure-control-group">
+                                <b class="m T_c_isp">ISP:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="isp" value="--">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_networkType">Network Type:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="networkType">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_band">Band:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="band" value="--">
+                            </div>
+                            <div class="pure-control-group">
+                                <div class="pure-control-group">
+                                    <b class="m T_c_data">Data:</b>
+                                    <input type="text" readonly="ture" class="tp-input-text ll" id="data" value="--">
+                                </div>
+                                <div class="pure-control-group nd" style="margin-top:-15px">
+                                    <b class="m T_c_data"></b>
+                                    <input type="text" readonly="ture" class="tp-input-text ll" id="dataSecond" value="--">
+                                </div>
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_upload_speed">Upload Speed:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="uploadSpeed" value="0B/s">
+                            </div>
+                            <div class="pure-control-group">
+
+                                <b class="m T_c_down_speed">Download Speed:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="downSpeed" value="0B/s">
+                            </div>
+                        </form>
+                   </div>
+                    <div class="pure-u-1-2">
+                        <form class="pure-form pure-form-aligned">
+                            <div class="pure-control-group">
+                                <b class="m T_c_simStatus">SIM Card Status:</b>
+                                <span id="simCardStatus" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="ssid_2g" style="display:none">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_signalStrength">Signal Strength:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="signalStrength" value="--">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_rsrp">RSRP:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="lteRsrp" value="--">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_rsrq">RSRQ:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="lteRsrq" value="--">
+                            </div>
+                            <div class="pure-control-group">
+                                <b class="m T_c_snr">SNR:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="lteSnr" value="--">
+                            </div>
+                            <div class="pure-control-group nd">
+                                <b class="m T_c_rssi">RSSI:</b>
+                                <input type="text" readonly="ture" class="tp-input-text ll" id="lteRssi" value="--">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pure-g">
+        <div class="pure-u-1-2">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon status-icon-internet"></span>
+                    <span id="status_internet_title" class="T_internet">Internet</span>
+                    <span id="conn_status_internet" class=""></span>
+                </h4>
+                <div class="mode-change">
+                    <span class="mode-select">IPv4</span>
+                    <span>IPv6</span>
+                </div>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main">
+                        <div class="pure-control-group">
+                            <b class="m T_c_name">Name:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="nameV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="macAddrV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_ipaddr">IP Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="IPV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_netmask">Subnet Mask:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="maskV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_defgw">Default Gateway:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="gateV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_primdns">Primary DNS:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="DNS1V4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_secdns">Secondary DNS:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="DNS2V4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_conntype">Connection Type:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="connTypeV4">
+                        </div>
+                    </div>
+                    <div class="status-panel-page">
+                        <span class="page gray" id="leftWanIpv4"></span>
+                        <span class="page right gray" id="rightWanIpv4"></span>
+                    </div>
+                </form>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main">
+                        <div class="pure-control-group">
+                            <b class="m T_c_name">Name:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="nameV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="macAddrV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_ipaddr">IP Address:</b>
+							<span id="span_IPV6" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="IPV6" style="display:none">
+                        </div>
+                        <div class="pure-control-group" style="display:none">
+                            <b class="m T_c_netmask">Subnet Mask:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="maskV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_defgw">Default Gateway:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="gateV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_primdns">Primary DNS:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="DNS1V6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_secdns">Secondary DNS:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="DNS2V6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_conntype">Connection Type:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="connTypeV6">
+                        </div>
+                    </div>
+                    <div class="status-panel-page">
+                        <span class="page gray" id="leftWanIpv6"></span>
+                        <span class="page right gray" id="rightWanIpv6"></span>
+                    </div>
+                </form>
+                <div class="corner-top-left"></div>
+                <div class="corner-top-right"></div>
+                <div class="corner-bot-left"></div>
+                <div class="corner-bot-right"></div>
+            </div>
+        </div>
+        <div class="pure-u-1-2">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon status-icon-wireless"></span>
+                    <span id="status_wirless_title" class="T_wireless">Wireless</span>
+                    <span id="conn_status_wireless_2g" class="conn-status conn-wireless-connected"></span>
+                    <span id="conn_status_wireless_5g" class="conn-status-5g conn-wireless-connected hidden"></span>
+                </h4>
+                <div class="mode-change">
+                    <span id="showWireless_2g" class="mode-select T_modeghz24">2.4GHz</span>
+                    <span id="showWireless_5g" class="T_modeghz5">5GHz</span>
+                </div>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main">
+                        <div class="pure-control-group">
+                            <b class="m T_c_netname">Network Name:</b>
+							<span id="span_ssid_2g" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="ssid_2g" style="display:none">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_wlradio">Wireless Radio:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="radio_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_mode">Mode:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="mode_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_chnwidth">Channel Width:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="channelWidth_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_channel">Channel:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="channel_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="mac_2g">
+                        </div>
+                    </div>
+                </form>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main">
+                        <div class="pure-control-group">
+                            <b class="m T_c_netname">Network Name:</b>
+							<span id="span_ssid_5g" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="ssid_5g" style="display:none">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_wlradio">Wireless Radio:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="radio_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_mode">Mode:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="mode_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_chnwidth">Channel Width:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="channelWidth_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_channel">Channel:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="channel_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="mac_5g">
+                        </div>
+                    </div>
+                </form>
+                <div class="corner-top-left"></div>
+                <div class="corner-top-right"></div>
+                <div class="corner-bot-left"></div>
+                <div class="corner-bot-right"></div>
+            </div>
+        </div>
+    </div>
+    <div class="pure-g">
+        <div class="pure-u-1-2">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon status-icon-lan"></span>
+                    <span id="status_lan_title" class="T_c_lan">LAN</span>
+                    <span></span>
+                </h4>
+                <div class="mode-change">
+                    <span class="mode-select">IPv4</span>
+                    <span>IPv6</span>
+                </div>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main s">
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="macAddrLanV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_ipaddr">IP Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="IPLanV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_netmask">Subnet Mask:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="maskLanV4">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_dhcp">DHCP:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="dhcpLanV4">
+                        </div>
+                    </div>
+                    <div class="status-panel-page">
+                        <span class="page gray" id="leftLanIpv4"></span>
+                        <span class="page right gray" id="rightLanIpv4"></span>
+                    </div>
+                </form>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main s">
+                        <div class="pure-control-group">
+                            <b class="m T_c_macaddr">MAC Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="macAddrLanV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_ipaddr">IP Address:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="IPLanV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_plen">Prefix Length:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="prefixLanV6">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_assigntype">Assigned Type:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="assignedLanV6">
+                        </div>
+                    </div>
+                    <div class="status-panel-page">
+                        <span class="page gray" id="leftLanIpv6"></span>
+                        <span class="page right gray" id="rightLanIpv6"></span>
+                    </div>
+                </form>
+                <div class="corner-top-left"></div>
+                <div class="corner-top-right"></div>
+                <div class="corner-bot-left"></div>
+                <div class="corner-bot-right"></div>
+            </div>
+        </div>
+        <div class="pure-u-1-2">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon status-icon-wireless"></span>
+                    <span id="status_guest_title" class="T_c_wlguest">Guest Network</span>
+                    <span id="conn_status_guest_2g" class="conn-status conn-wireless-connected"></span>
+                    <span id="conn_status_guest_5g" class="conn-status-5g conn-wireless-connected hidden"></span>
+                </h4>
+                <div class="mode-change">
+                    <span id="showGuest_2g" class="mode-select T_modeghz24">2.4GHz</span>
+                    <span id="showGuest_5g" class="T_modeghz5">5GHz</span>
+                </div>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main s">
+                        <div class="pure-control-group">
+                            <b class="m T_gnssid">Guest Network SSID:</b>
+							<span id="span_guestSSID_2g" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestSSID_2g" style="display:none">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_hidessid">Hide SSID:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="HideSSID_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_wlradio">Wireless Radio:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestRadio_2g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_seeeach">See each other:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestComm_2g">
+                        </div>
+                    </div>
+                </form>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main s">
+                        <div class="pure-control-group">
+                            <b class="m T_gnssid">Guest Network SSID:</b>
+							<span id="span_guestSSID_5g" class="multi_line"></span>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestSSID_5g" style="display:none">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_hidessid">Hide SSID:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="HideSSID_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_wlradio">Wireless Radio:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestRadio_5g">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="m T_c_seeeach">See each other:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="guestComm_5g">
+                        </div>
+                    </div>
+                </form>
+                <div class="corner-top-left"></div>
+                <div class="corner-top-right"></div>
+                <div class="corner-bot-left"></div>
+                <div class="corner-bot-right"></div>
+            </div>
+        </div>
+    </div>
+    <div class="pure-g" id="dslContent" class="nd">
+        <div class="pure-u-1-1">
+            <div class="content">
+                <h4 class="status">
+                    <span class="status-icon status-icon-dsl"></span>
+                    <span id="t_dsl">DSL</span>
+                    <span></span>
+                </h4>
+                <form class="pure-form pure-form-aligned">
+                    <div class="status-panel-main l">
+                        <div class="pure-control-group">
+                            <b class="l" id="t_link">Line Status:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="dslLink">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="l" id="t_time">DSL Up Time:</b>
+                            <input type="text" readonly="ture" class="tp-input-text xxl" id="dslTime">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="l" id="t_dslmode">DSL Modulation Type:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="dslMode">
+                        </div>
+                        <div class="pure-control-group">
+                            <b class="l" id="t_annex">Annex Type:</b>
+                            <input type="text" readonly="ture" class="tp-input-text l" id="annex">
+                        </div>
+                        <table class="pure-table pure-table-bordered" style="width:600px;margin:8px 0">
+                            <thead>
+                                <tr class="head">
+                                    <th class="table-head"></th>
+                                    <th class="table-head" style="width:180px" id="t_up">Upstream</th>
+                                    <th class="table-head" style="width:180px" id="t_down">Downstream</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="t_currate">Current Rate(kbps)</td>
+                                    <td id="upstreamCurrRate"></td>
+                                    <td id="downstreamCurrRate"></td>
+                                </tr>
+                                <tr>
+                                    <td id="t_maxrate">Max Rate(kbps)</td>
+                                    <td id="upstreamMaxRate"></td>
+                                    <td id="downstreamMaxRate"></td>
+                                </tr>
+                                <tr>
+                                    <td id="t_snr">SNR Margin(dB)</td>
+                                    <td id="upstreamNoiseMargin"></td>
+                                    <td id="downstreamNoiseMargin"></td>
+                                </tr>
+                                <tr>
+                                    <td id="t_att">Line Attenuation(dB)</td>
+                                    <td id="upstreamAttenuation"></td>
+                                    <td id="downstreamAttenuation"></td>
+                                </tr>
+                                <tr>
+                                    <td id="t_errs">Errors(pkts)</td>
+                                    <td id="UCRC"></td>
+                                    <td id="DCRC"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </form>
+                <div class="corner-top-left"></div>
+                <div class="corner-top-right"></div>
+                <div class="corner-bot-left"></div>
+                <div class="corner-bot-right"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>$(document).ready(function(n){$("#networkType").prop("value",networkType_str[0]),getWanAccessType(),INCLUDE_LTEWAN&&"LTE"==wanAccessType?($("#maskV4").parent().addClass("nd"),$("#gateV4").parent().addClass("nd"),$("#connTypeV4").parent().addClass("nd"),$("#maskV6").parent().addClass("nd"),$("#gateV6").parent().addClass("nd"),$("#connTypeV6").parent().addClass("nd")):checkInternetStatus(),initWan(),initWireless(),initLan(),INCLUDE_ADSLWAN?(initDsl(),$("#lteContent").hide(),$("#dslContent").show()):INCLUDE_LTEWAN&&($("#dslContent").hide(),INCLUDE_LTE_NET_STATISTICS?fastReturnInitLte():$("#lteContent").hide())})</script>

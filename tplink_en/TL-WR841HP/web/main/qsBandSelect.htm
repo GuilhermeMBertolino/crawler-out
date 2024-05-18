@@ -1,0 +1,104 @@
+﻿<script language="javascript" type="text/javascript">
+function goNext() {
+	doCollect();
+	
+	if ($.qd.wl.en == 1) 
+		$.qf.next("wl2g");
+	else if ($.qd.wl5g.en == 1)
+		$.qf.next("wl5g");
+	else
+		$.qf.next("save");
+}
+
+function goPrev() {
+	doCollect();
+	$.qf.prev();
+}
+
+function doCollect(){
+
+	if($.id("band_2g").checked == true)
+	{
+		$.qd.wl.en = 1;
+	}
+	else
+	{
+		$.qd.wl.en = 0;
+	}
+	if($.id("band_5g").checked == true)
+	{
+		$.qd.wl5g.en = 1;
+	}
+	else
+	{
+		$.qd.wl5g.en = 0;
+	}
+}
+</script>
+<p class="et T" id="et">Quick Setup - Wireless Dual Band Selection</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="L1 T" id="t_note">Please select or clear the check box to enable or disable a given radio band.</p>
+<p class="br"></p>
+<p>
+<input id="band_2g" type="checkbox"/><span class="T" id="t_band2g">2.4GHz</span>
+</p>
+<p>
+<input id="band_5g" type="checkbox"/><span class="T" id="t_band5g">5GHz</span>
+</p>
+</div>
+<p class="bl"></p>
+<p class="tail ctr">
+<input type="button" class="button L T T_back" value="Back" onclick="goPrev()" />
+<input type="button" class="button L T T_next" value="Next" onclick="goNext()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+var wlanObj2g;
+var wlanObj5g;
+(function(){
+	$.loadHelpFrame("DualBandSelectionHelpRpm.htm");
+	if (!$.mainParam) return $.loadMain("qsStart.htm");
+	
+	if (INCLUDE_LAN_WLAN_DUALBAND)
+	{
+		//$.addClass($.id("et"), "nd");
+	}
+	else
+	{
+		$.addClass($.id("et_2g"), "nd");
+	}
+	
+	if (!$.qm[$.curPage].__v) {
+		$.qd.wl = {};
+		$.qd.wl5g = {};
+		var wls = $.act(ACT_GL,LAN_WLAN,null,null,
+		["name","enable","standard","SSID","regulatoryDomain",
+		"possibleChannels","autoChannelEnable", "channel", "X_TP_PreSharedKey", "X_TP_Band"]);
+		if ($.exe()) return;
+
+
+		$.each(wls,function() {
+			if ("2.4GHz"==this.X_TP_Band) wlanObj2g = this;
+			if ("5GHz"==this.X_TP_Band) wlanObj5g = this;
+		});
+		$.qd.wl.stack = wlanObj2g.__stack;
+		$.qd.wl.en = wlanObj2g.enable == 1 ? true : false;
+		
+		$.qd.wl5g.stack = wlanObj5g.__stack;
+		$.qd.wl5g.en = wlanObj5g.enable == 1 ? true : false;
+	}
+	
+	if(1 == $.qd.wl.en)
+	{
+		$.id("band_2g").checked = true;
+	}
+	if(1 == $.qd.wl5g.en)
+	{
+		$.id("band_5g").checked = true;
+	}
+	
+})();
+</script><script language="javascript" type="text/javascript">$.styleInputElements();</script>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="hotspot_osuicons">
+    <header>
+        <image>images/icons/hotspot.png</image>
+        <name>Hotspot Osuicons</name>
+        <description>Osu icons for Hotspot</description>
+    </header>
+    <object viewtype="form"> 
+        <object name="temp">
+            <parameter  name="SSID"  type="dropdown" ddfun="wizardDropdown" firstselect="true" url="cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;LowerLayers=Device.WiFi.Radio.3.&amp;SSID=" webname="SSID" child="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OSUicons.*,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OSUproviders.*"></parameter>
+        </object>
+    </object>
+   <object viewtype="form"  Display="No" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20">
+        <parameter Display="No" access="true" name="Enable" type="dropdown" url="hotspotenable" webname="Hotspot Mode" firstselect="true"></parameter>
+    </object>
+    <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OSUicons.*" viewtype="tablePlus" dependsonparamvalue="'true'|| 'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable">
+        <parameter name="Name" type="stringA" required="false" webname="Name"/>
+        <parameter name="Width" type="stringA" required="false" webname="Icon Width"/>
+        <parameter name="Height" type="stringA" required="false" webname="Icon Height"/>
+        <parameter name="Type" type="stringA" required="false" webname="Icon Type"/>
+        <parameter name="LanguageCode" type="stringA" required="false" webname="Language Code"/>
+        <parameter name="FilePath" type="stringA" required="false" webname="File Path"/>
+        <parameter name="delete" action="post" routeurl="tableplusCustomdelete($event,$index,user)" type="button" webname="delete" maxlen="64"/>
+        <parameter name="edit" action="post" routeurl="tableplusstaticedit($data,$index,user.localadd)" type="button" webname="Edit" maxlen="64"/>
+        <parameter name="Add" action="post" routeurl="localadd($event)" type="button" webname="Add" maxlen="64"/>
+    </object>
+    <object viewtype="accordion" formToOpen="hotspot_osuicons_form" title="Hotspot OSUproviders" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.OSUproviders.*" nolocaladdapply="true" dependsonparamvalue="'true'|| 'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable" childparentrelation="true">
+        <parameter  name="OSUProviderServerURI"  type="stringA" webname="OSU Server URI" ></parameter>
+        <parameter  name="OSUProviderFriendlyName"  type="stringA" webname="OSU Friendly Name" ></parameter>
+        <parameter  name="edit" type="button"></parameter>
+        <parameter  name="delete" type="button"></parameter>
+        <parameter  name="Add" type="button"></parameter>
+    </object>
+    <parameter name="Modify" type="submitbutton" buttontype="true" routeurl="relationalFormsApply($event,'hotspot_conf')" webname="Apply" maxlen="64"/>
+</view>

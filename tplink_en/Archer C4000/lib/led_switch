@@ -1,0 +1,55 @@
+#!/bin/sh
+
+#changed by zhangshengbo
+local lp5523_flag=$(uci get profile.@lp5523[0].message -c /etc/profile.d)
+if [ "$lp5523_flag" == "chip-on" ]; then
+	if [ "$(nvram get rftestflag)" == "1" ]; then
+		nightmodeflagFile="/tmp/led_nightMode"
+		if [  -f "$nightmodeflagFile" ]; then
+			flag=$(cat $nightmodeflagFile)
+			if [ "$flag" == "on" ]; then
+				echo "off" > /tmp/led_nightMode
+				ubus send leds '{"action" : "4", "status" : "0"}'
+			elif [ "$flag" == "off" ]; then
+				echo "on" > /tmp/led_nightMode
+				ubus send leds '{"action" : "4", "status" : "1"}'
+			else
+				echo "unknown state!!!" >/dev/console
+			fi
+		else
+			echo "on" > /tmp/led_nightMode
+			ubus send leds '{"action" : "4", "status" : "1"}'	
+		fi
+	else
+		if [ ! -e /tmp/btn_check ];then
+				echo 0 > /tmp/btn_check
+		fi
+		ret=$(cat /tmp/btn_check)
+		ret=$(($ret | 0x4))
+		echo $ret > /tmp/btn_check
+	fi
+else
+#if [ "$(uci get ledctrl.NIGHT.enable)" == "off" ] ;
+#then
+	if [ "$(nvram get rftestflag)" == "1" ]; then
+		if [ "$(uci get ledctrl.GENERAL.enable)" == "on" ]
+		then
+			uci set ledctrl.GENERAL.enable="off"
+		else
+			uci set ledctrl.GENERAL.enable="on"
+		fi
+
+		uci commit ledctrl
+		ledcli GENERAL
+	else
+		if [ ! -e /tmp/btn_check ];then
+			echo 0 > /tmp/btn_check
+		fi
+		ret=$(cat /tmp/btn_check)
+		ret=$(($ret | 0x4))
+		echo $ret > /tmp/btn_check
+	fi
+fi
+#fi
+
+

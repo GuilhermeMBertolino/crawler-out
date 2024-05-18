@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start () {
+    config_load sysmode
+    config_get mode "sysmode" "mode"
+    config_load network
+    config_get ipaddr "wan" "ipaddr"
+
+    if [ $mode == 'ap' ]; then
+		/etc/init.d/smartip restart
+    fi
+    return 0
+}

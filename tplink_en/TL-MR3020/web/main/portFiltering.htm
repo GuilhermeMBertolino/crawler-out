@@ -1,0 +1,546 @@
+<style rel="stylesheet" type="text/css">
+    .lines-title {
+        vertical-align: top;
+        padding-top: 12px
+    }
+    .lines-content {
+        display: inline-block;
+        width: 473px;
+    }
+</style>
+<h3 id="et"></h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container" id="enFilter">
+            <b id="t_servicefilter"></b>
+            <ul>
+                <li>
+                    <button id="enFilterOn" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="enFilterOff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+    </form>
+</div>
+<h3 id="t_filterlist"></h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span id="refresh" class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="add" class="add-icon"></span>
+                <label class="T_add">Add</label>
+                <span id="delAll" class="delete-all-icon"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="table-filtering">
+            <thead></thead>
+            <tbody id="body-filtering">
+                <tr id="edit-container-filtering" class="nd">
+                    <td colspan="9">
+                        <div>
+                            <b class="T_c_servtype m">Service Type: </b>
+                            <select class="xl" id="serviceType">
+                                <option value="1">Any(ALL)</option>
+                                <option value="2">Any(TCP)</option>
+                                <option value="3">Any(UDP)</option>
+                                <option value="4">DNS</option>
+                                <option value="5">FTP</option>
+                                <option value="6">HTTP</option>
+                                <option value="7">HTTPS</option>
+                                <option value="8">NFS</option>
+                                <option value="9">SMTP</option>
+                                <option value="10">SNMP</option>
+                                <option value="11">SNMP-TRAPS</option>
+                                <option value="12">SSH</option>
+                                <option value="13">VPN-IPSEC</option>
+                                <option value="14">VPN-L2TP</option>
+                                <option value="15">VPN-PPTP</option>
+                                <option value="16">OpenVPN</option>
+                                <option value="17" id="t_userDefine"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <b class="T_proto m">Protocol: </b>
+                            <select class="xl" id="protocol">
+                                <option value="0">TCP</option>
+                                <option value="1">UDP</option>
+                                <option value="3">TCP/UDP</option>
+                            </select>
+                        </div>
+                        <div>
+                            <b id="t_startport" class="m">Starting Port: </b>
+                            <input class="xl" type="text" maxlength="5" id="startPort" />
+                            <span>(1-65535)</span>
+                        </div>
+                        <div>
+                            <b id="t_endport" class="m">Ending Port: </b>
+                            <input class="xl" type="text" maxlength="5" id="endPort" />
+                            <span>(1-65535)</span>
+                        </div>
+                        <div>
+                            <b class="T_c_servtype m">Service Type: </b>
+                            <input class="xl" type="text" id="serviceTypeInput" />
+                        </div>
+                        <div class="pure-control-group inline lines-title">
+                            <label id="t_filtermethod" class="label-title m">Filter Service For: </label>
+                        </div>
+                        <div class="lines-content">
+                            <input type="radio" name="filterFor" id="filterForSingle" />
+                            <label id="t_filtersingle">Single IP Address</label>
+                            <input type="radio" name="filterFor" id="filterForRange" />
+                            <label id="t_filterrange">IP Address Range</label>
+                            <input type="radio" name="filterFor" checked="checked" id="filterForAll" />
+                            <label id="t_filterall">All IP Addresses</label>
+                        </div>
+                        <div id="ipRange" class="nd">
+                            <b class="m"></b>
+                            <input class="l ip-address" type="text" id="ipFrom" /> - <input class="l ip-address" type="text" id="ipTo" />
+                        </div>
+                        <div id="ipSingle" class="nd">
+                            <b class="m"></b>
+                            <input class="l ip-address" type="text" id="ipAddress" />
+                        </div>
+                        <div class="inline-btn-right">
+                            <button type="submit" class="green T_cancel" id="cancel">Cancel</button>
+                            <button type="submit" class="green T_save" id="ok">Save</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+//  protocol值为0代表tcp，1代表udp，3代表TCP/UDP
+(function() {
+    var data = {};
+    var isEdit = false, editName;
+    // 存储lan端获取IP段、掩码、tpAddress需要的mask等
+    var lanSettings = {};
+    var serviceArray = {
+        "1": {type: "Any(ALL)", protocol: '3', port: '1-65535'},
+        "2": {type: "Any(TCP)", protocol: '0', port: '1-65535'},
+        "3": {type: "Any(UDP)", protocol: '1', port: '1-65535'},
+        "4": {type: "DNS", protocol: '3', port: '53'},
+        "5": {type: "FTP", protocol: '0', port: '20-21'},
+        "6": {type: "HTTP", protocol: '0', port: '80'},
+        "7": {type: "HTTPS", protocol: '0', port: '443'},
+        "8": {type: "NFS", protocol: '1', port: '2049'},
+        "9": {type: "SMTP", protocol: '0', port: '25'},
+        "10": {type: "SNMP", protocol: '3', port: '161'},
+        "11": {type: "SNMP-TRAPS", protocol: '3', port: '162'},
+        "12": {type: "SSH", protocol: '3', port: '22'},
+        "13": {type: "VPN-IPSEC", protocol: '1', port: '500'},
+        "14": {type: "VPN-L2TP", protocol: '1', port: '1701'},
+        "15": {type: "VPN-PPTP", protocol: '0', port: '1723'},
+        "16": {type: "OpenVPN", protocol: '3', port: '1194'},
+        "17": {type: "", protocol: '0', port: ''}
+    };
+    var headArray = [{
+        "text": '<div><input type="checkbox" id="checkbox_st" class="table-select-all" /><label></label></div>',
+        "width": "5%"
+    }, {
+        "text": table_str.id,
+        "width": "5%"
+    }, {
+        "text": table_str.servname,
+        "width": "10%"
+    }, {
+        "text": table_str.port,
+        "width": "12%"
+    }, {
+        "text": table_str.ip,
+        "width": "22%"
+    }, {
+        "text": table_str.status,
+        "width": "6%"
+    }, {
+        "text": table_str.modify,
+        "width": "10%"
+    }];
+
+    $.initTableHead($("#table-filtering"), headArray);
+    $("#table-filtering").tpTable(initTable);
+
+    $("#enFilterOn").click(function() {
+        $.addLoading();
+        $.act(ACT_SET, FIREWALL, null, null, ["enablePortFiltering=1"]);
+        $.exe(function(err) {
+            if (!err) {
+                $.removeLoading();
+                $.reload();
+            }
+        });
+    });
+
+    $("#enFilterOff").click(function() {
+        $.addLoading();
+        $.act(ACT_SET, FIREWALL, null, null, ["enablePortFiltering=0"]);
+        $.exe(function(err) {
+            if (!err) {
+                $.removeLoading();
+                $.reload();
+            }
+        });
+    });
+    
+    $('#serviceType').on('click', function() {
+        var attrs;
+        var type = $(this).data('value');
+
+        if (isEdit && type == data[editName].serviceType) {
+            attrs = {
+                protocol: data[editName].protocol,
+                port: (data[editName].portStart+'-'+data[editName].portEnd),
+                type: data[editName].entryName
+            };
+        } else if (serviceArray[type] !== undefined) {
+            attrs = serviceArray[type]
+        }
+
+        if (attrs) {
+            var protocol = attrs.protocol;
+            var port = attrs.port;
+
+            $('#protocol').find('option[value=' + protocol + ']').prop('selected', true);
+            if (port.indexOf('-') === -1) {
+                $('#startPort').val(port);
+                $('#endPort').val(port);
+            } else {
+                $('#startPort').val(port.split('-')[0]);
+                $('#endPort').val(port.split('-')[1]);
+            }
+            $('#serviceTypeInput').val(attrs.type);
+            $('#protocol').tpSelect({refresh: 1});
+        }
+    });
+    $('#table-filtering').on('click', 'span.edit-trash-icon', function() {
+        var name = $(this).attr('data-name');
+        var iStack = data[name]['internalStack'];
+        var eStack = data[name]['externalStack'];
+        var rStack = data[name]['ruleStack'];
+
+        rStack && $.act(ACT_DEL, RULE, rStack, null);
+
+        if (!$.exe()) {
+            iStack && $.act(ACT_DEL, INTERNAL_HOST, iStack, null);
+            eStack && $.act(ACT_DEL, EXTERNAL_HOST, eStack, null);
+            $.exe(function(err) {
+                $.reload();
+            });
+        }
+    }).on('click', 'span.edit-modify-icon', function() {
+        isEdit = true;
+        var name = $(this).attr('data-name');
+        editName = name;
+        $('#serviceType').find('option[value='+data[name].serviceType+']').prop('selected', true);
+        $('#protocol').find('option[value='+data[name].protocol+']').prop('selected', true);
+        $('#startPort').val(data[name].portStart);
+        $('#endPort').val(data[name].portEnd);
+        $('#serviceTypeInput').val(name);
+        if (data[name].IPEnd) {
+            $('#ipFrom').tpAddress('val', data[name].IPStart);
+            $('#ipTo').tpAddress('val', data[name].IPEnd);
+            $('#filterForRange').prop('checked', true);
+        } else {
+            $('#ipAddress').tpAddress('val', data[name].IPStart);
+            $('#filterForSingle').prop('checked', true);
+        }
+
+        $('#serviceType').tpSelect({refresh:1});
+        $('#protocol').tpSelect({refresh:1});
+        $('#filterForSingle').tpRadio();
+        $('#filterForRange').tpRadio();
+        $('#filterForAll').tpRadio();
+    }).on('click', 'span.rule-switch', function() {
+        var name = $(this).attr('data-name');
+        var status = $(this).attr('data-status');
+        if (status === '1' && data[name].ruleStack) {
+        	$.act(ACT_SET, RULE, data[name].ruleStack, null, ["enable=0"]);
+        } else if (status === '0' && data[name].ruleStack) {
+        	$.act(ACT_SET, RULE, data[name].ruleStack, null, ["enable=1"]);
+        }
+
+        if (!$.exe()) {
+            $.reload();
+        }
+    });
+    $('#filterForSingle').on('click', function() {
+        $(this).prop('checked', true);
+        $('#ipSingle').removeClass('nd');
+        $('#ipRange').addClass('nd');
+    });
+    $('#filterForRange').on('click', function() {
+        $(this).prop('checked', true);
+        $('#ipRange').removeClass('nd');
+        $('#ipSingle').addClass('nd');
+    });
+    $('#filterForAll').on('click', function() {
+        $(this).prop('checked', true);
+        $('#ipSingle').addClass('nd');
+        $('#ipRange').addClass('nd');
+    });
+    $("#cancel").click(function() {
+        $.reload();
+    });
+    $("#add").click(function() {
+    });
+    $("#delAll").click(function() {
+        $.confirm(c_str.del_choosed, deleteAll, null);
+    });
+    $("#ok").click(function() {
+        save();
+    });
+
+    $.tpInit(init);
+
+    function init() {
+        $('#serviceType').trigger('click');
+        $('#ipFrom').tpAddress('disabled', lanSettings.inputMask);
+        $('#ipFrom').tpAddress('val', lanSettings.netSegment);
+        $('#ipTo').tpAddress('disabled', lanSettings.inputMask);
+        $('#ipTo').tpAddress('val', lanSettings.netSegment);
+        $('#ipAddress').tpAddress('disabled', lanSettings.inputMask);
+        $('#ipAddress').tpAddress('val', lanSettings.netSegment);
+
+        var fw = $.act(ACT_GET, FIREWALL, null, null);
+        if (!$.exe()) {
+            if (fw.enablePortFiltering === '1') {
+                $('#enFilterOn').addClass('selected');
+            } else {
+                $('#enFilterOff').addClass('selected');
+            }
+            $('#enFilter').tpBtnGroup();
+        }
+    }
+
+    function initTable() {
+        var i, len, serviceName;
+        var array = [];
+        var internalHost = $.act(ACT_GL, INTERNAL_HOST, null, null);
+        var externalHost = $.act(ACT_GL, EXTERNAL_HOST, null, null);
+        var ruleList = $.act(ACT_GL, RULE, null, null);
+        var lanIP = $.act(ACT_GS, "LAN_IP_INTF", null, "1,0,0,0,0,0");
+
+        if (!$.exe()) {
+            setLanIPRange(lanIP[0]);
+
+            for (i = 0, len = externalHost.length; i < len; i ++) {
+                if (internalHost[i] && internalHost[i].isParentCtrl == '3') {
+                    serviceName = internalHost[i].entryName;
+                    if (data[serviceName] === undefined) {
+                        data[serviceName] = {entryName: serviceName};
+                    }
+                    data[serviceName].IPStart = $.num2ip(parseInt(internalHost[i].IPStart));
+                    data[serviceName].IPEnd = internalHost[i].IPEnd==0 ? 0 : $.num2ip(parseInt(internalHost[i].IPEnd));
+                    data[serviceName].internalStack = internalHost[i].__stack;
+                }
+                if (externalHost[i] && externalHost[i].isParentCtrl == '3') {
+                    serviceName = externalHost[i].entryName;
+                    if (data[serviceName] === undefined) {
+                        data[serviceName] = {entryName: serviceName};
+                    }
+                    data[serviceName].portStart = externalHost[i].portStart;
+                    data[serviceName].portEnd = externalHost[i].portEnd === "0" ? externalHost[i].portStart : externalHost[i].portEnd;
+                    data[serviceName].externalStack = externalHost[i].__stack;
+                }
+                if (ruleList[i] && ruleList[i].isParentCtrl == '3') {
+                    serviceName = ruleList[i].ruleName;
+                    if (data[serviceName] === undefined) {
+                        data[serviceName] = {entryName: serviceName};
+                    }
+                    data[serviceName].serviceType = ruleList[i].serviceType;
+                    data[serviceName].enable = ruleList[i].enable;
+                    data[serviceName].protocol = ruleList[i].protocol;
+                    data[serviceName].ruleStack = ruleList[i].__stack;
+                }
+            }
+
+            var index = 1;
+            $.each(data, function(name) {
+                var ip;
+                if (this.IPEnd == '0') {
+                    ip = this.IPStart;
+                } else {
+                    ip = this.IPStart + '-' + this.IPEnd;
+                }
+                array.push([{
+                    "text": '<span><div><input type="checkbox" id="port_filtering_' + index + '" class="table-select-one" data-name="'+
+                            name+'"/><label></label></div></span>',
+                    "width": "5%"
+                }, {
+                    "text": index++,
+                    "width": "5%"
+                }, {
+                    "text": this.entryName,
+                    "width": "10%"
+                }, {
+                    "text": this.portStart + '-' + this.portEnd,
+                    "width": "12%"
+                }, {
+                    "text": ip,
+                    "width": "22%"
+                }, {
+                    "text": (this.enable == 1) ? "<span class='table-grid-icon enable-icon rule-switch' data-status='1' data-name='"+name+"'></span>" :
+                            "<span class='table-grid-icon disable-icon rule-switch' data-status='0' data-name='"+name+"'></span>",
+                    "width": "6%"
+                }, {
+                    "text": "<span class='table-grid-icon edit-modify-icon' data-name='"+name+"'>"+
+                            "</span><span class='table-grid-icon edit-trash-icon' data-name='"+name+"'></span>",
+                    "width": "10%"
+                }]);
+            });
+        }
+        $.initTableBody($("#table-filtering"), array);
+        return array;
+    }
+
+    function deleteAll() {
+        var idx = 1, iStack, eStack, rStack;
+        $.addLoading();
+        $.each(data, function() {
+            iStack = eStack = rStack = '';
+            if ($("#port_filtering_"+idx).prop('checked')) {
+                var name = $("#port_filtering_"+idx).attr('data-name');
+                iStack = data[name]['internalStack'];
+                eStack = data[name]['externalStack'];
+                rStack = data[name]['ruleStack'];
+
+                rStack && $.act(ACT_DEL, RULE, rStack, null);
+
+                if (!$.exe()) {
+                    iStack && $.act(ACT_DEL, INTERNAL_HOST, iStack, null);
+                    eStack && $.act(ACT_DEL, EXTERNAL_HOST, eStack, null);
+                    $.exe();
+                }
+            }
+            idx++;
+        });
+        $.removeLoading();
+        $.reload();
+    }
+
+    function setLanIPRange(lan) {
+        var ip = $.ip2num(lan.IPInterfaceIPAddress);
+        var mask = $.ip2num(lan.IPInterfaceSubnetMask);
+        var net = $.num2ip(ip & mask).split('.');
+        var bit = Math.ceil($.getmaskbit(lan.IPInterfaceSubnetMask)/8);
+
+        var tempMask = "", tempPostfixFrom = [], tempPostfixTo = [], tag = true;
+
+        while (bit > 0) {
+            net.pop();
+            tempMask += "0";
+            tempPostfixFrom.unshift(tag ? "1" : "0");
+            tempPostfixTo.unshift("255");
+            tag = false;
+            bit--;
+        }
+
+        while (tempMask.length < 4) {
+            tempMask = "1" + tempMask;
+        }
+
+        lanSettings.netSegment = net.join(".");
+        lanSettings.postfixFrom = tempPostfixFrom.join(".");
+        lanSettings.postfixTo = tempPostfixTo.join(".");
+        lanSettings.inputMask = tempMask;
+    }
+
+    function save() {
+        var internalHostAttrs = {};
+        var externalHostAttrs = {};
+        var ruleAttrs = {};
+        var ipType = $('#filterForSingle').prop('checked') ? 0 : ($('#filterForRange').prop('checked') ? 1 : 2);
+
+        if (!isEdit) {
+            internalHostAttrs.type = 0;
+            internalHostAttrs.isParentCtrl = 3;
+        }
+        internalHostAttrs.entryName = $('#serviceTypeInput').val();
+        if (ipType === 0) {
+            internalHostAttrs.IPStart = $.ip2num($('#ipAddress').tpAddress('val'));
+            internalHostAttrs.IPEnd = 0;
+        } else if (ipType === 1) {
+            internalHostAttrs.IPStart = $.ip2num($('#ipFrom').tpAddress('val'));
+            internalHostAttrs.IPEnd = $.ip2num($('#ipTo').tpAddress('val'));
+        } else {
+            internalHostAttrs.IPStart = $.ip2num(lanSettings.netSegment + '.' + lanSettings.postfixFrom);
+            internalHostAttrs.IPEnd = $.ip2num(lanSettings.netSegment + '.' +lanSettings.postfixTo);
+        }
+
+        if (!isEdit) {
+            externalHostAttrs.type = 0;
+            externalHostAttrs.isParentCtrl = 3;
+        }
+        var tempPortStart = parseInt($('#startPort').val());
+        var tempPortEnd = parseInt($('#endPort').val());
+        if (!tempPortStart || tempPortStart <= 0 || tempPortStart > 65535 ) {
+            $.alert(ERR_SERVICE_FILTER_PORT_INVALID);
+			$('#startPort').select();
+			$('#startPort').focus();
+            return;
+        }
+		if (!tempPortEnd || tempPortEnd <= 0 || tempPortEnd > 65535) {
+            $.alert(ERR_SERVICE_FILTER_PORT_INVALID);
+			$('#endPort').select();
+			$('#endPort').focus();
+            return;
+        }
+        externalHostAttrs.entryName = internalHostAttrs.entryName;
+        externalHostAttrs.portStart = tempPortStart;
+        externalHostAttrs.portEnd = tempPortEnd;
+
+        if (!isEdit) {
+            ruleAttrs.enable = 1;
+            ruleAttrs.action = 1;
+            ruleAttrs.isParentCtrl = 3;
+            ruleAttrs.direction = 1;
+        }
+        ruleAttrs.serviceType = $('#serviceType').data('value');
+        ruleAttrs.ruleName = internalHostAttrs.entryName;
+        ruleAttrs.protocol = $('#protocol').data('value');
+        ruleAttrs.internalHostRef = internalHostAttrs.entryName;
+        ruleAttrs.externalHostRef = internalHostAttrs.entryName;
+
+
+        if (isEdit) {
+            $.act(ACT_SET, INTERNAL_HOST, data[editName].internalStack, null, internalHostAttrs);
+            $.act(ACT_SET, EXTERNAL_HOST, data[editName].externalStack, null, externalHostAttrs);
+
+            if (!$.exe()) {
+                $.act(ACT_SET, RULE, data[editName].ruleStack, null, ruleAttrs);
+                if (!$.exe()) {
+                    $.reload();
+                }
+            }
+        } else {
+            $.act(ACT_ADD, INTERNAL_HOST, null, null, internalHostAttrs);
+            $.act(ACT_ADD, EXTERNAL_HOST, null, null, externalHostAttrs);
+
+            if (!$.exe()) {
+                var listIn = $.act(ACT_GL, INTERNAL_HOST, null, null);
+                var listEx = $.act(ACT_GL, EXTERNAL_HOST, null, null);
+                $.act(ACT_ADD, RULE, null, null, ruleAttrs);
+                $.exe(function (err) {
+                    if (!err) {
+                        $.reload();
+                    } else {
+                        var indexIn = listIn.length - 1;
+                        var indexEx = listEx.length - 1;
+                        $.act(ACT_DEL, INTERNAL_HOST, listIn[indexIn].__stack, null);
+                        $.act(ACT_DEL, EXTERNAL_HOST, listEx[indexEx].__stack, null);
+                        $.exe();
+                        $.reload();
+                    }
+                });
+            }
+        }
+    }
+})();
+</script>

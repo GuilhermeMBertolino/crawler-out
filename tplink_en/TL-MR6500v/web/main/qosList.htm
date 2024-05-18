@@ -1,0 +1,73 @@
+<script language="javascript">var qosIntfCfg,queueList,flowClsList,appClsList,dscp_list=new Array(["AF13","56"],["AF12","48"],["AF11","40"],["CS1","32"],["AF23","88"],["AF22","80"],["AF21","72"],["CS2","64"],["AF33","120"],["AF32","112"],["AF31","104"],["CS3","96"],["AF43","152"],["AF42","144"],["AF41","136"],["CS4","128"],["EF","184"],["CS5","160"],["CS6","192"],["CS7","224"]),dscp_list_num=20,ethtype_list=new Array(["IP","2048"],["ARP","2054"],["802.1Q","33024"],["PPP_DISC","34915"],["PPP_SES","34916"]),ethtype_list_num=5,ip_proto_list=new Array(["TCP","6"],["UDP","17"],["ICMP","2"]),ip_proto_list_num=3,app_name_list=new Array(["VoIP","VOIP"],["TR069","TR069"],["Other","OTHER"]),app_name_list_num=3,lan_phy_intf={eth0:"LAN0","eth0.2":"LAN1","eth0.3":"LAN2","eth0.4":"LAN3","eth0.5":"LAN4",ra0:"Wi-Fi_2.4G",apcli0:"WIFI_WDS_2.4G",ra1:"WIFI_GUEST_2.4G",ra2:"SSID_2.4G_03",ra3:"SSID_2.4G_04",rai0:"Wi-Fi_5G",apclii0:"WIFI_WDS_5G",rai1:"WIFI_GUEST_5G",rai2:"SSID_5G_03",rai3:"SSID_5G_04"};function doQueueEnable(e){$.act(ACT_SET,QOS_QUEUE,queueList[e].__stack,null,["queueEnable=1"]),$.exe(function(e){e||$.reload()})}function doQueueDisable(e){$.act(ACT_SET,QOS_QUEUE,queueList[e].__stack,null,["queueEnable=0"]),$.exe(function(e){e||$.reload()})}function doQueueDelete(e){if(0<=e)$.act(ACT_DEL,QOS_QUEUE,queueList[e].__stack,null),$.exe(function(e){e||$.reload()});else{for(var t=0,l=0;l<queueList.length;l++){if($("#queueCheckbox"+l).prop("data-checked")){t=1;break}}t&&$.confirm(c_str.del_choosed,function(){for(var e=0;e<queueList.length;e++){var t=$("#queueCheckbox"+e);t.prop("data-checked")&&(t.parents("tr").first().remove(),$.act(ACT_DEL,QOS_QUEUE,queueList[e].__stack,null),$.exe(function(e){e||$.reload()}))}})}}function doQueueEdit(e){queueEditIndex=e,$.loadPage("queuePage","qosQueueEdit.htm")}function doFlowClsEnable(e){$.act(ACT_SET,CLASSIFICATION,flowClsList[e].__stack,null,["classificationEnable=1"]),$.exe(function(e){e||$.reload()})}function doFlowClsDisable(e){$.act(ACT_SET,CLASSIFICATION,flowClsList[e].__stack,null,["classificationEnable=0"]),$.exe(function(e){e||$.reload()})}function doFlowClsDelete(e){if(0<=e)$.act(ACT_DEL,CLASSIFICATION,flowClsList[e].__stack,null),$.exe(function(e){e||$.reload()});else{for(var t=0,l=0;l<flowClsList.length;l++){if($("#flowClsCheckbox"+l).prop("data-checked")){t=1;break}}t&&$.confirm(c_str.del_choosed,function(){for(var e=0;e<flowClsList.length;e++){var t=$("#flowClsCheckbox"+e);t.prop("data-checked")&&(t.parents("tr").first().remove(),$.act(ACT_DEL,CLASSIFICATION,flowClsList[e].__stack,null),$.exe(function(e){e||$.reload()}))}})}}function doFlowClsEdit(e){flowClsEditIndex=e,$.loadPage("flowClsPage","qosClsEdit.htm")}function doAppClsEnable(e){$.act(ACT_SET,QOS_APP,appClsList[e].__stack,null,["appEnable=1"]),$.exe(function(e){e||$.reload()})}function doAppClsDisable(e){$.act(ACT_SET,QOS_APP,appClsList[e].__stack,null,["appEnable=0"]),$.exe(function(e){e||$.reload()})}function doAppClsDelete(e){if(0<=e)$.act(ACT_DEL,QOS_APP,appClsList[e].__stack,null),$.exe(function(e){e||$.reload()});else{for(var t=0,l=0;l<appClsList.length;l++){if($("#appClsCheckbox"+l).prop("data-checked")){t=1;break}}t&&$.confirm(c_str.del_choosed,function(){for(var e=0;e<appClsList.length;e++){var t=$("#appClsCheckbox"+e);t.prop("data-checked")&&(t.parents("tr").first().remove(),$.act(ACT_DEL,QOS_APP,appClsList[e].__stack,null),$.exe(function(e){e||$.reload()}))}})}}function doAppClsEdit(e){appClsEditIndex=e,$.loadPage("appClsPage","qosAppEdit.htm")}function initQueueTable(){var t=new Array,l=0;$.each(qosIntfCfg,function(){if(1!=this.schedulerAlgorithm){var e=this;$.each(queueList,function(){e.__stack==$.stkPop(this.__stack,1)&&(cell0='<div><input type="checkbox" id="queueCheckbox'+l+'" class="table-select-one" /><label></label></div>',cell1=this.queueName,cell2=e==qosIntfCfg[0]?"UpStream":"Downstream",2==e.schedulerAlgorithm?(cell3="SP",cell4=this.queuePrecedence,cell5="",cell6=""):(cell3="WRR",cell4="",cell5=this.queueWeight,cell6=1==this.forceWeightEnable?"<span class='T_en'>Enable</span>":"<span class='T_dis'>Disable</span>"),cell7=1==this.queueEnable?"<span class='table-grid-icon enable-icon' onClick='doQueueDisable("+l+")'></span>":"<span class='table-grid-icon disable-icon' onClick='doQueueEnable("+l+")'></span>",cell8="<span class='table-grid-icon edit-modify-icon' onClick='doQueueEdit("+l+")'></span><span class='table-grid-icon edit-trash-icon' onclick='doQueueDelete("+l+");'></span>",t.push([{text:cell0,width:"10%"},{text:cell1,width:"30%"},{text:cell2,width:""},{text:cell3,width:"15%"},{text:cell4,width:"15%"},{text:cell5,width:"15%"},{text:cell6,width:"15%"},{text:cell7,width:"10%"},{text:cell8,width:"10%"}]),l++)})}}),$.initTableBody($("#tableQueue"),t),$.tablePages($("#tableQueue"),3)}function initFlowClsTable(){var l=new Array,s=0;$.each(flowClsList,function(){var e=0;cell0='<div><input type="checkbox" id="flowClsCheckbox'+s+'" class="table-select-one" /><label></label></div>',cell1=this.X_TP_ClassName,cell2=this.classificationOrder,cell3=lan_phy_intf[this.classInterface]?lan_phy_intf[this.classInterface]:this.classInterface;var t="";if(""!=this.sourceMACAddress&&(t+="Src MAC Addr: "+this.sourceMACAddress,""!=this.sourceMACMask&&(t+="<br/>Src MAC Mask: "+this.sourceMACMask)),""!=this.destMACAddress&&(""!=t&&(t+="<br/>"),t+="Dest MAC Addr: "+this.destMACAddress,""!=this.destMACMask&&(t+="<br/>Dest MAC Mask: "+this.destMACMask)),-1!=this.ethertype){for(""!=t&&(t+="<br/>"),e=0;e<ethtype_list_num;e++)ethtype_list[e][1]==this.ethertype&&(t+="EtherType: "+ethtype_list[e][0]);if(2048==this.ethertype){if(""!=this.sourceIP?(""!=t&&(t+="<br/>"),t+="Src IP Addr: ",t+=this.sourceIP,""!=this.sourceMask&&(t+=" / "+this.sourceMask)):""!=this.sourceVendorClassID?(""!=t&&(t+="<br/>"),t+="Src Vendor ID: ",t+=this.sourceVendorClassID):""!=this.sourceUserClassID&&(""!=t&&(t+="<br/>"),t+="Src User ID: ",t+=this.sourceUserClassID),""!=this.destIP&&(""!=t&&(t+="<br/>"),t+="Dest IP Addr: ",t+=this.destIP,""!=this.destMask&&(t+=" / "+this.destMask)),-1!=this.DSCPCheck)for(e=0;e<dscp_list_num;e++)if(this.DSCPCheck==dscp_list[e][1]){""!=t&&(t+="<br/>"),t+="DSCP Check: "+dscp_list[e][0];break}if(-1!=this.protocol){for(e=0;e<ip_proto_list_num;e++)if(this.protocol==ip_proto_list[e][1]){""!=t&&(t+="<br/>"),t+="Protocol: "+ip_proto_list[e][0];break}6!=this.protocol&&17!=this.protocol||(-1!=this.sourcePort&&(""!=t&&(t+="<br/>"),t+="Src Port: "+this.sourcePort,-1!=this.sourcePortRangeMax&&(t+=" ~ "+this.sourcePortRangeMax)),-1!=this.destPort&&(""!=t&&(t+="<br/>"),t+="Dest Port: "+this.destPort,-1!=this.destPortRangeMax&&(t+=" ~ "+this.destPortRangeMax)))}}else 33024==this.ethertype&&-1!=this.ethernetPriorityCheck&&(t+="802.1P Check: "+this.ethernetPriorityCheck)}for(cell4=t,cell5=qosIntfCfg[0].interfaceKey==this.X_TP_ClassInterface?"Upstream":"Downstream",e=0;e<queueList.length&&queueList[e].queueKey!=this.classQueue;e++);if(cell6=queueList[e].queueName,-1!=this.DSCPMark){for(e=0;e<dscp_list_num&&this.DSCPMark!=dscp_list[e][1];e++);cell7=dscp_list[e][0]}else cell7="";cell8=-1!=this.ethernetPriorityMark?this.ethernetPriorityMark:"",cell9=1==this.classificationEnable?"<span class='table-grid-icon enable-icon' onClick='doFlowClsDisable("+s+")'></span>":"<span class='table-grid-icon disable-icon' onClick='doFlowClsEnable("+s+")'></span>",cell10="<span class='table-grid-icon edit-modify-icon' onClick='doFlowClsEdit("+s+")'></span><span class='table-grid-icon edit-trash-icon' onclick='doFlowClsDelete("+s+");'></span>",l.push([{text:cell0,width:"10%"},{text:cell1,width:"30%"},{text:cell2,width:""},{text:cell3,width:"15%"},{text:cell4,width:"15%"},{text:cell5,width:"15%"},{text:cell6,width:"15%"},{text:cell7,width:"10%"},{text:cell8,width:"10%"},{text:cell9,width:"10%"},{text:cell10,width:"10%"}]),s++}),$.initTableBody($("#tableFlowCls"),l),$.tablePages($("#tableFlowCls"),3)}function initAppClsTable(){var t=new Array,l=0;$.each(appClsList,function(){var e=0;for(cell0='<div><input type="checkbox" id="appClsCheckbox'+l+'" class="table-select-one" /><label></label></div>',e=0;e<app_name_list_num&&this.appName!=app_name_list[e][1];e++);for(cell1=app_name_list[e][0],cell2="Upstream",e=0;e<queueList.length&&queueList[e].queueKey!=this.classQueue;e++);if(cell3=queueList[e].queueName,-1!=this.DSCPMark)for(e=0;e<dscp_list_num&&this.DSCPMark!=dscp_list[e][1];e++);cell4=dscp_list[e][0],cell5=-1!=this.ethernetPriorityMark?this.ethernetPriorityMark:"",cell6=1==this.appEnable?"<span class='table-grid-icon enable-icon' onClick='doAppClsDisable("+l+")'></span>":"<span class='table-grid-icon disable-icon' onClick='doAppClsEnable("+l+")'></span>",cell7="<span class='table-grid-icon edit-modify-icon' onClick='doAppClsEdit("+l+")'></span><span class='table-grid-icon edit-trash-icon' onclick='doAppClsDelete("+l+");'></span>",t.push([{text:cell0,width:"10%"},{text:cell1,width:"30%"},{text:cell2,width:""},{text:cell3,width:"15%"},{text:cell4,width:"15%"},{text:cell5,width:"15%"},{text:cell6,width:"15%"},{text:cell7,width:"10%"}]),l++}),$.initTableBody($("#tableAppCls"),t),$.tablePages($("#tableAppCls"),3)}function init(){var e=[{text:'<div><input type="checkbox" id="queueAll" class="table-select-all" /><label></label></div>',width:"5%"},{text:"Queue Name",width:"15%"},{text:"Direction",width:"15%"},{text:"Scheduler Algorithm",width:"15%"},{text:"Precedence",width:"15%"},{text:"Weight (%)",width:""},{text:"Force Weight",width:"10%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"10%"}];$.initTableHead($("#tableQueue"),e);var t=[{text:'<div><input type="checkbox" id="flowClsAll" class="table-select-all" /><label></label></div>',width:"5%"},{text:"Class Name",width:"10%"},{text:"Order",width:"8%"},{text:"Ingress interface",width:"10%"},{text:"Criteria",width:""},{text:"Direction",width:"10%"},{text:"Queue",width:"10%"},{text:"DSCP Mark",width:"8%"},{text:"802.1P Mark",width:"8%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"10%"}];if($.initTableHead($("#tableFlowCls"),t),INCLUDE_E8_APP){var l=[{text:'<div><input type="checkbox" id="appClsAll" class="table-select-all" /><label></label></div>',width:"5%"},{text:"Busniess Name",width:"15%"},{text:"Direction",width:"15%"},{text:"Queue",width:""},{text:"DSCP Mark",width:"15%"},{text:"802.1P Mark",width:"15%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"10%"}];$.initTableHead($("#tableAppCls"),l),$("#appClsBox").removeClass("nd")}qosIntfCfg=$.act(ACT_GL,QOS_INTF,null,null,["interfaceKey","schedulerAlgorithm"]),queueList=$.act(ACT_GL,QOS_QUEUE,null,null),flowClsList=$.act(ACT_GL,CLASSIFICATION,null,null),INCLUDE_E8_APP&&(appClsList=$.act(ACT_GL,QOS_APP,null,null)),$.exe(function(e){e||($("#tableQueue").tpTable(initQueueTable),$("#tableFlowCls").tpTable(initFlowClsTable),INCLUDE_E8_APP&&$("#tableAppCls").tpTable(initAppClsTable))})}</script>
+<h3 id="t_queueTitle">Queue List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-btn">
+                <span class="add-icon" id="queueAdd"></span>
+                <label class="T_add">Add</label>
+                <span class="delete-icon" id="queueDel"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="tableQueue">
+            <thead></thead>
+            <tbody id="tableQueueBody">
+                <tr id="editQueue" class="nd">
+                    <td colspan="9">
+                        <div id="queuePage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<h3 id="t_flowTitle">Flow Classification</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-btn">
+                <span class="add-icon" id="flowClsAdd"></span>
+                <label class="T_add">Add</label>
+                <span class="delete-icon" id="flowClsDel"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="tableFlowCls">
+            <thead></thead>
+            <tbody id="tableFlowClsBody">
+                <tr id="editFlowCls" class="nd">
+                    <td colspan="11">
+                        <div id="flowClsPage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div id="appClsBox" class="nd">
+	<h3 id="t_appClsTitle">Business Classification</h3>
+	<div class="content-container">
+	    <form class="pure-form pure-form-aligned">
+	        <div class="table-op">
+	            <div class="table-btn">
+	                <span class="add-icon" id="appClsAdd"></span>
+	                <label class="T_add">Add</label>
+	                <span class="delete-icon" id="appClsDel"></span>
+	                <label class="T_del">Delete</label>
+	            </div>
+	        </div>
+	        <table id="tableAppCls">
+	            <thead></thead>
+	            <tbody id="tableAppClsBody">
+	                <tr id="editAppCls" class="nd">
+	                    <td colspan="8">
+	                        <div id="appClsPage"></div>
+	                    </td>
+	                </tr>
+	            </tbody>
+	        </table>
+	    </form>
+	</div>
+</div>
+<script language="javascript">$("#queueAdd").on("click",function(l){doQueueEdit(-1)}),$("#queueDel").on("click",function(l){doQueueDelete(-1)}),$("#flowClsAdd").on("click",function(l){doFlowClsEdit(-1)}),$("#flowClsDel").on("click",function(l){doFlowClsDelete(-1)}),$("#appClsAdd").on("click",function(l){doAppClsEdit(-1)}),$("#appClsDel").on("click",function(l){doAppClsDelete(-1)}),$.tpInit(init)</script>

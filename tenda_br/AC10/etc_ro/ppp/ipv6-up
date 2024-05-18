@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# pppoe拨号获取到ipv6的EUI-64地址后的执行脚本，这里主要是设置默认路由,拉dhcp6c进程 llm
+# 父进程会关掉标准输出，要打印提示需要重定向到/dev/console
+
+# 传入的环境变量举例：
+# IFNAME=ppp1
+# PPPLOGNAME=root
+# LLLOCAL=fe80::051a:6148:7956:989d
+# ORIG_UID=0
+# MACREMOTE=66:5D:47:F2:9D:D3
+# PPPD_PID=5934
+# PWD=/
+# LLREMOTE=fe80::69ba:4aaa:608f:dbb7
+# DEVICE=eth1
+
+# 传入的参数列表
+# argv[0] = script;
+# argv[1] = ifname;
+# argv[2] = devnam;
+# argv[3] = strspeed;
+# argv[4] = strlocal;
+# argv[5] = strremote;
+# argv[6] = ipparam;
+# argv[7] = NULL;
+
+
+echo "## echo exec ipv6-up env ##" > /tmp/ipv6-up-env
+env >> /tmp/ipv6-up-env
+
+REMOTE_ADDDR="${LLREMOTE}"
+
+# 判断是否需要更改默认路由
+# if [[ "`ip -6 route | grep default | grep ${REMOTE_ADDDR}`" == "" ]]; then
+#     echo "change ipv6 default route" > /dev/console
+#     ip -6 route del default
+#     ip -6 route add default via ${REMOTE_ADDDR} dev ${IFNAME}
+# fi
+
+# 拉dhcp6c进程
+#start_dhcp6c.sh ${IFNAME} 

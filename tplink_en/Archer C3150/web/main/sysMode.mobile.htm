@@ -1,0 +1,160 @@
+<div class="titleBar">
+    <h1>
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.sysMode_nstr.et%>
+        </script>
+    </h1>
+    <a id="save" data-status="save">
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.m_str.save%>
+        </script>
+    </a>
+</div>
+<div id="opMode" class="link-list mt15">
+    <div class="section-container">
+        <div class="section-box">
+            <div>
+                <span>
+                    <script type="text/html" class="title-string">
+                        <%=$.tpLang.sysMode_nstr.t_router%>
+                    </script>
+                </span>
+            </div>
+            <input type="radio" name="cloneRadio" id="mode-router" />
+        </div>
+    </div>
+    <div class="section-container mtNo">
+        <div class="section-box">
+            <div>
+                <span>
+                    <script type="text/html" class="title-string">
+                        <%=$.tpLang.sysMode_nstr.t_ap%>
+                    </script>
+                </span>
+            </div>
+            <input type="radio" name="cloneRadio" id="mode-ap"/>
+        </div>
+    </div>
+    <!--<div class="section-container">-->
+        <!--<div class="section-box">-->
+            <!--<div>-->
+                <!--<span>-->
+                    <!--<script type="text/html" class="title-string">-->
+                        <!--<%=$.tpLang.sysMode_nstr.t_sysmod1%>-->
+                    <!--</script>-->
+                <!--</span>-->
+            <!--</div>-->
+            <!--<input type="radio" name="cloneRadio" id="mode-dsl" />-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--<div class="section-container mtNo nd" id="mode3g">-->
+        <!--<div class="section-box">-->
+            <!--<div>-->
+                <!--<span>-->
+                    <!--<script type="text/html" class="title-string">-->
+                        <!--<%=$.tpLang.sysMode_nstr.t_sysmod2%>-->
+                    <!--</script>-->
+                <!--</span>-->
+            <!--</div>-->
+            <!--<input type="radio" name="cloneRadio" id="mode-g"/>-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--<div class="section-container mtNo">-->
+        <!--<div class="section-box">-->
+            <!--<div>-->
+                <!--<span>-->
+                    <!--<script type="text/html" class="title-string">-->
+                        <!--<%=$.tpLang.sysMode_nstr.t_sysmod3%>-->
+                    <!--</script>-->
+                <!--</span>-->
+            <!--</div>-->
+            <!--<input type="radio" name="cloneRadio" id="mode-wireless"/>-->
+        <!--</div>-->
+    <!--</div>-->
+</div>
+<script type="text/javascript">
+    (function() {
+        var realMode;
+        var dhcpCfg;
+        var lanIPv4Cfg;
+        $.tpLocal('title-string', $.tpLang);
+
+        (function() {
+            $('.titleBar').titleBar();
+            $('#mode-router').radioMobile({
+                'hasTitle': true
+            });
+            $('#mode-ap').radioMobile({
+                'hasTitle': true
+            });
+            initDHCP();
+            sysModeInit();
+
+            $('#save').on('click', function() {
+                save();
+            });
+        })();
+
+        function initDHCP() {
+            var brLanList = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+            $.exe();
+            //not has group
+            lanIPv4Cfg = $.act(ACT_GS, LAN_IP_INTF, null, brLanList[0].__stack, ["IPInterfaceIPAddress", "IPInterfaceSubnetMask", "X_TP_MACAddress"]);
+            dhcpCfg = $.act(ACT_GET, LAN_HOST_CFG, brLanList[0].__stack, null, null);
+            $.exe();
+        }
+
+        function sysModeInit() {
+            var sysMode = $.act(ACT_GET, ROUTER_MODE, null, null, null);
+
+            if (!$.exe()) {
+                realMode = sysMode.mode;
+                if (sysMode.mode == "Router") {
+                    $("#mode-router").radioMobile('option', 'checked', true);
+                } else {
+                    $("#mode-ap").radioMobile('option', 'checked', true);
+                }
+            }
+        }
+
+        function save() {
+            var sysModeArg = {};
+            if ($("#mode-router").radioMobile('option', 'checked')) {
+                sysModeArg.mode = "Router";
+            } else {
+                sysModeArg.mode = "AP";
+            }
+
+            if (sysModeArg.mode == realMode) {
+                //设置同一个模式时，也会重启。所以这里不作设置
+                $.reload();
+
+                return;
+            }
+            $.confirmMobile($.tpLang.c_str.swmod,
+                    function() {
+                        $.startWaitingMobile($.tpLang.m_str.waiting);
+                        $.act(ACT_SET, ROUTER_MODE, null, null, sysModeArg);
+                        $.exe(function(ret) {
+                            $.stopWaitingMobile();
+                            if (!ret) {
+                                $.guageMobile($.tpLang.s_str.wait_reboot, 100, 500, function() {
+                                    if (sysModeArg.mode == "Router") {
+                                        //reload 192.168.0.1
+                                        location.href = ret[1] + "http://192.168.0.1/";
+                                    } else {
+                                        location.href = "http://tplinkwifi.net/";
+                                        //$.refresh();
+                                    }
+                                });
+                            }
+                        });
+                    }, function() {
+                        $.reload();
+                    }
+            );
+        }
+
+    })();
+
+</script>

@@ -1,0 +1,268 @@
+<script language="javascript" type="text/javascript">
+function doSave() {
+    var brlist = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+    var filterlist = $.act(ACT_GL, L2_BRIDGING_FILTER, null, null, ["filterKey", "X_TP_IfAliasName", "__filterBridgeRefName", "filterEnable"]);
+
+    var groupname = $("#groupName").prop('value');
+    var groupIsolation = $("#enableGroupIsolation").prop("data-checked") ? 1 : 0;
+    if (!$.isname(groupname)) {
+        $.alert(ERR_WAN_INTER_GROUPNAME_INVALID);
+        var element = $("#groupName");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+
+    if (!$.exe()) {
+        for (var i = 0; i < brlist.length; i++) {
+            if (groupname == brlist[i].bridgeName) {
+                $.alert(ERR_GROUP_NAME_INVAD);
+                return;
+            }
+        }
+
+        var checkLan;
+        var checkWan;
+        var addBridge = 0;
+		var ix = 0;
+
+        do {
+        	checkLan = $("#lanID" + ix);
+        	checkWan = $("#wanID" + ix);
+        	if ( checkLan.prop("data-checked") == true || checkWan.prop("data-checked") == true ) {
+        		addBridge = 1;
+        		break;
+        	}
+        	ix++;
+        } while(checkLan.length > 0 || checkWan.length > 0);
+
+        if (addBridge) {
+        	$.act(ACT_ADD, L2_BRIDGING_ENTRY, null, null, ["bridgeName=" + groupname, "X_TP_EnableBridgeIsolation=" + groupIsolation]);
+            if ($.exe()) return;
+        } else {
+        	$.alert(ERR_GROUP_INVAD);
+        	return;
+        }
+
+        $.each(filterlist, function(e) {
+            for (var ix = 0;
+                (checkLan = $("#lanID" + ix)).length > 0; ix++) {
+                if (checkLan.prop("data-checked") == true) {
+                    if (this.X_TP_IfAliasName == checkLan.siblings().text()) {
+                        $.act(ACT_SET, L2_BRIDGING_FILTER, this.__stack, null, ["__filterBridgeRefName=" + groupname]);
+                    }
+                }
+            }
+
+            for (var ix = 0;
+                (checkWan = $("#wanID" + ix)).length > 0; ix++) {
+                if (checkWan.prop("data-checked") == true) {
+                    if (this.X_TP_IfAliasName == checkWan.siblings().text()) {
+                        $.act(ACT_SET, L2_BRIDGING_FILTER, this.__stack, null, ["__filterBridgeRefName=" + groupname]);
+                    }
+                }
+            }
+        });
+	
+		$.exe(function(ret){
+			if (!ret) {
+				$.removeLoading();
+				$.loadMain("group.htm");
+			}
+		});
+    }
+}
+
+
+
+function doBack() {
+    $.loadMain("group.htm");
+}
+
+function buildTable() {
+    var routedWANExsit = false;
+    var fromSel = [];
+    var fromSelIndex = 0;
+    var lan_list = $("#lanTable");
+    var wan_list = $("#wanTable");
+    var brlist = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+    var filterlist = $.act(ACT_GL, L2_BRIDGING_FILTER, null, null, ["filterKey", "X_TP_IfAliasName", "__filterBridgeRefName", "filterEnable"]);
+    var availableIf = $.act(ACT_GL, L2_BRIDGING_INTF, null, null, ["availableInterfaceKey", "interfaceType"]);
+    var wanIpConns = $.act(ACT_GL, WAN_IP_CONN, null, null, ["enable", "connectionType", "name"]);
+    var wanPppConns = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["enable", "connectionType", "name", "transportType"]);
+    var l3ForwardingName = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+    if (!$.exe()) {
+        var lan_opt;
+        var wan_opt;
+        var lanIDIndex = 0;
+        var wanIDIndex = 0;
+        $.each(filterlist, function(arg, index) {
+            if (this.filterEnable == false)
+                return;
+            var notShow = 0;
+            if (INCLUDE_ROUTE_BINDING) {
+                for (var index = 0; index < wanIpConns.length; index++) {
+                    if (wanIpConns[index].name == this.X_TP_IfAliasName && wanIpConns[index].enable == 0) {
+                        notShow = 1;
+                        break;
+                    }
+                }
+                for (var index = 0; index < wanPppConns.length; index++) {
+                    if (wanPppConns[index].name == this.X_TP_IfAliasName &&
+                        (wanPppConns[index].enable == 0 || wanPppConns[index].transportType == "PPP3G")) {
+                        notShow = 1;
+                        break;
+                    }
+                }
+            } else {
+                for (var index = 0; index < wanIpConns.length; index++) {
+                    if (wanIpConns[index].name == this.X_TP_IfAliasName &&
+                        (wanIpConns[index].connectionType == "IP_Routed" ||
+                            (wanIpConns[index].connectionType == "IP_Bridged" &&
+                                wanIpConns[index].enable == 0))) {
+                        notShow = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (notShow == 1) {
+                return;
+            }
+
+
+            for (var i = 0; i < availableIf.length; i++) {
+                if (this.filterKey == availableIf[i].availableInterfaceKey) {
+                    if ((this.__filterBridgeRefName == "Default") && (availableIf[i].interfaceType == "LANInterface")) {
+                        lan_opt = "<div><input type='checkbox' id='lanID" + lanIDIndex + "'/><label>" + this.X_TP_IfAliasName + "</label></div><p></p>";
+                        $("#lanTableTd").append(lan_opt);
+                        $("#lanTable tbody tr td").css("text-align", "left");
+                        lanIDIndex++;
+                    }
+
+                    if ((this.__filterBridgeRefName == "Default") && (availableIf[i].interfaceType == "WANInterface")) {
+
+                        // if (this.X_TP_IfAliasName == l3ForwardingName.__ifAliasName)
+                        // {
+                        // 	$.h($.id("gwName"), "(" + l3ForwardingName.__ifAliasName + ")");
+                        // 	$.removeClass($.id("gwWarn"), "nd");
+                        // 	continue;
+                        // }
+
+                        wan_opt = "<div><input type='checkbox' id='wanID" + wanIDIndex + "'/><label>" + this.X_TP_IfAliasName + "</label></div><p></p>";
+                        $("#wanTableTd").append(wan_opt);
+                        $("#wanTable tbody tr td").css("text-align", "left");
+                        wanIDIndex++;
+                    }
+                }
+
+            }
+        });
+    }
+}
+
+function initLanTable() {
+
+    var lanTableHeadArray = [{
+        "text": "<b>" + table_str.avlanif + "</b>",
+        "width": "230px"
+    }];
+
+    $.initTableHead($("#lanTable"), lanTableHeadArray);
+    $("#lanTable tbody tr td").css("text-align", "left");
+    $("#lanTableTd").css("vertical-align", "top");
+    $("#lanTable").css("border", "none");
+    $("#lanTable th").css("border-left", "none");
+}
+
+function initWanTable() {
+
+    var wanTableHeadArray = [{
+        "text": "<b>" + table_str.avwanif + "</b>",
+        "width": "230px"
+    }];
+
+    $.initTableHead($("#wanTable"), wanTableHeadArray);
+    $("#wanTable tbody tr td").css("text-align", "left");
+    $("#wanTableTd").css("vertical-align", "top");
+    $("#wanTable").css("border", "none");
+    $("#wanTable th").css("border-left", "none");
+}
+
+function init() {
+
+    $("#lanTable").tpTable(initLanTable);
+    $("#wanTable").tpTable(initWanTable);
+    buildTable();
+}
+</script>
+
+<h3 id="t_addgrouptitle">Add New Group</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <label class="m" id="t_name">Group Name:</label>
+            <input type="text" id="groupName"  maxlength="15" required />
+        </div>
+        <p class="br"></p>
+        <div class="pure-g">
+            <div class="pure-u-1-2">
+                <div class="content">
+                    <div class="group-panel-main">
+                        <table id="lanTable">
+                            <thead></thead>
+                            <tbody>
+                                <tr>
+                                    <td id="lanTableTd"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pure-u-1-2">
+                <div class="content">
+                    <div class="group-panel-main" style="overflow:auto">
+                        <table id="wanTable">
+                            <thead></thead>
+                            <tbody>
+                                <tr>
+                                    <td id="wanTableTd"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <input type="checkbox" id="enableGroupIsolation" />
+            <label id="t_eniso">Enable Group Isolation.</label>
+        </div>
+
+
+
+        <p class="br"></p>
+        <div class="inline-btn-right">
+            <button type="submit" class="green inline T_cancel" id="editBack">Cancel</button>
+            <button type="submit" class="green inline T_save" id="editOK">Save</button>
+        </div>
+    </form>
+</div>
+
+<script language="javascript" type="text/javascript">
+$("#editBack").on('click', function(e) {
+    doBack();
+});
+
+$("#editOK").on('click', function(e) {
+    $.addLoading($(this));
+    doSave();
+});
+
+$.tpInit(init);
+</script>

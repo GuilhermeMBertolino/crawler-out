@@ -1,0 +1,343 @@
+<div id="top-menuIcon-container">
+    <a><span class="sprite c-navigator"></span></a>
+</div >
+
+<div class="nd" id="top-menuList" >
+    <ul>
+        <li>
+            <a>
+                <span class="icon"></span>
+                <span class="menuList-item">Quick Setup</span>
+            </a>
+        </li>
+    </ul>
+</div>
+<div class="top-logo-container" >
+    <span class="top-logo-img sprite n-logoPhone"></span>
+</div>
+<div id="top-titleBar">
+</div>
+<script type="text/javascript">
+(function() {
+    // 标记是否在执行动画效果
+    var animation = false;
+
+    // $('#top-logo-productName').html($.model);
+
+    function showMenu($menu, hook) {
+        if (!animation) {
+            animation = true;
+            var height = $("#top-menuList").css("height");
+            $("#top-menuList").css({
+                height: 0,
+                left: 0
+            });
+            $('#top-menuIcon-container .c-navigator').addClass('menu-open').removeClass('menu-close');
+        $menu.show().animate({
+                height: height
+        },'fast', 'swing', hook);
+        }
+    }
+
+    function hideMenu($menu, hook) {
+        if (!animation) {
+            animation = true;
+            var height = $("#top-menuList").css("height");
+            $('#top-menuIcon-container .c-navigator').addClass('menu-close').removeClass('menu-open');
+        $menu.animate({
+                height: 0
+        },'fast', 'swing', function() {
+            $menu.hide(hook);
+                $("#top-menuList").css({
+                    "height": height,
+                    "left": "-100%"
+                });
+        });
+    }
+    }
+
+function clickMenu(){
+    var $menu = $('#top-menuList');
+
+    if($menu.css('display') != 'block') {
+            showMenu($menu, function() {
+                $(document).off('click.tpPhoneMenu').one('click.tpPhoneMenu', function() {
+                    hideMenu($menu, function() {
+                        animation = false;
+            });
+        });
+                animation = false;
+            });
+    } else {
+            hideMenu($menu, function() {
+                animation = false;
+            });
+    }
+}
+    var menuTouchmove = false;
+$('#top-menuIcon-container').on('touchstart.tpPhoneMenu', function() {
+    $(this).addClass('touched');
+    menuTouchmove = false;
+}).on('touchend.tpPhoneMenu', function(e) {
+    e.stopPropagation();
+    $(this).removeClass('touched');
+}).on('touchcancel.tpPhoneMenu', function() {
+    $(this).removeClass('touched');
+}).on('touchmove.tpPhoneMenu', function() {
+    menuTouchmove = true;
+    $(this).removeClass('touched');
+    }).on('click.tpPhoneMenu', function(e) {
+        e.stopPropagation();
+        clickMenu();
+});
+<!--生成菜单-->
+var menuPhone = {
+    'netMap': [{
+        'name': $.tpLang.menu_str['map'],       //菜单上显示的名字
+        'url': 'networkMap.mobile.htm'        //页面的名字，一定以htm结尾
+    }],
+    'quickSetup': [{
+        'name': $.tpLang.menu_str['qs'],
+            'url': $.sysMode != "USB_3G" ? 'quickSetup.mobile.htm' : 0
+    }],
+    'sysMode': [{
+        'name': $.tpLang.menu_str['sysmod'],
+            'url': INCLUDE_ROUTER_MODE ? 'sysMode.mobile.htm' : 0 /* for ac3150 */
+    }],
+    'internet': [{
+        'name': $.tpLang.menu_str['network'],
+        'url': 'network.mobile.htm'
+    }],
+    'wireless': [{
+        'name': $.tpLang.menu_str['wl'],
+        'url': 'wireless.mobile.htm'
+    }],
+    'guestNtw': [{
+        'name': $.tpLang.menu_str['wlguest'],
+        'url': 'guestNetwork.mobile.htm'
+    }],
+        'voip': [{
+            'name': $.tpLang.menu_str['telephone'],
+            'url': INCLUDE_VOIP ? 'voice.mobile.htm' : 0
+    }],
+    'parentCtrl': [{
+        'name': $.tpLang.menu_str['pc'],
+        'url': 'parentCtrl.mobile.htm'
+    }],
+/*    'lan': [{
+        'name': 'LAN',
+        'url': 'lan.mobile.htm'
+    }],
+    'dhcp': [{
+        'name': 'DHCP',
+        'url': 'dhcp.mobile.htm'
+    }],*/
+    'usb': [{
+        'name': $.tpLang.menu_str['usb'],
+        'url': 'usbSettings.mobile.htm'
+    }],
+/*    'bandwidth': [{
+        'name': $.tpLang.menu_str['tc'],
+        'url': 'bandwidth.mobile.htm'
+    }], */
+    'sysTools': [{
+        'name': $.tpLang.menu_str['tools'],
+        'url': 'systemTools.mobile.htm'
+            }]
+};
+
+if (INCLUDE_ROUTER_MODE && $.routerMode == 'AP') {
+    menuPhone = {
+        'netMap': [{
+            'name': $.tpLang.menu_str['map'],       //菜单上显示的名字
+            'url': 'networkMap.mobile.htm'        //页面的名字，一定以htm结尾
+        }],
+        'quickSetup': [{
+            'name': $.tpLang.menu_str['qs'],
+            'url': 'quickSetupAP.mobile.htm'
+        }],
+        'sysMode': [{
+            'name': $.tpLang.menu_str['sysmod'],
+            'url': 'sysMode.mobile.htm'
+    }],
+        'internet': [{
+            'name': $.tpLang.menu_str['network'],
+            'url': 'lanSettings.mobile.htm'
+        }],
+        'wireless': [{
+            'name': $.tpLang.menu_str['wl'],
+            'url': 'wireless.mobile.htm'
+        }],
+        'guestNtw': [{
+            'name': $.tpLang.menu_str['wlguest'],
+            'url': 'guestNetwork.mobile.htm'
+        }],
+        'usb': [{
+        'name': $.tpLang.menu_str['usb'],
+        'url': 'usbSettings.mobile.htm'
+		}],
+        'sysTools': [{
+            'name': $.tpLang.menu_str['tools'],
+            'url': 'systemTools.mobile.htm'
+        }]
+};
+}
+(function($) {
+    'use strict';
+//        手机菜单类，实现参考web版，有些功能可能暂时是不需要的，但是为了和web版保持一致，先保留
+    function TPPhoneMenu() {};
+
+    TPPhoneMenu.prototype = {
+        constructor: TPPhoneMenu,
+        instances: [],
+        init: function(id, menuargs) {
+            var self = this;
+            var page;
+            var expr = /\w+.htm$/;
+            var hasMore = 0;
+            var inHTMLTmp = '';
+
+            self.id = id;
+            self.$menu = $('#' + id);
+
+            var inhtml = '<ul>';
+//以上的menu数组是全集，但dut实际可用的只是一部分，写在menu.cgi(web版，phone版先借用)，它会给页面插入menulist这个变量
+//          调用cgi，返回的是一段js代码，cgi会把它插入到页面中，请求成功后，再调用这里的hook
+//            cgi: function(path, arg, hook, noquit, unerr)
+            $.cgi('./frame/menu.cgi', null, function(err) {
+                if (err) {
+                    return;
+                }
+                //将menulist的值变成符合正则表达式的�?不合符的变成undefined
+                var menulistLen = menulist.length;
+                for (var i = 0; i < menulistLen; i++) {
+                    var ret = expr.exec(menulist[i]);
+                    if (ret) {
+                        menulist[i] = ret[0];
+                    } else {
+                        menulist[i] = undefined;
+                    }
+                }
+
+                //过滤，只剩下menulist上有的值，没有的url变成0，开发阶段暂时不需�?
+//                    self.menuFilter(menulist, menuargs);
+                for (page in menuargs) {
+                    if (menuargs[page].length == 1 && menuargs[page][0].url != '0') {
+                        inhtml += '<li><a href="javascript:void(0);" url="' + menuargs[page][0].url + '">';
+                        inhtml += '<span class="icon" id="' + page + '"></span>';
+                        inhtml += '<span class="top-menuList-item">' + menuargs[page][0].name + '</span></a>';
+                        inhtml += '</li>';
+                    }
+                }
+
+                    inhtml += '</ul><div class="menu-return"><div class="menu-arrow-icon sprite c-menu"></div></div>';
+                self.$menu.empty().append($(inhtml));
+//                    当菜单太长时，设定样式为滚动
+                    // if (self.$menu.height() > $(window).height() - $('#topPhone').height()) {
+//                        console.log('set');
+                    self.$menu.css({
+                        height: $(window).height() - $('#topPhone').height(),
+                        overflow: 'scroll'
+                    });
+                    // }
+
+                self.$a = self.$menu.find('a');
+                self.registerHandlers();
+            });
+        },
+
+        //        过滤掉在menulist中不存在的页面，将其url设为0
+        menuFilter: function(menulist, menuargs) {
+            var have = 0;
+            for (var page in menuargs) {
+                for (var l = 0; l < menuargs[page].length; l++) {
+                    have = 0;
+                    $.each(menulist, function() {
+                        var self = this;
+                        if (this == menuargs[page][l].url) {
+                            have = 1;
+                            return false;
+                        }
+                    });
+                    if ((have == 0)) {
+                        menuargs[page][l].url = '0';
+                    }
+                }
+            }
+        },
+
+        registerHandlers: function() {
+            var self = this;
+            var move = false;
+                //        转屏时重新调整菜单长度
+                $(window).on('orientationchange' in window ? 'orientationchange' : 'resize', function() {
+                    self.$menu.css({
+                        height: 'auto'
+                    });
+                    if (self.$menu.height() > $(window).height() - $('#topPhone').height()) {
+                        self.$menu.css({
+                            height: $(window).height() - $('#topPhone').height(),
+                            overflow: 'scroll'
+                        });
+                    }
+                });
+                self.$a.on('click.tpPhoneMenu', function(e) {
+                e.stopPropagation();
+//                    给选中项加上样式
+                    self.$a.removeClass('selected');
+                    if (!$(this).hasClass('selected')) {
+                        $(this).addClass('selected');
+                    }
+//                    跳转到对应页面
+                    var pageUrl = $(this).attr('url');
+                    $.loadPhoneMain(pageUrl, 'menu');
+                    hideMenu(self.$menu, function() {
+                        animation = false;
+                    });
+            });
+        },
+
+        destroy: function() {
+            this.empty();
+        }
+    };
+
+    $.fn.tpPhoneMenu = function(options) {
+        this.each(function() {
+            var tpPhoneMenu = $(this).data('tpPhoneMenu');
+            if (!tpPhoneMenu) {
+                $(this).data('tpPhoneMenu', new TPPhoneMenu());
+                $(this).data('tpPhoneMenu').init(this.id,  menuPhone);
+            } else if (options === 'destroy' && tpPhoneMenu) {
+                tpPhoneMenu.destroy();
+            } else {
+                tpPhoneMenu.destroy();
+                $(this).data('tpPhoneMenu', new TPPhoneMenu());
+                $(this).data('tpPhoneMenu').init(this.id,  menuPhone);
+            }
+        });
+    };
+    $.disableMenu = function (flag) {
+        if (flag === true) {
+            if ($('div#toggle-menu').length === 0) {
+                var node = $('<div id="toggle-menu"></div>');
+                node.css({
+                    width: "3.26rem",
+                    height: "3.26rem",
+                    background: "transparent",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    zIndex: 999
+                });
+                $('body').append(node);
+            }
+        } else {
+            $('div#toggle-menu').remove();
+        }
+    }
+})(jQuery);
+
+$('#top-menuList').tpPhoneMenu();
+})();
+</script>

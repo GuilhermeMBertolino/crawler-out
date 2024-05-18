@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2011 OpenWrt.org
+
+START=98
+
+CRON_TMP_FILE=/tmp/tmp_task
+CRON_BIN=/etc/init.d/cron
+NTPD_BIN=systime_sync
+
+start() {
+	local type
+	local cfg_exit=$(crontab -l | grep "$NTPD_BIN")
+	local mm=0
+	local hh=0
+
+	[ -z "$cfg_exit" ] || {
+		return 1
+	}
+
+	config_load system
+	config_get type ntp type
+
+	[ "$type" = "manual" ] && {
+		stop
+		return 1
+	}
+
+	#if device works in ap|repeater|client mode then return. Edited by xiejiabai@tp-link.net,2015.12.23
+	#config_load sysmode
+	#config_get mode sysmode mode
+	#[ "$mode" == "ap" -o "$mode" == "repeater" -o "$mode" == "client" ] && return 1
+
+	crontab -l > $CRON_TMP_FILE
+	eval $(date "+%H:%M" | awk -F ":" '{print "hh="$1";mm="$2}')
+	#echo "$mm $hh * * * (/usr/sbin/$NTPD_BIN)" >> $CRON_TMP_FILE
+	echo "* * * * * (/usr/sbin/$NTPD_BIN)" >> $CRON_TMP_FILE # every 1 minute sync network time
+	crontab $CRON_TMP_FILE
+	$CRON_BIN restart
+	rm -f $CRON_TMP_FILE
+}
+
+stop() {
+	local cfg_exit=$(crontab -l | grep "$NTPD_BIN")
+	[ -n "$cfg_exit" ] || {
+		return 1
+	}
+
+	crontab -l | sed '/'$NTPD_BIN'/'d | crontab -
+}
+
+restart() {
+	stop
+	start
+}
+
+reload() {
+	stop
+	local type
+	local cfg_exit=$(crontab -l | grep "$NTPD_BIN")
+	local mm=0
+	local hh=0
+
+	[ -z "$cfg_exit" ] || {
+		return 1
+	}
+
+	config_load system
+	config_get type ntp type
+
+	[ "$type" = "manual" ] && {
+		stop
+		return 1
+	}
+
+	#if device works in ap|repeater|client mode then return. Edited by xiejiabai@tp-link.net,2015.12.23
+	#config_load sysmode
+	#config_get mode sysmode mode
+	#[ "$mode" == "ap" -o "$mode" == "repeater" -o "$mode" == "client" ] && return 1
+
+	crontab -l > $CRON_TMP_FILE
+	eval $(date "+%H:%M" | awk -F ":" '{print "hh="$1";mm="$2}')
+	#echo "$mm $hh * * * (/usr/sbin/$NTPD_BIN)" >> $CRON_TMP_FILE
+	echo "$mm * * * * (/usr/sbin/$NTPD_BIN)" >> $CRON_TMP_FILE # every 1 hour sync network time
+	crontab $CRON_TMP_FILE
+	$CRON_BIN restart
+	rm -f $CRON_TMP_FILE
+}
+

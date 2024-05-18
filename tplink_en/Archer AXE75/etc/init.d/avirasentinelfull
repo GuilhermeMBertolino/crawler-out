@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+
+START=68
+STOP=32
+
+IS_AVIRA_SENTINEL_FULL_RESTART=0
+
+start () {
+	echo "[aviraSentinelFull]: start">/dev/console
+	
+    export LD_LIBRARY_PATH=/usr/lib/avira:$LD_LIBRARY_PATH
+    export PATH=/usr/bin/avira:$PATH
+    service_start /usr/bin/avira/avirasentinelfull/avirasentinelfull
+
+    if [ ! -f /etc/config/avira ];then
+        touch /etc/config/avira
+        uci set avira.info='global'
+    fi
+
+	local pay_decouple_support=$(uci get profile.@avira[0].pay_decouple_support -c "/etc/profile.d" -q)
+	local service
+	if [ "${pay_decouple_support}" = "yes" ]; then
+	   	### Now only change state and service when running 'aviraservice update'
+		echo "[aviraSentinelFull]: start IS_AVIRA_SENTINEL_FULL_RESTART: $IS_AVIRA_SENTINEL_FULL_RESTART ">/dev/console
+		echo 1 > /proc/pctl/payment
+		lua /usr/sbin/report_upload_components full n
+
+		## 'avira.info.process' indicates the actual state of the avira process,
+		## 'avira.info.state' and 'avira.info.service' synchronization cloud status
+		uci_toggle_state "avira" "info" "process" "full"
+    	
+		service=$(uci get avira.info.service)
+		if [ $service = "start" ]; then
+			/usr/sbin/aviraservice check slow
+		elif [ $service = "stop" ]; then
+			/usr/sbin/aviraservice check fast
+		fi
+		/etc/init.d/aviraserviceselector reload
+	else
+	    local changed="n"
+	    local state=`uci -q get avira.info.state`
+	    if [ "x$state" != "xpaid" ];then
+	        changed="y"
+	        uci set avira.info.state='paid'
+	        uci commit
+	        uci_commit_flash
+	    fi
+	        
+		echo "[aviraSentinelFull]: start IS_AVIRA_SENTINEL_FULL_RESTART: $IS_AVIRA_SENTINEL_FULL_RESTART ">/dev/console
+		echo 1 > /proc/pctl/payment
+		lua /usr/sbin/report_upload_components full $changed
+	fi
+	
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+
+	[ -e /proc/sys/net/ecm/ecm_nss_ipv4_is_sniffer_started ] && echo 1 > /proc/sys/net/ecm/ecm_nss_ipv4_is_sniffer_started
+}
+
+stop() {
+	echo "[aviraSentinelFull]: stop">/dev/console
+	
+	local pay_decouple_support=$(uci get profile.@avira[0].pay_decouple_support -c "/etc/profile.d" -q)
+	if [ "${pay_decouple_support}" = "yes" ]; then
+		uci_toggle_state "avira" "info" "process" "null"
+	fi
+
+    service_stop /usr/bin/avira/avirasentinelfull/avirasentinelfull
+	
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+
+	[ -e /proc/sys/net/ecm/ecm_nss_ipv4_is_sniffer_started ] && echo 0 > /proc/sys/net/ecm/ecm_nss_ipv4_is_sniffer_started
+}
+
+restart()
+{
+	echo "[aviraSentinelFull]: restart">/dev/console
+	echo "[aviraSentinelFull]: restart IS_AVIRA_SENTINEL_FULL_RESTART: $IS_AVIRA_SENTINEL_FULL_RESTART ">/dev/console
+	IS_AVIRA_SENTINEL_FULL_RESTART=1
+	
+	stop "$@"
+	start "$@"
+}
+
+

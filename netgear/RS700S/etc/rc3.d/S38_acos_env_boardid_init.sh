@@ -1,1 +1,0 @@
-../init.d/S38_acos_env_boardid_init.sh

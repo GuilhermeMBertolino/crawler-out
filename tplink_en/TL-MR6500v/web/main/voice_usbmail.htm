@@ -1,0 +1,110 @@
+<script>var voipUsbVoiceMail,voipUsbVoiceMailList,usbVStaus,usbVDevCap,usbVMailCapAvail,curLine,voipCallingFeaturesList,usbMailCapAvail,stopFresh,ITEM_PER_PAGE=100,goPageth=1,cfgLine=[],cfgList=[],clrFwd=[],urlArray=[],itemIndexArray=[],mailCfg={};function showPushTips(){$.errorTip("pushBtn",$.tpLang.voice_calllog_nstr.t_enPushTip),$("#pushBtn_tips").click(function(e){var a=e.target;$(a).is("a")?$.goToOtherPage("pushService.htm","advanced"):$("#t_pushoff").trigger("click")})}function backupErr(e){500==e?$.toast(!1,e_str[ERR_VOIP_USB_ERROR_GENERAL]):501==e?$.toast(!1,e_str[ERR_VOIP_USB_BACKING_UP]):502==e?$.toast(!1,e_str[ERR_VOIP_USB_NOT_AVAILABLE]):510==e?$.toast(!1,e_str[ERR_VOIP_USB_WRITE_FAILED]):511==e?$.toast(!1,e_str[ERR_VOIP_USB_READ_FAILED]):512==e&&$.toast(!1,e_str[ERR_VOIP_USB_NO_SPACE])}function enterCheck(){var e,a,t,i;try{t=n_str.voice_usbmail.t_name,a=$("#noans_time"),i="noans_time",e=getNumValue1(i,t,5,60,!0),a.get(0).value=e,t="Remote Access PIN",a=$("#vmPinNum1"),i="vmPinNum1",e=getValue(i,t,4,8),a.get(0).value=e,checkNum(a,t),t="Voice Duration Limit",a=$("#eachRD"),i="eachRD",e=getNumValue1(i,t,20,120),a.get(0).value=e}catch(e){if(!1===e)return!1;throw e}}function doPlayNotify(){var e=document.createElement("a");void 0===e.click?location.href="":(0==$("#selectNotify1").data("value")?e.href="/voicemail/voiceNotify/recNotifyDef_g711u.wav":e.href="/voicemail/voiceNotify/recNotifyCustom_g711u.wav",e.target="_blank",document.body.appendChild(e),e.click())}function doDownload(e,a){var t=document.createElement("a");void 0===t.click?location.href="":(t.href=urlArray[e]+"?storage="+a+"&download",t.target="_blank",document.body.appendChild(t),t.click())}function doPlay(e,a){var t=document.createElement("a");void 0===t.click?location.href="":(t.href=urlArray[e]+"?storage="+a+"&play",t.target="_blank",document.body.appendChild(t),t.click())}function doDel(e,a,t){$.addLoading($(this)),urlArray.splice(t,1);var i=e+"_"+a,l=$.act(ACT_GL,XTP_VOICE_PROCESS_STS,null,null,["usbVoiceUsingRecordedFile"]);if(0==$.exe())if(0==l[0].usbVoiceUsingRecordedFile){for(var o={op:"del",delString:""},s=0;s<usbMailList.length;){var n=usbMailList[s].split(",\r\n");n[0]+"_"+n[3]===i&&(o.delString+=i+",",900<o.delString.length&&($.cgi("/main/voice_usbmail.cgi",o,null),o.delString="")),s++}0<o.delString.length&&$.cgi("/main/voice_usbmail.cgi",o,null),$.removeLoading(),$.reload()}else $.alert(ERR_VOIP_USB_BUSY_ERROR)}function freshTable(e){var s=new Array;if(!e){var a=$.act(ACT_GL,XTP_USB_VOICEMAIL_PUBLICCFG,null,null,["usbStatus"]);if(0!=$.exe())return;a[0].usbStatus;var t={op:"get",lineToDis:4294967295};if(t.ITEM_PER_PAGE=ITEM_PER_PAGE,t.goPageth=goPageth,$.cgi("/main/voice_usbmail.cgi",t,null),null==usbMailString)return;usbMailList=usbMailString.split(";\r\n\r\n");var i=usbMailList.pop();0!=i.length&&usbMailList.push(i)}$("#table-mail").find("tbody tr:not(.nd)").remove();var n=0,c="";itemIndexArray=[];var r=[];$.each(usbMailList,function(){datalist=this.split(",\r\n");var e=0,a="",t="",i=datalist[0]+"_"+datalist[3];for(itemIndexArray.push(i),e=0;e<datalist[1].length/10;e++)a+=datalist[1].slice(10*e,10*(e+1));for(a+=datalist[1].slice(10*e),e=0;e<datalist[2].length/10;e++)t+=datalist[2].slice(10*e,10*(e+1));t+=datalist[2].slice(10*e);var l=1==datalist[9]?$.tpLang.voice_usbmail_nstr.t_usb:$.tpLang.voice_usbmail_nstr.t_flash;if("1"==datalist[6]){"1"==datalist[7]?r[n]=1:r[n]=0;var o=datalist[8].replace(/ /g,"%20").replace(/'/g,"%27").replace(/\+/g,"%2B");c="/voicemail/record/"+o,urlArray.push(c),s.push([{text:l,width:"5%"},{text:datalist[4],width:"30%"},{text:a,width:"20%"},{text:t,width:"20%"},{text:datalist[5],width:"10%"},{text:"<span class='table-grid-icon play-icon' id='play_"+n+"' onclick='doPlay("+n+","+datalist[9]+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+n+"' onclick='doDel("+datalist[0]+", "+datalist[3]+", "+n+");'></span><span class='table-grid-icon edit-dl-icon' id='dl_"+n+"' onclick='doDownload("+n+","+datalist[9]+");'></span>",width:"15%"}])}else"1"==datalist[7]?r[n]=1:r[n]=0,s.push([{text:l,width:"5%"},{text:datalist[4],width:"30%"},{text:a,width:"20%"},{text:t,width:"20%"},{text:datalist[5],width:"10%"},{text:"<span class='table-grid-icon noplay-icon' id='play_"+n+"'></span><span class='table-grid-icon edit-trash-icon' id='del_"+n+"' onclick='doDel();'></span><span class='table-grid-icon edit-nodl-icon' id='dl_"+n+"'></span>",width:"15%"}]);n++}),$.initTableBody($("#table-mail"),s),$.tablePages($("#table-mail"),8);var l=$("#table-mail").find("tbody tr");return $.each(r,function(e){1==this||l.eq(e).find("td").css({"font-weight":"bold"})}),s}function initTable(){handsetList=$.act(ACT_GL,VOICE_PROF_LINE,null,null,["X_TP_PhoneName","X_TP_PhoneType"]),0==$.exe()&&freshTable()}function init(){var e={},a=0;if(INCLUDE_MAIL&&(mailCfg=$.act(ACT_GET,MAIL_CFG,null,null)),INCLUDE_USB_STORAGE||($("#backupBtn").addClass("nd"),$("#expandBtn").addClass("nd")),voipCallingFeaturesList=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_UsbVoiceEnable","X_TP_UsbAllowRemoteAccess","X_TP_CallForwardUnconditionalStart","X_TP_CallForwardOnBusyStart","X_TP_CallForwardOnNoAnswerStart","X_TP_CallForwardOnNoAnswerThresholdTime"]),cfgList=$.act(ACT_GL,VOICE_PROF_LINE_XTPUSBVM,null,null,["UsbCustomNotify","UsbSelectNotify","UsbVoiceMailPinNum"]),voipUsbVoiceMailList=$.act(ACT_GL,XTP_USB_VOICEMAIL_PUBLICCFG,null,null),0==$.exe()){if(voipUsbVoiceMail=voipUsbVoiceMailList[0],usbVStaus=voipUsbVoiceMail.usbStatus,usbVDevCap=voipUsbVoiceMail.usbDevCapacity,$("#eachRD").prop("value",voipUsbVoiceMail.usbVoiceRecordDuration),$("#vmCap").prop("value",voipUsbVoiceMail.usbVoiceMailCapacity),2==voipCallingFeaturesList[0].X_TP_UsbVoiceEnable?($("#t_on").addClass("selected"),$("#t_off").removeClass("selected")):($("#t_on").removeClass("selected"),$("#t_off").addClass("selected")),1==voipCallingFeaturesList[0].X_TP_UsbAllowRemoteAccess&&"0000"!=cfgList[0].usbVoiceMailPinNum?($("#t_remoteon").addClass("selected"),$("#t_remoteoff").removeClass("selected")):($("#t_remoteoff").addClass("selected"),$("#t_remoteon").removeClass("selected"),e.X_TP_UsbAllowRemoteAccess=0,voipCallingFeaturesList[0].X_TP_UsbAllowRemoteAccess=0,a=1),1==voipUsbVoiceMail.expandStorageThroughUsb?($("#t_expandon").addClass("selected"),$("#t_expandoff").removeClass("selected"),0==voipUsbVoiceMail.externalUsbStatus?$.errorTip("expandBtn",$.tpLang.voice_usbmail_nstr.t_tip1):1==voipUsbVoiceMail.externalUsbStatus&&$.errorTip("expandBtn",$.tpLang.voice_usbmail_nstr.t_tip2)):($("#t_expandon").removeClass("selected"),$("#t_expandoff").addClass("selected")),INCLUDE_MAIL&&($("#pushBtn").removeClass("nd"),0!=(4&mailCfg.enableFlags)?($("#t_pushon").addClass("selected"),$("#t_pushoff").removeClass("selected")):($("#t_pushon").removeClass("selected"),$("#t_pushoff").addClass("selected"))),1==a){if($.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,e)}),0!=$.exe())return;a=0}$("#noans_time").prop("value",voipCallingFeaturesList[0].X_TP_CallForwardOnNoAnswerThresholdTime);var t=1024*voipUsbVoiceMail.usbVoiceMailCapacityAvail,i=Math.floor(t/28800),l=Math.floor((t-60*i*60*8)/480),o=showtype[7],s="<span style='color: #96cc56; vertical-align: bottom;'>",n="</span>",c=s+i+n+" "+s_str.hours+" "+s+l+n+" "+s_str.minute,r=typeArray[5];$("#usbCapRange").html(o.replace("%",c)).append(" ").append(r),$.cgi("/main/voice_usbmail_cap.cgi",null,null),usbVMailCapAvail=usbMailCapAvail,$("#t_noUSB").addClass("nd"),$("#t_notEnough").addClass("nd"),$("#t_noConfig").addClass("nd"),"INCLUDE_DECT"in window&&INCLUDE_DECT||($("#t_pinInfoNoDect").removeClass("nd"),$("#t_pinInfo").addClass("nd")),"0"==usbVStaus?$("#t_noUSB").removeClass("nd"):"2"==usbVStaus?$("#t_noConfig").removeClass("nd"):"0"==usbVMailCapAvail&&$("#t_notEnough").removeClass("nd");$('#selectNotify1 option[value="'+cfgList[0].usbSelectNotify+'"]').prop("selected","selected"),$("#selectNotify1").tpSelect({refresh:1}),$("#vmPinNum1").prop("value",cfgList[0].usbVoiceMailPinNum)}}$("#fresh").click(function(){$.reload()}),$("#t_on").click(function(){$.addLoading($(this));var e,a={};0==voipCallingFeaturesList[0].X_TP_UsbAllowRemoteAccess||"0000"!=cfgList[0].usbVoiceMailPinNum?(a.X_TP_CallForwardUnconditionalStart=0,a.X_TP_CallForwardOnNoAnswerStart=0,a.X_TP_UsbVoiceEnable=2,$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,a)}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})):(e=$("#vmPinNum1"),$.alert(ERR_VOIP_VOICEMAIL_PIN_IS_DEFAULT),setFocus(e),$.removeLoading())}),$("#t_off").click(function(){$.addLoading($(this));var e={X_TP_UsbVoiceEnable:0};$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,e)}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#t_remoteon").click(function(){$.addLoading($(this));var e={},a={};if("0000"!=$("#vmPinNum1").prop("value")){if(e.X_TP_UsbAllowRemoteAccess=1,$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,e)}),cfgList[0].usbVoiceMailPinNum!=$("#vmPinNum1").prop("value")){if(a.usbVoiceMailPinNum=$("#vmPinNum1").prop("value"),0==enterCheck())return;$.each(cfgList,function(){$.act(ACT_SET,VOICE_PROF_LINE_XTPUSBVM,this.__stack,null,a)})}actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}else $.removeLoading(),ctrl=$("#vmPinNum1"),setTimeout(function(){$("#t_remoteoff").addClass("selected"),$("#t_remoteon").removeClass("selected"),$("#remoteButtonGroup").tpBtnGroup("refresh"),$.errorTip("remoteButtonGroup",ERR_VOIP_VOICEMAIL_PIN_IS_DEFAULT)},10),$("#vmPinNum1").focus(),$("#vmPinNum1").select(),$.removeLoading()}),$("#t_remoteoff").click(function(){$.addLoading($(this));var e={X_TP_UsbAllowRemoteAccess:0};$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,e)}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#t_expandon").click(function(){$.addLoading($(this)),$.act(ACT_SET,XTP_USB_VOICEMAIL_PUBLICCFG,"1,1,0,0,0,0",null,["expandStorageThroughUsb=1"]);$.act(ACT_GET,XTP_USB_VOICEMAIL_PUBLICCFG,"1,1,0,0,0,0",null,["externalUsbStatus"]);$.exe()||($.removeLoading(),$.reload())}),$("#t_expandoff").click(function(){$.addLoading($(this)),$.act(ACT_SET,XTP_USB_VOICEMAIL_PUBLICCFG,"1,1,0,0,0,0",null,["expandStorageThroughUsb=0"]),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#t_pushon").click(function(){INCLUDE_MAIL&&(0==(1&mailCfg.enableFlags)||""==mailCfg.from||""==mailCfg.smtpServerAddr?setTimeout(function(){$("#t_pushoff").addClass("selected"),$("#t_pushon").removeClass("selected"),$("#pushBtn").tpBtnGroup("refresh"),showPushTips()},10):($.addLoading($(this)),mailCfg={},mailCfg=$.act(ACT_GET,MAIL_CFG,null,null,["EnableFlags"]),$.exe()||(mailCfg.enableFlags=4|mailCfg.enableFlags,mailCfg.password="",$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,mailCfg),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()}))))}),$("#t_pushoff").click(function(){INCLUDE_MAIL&&($.addLoading($(this)),mailCfg={},mailCfg=$.act(ACT_GET,MAIL_CFG,null,null,["EnableFlags"]),$.exe()||(mailCfg.enableFlags=-5&mailCfg.enableFlags,mailCfg.password="",$.act(ACT_SET,MAIL_CFG,"0,0,0,0,0,0",null,mailCfg),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})))}),$("#t_backupMails").click(function(){if($("#backup_status").addClass("nd"),$.addLoading(this),$.cgi("/main/voice_usbmail_backup.cgi?do",null,null),$.removeLoading(),500==code)$.alert(ERR_VOIP_USB_ERROR_GENERAL);else if(501==code)$.alert(ERR_VOIP_USB_BACKING_UP);else if(502==code)$.alert(ERR_VOIP_USB_NOT_AVAILABLE);else if(512==code)$.alert(ERR_VOIP_USB_NO_SPACE);else if(200==code){if(0==toCopied)return void $.alert(ERR_VOIP_USB_NO_VOICEMAIL);var i=toCopied,l=$.tpLang.voice_usbmail_nstr.t_backupNote1.replace("%2",i),a=$.tpLang.voice_usbmail_nstr.t_backupNote2.replace("%",volume+":"+path);if(toCopied<5)$.auto(function(){if($.cgi("/main/voice_usbmail_backup.cgi?status",null,null),100!=code){var e;if(200==code)e=1==toCopied?$.tpLang.voice_usbmail_nstr.t_backupDone2.replace("%",toCopied)+a:$.tpLang.voice_usbmail_nstr.t_backupDone.replace("%",toCopied)+a,$.toast(!0,e);else backupErr(code);return!1}},500);else{clearInterval(stopFresh);var o=0,s=[100,100,200,300,500];$.guageWithRateControl({text:l,updateInterval:500,rateControl:function(e,a){$.cgi("/main/voice_usbmail_backup.cgi?status",null,null);var t=parseInt(copied/toCopied*100);copied<=i&&$("#alert-container p.center").html(l.replace("%1",copied)),o<5&&($.auto_interval=s[o]),o++,a(t)},isComplete:function(e,a,t){100!==code&&($.removeLoading(),200==code?a&&a():t&&t(code))},callback_complete:function(){var e=$.tpLang.voice_usbmail_nstr.t_backupDone.replace("%",i)+a;$.toast(!0,e)},callback_error:function(e){backupErr(e)}})}}}),$("#t_save").click(function(){if($.addLoading($(this)),0!=enterCheck()){var e={};1==$("#t_on").hasClass("selected")&&2==voipCallingFeaturesList[0].X_TP_UsbVoiceEnable||0==$("#t_on").hasClass("selected")&&0==voipCallingFeaturesList[0].X_TP_UsbVoiceEnable?0:(1!=$("#t_remoteon").hasClass("selected")&&"0000"==$("#vmPinNum1").prop("value")||1!=$("#t_on").hasClass("selected")?e.X_TP_UsbVoiceEnable=0:(e.X_TP_CallForwardUnconditionalStart=0,e.X_TP_CallForwardOnNoAnswerStart=0,e.X_TP_UsbVoiceEnable=2),1),1==(1==$("#t_remoteon").hasClass("selected")&&1==voipCallingFeaturesList[0].X_TP_UsbAllowRemoteAccess||0==$("#t_remoteon").hasClass("selected")&&0==voipCallingFeaturesList[0].X_TP_UsbAllowRemoteAccess?0?0:1:"0000"!=$("#vmPinNum1").prop("value")&&1==$("#t_remoteon").hasClass("selected")?e.X_TP_UsbAllowRemoteAccess=1:(e.X_TP_UsbAllowRemoteAccess=0,1))&&$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,e)});var a={},t={},i={};a.usbVoiceRecordDuration=$("#eachRD").prop("value"),t.usbVoiceMailPinNum=$("#vmPinNum1").prop("value"),t.usbSelectNotify=$("#selectNotify1").data("value"),i.X_TP_CallForwardOnNoAnswerThresholdTime=$("#noans_time").prop("value"),$.each(voipCallingFeaturesList,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,i)}),$.each(cfgList,function(){$.act(ACT_SET,VOICE_PROF_LINE_XTPUSBVM,this.__stack,null,t)}),$.act(ACT_SET,XTP_USB_VOICEMAIL_PUBLICCFG,voipUsbVoiceMailList[0].__stack,null,a),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}}),$("#delAll").click(function(){$.confirm(c_str.voice_del_allcon,function(){$.addLoading($(this));var e=$.act(ACT_GL,XTP_VOICE_PROCESS_STS,null,null,["usbVoiceUsingRecordedFile"]);if(0==$.exe())if(0==e[0].usbVoiceUsingRecordedFile){var a={op:"delall"};$.cgi("/main/voice_usbmail.cgi",a,null),$.removeLoading(),$.reload()}else $.alert(ERR_VOIP_USB_BUSY_ERROR)})})</script>
+<style>#pushBtn_tips.widget-error-tips a{text-decoration:underline;color:#4acbd6}#form_maillist .button-container{text-align:left}#backupBtn .button-container{display:inline-block}</style>
+<h3 class="T" id="t_et">USB Voice Mail Configuration</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <p class="cfg-line nd" id="t_note">NOTE: Please fresh this page when USB hotplug happened!</p>
+            <p class="cfg-line nd" class="red" id="t_noUSB">USB Mass storage Disconnected!</p>
+            <p class="cfg-line nd" class="red" id="t_noConfig">There is no proper files in USB Mass storage.</p>
+            <p class="cfg-line nd" class="red" id="t_notEnough">USB MailBox Capacity avaliable is not enough!</p>
+        </div>
+        <div class="button-group-container" id="usbButtonGroup">
+            <b class="xxxl T" id="t_usbmail">USB Voice Mail:</b>
+            <ul>
+                <li>
+                    <button id="t_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <b class="xxxl T" id="t_name">"No answer" time: </b>
+            <input type="text" id="noans_time">
+            <span class="T" id="t_sec">(5~60 seconds)</span>
+        </div>
+        <div>
+            <b class="xxxl" id="t_notify">Voice Notify for Record:</b>
+            <select class="inline" id="selectNotify1">
+                <option class="T" id="t_def" value="0">default</option>
+                <option class="T" id="t_custom" value="1">custom</option>
+            </select>
+            <span class="table-grid-icon play-icon inline" id="play_notify" onclick="doPlayNotify()"></span>
+        </div>
+		<div>
+			<p class="cfg-line T" id="t_pinInfo">Pick up the phone (Analog Phone or DECT handset) and dial *30 to record a voice notify.</p>
+			<p class="cfg-line T nd" id="t_pinInfoNoDect">Pick up the phone and dial *30 to record a voice notify.</p>
+		</div>
+        <div>
+            <b class="xxxl" id="t_duration">Voice Duration:</b>
+            <input type="text" id="eachRD" value="20">
+            <span class="textbox-tips">(20-120s)</span>
+        </div>
+        <div class="button-group-container" id="remoteButtonGroup">
+            <b class="xxxl T" id="t_remoteAccess">Remote Access Voice Mail:</b>
+            <ul>
+                <li>
+                    <button id="t_remoteon" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_remoteoff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <b class="xxxl" id="t_rPIN">Remote Access PIN:</b>
+            <input type="text" maxlength="10" id="vmPinNum1" value="0000">
+        </div>
+		<div>
+			<p class="cfg-line T" id="t_pinInfo1">To listen to the voice messages remotely, please dial this phone number, press * when you hear the voice notify, and then follow the voice prompt to enter the Remote Access PIN.</p>
+        </div>
+        <div class="button-group-container nd" id="pushBtn">
+            <b class="xxxl T" id="t_enPush">Enable Push your Voice Mail via E-mail</b>
+            <ul>
+                <li>
+                    <button id="t_pushon" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_pushoff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div class="button-group-container" id="expandBtn">
+            <b class="xxxl T" id="t_enExpand">Enable Expand the storage space through USB device</b>
+            <ul>
+                <li>
+                    <button id="t_expandon" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_expandoff" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+            <p id="usbCapRange" class="cfg-line"></p>
+        <button type="submit" id="t_save" class="green T_save">Save</button>
+    </form>
+</div>
+<h3 class="T" id="t_et1">USB Voice Mail List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div id="backupBtn">
+            <button id="t_backupMails" type="submit" class="green T xxxxl">Back up</button>
+            <span id="backup_status" class="nd T T_success"></span>
+        </div>
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span class="refresh-icon" id="fresh"></span>
+                <label class="T T_refresh">Refresh</label>
+                <span id="delAll" class="delete-all-icon"></span>
+                <label class="T_delall">Delete All</label>
+            </div>
+        </div>
+        <table id="table-mail">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </form>
+</div>
+<script>var headArray=[{text:table_str.position,width:"5%"},{text:table_str.logdate,width:"30%"},{text:table_str.usbinnum,width:"20%"},{text:table_str.telnumber,width:"20%"},{text:table_str.logdur,width:"10%"},{text:table_str.sett,width:"15%"}];$.tpInit(init),$.initTableHead($("#table-mail"),headArray),$("#table-mail").tpTable(initTable)</script>

@@ -1,0 +1,17 @@
+. /lib/functions.sh
+
+local br_name=`ubus call network.interface.lan status| grep l3_device| awk 'BEGIN {FS="\""};{print $4}'`
+local br_ifname=`ls /sys/class/net/$br_name/brif/`
+
+for ifname in $br_ifname
+do
+        if [[ ${ifname:0:3} == 'eth' ]]; then
+                operstate=$( cat /sys/class/net/$ifname/operstate )
+                if [[ $DEVICE != $ifname -o $ACTION != 'ifdown' ]] && [[ $operstate == 'up' ]]; then
+                        ledcli LAN_ON
+			return
+                fi
+        fi
+done
+ledcli LAN_OFF
+

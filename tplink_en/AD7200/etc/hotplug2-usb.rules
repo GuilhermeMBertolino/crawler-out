@@ -1,0 +1,11 @@
+ACTION == add, DEVPATH is set, DEVNAME ~~ ^sd {
+	makedev /dev/%DEVNAME% 0644	
+}
+
+ACTION == remove, DEVPATH is set, DEVNAME ~~ ^sd, MAJOR is set, MINOR is set {
+	remove /dev/%DEVNAME%
+}
+
+SUBSYSTEM ~~ (^usb$|^block$) {
+	exec /sbin/hotplug-call %SUBSYSTEM%
+}

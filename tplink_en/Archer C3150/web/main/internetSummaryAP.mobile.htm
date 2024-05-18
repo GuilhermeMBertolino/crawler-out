@@ -1,0 +1,94 @@
+﻿<div id="internet-status">
+    <div class="titleBar">
+        <a id="back" url="networkMap.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+        <h1>
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.menu_str.network%>
+            </script>
+        </h1>
+        <a id="edit" url="lanSettings.mobile.htm" data-status="edit">
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.m_str.edit%>
+            </script>
+        </a>
+    </div>
+    <div class="info-list mt15">
+        <div class="section-container">
+			<div class="section-box">
+				<div class="text-right-title">
+					<span>
+						<script type="text/html" class="title-string">
+							<%=$.tpLang.s_str.macaddr%>
+						</script>
+					</span>
+				</div>
+				<div class="text-right" id="lanMacAddress">
+					<span></span>
+				</div>
+			</div>
+		</div>
+		<div class="section-container">
+			<div class="section-box">
+				<div class="text-right-title">
+					<span>
+						<script type="text/html" class="title-string">
+							<%=$.tpLang.s_str.addrtype%>
+						</script>
+					</span>
+				</div>
+				<div class="text-right" id="addressType">
+					<span></span>
+				</div>
+			</div>
+		</div>
+		<div class="section-container">
+			<div class="section-box">
+				<div class="text-right-title">
+					<span>
+						<script type="text/html" class="title-string">
+							<%=$.tpLang.status_nstr.c_ipaddr%>
+						</script>
+					</span>
+				</div>
+				<div class="text-right" id="lanIp">
+					<span></span>
+				</div>
+			</div>
+		</div>
+		<div class="section-container">
+			<div class="section-box">
+				<div class="text-right-title">
+					<span>
+						<script type="text/html" class="title-string">
+							<%=$.tpLang.s_str.netmask%>
+						</script>
+					</span>
+				</div>
+				<div class="text-right" id="lanIPSubMask">
+					<span></span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+//$('#internetIp span').text(ipv4);
+    (function() {
+        (function () {
+            $.tpLocal('title-string', $.tpLang);
+            $('#internet-status .titleBar').titleBar();
+            lanStatusInit();
+        })();
+        function lanStatusInit() {
+			var lanIPv4Cfg = $.act(ACT_GS, LAN_IP_INTF, null, null, ['IPInterfaceIPAddress', 'IPInterfaceSubnetMask', 'X_TP_MACAddress']);
+			var dhcpCfg = $.act(ACT_GL, LAN_HOST_CFG, null, null, ['X_TP_DHCPAuto']);
+            if (!$.exe()) {
+				$('#lanMacAddress span').text(lanIPv4Cfg[0].X_TP_MACAddress);
+				$('#addressType span').text(dhcpCfg[0].X_TP_DHCPAuto=="1" ? $.tpLang.s_str.smartdhcp : $.tpLang.s_str.staip);
+				$('#lanIp span').text(lanIPv4Cfg[0].IPInterfaceIPAddress);
+				$('#lanIPSubMask span').text(lanIPv4Cfg[0].IPInterfaceSubnetMask);
+			}
+        }
+
+    })();
+</script>

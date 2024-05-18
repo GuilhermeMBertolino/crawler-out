@@ -1,0 +1,54 @@
+#!/bin/sh
+# Copyright(c) 2011-2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# file     portspeed
+# brief    
+# author   liweijie<liweijie@tp-link.com.cn>
+# version  1.0.0
+# date     12Jan16
+# history  arg 1.0.0, 12Jan16, liwejie, Create the file. 
+
+. /lib/switch/core_phy.sh
+
+if [ $# -ne 4 ]; then
+    exit 0
+fi
+
+local port=$1
+local speed=$2
+local duplex=$3
+local autoneg=$4
+local speedname="auto"
+
+case $speed in
+    2500)
+		;;
+    1000)
+        ;;
+    100)
+        ;;
+    10)
+        ;;
+    *)
+    exit 1
+        ;;
+esac
+
+if [ "$duplex" != "full" -a "$duplex" != "half" ]; then
+    exit 1
+fi
+
+if [ "$autoneg" != "on" -a "$autoneg" != "off" ]; then
+    exit 1
+fi
+
+if [ "$autoneg" == "on"]; then
+    speedname="auto";
+elif [[ "$autoneg" == "off" && "$duplex" == "full" ]]; then
+    speedname="${speed}F";
+elif [[ "$autoneg" == "off" && "$duplex" == "half" ]]; then
+    speedname="${speed}H";
+fi
+
+bcm_set_wan_phy_mode $speedname
+
+exit 0

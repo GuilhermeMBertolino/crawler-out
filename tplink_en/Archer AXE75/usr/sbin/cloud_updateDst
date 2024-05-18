@@ -1,0 +1,13 @@
+#!/usr/bin/lua
+
+-- get new dst rules from cloud and update.
+
+local sys   = require "luci.sys"
+local dbg   = require "luci.tools.debug"
+local times = require "luci.model.app_timesetting"
+
+-- 1. update dst
+times.ts_update_dst()
+
+-- 2. reload time
+luci.sys.exec("/etc/init.d/time_settings reload")

@@ -1,0 +1,58 @@
+state="off"
+
+obtain_state() {
+	local disabled
+	local dev="$1"
+	config_get disabled $1 disabled
+
+	if [ "$ACTION" = "released" -a "$BUTTON" = "wireless" -a $SEEN -ge 2 ]; then
+		if [ "$disabled" = "off" ]; then
+			state="on"
+			ledcli WIFI2G_OFF
+			ledcli WIFI5G_OFF
+			ledcli WPS_OFF
+		else
+			ledcli WIFI2G_ON
+			ledcli WIFI5G_ON
+		fi
+	fi
+}
+
+do_toggle() {
+    local dev="$1"
+
+    if [ "$ACTION" = "released" -a "$BUTTON" = "wireless" -a $SEEN -ge 2 ]; then
+        uci set wireless.$dev.disabled=$state
+        wifi_commit
+    fi
+}
+
+toggle_wireless(){
+        config_load wireless
+        config_foreach obtain_state wifi-device
+        config_foreach do_toggle wifi-device
+}
+
+is_factory_mode(){
+        config_load factory
+        config_get enable  factorymode enable
+        echo "factory_mode:" $enable >/dev/console
+        [ $enable = "yes" ] && echo "true"  || echo "false"
+}
+
+check(){
+        if [ $(is_factory_mode) = "true" -a "$(/sbin/is_cal)" != "true" ]; then
+                echo "wifi button will lose function now!" >/dev/console
+                touch /tmp/button_wifi_check
+        elif [ $SEEN -ge 2 ]; then
+                toggle_wireless
+                local sysmode=$(uci get sysmode.sysmode.mode)
+                local support_onemesh=$(uci get profile.@onemesh[0].onemesh_support -c "/etc/profile.d" -q)
+                if [ "$support_onemesh" = "yes" -a "$sysmode" = "router" ]; then
+                    lua -e 'require("luci.controller.admin.onemesh").sync_wifi_all()'
+                fi
+                wifi
+        fi
+}
+
+[ "$ACTION" = "released" -a "$BUTTON" = "wireless" ] && check

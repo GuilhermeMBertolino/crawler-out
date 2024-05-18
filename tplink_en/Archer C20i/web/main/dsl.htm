@@ -1,0 +1,623 @@
+﻿<script language="javascript" type="text/javascript">
+var errorFlag;
+var initFlag;
+
+function initDsl()
+{
+	if($.wd.conn[$.wd.editIndex].type == null)
+	{		
+		$.removeClass($.id("atm_elem_add"), "nd");
+		if (INCLUDE_AUTO_PVC)
+		{
+			$.removeClass($.id("autoPVC"), "nd");
+		}
+		else
+		{
+			$.addClass($.id("autoPVC"), "nd");
+		}
+		initFlag = 0;
+		showPvcParam();	
+		initFlag = 1;
+	}
+	else 
+	{
+		$.removeClass($.id("atm_elem_edit"), "nd");
+		if($.wd.conn[$.wd.editIndex].type == "bridge")
+		{
+			$.addClass($.id("atmClick"), "cln");
+		}
+		initATM();
+	}
+}
+
+function showPvcParam()
+{	
+	var tmpWanCon;
+	var tmpPvc = "PVC:"+$.id("vpi").value+"/"+$.id("vci").value;
+	
+	for(var i = 0; i < $.wd.conn.length; i++)
+	{
+		if ($.wd.conn[i].dsl.destinationAddress == tmpPvc)
+		{
+			$.id("atm_encapsulation").value = $.wd.conn[i].dsl.ATMEncapsulation;
+			if($.wd.conn[i].dsl.ATMQoS == "UBR")
+			{
+				$.id("atm_qos").value = "ubr";
+				$.id("pcr").value = $.wd.conn[i].dsl.ATMPeakCellRate;
+				$.id("scr").value = "";
+				$.id("mbs").value = "";
+				$.id("scr").disabled = true;
+				$.id("mbs").disabled = true;
+			}
+			else
+			{
+				$.id("atm_qos").value = $.wd.conn[i].dsl.ATMQoS.toLowerCase();
+				$.id("pcr").value = $.wd.conn[i].dsl.ATMPeakCellRate;
+				$.id("scr").disabled = false;
+				$.id("mbs").disabled = false;
+				$.id("scr").value = $.wd.conn[i].dsl.ATMSustainableCellRate;
+				$.id("mbs").value = $.wd.conn[i].dsl.ATMMaximumBurstSize;
+			}
+			
+			tmpWanCon = $.act(ACT_GET, WAN_CONN_DEVICE, $.wd.conn[i].dsl.__stack, null);
+			if(!$.exe())
+			{
+				if((tmpWanCon.WANIPConnectionNumberOfEntries > 0)||(tmpWanCon.WANPPPConnectionNumberOfEntries > 0))
+				{
+					disablePvcParam($.wd.conn[i].dsl.linkType);
+				}			
+			}
+			return;
+		}
+		else 
+		{
+			$.id("atm_encapsulation").disabled = false;
+			$.id("atm_qos").disabled = false;
+			$.id("pcr").disabled = false;
+
+			if ($.id("link_type").value == "pppoa")
+				$.id("atm_encapsulation").value = "VCMUX";
+			else
+				$.id("atm_encapsulation").value = "LLC";
+				
+			$.id("atm_qos").value = "ubr";
+			$.id("pcr").value = 0;
+			$.id("scr").value = "";
+			$.id("mbs").value = "";
+			$.id("scr").disabled = true;
+			$.id("mbs").disabled = true;
+			$.addClass($.id("p_note"), "nd");
+			errorFlag = 0;
+		}
+	}	
+}
+
+function initATM()
+{
+	var wan_dsl = $.wd.conn[$.wd.editIndex].dsl;
+	$.h($.id("vpiText"), (wan_dsl.destinationAddress).split(":")[1].split("/")[0]);
+	$.h($.id("vciText"), (wan_dsl.destinationAddress).split(":")[1].split("/")[1]);
+	$.h($.id("atm_encapsulationText"), (wan_dsl.ATMEncapsulation == "VCMUX") ? "VC-Mux": wan_dsl.ATMEncapsulation);
+	$.h($.id("atm_qosText"), wan_dsl.ATMQoS);
+	
+	if (wan_dsl.ATMQoS == "ubr")
+	{
+		$.h($.id("pcrText"), wan_dsl.ATMPeakCellRate);
+		$.addClass($.id("atm_qos_div"), "nd");
+	}
+	else
+	{
+		$.removeClass($.id("atm_qos_div"), "nd");
+		$.h($.id("pcrText"), wan_dsl.ATMPeakCellRate);
+		$.h($.id("scrText"), wan_dsl.ATMSustainableCellRate);
+		$.h($.id("mbsText"), wan_dsl.ATMMaximumBurstSize);
+	}
+}
+
+function ATMClick(obj)
+{
+	if(obj.id.indexOf("Text") < 0)
+	{
+		if ($.hasClass(obj, "cln")) {
+			$.addClass($.id("atmDiv"), "nd");
+			$.removeClass(obj, "cln");
+		}
+		else {
+			$.removeClass($.id("atmDiv"), "nd");
+			$.addClass(obj, "cln");
+		}
+	}
+	else
+	{
+		if ($.hasClass(obj, "cln")) {
+			$.addClass($.id("atmDivText"), "nd");
+			$.removeClass(obj, "cln");
+		}
+		else {
+			$.removeClass($.id("atmDivText"), "nd");
+			$.addClass(obj, "cln");
+		}
+	}
+	
+}
+
+function disablePvcParam(tmpType)
+{
+	$.id("atm_encapsulation").disabled = true;
+	$.id("atm_qos").disabled = true;
+	$.id("pcr").disabled = true;
+	$.id("scr").disabled = true;
+	$.id("mbs").disabled = true;
+	$.removeClass($.id("p_note"), "nd");
+	
+	errorFlag = 0;
+
+	if(initFlag == 1)
+	{
+		if ($.id("link_type").value == "ipoa")
+		{
+			errorFlag=1;
+			$.alert(ERR_IPOA_PVC_INVAD);
+			var element = $.id("vpi");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return;
+		}
+		if ($.id("link_type").value == "pppoa")
+		{
+			errorFlag=1;
+			$.alert(ERR_PPPOA_PVC_INVAD);
+			var element = $.id("vpi");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return;
+		}
+		if (tmpType == "IPoA")
+		{
+			errorFlag=1;
+			$.alert(ERR_IPOA_PVC_INVAD);
+			var element = $.id("vpi");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return;
+		}
+	
+		if (tmpType == "PPPoA")
+		{
+			errorFlag=1;
+			$.alert(ERR_PPPOA_PVC_INVAD);
+			var element = $.id("vpi");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return;		
+		}
+	}
+}
+
+
+function detectPvcConflict()
+{	
+	var tmpWanCon;
+	var tmpPvc = "PVC:"+$.id("vpi").value+"/"+$.id("vci").value;
+	var wan_alldsl = $.act(ACT_GL, WAN_DSL_LINK_CFG, null, null, ["destinationAddress","linkType","ATMPeakCellRate","ATMMaximumBurstSize","ATMSustainableCellRate","ATMEncapsulation","ATMQoS"]);
+	if(!$.exe())
+	{
+		for(var i = 0; i<wan_alldsl.length;i++)
+		{
+			if(wan_alldsl[i].destinationAddress == tmpPvc)
+			{	
+				tmpWanCon = $.act(ACT_GET,WAN_CONN_DEVICE,wan_alldsl[i].__stack,null);
+				
+				if(!$.exe())
+				{
+					if ((tmpWanCon.WANIPConnectionNumberOfEntries > 0)||(tmpWanCon.WANPPPConnectionNumberOfEntries > 0))
+					{
+						disablePvcParam(wan_alldsl[i].linkType);
+					}			
+				}
+				return;
+			}
+		}
+	}		
+}
+
+
+function doAutoPVC()
+{
+	if ($.id("autoPVC_en").checked == 1)
+	{
+		$.id("vpi").value = "";
+		$.id("vci").value = "";
+		$.id("vpi").disabled = 1;
+		$.id("vci").disabled = 1;
+		$.id("atm_encapsulation").value = "LLC";
+		$.id("atm_encapsulation").disabled = 0;
+		$.id("atm_qos").value = "ubr";
+		$.id("atm_qos").disabled = 0;
+		$.id("pcr").value = 0;
+		$.id("scr").value = "";
+		$.id("mbs").value = "";
+		$.id("pcr").disabled = 0;
+		$.id("scr").disabled = 1;
+		$.id("mbs").disabled = 1;
+		$.addClass($.id("p_note"), "nd");
+	}
+	else if ($.id("autoPVC_en").checked == 0)
+	{
+		$.id("vpi").value = 0;
+		$.id("vci").value = 32;
+		$.id("vpi").disabled = 0;
+		$.id("vci").disabled = 0;
+		$.removeClass($.id("p_note"), "nd");
+		showPvcParam();
+	}
+}
+
+
+function saveAttr()
+{
+	var connectionType;
+	var linkType;
+	var addressingType;
+	var wan_connectiontype = $.id("link_type").value;
+	var vpi_vci, pcr, mcr, scr, mbs;
+	
+	detectPvcConflict();
+	if(errorFlag == 1)
+	{
+		$.removeLoading($.id("saveBtn"));
+		return false;
+	}
+	
+	var element;
+	if((!$.num($.id("vpi").value, [0, 255], true)) && (!$.num($.id("vci").value, [1, 65535], true)))
+	{
+		vpi_vci = "PVC:" + parseInt($.id("vpi").value, 10) + "/" + parseInt($.id("vci").value, 10);
+	}
+	else
+	{
+		$.alert(ERR_WAN_VPI_VCI_INVAD);
+		element = $.id("vpi");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	if (($.id("link_type").value == "ipoa") && (!$.hasClass($.id("p_note"), "nd")))
+	{
+		$.alert(ERR_IPOA_PVC_INVAD);
+		element = $.id("vpi");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+
+	var atm_encapsulation = $.id("atm_encapsulation").value;
+	var selected_qos = $.id("atm_qos");
+	var atm_qos = selected_qos.options[selected_qos.selectedIndex].text;	
+
+	if ($.id("pcr").value == "")
+	{
+		$.alert(ERR_WAN_PCR_EMPTY);
+		element = $.id("pcr");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	
+	if(($.isnum($.id("pcr").value))&&($.id("pcr").value >= 0)&&($.id("pcr").value <= 5500))	
+	{
+		pcr = parseInt($.id("pcr").value, 10);
+	}
+	else
+	{
+		$.alert(ERR_WAN_PCR_INVAD);
+		element = $.id("pcr");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	if($.id("scr").disabled == false)
+	{
+		if ($.id("scr").value == "")
+		{
+			$.alert(ERR_WAN_SCR_EMPTY);
+			element = $.id("scr");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	
+		if(($.isnum($.id("scr").value))&&($.id("scr").value >= 0)&&($.id("scr").value <= 5500))
+		{
+			scr = parseInt($.id("scr").value, 10);
+		}
+		else
+		{
+			$.alert(ERR_WAN_SCR_INVAD);
+			element = $.id("scr");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		
+		if(parseInt($.id("scr").value, 10) > parseInt($.id("pcr").value, 10))
+		{
+			$.alert(ERR_WAN_SCR_LARGER_THAN_PCR);
+			element = $.id("scr");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+	else
+	{
+		scr = 0;
+	}
+	if($.id("mbs").disabled == false)
+	{
+		if ($.id("mbs").value == "")
+		{
+			$.alert(ERR_WAN_MBS_EMPTY);
+			element = $.id("mbs");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	
+		if(($.isnum($.id("mbs").value) == true)&&($.id("mbs").value >= 0)&&($.id("mbs").value <= 65535))
+			mbs = parseInt($.id("mbs").value, 10);
+		else
+		{
+			$.alert(ERR_WAN_MBS_INVAD);
+			element = $.id("mbs");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+	else
+	{
+		mbs = 0;
+	}
+	
+	if(wan_connectiontype == "staticIp")
+	{
+		connectionType = "IP_Routed";
+		linkType = "EoA";
+		addressingType = "Static";
+	}
+	else if(wan_connectiontype == "dynamicIp")
+	{
+		connectionType = "IP_Routed";
+		linkType = "EoA";
+		addressingType = "DHCP";
+	}
+	else if(wan_connectiontype == "ipoa")
+	{
+		connectionType = "IP_Routed";
+		linkType = "IPoA";
+		addressingType = "Static";
+	}
+	else if(wan_connectiontype == "bridge")
+	{
+		connectionType = "IP_Bridged";
+		linkType = "EoA";
+		addressingType = "Static";
+	}	
+	else if(wan_connectiontype == "pppoe")
+	{
+		connectionType = "IP_Routed";
+		linkType = "EoA";
+		transportType = "PPPoE";	
+	}
+	else if(wan_connectiontype == "pppoa")
+	{
+		connectionType = "IP_Routed";
+		linkType = "PPPoA";
+		transportType = "PPPoA";	
+	}
+	else
+	{
+		$.alert(ERR_WAN_CONNECTIONTYPE_INVAD);
+		element = $.id("link_type");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	
+	wanDsl.linkType = linkType;
+	wanDsl.destinationAddress = vpi_vci;
+	wanDsl.aTMPeakCellRate = pcr;
+	wanDsl.aTMMaximumBurstSize = mbs;
+	wanDsl.aTMSustainableCellRate = scr;
+	wanDsl.ATMEncapsulation = atm_encapsulation;
+	wanDsl.ATMQoS = atm_qos;
+	wanDsl.enable = 1;
+	
+	return true;
+}
+
+function addDslCfgAttrs()
+{
+	var ret = true;
+	
+	if (INCLUDE_AUTO_PVC)
+	{
+		var pvcflag = 1;
+		if ($.id("autoPVC_en").checked == 0)
+		{
+			saveAttr();
+		}
+		else if ($.id("autoPVC_en").checked == 1)
+		{
+			pvcflag = 0;
+			var arg = {};
+			arg.type = $.id("atm_encapsulation").value;
+			var tmpLinktype = $.id("link_type").value;
+			if (tmpLinktype == "staticIp")
+			{
+				arg.linkType = "Static";
+				if ($.ifip($.id("ip_address").value, true))
+				{
+					$.removeLoading($.id("saveBtn"));
+					$.alert(ERR_IP_FORMAT);
+					element = $.id("ip_address");
+					if(element){
+						element.focus();
+						element.select();
+					}
+					return;
+				}
+				if ($.ifip($.id("ip_gateway").value, true))
+				{
+					$.removeLoading($.id("saveBtn"));
+					$.alert(ERR_AUTOPVC_IP_FORMAT);
+					element = $.id("ip_gateway");
+					if(element){
+						element.focus();
+						element.select();
+					}
+					return;
+				}
+				arg.ipAddr = $.ip2ip($.id("ip_address").value);
+				arg.gwAddr = $.ip2ip($.id("ip_gateway").value);
+			}
+			else if (tmpLinktype == "bridge")
+				arg.linkType = "Bridge";
+			else if (tmpLinktype == "dynamicIp")
+				arg.linkType = "DHCP";
+			else if (tmpLinktype == "pppoe")
+				arg.linkType = "PPPoE";
+			else if (tmpLinktype == "pppoa")
+				arg.linkType = "PPPoA";
+			$.act(ACT_CGI, "/cgi/pvc", null, null, arg);
+			if (!$.exe())
+			{
+				$.auto(function(){
+					var autores = $.act(ACT_GET, WAN_DSL_AUTOPVC, pStk, null, ["searchState"]);
+					if (!$.exe()) {
+						if (autores.searchState <= 1) 
+							return;
+						if (autores.searchState == 2) 
+						{
+							var pvcCfg = $.act(ACT_GET, WAN_DSL_AUTOPVC, pStk, null, ["detectedVpi", "detectedVci"]);
+							if (!$.exe())
+							{
+								$.id("vpi").value = pvcCfg.detectedVpi;
+								$.id("vci").value = pvcCfg.detectedVci;
+								pvcflag = 1;
+							}
+						}
+						else if (autores.searchState == 3)
+						{
+							$.removeLoading($.id("saveBtn"));
+							$.alert(ERR_AUTOPVC_INVAD);
+						}
+						
+						if (pvcflag == 1)
+						{
+							saveAttr();
+						}
+						return false;
+					}
+				}, 500, true);
+			}
+		}
+	}
+	else
+	{
+		ret = saveAttr();
+	}
+	return ret;
+}
+
+function showQoS()
+{
+	var obj = $.id("atm_qos");
+	if(obj.options[obj.selectedIndex].text == "UBR")
+	{
+		$.id("scr").disabled = true;
+		$.id("mbs").disabled = true;
+		$.id("scr").value = "";
+		$.id("mbs").value = "";
+	}
+	else
+	{
+		$.id("scr").disabled = false;
+		$.id("mbs").disabled = false;
+		$.id("scr").value = "0";
+		$.id("mbs").value = "0";
+	}
+}
+</script>
+
+<p class="L1"><b class="T T_atm">ATM Configuration</b></p>
+	<div id="atm_elem_add" class="bdr L nd">
+		<p><b class="item L">VPI (0-255):</b><input type="text" class="text" id="vpi" value="8" onchange="showPvcParam();" size="10" maxlength="3"/></p>
+		<p><b class="item L">VCI (1-65535):</b><input type="text" class="text" id="vci" value="35" onchange="showPvcParam();" size="10" maxlength="5" /></p>
+		<p id="autoPVC" class="nd"><b class="item L" id="t_autoPvc">Enable PVC Auto-detection</b><input type="checkbox" id="autoPVC_en" onclick="doAutoPVC();" /></p>
+		<p class="nd" id="p_note"><i class="T" id="t_note1">Notice: The current PVC has a plurality of connection,the following parameters prohibiting to modify!</i></p>
+		<p id="br"></p>
+		<div class="cl" id="atmClick" onclick="ATMClick(this)"><p class="cl"></p></div>
+		<div id="atmDiv" class="nd">
+		<p class="T" id="t_note2">Notice: Do not change the parameters below unless necessary!</p>
+		<p><b class="item L T T_encapmod">Encapsulation Mode:</b><select id="atm_encapsulation" class="M">
+		<option id="llc" value="LLC" selected="selected">LLC</option><option id="vcmux" value="VCMUX">VC-Mux</option></select></p>
+		<p><b class="item L T T_atmqos">ATM QoS Type:</b>
+		<select id="atm_qos" class="M" onchange="showQoS()">
+		<option id="ubr" value="ubr" selected="selected" >UBR</option>
+		<option id="cbr" value="cbr">CBR</option>
+		<option id="vbr_nrt" value="vbr_nrt">VBR-nrt</option>
+		<option id="vbr_rt" value="vbr_rt">VBR-rt</option>
+		</select></p>
+		<p><b class="item L">PCR:</b><input type="text" class="text" id="pcr" value="0" size="10" maxlength="4"/><span class="T T_fps">frames/s</span></p>
+		<p><b class="item L">SCR:</b><input type="text" class="text" id="scr" value="" size="10" disabled="disabled" maxlength="4"/><span class="T T_fps">frames/s</span></p>
+		<p><b class="item L">MBS:</b><input type="text" class="text" id="mbs" value="" size="10" disabled="disabled" maxlength="5"/><span class="T T_fps">frames/s</span></p>
+		</div>
+	</div>
+
+<div id="atm_elem_edit" class="bdr L nd">
+	<p><b class="item L">VPI(0-255):</b><b style="padding-left:12px" id="vpiText"></b></p>
+	<p><b class="item L">VCI(32-65535):</b><b style="padding-left:12px" id="vciText"></b></p>
+	<div class="cl" id="atmClickText" onclick="ATMClick(this)"><p class="cl"></p></div>
+	<div id="atmDivText" class="nd">
+	<p><b class="item L T T_encapmod">Encapsulation Mode:</b><b style="padding-left:12px" id="atm_encapsulationText"></b></p>
+	<p><b class="item L T T_atmqos">ATM QoS Type:</b><b style="padding-left:12px" id="atm_qosText"></b></p>
+	<p><b class="item L">PCR:</b><b style="padding-left:12px" id="pcrText"></b> <span class="T T_fps">frames/s</span></p>
+	<div id="atm_qos_div">
+	<p><b class="item L">SCR:</b><b style="padding-left:12px" id="scrText"></b> <span class="T T_fps">frames/s</span></p>
+	<p><b class="item L">MBS:</b><b style="padding-left:12px" id="mbsText"></b> <span class="T T_fps">frames/s</span></p>
+	</div>
+	</div>
+</div>
+<script language="javascript" type="text/javascript">
+initDsl();
+</script>

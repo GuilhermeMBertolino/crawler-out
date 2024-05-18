@@ -1,0 +1,45 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+if [ "$ACTION" != "start"  ]; then
+	exit 0
+fi
+
+openvpn_handle()
+{
+	local enabled="off"
+	local proto="udp"
+	local port="1194"
+	local access="home"
+
+	config_load openvpn
+	config_get enabled "server" "enabled"
+	config_get proto "server" "proto"
+	config_get port "server" "port"
+	config_get access "server" "access"
+
+    # add rules back here
+    # fw will skip existing ones
+	if [ "$enabled" = "on" ]; then
+		fw openvpn_access $proto $port $access
+	fi
+}
+
+pptpvpn_handle()
+{
+	local enabled="off"
+
+	config_load pptpd
+	config_get enabled "pptpd" "enabled"
+	config_get smbacc  "pptpd" "samba_access"
+
+    # add rules back here
+    # fw will skip existing ones
+	if [ "$enabled" = "on" ]; then
+		fw pptp_access $smbacc
+	fi
+}
+
+openvpn_handle
+pptpvpn_handle

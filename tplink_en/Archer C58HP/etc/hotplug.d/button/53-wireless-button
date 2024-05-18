@@ -1,0 +1,27 @@
+# Copyright (c) 2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : Eddie Ho <eddie.ho@tp-link.com>
+# Date    : 21 Aug 2016
+
+WIFI_BUTTON_PID="/var/run/wifi_button.pid"
+
+if [ "$ACTION" = "released" -a "$BUTTON" = "wifi" ]; then
+        if [ "$(uci get factory.factorymode.enable)" = "yes" ]; then
+                touch /tmp/button_wifi_check
+        else
+                if [ "$SEEN" -lt 2 ]; then
+                        [ -e ${WIFI_BUTTON_PID} ] && {
+                                local pid=$(cat ${WIFI_BUTTON_PID})
+                                echo "$ACTION:$BUTTON:$SEEN: Kill pid $pid." > /dev/console
+                                [ -n "$pid" ] && kill -9 $pid
+                                rm -f ${WIFI_BUTTON_PID}
+                        }
+                fi
+        fi
+fi
+
+if [ "$ACTION" = "pressed" -a "$BUTTON" = "wifi" ]; then
+        if [ "$(uci get factory.factorymode.enable)" != "yes" ]; then
+                /sbin/wifi_button &
+        fi
+fi
+

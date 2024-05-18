@@ -1,1 +1,0 @@
-function getTop(frameWindow){try{var parentWindow=frameWindow.parent;return void 0!==frameWindow.netgear_version?frameWindow:parentWindow===frameWindow?frameWindow:parentWindow.origin!==frameWindow.origin?frameWindow:getTop(parentWindow)}catch(e){return top}}function IsGameRouter(){return getTop(window).game_router_flag}

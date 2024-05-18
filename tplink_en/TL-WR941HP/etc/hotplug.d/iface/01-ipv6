@@ -1,0 +1,123 @@
+#!/bin/sh
+
+include /lib/network
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /usr/share/libubox/jshn.sh
+. /lib/netifd/netifd-proto.sh
+
+get_iface_gateway() {
+	local iface="$1"
+	local var="$2"
+	gwstr=`ubus call network.interface.$iface status | grep -A2 '"target": "::"' | grep '"nexthop": '`
+	gwstr=${gwstr##*: \"}
+	gwstr=${gwstr%%\"}
+	
+	eval "export -- \"$var=$gwstr\""
+}
+
+get_iface_l3_device() {
+	local iface="$1"
+	local var="$2"
+	ifstr=`ubus call network.interface.$iface status | grep '"l3_device": '`
+	ifstr=${ifstr##*: \"}
+	ifstr=${ifstr%%\",}
+	
+	eval "export -- \"$var=$ifstr\""
+}
+
+get_gw_route_gateway() {
+	local gw_route=`route -n -A inet6|grep ::/0`
+	local var="$1"
+			
+	[ -n "$gw_route" ] && {
+		local oIFS="$IFS";IFS=" "; set -- $gw_route;IFS="oIFS"
+		eval "export -- \"$var=$3\""
+	}
+}
+
+get_gw_route_dev () {
+	local gw_route=`route -n -A inet6|grep ::0`
+	local var="$1"
+	
+	[ -n "$gw_route" ] && {
+		local oIFS="$IFS";IFS=" "; set -- $gw_route;IFS="oIFS"
+		eval "export -- \"$var=$5\""
+	}
+}
+
+#setup_wanv6_gateway() {
+#	local gateway ifname old_gw gw_dev proto device
+#	
+#	config_load /etc/config/network
+#	config_get proto wanv6 proto
+#	config_get device wanv6 ifname
+#
+#	get_gw_route_gateway old_gw	
+#	get_gw_route_dev gw_dev
+#	get_iface_l3_device wanv6 ifname
+#	get_iface_gateway wanv6 gateway
+#	
+#	[ "$old_gw" == "$gateway" -a  "$ifname" == "$gw_dev" ] && return
+#	
+#	[ -n "$gateway" -a -n "$ifname" ] && {
+#		ip -6 route del "::/0" dev "$gw_dev"
+#		[ "$proto" == "6to4" ] && {
+#			[ -n "$device" ] || device="eth0"
+#			ip -6 route del "::/96" dev "$device"
+#			ip -6 route add "::/96" dev "$ifname" metric 256
+#		}
+#		ip -6 route add "::/0" via "$gateway" dev "$ifname"
+#	}
+#}
+setup_wanv6_gateway(){
+	local ifname
+	local proto
+	local gateway
+	config_load /etc/config/network
+	config_get ifname wanv6 ifname
+	config_get proto wanv6 proto
+	local gw_route=`ip -6 route|grep default`
+	[ -z ${gw_route} ] && {
+		if [ "$proto" == "static" ]
+		then
+			config_get gateway wanv6 ip6gw
+		else
+			gateway=`cat /proc/sys/net/ipv6/conf/$ifname/default_gateway`
+		fi
+		[ ${#gateway} -ne 0 ] &&
+		{
+			#echo "hotplug.d 01-ipv6 [route -A inet6 add default gw $gateway dev $ifname]" > /dev/console
+			route -A inet6 add default gw "$gateway" dev "$ifname"
+		}
+	}
+}
+
+[ "$ACTION" == "ifup" -a "$INTERFACE" == "wanv6" ] && {
+
+	echo "1" > /proc/sys/net/ipv6/conf/all/forwarding 
+	ubus call network.interface.lanv6 down
+	sleep 1
+	ubus call network.interface.lanv6 up
+	setup_wanv6_gateway
+}
+
+[ "$ACTION" == "ifdown" -a "$INTERFACE" == "wanv6" ] && {
+
+	local ifname
+	local proto
+	local gateway
+	get_gw_route_dev ifname
+	[ -n "$ifname" ] &&
+	{
+		#echo "hotplug.d 01-ipv6 [route -A inet6 del ::/0 dev $ifname]" > /dev/console
+		route -A inet6 del ::/0 dev "$ifname"
+	}
+	echo "0" > /proc/sys/net/ipv6/conf/all/forwarding
+
+	ubus call network.interface.lanv6 down
+	sleep 1
+	ubus call network.interface.lanv6 up
+}
+

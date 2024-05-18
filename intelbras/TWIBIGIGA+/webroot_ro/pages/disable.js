@@ -1,1 +1,0 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[7],{vRpO:function(p,n,e){"use strict";e.r(n);var a=e("9rUL");new(e.n(a).a)({el:"#app",template:"<span>Denied</span>"})}},[["vRpO",1,0]]]);

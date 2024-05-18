@@ -1,0 +1,58 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=98
+
+PC_LIBDIR=/lib/guestnetwork_bandwidth_ctrl
+
+support_triband=$(uci get profile.@wireless[0].support_triband -c "/etc/profile.d" -q)
+support_fourband=$(uci get profile.@wireless[0].support_fourband -c "/etc/profile.d" -q)
+support_6g=$(uci get profile.@wireless[0].support_6g -c "/etc/profile.d" -q)
+
+guestnetwork_bandwidth_ctrl() {
+	. $PC_LIBDIR/gbc_core.sh
+	gbc_$1
+}
+
+start() {
+	local sysmode=$(uci get sysmode.sysmode.mode)
+	if [ "${sysmode}" != "router" ]; then
+		return 0
+	fi
+
+	if [ ! -f /etc/config/guestnetwork_bandwidth_ctrl ];then
+		touch /etc/config/guestnetwork_bandwidth_ctrl
+		uci set guestnetwork_bandwidth_ctrl.settings='global'
+
+		uci set guestnetwork_bandwidth_ctrl.settings.enable_2g='off'
+		uci set guestnetwork_bandwidth_ctrl.settings.down_band_2g=''
+		uci set guestnetwork_bandwidth_ctrl.settings.up_band_2g=''
+		
+		uci set guestnetwork_bandwidth_ctrl.settings.enable_5g1='off'
+		uci set guestnetwork_bandwidth_ctrl.settings.down_band_5g1=''
+		uci set guestnetwork_bandwidth_ctrl.settings.up_band_5g1=''
+
+		if [ "${support_triband}" == "yes" -a "${support_6g}" != "yes" -o "${support_fourband}" == "yes" ]; then
+			uci set guestnetwork_bandwidth_ctrl.settings.enable_5g2='off'
+			uci set guestnetwork_bandwidth_ctrl.settings.down_band_5g2=''
+			uci set guestnetwork_bandwidth_ctrl.settings.up_band_5g2=''
+		fi
+
+		if [ "${support_6g}" == "yes" ]; then
+			uci set guestnetwork_bandwidth_ctrl.settings.enable_6g='off'
+			uci set guestnetwork_bandwidth_ctrl.settings.down_band_6g=''
+			uci set guestnetwork_bandwidth_ctrl.settings.up_band_6g=''
+		fi
+		
+		uci commit
+	fi
+	guestnetwork_bandwidth_ctrl start
+}
+
+stop() {
+	guestnetwork_bandwidth_ctrl stop
+}
+
+restart() {
+	guestnetwork_bandwidth_ctrl restart
+}

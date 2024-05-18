@@ -1,0 +1,65 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start()
+{
+	local kernel_version=$(uname -r)
+	local if_account_exist
+	local domain
+	local ip
+
+	local sysmode
+	config_load sysmode
+	config_get sysmode sysmode mode "router"
+	if [ "$sysmode" = "router" ]; then
+		mkdir -p /tmp/wportal
+		echo "stop" > /tmp/wportal/status	
+		insmod /lib/modules/$kernel_version/wportal.ko
+		wportalctrl -c
+#		local defcfg
+#		config_load wportal
+#		config_get defcfg defcfg defcfg "no"
+		. /lib/wportal/wportal.sh
+		is_account_exist
+		if_account_exist=$?
+
+		if [ $if_account_exist == "0" ] ;
+		then
+			config_load domain_login
+			config_get domain tp_domain domain ""
+			config_load network
+			config_get ip lan ipaddr ""
+			local lan_ip_addr
+			config_load network
+			config_get lan_ip_addr lan ipaddr $domain
+			wportalctrl -s -u http://$lan_ip_addr/webpages/init.html -i $ip
+			wportalctrl -D -Y
+			. /lib/wportal/wportal.sh 
+			wportalctrl_update_init
+
+			local lan_mask
+			config_get lan_mask lan netmask "255.255.255.0"
+			wportalctrl -m $lan_mask
+			
+			echo "init" > /tmp/wportal/status
+		else
+			/etc/hotplug.d/iface/99-wportal
+			. /lib/wportal/wportal.sh 
+			wportalctrl_update_init
+			/lib/wportal/wportal.sh wportalctrl_update_start
+		fi
+	fi
+}
+
+stop()
+{
+	local sysmode
+	config_load sysmode
+	config_get sysmode sysmode mode "router"
+	if [ "$sysmode" = "router" ]; then
+		wportalctrl -c
+		echo "stop" > /tmp/wportal/status
+		rmmod wportal
+	fi
+}

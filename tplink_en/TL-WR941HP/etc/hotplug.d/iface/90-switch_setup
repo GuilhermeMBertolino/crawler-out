@@ -1,0 +1,10 @@
+#!/bin/sh
+booted=1
+[ -d "/proc/ag71xx_switch" ] && {
+	booted=`cat /proc/ag71xx_switch/booted`
+}
+if [ "$ACTION" == "ifup" ] && [ "$DEVICE" == "br-lan" ] && [ "$INTERFACE" == "lan" ] && [ "$booted" == "1" ]; then
+    ./etc/init.d/switch restart hotplug
+    ./etc/init.d/phyport restart hotplug
+fi
+

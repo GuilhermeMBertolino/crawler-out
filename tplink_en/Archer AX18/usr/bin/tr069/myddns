@@ -1,0 +1,19 @@
+#!/usr/bin/lua
+
+local uci = require "luci.model.uci"
+local uci_r = uci.cursor()
+
+local provider = uci_r:get("ddns", "provider", "provider")
+local enable = uci_r:get("ddns", provider, "enabled")
+
+local cmd
+if enable == "on" then
+	cmd_stop = "/usr/sbin/ddns stop " .. provider
+	cmd_start = "/usr/sbin/ddns start " .. provider
+	os.execute(cmd_stop)
+	os.execute(cmd_start)
+else
+	cmd_stop = "/usr/sbin/ddns stop " .. provider
+	os.execute(cmd_stop)
+end
+

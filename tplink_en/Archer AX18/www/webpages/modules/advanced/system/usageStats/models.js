@@ -1,0 +1,1 @@
+!function(e){e.su.modelManager.define("improvementModel",{type:"model",fields:[{name:"enable"}],proxy:{url:e.su.url("/admin/status?form=user_experience_plan_switch")}})}(jQuery);

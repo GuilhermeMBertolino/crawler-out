@@ -1,1 +1,0 @@
-../init.d/pad.sh

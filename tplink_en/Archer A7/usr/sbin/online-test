@@ -1,0 +1,23 @@
+#!/bin/sh
+
+## is_online: 1--online; 0--offline
+ONLINE_STATUS_FILE="/tmp/is_online"
+get_online_status()
+{
+	local result
+	local tryTimes=0
+
+## avoid read error result, re-read most 3 times
+	while [ $tryTimes -lt 3 -a "$result" != "0" -a "$result" != "1" ]; do
+		result=`cat $ONLINE_STATUS_FILE`
+		let "tryTimes = $tryTimes + 1"
+	done
+
+	if [ "$result" == "1" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+get_online_status

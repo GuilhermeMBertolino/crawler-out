@@ -1,0 +1,26 @@
+<script>function init(){if(lteSmsCfg=$.act(ACT_GET,LTE_SMS_CONFIG,null,null,["messageCenter","messageCenterNumber"]),$.exe())return!1;"CDMANOCENT"==lteSmsCfg.messageCenterNumber&&(isCDMANoCent=1),1==lteSmsCfg.messageCenter?($("#enMsgCenter").addClass("selected"),$("#msgCenterNum_cfg_div").removeClass("nd"),-1==lteSmsCfg.messageCenterNumber?$("#msgCenterNum").prop("value",""):$("#msgCenterNum").prop("value",lteSmsCfg.messageCenterNumber)):($("#disMsgCenter").addClass("selected"),$("#msgCenterNum_cfg_div").addClass("nd"))}var lteSmsCfg,isCDMANoCent=0</script>
+
+<h3 id="t_et">SMS Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container">
+            <b id="t_msgCenter">Message Center:</b>
+            <ul><li><button id="enMsgCenter" class="fst T_on" value="on">On</button></li>
+                <li><button id="disMsgCenter" class="lst T_off" value="off">Off</button></li>
+            </ul>
+        </div>
+
+        <div id="msgCenterNum_cfg_div" class="part-separate">
+            <div>
+                <b id="t_msgCenterNum">Message Center Number:</b>
+                <input type="text" id="msgCenterNum" required> 
+            </div>
+        </div>
+
+        <div class="part-separate">
+            <button type="submit" class="green T_save" id="save">Save</button>
+        </div>
+    </form>
+</div>
+
+<script>function checkPhoneNum(e){var n,t,s=0;if(e.length>=20||e.length<=0?(s=1,$.alert(ERR_LTE_SMS_PHONE_NUM_LEN)):"+"==(t=e.charAt(0))||$.isnum(t)?"+"==t?(n=e.substring(1,e.length),$.isnum(n)||(s=1,$.alert(ERR_LTE_SMS_PHONE_NUM_FORMAT))):$.isnum(e)||(s=1,$.alert(ERR_LTE_SMS_PHONE_NUM_FORMAT)):(s=1,$.alert(ERR_LTE_SMS_PHONE_NUM_FORMAT)),1==s){var r=$("#msgCenterNum");return r&&(r.focus(),r.select()),!1}return!0}$("#enMsgCenter").click(function(){$("#msgCenterNum_cfg_div").removeClass("nd"),-1==lteSmsCfg.messageCenterNumber?$("#msgCenterNum").prop("value",""):$("#msgCenterNum").prop("value",lteSmsCfg.messageCenterNumber)}),$("#disMsgCenter").click(function(){$("#msgCenterNum_cfg_div").addClass("nd")}),$("#save").click(function(){var e="",n="";if($("#enMsgCenter").hasClass("selected")){if(e=1,n=$("#msgCenterNum").prop("value"),!checkPhoneNum(n))return!1}else e=0,n="";1==isCDMANoCent&&1==e?$.alert(ERR_LTE_CDMA_NO_CENT):($.addLoading($(this)),$.act(ACT_SET,LTE_SMS_CONFIG,null,null,["messageCenter="+e,"messageCenterNumber="+n]),$.exe(function(e){$.removeLoading(),e||$.reload()}))}),$.tpInit(init)</script>

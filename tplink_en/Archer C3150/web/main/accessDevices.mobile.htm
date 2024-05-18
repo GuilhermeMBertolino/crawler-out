@@ -1,0 +1,121 @@
+<div class="titleBar">
+    <a id="back" url="networkMap.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.networkMap_nstr.t_access%>
+        </script>
+    </h1>
+</div>
+
+<div class="section-title mt15" id="wirelessh-num">
+    <script type="text/html" class="title-string">
+        <%=$.tpLang.networkMap_nstr.t_wireless_h%>
+    </script>
+    <span class="dhcp-n nd">0</span>
+</div>
+<div class="info-list" id="wireless-host">
+</div>
+
+<div class="section-title mt15" id="wirelessg-num">
+    <script type="text/html" class="title-string">
+        <%=$.tpLang.networkMap_nstr.t_wireless_g%>
+    </script>
+    <span class="dhcp-n nd">0</span>
+</div>
+<div class="info-list" id="wireless-guest">
+</div>
+
+<div class="section-title mt15" id="wire-num">
+    <script type="text/html" class="title-string">
+        <%=$.tpLang.networkMap_nstr.c_wireclient%>
+    </script>
+    <span class="dhcp-n nd">0</span>
+</div>
+<div class="info-list" id="wired">
+</div>
+
+<script type="text/javascript">
+    (function() {
+        $.tpLocal('title-string', $.tpLang);
+        $('.titleBar').titleBar();
+
+        init();
+
+        function init() {
+        var count = 0;
+            var wire = 0;
+            var wireless_h = 0;
+            var wireless_g = 0;
+            var dhcpClientList = $.act(ACT_GS, LAN_HOST_ENTRY, null, null);
+
+        var noneDevice = '<div class="section-container">' +
+            '<div class="section-box">' +
+            '<div class="device-div">' +
+            '<div class="device-content-none">' +
+            '<span class="sprite grid-no-device"></span></div>' +
+            '<div class="device-content-none-text">'+$.tpLang.m_str.none+'</div>'+
+            '</div></div></div>';
+
+			if (!$.exe()) {
+				$.each(dhcpClientList, function(index) {
+					if (this.active == 1) {
+                    count++;
+                    var div = '<div class="section-container">' +
+							'<div class="section-box">' +
+							'<div class="device-div">' +
+							'<div class="device-label">' +
+                        '<span class="sprite grid-row-device"></span>' +
+							'</div>' +
+							'<div class="device-content">' +
+							'<div class="device-line">' +
+							'<div class="device-info">' +
+							'<div class="device-info-name">' + this.hostName + '</div>' +
+							'<div class="device-info-item">' +
+							'<span class="device-info-title">' + $.tpLang.networkMap_nstr.c_netaddr + '</span>' +
+							'<span class="device-info-text">' + this.IPAddress + '</span>' +
+							'</div>' +
+							'<div class="device-info-item">' +
+							'<span class="device-info-title">' + $.tpLang.networkMap_nstr.c_macaddr + '</span>' +
+							'<span class="device-info-text device-info-mac">' + this.MACAddress + '</span>' +
+							'</div>' +
+							'</div>' +
+							'</div></div></div></div>';
+
+						if (this.X_TP_ConnType === '0') {
+							wire++;
+							$('#wired').append(div);
+						} else if (this.X_TP_ConnType === '1' || this.X_TP_ConnType === '3') {
+							wireless_h++;
+							$('#wireless-host').append(div);
+						} else if (this.X_TP_ConnType === '2' || this.X_TP_ConnType === '4') {
+							wireless_g++;
+							$('#wireless-guest').append(div);
+						}
+					}
+				});
+
+				$.each($('.device-div'), function() {
+					$.addDeviceBlock(this);
+				});
+            if (wire === 0) {
+                // $('#wire-num').hide();
+                $('#wired').append(noneDevice);
+            } else {
+                $('#wire-num .dhcp-n').text(wire);
+            }
+            if (wireless_h === 0) {
+                // $('#wirelessh-num').hide();
+                $('#wireless-host').append(noneDevice);
+            } else {
+                $('#wirelessh-num .dhcp-n').text(wireless_h);
+            }
+            if (wireless_g === 0) {
+                // $('#wirelessg-num').hide();
+                $('#wireless-guest').append(noneDevice);
+            } else {
+                $('#wirelessg-num .dhcp-n').text(wireless_g);
+            }
+			}
+        }
+    })();
+</script>

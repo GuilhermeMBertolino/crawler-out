@@ -1,0 +1,75 @@
+<script language="javascript">function initInternetDiagPara(){step=1,bDiagFinished=!0,step3RetryCnt=2,bStart=!1,internetDiagId=$.getAsync()}function doInternetDiag(){var e={};if($.checkAsync(internetDiagId))switch(step){case 1:lteLinkCfg=$.act(ACT_GET,WAN_LTE_LINK_CFG,lteLinkCfgStk,null,null),$.exe(function(e){if(e)return $.alert(e),void(bDiagFinished=!0);2==lteLinkCfg.connectStatus||3==lteLinkCfg.connectStatus?($("#b_internetStatus").prop("value",m_str.connecting),setTimeout(doInternetDiag,1e3)):4==lteLinkCfg.connectStatus?(step++,doInternetDiag()):(bDiagFinished=!0,$("#b_internetStatus").prop("value",m_str.disconnected))});break;case 2:e=$.act(ACT_GET,DIAG_TOOL,null,null,["LastResult"]),$.exe(function(t){if(t)return $.alert(t),void(bDiagFinished=!0);if(3==e.lastResult)$("#b_internetStatus").prop("value",m_str.connecting),setTimeout(doInternetDiag,1e3);else if(1==bStart){if(step3RetryCnt--,1==e.lastResult)$("#b_internetStatus").prop("value",m_str.connected);else{if(step3RetryCnt>0)return step=2,bStart=!1,void doInternetDiag();$("#b_internetStatus").prop("value",m_str.disconnected)}step++,bDiagFinished=!0}else $("#b_internetStatus").prop("value",m_str.connecting),bStart=!0,$.act(ACT_OP,ACT_OP_DIAG_STARTDIAG,e.__stack),$.exe(function(e){if(e)return $.alert(e),void(bDiagFinished=!0);setTimeout(doInternetDiag,1e3)})})}}function chg(e,t){$("#b_pdpType").prop(e,t),$("#b_pdpType").tpSelect({refresh:1}),$("#b_apnType0").prop(e,t),$("#b_apnType0").tpSelect({refresh:1}),$("#b_apn0").prop(e,t),$("#b_usrLte0").prop(e,t),$("#b_pwdLte0").prop(e,t),$("#b_authType0").prop(e,t),$("#b_authType0").tpSelect({refresh:1})}function showProfileList(e){$("#b_profile_list_sel").empty();for(var t=0;t<profileList.length;t++)if("NONE"!=profileList[t].profileName||t==e.activeProfile){var i,a=t+1;i=t<e.defaultProfile?"NONE"==profileList[t].profileName?"":$.htmlEncodeStr(profileList[t].profileName)+"("+s_str.defaultIndex+":"+a+")":$.htmlEncodeStr(profileList[t].profileName);var n=$("<option></option>");n.val(profileList[t].profileID),n.text(i),$("#b_profile_list_sel").append(n)}$("#b_profile_list_sel option[value='"+profileList[e.activeProfile].profileID+"']").prop("selected","selected"),e.activeProfile<e.defaultProfile?(showApnType(0),chg("disabled",!0)):(showApnType(1),chg("disabled",!1)),$("#b_profile_list_sel").tpSelect({refresh:1})}function showApnType(e){0==e?$("#b_ipv4ApnType").addClass("nd"):$("#b_ipv4ApnType").removeClass("nd")}function showProfileInfo(e){$("#b_pdpType option[value='"+e.pdpType+"']").prop("selected","selected"),$("#b_pdpType").tpSelect({refresh:1}),1!=e.pdpType?($("#b_apnType0 option[value='"+e.ipv4ApnType+"']").prop("selected","selected"),$("#b_apnType0").tpSelect({refresh:1}),$("#b_apn0").val(e.ipv4Apn),$("#b_usrLte0").val(e.ipv4Username),$("#b_pwdLte0").val(e.ipv4Password),$("#b_authType0 option[value='"+e.ipv4AuthType+"']").prop("selected","selected"),$("#b_authType0").tpSelect({refresh:1})):($("#b_apnType0 option[value='"+e.ipv6ApnType+"']").prop("selected","selected"),$("#b_apnType0").tpSelect({refresh:1}),$("#b_apn0").val(e.ipv6Apn),$("#b_usrLte0").val(e.ipv6Username),$("#b_pwdLte0").val(e.ipv6Password),$("#b_authType0 option[value='"+e.ipv6AuthType+"']").prop("selected","selected"),$("#b_authType0").tpSelect({refresh:1}))}function init(){var e,t=$.act(ACT_GL,WAN_COMMON_INTF_CFG,null,null,["WANAccessType"]),i=$.act(ACT_GL,LTE_WAN_CFG,null,null,["dataSwitchStatusBackup"]),a=0;if(!$.exe()){if($.each(t,function(){"LTE"==this.WANAccessType&&(e=this.__stack)}),$.each(i,function(){var t=$.stkPop(this.__stack,1);if(e==t)return wanCfgStk=this.__stack,lteLinkCfgStk=this.__stack,$.act(ACT_SET,LTE_WAN_CFG,wanCfgStk,null,["profileAction=4"]),wanCfg=$.act(ACT_GET,LTE_WAN_CFG,this.__stack,null,null),profileList=$.act(ACT_GL,LTE_PROFILE,null,null,null),a=1,!1}),0==a||$.exe())return;1==wanCfg.dataSwitchStatusBackup?$("#b_mdEn").addClass("selected"):$("#b_mdDis").addClass("selected"),$("#b_network_mode_sel option[value='"+wanCfg.networkPreferredMode+"']").prop("selected","selected"),showProfileList(wanCfg),showProfileInfo(profileList[wanCfg.activeProfile]),0==$("#b_profile_list_sel option").length&&($("#b_profile_list_sel").prop("disabled",!0),$("#b_profile_list_sel").tpSelect({refresh:1})),initInternetDiagPara(),doInternetDiag()}}function selectObj(e){e&&(e.focus(),e.select())}function isValidString(e){return!/\s/.test(e)&&!/['"]/.test(e)}function isValidLength(e){return e.length>0&&e.length<32}function isValidApnNi(e){return String.prototype.startsWith||Object.defineProperty(String.prototype,"startsWith",{value:function(e,t){return t=!t||t<0?0:+t,this.substring(t,t+e.length)===e}}),String.prototype.endsWith||(String.prototype.endsWith=function(e,t){return(void 0===t||t>this.length)&&(t=this.length),this.substring(t-e.length,t)===e}),String.prototype.includes||(String.prototype.includes=function(e,t){"use strict";return"number"!=typeof t&&(t=0),!(t+e.length>this.length)&&-1!==this.indexOf(e,t)}),!((e=e.toLowerCase()).startsWith("rac")||e.startsWith("lac")||e.startsWith("sgsn")||e.startsWith("rnc")||e.endsWith(".gprs")||e.includes("*"))}function isValidLabel(e){return/^(?=[A-Za-z0-9])[A-Za-z0-9-]*[A-Za-z0-9]$/.test(e)}function getSimStatus(){var e=$.act(ACT_GET,WAN_LTE_LINK_CFG,lteLinkCfgStk,null,null);return $.exe()?simStatus:e.simStatus}function checkParam(e){var t,i,a,n,l=$("#b_pdpType").data("value"),p=($("#b_network_mode_sel").data("value"),0),r=$("#a_profile_list_sel").data("value");if(1!=l){if(t=$("#b_usrLte0").val(),i=$("#b_pwdLte0").val(),a=$("#b_apn0").val(),(n=$("#b_apnType0").data("value"))!=e.ipv4ApnType&&(p=1),0==n&&r>=wanCfg.defaultProfile){if(!a)return $.alert(ERR_LTE_PROFILE_APN_EMPTY),selectObj($("#b_apn0")),-1;if(!isValidApnNi(a))return $.alert(ERR_LTE_PROFILE_APN_ILLEGAL_CHAR),selectObj($("#b_apn0")),-1;labels=a.split(".");for(s=0;s<labels.length;s++)if(!isValidLabel(labels[s]))return $.alert(ERR_LTE_PROFILE_APN_ILLEGAL_CHAR),selectObj($("#b_apn0")),-1;a!=e.ipv4Apn&&(p=1)}if(e.ipv4Username!=t){if(t){if(!isValidLength(t))return $.alert(ERR_LTE_PROFILE_USERNAME_MAXLEN_ERROR),selectObj($("#b_usrLte0")),-1;if(!isValidString(t))return $.alert(ERR_LTE_PROFILE_USERNAME_ILLEGAL_CHAR),selectObj($("#b_usrLte0")),-1}p=1}if(e.ipv4Password!=i){if(i){if(!isValidLength(i))return $.alert(ERR_LTE_PROFILE_PASSWORD_MAXLEN_ERROR),selectObj($("#b_pwdLte0")),-1;if(!isValidString(i))return $.alert(ERR_LTE_PROFILE_PASSWORD_ILLEGAL_CHAR),selectObj($("#b_pwdLte0")),-1}p=1}}if(0!=l){if(t=$("#b_usrLte0").val(),i=$("#b_pwdLte0").val(),a=$("#b_apn0").val(),(n=$("#b_apnType0").data("value"))!=e.ipv6ApnType&&(p=1),0==n){if(!a)return $.alert(ERR_LTE_PROFILE_APN_EMPTY),selectObj($("#b_apn0")),-1;if(!isValidApnNi(a))return $.alert(ERR_LTE_PROFILE_APN_ILLEGAL_CHAR),selectObj($("#b_apn0")),-1;labels=a.split(".");for(var s=0;s<labels.length;s++)if(!isValidLabel(labels[s]))return $.alert(ERR_LTE_PROFILE_APN_ILLEGAL_CHAR),selectObj($("#b_apn0")),-1;a!=e.ipv6Apn&&(p=1)}if(e.ipv6Username!=$("#b_usrLte0").val()){if(t){if(!isValidLength(t))return $.alert(ERR_LTE_PROFILE_USERNAME_MAXLEN_ERROR),selectObj($("#b_usrLte0")),-1;if(!isValidString(t))return $.alert(ERR_LTE_PROFILE_USERNAME_ILLEGAL_CHAR),selectObj($("#b_usrLte0")),-1}p=1}if(e.ipv6Password!=$("#b_pwdLte0").val()){if(i){if(!isValidLength(i))return $.alert(ERR_LTE_PROFILE_PASSWORD_MAXLEN_ERROR),selectObj($("#b_pwdLte0")),-1;if(!isValidString(i))return $.alert(ERR_LTE_PROFILE_PASSWORD_ILLEGAL_CHAR),selectObj($("#b_pwdLte0")),-1}p=1}}return e.pdpType!=$("#b_pdpType").data("value")&&(p=1),e.ipv4AuthType!=$("#b_authType0").data("value")&&(p=1),e.ipv6AuthType!=$("#b_authType0").data("value")&&(p=1),wanCfg.activeProfile!=activeProfile&&(p=1),p}var wanCfg,lteLinkCfg,wanCfgStk,lteLinkCfgStk,activeProfile=0,profileList=new Array,step=1,bDiagFinished=!0,step3RetryCnt=2,bStart=!1,internetDiagId=$.getAsync();$("select#b_profile_list_sel").click(function(){for(var e=$("#b_profile_list_sel").data("value"),t=0;t<profileList.length;t++)if(profileList[t].profileID==e){showProfileInfo(profileList[t]),t<wanCfg.defaultProfile?(showApnType(0),chg("disabled",!0)):(showApnType(1),chg("disabled",!1));break}}),$("select#b_apnType0").on("click.basicLte",function(e){1==$("#b_apnType0").data("value")?$("#b_ipv4Apn").addClass("nd"):$("#b_ipv4Apn").removeClass("nd")}),$("select#b_apnType1").on("click.basicLte",function(e){1==$("#b_apnType1").data("value")?$("#b_ipv6Apn").addClass("nd"):$("#b_ipv6Apn").removeClass("nd")}),$("#b_mdEn").on("click.basicLte",function(e){$.addLoading($(this)),$.act(ACT_SET,LTE_WAN_CFG,wanCfgStk,null,["dataSwitchStatusBackup=1"]),$.exe(function(e){e&&(1==wanCfg.dataSwitchStatusBackup?$("#b_mdEn").addClass("selected"):$("#b_mdDis").addClass("selected")),initInternetDiagPara(),doInternetDiag(),$.removeLoading()})}),$("#b_mdDis").on("click.basicLte",function(e){$.addLoading($(this)),$.act(ACT_SET,LTE_WAN_CFG,wanCfgStk,null,["dataSwitchStatusBackup=0"]),$.exe(function(e){e&&(1==wanCfg.dataSwitchStatusBackup?$("#b_mdEn").addClass("selected"):$("#b_mdDis").addClass("selected")),initInternetDiagPara(),doInternetDiag(),$.removeLoading()})}),$("#saveBtn").click(function(){var e=$("#b_profile_list_sel").data("value"),t={},i=0,a={},n=$("#b_network_mode_sel").data("value"),l=!1;if(wanCfg.networkPreferredMode!=n){var p=getSimStatus();if("3"!=p&&"5"!=p)return $("#b_network_mode_sel option[value='"+wanCfg.networkPreferredMode+"']").prop("selected","selected"),$("#b_network_mode_sel").tpSelect({refresh:1}),$.alert(ERR_LTE_NTWKNODE_CARD_NOTOK),!1;a.networkPreferredMode=n,l=!0}for(i=0;i<profileList.length;i++)if(profileList[i].profileID==e){t=profileList[i],activeProfile=i;break}if(i<profileList.length){var r=checkParam(t);if(1==r)a.profileID=t.profileID,a.profileName=t.profileName,a.pdpType=$("#b_pdpType").data("value"),1!=a.pdpType&&(a.ipv4ApnType=$("#b_apnType0").data("value"),0==a.ipv4ApnType?a.ipv4Apn=$("#b_apn0").val():a.ipv4Apn="",a.ipv4Apn=$("#b_apn0").val(),a.ipv4Username=$("#b_usrLte0").val(),a.ipv4Password=$("#b_pwdLte0").val(),a.ipv4AuthType=$("#b_authType0").data("value")),0!=a.pdpType&&(a.ipv6ApnType=$("#b_apnType0").data("value"),0==a.ipv6ApnType?a.ipv6Apn=$("#b_apn0").val():a.ipv6Apn="",a.ipv6Apn=$("#b_apn0").val(),a.ipv6Username=$("#b_usrLte0").val(),a.ipv6Password=$("#b_pwdLte0").val(),a.ipv6AuthType=$("#b_authType0").data("value")),a.profileAction=1,a.activeProfile=activeProfile,l=!0;else if(-1==r)return!1}l&&($.act(ACT_SET,LTE_WAN_CFG,wanCfgStk,null,a),$.addLoading($(this)),$.exe(function(e){$.removeLoading(),$.reload()}))})</script>
+
+<h3 id="t_sett">Internet</h3>
+
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+		<div class="pure-control-group">
+             <b class="xl T_internetStatus" id="b_netstatus">Internet Status:</b>
+            <input type="text" readonly="ture" class="tp-input-text xl" id="b_internetStatus">
+        </div>
+
+        <div class="button-group-container" id="b_mobileDataSwitch">
+            <b class="xl T_mobileData">Mobile Data:</b>
+            <ul><li><button id="b_mdEn" class="fst" value="on">On</button></li>
+                <li><button id="b_mdDis" class="lst" value="off">Off</button></li>
+            </ul>
+        </div>
+        <div><b class="xl T_networkMode">Network Mode:</b>
+            <select id="b_network_mode_sel" class="lte">
+                <option value="3" class="T_Preferred4g">4G Preferred</option>
+                <option value="2" class="T_only4g">4G Only</option>
+                <option value="1" class="T_only3g">3G Only</option>
+            </select>
+        </div>
+		<br>
+        <div><p></p><label class="label-title l T_dialupSet" style="font-weight:700">Dial-up Settings</label><p></p></div>
+
+        <div class="divCp"><b class="xl T_profileName">Profile Name:</b>
+            <select id="b_profile_list_sel" class="lte"></select>
+        </div>
+
+        <div class="divCp"><b class="xl T_pdpType">PDP Type:</b>
+            <select id="b_pdpType" class="lte">
+                <option value="0">IPv4</option>
+                <option value="1">IPv6</option>
+                <option value="2">IPv4 & IPv6</option>
+            </select>
+        </div>
+
+        <div id="b_ipv4">
+            <div id="b_ipv4ApnType" class="divCp"><b id="b_ipv4ApnType_b" class="xl T_lteApnType">APN Type:</b>
+                <select id="b_apnType0" class="lte">
+                    <option value="0" class="T_static">Static</option>
+                    <option value="1" class="T_dynamic" selected="selected">Dynamic</option>
+                </select>
+            </div>
+            <div id="b_ipv4Apn" class="divCp"><b class="xl T_lteApn">APN:</b>
+                    <input type="text" class="lte" id="b_apn0" maxlength="62">
+            </div>
+            <div class="divCp"><b class="xl T_lteUsername">Username:</b>
+                    <input type="text" class="lte" id="b_usrLte0" maxlength="31">
+            </div>
+            <div class="divCp"><b class="xl T_ltePassword">Password:</b>
+                    <input type="password" class="lte" id="b_pwdLte0" maxlength="31">
+            </div>
+
+            <div class="divCp"><b class="xl T_lteAuthType">Authentication Type:</b>
+                <select id="b_authType0" class="lte">
+                    <option value="0" class="T_none">NONE</option>
+                    <option value="1">PAP </option>
+                    <option value="2">CHAP</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="text-align:right" class="part-separate">
+            <div class="inline">
+                <button type="submit" class="green T_save" id="saveBtn">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>$(document).ready(function(){$.tpInit(init)})</script>
+

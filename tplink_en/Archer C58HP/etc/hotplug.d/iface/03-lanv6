@@ -1,0 +1,639 @@
+#!/bin/sh
+# dhcp6s.sh - IPv6-in-IPv4 tunnel backend
+# Copyright (c) 2010-2012 OpenWrt.org
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /usr/share/libubox/jshn.sh
+. /lib/netifd/netifd-proto.sh
+
+parsing_ipv6_dns()
+{
+	local dnsv6=""
+	for ipstr in $1; do
+	if [ "$ipstr" == "${ipstr#*[0-9].[0-9]}" -a "$ipstr" != "${ipstr#*:[0-9a-fA-F]}" ]; then
+		[ -n "$dnsv6" ] && dnsv6="$dnsv6 $ipstr" || dnsv6="$ipstr"
+	fi
+	done
+	printf "$dnsv6"
+}
+
+get_tunnel_prefix() {
+	local ip4="$1"
+	local oIFS="$IFS"; IFS="."; set -- $ip4; IFS="$oIFS"
+	printf "2002:%02x%02x:%02x%02x:1::\n" $1 $2 $3 $4
+}
+
+add_del_prefix_route() {
+	local action="$1"
+	local ifname
+	local wan_type wanv6_type
+	local proto
+	local ip_mode ipv6_mode
+	local prefix prefixlen
+
+	config_load /etc/config/network
+	config_get wan_type wan wan_type
+	config_get wanv6_type wanv6 wanv6_type
+	config_get ip_mode wanv6 ip_mode
+	config_get ifname lanv6 ifname
+	config_get prefix lanv6 prefix
+	config_get prefixlen lanv6 prefixlen
+
+	if [ "$wan_type" == "pppoeshare" ]
+	then
+		config_get ipv6_mode internet ipv6_mode
+		config_get proto internet proto
+		config_get ip_config wan ip_config
+		[ "$ipv6_mode" == "prefix" ] && {
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoeshare" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+			if [ "$action" == "add" ]
+			then
+				#echo "add route for prefix mode [route -A inet6 add $prefix/$prefixlen dev $ifname]" > /dev/console
+				route -A inet6 add "$prefix"/"$prefixlen" dev "$ifname"
+			else
+				#echo "delete route for prefix mode [route -A inet6 del $prefix/$prefixlen dev $ifname]" > /dev/console
+				route -A inet6 del "$prefix"/"$prefixlen" dev "$ifname"
+			fi
+		}
+		network_get_dnsserver dns "internet"
+	else
+		config_get ip_mode wanv6 ip_mode
+		config_get proto wanv6 proto
+		config_get ip_config wanv6 ip_config
+		[ "$ip_mode" == "prefix" ] && {
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoev6" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+			if [ "$action" == "add" ]
+			then
+				#echo "add route for prefix mode [route -A inet6 add $prefix/$prefixlen dev $ifname]" > /dev/console
+				route -A inet6 add "$prefix"/"$prefixlen" dev "$ifname"
+			else
+				#echo "delete route for prefix mode [route -A inet6 del $prefix/$prefixlen dev $ifname]" > /dev/console
+				route -A inet6 del "$prefix"/"$prefixlen" dev "$ifname"
+			fi
+		}
+	fi
+
+}
+
+
+create_radvd_conf() {
+	local ifname="$1"
+	local prefix="$2"
+	local prefixlen="$3"
+	local mode="$4"
+	local file="$5"
+	local dns1="$6"
+	local dns2="$7"
+
+    local ula_enable=$(uci get protocol.ula.enable)
+	
+	echo -e "interface $ifname " > "$file"
+	echo -e "{" >> "$file"
+	echo -e "\tAdvSendAdvert on;" >> "$file"
+    if [ -z "$prefix" ]; then
+        echo -e "\tAdvDefaultLifetime 0;" >> "$file"
+    fi
+	
+	if [ "$mode" == "prefix" ]; then
+		echo -e "\tAdvManagedFlag off;" >> "$file"
+		echo -e "\tAdvOtherConfigFlag on;" >> "$file"
+        if [ -n "$prefix" ]; then
+		    echo -e "\tprefix $prefix/$prefixlen" >> "$file"
+		    echo -e "\t{" >> "$file"
+		    echo -e "\t\tAdvOnLink on;" >> "$file"
+		    echo -e "\t\tAdvAutonomous on;" >> "$file"
+		    echo -e "\t\tAdvRouterAddr on;" >> "$file"
+		    echo -e "\t};" >> "$file"
+        fi
+	elif [ "$mode" == "dhcp6s" ]; then
+		echo -e "\tAdvManagedFlag on;" >> "$file"
+		echo -e "\tAdvOtherConfigFlag on;" >> "$file"
+	elif [ "$mode" == "rdnss" ]; then
+		echo -e "\tAdvManagedFlag off;" >> "$file"
+		echo -e "\tAdvOtherConfigFlag off;" >> "$file"
+        if [ -n "$prefix" ]; then
+		    echo -e "\tprefix $prefix/$prefixlen" >> "$file"
+		    echo -e "\t{" >> "$file"
+		    echo -e "\t\tAdvOnLink on;" >> "$file"
+		    echo -e "\t\tAdvAutonomous on;" >> "$file"
+		    echo -e "\t\tAdvRouterAddr on;" >> "$file"
+		    echo -e "\t};" >> "$file"
+        fi
+		echo -e "\tRDNSS $dns1 $dns2" >> "$file"
+		echo -e "\t{" >> "$file"
+		echo -e "\t\tAdvRDNSSPreference 8;" >> "$file"
+		echo -e "\t\tAdvRDNSSOpen off;" >> "$file"
+		echo -e "\t};" >> "$file"
+	fi
+
+    if [ "$ula_enable" = "on" ]; then
+        prefix=$(uci get protocol.ula.prefix)
+        prefixlen=$(uci get protocol.ula.prefix_len)
+		echo -e "\tprefix $prefix/$prefixlen" >> "$file"
+		echo -e "\t{" >> "$file"
+		echo -e "\t\tAdvOnLink on;" >> "$file"
+		echo -e "\t\tAdvAutonomous on;" >> "$file"
+		echo -e "\t\tAdvRouterAddr on;" >> "$file"
+		echo -e "\t};" >> "$file"
+    fi
+
+	echo -e "};" >> "$file"
+}
+
+start_radvd(){
+	local radvdfile="$1"
+	local radvdpidfile="$2"
+	local ifname="$3"
+	local count=3
+	local running=`ifconfig $ifname | grep RUNNING`
+	while [ $count -ne 0 -a ${#running} -eq 0 ]; do
+		sleep 1
+		running=`ifconfig $ifname | grep RUNNING`
+		let "count=count - 1"
+	done
+	[ -f "$radvdfile" ] &&  /usr/sbin/radvd -C "$radvdfile" -p "$radvdpidfile"
+}
+
+proto_dhcp6s_setup() {
+	local iface="$1"
+	local ifname="$2"
+	local radvddir="/tmp/radvd-$ifname"
+	local radvdfile="$radvddir/radvd.conf"
+	local radvdpidfile="$radvddir/radvd.pid"
+	
+	local dns1="none"
+	local dns2="none"
+	local dns tmp
+	local wan_type wanv6_type
+	local ip_mode ipv6_mode
+	local proto
+	local ip_config
+	
+	local startip endip leasetime prefix prefixlen
+	
+	config_load /etc/config/network
+	config_get wan_type wan wan_type
+	config_get wanv6_type wanv6 wan_type
+	config_get startip lanv6 startip
+	config_get endip lanv6 endip
+	config_get leasetime lanv6 leasetime 
+	config_get prefix lanv6 prefix
+	config_get prefixlen lanv6 prefixlen
+
+	if [ "$wan_type" == "pppoeshare" ]
+	then
+		config_get ipv6_mode internet ipv6_mode
+		config_get proto internet proto
+		config_get ip_config wan ip_config
+		[ "$ipv6_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wan.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoeshare" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "internet"
+	else
+		config_get ip_mode wanv6 ip_mode
+		config_get proto wanv6 proto
+		config_get ip_config wanv6 ip_config
+		[ "$ip_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wanv6.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoev6" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "wanv6"
+	fi
+
+
+	echo "#### prefix=$prefix dns=$dns" > /dev/console
+	local dnses=$(parsing_ipv6_dns "$dns")
+	[ -n "$dnses" ] && {
+		tmp=${dnses%% *}
+		[ -n "$tmp" ] && dns1="$tmp"
+		[ "$tmp" != "${dnses##* }" ] && dns2="${dnses##* }"
+	}
+
+	[ "$wanv6_type" == "6to4" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			return
+		fi
+		prefix=$(get_tunnel_prefix "$ipaddr")
+		prefixlen="64"
+	}
+
+	[ "$wanv6_type" == "6rd" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			proto_notify_error "$iface" "NO_WAN_LINK"
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			proto_notify_error "$iface" "NO_WAN_ADDRESS"	
+			return
+		fi
+
+		local ip6prefix=$(uci get network.wanv6.ip6prefix)
+		local ip6prefixlen=$(uci get network.wanv6.ip6prefixlen)
+		local ip4prefixlen=$(uci get network.wanv6.ip4prefixlen)
+		local ip6subnet=$(6rdcalc "$ip6prefix/$ip6prefixlen" "$ipaddr/$ip4prefixlen")
+
+		prefix="${ip6subnet%%::*}:1::"
+		prefixlen="64"
+	}
+
+    local ula_enable=$(uci get protocol.ula.enable)
+	[ -z "$prefix" -a "$ula_enable" != "on" ] && {
+		return
+	}
+	
+	prefixlen="${prefixlen:-64}"
+	leasetime="${leasetime:-86400}"
+	startip="${prefix}${startip:-1000}"
+	endip="${prefix}${endip:-2000}"
+	
+#	local oIFS="$IFS"; IFS=":"; set -- $prefix; IFS="oIFS"
+#	if [ "$#" == "4" -a -n "$4" ]; then
+#		startip="${prefix}:${startip:-1000}"
+#		endip="${prefix}:${endip:-2000}"
+#	else
+#		startip="${prefix}${startip:-1000}"
+#		endip="${prefix}${endip:-2000}"
+#	fi	
+	
+	[ -d "$radvddir" ] && rm -rf "$radvddir"
+	mkdir -p "$radvddir"
+	
+	[ "$dns1" == "none" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "::" ]	&& {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "none" -a "$dns2" == "::" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+
+    # start radvd
+	create_radvd_conf "$ifname" "$prefix" "$prefixlen" "dhcp6s" "$radvdfile"
+	#[ -f "$radvdfile" ] &&  /usr/sbin/radvd -C "$radvdfile" -p "$radvdpidfile"
+	start_radvd "$radvdfile" "$radvdpidfile" "$ifname"
+
+    [ -z "$prefix" ] && {
+        return
+    }
+
+    # config and restart dhcp6s
+    uci set dhcp6s.basic.enabled="1"
+    uci set dhcp6s.basic.proto="dhcp6s"
+    uci set dhcp6s.basic.interface="$iface"
+    uci set dhcp6s.basic.ifname="$ifname"
+    uci set dhcp6s.basic.primary_dns="$dns1"
+    uci set dhcp6s.basic.secondary_dns="$dns2"
+    uci set dhcp6s.basic.startip="$startip"
+    uci set dhcp6s.basic.endip="$endip"
+    uci set dhcp6s.basic.leasetime="$leasetime"
+    uci commit dhcp6s
+    /etc/init.d/dhcp6s restart
+}
+
+
+proto_slaac_setup() {
+	local iface="$1"
+	local ifname="$2"
+	local radvddir="/tmp/radvd-$ifname"
+	local radvdfile="$radvddir/radvd.conf"
+	local radvdpidfile="$radvddir/radvd.pid"
+	
+	local dns1="none"
+	local dns2="none"
+	local dns tmp
+	local wan_type wanv6_type
+	local ip_mode ipv6_mode
+	local proto
+	local prefix prefixlen
+		
+	config_load /etc/config/network
+	config_get wan_type wan wan_type
+	config_get wanv6_type wanv6 wan_type
+	config_get ip_mode wanv6 ip_mode
+	config_get prefix lanv6 prefix
+	config_get prefixlen lanv6 prefixlen
+	
+	if [ "$wan_type" == "pppoeshare" ]
+	then
+		config_get ipv6_mode internet ipv6_mode
+		config_get proto internet proto
+		config_get ip_config wan ip_config
+		[ "$ipv6_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wan.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoeshare" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "internet"
+	else
+		config_get ip_mode wanv6 ip_mode
+		config_get proto wanv6 proto
+		config_get ip_config wanv6 ip_config
+		[ "$ip_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wanv6.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoev6" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "wanv6"
+	fi
+	echo "#### prefix=$prefix dns=$dns" > /dev/console
+	local dnses=$(parsing_ipv6_dns "$dns")
+	[ -n "$dnses" ] && {
+		tmp=${dnses%% *}
+		[ -n "$tmp" ] && dns1="$tmp"
+		[ "$tmp" != "${dnses##* }" ] && dns2="${dnses##* }"
+	}
+	
+	[ "$wanv6_type" == "6to4" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			return
+		fi
+		prefix=$(get_tunnel_prefix "$ipaddr")
+		prefixlen="64"
+	}
+
+	[ "$wanv6_type" == "6rd" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			proto_notify_error "$iface" "NO_WAN_LINK"
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			proto_notify_error "$iface" "NO_WAN_ADDRESS"	
+			return
+		fi
+
+		local ip6prefix=$(uci get network.wanv6.ip6prefix)
+		local ip6prefixlen=$(uci get network.wanv6.ip6prefixlen)
+		local ip4prefixlen=$(uci get network.wanv6.ip4prefixlen)
+		local ip6subnet=$(6rdcalc "$ip6prefix/$ip6prefixlen" "$ipaddr/$ip4prefixlen")
+
+		prefix="${ip6subnet%%::*}:1::"
+		prefixlen="64"
+	}
+	
+    local ula_enable=$(uci get protocol.ula.enable)
+	[ -z "$prefix" -a "$ula_enable" != "on" ] && {
+		return
+	}
+	
+	prefixlen="${prefixlen:-64}"
+	
+	[ -d "$radvddir" ] && rm -rf "$radvddir"
+	mkdir -p "$radvddir"
+	
+	[ "$dns1" == "none" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "::" ]	&& {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "none" -a "$dns2" == "::" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+    # start radvd
+	create_radvd_conf "$ifname" "$prefix" "$prefixlen" "prefix" "$radvdfile"
+	start_radvd "$radvdfile" "$radvdpidfile" "$ifname"
+	#[ -f "$radvdfile" ] && {
+	#	sleep 3
+	#	echo start radvd:$radvdfile:$radvdpidfile > /dev/console
+	#	/usr/sbin/radvd -C "$radvdfile" -p "$radvdpidfile" -m "syslog"
+	#}
+
+    [ -z "$prefix" ] && {
+        return
+    }
+
+    # config and restart dhcp6s
+    uci set dhcp6s.basic.enabled="1"
+    uci set dhcp6s.basic.proto="slaac"
+    uci set dhcp6s.basic.interface="$iface"
+    uci set dhcp6s.basic.ifname="$ifname"
+    uci set dhcp6s.basic.primary_dns="$dns1"
+    uci set dhcp6s.basic.secondary_dns="$dns2"
+    uci commit dhcp6s
+    /etc/init.d/dhcp6s restart
+}
+
+proto_rdnss_setup() {
+	local iface="$1"
+	local ifname="$2"
+	local radvddir="/tmp/radvd-$ifname"
+	local radvdfile="$radvddir/radvd.conf"
+	local radvdpidfile="$radvddir/radvd.pid"
+	
+	local dns1="none"
+	local dns2="none"
+	local dns tmp
+	local wan_type wanv6_type
+	local ip_mode ipv6_mode
+	local prefix prefixlen
+	local proto
+
+	config_load /etc/config/network
+	config_get wan_type wan wan_type
+	config_get wanv6_type wanv6 wan_type
+	config_get proto wanv6 proto
+	config_get ip_mode wanv6 ip_mode
+	config_get prefix lanv6 prefix
+	config_get prefixlen lanv6 prefixlen
+	
+	if [ "$wan_type" == "pppoeshare" ]
+	then
+		config_get ipv6_mode internet ipv6_mode
+		config_get proto internet proto
+		config_get ip_config wan ip_config
+		[ "$ipv6_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wan.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoeshare" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "internet"
+	else
+		config_get ip_mode wanv6 ip_mode
+		config_get proto wanv6 proto
+		config_get ip_config wanv6 ip_config
+		[ "$ip_mode" == "prefix" ] && {
+			[ "$(uci -p /var/state get network.wanv6.up 2>/dev/null)" = "1" ] || {
+				prefix=""
+			}
+			[ "$proto" == "dhcp6c" -o "$proto" == "pppoev6" ] && [ "$ip_config" != "specified" ] && prefix=`cat /tmp/dhcp6c/prefix.info`
+		}
+		network_get_dnsserver dns "wanv6"
+	fi
+	echo "#### prefix=$prefix dns=$dns" > /dev/console
+	local dnses=$(parsing_ipv6_dns "$dns")
+	[ -n "$dnses" ] && {
+		tmp=${dnses%% *}
+		[ -n "$tmp" ] && dns1="$tmp"
+		[ "$tmp" != "${dnses##* }" ] && dns2="${dnses##* }"
+	}
+	
+	[ "$wanv6_type" == "6to4" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			return
+		fi
+		prefix=$(get_tunnel_prefix "$ipaddr")
+		prefixlen="64"
+	} 
+	
+	[ "$wanv6_type" == "6rd" ] && {
+		local wanif ipaddr
+		if ! network_find_wan wanif; then
+			proto_notify_error "$iface" "NO_WAN_LINK"
+			return
+		fi
+			
+		if ! network_get_ipaddr ipaddr "$wanif"; then
+			proto_notify_error "$iface" "NO_WAN_ADDRESS"	
+			return
+		fi
+
+		local ip6prefix=$(uci get network.wanv6.ip6prefix)
+		local ip6prefixlen=$(uci get network.wanv6.ip6prefixlen)
+		local ip4prefixlen=$(uci get network.wanv6.ip4prefixlen)
+		local ip6subnet=$(6rdcalc "$ip6prefix/$ip6prefixlen" "$ipaddr/$ip4prefixlen")
+
+		prefix="${ip6subnet%%::*}:1::"
+		prefixlen="64"
+	}
+
+    local ula_enable=$(uci get protocol.ula.enable)
+	[ -z "$prefix" -a "$ula_enable" != "on" ] && {
+		return
+	}
+	
+	prefixlen="${prefixlen:-64}"
+	
+	[ -d "$radvddir" ] && rm -rf "$radvddir"
+	mkdir -p "$radvddir"
+	
+	[ "$dns1" == "none" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "::" ]	&& {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "::" -a "$dns2" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}	
+	
+	[ "$dns1" == "none" -a "$dns2" == "::" ] && {
+		dns1="2001:4860:4860::8888"
+		dns2="2001:4860:4860::8844"
+	}
+
+	[ "$dns1" == "none" ] && {
+		dns1="2001:4860:4860::8888"
+	}
+
+	[ "$dns2" == "none" ] && {
+		dns2="2001:4860:4860::8844"
+	}
+
+    # start radvd
+	create_radvd_conf "$ifname" "$prefix" "$prefixlen" "rdnss" "$radvdfile" "$dns1" "$dns2"
+	#[ -f "$radvdfile" ] &&  /usr/sbin/radvd -C "$radvdfile" -p "$radvdpidfile"
+	start_radvd "$radvdfile" "$radvdpidfile" "$ifname"
+    # stop dhcp6s
+    /etc/init.d/dhcp6s stop
+}
+
+proto_lanv6_setup() {
+	local ifname proto
+	
+	config_load /etc/config/network
+	config_get ifname $INTERFACE ifname
+	config_get proto $INTERFACE proto
+
+	local radvddir="/tmp/radvd-$ifname"
+
+	[ -d "$radvddir" ] && rm -rf "$radvddir"
+	
+	echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+	
+	[ "$proto" == "dhcp6s" ] && proto_dhcp6s_setup "$INTERFACE" "$ifname"
+	
+	[ "$proto" == "slaac" ] && proto_slaac_setup "$INTERFACE" "$ifname"
+
+	[ "$proto" == "rdnss" ] && proto_rdnss_setup "$INTERFACE" "$ifname"
+
+	add_del_prefix_route "add"
+}
+
+proto_lanv6_teardown() {
+	local ifname
+	config_load /etc/config/network
+	config_get ifname $INTERFACE ifname
+	
+	local radvddir="/tmp/radvd-$ifname"
+	local radvdpidfile="$radvddir/radvd.pid"
+	
+	echo "down lanv6" >> /tmp/lanv6.txt
+	cat $radvdpidfile >> /tmp/lanv6.txt
+	
+	[ -f "$radvdpidfile" ] && kill -15 `cat "$radvdpidfile"`
+	[ -d "$radvddir" ] && rm -rf "$radvddir"
+
+    /etc/init.d/dhcp6s stop
+
+	add_del_prefix_route "del"
+}
+	
+[ "$ACTION" == "ifup" -a "$INTERFACE" == "lanv6" ] && proto_lanv6_setup
+
+[ "$ACTION" == "ifdown" -a "$INTERFACE" == "lanv6" ] && proto_lanv6_teardown
+

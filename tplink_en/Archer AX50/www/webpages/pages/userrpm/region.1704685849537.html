@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Wireless</title>
+</head>
+
+<body>
+<div class="func-container">
+	<div id="wireless-region">
+		<form id="wireless_region_form" >
+			<input  name="country" id="wireless_region_combo" />
+		</form>
+	</div>
+	
+
+	<div id="help-wireless-setting"></div>
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+try{
+	$
+}catch(e){
+	location.href = "/";
+};
+
+$(document).ready(function(e){
+	var cur_region_data = {};
+	var region_data = {};
+
+	var URL_REGION_G_NEW = $.su.url("/locale?form=country");
+	var URL_REGION_G_LOAD_NEW = $.su.url("/locale?form=country_list");
+	
+	
+
+	$("div#wireless-region").panel({
+		title: $.su.CHAR.WIRELESS.GLOBAL_SETTINGS,
+		collapsible: false
+	});
+	
+	$("form#wireless_region_form").form({
+		proxy: new $.su.Proxy({
+			timeout:20*1000,
+			url:URL_REGION_G_NEW
+		}),
+		fields: [
+			{name: "country", mapping: "country"}
+		],
+		autoLoad:true,
+		submitBtn: "default"
+	});
+	$("#wireless_region_combo").combobox({
+		fieldLabel: $.su.CHAR.WIRELESS.REGION,
+		labelCls: "l",
+		tips: "",
+		// labelCls: "l",
+		inputCls: "xxl",
+		items: [
+			
+		]
+	});
+	var newRegionItem = [];
+	newRegionItem = $.su.loadComboData(URL_REGION_G_LOAD_NEW, {}, [
+		{
+			srcKey:"name", 
+			dstKey:"name", 
+			func:function(src, para){
+				return para[src];
+			}, 
+			para:$.su.CHAR.REGION
+		},
+		{srcKey:"value", dstKey:"value"}
+	]);
+	$("#wireless_region_combo").combobox("loadData",newRegionItem);
+});
+//]]>
+</script>
+
+</body>
+</html>

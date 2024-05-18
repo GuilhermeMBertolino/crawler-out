@@ -1,0 +1,84 @@
+#!/usr/bin/lua
+
+-- get new firmware list from cloud.
+
+local cloud = require "cloud_req.cloud_comm"
+local json  = require "luci.json"
+local sys   = require "luci.sys"
+local uci   = require "luci.model.uci"
+local dbg   = require "luci.tools.debug"
+local uci_r = uci.cursor()
+
+local req = {}
+req.method = "getIntlFwList"
+req.params = {}
+req.params.hwId = cloud.TrimStr(sys.exec("getfirm HW_ID"))
+req.params.fwId = cloud.TrimStr(sys.exec("getfirm FW_ID"))
+req.params.oemId = cloud.TrimStr(sys.exec("getfirm OEM_ID"))
+req.params.devFwCurrentVer = string.match(sys.exec("getfirm SOFTVERSION"), "[^%s]+")
+req.params.locale = uci_r:get("locale", "sysinfo", "locale") or "en_US"
+
+local re, data = cloud.send_request_sync(req, 5000, 1)
+
+-- connection error
+if re ~= 0 then os.exit(-1) end
+
+-- handler err_code
+if data.error_code ~= 0 then os.exit(data.error_code) end
+
+-- empty fwlist
+if #data.result.fwList == 0 then os.exit(0) end
+
+
+local fw = {}
+function checkFwVersion(fw1, fw2)
+	if fw1.fwVer == nil then return true end
+
+	local plat1, major1, minor1, date1, stamp1 = string.match(fw1.fwVer, "(%d+).(%d+).(%d+) Build (%d+) rel.(%d+)")
+	local plat2, major2, minor2, date2, stamp2 = string.match(fw2.fwVer, "(%d+).(%d+).(%d+) Build (%d+) rel.(%d+)")
+
+	if plat2 ~= plat1  then return false end
+	if major2 > major1 then return true end
+	if major2 < major1 then return false end
+	if minor2 > minor1 then return true end
+	if minor2 < minor1 then return false end
+	if date2  > date1  then return true end
+	if date2  < date1  then return false end
+	if stamp2 > stamp1 then return true end
+	if stamp2 < stamp1 then return false end
+
+	return false
+end
+
+for i,v in ipairs(data.result.fwList) do
+	if checkFwVersion(fw, v) then
+		fw.fwType= v.fwType or ""
+		fw.fwVer = v.fwVer or ""
+		fw.fwReleaseDate = v.fwReleaseDate or ""
+		fw.fwUrl = v.fwUrl or ""
+		fw.fwReleaseLog = v.fwReleaseLog or ""
+		fw.fwReleaseLogUrl = v.fwReleaseLogUrl or ""
+		fw.fwLocation = v.fwLocation or ""
+		fw.fwTitle = v.fwTitle or ""
+	end
+end
+fw.fwReleaseLog = string.gsub(fw.fwReleaseLog,"\n","\\n")
+
+uci_r:set("cloud_config", "upgrade_info", "type", fw.fwType)
+uci_r:set("cloud_config", "upgrade_info", "version", fw.fwVer)
+uci_r:set("cloud_config", "upgrade_info", "release_date", fw.fwReleaseDate)
+uci_r:set("cloud_config", "upgrade_info", "download_url", fw.fwUrl)
+uci_r:set("cloud_config", "upgrade_info", "release_log", fw.fwReleaseLog)
+uci_r:set("cloud_config", "upgrade_info", "release_log_url", fw.fwReleaseLogUrl)
+uci_r:set("cloud_config", "upgrade_info", "location", fw.fwLocation)
+uci_r:set("cloud_config", "upgrade_info", "fw_title", fw.fwTitle)
+uci_r:set("cloud_config", "new_firmware", "fw_new_notify", "1")
+uci_r:set("cloud_config", "new_firmware", "notify_time", os.time())
+
+if "3" == uci_r.get("cloud_config", "info", "tcsp_status") then
+	uci_r:set("cloud_config", "upgrade_info", "type", "3")
+end
+
+uci_r:commit("cloud_config")
+
+sys.exec("lua /lib/wportal/clear_upgrade.lua")

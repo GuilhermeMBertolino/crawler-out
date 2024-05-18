@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Intel</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="js/Datetimepicker/DateTimePicker.js"></script>
+        <style type="text/css">
+        </style>
+        <script>
+            $(document).ready(function () {
+                $("#dtBox").DateTimePicker();
+            });
+        </script>
+    </head>
+    <body>
+        <div id="translation" class="hide">adminactions</div>
+<!--Breadscrumbs starts here -->                                                                                                      
+    <div class="row ltq_breadcrumbs">                                                                                                     
+        <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+            <ng-switch on="$first">                                                                                                               
+                <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                    <div class="ltq_brd_home" >                                                                                                           
+                    <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                        <i class="fa fa-home"></i>                                                                                                            
+                            {{breadcrumb.name}}                                                                                                                   
+                    </a>                                                                                                                                  
+                    </div>                                                                                                                                
+                </div>                                                                                                                                
+
+                <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                    <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>                                                                                                                               
+                    <span ng-if ="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>                                                                                                                               
+                </div>                                                                                                                                 
+
+            </ng-switch>                                                                                                                            
+        </div>                                                                                                                                   
+    </div>                                                                                                                                  
+<!--Breadscrumbs ends here --> 
+        <div class="subheader">
+            <div>
+                <img src="images/icons/backupstore-0.png" alt="image" class="iconDetails">
+            </div>
+            <div><h4 ng-bind="'adminactions.headername'| translate"></h4></div>
+            <p ng-bind="'adminactions.headerdescription'| translate"></p>
+        </div>
+        <div class="backuprestore" ng-controller="backupRestoreController" ng-cloak>
+            <div class="row" ng-show="backupformnamepopup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('backupformnamepopup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="backupformnamepopupval"></span>
+                    </div>
+            </div>
+            <div class="row" ng-show="DeviceX_LANTIQ_COM_Upgradepopup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('DeviceX_LANTIQ_COM_Upgradepopup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="DeviceX_LANTIQ_COM_Upgradepopupval"></span>
+                    </div>
+            </div>
+            <div class="row" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgradeLatestUpgrade1popup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('DeviceX_LANTIQ_COM_UpgradeUpgradeLatestUpgrade1popup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgradeLatestUpgrade1popupval"></span>
+                    </div>
+            </div>
+            <div class="row" ng-show="fileuploadformnamepopup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('fileuploadformnamepopup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="fileuploadformnamepopupval"></span>
+                    </div>
+            </div>
+            <div class="row" ng-show="checkforupdatepopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('checkforupdatepopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="checkforupdateval"></span>
+                </div>
+            </div>
+            <div class="help_toggle helpshow" ng-class="$root.scopevariable ? 'helpshow' : 'helphide'" ng-init="$root.scopevariable=true">
+                    <div class="help_txtcontent">
+                        <a helpfile="languages/*/{{'adminactions.helpkey' | translate}}" ng-click="helpTextDetails($event)" href="">
+                            <i class="fa fa-info circle_bg"></i>
+                        </a>
+                        <div class="help_content" ng-include="$root.helpfile"></div>
+                    </div>
+            </div>
+            <div class="col-lg-6 col-md-6 no-padding-hr-l mbl-no-padding-hr" >
+                    <div class="rebootandfactoryreset" ng-controller="rebootFactoryResetController">
+						<div class="row" ng-show="rebootformnamepopup">
+							<div class="alert alert-danger">
+								<a class="close" aria-label="close" ng-click="popupclose('rebootformnamepopup')">&times;</a>
+							<strong ng-bind="'Warning!' | translate"></strong><span ng-bind="rebootformnamepopupval"></span>
+							</div>
+						</div>
+						<div class="row" ng-show="factoryresetformnamepopup">
+							<div class="alert alert-danger">
+								<a class="close" aria-label="close" ng-click="popupclose('factoryresetformnamepopup')">&times;</a>
+								<strong ng-bind="'Warning!' | translate"></strong><span ng-bind="factoryresetformnamepopupval"></span>
+							</div>
+						</div>
+						<div class="panel">
+                        <div class="panel-heading org_bg"><span class="panel_heading_icon"><img src="images/icons/configuration-1.png" alt="panel-icon"/></span><span ng-bind="'adminactions.RebootFactoryReset' | translate"></span></div>
+                        <div class="panel-body">
+                            <div class="content_body">
+                                <p ng-bind="'adminactions.Factoryrestdesc' | translate"></p>
+                            </div>
+                            <div class="text-right">
+                                <button class="btn btn-info waves-effect waves-light" title="Reboot" id="Modify" name="Reboot" value="Reboot" ng-click="Reboot($event)"><span class="" ng-bind="'adminactions.Reboot' | translate"></span></button>
+								<button class="btn btn-info waves-effect waves-light" title="FactoryReset" id="Modify" name="FactoryReset" value="FactoryReset" ng-click="factoryReset($event)"><span class="" ng-bind="'adminactions.FactoryReset' | translate"></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6 no-padding-hr-r mbl-no-padding-hr">
+                    <div class="panel" >
+                        <div class="panel-heading org_bg"><span class="panel_heading_icon"><img src="images/icons/backup-panel-icon.png" alt="panel-icon"/></span><span ng-bind="'adminactions.Backup' | translate"></span></div>
+                        <div class="panel-body">
+                            <div class="content_body">
+                                <p ng-bind="'adminactions.Backupdesc' | translate"></p>
+                            </div>
+                            <div class="text-right">
+                            <div class="btn-group text-center">
+                                <button class="btn btn-info waves-effect waves-light" id="Modify" name="Backup" value="Backup" ng-click="backUp()" title="Backup"><span class="" ng-bind="'Backup' | translate"></span></button>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            <div class="row">
+                <div class="col-lg-6 col-md-6 no-padding-hr-l mbl-no-padding-hr">
+                    <div class="panel">
+                        <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/restore-panel-icon.png" alt="panel-icon"/></span><span ng-bind="'adminactions.Restore' | translate"></span></div>
+                        <div class="panel-body">
+                            <p ng-bind="'adminactions.Restoredesc' | translate"></p>
+                            <div fu-file-dropper ng-model="fileList3" type="restore" ng-bind="'adminactions.Dragdropfiledesc' | translate"></div>
+                            <div ng-repeat="f in fileList3">- {{f.name}}</div>
+                            <p ng-bind="'adminactions.Selectfiledesc' | translate"></p>
+                            <form method="POST" enctype="multipart/form-data" onsubmit="return false">
+                                <div class="form-inline">
+                                    <div class="form-group">
+                                        <input id="restore" type="file" file-model="myFile" name="restore">
+                                    </div>
+                                    <div class="text-right">
+                                    <button class="btn btn-info waves-effect waves-light" id="Modify" name="Restore" value="Restore" ng-click="Restore()" title="Restore"><span class="" ng-bind="'Restore' | translate"></span></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 no-padding-hr-r mbl-no-padding-hr">
+                    <div class="panel">
+                        <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/fireware-panel-icon.png" alt="panel-icon"/></span><span ng-bind="'adminactions.FirmwareUpgrade' | translate"></span></div>
+                        <div class="panel-body">
+                            <div><span class="ver_class" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Version' | translate"></span><span> {{version}}</span>
+                            <span class="ver_class" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade&LatestUpgrade=1.Last Image Upgrade' | translate"></span><span class="{{colorId}}"> {{stateValue}}</span></div>
+                            <div fu-file-dropper ng-model="fileList4" type="firmware" ng-bind="'adminactions.Dragdropfiledesc' | translate"></div>
+                            <div ng-repeat="f in fileList4">- {{f.name}}</div>
+                            <p ng-bind="'adminactions.Selectfiledesc' | translate"></p>
+                            <form method="POST" enctype="multipart/form-data" onsubmit="return false" name="upgradefirmwareform">
+                                <div class="form-inline">
+                                    <div class="form-group">
+                                        <input id="firmware" type="file" file-model="myFile" name="firmware">
+                                    </div>
+                                    <div class="text-right">
+                                    <button class="btn btn-info waves-effect waves-light" id="Modify" name="Firmwareupgrade" value="Firmwareupgrade" ng-click="firmwareUpgrade()" title="Firmware upgrade"><span class="" ng-bind="'adminactions.FirmwareUpgrade' | translate"></span></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 col-md-6 no-padding-hr-l" ng-show="showfirmwareparams">
+                    <div class="panel">
+                        <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/fireware-panel-icon.png" alt="panel-icon"/></span><span ng-bind="'adminactions.Auto Firmware Upgrade Settings' | translate"></span></div>
+			<div class="panel-body">
+			<form name="upgradefirmwareform">
+                            <div class="row">    
+                                <span class="text-left">
+                                    <label ng-class="{red_color:error, green_color:success}" ng-bind="updatestatusmessage | translate"></label>
+                                </span>                                                            
+                                <span class="text-right" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtStatus == 'Sync' || DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtStatus == "'ServerUnReachable'">
+                                    <button class="btn btn-info waves-effect waves-light pull-right" id="Modify" name="checkforupdate" value="Check for update" ng-click="checkforUpdate()" title="Check for update"><span class="" ng-bind="'adminactions.Check for update' | translate"></span></button>
+                                </span>
+                                <span class="text-right" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtStatus == 'Unsync'">
+                                    <button class="btn btn-info waves-effect waves-light pull-right" id="Modify" name="updatefromserver" value="UPDATE From Server" ng-click="updatefromServer()" title="UPDATE From Server"><span class="" ng-bind="'adminactions.UPDATE From Server' | translate"></span></button>
+                                </span>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-3 col-md-3 col-xs-12 text-left firewallprofile mbl-no-padding-hr no-padding-hr-l"><label class="label_inline" ng-bind="'adminactions.Auto-Update' | translate"></label></div>                       
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12 mbl-no-padding-hr no-padding-hr">
+
+                                    <div class="input-field1 radiogroup mbl-no-padding-hr">                            
+                                        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_Disable" name="Auto-update" class="with-gap" type="radio" value="Disable" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtState" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4SwUpdtState')">
+                                        <label for="DeviceX_LANTIQ_COM_UpgradeUpgrade_Disable" class="radio_left_align mr-20" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Disable' | translate"></label>
+                                        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_Notify" name="Auto-update" class="with-gap" type="radio" value="Notify" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtState" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4SwUpdtState')">
+                                        <label for="DeviceX_LANTIQ_COM_UpgradeUpgrade_Notify" class="radio_left_align mr-20" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Notify Only' | translate"></label>
+                                        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_Automatic" name="Auto-update" class="with-gap" type="radio" value="Automatic" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtState" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4SwUpdtState')">
+                                        <label for="DeviceX_LANTIQ_COM_UpgradeUpgrade_Automatic" class="radio_left_align mr-20" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Notify and Upgrade' | translate"></label>
+                                        <!--                                                <span class="error" forname="formprops_DefaultAction" ng-show="parentalcontrol.pcdefaultaction.$error.required" ng-bind="'Device.Firewall.X_LANTIQ_COM_ParentalControl.DefaultAction.$error.required' | translate">
+                                        
+                                                                                        </span>-->
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtState" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtStateresponsestatus" ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtStateval">
+
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtState == 'Notify'">
+                                <div>
+                                    <label ng-bind="'adminactions.Specify time to check for updates' | translate"></label>
+                                </div>
+                                <div class="row no-padding-hr">
+                                <div class="form-group required col-lg-6 col-md-6 text-left custom_formgroup  no-padding-hr-l">
+                                <div class="input-field col-sm-12">                                 
+        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_URL" ng-required="true" type="text" name="autoupdateurl" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.URL" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4URL')" placeholder="{{'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Server URL.URL to check for update' | translate}}">
+                                    <label class="required active" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Server URL' | translate"></label>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_URL" ng-show="upgradefirmwarestatus && upgradefirmwareform.autoupdateurl.$error.required" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.URL.$error.required' | translate "></span>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_URL" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4_URLresponsestatus" ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgrade4_URL"></span>
+                                </div>
+                                </div>
+                                </div>
+                                <div class="row timepicker no-padding-hr"> 
+                                    <div class="form-group required col-lg-6 col-md-6 text-left custom_formgroup  no-padding-hr-l">                                                
+                                        <label class="inline active" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Start Time' | translate"></label>
+        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTime" class="startTime1 icon" ng-required="true" trigger-event="" name="autoupdatestarttime" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtTime" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4SwUpdtTime')" placeholder="&#xf017;" type="text" data-field="time" data-startend="start" data-format="HH:mm" data-startendelem=".endTime1" readonly /><i class="fa fa-pencil-square-o"></i>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTime" ng-show="upgradefirmwarestatus && upgradefirmwareform.autoupdatestarttime.$error.required" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.SwUpdtTime.$error.required' | translate ">                                                    
+                                        </span>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTime" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4_SwUpdtTimeresponsestatus" ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgrade4_SwUpdtTimeval">
+                                        </span>
+                                    </div>
+                                </div>
+                     
+                            </div>
+                            <div ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtState == 'Automatic'">
+                                <div>
+                                    <label class="green_color" ng-bind="'adminactions.Please note that Notify and upgrade option will cause device reboot' | translate"></label>
+                                </div>
+                                <div>
+                                    <label ng-bind="'adminactions.Specify time window to check for updates' | translate"></label>
+                                </div>
+                                <div class="row no-padding-hr">
+                                <div class="form-group required col-lg-6 col-md-6 text-left custom_formgroup  no-padding-hr-l">
+                                <div class="input-field col-sm-12">                                 
+        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_URLtwo" ng-required="true" type="text" name="autoupdateurltwo" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.URL" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4URL')" placeholder="{{'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Server URL.URL to check for update' | translate}}">
+                                    <label class="required active" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Server URL' | translate"></label>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_URLtwo" ng-show="upgradefirmwarestatus && upgradefirmwareform.autoupdateurltwo.$error.required" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.URL.$error.required' | translate "></span>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_URLtwo" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4_URLresponsestatus" ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgrade4_URL"></span>
+                                </div>
+                                </div>
+                                </div>
+                                <div class="row timepicker no-padding-hr"> 
+                                    <div class="form-group required col-lg-6 col-md-6 text-left custom_formgroup  no-padding-hr-l">                                                
+                                        <label class="inline active" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.Start Time' | translate"></label>
+                                        <input id="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTimetwo" class="startTime1 icon" ng-required="true" trigger-event="" name="autoupdatestarttime1" ng-model="DeviceX_LANTIQ_COM_UpgradeUpgrade4.SwUpdtTime" ng-change="textChange('DeviceX_LANTIQ_COM_UpgradeUpgrade4SwUpdtTime')" placeholder="&#xf017;" type="text" data-field="time" data-startend="start" data-format="HH:mm" data-startendelem=".endTime1" readonly /><i class="fa fa-pencil-square-o"></i>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTimetwo" ng-show="upgradefirmwarestatus && upgradefirmwareform.autoupdatestarttime1.$error.required" ng-bind="'Device.X_LANTIQ_COM_Upgrade.Upgrade.4.SwUpdtTime.$error.required' | translate ">                                                    
+                                        </span>
+                                        <span class="error" forname="DeviceX_LANTIQ_COM_UpgradeUpgrade_SwUpdtTimetwo" ng-show="DeviceX_LANTIQ_COM_UpgradeUpgrade4_SwUpdtTimeresponsestatus" ng-bind="DeviceX_LANTIQ_COM_UpgradeUpgrade4_SwUpdtTimeval">
+                                        </span>
+                                    </div>
+                                </div>
+                                    
+                            </div>
+                            <div id="dtBox"></div>
+                            <div class="text-right">
+                                <button class="btn btn-info waves-effect waves-light" id="Modify" name="Save" value="Save" formstatus="{{upgradefirmwareform.$valid}}" ng-click="saveChanges('Device.X_LANTIQ_COM_Upgrade.Upgrade.4', $event)" title="Save"><span class="" ng-bind="'Save' | translate">Save</span></button>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                
+        </div>
+        </div>
+        <script  type="text/ng-template" id="templateRemove">
+            <div class="ngdialog-message">
+            <h4 ng-bind="'adminactions.Device will reboot when new firmware is availble. Do you still want to contnue ?' | translate"></h4>
+            </div>
+            <div class="ngdialog-buttons">
+            <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="closeThisDialog('button')" ng-bind="'Cancel' | translate"></button>
+            <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="confirm('OK')" ng-bind="'Ok' | translate"></button>
+            </div>
+        </script>
+        <script  type="text/ng-template" id="templateUpdate">
+            <div class="ngdialog-message">
+                <h4 ng-bind="'adminactions.Device will go for reboot after upgrade.' | translate"></h4>
+            </div>
+            <div class="ngdialog-buttons">
+                <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="closeThisDialog('button')" ng-bind="'Cancel' | translate"></button>
+                <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="confirm('OK')" ng-bind="'Ok' | translate"></button>
+            </div>
+        </script> 
+        <script  type="text/ng-template" id="templateRestore">
+            <div class="ngdialog-message">
+                <h4 ng-bind="'adminactions.You might loose current configuration . Do you want to proceed with restore?' | translate"></h4>
+            </div>
+            <div class="ngdialog-buttons">
+                <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="closeThisDialog('button')" ng-bind="'Cancel' | translate"></button>
+                <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="confirm('OK')" ng-bind="'Ok' | translate"></button>
+            </div>
+        </script> 
+    </body>
+</html>

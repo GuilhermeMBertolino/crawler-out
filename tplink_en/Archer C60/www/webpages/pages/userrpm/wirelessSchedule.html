@@ -1,0 +1,442 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Wireless Schedule</title>
+</head>
+
+<body>
+	<div class="func-container">
+		<div id="wireless_schedule">
+			<div class="mode-change" id="mode_change">
+				<span id="show_2g" class="first-mode mode-select"></span>
+				<span id="seprate_2g"> | </span>
+				<span id="show_5g" class="second-mode"></span>
+				<span id="seprate_5g"> | </span>
+				<span id="show_52g" class="third-mode"></span>
+			</div>
+
+			<form id="wireless-schedule-2g">
+				<input type="text" id="enable_schedule_2g" name="enable" value="" />
+				<input id="schedule_calendar_2g" name="calendar">
+			</form>
+			<form id="wireless-schedule-5g" class="hidden">
+				<input type="text" id="enable_schedule_5g" name="enable" value="" />
+				<input id="schedule_calendar_5g" name="calendar">
+			</form>
+			<form id="wireless-schedule-52g" class="hidden">
+				<input type="text" id="enable_schedule_52g" name="enable" value="" />
+				<input id="schedule_calendar_52g" name="calendar">
+			</form>
+		</div>
+
+		<div id="wireless_schedule_help"></div>
+	</div>
+	
+<script type="text/javascript">
+//<![CDATA[
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	var WIRELESS_SCHEDULE_2G_URL_NEW = $.su.url("/admin/wireless?form=wireless_schedule_2g");
+	var WIRELESS_SCHEDULE_5G_URL_NEW = $.su.url("/admin/wireless?form=wireless_schedule_5g");
+	var WIRELESS_SCHEDULE_52G_URL_NEW = $.su.url("/admin/wireless?form=wireless_schedule_52g");
+	var URL_TIME_SETTING = $.su.url("/admin/time?form=settings");
+
+	var URL_SMART_CONNECT_NEW = $.su.url("/admin/wireless?form=smart_connect");
+	var URL_REGION_NEW = $.su.url("/admin/wireless?form=region");
+	var cur_region_data = {};
+	var isTriband = false;
+
+	var regionProxy = new $.su.Proxy({
+		url:URL_REGION_NEW,
+		async:false
+	});
+	regionProxy.read({},function(data){
+		cur_region_data = data.capability;
+	});
+	var channel_5g = cur_region_data.channel_5g;
+	var channel_52g = cur_region_data.channel_5g_2;
+	if(channel_52g == undefined){//双频
+		isTriband = false;
+	}
+	else{	//三频
+		isTriband = true;
+	}
+
+	var timeZoneObj = {
+		"0": 'GMT-12:00',
+	    "60": 'GMT-11:00',
+	    "120": 'GMT-10:00',
+	    "180": 'GMT-09:00',
+	    "240": 'GMT-08:00',
+	    "300": 'GMT-07:00',
+	    "360": 'GMT-06:00',
+	    "420": 'GMT-05:00',
+	    "450": 'GMT-04:30',
+	    "480": 'GMT-04:00',
+	    "510": 'GMT-03:30',
+	    "540": 'GMT-03:00',
+	    "600": 'GMT-02:00',
+	    "660": 'GMT-01:00',
+	    "720": 'GMT'      ,
+	    "780": 'GMT+01:00',
+	    "840": 'GMT+02:00',
+	    "900": 'GMT+03:00',
+	    "930": 'GMT+03:30',
+	    "960": 'GMT+04:00',
+	    "990": 'GMT+04:30',
+	    "1020": 'GMT+05:00',
+	    "1050": 'GMT+05:30',
+	    "1065": 'GMT+05:45',
+	    "1080": 'GMT+06:00',
+	    "1110": 'GMT+06:30',
+	    "1140": 'GMT+07:00',
+	    "1200": 'GMT+08:00',
+	    "1260": 'GMT+09:00',
+	    "1290": 'GMT+09:30',
+	    "1320": 'GMT+10:00',
+	    "1380": 'GMT+11:00',
+	    "1440": 'GMT+12:00',
+	    "1500": 'GMT+13:00'
+	};
+
+	var dayObj = {
+		"1": $.su.CHAR.ORDER["1ST_"],
+		"2": $.su.CHAR.ORDER["2ND"],
+		"3": $.su.CHAR.ORDER["3RD"]
+	};
+
+	var weekObj = {
+		"mon": $.su.CHAR.DATE.MON,
+		"tue": $.su.CHAR.DATE.TUES,
+		"wed": $.su.CHAR.DATE.WED,
+		"thu": $.su.CHAR.DATE.THUR,
+		"fri": $.su.CHAR.DATE.FRI,
+		"sat": $.su.CHAR.DATE.SAT,
+		"sun": $.su.CHAR.DATE.SUN
+	};
+
+	var monthObj = {
+		"1": $.su.CHAR.DATE.JAN,
+		"2": $.su.CHAR.DATE.FEB,
+		"3": $.su.CHAR.DATE.MAR,
+		"4": $.su.CHAR.DATE.APR,
+		"5": $.su.CHAR.DATE.MAY,
+		"6": $.su.CHAR.DATE.JUN,
+		"7": $.su.CHAR.DATE.JUL,
+		"8": $.su.CHAR.DATE.AUG,
+		"9": $.su.CHAR.DATE.SEP,
+		"10": $.su.CHAR.DATE.OCT,
+		"11": $.su.CHAR.DATE.NOV,
+		"12": $.su.CHAR.DATE.DEC
+	};
+
+	var smart_connect = "off";
+
+	$("#show_2g").html($.su.CHAR.WIRELESS_SCHEDULE.MODE_2G);
+	$("#show_5g").html($.su.CHAR.WIRELESS_SCHEDULE.MODE_5G);
+	$("#show_52g").html($.su.CHAR.WIRELESS_SCHEDULE.MODE_52G);
+	$("#show_52g").hide();
+	$("#seprate_5g").hide();
+
+	$("div.func-container").page({
+		title: $.su.CHAR.WIRELESS_SCHEDULE.TITLE,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	$('div#wireless_schedule').panel({
+		title: $.su.CHAR.WIRELESS_SCHEDULE.TASK_SCHEDULE,
+		collapsible: false
+	});
+
+	var timeSettingProxy = new $.su.Proxy({
+		url: URL_TIME_SETTING,
+		autoLoad: false
+	});
+
+	var timeSystem = 0;
+	var showSysTime = function(e, input, msg){
+		clearInterval(timeSystem);
+
+		var timeFormat = function(date){
+			var d = "";
+			var dd = date.date.split("/");
+			var m = parseInt(dd[0], 10);
+			var dt = parseInt(dd[1], 10);
+			var y = dd[2];
+
+			d += weekObj[date.day.toLowerCase()] + " ";
+			d += (dayObj[dt] || dt + $.su.CHAR.ORDER.TH) + " ";
+			d += monthObj[m] + " ";
+			d += y + " ";
+			d += date.time + " ";
+			d += timeZoneObj[date.timezone];
+
+			var inHTML = 	"<span class=\"label\">"+$.su.CHAR.WIRELESS_SCHEDULE.SYSTEM_TIME+":"+"</span>";
+				inHTML +=	"<span>";
+				inHTML += 	d;
+				inHTML += 	"</span>";
+			return inHTML;
+		};
+
+		var setSysTime = function(t,d){
+			var t = d.time.split(":");
+			if(t[2] >= 59 && t[1] >= 59 && t[0] >= 23){
+				stopSysTime();
+				timeRead();
+				return;
+			}
+			if(t[2] >= 59){
+				t[2] = -1;
+				t[1] = t[1] >= 59 ? 0 : parseInt(t[1], 10) + 1;
+				t[0] = t[1] == 0 ? parseInt(t[0], 10) + 1 : t[0];
+				t[0] = t[0] >= 24 ? 0 : t[0];
+			}
+			d.time = $.su.func.prefixInteger(t[0],2) + ":" + $.su.func.prefixInteger(t[1],2) + ":" + $.su.func.prefixInteger( (parseInt(t[2], 10) + 1),2);
+			var t = timeFormat(d);
+			msg.msg("setTitle", t);
+		};
+
+		var timeRead = function(){
+			timeSettingProxy.read({}, function(data){
+				if (data){
+					var d = {
+						date: data.date,//"12/22/2013"
+						day: data.day,//"Mon"
+						time: data.time,//"23:59:59"
+						timezone: data.timezone//"450"
+					};
+
+					var t = timeFormat(d);
+					msg.msg("setTitle", t);
+
+					timeSystem = setInterval(function(){
+						setSysTime(t,d);
+					}, 1*1000);
+				};
+			});
+		}
+		timeRead();
+	};
+
+	var stopSysTime = function(){
+		clearInterval(timeSystem);
+	};
+
+	$("#enable_schedule_2g").switchbutton({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.ENABLE,
+		cls:"form-inner",
+		proxy: {
+			url: WIRELESS_SCHEDULE_2G_URL_NEW
+		},
+		field: {
+			"name": "enable"
+		},
+		autoLoad: false,
+		onHandler: function(){
+			$("#schedule_calendar_2g").timepicker("show");
+			$(form_2g.get(0).submitBtn).button("show");
+		},
+		offHandler: function(){
+			$("#schedule_calendar_2g").timepicker("hide");
+			$(form_2g.get(0).submitBtn).button("hide");
+		}
+	});
+
+	$("#schedule_calendar_2g").timepicker({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.EDIT,
+		cls: 'time-settings',
+		legendText: $.su.CHAR.WIRELESS_SCHEDULE.TIME
+	}).on("ev_beforeshow", showSysTime).on("ev_close", stopSysTime);
+
+	$("#enable_schedule_5g").switchbutton({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.ENABLE,
+		cls:"form-inner",
+		proxy: {
+			url: WIRELESS_SCHEDULE_5G_URL_NEW
+		},
+		field: {
+			"name": "enable"
+		},
+		autoLoad: false,
+		onHandler: function(){
+			$("#schedule_calendar_5g").timepicker("show");
+			$(form_5g.get(0).submitBtn).button("show");
+		},
+		offHandler: function(){
+			$("#schedule_calendar_5g").timepicker("hide");
+			$(form_5g.get(0).submitBtn).button("hide");
+		}
+	});
+
+	$("#schedule_calendar_5g").timepicker({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.EDIT,
+		cls: 'time-settings',
+		legendText: $.su.CHAR.WIRELESS_SCHEDULE.TIME
+	}).on("ev_beforeshow", showSysTime).on("ev_close", stopSysTime);
+
+	$("#enable_schedule_52g").switchbutton({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.ENABLE,
+		cls: 'form-inner',
+		proxy: {
+			url: WIRELESS_SCHEDULE_52G_URL_NEW
+		},
+		field: {
+			"name": "enable"
+		},
+		autoLoad: false,
+		onHandler: function(){
+			$("#schedule_calendar_52g").timepicker("show");
+			$(form_52g.get(0).submitBtn).button("show");
+		},
+		offHandler: function(){
+			$("#schedule_calendar_52g").timepicker("hide");
+			$(form_52g.get(0).submitBtn).button("hide");
+		}
+	});
+
+	$("#schedule_calendar_52g").timepicker({
+		fieldLabel: $.su.CHAR.WIRELESS_SCHEDULE.EDIT,
+		cls: 'time-settings',
+		legendText: $.su.CHAR.WIRELESS_SCHEDULE.TIME
+	}).on("ev_beforeshow", showSysTime).on("ev_close", stopSysTime);
+
+	var form_2g = $("#wireless-schedule-2g").form({
+		proxy:{
+			url: WIRELESS_SCHEDULE_2G_URL_NEW
+		},
+		fields: [
+			{name: "enable"},
+			{name: "calendar"}
+		],
+		autoLoad: false,
+		submitBtn: "default"
+	});
+
+	var form_5g = $("#wireless-schedule-5g").form({
+		proxy:{
+			url: WIRELESS_SCHEDULE_5G_URL_NEW,
+			operation: "5g"
+		},
+		fields: [
+			{name: "enable"},
+			{name: "calendar"}
+		],
+		autoLoad: false,
+		submitBtn: "default"
+	});
+
+
+	var form_52g = $("#wireless-schedule-52g").form({
+		proxy:{
+			url: WIRELESS_SCHEDULE_52G_URL_NEW
+		},
+		fields: [
+			{name: "enable"},
+			{name: "calendar"}
+		],
+		autoLoad: false,
+		submitBtn: "default"
+	});
+
+	var queryProxy = new $.su.Proxy({
+		url: URL_SMART_CONNECT_NEW,
+		async : false
+	});
+	queryProxy.read({},function(data){
+		smart_connect = data.smart_enable || "off";
+	});
+
+	if(smart_connect == "on"){
+		$("#mode_change").hide();
+	}
+	else{
+		$("#mode_change").show();
+	}
+
+	if(isTriband){
+		$("#show_5g").html($.su.CHAR.WIRELESS_SCHEDULE.MODE_51G);
+		$("#show_52g").show();
+		$("#seprate_5g").show();
+	}
+	else{
+		$("#show_5g").html($.su.CHAR.WIRELESS_SCHEDULE.MODE_5G);
+		$("#show_52g").hide();
+		$("#seprate_5g").hide();
+	}
+	form_2g.form("load");
+	if( $.isEmptyObject(channel_5g) ){
+		$("span.second-mode").addClass("disabled");
+	}
+	else{
+		$("span.second-mode").removeClass("disabled");
+		form_5g.form("load");
+	}
+	if( $.isEmptyObject(channel_52g) ){
+		$("span.third-mode").addClass("disabled");
+	}
+	else{
+		$("span.third-mode").removeClass("disabled");
+		form_52g.form("load");
+	}
+
+	$("span.first-mode").click(function(){
+		if($(this).hasClass("mode-select")){
+		}
+		else{
+			$(this).addClass("mode-select");
+			$("span.second-mode").hasClass("mode-select")? $("span.second-mode").toggleClass("mode-select") : 1;
+			$("span.third-mode").hasClass("mode-select")? $("span.third-mode").toggleClass("mode-select") : 1;
+			form_5g.form("hide");
+			form_52g.form("hide");
+			form_2g.form("show");
+		}
+	});
+
+	$("span.second-mode").click(function(){
+		if($(this).hasClass("mode-select")){
+		}
+		else{
+			if($(this).hasClass("disabled")){
+				return false;
+			}
+			$(this).addClass("mode-select");
+			$("span.first-mode").hasClass("mode-select")? $("span.first-mode").toggleClass("mode-select") : 1;
+			$("span.third-mode").hasClass("mode-select")? $("span.third-mode").toggleClass("mode-select") : 1;
+			form_2g.form("hide");
+			form_52g.form("hide");
+			form_5g.form("show");
+		}
+	});
+
+	$("span.third-mode").click(function(){
+		if($(this).hasClass("mode-select")){
+		}
+		else{
+			if($(this).hasClass("disabled")){
+				return false;
+			}
+			$(this).addClass("mode-select");
+			$("span.first-mode").hasClass("mode-select")? $("span.first-mode").toggleClass("mode-select") : 1;
+			$("span.second-mode").hasClass("mode-select")? $("span.second-mode").toggleClass("mode-select") : 1;
+			form_2g.form("hide");
+			form_5g.form("hide");
+			form_52g.form("show");
+		}
+	});
+
+	var helpWirelessSchedule = new $.su.Help({
+		container: "div#wireless_schedule_help",
+		content: ["WIRELESS_SCHEDULE"]
+	});
+
+	$.su.app.runningModule.addUnloadHandler(stopSysTime);
+});
+</script>
+</body>
+</html>

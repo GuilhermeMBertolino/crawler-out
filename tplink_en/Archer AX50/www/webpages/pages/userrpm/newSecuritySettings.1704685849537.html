@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Parental Control</title>
+</head>
+
+<body>
+<div class="func-container">
+	<div id="firewall">
+		<form id="dos_setting">
+			<input type="text"  id="enable_spi" name="enable" value="" />
+	    	<input type="text"  id="wan_ping" name="wan_ping" value="" />
+	    	<input type="text"  id="lan_ping" name="lan_ping" value="" />
+		</form>
+	    
+	</div>
+
+	<div id="help_security_setting"></div>
+</div>
+
+<script type="text/javascript">
+
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	var URL_DOS_ENABLE = $.su.url("/admin/security_settings?form=new_enable");
+
+	$("div#firewall").panel({
+		title: $.su.CHAR.SECURITY_SETTING.FIREWALL,
+		collapsible: false
+	});
+
+	$("input#enable_spi").checkbox({
+		fieldLabel: '',
+		labelCls: 'xxs',
+		items: [
+			{boxlabel: $.su.CHAR.SECURITY_SETTING.ENABLE_SPI_FIREWALL, inputValue:'on', uncheckedValue:'off'}
+		]
+	});
+
+	$("input#wan_ping").checkbox({
+		fieldLabel: '',
+		labelCls: 'xxs',
+		items: [
+			{boxlabel: $.su.CHAR.SECURITY_SETTING.ALLOW_WAN_PING, inputValue:'on', uncheckedValue:'off'}
+		]
+	});
+
+	$("input#lan_ping").checkbox({
+		fieldLabel: '',
+		labelCls: 'xxs',
+		items: [
+			{boxlabel: $.su.CHAR.SECURITY_SETTING.ALLOW_LAN_PING, inputValue:'on', uncheckedValue:'off'}
+		]
+	});
+
+	var dosProxy = new $.su.Proxy({
+		url: URL_DOS_ENABLE
+	});
+
+	$("form#dos_setting").form({
+		proxy: dosProxy,
+		fields: [
+			{name: "enable", mapping: "enable"},
+			{name: "wan_ping", mapping: "wan_ping"},
+			{name: "lan_ping", mapping: "lan_ping"}
+		],
+		submitBtn: "default"
+	});
+
+	var helpSecuritySetting = new $.su.Help({
+			container: "div#help_security_setting",
+			content: ["FIREWALL"]
+	});
+});
+</script>
+</body>
+
+</html>

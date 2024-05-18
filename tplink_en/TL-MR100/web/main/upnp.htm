@@ -1,0 +1,39 @@
+<script>function init(){var t=$.act(ACT_GET,UPNP_CFG,null,null,["Enable"]);$.exe(),1==t.enable?($("#upnp_on").addClass("selected"),$("#upnp_off").removeClass("selected")):($("#upnp_on").removeClass("selected"),$("#upnp_off").addClass("selected"))}function doUpdate(){var t=new Array;if(upnpCfgObj=$.act(ACT_GET,UPNP_CFG,null,null),!$.exe())if($("#table-upnp").find("tbody tr:not(.nd)").remove(),0==upnpCfgObj.enable);else{var n=$.act(ACT_GL,UPNP_PORTMAPPING,null,null);if($.exe())return;$("#num").html("<span>"+n.length+"</span>");for(var e=0;e<n.length;e++)t.push([{text:e+1,width:"5%"},{text:$.htmlEncodeStr(n[e].portMappingDescription),width:"30%"},{text:n[e].externalPort,width:"20%"},{text:n[e].portMappingProtocol,width:"10%"},{text:n[e].internalClient,width:"35%"},{text:n[e].internalPort,width:"20%"}]);$.initTableBody($("#table-upnp"),t)}}function initTable(){var t=new Array;if(upnpCfgObj=$.act(ACT_GET,UPNP_CFG,null,null),!$.exe()){if($("#table-upnp").find("tbody tr:not(.nd)").remove(),1==upnpCfgObj.enable){var n=$.act(ACT_GL,UPNP_PORTMAPPING,null,null,null);if($.exe())return;$("#num").html("<span>"+n.length+"</span>");for(var e=0;e<n.length;e++)t.push([{text:e+1,width:"5%"},{text:$.htmlEncodeStr(n[e].portMappingDescription),width:"30%"},{text:n[e].externalPort,width:"20%"},{text:n[e].portMappingProtocol,width:"10%"},{text:n[e].internalClient,width:"25%"},{text:n[e].internalPort,width:"10%"}])}$.initTableBody($("#table-upnp"),t),$.tablePages($("#table-upnp"),8)}}var upnpTbl,upnpCfgObj;$("#fresh").click(function(){initTable()}),$("#upnp_on").click(function(){$.addLoading($(this)),$.act(ACT_SET,UPNP_CFG,upnpCfgObj.__stack,null,["Enable=1"]),$.exe(function(t){$.removeLoading(),t||$.reload()})}),$("#upnp_off").click(function(){$.addLoading($(this)),$.act(ACT_SET,UPNP_CFG,upnpCfgObj.__stack,null,["Enable=0"]),$.exe(function(t){$.removeLoading(),t||$.reload()})})</script>
+<h3 id="et">UPnP</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container">
+            <b class="l" id="t_enupnp" class="s">UPnP:</b>
+            <ul>
+                <li>
+                    <button id="upnp_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="upnp_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+    </form>
+</div>
+<br>
+<h3 id="t_servlist">UPnP Service List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-note">
+                <label class="label-title" id="t_clientnum">Client Number:</label>
+                <span id="num" class="text">0</span>
+            </div>
+            <div class="table-btn">
+                <span class="refresh-icon" id="fresh"></span>
+                <label class="T_refresh">Refresh</label>
+            </div>
+        </div>
+        <table id="table-upnp">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </form>
+</div>
+<script>var headArray=[{text:table_str.id,width:"5%"},{text:table_str.servdesc,width:"30%"},{text:table_str.exterport,width:"20%"},{text:table_str.protocol,width:"10%"},{text:table_str.interipaddr,width:"25%"},{text:table_str.interport,width:"10%"}];$.tpInit(init),$.initTableHead($("#table-upnp"),headArray),$("#table-upnp").tpTable(initTable)</script>
+

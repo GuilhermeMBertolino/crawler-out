@@ -1,0 +1,242 @@
+
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<SCRIPT type="text/javascript">
+<!--
+function doShowing()
+{
+	document.getElementById("show_standard_mode").style.display = (WzdWorkModePara[standardModeIdx] == 1)?"":"none";
+	document.getElementById("show_3g_mode").style.display = (WzdWorkModePara[general3gModeIdx] == 1)?"":"none";
+	document.getElementById("show_apc_mode").style.display = (WzdWorkModePara[apcModeIdx] == 1)?"":"none";
+	document.getElementById("show_ap_mode").style.display = (WzdWorkModePara[apModeIdx] == 1)?"":"none";
+	document.getElementById("show_pure_3g_mode").style.display = (WzdWorkModePara[pure3gModeIdx] == 1)?"":"none";
+}
+/*
+function printTipMsg(sysMode)
+{//will show different tip msg in different working mode
+	var tipMsg = "<B>Start&nbsp;&gt;&gt;&nbsp;</B><span class=\"STYLE2\">Working Mode</span>";
+	
+	if (sysMode == 1 || sysMode == 4)
+	{
+		tipMsg += "<B>&nbsp;&gt;&gt;&nbsp;WAN Connection Type&nbsp;&gt;&gt;&nbsp;Wireless&nbsp;&gt;&gt;&nbsp;Finish</B>";
+	}
+	else if (sysMode == 2)
+	{
+		tipMsg += "<B>&nbsp;&gt;&gt;&nbsp;WAN/3G&nbsp;&gt;&gt;&nbsp;Wireless&nbsp;&gt;&gt;&nbsp;Finish</B>";
+	}
+	else if (sysMode == 8)
+	{
+		tipMsg += "<B>&nbsp;&gt;&gt;&nbsp;Wireless&nbsp;&gt;&gt;&nbsp;Finish</B>";
+	}
+	else if (sysMode == 16)
+	{
+		tipMsg += "<B>&nbsp;&gt;&gt;&nbsp;3G&nbsp;&gt;&gt;&nbsp;Wireless&nbsp;&gt;&gt;&nbsp;Finish</B>";
+	}
+	document.getElementById("tips_msg").innerHTML = tipMsg;
+}
+*/
+
+function showStepInfoOnClick(newSysMode)
+{
+if(document.forms[0].workMode[0].checked)
+	document.getElementById("router_desc").style.display="";
+else
+	document.getElementById("router_desc").style.display="none";
+
+if(document.forms[0].workMode[1].checked)
+	document.getElementById("wisp_desc").style.display="";
+else
+	document.getElementById("wisp_desc").style.display="none";
+	
+if(document.forms[0].workMode[2].checked)
+	document.getElementById("ap_desc").style.display="";
+else
+	document.getElementById("ap_desc").style.display="none";
+	
+if(document.forms[0].workMode[3].checked)
+	document.getElementById("rpt_desc").style.display="";
+else
+	document.getElementById("rpt_desc").style.display="none";
+	
+if(document.forms[0].workMode[4].checked)
+	document.getElementById("client_desc").style.display="";
+else
+	document.getElementById("client_desc").style.display="none";
+	
+	
+	if (bShowStepInfoEnable)
+	{
+		showTipMsg(bMultiSysMode, newSysMode, accessType, bWlanDualBand, "tips_msg", sysModeStep);
+	}
+}
+//-->
+</SCRIPT>
+<style type="text/css">
+<!--
+.STYLE2 {color: #66CC00}
+-->
+</style>
+</HEAD>
+<BODY onLoad="setTagStr(document,'ntw_WzdWorkMode');LoadHelp('WzdWorkingModeHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<CENTER>
+  <FORM action="WzdWorkingModeRpm.htm" method="get" enctype="multipart/form-data" >
+    <TABLE id=autoWidth>
+      <TBODY>
+        <TR>
+          <TD class=h1 colspan=2 id="t_title">Quick Setup - Operation Mode</TD>
+        </TR>
+        <TR>
+          <TD class=blue colspan=2></TD>
+        </TR>
+		<TR style="display:none">
+			<TD class=info colspan=2 STYLE1>
+			<SPAN id = "tips_msg"></SPAN>
+			</TD>
+		</TR>
+		<TR>
+			<TD>
+				<B id="t_mode_travel">During Travel</B>
+			</TD>		
+			<TD></TD>		
+		</TR>		
+        <TR id="show_standard_mode">
+          <TD class=clk WIDTH="30px"><INPUT name="workMode" type="radio" value="1" onclick="showStepInfoOnClick(1)"></TD>
+          <TD WIDTH="400px"><B id="t_standard_mode">Wireless Router(Default)</B></TD>
+        </TR>
+		<TR id="router_desc" style="display:none">
+			<TD></TD>
+			<TD WIDTH="400px">
+				Share internet connection from an Ethernet cable. For example: hotel room, small office, ...
+			</TD>
+		</TR>
+		<TR	id="show_wisp_mode">
+          <TD class=clk><INPUT type=radio value="4" name="workMode" onclick="showStepInfoOnClick(4)"></TD>
+          <TD><B id="t_wisp_mode">Hotspot Router</B></TD>
+        </TR>
+		<TR id="wisp_desc" style="display:none">
+			<TD></TD>
+			<TD>
+				Share Internet connection anywhere public Wi-Fi exists. For example: hotel room, trade show, ...
+			</TD>
+		</TR>
+        <TR>
+          <TD colspan=2>&nbsp;</TD>
+        </TR>		
+		<TR>
+			<TD>
+				<B id="t_mode_home">At Home</B>
+			</TD>		
+			<TD></TD>
+		</TR>			
+        <TR id="show_ap_mode">
+          <TD class=clk><INPUT type=radio value="7" name="workMode" onclick="showStepInfoOnClick(7)"></TD>
+          <TD><B id="t_ap_mode">Access Point</B></TD>
+        </TR>
+		<TR id="ap_desc" style="display:none">
+			<TD></TD>
+			<TD>
+				Setup Wi-Fi on an existing wired network
+			</TD>
+		</TR>	
+        <TR id="show_repeater_mode">
+          <TD class=clk><INPUT type=radio value="6" name="workMode" onclick="showStepInfoOnClick(6)"></TD>
+          <TD><B id="t_repeater_mode">Range Extender</B></TD>
+        </TR>
+		<TR id="rpt_desc" style="display:none">
+			<TD></TD>
+			<TD>
+				Extend the range of an existing Wi-Fi
+			</TD>
+		</TR>
+        <TR id="show_client_mode">
+          <TD class=clk><INPUT type=radio value="3" name="workMode" onclick="showStepInfoOnClick(3)"></TD>
+          <TD><B id="t_client_mode">Client</B></TD>
+        </TR>
+		<TR id="client_desc" style="display:none">
+			<TD></TD>
+			<TD>
+				Act as a "Wireless Adapter" to connect your wired devices (e.g. Blu-ray player, smart TV) to existing Wi-Fi
+			</TD>
+		</TR>
+        <TR>
+          <TD class=blue colspan=2></TD>
+        </TR>
+        <TR>
+         <TD class=mbtn colspan=2>
+            <INPUT class=buttonBig id=Return type="submit" value="Back" name="Return">
+            &nbsp;
+			&nbsp;
+			<INPUT class=buttonBig id=Submit type="submit" value="Next" name ="Next">
+			 &nbsp;
+			<INPUT type=hidden name=ClientId>
+		 </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+  </FORM>
+</CENTER>
+</BODY>
+<HEAD>
+<META http-equiv="pragma" content="no-cache">
+</HEAD>
+</HTML>
+<SCRIPT type="text/javascript">
+<!--//
+var selectedModeIdx = 0;
+var standardModeIdx = 1;
+var general3gModeIdx = 2;
+var apcModeIdx = 3;
+var apModeIdx = 4;
+var pure3gModeIdx = 5;
+var cliIdIdx = 6;
+
+document.forms[0].workMode[0].checked = (WzdWorkModePara[selectedModeIdx] == 1);
+document.forms[0].workMode[1].checked = (WzdWorkModePara[selectedModeIdx] == 4);
+document.forms[0].workMode[2].checked = (WzdWorkModePara[selectedModeIdx] == 7);
+document.forms[0].workMode[3].checked = (WzdWorkModePara[selectedModeIdx] == 6);
+document.forms[0].workMode[4].checked = (WzdWorkModePara[selectedModeIdx] == 3);
+
+if(document.forms[0].workMode[0].checked)
+	document.getElementById("router_desc").style.display="";
+else
+	document.getElementById("router_desc").style.display="none";
+
+if(document.forms[0].workMode[1].checked)
+	document.getElementById("wisp_desc").style.display="";
+else
+	document.getElementById("wisp_desc").style.display="none";
+	
+if(document.forms[0].workMode[2].checked)
+	document.getElementById("ap_desc").style.display="";
+else
+	document.getElementById("ap_desc").style.display="none";
+	
+if(document.forms[0].workMode[3].checked)
+	document.getElementById("rpt_desc").style.display="";
+else
+	document.getElementById("rpt_desc").style.display="none";
+	
+if(document.forms[0].workMode[4].checked)
+	document.getElementById("client_desc").style.display="";
+else
+	document.getElementById("client_desc").style.display="none";	
+
+document.forms[0].ClientId.value = WzdWorkModePara[cliIdIdx];
+
+//printTipMsg(WzdWorkModePara[selectedModeIdx]);
+var accessTypeIdx = 2;
+var multiSysModeIdx = 0;
+var sysModeIdx = 1;
+var wlanDualBandIdx = 3;
+var showStepInfoIdx = 4;
+
+var bMultiSysMode = wzdForShowStepInfo[multiSysModeIdx];
+var sysMode = wzdForShowStepInfo[sysModeIdx];
+var accessType = wzdForShowStepInfo[accessTypeIdx];
+var bWlanDualBand = wzdForShowStepInfo[wlanDualBandIdx];
+var bShowStepInfoEnable = wzdForShowStepInfo[showStepInfoIdx];
+if (bShowStepInfoEnable)
+{
+	showTipMsg(bMultiSysMode, sysMode, accessType, bWlanDualBand, "tips_msg", sysModeStep);
+}
+//-->
+</SCRIPT>

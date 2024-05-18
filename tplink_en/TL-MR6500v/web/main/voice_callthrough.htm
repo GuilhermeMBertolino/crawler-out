@@ -1,0 +1,43 @@
+<script>var numList,callObj,modeIdArray=new Array(0,0,0,0,0,0,0,0),numId=new Array;function enterCheck(){var e,t,n;try{if(-1==$("#inNum").data("value"))throw(e=$("#inNum"))&&($.alert(ERR_VOIP_THROUGH_INCOMEING_ERROR),e.focus(),e.select()),!1;if(e=$("#inNum"),4294967295==$("#inNum").data("value"))throw e&&($.alert(ERR_VOIP_THROUGH_INCOMEING_ERROR),e.focus(),e.select()),!1;e=$("#t_pin"),n="t_pin",t=n_str.voice_callthrough.t_callpin,getValue(n,t,4,4,1),e.get(0).value=$("#t_pin").prop("value"),checkNum(e,t);for(var a=[],l=0;l<modeIdArray.length;l++)modeIdArray[l]&&(e=$("#num_"+l),n="num_"+l,t=s_str.num,getValue(n,t,3,32),e.get(0).value=getValue(n,t,3,32),checkNum(e,t),a.push(e.get(0).value));for(var i=0;i<a.length-1;i++)for(var o=i+1;o<a.length;o++)if(a[o]==a[i])throw $.alert(ERR_VOIP_THROUGHT_NUMBER_CONFLICT_ERROR),!1}catch(e){if(!1===e)return!1;throw e}return!0}function init(){var e={refresh:1},n="",t=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiProfileName","multiExtension","multiIndexing"]);if(callObj=$.act(ACT_GET,XTP_CALL_THROUGH,null,null),numList=$.act(ACT_GL,XTP_CALLTHROUGH_NUM,null,null,null),!$.exe()){1==callObj.enable?($("#t_on").addClass("selected"),$("#t_off").removeClass("selected")):($("#t_on").removeClass("selected"),$("#t_off").addClass("selected")),$("#enCheck").prop("checked",0==callObj.anyCallAllowedEnable&&0<numList.length),$.each(t,function(){if(this.multiExtension&&""!=this.multiExtension){var e=this.multiProfileName,t=this.multiIndexing;n+="<option value='"+t+"' text='"+e+"' >"+e+"</option>"}});var a="<option value='4294967295' text='Please select'>"+showtype[1]+"</option>",l="<option value='auto' text='Auto'>"+showtype[0]+"</option>";if(""==n?($("#inNum").empty().append(a),$("#outNum").empty().append(l)):($("#inNum").empty().append(a),$("#inNum").append(n),$("#outNum").empty().append(n),$("#outNum").append(l)),$('#inNum option[value="'+callObj.incomingSipAcctIdx+'"]').prop("selected","selected"),4294967295==callObj.outgoingViaSipAcctIdx?$("#outNum option[value='auto']").prop("selected","selected"):$('#outNum option[value="'+callObj.outgoingViaSipAcctIdx+'"]').prop("selected","selected"),$("#inNum").tpSelect(e),$("#outNum").tpSelect(e),callObj.pin&&$("#t_pin").prop("value",callObj.pin),numList.length)for(var i=0;i<numList.length;i++){$("#addNumIcon").parent("div").append('<div class="keyword"><input type="text" id="num_'+i+'" class="tp-input-text"/><span class="table-icon delete-icon"></span></div>'),modeIdArray[i]=1,$("#num_"+i).prop("value",numList[i].number);var o="#num_"+i;numId.push(o)}if($("span.delete-icon").click(function(){var e=$(this).parent("div.keyword").children("input").attr("id").split("_");modeIdArray[e[1]]=0,$(this).parent("div.keyword").remove()}),$("#t_on").hasClass("selected")&&$("#enCheck").prop("checked")){for(var r=0,c=(i=0,modeIdArray.length);i<c;i++)if(1==modeIdArray[i]){r=1;break}if(0===r)return $.errorTip("enCheck",n_str.voice_callthrough.t_whiteList),void $("#enCheck_tips").css("left","167px")}}}$("#t_save").click(function(){if($("#t_on").hasClass("selected")&&$("#enCheck").prop("checked")){for(var e=0,t=0,n=modeIdArray.length;t<n;t++)if(1==modeIdArray[t]){e=1;break}if(0===e)return $.errorTip("enCheck",n_str.voice_callthrough.t_whiteList),void $("#enCheck_tips").css("left","167px")}$.addLoading($(this));var a={},l={};if(0!=enterCheck()){$("#enCheck").prop("checked")?a.anyCallAllowedEnable=0:a.anyCallAllowedEnable=1,a.pin=$("#t_pin").prop("value"),a.incomingSipAcctIdx=$("#inNum").data("value"),"auto"==$("#outNum").data("value")?a.outgoingViaSipAcctIdx=4294967295:a.outgoingViaSipAcctIdx=$("#outNum").data("value"),$.each(numList,function(){$.act(ACT_DEL,XTP_CALLTHROUGH_NUM,this.__stack,null)});for(t=0;t<modeIdArray.length;t++)modeIdArray[t]&&(l.number=$("#num_"+t).prop("value"),$.act(ACT_ADD,XTP_CALLTHROUGH_NUM,null,null,l));$.act(ACT_SET,XTP_CALL_THROUGH,callObj.__stack,null,a),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}}),$("#t_on").click(function(){if($("#enCheck").prop("checked")){for(var e=0,t=0,n=modeIdArray.length;t<n;t++)if(1==modeIdArray[t]){e=1;break}0===e&&($.errorTip("enCheck",n_str.voice_callthrough.t_whiteList),$("#enCheck_tips").css("left","167px"))}$.addLoading($(this)),$.act(ACT_SET,XTP_CALL_THROUGH,callObj.__stack,null,["Enable=1"]),actForSendMsg(),$.exe(function(e){$.removeLoading()})}),$("#t_off").click(function(){$.addLoading($(this)),$.act(ACT_SET,XTP_CALL_THROUGH,callObj.__stack,null,["Enable=0"]),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#addNumIcon").click(function(){for(var e=0;e<modeIdArray.length;e++)if(0==modeIdArray[e]){modeIdArray[e]=1;break}if(e>=modeIdArray.length)$.alert(ERR_VOIP_TELEPHONE_NUMBER_LIST_FULL_ERROR);else{$("#addNumIcon").parent("div").append('<div class="keyword"><input type="text" id="num_'+e+'" class="tp-input-text" required="true"/><span class="table-icon delete-icon"></span></div>');var t="#num_"+e;numId.push(t),$("span.delete-icon").click(function(){var e=$(this).parent("div.keyword").children("input").attr("id").split("_");modeIdArray[e[1]]=0,$(this).parent("div.keyword").remove()})}})</script>
+<h3 class="T" id="t_et">Call through</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <p class="cfg-line" id="t_note"></p>
+        <div class="button-group-container">
+            <b class="T xl" id="t_et1">Call through: </b>
+            <ul>
+                <li>
+                    <button id="t_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <b class="T xl" id="t_incoming">Select incoming number: </b>
+            <select id="inNum" class="inline l"></select>
+        </div>
+        <div>
+            <b class="T xl" id="t_outgoing">Select outgoing number: </b>
+            <select id="outNum" class="inline l"></select>
+        </div>
+        <div>
+            <b class="T xl" id="t_callpin">PIN: </b>
+            <input type="text" maxlength="4" id="t_pin" value="123456">
+        </div>
+        <div class="part-separate">
+            <input type="checkbox" id="enCheck">
+            <label class="T" id="t_info">Only accept calls from below numbers</label>
+        </div>
+        <div style="line-height:36px">
+            <span id="addNumIcon">
+                <span class="table-icon add-icon" style="margin-left:0"></span>
+                <label class="table-icon-text T" id="t_addnum">Add more numbers</label>
+		<br>
+            </span>
+        </div>
+        <button type="submit" class="green T_save" id="t_save">Save</button>
+    </form>
+</div>
+<script>$.tpInit(init)</script>

@@ -1,0 +1,32 @@
+#!/usr/bin/env lua
+--[[
+	wifimac, a tool calculate wifi 2G/5G mac,
+	increasing 1 based on input mac
+]]--
+-- param  mac       MAC (xx:xx:xx:xx:xx:xx)
+-- return new_mac   MAC + 1
+
+local mac = arg[1]
+
+if not mac then
+	return false
+end
+
+local eth = {}
+eth[6], eth[5], eth[4], eth[3], eth[2], eth[1] = mac:match("(%x%x):(%x%x):(%x%x):(%x%x):(%x%x):(%x%x)")
+
+for i, v in pairs(eth) do
+	eth[i] = tonumber(v, 16)
+end
+
+for i, v in pairs(eth) do
+	if v > 0 then
+		eth[i] = v - 1
+		break
+	else
+		eth[i] = 255
+	end
+end
+
+print(string.format("%02X:%02X:%02X:%02X:%02X:%02X", eth[6], eth[5], eth[4], eth[3], eth[2], eth[1]))
+

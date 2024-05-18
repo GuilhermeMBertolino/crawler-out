@@ -1,1 +1,0 @@
-../init.d/S37acos_nvram_init.sh

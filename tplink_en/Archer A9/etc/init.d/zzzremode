@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+
+
+START=99
+STOP=99
+
+start () {
+	config_load sysmode
+	config_get mode "sysmode" "mode"
+
+	if [[ $mode == 'router' ]]; then
+		config_load wireless
+		config_get wds_2g_but "wl03" "wds_button"
+        config_load wireless
+        config_get wds_5g_but "wl13" "wds_button"
+
+        if [[ $wds_2g_but == 'on' -o $wds_5g_but == 'on' ]]; then
+	        ifconfig eth0.4094 down
+    	    /etc/init.d/smartip start &
+        fi
+    fi
+
+	return 0
+}
+
+stop () {
+	ifconfig eth0.4094 up
+	killall smartipd
+
+	return 0
+}

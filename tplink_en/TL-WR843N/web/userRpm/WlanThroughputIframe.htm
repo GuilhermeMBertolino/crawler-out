@@ -1,0 +1,173 @@
+
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<script language="JavaScript" src="../dynaform/common.js" type="text/JavaScript"></script>
+<script language="Javascript"><!--//
+function drawDot(x,y,color,size)
+{
+	size += "px";
+	document.write("<table border='0' cellspacing=0 cellpadding=0><tr><td style='position: absolute; left: "+(x)+"; top: "+(y)+";background-color: "+color+"' width="+size+" height="+size+"></td></tr></table>");
+}
+
+function drawLine(x1,y1,x2,y2,color,size,style)
+{
+	var i;
+	var r=Math.floor(Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)));
+	var theta=Math.atan((x2-x1)/(y2-y1));
+	if(((y2-y1)<0&&(x2-x1)>0)||((y2-y1)<0&&(x2-x1)<0))
+	theta=Math.PI+theta;
+	var dx=Math.sin(theta);//alert(dx)
+	var dy=Math.cos(theta);
+	for(i=0;i<r;i++)
+	{
+		switch(style)
+		{
+			case 0:
+			drawDot(x1+i*dx,y1+i*dy,color,size);
+			break;
+			case 1:
+			i+=size*4;
+			drawDot(x1+i*dx,y1+i*dy,color,size);
+			break;
+			case 2:
+			if(Math.floor(i/4/size)%2==0)
+			{
+				drawDot(x1+i*dx,y1+i*dy,color,size);
+			}
+			else
+			{
+				i+=size*2;
+				drawDot(x1+i*dx,y1+i*dy,color,size);
+			}
+			break;
+			default:
+			drawDot(x1+i*dx,y1+i*dy,color,size);
+			break;
+		}
+	}
+}
+
+function doDrawFunc()
+{
+	var i,j,k;
+	var temp, elem;
+	var x0 = 30, y0, x1, y1;
+	
+	scale = parent.getRateScale(10);
+	temp = parent.total_time % 21 + 2;
+	for(i=1;i<parent.dotNum;i++)
+	{
+		x0 += 20;
+		x1 = x0 + 20;
+		
+		if(parent.dotNum == 21)
+		{	
+			j = temp % 21;
+			temp++;
+		}
+		else
+		{
+			j = i;
+		}
+		k = (j == 0)?20:(j-1);
+		y0 = 281-((parent.dot[k][2] / scale) * 23);
+		y1 = 281-((parent.dot[j][2] / scale) * 23);
+		drawLine(x0,y0,x1,y1,"0099FF",2,0);
+		y0 = 279-((parent.dot[k][3] / scale) * 23);
+		y1 = 279-((parent.dot[j][3] / scale) * 23);
+		drawLine(x0,y0,x1,y1,"9900FF",2,0);
+	}
+	updateYScale(scale,11);
+	i = parent.total_time % 21;
+	y0 = Math.floor(parent.dot[i][2] * 10000) / 10000;
+	y1 = Math.floor(parent.dot[i][3] * 10000) / 10000;
+	elem = document.getElementById("t_ltx_rate");
+	elem.innerHTML = "&nbsp;" + y0 + parent.format[1] + "&nbsp;&nbsp;&nbsp;&nbsp;";
+	elem = document.getElementById("t_lrx_rate");
+	elem.innerHTML = "&nbsp;" + y1 + parent.format[1] + "&nbsp;&nbsp;&nbsp;&nbsp;";
+	elem = document.getElementById("t_ltx_max");
+	elem.innerHTML = parent.Rates[0] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_lrx_max");
+	elem.innerHTML = parent.Rates[1] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_ltx_min");
+	elem.innerHTML = parent.Rates[2] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_lrx_min");
+	elem.innerHTML = parent.Rates[3] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_ltx_average");
+	elem.innerHTML = parent.Rates[4] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_lrx_average");
+	elem.innerHTML = parent.Rates[5] + parent.ratesFormatArray[1] + "&nbsp;&nbsp;";
+	elem = document.getElementById("t_ltime_unit");
+	elem.innerHTML = (parent.total_time * 4) + "&nbsp;s";
+	elem = document.getElementById("t_lrate_unit");
+	elem.innerHTML = parent.format[1];
+	parent.total_time++;
+}
+
+function updateYScale(scale, num)
+{
+	var i,elem;
+	var	yScale = 0;
+	for(i=num-1;i>=0;i--)
+	{				
+		elem = document.getElementById("scale_y"+i);
+		elem.innerHTML = yScale;
+		yScale += scale;		
+	}
+}
+
+function Click(){ window.event.returnValue=false;}
+	document.oncontextmenu=Click;
+
+function doPage()
+{
+		location.href = "WlanThroughputIframe.htm";
+}
+//--></script>
+</head><body style = "background-color:transparent" onload="setTagStr(document,'ntw_wlan_throughputIframe');">
+<form action="WlanThroughputIframe.htm" enctype="multipart/form-data" method="get">
+<div style = " FONT-SIZE: 14px; FONT-WEIGHT: bold;"><span id = "t_rate">Rate:</span>
+<span name = "t_lrate_unit" id = "t_lrate_unit">bps</span></div>
+<table border = 0 height="10"><tr><td></td></tr></table>
+<table border = 0 width="40" height="253" style = "FONT-SIZE: 12px; text-align: right;">
+<tr><td id = "scale_y0">10</td></tr>
+<tr><td id = "scale_y1">9</td></tr>
+<tr><td id = "scale_y2">8</td></tr>
+<tr><td id = "scale_y3">7</td></tr>
+<tr><td id = "scale_y4">6</td></tr>
+<tr><td id = "scale_y5">5</td></tr>
+<tr><td id = "scale_y6">4</td></tr>
+<tr><td id = "scale_y7">3</td></tr>
+<tr><td id = "scale_y8">2</td></tr>
+<tr><td id = "scale_y9">1</td></tr>
+<tr><td id = "scale_y10">0</td></tr></table>
+<table border='0' cellspacing=0 cellpadding=0 height ="2px">
+<tr><td></td><td style = "padding-left: 5; padding-right: 50; FONT-SIZE: 14px; FONT-WEIGHT: bold;" id = "t_cur">Current</td><td style = "padding-right: 80; FONT-SIZE: 14px; FONT-WEIGHT: bold;" id = "t_max">Max</td><td style = "padding-right: 80; FONT-SIZE: 14px; FONT-WEIGHT: bold;" id = "t_min">Min</td><td style = " FONT-SIZE: 14px; FONT-WEIGHT: bold;" id = "t_average">Average</td></tr>
+<tr><td style = "background-color: #0099FF; FONT-SIZE: 12px; FONT-WEIGHT: bold;" id = "t_tx">Transmit</td><td style = "FONT-SIZE: 12px; " id = "t_ltx_rate">&nbsp;0bps&nbsp;&nbsp;&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_ltx_max">0bps&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_ltx_min">0bps&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_ltx_average">0bps&nbsp;&nbsp;</td></tr>
+<TR><TD colspan=3></TD></TR>
+<tr><td style = "background-color: #9900FF; FONT-SIZE: 12px; FONT-WEIGHT: bold;" id = "t_rx">Receive</td><td style = "FONT-SIZE: 12px; " id = "t_lrx_rate">&nbsp;0bps&nbsp;&nbsp;&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_lrx_max">0bps&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_lrx_min">0bps&nbsp;&nbsp;</td><td style = "FONT-SIZE: 12px;" id = "t_lrx_average">0bps&nbsp;&nbsp;</td></tr>
+</table>
+<div style = "position :absolute; left: 350px; top: 10; FONT-SIZE: 13px;"><span id = "t_time">Run Time:</span>
+<span name = "t_ltime_unit" id = "t_ltime_unit">0s</span></div>
+
+</form></body></html>
+<script language="Javascript"><!--//
+//var WlanThroughputPara = new Array(55555,333,0,0);
+
+	for(i=0;i<10;i++)
+	{
+		drawLine(50+40*i,30,50+40*i,280,"#C0C0C0",1,1);
+		drawLine(70+40*i,30,70+40*i,280,"#C0C0C0",1,1);
+		drawLine(50,280-23*i,450,280-23*i,"#C0C0C0",1,1);
+	}
+	drawLine(450,30,450,280,"#C0C0C0",1,1);
+	drawLine(50,50,450,50,"#C0C0C0",1,1);
+	parent.updateDotsInfo(WlanThroughputPara[0], WlanThroughputPara[1]);
+	doDrawFunc();
+	if(parent.runState)
+	{	
+		window.setTimeout("doPage()",4000);
+	}	
+//--></script>
+

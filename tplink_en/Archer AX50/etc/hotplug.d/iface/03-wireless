@@ -1,0 +1,52 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /usr/share/libubox/jshn.sh
+. /lib/netifd/netifd-proto.sh
+
+fixup_wireless_iface() {
+	local enable = 0
+	config_load wireless
+	
+	enable = 0
+	config_get_bool enable "wl01" enable
+	# echo "wlan0 $enable" >/dev/console
+	if [ "$enable" = "1" ]; then
+		brctl addif br-lan wlan0
+	fi
+
+	enable = 0
+	config_get_bool enable "wl02" enable
+	# echo "wlan0.0 $enable" >/dev/console
+	if [ "$enable" = "1" ]; then
+		brctl addif br-lan wlan0.0
+	fi
+
+	enable = 0
+	config_get_bool enable "wl21" enable
+	# echo "wlan2 $enable" >/dev/console
+	if [ "$enable" = "1" ]; then
+		brctl addif br-lan wlan2
+	fi
+
+	enable = 0
+	config_get_bool enable "wl22" enable
+	# echo "wlan2.0 $enable" >/dev/console
+	if [ "$enable" = "1" ]; then
+		brctl addif br-lan wlan2.0
+	fi	
+}
+
+if [ "$INTERFACE" == "lan" -o "$INTERFACE" == "lanv6" ]; then
+	case "$ACTION" in
+		ifup)
+			# echo "ifup fixup_wireless_iface()." >/dev/console 
+			fixup_wireless_iface
+		;;
+		*)
+			# echo "ifdown no operation." >/dev/console 
+			echo "ifdown no operation."
+		;;
+	esac
+fi

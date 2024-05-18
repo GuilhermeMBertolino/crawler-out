@@ -1,0 +1,13 @@
+#!/bin/sh
+
+#ax10 bcm cfe recovery时，只能支持1024字节的分区表长度，最多在原分区表基础上增加一个
+#图片改为一起压缩存储
+#favicon_partition="favicon"
+#logo_partiton="logo"
+icons_partition="icons"
+
+nvrammanager -e -p ag-config
+nvrammanager -e -p  $icons_partition
+lua -e 'require("luci.controller.admin.firmware").config_factory()'
+sleep 3
+reboot -f 

@@ -1,0 +1,503 @@
+﻿<script language="javascript" type="text/javascript">
+$("span.delete-all-icon").click(function() {
+    var stkArray = [];
+    $.confirm(c_str.del_con, function() {
+        $.showCover();
+        $.lock();
+        $.each($.wd.conn, function() {
+            if (this.obj.name.match("iptv_") != null) {
+                return true;
+            }
+
+            if (this.type) {
+                stkArray.push(this.obj.__stack);
+                if (this.type.indexOf("ppp") < 0) {
+                    $.act(ACT_DEL, WAN_IP_CONN, this.obj.__stack, null);
+                } else {
+                    $.act(ACT_DEL, WAN_PPP_CONN, this.obj.__stack, null);
+                }
+            }
+        });
+
+        var stkTmp = [];
+        var deviceStk;
+        $.each(stkArray, function() {
+            deviceStk = $.stkPop(this, 1);
+            for (var i = 0; i < stkTmp.length; i++) {
+                if (stkTmp[i] == deviceStk) return true;
+            }
+            stkTmp.push(deviceStk)
+            $.act(ACT_DEL, WAN_CONN_DEVICE, deviceStk, null);
+        });
+
+        $.exe(function(err) {
+            $.hideCover();
+            $.reload();
+        });
+    })
+});
+
+function doEdit(val1, val2) {
+    for (var i = 0; i < $.wd.conn.length; i++) {
+        if ($.wd.conn[i].obj.__stack == val2) {
+            if (((val1 == 1) && ($.wd.conn[i].type.indexOf("ppp") < 0)) ||
+                ((val1 == 2) && ($.wd.conn[i].type.indexOf("ppp") >= 0))) {
+                $.wd.editIndex = i;
+                break;
+            }
+        }
+    }
+    $.loadPage("divPage", "div.htm");
+}
+
+function doDel(val1, val2) {
+    var stk = val2;
+    $.confirm(c_str.del_con, function() {
+        $.showCover();
+        $.lock();
+
+        var isLastWan = false;
+        var stkIndex = stk.slice();
+        stkIndex[2] = 0;
+        var wanConnDev = $.act(ACT_GET, WAN_CONN_DEVICE, stkIndex, null, ["WANIPConnectionNumberOfEntries", "WANPPPConnectionNumberOfEntries"]);
+
+        $.exe(function(err) {
+            if (!err) {
+                if (+wanConnDev.WANIPConnectionNumberOfEntries + (+wanConnDev.WANPPPConnectionNumberOfEntries) == 1) {
+                    isLastWan = true;
+                }
+            } else {
+                $.hideCover();
+            }
+
+            if (val1 == 1)
+                $.act(ACT_DEL, WAN_IP_CONN, stk, null);
+            else if (val1 == 2)
+                $.act(ACT_DEL, WAN_PPP_CONN, stk, null);
+
+            if (isLastWan)
+                $.act(ACT_DEL, WAN_CONN_DEVICE, stkIndex, null);
+
+            $.exe(function(err) {
+                if (!err) {
+                    $.hideCover();
+                    $.reload();
+                }
+            });
+        });
+    });
+}
+
+function doDisConn(val1, val2) {
+    var stk = val2;
+    if (val1 == 1)
+        $.act(ACT_OP, ACT_OP_DHCP_RELEASE, stk);
+    else if (val1 == 2)
+        $.act(ACT_OP, ACT_OP_PPP_DISCONN, stk);
+
+    if (!$.exe())
+        $.timeout(function() {
+            $.reload();
+        }, 1500);
+}
+
+function doConn(val1, val2) {
+    var stk = val2;
+    if (val1 == 1)
+        $.act(ACT_OP, ACT_OP_DHCP_RENEW, stk);
+    else if (val1 == 2)
+        $.act(ACT_OP, ACT_OP_PPP_CONN, stk);
+
+    if (!$.exe())
+        $.timeout(function() {
+            $.reload();
+        }, 1500);
+}
+
+function init() {
+    $('#scroll').scrollTop(0);
+    /*  var wanConnDev = $.act(ACT_GL, WAN_CONN_DEVICE, null, null,["WANIPConnectionNumberOfEntries", "WANPPPConnectionNumberOfEntries"]);
+    if (!$.exe()) {
+        $.each(wanConnDev, function(){
+            if ((this.WANIPConnectionNumberOfEntries == 0) 
+            && (this.WANPPPConnectionNumberOfEntries == 0)) { 
+                $.act(ACT_DEL, WAN_CONN_DEVICE, this.__stack, null);
+                $.exe();                
+            }
+        });
+    } */
+}
+
+function initTable() {
+    var status, connect, modify;
+    var array = new Array();
+
+    var wanDslInfList = {};
+    var wanComInfList = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+    var wanDslLnkList = $.act(ACT_GL, WAN_DSL_LINK_CFG, null, null);
+
+    if (!INCLUDE_VDSLWAN) {
+        $("#xDslTip").addClass("nd");
+        wanDslInfList = $.act(ACT_GL, WAN_DSL_INTF_CFG, null, null, ["status"]);
+    } else {
+        wanDslInfList = $.act(ACT_GL, WAN_DSL_INTF_CFG, null, null, ["status", "linkEncapsulationUsed"]);
+    }
+
+    if (INCLUDE_IPV6) {
+        $("#t_ipvx").removeClass("nd");
+    }
+
+    if (INCLUDE_IPTV) {
+        var iptvCfg = $.act(ACT_GET, DSL_IPTV_CFG, null, null, ["iptvVPI", "iptvVCI"]);
+    }
+    var wanIpConList = $.act(ACT_GL, WAN_IP_CONN, null, null);
+    var wanPppConList = $.act(ACT_GL, WAN_PPP_CONN, null, null);
+    var l3Forwarding = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+    if (INCLUDE_IPV6) {
+        var l3Ip6Forwarding = $.act(ACT_GET, L3_IP6_FORWARDING, null, null, ["__ifAliasName"]);
+    }
+
+    $.exe(function(err) {
+        if (!err) {
+
+            var wanDslInfStkList = "";
+            var wanDslInfStatusList = "";
+
+            var curSupIsPtm = 0;
+            var curConnIsPtm = 0;
+
+            if (INCLUDE_VDSLWAN) {
+                $.wd.curSupXtmType = (wanDslInfList[0].linkEncapsulationUsed == "G.993.2_Annex_K_PTM") ? "PTM" : "ATM";
+                if ($.wd.curSupXtmType == "PTM") {
+                    $("#xDslTipText").val(n_str["wan"].xDslTipTextVDSL);
+                    curSupIsPtm = 1;
+                } else {
+                    $("#xDslTipText").val(n_str["wan"].xDslTipTextADSL);
+                }
+            }
+
+            for (var i = 0; i < wanDslInfList.length; i++) {
+                var stkParts = (wanDslInfList[i].__stack).split(",");
+                wanDslInfStkList += stkParts[0] + ",";
+                wanDslInfStatusList += wanDslInfList[i].status + ",";
+            }
+
+            var wanDslLnkTypeList = "";
+            var wanDslLnkStkList = "";
+            var wanDslLnkDesaddrList = "";
+            for (var i = 0; i < wanDslLnkList.length; i++) {
+                var stkParts = (wanDslLnkList[i].__stack).split(",");
+                wanDslLnkStkList += stkParts[0] + stkParts[1] + ",";
+                wanDslLnkTypeList += wanDslLnkList[i].linkType + ",";
+                wanDslLnkDesaddrList += wanDslLnkList[i].destinationAddress + ",";
+            }
+
+            $.each(wanComInfList, function() {
+                if (this.WANAccessType == "DSL") {
+                    $.wd.pStk = this.__stack;
+                    $.wd.l3ForwardingObj.__ifAliasName = l3Forwarding.__ifAliasName;
+                    if (INCLUDE_IPV6) {
+                        $.wd.l3Ip6ForwardingObj.__ifAliasName = l3Ip6Forwarding.__ifAliasName;
+                    }
+                }
+            });
+
+            $.each(wanIpConList, function() {
+                var tmpStk = $.stkPop(this.__stack, 2);
+                if ($.wd.pStk == tmpStk) {
+                    var thisStkParts = (this.__stack).split(",");
+
+                    var stk = thisStkParts[0] + thisStkParts[1];
+                    var stkIndex = (wanDslLnkStkList).split(",");
+
+                    var stk1 = thisStkParts[0];
+                    var stkIndex1 = (wanDslInfStkList).split(",");
+
+                    var lnkTypeIndex = (wanDslLnkTypeList).split(",");
+                    var desaddrIndex = (wanDslLnkDesaddrList).split(",");
+                    var statusIndex = (wanDslInfStatusList).split(",");
+                    var pvc;
+
+                    for (var j = 0; j < stkIndex.length; j++) {
+                        if (stk == stkIndex[j]) {
+                            connObj = {};
+                            connObj.dsl = $.act(ACT_GET, WAN_DSL_LINK_CFG, $.stkPop(this.__stack, 1), null, ["destinationAddress", "linkType", "ATMPeakCellRate", "ATMMaximumBurstSize", "ATMSustainableCellRate", "ATMEncapsulation", "ATMQoS"]);
+                            if (INCLUDE_VDSLWAN)
+                                connObj.ptm = $.act(ACT_GET, WAN_PTM_LINK_CFG, $.stkPop(this.__stack, 1), null, ["X_TP_Used", "X_TP_VlanEnabled", "X_TP_VID"]);
+                            $.exe();
+                            curConnIsPtm = INCLUDE_VDSLWAN ? connObj.ptm.X_TP_Used : 0;
+                            connObj.obj = this;
+                            connObj.obj.__stack = this.__stack;
+                            pvc = (INCLUDE_VDSLWAN && curConnIsPtm == 1) ? connObj.ptm.X_TP_VID : desaddrIndex[j].split(":")[1];
+
+                            /*cell = row.insertCell(-1);*/
+                            if ((!INCLUDE_VDSLWAN || curConnIsPtm == 0) && lnkTypeIndex[j] == "IPoA") {
+                                connObj.type = "ipoa";
+                            }
+                            if ((INCLUDE_VDSLWAN && curConnIsPtm == 1) || lnkTypeIndex[j] == "EoA") {
+                                if (this.connectionType == "IP_Bridged") {
+                                    connObj.type = "bridge";
+                                }
+                                if (this.connectionType == "IP_Routed") {
+                                    if (this.addressingType == "DHCP") {
+                                        connObj.type = "dynamicIp";
+                                    } else if (this.addressingType == "Static") {
+                                        connObj.type = "staticIp";
+                                    }
+                                }
+                            }
+
+                            $.wd.editIndex = $.wd.conn.push(connObj);
+                            break;
+                        }
+                    }
+
+                    var thisStk = "[" + this.__stack + "]";
+                    for (var j = 0; j < stkIndex1.length; j++) {
+                        if (stk1 == stkIndex1[j]) {
+                            if (statusIndex[j] == "Up") {
+                                if (this.connectionStatus == "Connected") {
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_connected'>" + m_str.connected + "</span>";
+                                    if ((this.connectionType == "IP_Bridged") || ((this.connectionType == "IP_Routed") && (this.addressingType == "Static"))) {
+                                        connect = "<span class='conn-opt-disabled T_disconn'>" + m_str.disconn + "</span>";
+                                    } else {
+                                        connect = "<span class='conn-opt T T_disconn' onClick='doDisConn(1, " + thisStk + ");'>" + m_str.disconn + "</span>";
+                                    }
+                                } else if ((this.connectionStatus == "Disconnected") || (this.connectionStatus == "Unconfigured")) {
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_disconnected'>" + m_str.disconnected + "</span>";
+
+                                    if (INCLUDE_IPV6 && this.X_TP_IPv4Enabled == 0) {
+                                        connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                                    } else {
+                                        if (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm)
+                                            connect = "<span class='conn-opt-disabled T_conn' onClick='doConn(1, " + thisStk + ");'>" + m_str.conn + "</span>";
+                                        else
+                                            connect = "<span class='conn-opt T_conn' onClick='doConn(1, " + thisStk + ");'>" + m_str.conn + "</span>";
+                                    }
+                                } else {
+                                    $.auto(function() {
+                                        if (!$.locked()) $.reload();
+                                    }, 5000);
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_connecting'>" + m_str.connecting + "</span>";
+                                    connect = "<span class='conn-opt-disabled T_conn' >" + m_str.conn + "</span>";
+                                }
+                            } else if ((statusIndex[j] == "Initializing") || (statusIndex[j] == "EstablishingLink")) {
+                                $.auto(function() {
+                                    if (!$.locked()) $.reload();
+                                }, 5000);
+                                status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span>DSL " + m_str.initing + "</span>";
+                                connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                            } else {
+                                status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span>DSL " + m_str.disconnected + "</span>";
+                                connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                            }
+
+                            if (this.connectionType == "IP_Bridged") {
+                                if (INCLUDE_IPTV) {
+                                    var iptv_regexp = /^iptv/;
+                                    if (iptv_regexp.test(this.name))
+                                        modify = "<span class='a T T_view table-grid-icon edit-modify-icon' onClick='doEdit(1, " + thisStk + ")'></span>";
+                                    else
+                                        modify = "<span class='a table-grid-icon edit-modify-icon' onClick='doEdit(1, " + thisStk + ")'></span>&nbsp;<span class='a table-grid-icon edit-trash-icon' onClick='doDel(1, " + thisStk + ")'></span>";
+                                } else
+                                    modify = "<span class='a table-grid-icon edit-modify-icon' onClick='doEdit(1, " + thisStk + ")'></span>&nbsp;<span class='a table-grid-icon edit-trash-icon' onClick='doDel(1, " + thisStk + ")'></span>";
+                            } else {
+                                modify = "<span class='a table-grid-icon edit-modify-icon' onClick='doEdit(1, " + thisStk + ")'></span>&nbsp;<span class='a table-grid-icon edit-trash-icon' onClick='doDel(1, " + thisStk + ")'></span>";
+                            }
+                            array.push([{
+                                text: this.name,
+                                width: ""
+                            }, {
+                                text: pvc,
+                                width: "10%"
+                            }, {
+                                text: status,
+                                width: "20%"
+                            }, {
+                                text: connect,
+                                width: "10%"
+                            }, {
+                                text: modify,
+                                width: "15%"
+                            }]);
+                            break;
+                        }
+
+                    }
+                }
+            });
+
+            $.each(wanPppConList, function() {
+                var tmpStk = $.stkPop(this.__stack, 2);
+                if ($.wd.pStk == tmpStk) {
+                    var thisStkParts = (this.__stack).split(",");
+
+                    var stk = thisStkParts[0] + thisStkParts[1];
+                    var stkIndex = (wanDslLnkStkList).split(",");
+
+                    var stk1 = thisStkParts[0];
+                    var stkIndex1 = (wanDslInfStkList).split(",");
+
+                    var lnkTypeIndex = (wanDslLnkTypeList).split(",");
+                    var desaddrIndex = (wanDslLnkDesaddrList).split(",");
+                    var statusIndex = (wanDslInfStatusList).split(",");
+                    var pvc;
+
+                    for (var j = 0; j < stkIndex.length; j++) {
+                        if (stk == stkIndex[j]) {
+                            connObj = {};
+                            connObj.dsl = $.act(ACT_GET, WAN_DSL_LINK_CFG, $.stkPop(this.__stack, 1), null, ["destinationAddress", "linkType", "ATMPeakCellRate", "ATMMaximumBurstSize", "ATMSustainableCellRate", "ATMEncapsulation", "ATMQoS"]);
+                            if (INCLUDE_VDSLWAN)
+                                connObj.ptm = $.act(ACT_GET, WAN_PTM_LINK_CFG, $.stkPop(this.__stack, 1), null, ["X_TP_Used", "X_TP_VlanEnabled", "X_TP_VID"]);
+                            $.exe();
+                            curConnIsPtm = INCLUDE_VDSLWAN ? connObj.ptm.X_TP_Used : 0;
+                            connObj.obj = this;
+                            connObj.obj.__stack = this.__stack;
+                            pvc = (INCLUDE_VDSLWAN && curConnIsPtm == 1) ? connObj.ptm.X_TP_VID : desaddrIndex[j].split(":")[1];
+
+                            if (this.transportType == "PPPoA") {
+                                connObj.type = "pppoa";
+                            } else if (this.transportType == "PPPoE") {
+                                connObj.type = "pppoe";
+                            } else if (this.transportType == "L2TP")
+                                connObj.type = "l2tp";
+                            else if (this.transportType == "PPTP")
+                                connObj.type = "pptp";
+
+                            $.wd.editIndex = $.wd.conn.push(connObj);
+                            break;
+                        }
+                    }
+                    var thisStk = "[" + this.__stack + "]";
+
+                    for (var j = 0; j < stkIndex1.length; j++) {
+                        if (stk1 == stkIndex1[j]) {
+                            if (statusIndex[j] == "Up") {
+                                if (INCLUDE_IPV6 && this.X_TP_IPv4Enabled == 0) {
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_disconnected'>" + m_str.disconnected + "</span>";
+
+                                    connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                                } else if (this.connectionStatus == "Connected") {
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_connected'>" + m_str.connected + "</span>";
+
+                                    connect = "<span class='conn-opt T_discon' onClick='doDisConn(2, " + thisStk + ");'>" + m_str.disconn + "</span>";
+                                } else if ((this.connectionStatus == "Disconnected") || (this.connectionStatus == "Unconfigured")) {
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_disconnected'>" + m_str.disconnected + "</span>";
+
+                                    if (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm)
+                                        connect = "<span class='conn-opt-disabled T_conn' onClick='doConn(2, " + thisStk + ");'>" + m_str.conn + "</span>";
+                                    else
+                                        connect = "<span class='conn-opt T_conn' onClick='doConn(2, " + thisStk + ");'>" + m_str.conn + "</span>";
+                                } else if (this.connectionStatus == "Connecting") {
+                                    $.auto(function() {
+                                        if (!$.locked()) $.reload();
+                                    }, 5000);
+                                    status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span class='T_connecting'>" + m_str.connecting + "</span>";
+                                    connect = "<span class='conn-opt T_disconn' onClick='doDisConn(2, " + thisStk + ");'>" + m_str.disconn + "</span>";
+                                }
+                            } else if ((statusIndex[j] == "Initializing") || (statusIndex[j] == "EstablishingLink")) {
+                                $.auto(function() {
+                                    if (!$.locked()) $.reload();
+                                }, 5000);
+                                status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span>DSL " + m_str.initing + "</span>";
+                                connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                            } else {
+                                status = (INCLUDE_VDSLWAN && curSupIsPtm != curConnIsPtm) ? "<span>DSL " + m_str.disabled + "</span>" : "<span>DSL " + m_str.disconnected + "</span>";
+                                connect = "<span class='conn-opt-disabled T_conn'>" + m_str.conn + "</span>";
+                            }
+                            modify = "<span class='a table-grid-icon edit-modify-icon' onClick='doEdit(2, " + thisStk + ")'></span>&nbsp;<span class='a table-grid-icon edit-trash-icon' onClick='doDel(2, " + thisStk + ")'></span>";
+
+                            array.push([{
+                                text: this.name,
+                                width: "20%"
+                            }, {
+                                text: pvc,
+                                width: ""
+                            }, {
+                                text: status,
+                                width: "20%"
+                            }, {
+                                text: connect,
+                                width: "10%"
+                            }, {
+                                text: modify,
+                                width: "15%"
+                            }]);
+                            break;
+                        }
+                    }
+                }
+            });
+            $.initTableBody($("#wanTable"), array);
+            return array;
+        }
+    });
+}
+
+$("#addConnIcon").click(function() {
+    $.loadPage("divPage", "div.htm");
+    $("#editContainer").addClass("nd");
+});
+</script>
+
+<h3 id="et">DSL WAN Interface</h3>
+<div class="content-container" id="arp">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+                <span id="addConnIcon" class="add-icon"></span>
+                <label class="T_add">Add</label>
+                <span class="delete-all-icon"></span>
+                <label class="T_delall">Delete All</label>
+            </div>
+        </div>
+        <table id="wanTable">
+            <thead></thead>
+            <tbody id="wanBody">
+                <tr id="editContainer" class="nd">
+                    <td colspan="5">
+                        <div id="divPage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+
+<script language="javascript" type="text/javascript">
+var connObj = {
+    type: null,
+    obj: {},
+    dsl: {},
+    ptm: {}
+};
+$.wd = {
+    conn: new Array(),
+    pStk: null,
+    editIndex: 0,
+    l3ForwardingObj: {},
+    l3Ip6ForwardingObj: {}
+};
+
+var headArray = [{
+    "text": table_str.wanInfName,
+    "width": ""
+}, {
+    "text": INCLUDE_VDSLWAN ? s_str.destVDSL : s_str.destADSL,
+    "width": "15%"
+}, {
+    "text": table_str.status,
+    "width": "20%"
+}, {
+    "text": table_str.operation,
+    "width": "20%"
+}, {
+    "text": table_str.modify,
+    "width": "15%"
+}];
+$.initTableHead($("#wanTable"), headArray);
+$("#wanTable").tpTable(initTable);
+$.tpInit(init);
+</script>

@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Filtered Content</title>
+<link href="themes/default/img/replace/favicon.ico?t=29dee038" mce_href="themes/default/img/replace/favicon.ico" rel="bookmark" type="image/x-icon" /> 
+<link href="themes/default/img/replace/favicon.ico?t=29dee038" mce_href="themes/default/img/replace/favicon.ico" rel="icon" type="image/x-icon" /> 
+<link href="themes/default/img/replace/favicon.ico?t=29dee038" mce_href="themes/default/img/replace/favicon.ico" rel="shortcut icon" type="image/x-icon" /> 
+<style>
+*{
+	font-family: Arial, Verdana, Geneva, sans-serif;    
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+html{
+	min-height: 100%;
+    position: relative;
+}
+body{
+	background:#f4f5f6;
+	margin:0;
+}
+.clearfix{
+	display:block;
+	clear:both;
+	height:0;
+	visibility:hidden;
+}
+.header{
+	width:980px;
+	margin:72px auto;
+}
+.logo{
+	width:177px;
+	cursor:pointer;
+	height:67px;
+	background: url("themes/default/img/security.png?t=29dee038") -970px -1px no-repeat;
+}
+.content{
+	margin:140px auto;
+	width:950px;
+    color: #36444b;
+}
+.content .situation-img{
+	width: 241px;
+	height: 241px;    
+	margin: 0 60px 100px 49px;
+	background: url("themes/default/img/security.png?t=29dee038") -1px -1px no-repeat;
+	float:left;
+}
+.content #situation-Two .situation-img{
+	background: url("themes/default/img/security.png?t=29dee038") -486px -1px no-repeat;
+}
+.content #situation-Three.bed-time .situation-img{
+	background: url("themes/default/img/security.png?t=29dee038") -244px -1px no-repeat;
+}
+.content #situation-Three.time-up .situation-img{
+	background: url("themes/default/img/security.png?t=29dee038") -728px -1px no-repeat;
+}
+.content #situation-Three.pause .situation-img{
+	background: url("themes/default/img/security.png?t=29dee038") -1149px -1px no-repeat;
+}
+.content h1{
+    font-size: 42px;
+	padding-top:25px;
+	font-weight: normal;
+}
+.content span.situation-sentence{
+    font-size: 20px;
+	line-height: 24px;
+	margin-top:16px;
+}
+#situation-One,
+#situation-Two,
+#situation-Three {
+	display: none;
+}
+</style>
+<script>
+if (navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)){
+	var devicePixelRatio = Math.floor(window.devicePixelRatio)>2?2:Math.floor(window.devicePixelRatio);
+	var scale = (1 / devicePixelRatio).toFixed(1); 
+	document.write('<meta name="viewport" content="width=device-width, initial-scale='+ scale +', minimum-scale='+ scale +', maximum-scale='+ scale +', user-scalable=no">');
+	document.write('<link rel="stylesheet" type="text/css" media="screen" href="themes/default/css/block.css">');
+}
+</script>
+</head>
+<body>
+	<div class="header">
+		<div class="logo" onclick="location.href='http://www.tp-link.com/'"></div>
+	</div>
+	<div class="content">
+		<div id="situation-One">
+			<div class="situation-img"></div>
+			<div class="situation-info">
+				<h1></h1>
+				<span class="situation-sentence"></span>
+				<br class="clearfix" />
+			</div>
+		</div>
+		<div id="situation-Two">
+			<div class="situation-img"></div>
+			<div class="situation-info">
+				<h1></h1>
+				<span class="situation-sentence"></span>
+				<br class="clearfix" />
+			</div>
+		</div>
+		<div id="situation-Three">
+			<div class="situation-img"></div>
+			<div class="situation-info">
+				<h1></h1>
+				<span class="situation-sentence"></span>
+				<br class="clearfix" />
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="js/libs/jquery.min.js?t=29dee038"></script>
+	<script type="text/javascript">
+	//<![CDATA[
+		function changeType(data){
+			var lanType = data.locale || "en_US",
+		        force = data.force === true ? true : false,
+		        model = data.model || "",
+		        region = data.region || "";
+
+			var URL_JS = "./locale/%LAN_TYPE%/lan.js".replace("%LAN_TYPE%", lanType);
+			var URL_CSS = "./locale/%LAN_TYPE%/lan.css".replace("%LAN_TYPE%", lanType);
+
+			$("script#lan-js").remove();
+			$("link#lan-css").remove();
+
+			$("head").append("<script id=\"lan-js\" type=\"text\/javascript\" src=\""+URL_JS+" \"><\/script>");
+			$("head").append("<link id=\"lan-css\" type=\"text\/css\" rel=\"stylesheet\" href=\""+URL_CSS+" \"\/>");
+			$("head").append("<script type=\"text\/javascript\" src=\".\/locale\/language.js\" ><\/script>");
+		    //console.log("this", this)
+		}
+		function setDefault(){
+			this.changeType({
+		        "locale": "en_US",
+		        "force": false,
+		        "model": "",
+		        "region": ""
+		    });
+		}
+	    try{
+	        $.ajax({
+		    	type: "POST",
+		        url: "/cgi-bin/luci/;stok=/locale?form=lang",
+		        async: false,
+		        dataType: "json",
+		        data:{
+		        	"operation": "read"
+		        },
+		        success: function(data){
+		        	if (data.success && data.data && data.data.locale){
+		        		changeType(data.data);
+		        	}else{
+		                setDefault();
+		            };
+		        },
+		        error: function(){
+		            setDefault();
+		        }
+		    });
+	    }catch(error){
+	        // location.href = "./error.html?t=29dee038";
+	        setDefault();
+	    };
+	//]]>
+	</script>
+
+	<script type="text/javascript">
+		$(document).ready(function(e){
+			function $_(ele){
+				return document.getElementById(ele);
+			}
+			function showSituation(id){
+				$_("situation-One").style.display="none";
+				$_("situation-Two").style.display="none";
+				$_("situation-Three").style.display="none";
+				$_(id).style.display="block";
+			}
+			
+			document.title = $.su.CHAR.SHN_BLOCKING.TITLE1;
+			//$_("situation-One").getElementsByTagName("h1")[0].innerHTML=$.su.CHAR.SHN_BLOCKING.TITLE0;
+			//$_("situation-One").getElementsByTagName("span")[0].innerHTML=$.su.CHAR.SHN_BLOCKING.CONTENT0;
+			$_("situation-Two").getElementsByTagName("h1")[0].innerHTML=$.su.CHAR.SHN_BLOCKING.TITLE1;
+			$_("situation-Three").getElementsByTagName("h1")[0].innerHTML=$.su.CHAR.SHN_BLOCKING.TITLE1;
+
+			//logic
+			if(location.search.slice(1).split("&")[0]!=""){
+				var urlArr = location.search.slice(1).split("&");
+				var urlHash = {};
+				var situationSentence;
+				for(var i=0;i<urlArr.length;i++){
+					urlHash[urlArr[i].split("=")[0]] = urlArr[i].split("=")[1];
+				}
+				var pid = urlHash["pid"];
+				if(pid){
+					showSituation("situation-Three");
+					situationSentence = $_("situation-Three").getElementsByTagName("span")[0];
+					switch(pid*1){
+						case 1:
+							$_("situation-Three").className = "pause";
+							situationSentence.innerHTML = $.su.CHAR.SHN_BLOCKING.CONTENT2;
+							break;
+						case 2:
+							$_("situation-Three").className = "time-up";
+							situationSentence.innerHTML = $.su.CHAR.SHN_BLOCKING.CONTENT3;
+							break;
+						case 3:
+							$_("situation-Three").className = "bed-time";
+							situationSentence.innerHTML = $.su.CHAR.SHN_BLOCKING.CONTENT4;
+							break;
+						case 4:
+							showSituation("situation-Two");
+							situationSentence = $_("situation-Two").getElementsByTagName("span")[0];
+							situationSentence.innerHTML = $.su.CHAR.SHN_BLOCKING.CONTENT1_0;
+							break;
+					}
+				}
+			}else{
+				showSituation("situation-Two");
+			}
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+#!/usr/bin/lua
+-- only need to read first 2 bytes to match chip name
+local read_size = 2
+local cal_2g_offset = 0x0
+local cal_5g_offset = 0x8000
+local mtd_art = io.popen("cat /proc/mtd | grep 'ART' | grep -o 'mtd.'")
+local file = nil
+local cal_2g = 0
+local cal_5g = 0
+
+if mtd_art then
+    file = io.open("/dev/" .. string.gsub(mtd_art:read("*all"),"\n",""), "r")
+    mtd_art:close()
+end
+
+if file == nil then
+    print("nil file")
+else
+    file:seek("set", cal_2g_offset)
+    local bytes_read_2g = file:read(read_size)
+    local byte0, byte1 =  string.byte(bytes_read_2g, 1, 2)
+    -- for mt7603, first two byte is 03 76
+    if byte0 == 0x03 and byte1 == 0x76 then
+        cal_2g = 1
+    end
+
+    file:seek("set", cal_5g_offset)
+    local bytes_read_5g = file:read(read_size)
+    byte0, byte1 =  string.byte(bytes_read_5g, 1, 2)
+    -- for mt7613, first two byte is 63 76
+    if byte0 == 0x63 and byte1 == 0x76 then
+        cal_5g = 1
+    end
+
+    if cal_2g == 1 and cal_5g == 1 then
+        print("true")
+    else
+        print("false")
+    end
+end

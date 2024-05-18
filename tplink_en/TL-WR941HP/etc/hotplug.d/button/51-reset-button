@@ -1,0 +1,26 @@
+# Copyright (c) 2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : Eddie Ho <eddie.ho@tp-link.com>
+# Date    : 21 Aug 2016
+
+FACTORY_RESET_BUTTON_PID="/var/run/factory_reset.pid"
+
+if [ "$ACTION" = "released" -a "$BUTTON" = "reset" ]; then
+        touch /tmp/button_reset_check
+        if [ "$SEEN" -lt 5 ]; then
+                [ -e ${FACTORY_RESET_BUTTON_PID} ] && {
+                        local pid=$(cat ${FACTORY_RESET_BUTTON_PID})
+                        echo "$ACTION:$BUTTON:$SEEN: Kill pid $pid." > /dev/console
+                        [ -n "$pid" ] && kill -9 $pid
+                        rm -f ${FACTORY_RESET_BUTTON_PID}
+                }
+        fi
+fi
+
+if [ "$ACTION" = "pressed" -a "$BUTTON" = "reset" ]; then
+        if [ "$(uci get factory.factorymode.enable)" = "yes" -a "$(/sbin/is_cal)" != "true" ]; then
+                echo "--> RESET button pressed" > /dev/console
+        else
+                /usr/sbin/factory_reset &
+        fi
+fi
+

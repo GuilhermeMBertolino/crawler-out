@@ -1,0 +1,201 @@
+<script language="javascript">
+var preArray = new Array(
+    "015-016-017",
+    "2-3-4-5-6-7-8-9-12-13-14-15-16-17-18",
+    "02-03-04-05-06-07-08-09",
+    "00"
+);
+var attrType = 2;
+var otherType = 1;
+var tlb = $.id("callruleTlb");
+function isPrefix(preNum) {
+    for (var i = 0; i < preArray.length; i++) {
+        var tmp = preArray[i].split('-');
+        for (var j = 0; j < tmp.length; j++) {
+            if (tmp[j] == preNum) {
+                return i;
+            }
+        }
+    }
+    return (4);
+}
+function doEdit(typename, stack) {
+	var subPara = new Object();
+	subPara.stack = stack;
+	subPara.typename = typename;
+	$.loadMain('voice_addcallrule.htm', subPara);
+}
+function doDel(typename, stack) {
+        var attr = 1;
+        var typeAttr;
+        var voipDialPlanTmp = $.act(ACT_GL, XTP_IGD_MULTIISPDP_LIST, null, null, ["attr", "prefix", "type"]);
+        var dialplanObj = $.act(ACT_GET, XTP_IGD_MULTIISPDP_LIST, stack, null);
+        if (0 != $.exe()) {
+            return;
+        }
+        var dialPlanList = [];
+        $.each(voipDialPlanTmp, function(arg, index) {
+            var attr = parseInt(this.attr, 10);
+            if (((attr & ENABLE_MASK) >>> ENABLE_SHIFT) != 0) {
+                dialPlanList.push(this);
+            }
+        });
+        var prefix = [];
+        if (typename == "other") {
+            prefix.push(dialplanObj.prefix);
+            typeAttr = otherType;
+        } else {
+            var result = isPrefix(dialplanObj.prefix);
+            if (result >= 0 && result <= 3) {
+                prefix = preArray[result].split('-');
+            }
+            typeAttr = attrType;
+        }
+        for (var j = 0; j < dialPlanList.length; j++) {
+            for (var i = 0; i < prefix.length; i++) {
+                if (dialPlanList[j].prefix == prefix[i]) {
+                    $.act(ACT_DEL, XTP_IGD_MULTIISPDP_LIST, dialPlanList[j].__stack, null, ["attr=" + ]);
+                    break;
+                }
+            }
+        }
+        actForSendMsg();
+        $.exe(function(ret) {
+            if (!ret)
+                $.reload();
+        });
+}
+function delAll(obj) {
+	$.addLoading(obj);
+	var attr = 1;
+	var voipDialPlanTmp = $.act(ACT_GL, XTP_IGD_MULTIISPDP_LIST, null, null, ["attr", "prefix", "type"]);
+	if (0 != $.exe()) {
+		return;
+	}
+	var dialPlanList = [];
+	$.each(voipDialPlanTmp, function(arg, index) {
+		var attr = parseInt(this.attr, 10);
+		if (((attr & ENABLE_MASK) >>> ENABLE_SHIFT) != 0) {
+			dialPlanList.push(this);
+		}
+	});
+	for (var j = 0; j < dialPlanList.length; j++) {
+		$.act(ACT_DEL, XTP_IGD_MULTIISPDP_LIST, dialPlanList[j].__stack, null, ["attr=" + dialPlanList[j].attr, "type=" + dialPlanList[j].type]);
+	}
+	actForSendMsg();
+	$.exe(function(ret) {
+		$.removeLoading();
+		if (!ret)
+			$.reload();
+	});
+}
+function addOnclick()
+{
+	var subPara = new Object();
+	subPara.add = true;
+	$.loadMain('voice_addcallrule.htm', subPara);
+}
+function freshTable() {
+        voipAccounts = $.act(ACT_GL, XTP_MULTI_ISP, null, null, ["multiProfileName", "multiExtension", "multiIndexing"]);
+        voipDialPlanTmp = $.act(ACT_GL, XTP_IGD_MULTIISPDP_LIST, null, null, ["attr", "prefix", "replace", "type"]);
+        if (INCLUDE_DECT)
+            var handsetList = $.act(ACT_GL, VOICE_PROF_LINE, null, null, ["X_TP_PhoneName", "X_TP_InternalNumber", "X_TP_PhoneType"]);
+        if (0 != $.exe()) {
+            return;
+        }
+		var len = tlb.rows.length
+		for(var i=1; i<len; i++)
+		{
+			tlb.deleteRow(1);
+		}
+		var row;
+		var cell;
+        voipDialPlan = [];
+        $.each(voipDialPlanTmp, function(arg, index) {
+            var attr = parseInt(this.attr, 10);
+            if (((attr & ENABLE_MASK) >>> ENABLE_SHIFT) != 0) {
+                voipDialPlan.push(this);
+            }
+        });
+        var array = new Array();
+        var resTmp = new Array(0, 0, 0, 0);
+        var index;
+        $.each(voipDialPlan, function() {
+            var prefix = this.prefix;
+            var attr = parseInt(this.attr, 10);
+            var result = isPrefix(prefix);
+            var viaIndex = (attr & SIP_MASK) >>> SIP_SHIFT;
+            var accIndex = viaIndex - 1;
+            var thisStk = "[" + this.__stack + "]";
+            if (result >= 0 && result <= 3) {
+                if (this.type & attrType) {
+                    if (resTmp[result] == 0) {
+						row = tlb.insertRow(-1);
+						cell = row.insertCell(-1);
+                        resTmp[result] = 1;
+						cell.innerHTML = "<span class='fl'>" + typeArray[result] + "</span>";
+						cell = row.insertCell(-1);
+						cell.innerHTML = viaIndex ? voipAccounts[accIndex].multiProfileName : "None";
+						cell = row.insertCell(-1);
+						$.addClass(cell, "tc");
+						cell.innerHTML = "<span class='a' id='del_" + index + "' onclick='doDel(\"type\", "  + thisStk + ");'>"+m_str["del"]+"</span>";
+						cell = row.insertCell(-1);
+						$.addClass(cell, "tc");
+						cell.innerHTML = "<span class='a' id='edit_" + index + "' onclick='doEdit(\"type\", " + thisStk + ");'>"+m_str["edit"]+"</span>";
+                    }
+                }
+                if (this.type & otherType) {
+					row = tlb.insertRow(-1);
+					cell = row.insertCell(-1);
+					cell.innerHTML = "<span class='fl'>" + this.prefix + "</span>";
+					cell = row.insertCell(-1);
+					cell.innerHTML = viaIndex ? voipAccounts[accIndex].multiProfileName : "None";
+					cell = row.insertCell(-1);
+					$.addClass(cell, "tc");
+					cell.innerHTML = "<span class='a' id='del_" + index + "' onclick='doDel(\"other\", " + thisStk + ");'>"+m_str["del"]+"</span>";
+					cell = row.insertCell(-1);
+					$.addClass(cell, "tc");
+					cell.innerHTML = "<span class='a' id='edit_" + index + "' onclick='doEdit(\"other\", " + thisStk + ");'>"+m_str["edit"]+"</span>";
+                }
+            } else {
+				row = tlb.insertRow(-1);
+				cell = row.insertCell(-1);
+                cell.innerHTML = "<span class='fl'>" + this.prefix + "</span>";
+				cell = row.insertCell(-1);
+				cell.innerHTML = viaIndex ? voipAccounts[accIndex].multiProfileName : "None";
+				cell = row.insertCell(-1);
+				$.addClass(cell, "tc");
+				cell.innerHTML = "<span class='a' id='del_" + index + "' onclick='doDel(\"other\", " + thisStk + ");'>"+m_str["del"]+"</span>";
+				cell = row.insertCell(-1);
+				$.addClass(cell, "tc");
+				cell.innerHTML = "<span class='a' id='edit_" + index + "' onclick='doEdit(\"other\", " + thisStk + ");'>"+m_str["edit"]+"</span>";
+            }
+            index++;
+        });
+}
+function initCallRule() {
+   $.auto(freshTable, VOICE_FRESH_TIME, true);
+}
+</script>
+<p class="et"><b class="T T_callrules">Call Rules</b></p>
+<div class="con1 XXL">
+<p class="ct T T_callrules">Call Rules</p>
+<p class="bl"></p>
+<div class="con2">
+	<p class="br"></p>
+	<table id="callruleTlb" align="center" class="bdr XXXL" cellpadding="0" cellspacing="0">
+		<tr>
+			<th class="T" id="t_pre">Prefix or call type</th>
+			<th class="T" id="t_numout">Number for Outgoing</th>
+			<th class="T T_remove">Remove</th>
+			<th class="T T_telmod">Modify</th>
+		</tr>
+	</table>
+</div>
+<p class="bl"></p>
+<p class="tail">
+	<input type="button" id="add" class="button M T T_add" value="Add" onclick="addOnclick()">
+	<input type="button" id="deleteAll" class="button L T T_delall" value="delete All" onclick="delAll(this)">
+</p>
+</div>
+<script language="javascript">initCallRule()</script>

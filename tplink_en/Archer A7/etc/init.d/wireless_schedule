@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=48
+
+WIRELESS_SCHEDULE_LIBDIR=/lib/wifi
+
+wireless_schedule() {
+	. ${WIRELESS_SCHEDULE_LIBDIR}/wireless_schedule_core.sh
+	wireless_schedule_$1
+}
+
+start() {
+	#for old version which has no such config,create it manually.
+	if [ ! -f /etc/config/wireless_schedule ];then
+		echo "config global '2g'" >/etc/config/wireless_schedule
+		echo " " >>/etc/config/wireless_schedule
+		echo "config global '5g'" >>/etc/config/wireless_schedule
+		echo " " >>/etc/config/wireless_schedule
+		echo "config global '52g'" >>/etc/config/wireless_schedule
+		uci commit
+	fi
+	wireless_schedule start
+}
+
+stop() {
+	wireless_schedule stop
+}
+
+restart() {
+	wireless_schedule restart
+}

@@ -1,0 +1,234 @@
+<script>function isHex(e,a){e=e.toLowerCase();for(var n=0;n<e.length;n++)if(!(e.charAt(n)>="0"&&e.charAt(n)<="9"||e.charAt(n)>="a"&&e.charAt(n)<="f"))return 0!=a&&$.alert(ERR_WLAN_WEP_KEY_HEX_INVALID),!1;return 0!=parseInt(e,16)||(0!=a&&$.alert(ERR_WLAN_WEP_KEY_HEX_INVALID),!1)}function checkWDS(e){return 0!=$("#channel").data("value")||"1"!=("_2g"==e?wdsObj_2g:wdsObj_5g).bridgeEnable||($.alert(ERR_WLAN_CHANNEL_CONFLICTE_WITH_WDS),$("#channel").focus(),$("#channel").select(),!1)}function checkSSID(e){var a=$("#ssid"),n=$.realLen(a.prop("value")),t=!1;return INCLUDE_LAN_WLAN_MSSID&&INCLUDE_LAN_WLAN_GUESTNETWORK&&(INCLUDE_LAN_WLAN_DUALBAND&&(t=a.prop("value")==guestVap_5g.SSID),a.prop("value")==guestVap_2g.SSID||t)?($.alert(CMM_WLAN_SSID_CONFLICTE_WITH_GUESTNET),a.focus(),a.select(),!1):n<=0?($.alert(ERR_WLAN_SSID_IS_EMPTY),a.focus(),a.select(),!1):!(n>32)||($.alert(ERR_WLAN_SSID_LEN_OUTRANGE),a.focus(),a.select(),!1)}function checkPersonal(e){var a=$("#wpa2PersonalPwd"),n=a.prop("value");if(0==n.length)return $.alert(ERR_WLAN_WPA_PSK_EMPTY),a.focus(),a.select(),!1;if(n.length<8)return $.alert(ERR_WLAN_WPA_PSK_LENGTH_INVALID),a.focus(),a.select(),!1;if(n.length>=64){if(!isHex(n,0))return $.alert(ERR_WLAN_WPA_PSK_HEX_INVALID),a.focus(),a.select(),!1;a.prop("value",a.prop("value").substr(0,64))}else{if($.asc(n,!0))return $.alert(ERR_WLAN_WPA_PSK_ASCII_INVALID),a.focus(),a.select(),!1;if(1==/[ ]/.test(n))return $.alert(ERR_WLAN_WPA_PSK_SPACE_INVALID),a.focus(),a.select(),!1}return!(1==qssEnable_2g&&"_2g"==e||1==qssEnable_5g&&"_5g"==e)||!$("#encrypPersonalTkip").prop("checked")||($.alert(ERR_WLAN_QSS_TKIP_CONFLICT),!1)}function checkEnterprise(e){var a=$("#wpa2EnterpriseIP"),n=$("#wpa2EnterprisePort"),t=$("#wpa2EnterprisePwd");return $.ifip(a.tpAddress("val"))?(a.focus(),a.select(),!1):(0==n.prop("value")&&n.prop("value",1812),n.value>65535||n.value<1?($.alert(ERR_WLAN_WPA_PORT_INVALID),n.focus(),n.select(),!1):0==t.prop("value").length?($.alert(ERR_WLAN_WPA_PWD_EMPTY),t.focus(),t.select(),!1):t.prop("value").length>64?($.alert(ERR_WLAN_WPA_PWD_INVALID),t.focus(),t.select(),!1):!(1==qssEnable_2g&&"_2g"==e||1==qssEnable_5g&&"_5g"==e)||!$("#encrypPersonalTkip").prop("checked")||($.alert(ERR_WLAN_QSS_TKIP_CONFLICT),!1))}function checkWEP(e){var a=$("#wepShareKey").data("value"),n=$("#wepKey"+a+"Value"),t=0,c=0;return t=$("#key"+a+"FormatAscii").prop("checked")?1:0,c=$("#key"+a+"Type64").prop("checked")?1:0,0==n.prop("value").length?($.alert(ERR_WLAN_WEP_NO_KEY),!1):0!=t||isHex(n.prop("value"),1)?$.asc(n.prop("value"),!0)?($.alert(ERR_WLAN_WEP_KEY_ASCII_INVALID),n.focus(),n.select(),!1):n.prop("value").length==(c?40:104)/(t?8:4)||($.alert(ERR_WLAN_WEP_KEY_LENGTH_INVALID),n.focus(),n.select(),!1):(n.focus(),n.select(),!1)}function checkValue(e){switch($("select#sec").data("value")){case"0":return!0;case"1":return checkPersonal(e);case"2":return checkEnterprise(e);case"3":return checkWEP(e)}}function initModeList(e,a){var n,t=$("#mode");t.empty(),"_5g"==a?INCLUDE_LAN_WLAN_AC?$.each(strMode_AC,function(){n='<option value="'+this[1]+'">'+this[0]+"</option>",t.append(n)}):$.each(strMode_AN,function(){n='<option value="'+this[1]+'">'+this[0]+"</option>",t.append(n)}):$.each(strMode_N,function(){n='<option value="'+this[1]+'">'+this[0]+"</option>",t.append(n)}),$('#mode option[value="'+e.standard+'"]').prop("selected","selected")}function initBandWidth(e,a){var n,t=$("#chnwidth");t.empty(),"KP "==e.regulatoryDomain||("AM "==e.regulatoryDomain||"BH "==e.regulatoryDomain||"CR "==e.regulatoryDomain||"EC "==e.regulatoryDomain||"EG "==e.regulatoryDomain||"SV "==e.regulatoryDomain||"GL "==e.regulatoryDomain||"GU "==e.regulatoryDomain||"ID "==e.regulatoryDomain||"JP "==e.regulatoryDomain||"TN "==e.regulatoryDomain)&&"_5g"==a?(n='<option value="20M">'+strBandWidth[1][0]+"</option>",t.append(n),t.val("20M"),t.prop("disabled",!0),t.get(0).selectedIndex=0):($.each(strBandWidth,function(e,a){n='<option value="'+this[1]+'">'+this[0]+"</option>",t.append(n)}),!INCLUDE_LAN_WLAN_AC||"ac"!=e.standard&&"ac-only"!=e.standard&&"nac"!=e.standard||$.each(strBandWidth_AC,function(a,c){if("UA "==e.regulatoryDomain||"RU "==e.regulatoryDomain)return t.find('option[value="Auto"]').remove(),!0;n='<option value="'+this[1]+'">'+this[0]+"</option>",t.append(n)}),t.prop("disabled",!1),"80M"==e.X_TP_Bandwidth&&"an"==e.standard?t.get(0).selectedIndex=0:$("#chnwidth option[value = "+e.X_TP_Bandwidth+"]").prop("selected","selected")),$("#chnwidth").tpSelect({refresh:1}),e.X_TP_Bandwidth=t.val()}function initChannel(e,a){var n,t=0,c=e.standard,r=e.X_TP_Bandwidth;dfsMask=1<<IEEE80211_CHAN_REQUIRED_DFS;var o,i=$("#channel");i.empty(),i.append('<option value="0">'+m_str.auto+"</option>"),t="_2g"==a?$.getWl24gMask(c,r):$.getWl5gMask(c,r);for(var p in regionCodeInfo)regionCodeInfo[p][1]==e.regulatoryDomain&&(n=p);for(n*=region_chan_table_shift,p=1;p<=TOTAL_CHANNEL;p++)Region_chan_table[n+p]&t&&("_2g"!=a&&("_5g"!=a||0!=(Region_chan_table[n+p]&dfsMask)&&(Region_chan_table[n+p],dfsMask,1))||(o='<option value="'+chan_index_map[p-1]+'">'+chan_index_map[p-1]+"</option>",i.append(o)));1==e.autoChannelEnable?$('#channel option[value="0"]').prop("selected","selected"):$('#channel option[value="'+e.channel+'"]').prop("selected","selected"),$("select#channel").tpSelect({refresh:1})}function initPower(e,a){var n=e.transmitPowerSupported.split(",");switch(n.sort(function(e,a){return e-a}),$.baseIndexOf(n,e.transmitPower)){case 0:$("#powerLow").prop("checked",!0),$("#powerMiddle").prop("checked",!1),$("#powerHigh").prop("checked",!1);break;case 1:$("#powerLow").prop("checked",!1),$("#powerMiddle").prop("checked",!0),$("#powerHigh").prop("checked",!1);break;case 2:$("#powerLow").prop("checked",!1),$("#powerMiddle").prop("checked",!1),$("#powerHigh").prop("checked",!0)}$("#powerLow").data("dmNum",n[0]),$("#powerMiddle").data("dmNum",n[1]),$("#powerHigh").data("dmNum",n[2])}function initParamShow(e,a){1==e.enable?($("#wlEn").prop("checked",!0),$("#wlEn").prop("disabled",!1)):"BD "!=e.regulatoryDomain&&"KZ "!=e.regulatoryDomain&&"SY "!=e.regulatoryDomain&&"YE "!=e.regulatoryDomain||"_5g"!=a?($("#wlEn").prop("checked",!1),$("#wlEn").prop("disabled",!1)):($("#wlEn").prop("checked",!1),$("#wlEn").prop("disabled",!0)),$("#wlEn").data("tpCheckbox").refresh(),$("#ssid").prop("value",e.SSID),0==e.SSIDAdvertisementEnabled?$("#hideSSID").prop("checked",!0):$("#hideSSID").prop("checked",!1),initModeList(e,a),initBandWidth(e,a),initChannel(e,a),initPower(e,a)}function initSecShow(e,a){initSecType(e,a),initWpa2Personal(e,a),initWpa2Enterprise(e,a),initWep(e,a)}function initSecType(e,a){"Basic"==e.beaconType&&"None"==e.basicEncryptionModes?$("#noSec").prop("selected","selected"):"WPA"==e.beaconType?"PSKAuthentication"==e.WPAAuthenticationMode?$("#wpa2Personal").prop("selected","selected"):$("#wpa2Enterprise").prop("selected","selected"):"11i"==e.beaconType||"WPAand11i"==e.beaconType?"PSKAuthentication"==e.IEEE11iAuthenticationMode?$("#wpa2Personal").prop("selected","selected"):$("#wpa2Enterprise").prop("selected","selected"):"Basic"==e.beaconType&&"WEPEncryption"==e.basicEncryptionModes&&$("#wep").prop("selected","selected")}function initWpa2Personal(e,a){"WPAand11i"==e.beaconType&&"PSKAuthentication"==e.WPAAuthenticationMode?($("#verPersonalAuto").prop("checked","checked"),"TKIPEncryption"==e.IEEE11iEncryptionModes?$("#encrypPersonalTkip").prop("checked","checked"):"AESEncryption"==e.IEEE11iEncryptionModes?$("#encrypPersonalAes").prop("checked","checked"):$("#encrypPersonalAuto").prop("checked","checked")):"WPA"==e.beaconType&&"PSKAuthentication"==e.WPAAuthenticationMode?($("#verPersonalWpa").prop("checked","checked"),"TKIPEncryption"==e.WPAEncryptionModes?$("#encrypPersonalTkip").prop("checked","checked"):"AESEncryption"==e.WPAEncryptionModes?$("#encrypPersonalAes").prop("checked","checked"):$("#encrypPersonalAuto").prop("checked","checked")):"11i"==e.beaconType&&"PSKAuthentication"==e.IEEE11iAuthenticationMode?($("#verPersonalWpa2").prop("checked","checked"),"TKIPEncryption"==e.WPAEncryptionModes?$("#encrypPersonalTkip").prop("checked","checked"):"AESEncryption"==e.WPAEncryptionModes?$("#encrypPersonalAes").prop("checked","checked"):$("#encrypPersonalAuto").prop("checked","checked")):($("#verPersonalAuto").prop("checked","checked"),$("#encrypPersonalAuto").prop("checked","checked")),$("#wpa2PersonalPwd").prop("value",e.X_TP_PreSharedKey)}function initWpa2Enterprise(e,a){"WPAand11i"==e.beaconType&&"EAPAuthentication"==e.WPAAuthenticationMode?($("#verEnterpriseAuto").prop("checked","checked"),"TKIPEncryption"==e.IEEE11iEncryptionModes?$("#encrypEnterpriseTkip").prop("checked","checked"):"AESEncryption"==e.IEEE11iEncryptionModes?$("#encrypEnterpriseAes").prop("checked","checked"):$("#encrypEnterpriseAuto").prop("checked","checked")):"WPA"==e.beaconType&&"EAPAuthentication"==e.WPAAuthenticationMode?($("#verEnterpriseWpa").prop("checked","checked"),"TKIPEncryption"==e.WPAEncryptionModes?$("#encrypEnterpriseTkip").prop("checked","checked"):"AESEncryption"==e.WPAEncryptionModes?$("#encrypEnterpriseAes").prop("checked","checked"):$("#encrypEnterpriseAuto").prop("checked","checked")):"11i"==e.beaconType&&"EAPAuthentication"==e.IEEE11iAuthenticationMode?($("#verEnterpriseWpa2").prop("checked","checked"),"TKIPEncryption"==e.WPAEncryptionModes?$("#encrypEnterpriseTkip").prop("checked","checked"):"AESEncryption"==e.WPAEncryptionModes?$("#encrypEnterpriseAes").prop("checked","checked"):$("#encrypEnterpriseAuto").prop("checked","checked")):($("#verEnterpriseAuto").prop("checked","checked"),$("#encrypEnterpriseAuto").prop("checked","checked")),$("#wpa2EnterprisePwd").prop("value",e.X_TP_RadiusServerPassword),$("#wpa2EnterpriseIP").tpAddress("val",e.X_TP_RadiusServerIP),$("#wpa2EnterprisePort").prop("value",e.X_TP_RadiusServerPort)}function initWep(e,a){if("_2g"==a&&$.isEmptyObject(wepListTmp2g[0])){n=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,e.__stack,["WEPKey"]);$.exe()}else"_2g"==a&&(n=wepListTmp2g);if("_5g"==a&&$.isEmptyObject(wepListTmp5g[0])){var n=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,e.__stack,["WEPKey"]);$.exe()}else"_5g"==a&&(n=wepListTmp5g);"Auto"==e.basicAuthenticationMode?$("#typeAuto").prop("checked","checked"):"None"==e.basicAuthenticationMode?$("#typeOpenSys").prop("checked","checked"):"SharedAuthentication"==e.basicAuthenticationMode&&$("#typeSharedKey").prop("checked","checked"),$('#wepShareKey option[value="'+e.WEPKeyIndex+'"]').prop("selected","selected");var t=1;$.each(n,function(){switch($("#wepKey"+t+"Value").prop("value",this.WEPKey),$("#wepKey"+t+"Value").prop("value").length){case 5:$("#key"+t+"Type64").prop("checked","checked"),$("#key"+t+"FormatAscii").prop("checked","checked");break;case 10:$("#key"+t+"Type64").prop("checked","checked"),$("#key"+t+"FormatHex").prop("checked","checked");break;case 13:$("#key"+t+"Type128").prop("checked","checked"),$("#key"+t+"FormatAscii").prop("checked","checked");break;case 26:$("#key"+t+"Type128").prop("checked","checked"),$("#key"+t+"FormatHex").prop("checked","checked")}t++})}function saveDM(e,a){var n,t={};switch(t.__stack=e.__stack,t.enable=$("#wlEn").prop("data-checked")?1:0,t.SSID=$("#ssid").prop("value"),t.SSIDAdvertisementEnabled=$("#hideSSID").prop("data-checked")?0:1,t.standard=$("#mode").data("value"),t.X_TP_Bandwidth=$("#chnwidth").data("value"),0==$("#channel").data("value")?t.autoChannelEnable=1:(t.autoChannelEnable=0,t.channel=$("#channel").data("value")),t.transmitPower=$('[name="transPower"]:checked').data("dmNum"),$("select#sec").data("value")){case"0":t.beaconType="Basic",t.basicEncryptionModes="None",t.basicAuthenticationMode="None";break;case"1":$("#encrypPersonalAuto").prop("checked")?n="TKIPandAESEncryption":$("#encrypPersonalTkip").prop("checked")?n="TKIPEncryption":$("#encrypPersonalAes").prop("checked")&&(n="AESEncryption"),t.WPAEncryptionModes=t.IEEE11iEncryptionModes=n,t.WPAAuthenticationMode=t.IEEE11iAuthenticationMode="PSKAuthentication",t.X_TP_PreSharedKey=$("#wpa2PersonalPwd").prop("value"),$("#verPersonalAuto").prop("checked")?t.beaconType="WPAand11i":$("#verPersonalWpa").prop("checked")?t.beaconType="WPA":$("#verPersonalWpa2").prop("checked")&&(t.beaconType="11i");break;case"2":$("#encrypEnterpriseAuto").prop("checked")?n="TKIPandAESEncryption":$("#encrypEnterpriseTkip").prop("checked")?n="TKIPEncryption":$("#encrypEnterpriseAes").prop("checked")&&(n="AESEncryption"),t.WPAEncryptionModes=t.IEEE11iEncryptionModes=n,t.WPAAuthenticationMode=t.IEEE11iAuthenticationMode="EAPAuthentication",t.X_TP_RadiusServerPort=$("#wpa2EnterprisePort").prop("value"),t.X_TP_RadiusServerIP=$("#wpa2EnterpriseIP").tpAddress("val"),t.X_TP_RadiusServerPassword=$("#wpa2EnterprisePwd").prop("value"),$("#verEnterpriseAuto").prop("checked")?t.beaconType="WPAand11i":$("#verEnterpriseWpa").prop("checked")?t.beaconType="WPA":$("#verEnterpriseWpa2").prop("checked")&&(t.beaconType="11i");break;case"3":n=$("#typeAuto").prop("checked")?"Auto":$("#typeSharedKey").prop("checked")?"SharedAuthentication":"None",t.beaconType="Basic",t.basicAuthenticationMode=n,t.basicEncryptionModes="WEPEncryption",t.WEPKeyIndex=$("#wepShareKey").data("value")}return t}function setDM(e,a){var n=1,t=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,e.__stack,["WEPKey"]);$.exe(),$.each(t,function(){$.act(ACT_SET,LAN_WLAN_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+n+"Value").prop("value")]),"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+n+"Value").prop("value")]),n++}),"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC,e.__stack,null,a),$.act(ACT_SET,LAN_WLAN,e.__stack,null,a),$.showGuage({rate:3,updateInterval:900,callback_complete:function(){initDM(),$.removeLoading()}})}function setDM_smart(e,a,n,t){var c=1,r=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,e.__stack,["WEPKey"]),o=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,a.__stack,["WEPKey"]);$.exe(),$.each(r,function(){"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),$.act(ACT_SET,LAN_WLAN_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),c++}),c=1,$.each(o,function(){"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),$.act(ACT_SET,LAN_WLAN_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),c++}),$.exe(),n.X_TP_Bandwidth="Auto",n.autoChannelEnable=1,n.standard="n",t.X_TP_Bandwidth="Auto",t.autoChannelEnable=1,t.standard="ac","undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&($.act(ACT_SET,LAN_WLAN_SYNC,e.__stack,null,n),$.act(ACT_SET,LAN_WLAN_SYNC,a.__stack,null,t),$.exe()),$.act(ACT_SET,LAN_WLAN,e.__stack,null,n),$.act(ACT_SET,LAN_WLAN,a.__stack,null,t),$.showGuage({rate:3,updateInterval:900,callback_complete:function(){initDM(),$.removeLoading()}})}function setDM_smart_noexe(e,a,n,t){var c=1,r=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,e.__stack,["WEPKey"]),o=$.act(ACT_GS,LAN_WLAN_WEPKEY,null,a.__stack,["WEPKey"]);$.exe(),$.each(r,function(){"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),$.act(ACT_SET,LAN_WLAN_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),c++}),c=1,$.each(o,function(){"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&$.act(ACT_SET,LAN_WLAN_SYNC_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),$.act(ACT_SET,LAN_WLAN_WEPKEY,this.__stack,null,["WEPKey="+$("#wepKey"+c+"Value").prop("value")]),c++}),$.exe(),n.X_TP_Bandwidth="Auto",n.autoChannelEnable=1,n.standard="n",t.X_TP_Bandwidth="Auto",t.autoChannelEnable=1,t.standard="ac","undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&($.act(ACT_SET,LAN_WLAN_SYNC,e.__stack,null,n),$.act(ACT_SET,LAN_WLAN_SYNC,a.__stack,null,t),$.exe()),$.act(ACT_SET,LAN_WLAN,e.__stack,null,n),$.act(ACT_SET,LAN_WLAN,a.__stack,null,t)}function clickSave(e,a){0!=checkSSID(a)&&0!=checkValue(a)&&("TL-MR3020"!=$.model&&"TL-MR3420"!=$.model||0!=checkWDS(a))&&setDM(e,wlSettings=saveDM(e,a))}function clickSave_smart(e,a){0!=checkSSID("_2g")&&0!=checkValue("_2g")&&(wlSettings.band2g=saveDM(e,"_2g"),wlSettings.band5g=saveDM(a,"_5g"),setDM_smart(e,a,wlSettings.band2g,wlSettings.band5g))}function clickSec(e){switch($("select#sec").data("value")){case"0":$("[id^='hide']").fadeOut(1);break;case"1":$("[id^='hide']").fadeOut(1),$("#hideWpa2Personal").fadeIn(1);break;case"2":$("[id^='hide']").fadeOut(1),$("#hideWpa2Enterprise").fadeIn(1);break;case"3":$("[id^='hide']").fadeOut(1),$("#hideWep").fadeIn(1),$("select#wepShareKey").click()}}function clickWep(e){if(!$("#hideWep").is(":hidden")&&"3"==$("select#sec").data("value"))switch($("select#wepShareKey").data("value")){case"1":$("[id^='hideKey']").fadeOut(1),$("#hideKey1").fadeIn(1);break;case"2":$("[id^='hideKey']").fadeOut(1),$("#hideKey2").fadeIn(1);break;case"3":$("[id^='hideKey']").fadeOut(1),$("#hideKey3").fadeIn(1);break;case"4":$("[id^='hideKey']").fadeOut(1),$("#hideKey4").fadeIn(1)}}function focusWepValue(e){var a=$("#wepShareKey").data("value"),n=0,t=0;switch(n=$("#key"+a+"FormatAscii").prop("checked")?"1":"0",t=$("#key"+a+"Type64").prop("checked")?"1":"0",n+t){case"11":$("#wepKey"+a+"Value").prop("maxlength","5");break;case"10":$("#wepKey"+a+"Value").prop("maxlength","13");break;case"01":$("#wepKey"+a+"Value").prop("maxlength","10");break;case"00":$("#wepKey"+a+"Value").prop("maxlength","26")}}function initDM(){"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH?(smart=$.act(ACT_GET,ONEMESH,null,null,["enableSmartConnect"]),$.exe(),1==smart.enableSmartConnect?($("div.mode-change").hide(),$("#smart_hide").addClass("nd"),$("#b_scEn").addClass("selected")):($("#b_scDis").addClass("selected"),$("#smart_hide").removeClass("nd"))):($("#h_sc").addClass("nd"),$("#div_sc").addClass("nd"));var e=$.act(ACT_GL,LAN_WLAN,null,null,["Name","Standard","SSID","X_TP_Band","RegulatoryDomain","PossibleChannels","AutoChannelEnable","Channel","X_TP_Bandwidth","Enable","SSIDAdvertisementEnabled","BeaconType","BasicEncryptionModes","X_TP_Configuration_Modified","WMMEnable","X_TP_FragmentThreshold","WEPEncryptionLevel","WEPKeyIndex","BasicAuthenticationMode","WPAEncryptionModes","WPAAuthenticationMode","IEEE11iEncryptionModes","IEEE11iAuthenticationMode","X_TP_PreSharedKey","X_TP_GroupKeyUpdateInterval","TransmitPowerSupported","TransmitPower","X_TP_RadiusServerIP","X_TP_RadiusServerPort","X_TP_RadiusServerPassword"]);$.exe()||($.each(e,function(){"2.4GHz"==this.X_TP_Band?wlanObj_2g=this:INCLUDE_LAN_WLAN_DUALBAND&&"5GHz"==this.X_TP_Band&&(wlanObj_5g=this)}),INCLUDE_LAN_WLAN_WDS&&(wdsObj_2g=$.act(ACT_GET,LAN_WLAN_WDSBRIDGE,wlanObj_2g.__stack,null,["BridgeEnable","BridgeAddrMode","BridgeBSSID","BridgeSSID","BridgeAuthMode","BridgeEncryptMode","BridgeKey","BridgeWepKeyIndex"])),wpsObj_2g=$.act(ACT_GET,LAN_WLAN_WPS,wlanObj_2g.__stack,null,["Enable"]),mssidObj_2g=$.act(ACT_GET,LAN_WLAN_MULTISSID,wlanObj_2g.__stack,null,["MultiSSIDEnable"]),vapList_2g=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_2g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BeaconType","BasicAuthenticationMode","WEPKeyIndex","BasicEncryptionModes","WPAEncryptionModes","WPAAuthenticationMode","IEEE11iEncryptionModes","IEEE11iAuthenticationMode","PreSharedKey","GroupKeyUpdateInterval","RadiusServerIP","RadiusServerPort","RadiusServerPassword"]),guestnetObj_2g=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_2g.__stack,null,["Enable","Name"]),INCLUDE_LAN_WLAN_DUALBAND&&(INCLUDE_LAN_WLAN_WDS&&(wdsObj_5g=$.act(ACT_GET,LAN_WLAN_WDSBRIDGE,wlanObj_5g.__stack,null,["BridgeEnable","BridgeAddrMode","BridgeBSSID","BridgeSSID","BridgeAuthMode","BridgeEncryptMode","BridgeKey","BridgeWepKeyIndex"])),wpsObj_5g=$.act(ACT_GET,LAN_WLAN_WPS,wlanObj_5g.__stack,null,["Enable"]),mssidObj_5g=$.act(ACT_GET,LAN_WLAN_MULTISSID,wlanObj_5g.__stack,null,["MultiSSIDEnable"]),vapList_5g=$.act(ACT_GS,LAN_WLAN_MSSIDENTRY,null,wlanObj_5g.__stack,["Name","Enable","SSID","SSIDAdvertisementEnable","isolateClients","BeaconType","BasicAuthenticationMode","WEPKeyIndex","BasicEncryptionModes","WPAEncryptionModes","WPAAuthenticationMode","IEEE11iEncryptionModes","IEEE11iAuthenticationMode","PreSharedKey","GroupKeyUpdateInterval","RadiusServerIP","RadiusServerPort","RadiusServerPassword"]),guestnetObj_5g=$.act(ACT_GET,LAN_WLAN_GUESTNET,wlanObj_5g.__stack,null,["Enable","Name"])),$.exe()||(qssEnable_2g=wpsObj_2g.enable,$.each(vapList_2g,function(e,a){this.name==guestnetObj_2g.name&&(guestVap_2g=this)}),INCLUDE_LAN_WLAN_DUALBAND&&(qssEnable_5g=wpsObj_5g.enable,$.each(vapList_5g,function(e,a){this.name==guestnetObj_5g.name&&(guestVap_5g=this)}))))}function clickMode(e,a){e.standard=$("select#mode").data("value"),initBandWidth(e,a),initChannel(e,a)}function clickChannel(e,a){0==$("#channel").data("value")?e.autoChannelEnable=1:(e.autoChannelEnable=0,e.channel=$("#channel").data("value"))}function clickChnWidth(e,a){e.X_TP_Bandwidth=$("select#chnwidth").data("value"),initChannel(e,a)}function init(){initDM(),initParamShow(wlanObj_2g,"_2g"),initSecShow(wlanObj_2g,"_2g"),$("#lte_wifi_note").html(c_str.lteWifiNote),INCLUDE_LAN_WLAN_DUALBAND||$("#load_5g").addClass("nd")}var wlanObj_2g,wlanObj_5g,mssidObj_2g,mssidObj_5g,vapList_2g,vapList_5g,guestnetObj_2g,guestnetObj_5g,guestVap_2g,guestVap_5g,qssEnable_2g,qssEnable_5g,wdsObj_2g,wdsObj_5g,smart,wlSettings={};wlSettings.band2g={},wlSettings.band5g={};var wepListTmp2g=[{},{},{},{}],wepListTmp5g=[{},{},{},{}];$("select#sec").on("click.wlSettings",function(e){clickSec("_2g")}),$("select#wepShareKey").on("click.wlSettings",function(e){clickWep("_2g")}),$("select#chnwidth").on("click",function(){$("#load_5g").hasClass("mode-select")?clickChnWidth(wlanObj_5g,"_5g"):clickChnWidth(wlanObj_2g,"_2g")}),$("select#channel").on("click",function(){$("#load_5g").hasClass("mode-select")?clickChannel(wlanObj_5g,"_5g"):clickChannel(wlanObj_2g,"_2g")}),$("select#mode").on("click",function(){var e=$(this).data("value");$("select#sec").data("value");"n-only"==e||"nac"==e?($("#encrypPersonalAuto").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypPersonalTkip").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypPersonalAes").prop("checked",!0).data("tpRadio").refresh(),$("#encrypEnterpriseAuto").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypEnterpriseTkip").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypEnterpriseAes").prop("checked",!0).data("tpRadio").refresh()):0==$("#verPersonalWpa2").prop("checked")&&($("#encrypPersonalAuto").prop("disabled",!1).data("tpRadio").refresh(),$("#encrypPersonalTkip").prop("disabled",!1).data("tpRadio").refresh(),$("#encrypEnterpriseAuto").prop("disabled",!1).data("tpRadio").refresh(),$("#encrypEnterpriseTkip").prop("disabled",!1).data("tpRadio").refresh()),$("#load_5g").hasClass("mode-select")?clickMode(wlanObj_5g,"_5g"):clickMode(wlanObj_2g,"_2g")}),$("#save").on("click.wlSettings",function(e){$.addLoading($(this)),"undefined"!=typeof INCLUDE_ONEMESH&&INCLUDE_ONEMESH&&1==smart.enableSmartConnect?clickSave_smart(wlanObj_2g,wlanObj_5g):$("#load_5g").hasClass("mode-select")?clickSave(wlanObj_5g,"_5g"):clickSave(wlanObj_2g,"_2g")}),$('input[name="wepKeyValue"]').on("focus.wlSettings",function(e){focusWepValue("_2g")}),$('input[name="wepKeyValue"]').on("focus.wlSettings",function(e){focusWepValue("_5g")}),$("#verPersonalWpa2").on("click.wlSettings",function(e){$("#encrypPersonalAuto").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypPersonalTkip").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypPersonalAes").prop("checked",!0).data("tpRadio").refresh()}),$("#verEnterpriseWpa2").on("click.wlSettings",function(e){$("#encrypEnterpriseAuto").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypEnterpriseTkip").prop("disabled",!0).prop("checked",!1).data("tpRadio").refresh(),$("#encrypEnterpriseAes").prop("checked",!0).data("tpRadio").refresh()}),$("#verPersonalAuto").on("click.wlSettings",function(e){var a=$("select#mode").data("value");"n-only"!=a&&"nac"!=a&&($("#encrypPersonalAuto").prop("disabled",!1).data("tpRadio").refresh(),$("#encrypPersonalTkip").prop("disabled",!1).data("tpRadio").refresh())}),$("#verEnterpriseAuto").on("click.wlSettings",function(e){var a=$("select#mode").data("value");"n-only"!=a&&"nac"!=a&&($("#encrypEnterpriseAuto").prop("disabled",!1).data("tpRadio").refresh(),$("#encrypEnterpriseTkip").prop("disabled",!1).data("tpRadio").refresh())}),$("#load_2g").on("click.wlSettings",function(e){if(!$(this).hasClass("mode-select")){if($(this).siblings("span.mode-select").removeClass("mode-select"),$(this).addClass("mode-select"),0==$.isEmptyObject(wlSettings.band2g)&&$.extend(wlanObj_2g,wlSettings.band2g),wlSettings.band5g=saveDM(wlanObj_5g,"_5g"),wlSettings.band5g.possibleChannels=wlanObj_5g.possibleChannels,wlSettings.band5g.transmitPowerSupported=wlanObj_5g.transmitPowerSupported,3==$("select#sec").data("value"))for(var a=0;a<4;a++)switch(a){case 0:wepListTmp5g[0].WEPKey=$("#wepKey1Value").prop("value");break;case 1:wepListTmp5g[1].WEPKey=$("#wepKey2Value").prop("value");break;case 2:wepListTmp5g[2].WEPKey=$("#wepKey3Value").prop("value");break;case 3:wepListTmp5g[3].WEPKey=$("#wepKey4Value").prop("value")}initParamShow(wlanObj_2g,"_2g"),initSecShow(wlanObj_2g,"_2g");var n={};n.refresh=1,$("select").each(function(){$(this).tpSelect(n)}),$("input[type='checkbox']").each(function(){$(this).data("tpCheckbox").refresh()}),$("input[type='radio']").each(function(){$(this).data("tpRadio").refresh()})}}),$("#load_5g").on("click.wlSettings",function(e){if(!$(this).hasClass("mode-select")){if($(this).siblings("span.mode-select").removeClass("mode-select"),$(this).addClass("mode-select"),0==$.isEmptyObject(wlSettings.band5g)&&$.extend(wlanObj_5g,wlSettings.band5g),wlSettings.band2g=saveDM(wlanObj_2g,"_2g"),wlSettings.band2g.possibleChannels=wlanObj_2g.possibleChannels,wlSettings.band2g.transmitPowerSupported=wlanObj_2g.transmitPowerSupported,3==$("select#sec").data("value"))for(var a=0;a<4;a++)switch(a){case 0:wepListTmp2g[0].WEPKey=$("#wepKey1Value").prop("value");break;case 1:wepListTmp2g[1].WEPKey=$("#wepKey2Value").prop("value");break;case 2:wepListTmp2g[2].WEPKey=$("#wepKey3Value").prop("value");break;case 3:wepListTmp2g[3].WEPKey=$("#wepKey4Value").prop("value")}initParamShow(wlanObj_5g,"_5g"),initSecShow(wlanObj_5g,"_5g");var n={};n.refresh=1,$("select").each(function(){$(this).tpSelect(n)}),$("input[type='checkbox']").each(function(){$(this).data("tpCheckbox").refresh()}),$("input[type='radio']").each(function(){$(this).data("tpRadio").refresh()})}}),$("#channel").click(function(){INCLUDE_LTEWAN&&"LTE"==$.sysMode&&(0!=$("#channel").data("value")&&$("#channel").data("value")<=14?$("#lte_wifi_notice").removeClass("nd"):$("#lte_wifi_notice").addClass("nd"))}),$("#b_scEn").on("click",function(){$.addLoading($(this)),$.act(ACT_SET,ONEMESH,null,null,["enableSmartConnect=1"]),0!=checkSSID("_2g")&&0!=checkValue("_2g")?($("#ssid").prop("value",wlanObj_2g.SSID),0==wlanObj_2g.SSIDAdvertisementEnabled?$("#hideSSID").prop("checked",!0):$("#hideSSID").prop("checked",!1),initSecShow(wlanObj_2g,"_2g"),initPower(wlanObj_2g,"_2g"),wlSettings.band2g=saveDM(wlanObj_2g,"_2g"),wlSettings.band5g=saveDM(wlanObj_5g,"_5g"),setDM_smart_noexe(wlanObj_2g,wlanObj_5g,wlSettings.band2g,wlSettings.band5g),$.showGuage({rate:3,updateInterval:900,callback_complete:function(){$.removeLoading(),$.reload()}})):$.removeLoading()}),$("#b_scDis").on("click",function(){$.addLoading($(this)),$.act(ACT_SET,ONEMESH,null,null,["enableSmartConnect=0"]),$.exe(function(e){$.removeLoading(),e||($.removeLoading(),$.reload())})})</script>
+<div id="h_sc"><h3 class="T_smartConnect">Smart Connect</h3></div>
+<div class="content-container" id="div_sc">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container" id="b_smartConnectSwitch">
+            <b class="xl T_smartConnect">Smart Connect:</b>
+            <ul><li><button id="b_scEn" class="fst" value="on">On</button></li>
+                <li><button id="b_scDis" class="lst" value="off">Off</button></li>
+            </ul>
+        </div>
+        <p class="T_smartConnectTip"></p>
+    </form>
+</div>
+
+<h3 class="T_wl">Wireless</h3>
+<div class="content-container">
+    <div class="mode-change load-page">
+        <span class="mode-select T_modeghz24" id="load_2g">2.4GHz</span>
+        <span class="T_modeghz5" id="load_5g">5GHz</span>
+    </div>
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="xl"></b>
+            <input type="checkbox" id="wlEn">
+            <label id="t_wlradioen">Enable Wireless Radio</label>
+        </div>
+
+        <div class="inline">
+            <b class="T_wlname xl">Name(SSID):</b>
+            <input type="text" maxlength="32" oninput="$.maxlength(this)" class="xl" id="ssid">
+        </div>
+        <div class="inline">
+            <input type="checkbox" id="hideSSID">
+            <label class="T_hidessid">Hide SSID</label>
+        </div>
+
+        <b class="T_wlsec xl">Security:</b>
+        <select id="sec" class="xl">
+            <option value="0" class="T_wldissec" id="noSec">No Security</option>
+            <option value="1" class="T_wlsecpersonalrec" id="wpa2Personal">WPA/WPA2 Personal(Recommended)</option>
+            <option value="2" class="T_wlsecenterprise" id="wpa2Enterprise">WPA/WPA2 Enterprise</option>
+            <option value="3" id="wep">WEP</option>
+        </select>
+        <div id="hideWpa2Personal" class="nd">
+            <div>
+                <b class="T_version xl">Version:</b>
+                <input type="radio" name="versionPersonal" id="verPersonalAuto">
+                <label class="T_auto">Auto</label>
+                <input type="radio" name="versionPersonal" id="verPersonalWpa2">
+                <label class="T_wpa2">WPA2-PSK</label>
+            </div>
+
+            <div>
+                <b class="T_encryption xl">Encryption:</b>
+                <input type="radio" name="encryptionPersonal" id="encrypPersonalAuto">
+                <label class="T_auto">Auto</label>
+                <input type="radio" name="encryptionPersonal" id="encrypPersonalTkip">
+                <label>TKIP</label>
+                <input type="radio" name="encryptionPersonal" id="encrypPersonalAes">
+                <label>AES</label>
+            </div>
+
+            <div class="pure-control-group">
+                <b class="T_wlpwd xl">Wireless Password:</b>
+                <input type="text" maxlength="64" oninput="$.maxlength(this)" class="tp-input-text xl" id="wpa2PersonalPwd">
+            </div>
+        </div>
+        <div id="hideWpa2Enterprise" class="nd">
+            <div>
+                <b class="T_version xl">Version:</b>
+                <input type="radio" name="versionEnterprise" id="verEnterpriseAuto">
+                <label class="T_auto">Auto</label>
+                <input type="radio" name="versionEnterprise" id="verEnterpriseWpa2">
+                <label class="T_wpa2nopsk">WPA2</label>
+            </div>
+
+            <div>
+                <b class="T_encryption xl">Encryption:</b>
+                <input type="radio" name="encryptionEnterprise" id="encrypEnterpriseAuto">
+                <label class="T_auto">Auto</label>
+                <input type="radio" name="encryptionEnterprise" id="encrypEnterpriseTkip">
+                <label>TKIP</label>
+                <input type="radio" name="encryptionEnterprise" id="encrypEnterpriseAes">
+                <label>AES</label>
+            </div>
+
+            <div>
+                <b class="xl" id="t_srvIp">Radius Server IP:</b>
+                <input type="text" class="tp-input-text xl ip-address" id="wpa2EnterpriseIP">
+            </div>
+            <div>
+                <b class="xl" id="t_srvPort">RADIUS Server Port:</b>
+                <input type="text" maxlength="5" class="tp-input-text xl" id="wpa2EnterprisePort">
+            </div>
+            <div>
+                <b class="xl" id="t_srvPwd">RADIUS Server Password:</b>
+                <input type="text" class="tp-input-text xl" id="wpa2EnterprisePwd">
+            </div>
+        </div>
+
+        <div id="hideWep" class="nd">
+            <div>
+                <b class="T_type xl">Type:</b>
+                <input type="radio" name="wepType" id="typeAuto">
+                <label class="T_auto">Auto</label>
+                <input type="radio" name="wepType" id="typeOpenSys">
+                <label class="T_opensys">Open System</label>
+                <input type="radio" name="wepType" id="typeSharedKey">
+                <label class="T_sharekey">Shared Key</label>
+            </div>
+            <b class="xl" id="t_selkey">Key Selected:</b>
+            <select id="wepShareKey" class="xl">
+                <option value="1" id="key1" class="T_wepkey1">Key 1</option>
+                <option value="2" id="key2" class="T_wepkey2">Key 2</option>
+                <option value="3" id="key3" class="T_wepkey3">key 3</option>
+                <option value="4" id="key4" class="T_wepkey4">Key 4</option>
+            </select>
+        </div>
+        <div id="hideKey1" class="nd">
+            <div>
+                <b class="T_weptype xl">Key Format:</b>
+                <input type="radio" name="key1Format" id="key1FormatAscii" checked="true">
+                <label>ASCII</label>
+                <input type="radio" name="key1Format" id="key1FormatHex">
+                <label class="T_hex">Hexadecimal</label>
+            </div>
+            <div>
+                <b class="T_keytype xl">key Type:</b>
+                <input type="radio" name="key1Type" id="key1Type64" checked="true">
+                <label class="T_bit64">64-Bit</label>
+                <input type="radio" name="key1Type" id="key1Type128">
+                <label class="T_bit128">128-Bit</label>
+            </div>
+            <div>
+                <b class="T_keyvalue xl">Key Value:</b>
+                <input type="text" class="tp-input-text xl" name="wepKeyValue" id="wepKey1Value">
+            </div>
+        </div>
+        <div id="hideKey2" class="nd">
+            <div>
+                <b class="T_weptype xl">Key Format:</b>
+                <input type="radio" name="key2Format" id="key2FormatAscii" checked="true">
+                <label>ASCII</label>
+                <input type="radio" name="key2Format" id="key2FormatHex">
+                <label class="T_hex">Hexadecimal</label>
+            </div>
+            <div>
+                <b class="T_keytype xl">key Type:</b>
+                <input type="radio" name="key2Type" id="key2Type64" checked="true">
+                <label class="T_bit64">64-Bit</label>
+                <input type="radio" name="key2Type" id="key2Type128">
+                <label class="T_bit128">128-Bit</label>
+            </div>
+            <div>
+                <b class="T_keyvalue xl">Key Value:
+                </b>
+                <input type="text" class="tp-input-text xl" name="wepKeyValue" id="wepKey2Value">
+            </div>
+        </div>
+        <div id="hideKey3" class="nd">
+            <div>
+                <b class="T_weptype xl">Key Format:</b>
+                <input type="radio" name="key3Format" id="key3FormatAscii" checked="true">
+                <label>ASCII</label>
+                <input type="radio" name="key3Format" id="key3FormatHex">
+                <label class="T_hex">Hexadecimal</label>
+            </div>
+            <div>
+                <b class="T_keytype xl">key Type:</b>
+                <input type="radio" name="key3Type" id="key3Type64" checked="true">
+                <label class="T_bit64">64-Bit</label>
+                <input type="radio" name="key3Type" id="key3Type128">
+                <label class="T_bit128">128-Bit</label>
+            </div>
+            <div>
+                <b class="T_keyvalue xl">Key Value:
+                </b>
+                <input type="text" class="tp-input-text xl" name="wepKeyValue" id="wepKey3Value">
+            </div>
+        </div>
+        <div id="hideKey4" class="nd">
+            <div>
+                <b class="T_weptype xl">Key Format:</b>
+                <input type="radio" name="key4Format" id="key4FormatAscii" checked="true">
+                <label>ASCII</label>
+                <input type="radio" name="key4Format" id="key4FormatHex">
+                <label class="T_hex">Hexadecimal</label>
+            </div>
+            <div>
+                <b class="T_keytype xl">key Type:</b>
+                <input type="radio" name="key4Type" id="key4Type64" checked="true">
+                <label class="T_bit64">64-Bit</label>
+                <input type="radio" name="key4Type" id="key4Type128">
+                <label class="T_bit128">128-Bit</label>
+            </div>
+            <div>
+                <b class="T_keyvalue xl">Key Value:
+                </b>
+                <input type="text" class="tp-input-text xl" name="wepKeyValue" id="wepKey4Value">
+            </div>
+        </div>
+
+		<div id="smart_hide">
+        <b class="T_mode xl">Mode:</b>
+        <select id="mode" class="xl">
+        </select>
+
+        <b class="T_channel xl">Channel:</b>
+        <select id="channel" class="xl">
+        </select>
+		
+        <div id="lte_wifi_notice" class="nd">
+			<p id="lte_wifi_note" class="note"></p>
+        </div>		
+
+        <b class="T_chnwidth xl">Channel Width:</b>
+        <select id="chnwidth" class="xl">
+        </select>
+		</div>
+
+        <div>
+            <b class="xl" id="t_txpow">Transmit Power:</b>
+            <input type="radio" name="transPower" id="powerLow">
+            <label id="t_low">Low</label>
+            <input type="radio" name="transPower" id="powerMiddle">
+            <label id="t_middle">Middle</label>
+            <input type="radio" name="transPower" id="powerHigh">
+            <label id="t_high">High</label>
+        </div>
+        <button type="submit" class="green T_save" id="save">Save</button>
+    </form>
+</div>
+
+<script>$(document).ready(function(){$.tpInit(init)})</script>

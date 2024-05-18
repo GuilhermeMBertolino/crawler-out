@@ -1,0 +1,50 @@
+#!/bin/sh
+
+## check url and download the firmware.
+
+CLOUD_TMP_DIR="/tmp/cloud/"
+LAST_URL_FILE=${CLOUD_TMP_DIR}"last_download_url"
+CLOUD_DL_PID=${CLOUD_TMP_DIR}"cloud_dl.pid"
+CLOUD_DL_HEAD=${CLOUD_TMP_DIR}"cloud_dl.head"
+CLOUD_FW_LENGTH=${CLOUD_TMP_DIR}"cloud_fw.length"
+TIMEOUT=10
+
+[ $# -lt 2 ] && echo Please input: url file && exit 0
+
+### check the internet, or check whether the remote file is exist or not. 
+[ ! -d ${CLOUD_TMP_DIR} ] && mkdir ${CLOUD_TMP_DIR}
+curl -s --head -g "$1" > ${CLOUD_DL_HEAD}
+re=`cat ${CLOUD_DL_HEAD}|grep -w HTTP|awk '{print $2}'`
+[ "$re" != "200" ] && {
+	### don't need to remove up.bin when get remote file failed, fail may cause by poor connection.
+    #rm -rf $2
+	echo "poor network.." >/dev/console 2>&1
+    exit
+}
+
+[ ! -f ${LAST_URL_FILE} ] && touch ${LAST_URL_FILE}
+[ ! -f ${CLOUD_DL_PID} ] && touch ${CLOUD_DL_PID}
+last_url=`cat ${LAST_URL_FILE}`
+pid=`cat ${CLOUD_DL_PID}`
+if [ "${last_url}" != "$1" ]; then
+	rm -rf $2
+	[ ! -z ${pid} ] && kill -9 ${pid}
+	cat ${CLOUD_DL_HEAD}|grep -w Length|awk '{print $2}' > ${CLOUD_FW_LENGTH}
+else
+	[ -f "/proc/${pid}/status" ] echo "prpocess still exist." >/dev/console 2>&1 && return 0
+fi
+
+######################################################################################
+###	-C, --continue-at OFFSET  	Resumed transfer offset								
+### -#, --progress-bar  		Display transfer progress as a progress bar
+### -L, --location      		Follow 	redirects
+### -e, --referer       		Referer URL
+### -o, --output FILE   		Write output to <file> instead of stdout
+### -g, --globoff       		Disable URL sequences and ranges using {} and []
+### -Y, --speed-limit RATE  	Stop transfers below speed-limit for 'speed-time' secs
+### -y, --speed-time SECONDS  	Time for trig speed-limit abort. Defaults to 30
+#######################################################################################
+echo "Begin to download firmware" >/dev/console 2>&1
+curl -C - -# -L -e ';auto' -o "$2" -g "$1" -Y 1 -y ${TIMEOUT} > /dev/null 2>&1 &
+echo $! > ${CLOUD_DL_PID}
+echo $1 > ${LAST_URL_FILE}

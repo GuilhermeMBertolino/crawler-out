@@ -1,0 +1,104 @@
+<script>var brLanList,staticIpList,condPoolList,groupEditIndex,condEditIndex,staticEditIndex,hasGroup,isEdit,brStackList="",brNameList="",ONEMESH_INIT_SCLI_LEASE=8;function initDhcpTableEdit(){if(!$.exe()){if(1==brLanList.length)return hasGroup=0,$("#tableDchpUpper").addClass("nd"),$("#tableDchp").addClass("nd"),void $.loadPage("dhcpEditPage","dhcpEdit.htm",function(){},function(){$("#dhcpEditPage").removeClass("nd")});hasGroup=1,$("#dhcpEditPage").addClass("nd"),$("#tableDchpUpper").removeClass("nd"),$("#tableDchp").removeClass("nd");var i=new Array,a=0;return $.each(brLanList,function(){var t=$.act(ACT_GET,LAN_HOST_CFG,this.__stack,null,null),e=$.act(ACT_GS,LAN_IP_INTF,null,this.__stack,["IPInterfaceIPAddress","IPInterfaceSubnetMask","__ifName"]);$.exe()||(i.push([{text:$.htmlEncodeStr(this.bridgeName),width:"18%"},{text:e[0].IPInterfaceIPAddress,width:"20%"},{text:e[0].IPInterfaceSubnetMask,width:"20%"},{text:t.minAddress+"-<br />"+t.maxAddress,width:"25%"},{text:1==t.DHCPServerEnable?"<span class='table-grid-icon enable-icon' onClick='disableDHCP("+a+")'></span>":"<span class='table-grid-icon disable-icon' onClick='enableDHCP("+a+")'></span>",width:"5%"},{text:"<span class='table-grid-icon edit-modify-icon' onClick='doGroupEdit("+a+")'></span>",width:""}]),a++)}),$.initTableBody($("#tableDchp"),i),$.tablePages($("#tableDchp"),8),i}}function doGroupEdit(t){groupEditIndex=t,$.loadPage("dhcpTableEditPage","dhcpEdit.htm")}function initClientListTable(){var s=new Array;if(INCLUDE_ONEMESH){$.act(ACT_SET,ONEMESH_RT,null,null,["action="+ONEMESH_INIT_SCLI_LEASE]),$.exe(function(t){});var e=$.act(ACT_GL,ONEMESH_DEVICE,null,null)}var i=$.act(ACT_GL,LAN_HOST_ENTRY,null,null);$.exe(function(t){if(!t){var l=0;return $.each(i,function(){var t=0,e=0,i=0,a=0;a=-1==this.leaseTimeRemaining?s_str.permanent:(t=(t=parseInt(this.leaseTimeRemaining/3600,10))<10?"0"+t:t)+":"+(e=(e=parseInt(this.leaseTimeRemaining/60,10)%60)<10?"0"+e:e)+":"+(i=(i=this.leaseTimeRemaining%60)<10?"0"+i:i),"DHCP"==this.addressSource&&s.push([{text:++l,width:"10%"},{text:""==this.hostName?"Unknow":$.htmlEncodeStr(this.hostName),width:"20%"},{text:this.MACAddress.replace(/\:/g,"-"),width:"20%"},{text:this.IPAddress,width:"30%"},{text:a,width:""}])}),INCLUDE_ONEMESH&&$.each(e,function(){if(0<this.lease){var t,e=0,i=0,a=0;t=(e=(e=parseInt(this.lease/3600,10))<10?"0"+e:e)+":"+(i=(i=parseInt(this.lease/60,10)%60)<10?"0"+i:i)+":"+(a=(a=this.lease%60)<10?"0"+a:a),s.push([{text:++l,width:"10%"},{text:""==this.name?"Unknown":$.htmlEncodeStr(this.name),width:"20%"},{text:this.mac.replace(/\:/g,"-"),width:"20%"},{text:this.ip,width:"30%"},{text:t,width:""}])}}),$.initTableBody($("#tableClientList"),s),$("#clientNum").html(l),$.tablePages($("#tableClientList"),5),s}})}function initAddrResvTable(){staticIpList=$.act(ACT_GL,LAN_DHCP_STATIC_ADDR,null,null,["enable","chaddr","yiaddr"]);var s=new Array,n=0;$.exe(function(t){if(!t)return $.each(staticIpList,function(){for(var t,e=this.__stack.split(",")[0],i=brStackList.split(","),a=brNameList.split(","),l=0;l<i.length;l++)e==i[l]&&(t=a[l]);s.push([{text:'<div><input type="checkbox" id="staticCheckbox'+n+'" class="table-select-one" /><label></label></div>',width:"10%"},{text:this.chaddr.toUpperCase(),width:"30%"},{text:this.yiaddr,width:""},{text:$.htmlEncodeStr(t),width:"15%"},{text:1==this.enable?"<span class='table-grid-icon enable-icon' onClick='disableStaticIP("+n+")'></span>":"<span class='table-grid-icon disable-icon' onClick='enableStaticIP("+n+")'></span>",width:"10%"},{text:"<span class='table-grid-icon edit-modify-icon' onClick='doStaticEdit("+n+")'></span><span class='table-grid-icon edit-trash-icon' onclick='doStaticDel("+n+");'></span>",width:"10%"}]),n++}),$.initTableBody($("#tableAddrResv"),s),$.tablePages($("#tableAddrResv"),8),s})}function doStaticEdit(t){isEdit=1,staticEditIndex=t,$.loadPage("dhcpStaticPage","dhcpStaticEdit.htm")}function initCondPoolTable(){condPoolList=$.act(ACT_GL,LAN_DHCP_COND_SRV_POOL,null,null,null);var e,i=new Array,a=0;$.exe(function(t){if(!t)return $.each(condPoolList,function(){var t=this.__stack.split(",")[0];$.each(brLanList,function(){t==this.__stack.split(",")[0]&&(e=this.bridgeName)}),i.push([{text:'<div><input type="checkbox" id="condCheckbox'+a+'" class="table-select-one" /><label></label></div>',width:"10%"},{text:$.htmlEncodeStr(this.vendorClassID),width:"10%"},{text:this.minAddress+"/ "+this.maxAddress,width:""},{text:this.X_TP_DeviceName.replace(/\&/g,"&amp;").replace(/</g,"&lt;").replace(/ /g,"&nbsp;"),width:"10%"},{text:$.htmlEncodeStr(e),width:"10%"},{text:1==this.enable?"<span class='table-grid-icon enable-icon' onClick='disableCondPool("+a+")'></span>":"<span class='table-grid-icon disable-icon' onClick='enableCondPool("+a+")'></span>",width:"10%"},{text:"<span class='table-grid-icon edit-modify-icon' onClick='doCondEdit("+a+")'></span><span class='table-grid-icon edit-trash-icon' onclick='doCondDel("+a+");'></span>",width:"10%"}]),a++}),$.initTableBody($("#tableCondPool"),i),$.tablePages($("#tableCondPool"),8),i})}function doCondEdit(t){isEdit=1,condEditIndex=t,$.loadPage("dhcpCondPage","dhcpCondEdit.htm")}function init(){brLanList=$.act(ACT_GL,L2_BRIDGING_ENTRY,null,null,["bridgeName"]),$.exe()||$.each(brLanList,function(){var t=this.__stack.split(",");brStackList+=t[0]+",",brNameList+=this.bridgeName+","});var t=[{text:table_str.group,width:"18%"},{text:table_str.ip,width:"20%"},{text:table_str.subMask,width:"20%"},{text:table_str.dhcpPool,width:"25%"},{text:table_str.enable,width:"5%"},{text:table_str.modify,width:"5"}];$.initTableHead($("#tableDchp"),t);var e=[{text:table_str.id,width:"10%"},{text:table_str.clientName,width:"20%"},{text:table_str.mac,width:"30%"},{text:table_str.assip,width:"30%"},{text:table_str.leaseTime,width:""}];$.initTableHead($("#tableClientList"),e);var i=[{text:'<div><input type="checkbox" id="staticAll" class="table-select-all" /><label></label></div>',width:"10%"},{text:table_str.mac,width:"30%"},{text:table_str.resip,width:""},{text:table_str.group,width:"15%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"10%"}];$.initTableHead($("#tableAddrResv"),i);var a=[{text:'<div><input type="checkbox" id="condAll" class="table-select-all" /><label></label></div>',width:"10%"},{text:table_str.vid,width:"10%"},{text:table_str.ipRange,width:""},{text:table_str.devname,width:"10%"},{text:table_str.group,width:"10%"},{text:table_str.status,width:"10%"},{text:table_str.modify,width:"10%"}];$.initTableHead($("#tableCondPool"),a),$("#tableDchp").tpTable(initDhcpTableEdit),$("#tableClientList").tpTable(initClientListTable),$("#tableAddrResv").tpTable(initAddrResvTable),$("#tableCondPool").tpTable(initCondPoolTable)}</script>
+<h3 id="t_dhcpTitle">DHCP Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="nd" id="dhcpEditPage"></div>
+        <div class="table-op" id="tableDchpUpper">
+            <div class="table-btn">
+                <span class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+            </div>
+        </div>
+        <table id="tableDchp">
+            <thead></thead>
+            <tbody id="tableDchpBody">
+                <tr id="editDHCPCfg" class="nd">
+                    <td colspan="6">
+                        <div id="dhcpTableEditPage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<h3 id="t_clistTitle">Client List</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-note">
+                <label class="label-title" id="t_clistNum">client number:</label>
+                <span class="text" id="clientNum"></span>
+            </div>
+            <div class="table-btn" id="clientListRefresh">
+                <span class="refresh-icon"></span>
+                <label class="T_refresh">Refresh</label>
+            </div>
+        </div>
+        <table id="tableClientList">
+            <thead></thead>
+            <tbody id="tableclientListBody">
+            </tbody>
+        </table>
+    </form>
+</div>
+<h3 id="t_staticTitle">Address Reservation</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-btn">
+                <span class="add-icon" id="staticAdd" onclick="clickStaticAdd()"></span>
+                <label class="T_add">Add</label>
+                <span class="delete-icon" id="staticDel"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="tableAddrResv">
+            <thead></thead>
+            <tbody id="tableAddrResvBody">
+                <tr id="editAddrResv" class="nd">
+                    <td colspan="6">
+                        <div id="dhcpStaticPage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="accessDevList" class="nd">
+            <div id="closeDeviceList" class="table-op">
+                <div class="table-btn">
+                    <span class="close-icon table-icon"></span>
+                </div>
+            </div>
+            <table id="tableAccessDevicesList">
+                <thead>
+                    <span id="t_devlist" class="msg-container-title"></span>
+                </thead>
+                <tbody id="bodyAccessDevicesList">
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<h3 id="t_condTitle">Condition Pool</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op">
+            <div class="table-btn">
+                <span class="add-icon" id="condAdd" onclick="clickCondAdd()"></span>
+                <label class="T_add">Add</label>
+                <span class="delete-icon" id="condDel"></span>
+                <label class="T_del">Delete</label>
+            </div>
+        </div>
+        <table id="tableCondPool">
+            <thead></thead>
+            <tbody id="tableCondPoolBody">
+                <tr id="editCondPool" class="nd">
+                    <td colspan="7">
+                        <div id="dhcpCondPage"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<script>function enableDHCP(t){$.act(ACT_SET,LAN_HOST_CFG,brLanList[t].__stack,null,["DHCPServerEnable=1"]),$.exe(function(t){t||$.reload()})}function disableDHCP(t){$.act(ACT_SET,LAN_HOST_CFG,brLanList[t].__stack,null,["DHCPServerEnable=0"]),$.exe(function(t){t||$.reload()})}function clickStaticAdd(){isEdit=0,$.loadPage("dhcpStaticPage","dhcpStaticEdit.htm")}function clickStaticDel(){for(var t=0,c=0;c<staticIpList.length;c++){if($("#staticCheckbox"+c).prop("data-checked")){t=1;break}}t&&$.confirm(c_str.del_choosed,function(){for(var t=0;t<staticIpList.length;t++){var c=$("#staticCheckbox"+t);c.prop("data-checked")&&(c.parents("tr").first().remove(),$.act(ACT_DEL,LAN_DHCP_STATIC_ADDR,staticIpList[t].__stack,null),$.exe(function(t){t||$.reload()}))}})}function doStaticDel(t){$.act(ACT_DEL,LAN_DHCP_STATIC_ADDR,staticIpList[t].__stack,null),$.exe(function(t){t||$.reload()})}function enableStaticIP(t){$.act(ACT_SET,LAN_DHCP_STATIC_ADDR,staticIpList[t].__stack,null,["enable=1"]),$.exe(function(t){t||$.reload()})}function disableStaticIP(t){$.act(ACT_SET,LAN_DHCP_STATIC_ADDR,staticIpList[t].__stack,null,["enable=0"]),$.exe(function(t){t||$.reload()})}function clickCondAdd(){isEdit=0,$.loadPage("dhcpCondPage","dhcpCondEdit.htm")}function clickCondDel(){for(var t=0,c=0;c<condPoolList.length;c++){if($("#condCheckbox"+c).prop("data-checked")){t=1;break}}t&&$.confirm(c_str.del_choosed,function(){for(var t=0;t<condPoolList.length;t++){var c=$("#condCheckbox"+t);c.prop("data-checked")&&(c.parents("tr").first().remove(),$.act(ACT_DEL,LAN_DHCP_COND_SRV_POOL,condPoolList[t].__stack,null),$.exe(function(t){t||$.reload()}))}})}function doCondDel(t){$.act(ACT_DEL,LAN_DHCP_COND_SRV_POOL,condPoolList[t].__stack,null),$.exe(function(t){t||$.reload()})}function enableCondPool(t){$.act(ACT_SET,LAN_DHCP_COND_SRV_POOL,condPoolList[t].__stack,null,["enable=1"]),$.exe(function(t){t||$.reload()})}function disableCondPool(t){$.act(ACT_SET,LAN_DHCP_COND_SRV_POOL,condPoolList[t].__stack,null,["enable=0"]),$.exe(function(t){t||$.reload()})}$("#staticDel").click(function(t){clickStaticDel()}),$("#condDel").on("click",function(t){clickCondDel()}),$.tpInit(init)</script>

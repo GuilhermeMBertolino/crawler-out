@@ -1,0 +1,20 @@
+#!/bin/sh
+
+procNum=`ps | grep -w ated_iwpriv | grep -v grep | wc -l`
+
+if [ $procNum -le 0 ]
+then
+    ated_iwpriv&
+    ated_iwpriv&
+	is_ated_ready=`netstat -anp| grep 5001 | grep -v grep | wc -l`
+	until [ $is_ated_ready -eq 1 ]
+	do
+		is_ated_ready=`netstat -anp| grep 5001 | grep -v grep | wc -l`
+		sleep 1
+	done
+elif [ $procNum -le 1 ]
+then
+    ated_iwpriv&
+else
+    echo "Already in Testmode"
+fi

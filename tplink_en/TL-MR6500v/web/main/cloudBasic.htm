@@ -1,0 +1,52 @@
+<style>#cloud-form{text-align:center}div.pc-login-field{margin:8px 0}.pure-form input[type=password].icon-input,.pure-form input[type=text].icon-input{padding-left:30px}div.pc-inputarea{position:relative;display:inline-block}label.pc-login-password-label,label.pc-login-username-label{position:absolute;left:0;top:0;margin:7px 4px 7px 7px;height:auto;z-index:1}label.pc-login-password-label span.icon,label.pc-login-username-label span.icon{background:url(img/icons.png) no-repeat scroll -193px -1185px;display:inline-block;height:18px;width:18px;vertical-align:middle}label.pc-login-password-label span.icon{background-position:-337px -1116px}label.pc-login-username-label span.icon{background-position:-357px -1115px}div#basic-account div#status-0,div#cloud-account-0 div#cloud_account_wizard_cnt{position:relative;display:inline-block;padding-right:24px}ul{padding:0}a.link{display:inline-block;color:#4acbd6;vertical-align:inherit;text-decoration:none;cursor:default;font-style:italic}div#basic-account #cloud-login{width:100%;margin:0;padding:0}#status-0{margin-top:15px}</style>
+<div id="basic-account">
+    <div class="func_container">
+        <div id="status-0">
+            <span id="t_wizard"></span>
+            <div class="cloud_hover_container">
+                <span class="cloud_account_icon"></span>
+                <div id="connect-area"></div>
+                <div id="cloud_account_wizard_tip" class="cloud_account_wizard_tip_cnt">
+                    <div class="tips-content-container">
+                        <div class="position-top-left"></div>
+                        <div class="position-top-center"></div>
+                        <div class="position-top-right"></div>
+                        <div class="position-center-left">
+                            <div class="position-center-right">
+                                <div class="tips-content-wrap">
+                                    <div class="tips-content-container-wrap">
+                                        <div class="tips-content">
+                                            <span id="cloud_account_wizard_total"></span>
+                                            <ul>
+                                                <li class="cloud_account_wizard_tip">
+                                                    <span id="cloud_account_wizard_tip1"></span>
+                                                </li>
+                                                <li class="cloud_account_wizard_tip">
+                                                    <span id="cloud_account_wizard_tip2"></span>
+                                                </li>
+                                                <li class="cloud_account_wizard_tip">
+                                                    <span id="cloud_account_wizard_tip3"></span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="position-bottom-left"></div>
+                        <div class="position-bottom-center"></div>
+                        <div class="position-bottom-right"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="status-1" class="nd"></div>
+        <div id="status-2" class="nd">
+            <h3 id="offline"></h3>
+            <p id="offline-note-title" class="note"></p>
+            <p id="offline-note-content" class="note"></p>
+        </div>
+    </div>
+    <iframe id="cloud-login" class="nd" name="cloud-login" frameborder="no" scrolling="no" src=""></iframe>
+</div>
+<script>!function(){var i=6,u=10,l=20009;$.helpControl=$.helpControl||{},$.helpControl.cloudLogin=0,$.helpControl.cloudRole=null;var s;function e(e){var n=e.originalEvent||e;if(n.origin===$.cloudOrigin||"_self"===n.origin||null==n.origin){var t=n.data;if("string"==typeof n.data&&(t=$.parseJSON(t)),t)switch(t.eType){case"ev_goto":t.url?"devicePages&page=account"==t.url?$.getToken(t.url,null,!1):$.getToken(t.url,null,!1,!0):t.index,"login"==t.url||"login"==t.index?$("#status-0").show():"register"==t.url||"register"==t.index?($.addLoading(),$("#status-0").hide()):"findBackPassword"==t.url||"findBackPassword"==t.index?($.addLoading(),$("#status-0").hide()):"devicePages&page=account"!=t.url&&"devicePages&page=account"!=t.index||($.addLoading(),$("#status-0").hide(),$.helpControl.cloudLogin=1,$.helpControl.cloudRole=1==s.userRole?0:1,$.loadHelp($.curPage.replace(/\.htm$/,"")));break;case"ev_unbind":var o;$.addLoading(),1==s.userRole?o=1:2==s.userRole&&(o=6),$.act(ACT_SET,CURRENT_USER_INFO,null,null,["action="+o,"status=0"]),$.exe();var a=0;setTimeout(function(){a++;var e=$.act(ACT_GET,CURRENT_USER_INFO,null,null);$.exe(),e.status==i||e.status==u?($.act(ACT_CGI,"/cgi/logout"),$.exe(),$.refresh()):2e4<=e.loginStatus?($.removeLoading(),e.loginStatus==l&&$.alert($.tpLang.cloudBasic_nstr.E20004),$.alert($.tpLang.cloudBasic_nstr["E"+e.loginStatus])):a<10?setTimeout(arguments.callee,1e3):($.removeLoading(),$.alert($.tpLang.ddns_nstr.E20002))},1e3);break;case"ev_login":t.validate&&($.addLoading(),$.userInfo.username=t.email,$.userInfo.token=t.token,setTimeout(function(){!function(e,n){if(INCLUDE_LOGIN_GDPR_ENCRYPT){var t=$.Iencryptor.AESEncrypt(e+"&"+n,0);$.cgi("cgi/getBindStatus?data="+encodeURIComponent(t.data)+"&sign="+t.sign)}else $.cgi("cgi/getBindStatus?cloudUserName="+$.Base64Encoding(e)+"&Token="+n);$.BindStatus=BindStatus,$.Role=Role}($.userInfo.username,$.userInfo.token),null!=$.BindStatus&&(1==$.BindStatus?(localStorage.setItem("userInfo",JSON.stringify($.userInfo)),$.cloudLogin(!0,$.userInfo.username),$.removeLoading(),$.loadPage("main","cloudBasic.htm")):2==$.BindStatus?(!function(){var e=$.userInfo;if($.ret=-1,null!=e)if(INCLUDE_LOGIN_GDPR_ENCRYPT){var n=$.Iencryptor.AESEncrypt(e.username+"\n"+e.token,0);$.cgi("/cgi/login?Action=5&data="+encodeURIComponent(n.data)+"&sign="+n.sign+"&LoginStatus=0")}else $.cgi("/cgi/login?Action=5&cloudUserName="+$.Base64Encoding(e.username)+"&Token="+e.token+"&LoginStatus=0")}(),0==$.ret&&(localStorage.setItem("userInfo",JSON.stringify($.userInfo)),$.cloudLogin(!0,$.userInfo.username),$.removeLoading(),$.loadPage("main","cloudBasic.htm"))):3==$.BindStatus?1==$.Role?(localStorage.setItem("userInfo",JSON.stringify($.userInfo)),$.cloudLogin(!0,$.userInfo.username),$.removeLoading(),$.loadPage("main","cloudBasic.htm")):($.alert($.tpLang.login.BOUND_ERROR_NOTE),$.removeLoading()):($.alert($.tpLang.m_str.unknown),$.removeLoading()))},0));break;case"ev_cloud_logout":localStorage&&localStorage.setItem("userInfo",""),$.act(ACT_CGI,"/cgi/logout"),$.exe(),$.refresh()}}}$("#t_wizard").html($.tpLang.cloudBasic_nstr.CLOUD_WIZARD),$("#no_account_tip").html($.tpLang.cloudBasic_nstr.NO_ACCOUNT),$("#cloud_account_wizard_total").html($.tpLang.quicksetup_nstr.ACCOUNT_DESP),$("#cloud_account_wizard_tip1").html($.tpLang.quicksetup_nstr.ACCOUNT_DESP_SUB1),$("#cloud_account_wizard_tip2").html($.tpLang.quicksetup_nstr.ACCOUNT_DESP_SUB2),$("#cloud_account_wizard_tip3").html($.tpLang.quicksetup_nstr.ACCOUNT_DESP_SUB3),$("#cloud-login").hide(),$("#status-0").hide(),$("#offline").html($.tpLang.cloudBasic_nstr.OFFLINE_NOTE_TITLE),$("p#offline-note-title").html($.tpLang.cloudBasic_nstr.LOGIN_NOTE_TITLE),$("p#offline-note-content").html($.tpLang.cloudBasic_nstr.LOGIN_OFFLINE_NOTE),$(window).off(".cloudBasic").on("message.cloudBasic",e),$.tpInit(function(){$.addLoading(),s=$.act(ACT_GET,CURRENT_USER,null,null,["userSetting","loginStatus","logInCloud","userRole"]),$.exe()?$.removeLoading():$.checkCloudConn(function(){2==s.userSetting&&2==s.loginStatus&&1==s.logInCloud&&"username"in $.userInfo?e({data:{eType:"ev_goto",url:"devicePages&page=account"},source:null,origin:"_self"}):($("#status-0").show(),e({data:{eType:"ev_goto",url:"login&page=basicLogin"},source:null,origin:"_self"}))},function(){$("div#status-2").removeClass("nd"),$.removeLoading()})}),$(".input-hint").click(function(e){var n=$(e.target).parents(".pc-inputarea").find("input:visible");0<n.length&&n.focus()}),$(".pc-inputarea input").on("blur",function(e){$(e.target).val()||$(e.target).parents(".pc-inputarea").find(".input-hint").show()}).on("focus",function(e){$(e.target).parents(".pc-inputarea").find(".input-hint").hide()})}()</script>

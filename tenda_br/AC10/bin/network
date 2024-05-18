@@ -1,0 +1,28 @@
+#! /bin/sh
+
+eth_init() {
+	ifconfig $1 down
+	ifconfig $1 hw ether $2
+	ifconfig $1 up
+	
+	vconfig set_name_type VLAN_PLUS_VID_NO_PAD
+	vconfig add $1 1
+	ifconfig vlan1 up
+}
+
+br_init() {
+	brctl addbr $1
+	brctl setfd $1 0
+	brctl stp $1 on
+	brctl addif $1 $2
+	ifconfig $1 up
+}
+
+case $1 in
+eth_init)
+	eth_init $2 $3;;
+br_init)
+	br_init $2 $3;;
+*)
+	echo "Invalid arg"
+esac

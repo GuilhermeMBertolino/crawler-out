@@ -1,1 +1,0 @@
-../init.d/ifx_load_voip_common_drivers.sh

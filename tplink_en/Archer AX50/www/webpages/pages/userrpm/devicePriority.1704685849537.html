@@ -1,0 +1,551 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>QoS</title>
+<style type="text/css">
+</style>
+</head>
+<body>
+<div class="func-container">
+	<div id="device-priority">
+		<div id="total-bandwidth-container"></div>
+		<div id="device-priority-grid"></div>
+	</div>
+
+	<div id="help-qos-device-priority"></div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(e){
+	var URL_DEVICE_PRIORITY_GRID = $.su.url("/admin/smart_network?form=device_priority");
+
+	$("div#device-priority").panel({
+		title: $.su.CHAR.QOS.DEVICE_PRIORITY
+	});
+
+	$("#total-bandwidth-container").load("./pages/userrpm/totalBandwidth.1704685849537.html", {}, function(response,status,xhr){});
+
+	var storeProxy = new $.su.Proxy({
+		url: URL_DEVICE_PRIORITY_GRID
+	});
+
+	var devicePriorityGrid = $("#device-priority-grid").grid({
+		store:{
+			proxy: storeProxy,
+			fields: [
+				{"name": "deviceType"},
+				{"name": "deviceName"},
+				{"name": "deviceTag"},
+				{"name": "mac"},
+				{"name": "downloadSpeed"},
+				{"name": "uploadSpeed"},
+				{"name": "trafficUsage"},
+				{"name": "enablePriority"},
+				{"name": "timePeriod"},
+				{"name": "remainTime"}
+			],
+			autoLoad: true,
+			updateMode: "operation"
+		},
+		showPrompt:false,
+		minLines: 0,
+		editor: null,
+		columns: [
+			{
+				text: $.su.CHAR.QOS.TYPE,
+				width:67,
+				dataIndex: "deviceType",
+				renderer:function(val){
+					if(val!=0&&val!="---"){
+						var type = arguments[2].deviceType,
+							enable = arguments[2].enablePriority?"enable":"",
+							inHTML="<div class=\"device-type-container widget-container\">";
+
+						inHTML += "<span class=\"icon "+type+" "+enable+"\"></span>";
+						inHTML += "</div>";
+
+						return inHTML;
+					}
+					else{
+						return "---";
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.QOS.INFORMATION,
+				width:173,
+				dataIndex: "deviceName",
+				renderer:function(val){
+					if(val!=0&&val!="---"){
+						var deviceName = $.su.func.escapeHtml(arguments[2].deviceName),
+							mode = arguments[2].deviceTag,
+							mac = arguments[2].mac,
+							inHTML="<div class=\"device-info-container widget-container\">",
+							modeType = "";
+						switch(mode){
+							case "2.4G":
+								modeType = "show_24G";
+								break;
+							case "5G":
+								modeType = "show_51G";
+								break;
+							case "5G_2":
+								modeType = "show_52G";
+								break;
+							case "wired":
+								modeType = "show_LAN";
+								break;
+							case "offline":
+								modeType = "show_offline";
+								break;
+							default:
+								modeType = "show_offline";
+						}
+						inHTML += "<div class=\"name\" title=\""+deviceName+"\">"+deviceName+"</div>";
+						inHTML += "<div>";
+						inHTML += 	"<span class=\"mode "+modeType+"\"></span>";
+						inHTML += "<span class=\"mac\">"+mac+"</span>";
+						inHTML += "</div>";
+						inHTML += "</div>";
+
+						return inHTML;
+					}
+					else{
+						return "---";
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.QOS.REALTIME_RATE,
+				width:108,
+				dataIndex: "downloadSpeed",
+				renderer:function(val){
+					if(val!="---"){
+						var speed=val,
+							unit=["B/s","KB/s","MB/s","GB/s","TB/s"],
+							inHTML="<div class=\"speed-upload-container widget-container\">";
+						speed=arguments[2].uploadSpeed;
+						// for(var i=0;i<4;i++){
+						// 	if(speed/1024>1){
+						// 		speed=speed/1024;
+						// 	}else break;
+						// }
+						inHTML += "<span class=\"icon\"></span>";
+
+						// inHTML += "<span class=\"text\">"+Math.floor(speed*10)/10+unit[i]+"</span>";
+						if(speed/1024<1){
+							if(speed==0){
+								inHTML += "<span class=\"text\">"+0+"</span>";
+							}
+							else{
+							inHTML += "<span class=\"text\">"+(speed/1024).toFixed(2)+"</span>";
+							}
+							inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                        }
+                        else if(speed/1024/1024<1){
+                            if(speed/1024<1000){
+                                inHTML += "<span class=\"text\">"+(speed/1024).toFixed(1)+"</span>";
+                                inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                            }
+                            else{
+                                inHTML += "<span class=\"text\">"+(speed/1024).toFixed(0)+"</span>";
+                                inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                            }
+                        }
+                        else{
+                        	inHTML += "<span class=\"text\">"+(speed/1024/1024).toFixed(1)+"</span>";
+                        	inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.MBPS+"</span>";
+						}
+						inHTML += "</div>";
+
+
+						speed=val;
+						// for(var i=0;i<4;i++){
+						// 	if(speed/1024>1){
+						// 		speed=speed/1024;
+						// 	}else break;
+						// }
+						inHTML +="<div class=\"speed-download-container widget-container\">";
+						inHTML += "<span class=\"icon\"></span>";
+						// inHTML += "<span class=\"text\">"+Math.floor(speed*10)/10+unit[i]+"</span>";
+						if(speed/1024<1){
+							if(speed==0){
+								inHTML += "<span class=\"text\">"+0+"</span>";
+							}
+							else{
+							inHTML += "<span class=\"text\">"+(speed/1024).toFixed(2)+"</span>";
+							}
+							inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                        }
+                        else if(speed/1024/1024<1){
+                            if(speed/1024<1000){
+                                inHTML += "<span class=\"text\">"+(speed/1024).toFixed(1)+"</span>";
+                                inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                            }
+                            else{
+                                inHTML += "<span class=\"text\">"+(speed/1024).toFixed(0)+"</span>";
+                                inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.KBPS+"</span>";
+                            }
+                        }
+                        else{
+                        	inHTML += "<span class=\"text\">"+(speed/1024/1024).toFixed(1)+"</span>";
+                        	inHTML += "<span class=\"unit\">"+$.su.CHAR.QOS.MBPS+"</span>";
+                        }
+						inHTML += "</div>";
+						
+						return inHTML;
+					}
+					else{
+						return "---";
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.QOS.TRAFFIC_USAGE,
+				width:119,
+				dataIndex: "trafficUsage",
+				renderer:function(val){
+					if(val!="---"){
+						var usage = val,
+							unit = ["KB","MB","GB","TB"],
+							usage = arguments[2].trafficUsage;
+
+						var inHTML = "";
+						usage=usage/1024;
+						for(var i=0;i<4;i++){
+							if(usage/1024>1){
+								usage=usage/1024;
+							}
+							else
+								break;
+						}
+						if(usage==0){
+							inHTML += "<span class=\"text usage\">"+Math.floor(usage*10)/10+"</span>";
+						}
+						else{
+							inHTML += "<span class=\"text usage\">"+Math.floor(usage*10)/10+"</span>";
+						}
+						inHTML += "<span class=\"text unit\">"+unit[i]+"</span>"
+
+						return inHTML;
+					}
+					else{
+						return "---";
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.QOS.PRIORITY,
+				width:71,
+				dataIndex: "enablePriority",
+				renderer:function(value,index,data){
+					var key = data[devicePriorityGrid.grid("getStore").keyProperty];
+					var columns = devicePriorityGrid.grid("getColumns");
+					var column = columns[0];
+					var cls= "",
+						val = "";
+
+					if(data.enablePriority == true){
+						cls = 'on';
+						val = true;
+					}else{
+						res = $.su.CHAR.GRID.DISABLED;
+						cls = "off";
+						val = false;
+					}
+
+					var inHTML = 	"<div class=\"container widget-container switch-button-container "+cls+"\">";
+						inHTML +=		"<div class=\"widget-wrap-outer switch-button-wrap-outer\">";
+						inHTML +=			"<a class=\"switch-button-btn "+cls+"\" href=\"javascript:void(0);\" data-index=\""+index+"\" data-name=\""+column.dataIndex+"\" data-value=\""+val+"\" data-key=\""+key+"\" data-on=\"on\" data-off=\"off\">";
+						inHTML +=				"<span class=\"switch-button-btn-wrap\">";
+						inHTML +=					"<span class=\"switch-button-btn-slider\"></span>";
+						inHTML += 				"</span>";
+						inHTML +=			"</a>";
+						inHTML +=		"</div>";
+						inHTML +=	"</div>";
+
+					return inHTML;
+				}
+			},
+			{
+				text: $.su.CHAR.QOS.TIME_PERIOD,
+				width:105,
+				dataIndex: "timePeriod",
+				renderer:function(value,index,data){
+					var key = data[devicePriorityGrid.grid("getStore").keyProperty];
+					var columns = devicePriorityGrid.grid("getColumns");
+					var column = columns[0];
+					var remaining = data.remainTime,
+						hours = parseInt(remaining/3600),
+						minutes = parseInt((remaining%3600)/60),
+						period = "";
+
+					var selected_1 = "",
+						selected_2 = "",
+						selected_3 = "",
+						selected_4 = "";
+					switch(data.timePeriod){
+						case "1":
+							selected_1 = "selected";
+							period = $.su.CHAR.QOS.ONE_HOUR;
+							break;
+						case "2":
+							selected_2 = "selected";
+							period = $.su.CHAR.QOS.TWO_HOURS;
+							break;
+						case "4":
+							selected_3 = "selected";
+							period = $.su.CHAR.QOS.FOUR_HOURS;
+							break;
+						case "-1":
+							selected_4 = "selected";
+							period = $.su.CHAR.QOS.ALWAYS;
+							break;
+						default:
+							selected_4 = "selected";
+							period = $.su.CHAR.QOS.ALWAYS;
+							break;
+					}
+
+					var timePeriodShow = data.enablePriority?"":"hidden";
+					var timePeriodHide = data.enablePriority?"hidden":"";
+					var timeRemainingShow = (period==$.su.CHAR.QOS.ALWAYS||remaining<=60)?"hidden":"";
+
+					var inHTML = 	"<div class=\"time-period-wrapper "+timePeriodShow+"\">";
+						inHTML += 	"<div class=\"container widget-container combobox-container\">";
+						inHTML += 		"<div class=\"widget-wrap-outer combobox-wrap-outer\">";
+						inHTML += 			"<div class=\"widget-wrap combobox-wrap\">";
+						inHTML +=				"<input class=\"combobox-text\" type=\"text\" readonly=\"true\" value=\""+period+"\" data-index=\""+index+"\" data-name=\""+column.dataIndex+"\" data-value=\""+data.timePeriod+"\" data-key=\""+key+"\" />";
+						inHTML +=				"<a class=\"combobox-switch\" href=\"javascript:void(0);\">";
+						inHTML +=					"<span class=\"icon\"></span>";
+						inHTML +=				"</a>";
+
+						inHTML += 				"<div class=\"combobox-list-wrap\">";
+						inHTML +=					'<div class="position-top-left"></div><div class="position-top-center"></div>';
+						inHTML +=					'<div class="position-center-left"><div class="position-center-right">';
+						inHTML +=						"<div class=\"combobox-list-content-wrap\">";
+						inHTML +=							"<ul class=\"combobox-list\">";
+						inHTML += 								"<li class=\"combobox-list "+selected_1+"\">";
+						inHTML +=									"<label class=\"combobox-label\">";
+						inHTML +=										"<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"1\" />";
+						inHTML +=										"<span class=\"text\">"+$.su.CHAR.QOS.ONE_HOUR+"</span>";
+						inHTML +=									"</label>";
+						inHTML +=								"</li>";
+						inHTML += 								"<li class=\"combobox-list "+selected_2+"\">";
+						inHTML +=									"<label class=\"combobox-label\">";
+						inHTML +=										"<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"2\" />";
+						inHTML +=										"<span class=\"text\">"+$.su.CHAR.QOS.TWO_HOURS+"</span>";
+						inHTML +=									"</label>";
+						inHTML +=								"</li>";
+						inHTML += 								"<li class=\"combobox-list "+selected_3+"\">";
+						inHTML +=									"<label class=\"combobox-label\">";
+						inHTML +=										"<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"4\" />";
+						inHTML +=										"<span class=\"text\">"+$.su.CHAR.QOS.FOUR_HOURS+"</span>";
+						inHTML +=									"</label>";
+						inHTML +=								"</li>";
+						inHTML += 								"<li class=\"combobox-list "+selected_4+"\">";
+						inHTML +=									"<label class=\"combobox-label\">";
+						inHTML +=										"<input class=\"combobox-checkbox lst hidden\" type=\"checkbox\" value=\"Always\" />";
+						inHTML +=										"<span class=\"text\">"+$.su.CHAR.QOS.ALWAYS+"</span>";
+						inHTML +=									"</label>";
+						inHTML +=								"</li>";
+						inHTML +=							"</ul>";
+						inHTML +=						"</div>";
+						inHTML +=					'</div></div>';
+						inHTML +=					'<div class="position-bottom-left"></div><div class="position-bottom-center"></div>';
+						inHTML +=				"</div>";
+
+						inHTML +=			"</div>";
+						inHTML +=		"</div>";
+						inHTML +=	"</div>";
+						inHTML +=	"<div class=\"time-remaining "+timeRemainingShow+"\">"+hours+" "+$.su.CHAR.QOS.H+" "+minutes+" "+$.su.CHAR.QOS.MIN+"</br>"+$.su.CHAR.QOS.REMAINING+"</div>";
+						inHTML +=	"</div>";
+						inHTML +=	"<div class=\"time-period-line "+timePeriodHide+"\"><span></span></div>";
+
+					return inHTML;
+				}
+			}
+		],
+		operation: "prompt"
+	}).on("ev_load", function(e){
+		devicePriorityGrid.grid("prompt", true);
+	});
+	devicePriorityGrid.grid("runProgress");
+
+	devicePriorityGrid.delegate("a.switch-button-btn","click",function(e){
+		e.preventDefault();
+		e.stopPropagation();
+
+		var btn = $(this);
+		var me = devicePriorityGrid;
+
+		var tar = me.get(0);
+			key = btn.attr("data-key"),				//当前操作的key值
+			value = btn.attr("data-value"),
+			vOn = btn.attr("data-on"),
+			vOff = btn.attr("data-off"),
+			name = btn.attr("data-name"),
+			store = devicePriorityGrid.grid("getStore"),
+			keyProperty = store.keyProperty,
+			dOld = store.getData(key);
+
+		var opt = {};
+			opt['enablePriority'] = (value === "true") ? false : true;
+		var	dNew = $.extend({}, dOld, opt);
+
+		delete dNew[keyProperty];
+
+		if(value){
+			$("tr.grid-content-tr-"+key+" td.grid-content-td-deviceType span.icon").addClass("enable");
+		}else{
+			$("tr.grid-content-tr-"+key+" td.grid-content-td-deviceType span.icon").removeClass("enable");
+		}
+		
+		devicePriorityGrid.grid("runProgress");
+		// store.update(key, {
+		// 	"old": $.su.json.toJSONString(dOld),
+		// 	"new": $.su.json.toJSONString(dNew)
+		// }, function(key, data){
+		// 	me.grid("prompt", true);
+		// 	store.loadData(data);
+		// }, function(){
+		// 	me.grid("prompt", false);
+		// });
+
+		storeProxy.write({
+			"operation": "update",
+			"old": $.su.json.toJSONString(dOld),
+			"new": $.su.json.toJSONString(dNew)
+		}, function(data){
+			me.grid("prompt", true);
+			store.loadData(data);
+		}, function(){
+			me.grid("prompt", false);
+		});
+	});
+
+	devicePriorityGrid.delegate("div.combobox-wrap","click",function(e){
+		e.stopPropagation();
+		var switchBtn = $(this).find("a.combobox-switch"),
+			wrap = switchBtn.next("div.combobox-list-wrap"),
+			container = switchBtn.closest("div.combobox-container"),
+			toggleFlag = wrap.attr("toggleflag") || "hidden";
+
+		$("div.combobox-list-wrap").hide();
+
+		if (toggleFlag === "hidden"){
+			container.addClass("focus")
+			wrap.slideDown(150);
+			wrap.attr("toggleflag", "shown");
+			// var selectedValue = container.find(".combobox-text").attr("data-value");
+			// var comboboxItems = container.find("li.combobox-list");
+			// for(var i=0; i<comboboxItems.length; i++){
+
+			// }
+		}else{
+			container.removeClass("focus");
+			wrap.hide();
+			wrap.attr("toggleflag", "hidden");
+		};
+	});
+
+	devicePriorityGrid.delegate("label.combobox-label","click",function(e){
+		e.stopPropagation();
+		e.preventDefault();
+
+		var label = $(this),
+			li = label.closest("li.combobox-list"),
+			container = label.closest("div.combobox-container"),
+			input = label.find("input.combobox-checkbox"),
+			value = input.val(),
+			vOld = container.find(".combobox-text").val(),
+			vNew = "";
+
+		if(value != "Always"){
+			vNew = value=="1"?value+" hour":value+" hours";
+		}
+		else{
+			vNew = value;
+		}
+
+		container.find(".combobox-text").val(vNew);
+
+
+		var btn = container.find(".combobox-text");
+		btn.attr("data-value", input.val());
+
+		var me = devicePriorityGrid;
+		var tar = container.find(".combobox-text").get(0);
+			key = btn.attr("data-key"),				//当前操作的key值
+			value = btn.attr("data-value"),
+			name = btn.attr("data-name"),
+			store = devicePriorityGrid.grid("getStore"),
+			keyProperty = store.keyProperty,
+			dOld = store.getData(key);
+
+		var opt = {};
+			opt['timePeriod'] = input.val();
+		var	dNew = $.extend({}, dOld, opt);
+
+		delete dNew[keyProperty];
+		devicePriorityGrid.grid("runProgress");
+		// store.update(key, {
+		// 	"old": $.su.json.toJSONString(dOld),
+		// 	"new": $.su.json.toJSONString(dNew)
+		// }, function(){
+		// 	me.grid("prompt", true);
+		// }, function(){
+		// 	me.grid("prompt", false);
+		// });
+
+		storeProxy.write({
+			"operation": "update",
+			"old": $.su.json.toJSONString(dOld),
+			"new": $.su.json.toJSONString(dNew)
+		}, function(data){
+			me.grid("prompt", true);
+			store.loadData(data);
+		}, function(){
+			me.grid("prompt", false);
+		});
+
+
+		var listWrap = label.parents("div.combobox-list-wrap");
+		listWrap.hide().attr("toggleflag", "hidden");
+	});
+
+	devicePriorityGrid.on("ev_lineclicked", function(e){
+		$("tbody").click();
+	});
+
+	var updateGridId = setInterval(function(){
+		var store = devicePriorityGrid.grid("getStore");
+		var columns = ["downloadSpeed", "trafficUsage"];
+		store.updateColumns(columns, {}, function(data, others, status, xhr){
+			//
+		});
+			
+		// storeProxy.write({
+		// 	"operation": "updateColumn",
+		// 	"column": columns
+		// }, function(data){
+		// 	for(var i=0;i<data.length;i++){
+		// 		store.updateData(data[i].key, data[i]);
+		// 	}
+		// });
+	}, 3000);
+
+
+	var helpQosDevicePriority = new $.su.Help({
+		container: "div#help-qos-device-priority",
+		content: ["DEVICE_PRIORITY"]
+	});
+
+	$.su.app.runningModule.addUnloadHandler(function(){
+        clearInterval(updateGridId);
+    });
+});	
+</script>
+</body>
+</html>

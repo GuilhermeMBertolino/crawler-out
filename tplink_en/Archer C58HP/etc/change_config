@@ -1,0 +1,33 @@
+#!/bin/sh
+# Copyright (c) 2018 Shenzhen Tp-link Technologies Co.Ltd.
+# Author : Jimmy Chiang <jiangji@tp-link.com.cn>
+# Data   : Jan 10 2018 
+
+# backup & recovery user-config when sysmode change
+# $1: target mode
+# $2: current mode
+
+TARGET_MODE=$1
+CURRENT_MODE=$2
+
+[ -n "$TARGET_MODE" ] || exit 0
+[ -n "$CURRENT_MODE" ] || exit 0
+
+FILE_LIST="network dhcp protocol"
+CONFIG_PATH_PREFIX="/etc/config"
+
+# backup&restore each file in FILE_LIST
+for f in $FILE_LIST;do
+	local backup_file="${CONFIG_PATH_PREFIX}/${f}_${CURRENT_MODE}"
+	local recover_file="${CONFIG_PATH_PREFIX}/${f}_${TARGET_MODE}"
+	local nowan_config="${CONFIG_PATH_PREFIX}/${f}_nowan"
+	local config_file="${CONFIG_PATH_PREFIX}/${f}"
+	cp $config_file $backup_file
+	if [ -f $recover_file ]; then
+		cp $recover_file $config_file
+	else
+		cp $nowan_config $config_file
+	fi
+done
+
+uci_commit_flash

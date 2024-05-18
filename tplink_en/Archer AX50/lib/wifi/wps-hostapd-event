@@ -1,0 +1,136 @@
+#!/bin/sh
+
+# Due to a change in hostapd event input we change parameters settings:
+# VAP name is added as third parameter
+# input examples:
+#   disconnect VAP:
+#   wps-hostapd-event wlan0 AP-STA-DISCONNECTED wlan0.0 30:5a:3a:18:bd:7b
+name=$2
+interface_name=$3
+param3=$4
+param4=$
+
+# In order to reduce CPU usage, exit on all events that are not handled, before sourcing the lib_common.
+# Every new event must be added to this list, as well as to the handler.
+# lib_required events will source the fapi lib_common, events that  do not need it will skip to save CPU
+case $name in
+	"WPS-PBC-ACTIVE" | "WPS-PIN-ACTIVE" | "WPS-REG-SUCCESS" |\
+	"WPS-TIMEOUT" |	"WPS-FAIL" | "WPS-OVERLAP-DETECTED" )
+		
+	;;
+	*)
+		exit 0
+	;;
+esac
+
+# Cancel current running WPS session
+cancel_wps() {
+	local ifname=$1
+	/tmp/hostapd_cli_${ifname} -i $ifname wps_cancel
+}
+
+# Handled hostapd events
+case $name in
+	"WPS-PBC-ACTIVE")
+		if [ -e /tmp/last_wps_success ]; then
+			rm -rf /tmp/last_wps_success
+		fi
+		ledcli WPS_INPROGRESS
+	;;
+	"WPS-PIN-ACTIVE")
+		if [ -e /tmp/last_wps_success ]; then
+			rm -rf /tmp/last_wps_success
+		fi
+		ledcli WPS_INPROGRESS
+	;;
+	"WPS-REG-SUCCESS")
+		if [ ! -e /tmp/last_wps_success ]; then
+			echo "$interface_name" > /tmp/last_wps_success
+		fi
+
+		# Cancel WPS on all other interafces
+		ifname=${interface_name%%.*}
+		target_ifname=wlan0
+		if [ "$ifname" = "wlan0" ]; then
+			target_ifname=wlan2
+		fi
+		cancel_wps $target_ifname
+
+		ledcli WPS_SUCCESS
+	;;
+	"WPS-TIMEOUT")
+		if [ -f /tmp/last_wps_success ]; then
+			local ifname=`cat /tmp/last_wps_success`
+			if [ "$ifname" != "$interface_name" ]; then
+				rm -rf /tmp/last_wps_success
+			else
+				ledcli WPS_ERROR
+			fi
+		else
+			ledcli WPS_ERROR
+		fi
+	;;
+	"WPS-FAIL")
+	# event example (PIN Error): 
+	#   wlan2 WPS-FAIL wlan2 msg=8 config_error=18
+	#From the code:
+	#	enum wps_config_error {
+	#		WPS_CFG_NO_ERROR = 0,
+	#		WPS_CFG_OOB_IFACE_READ_ERROR = 1,
+	#		WPS_CFG_DECRYPTION_CRC_FAILURE = 2,
+	#		WPS_CFG_24_CHAN_NOT_SUPPORTED = 3,
+	#		WPS_CFG_50_CHAN_NOT_SUPPORTED = 4,
+	#		WPS_CFG_SIGNAL_TOO_WEAK = 5,
+	#		WPS_CFG_NETWORK_AUTH_FAILURE = 6,
+	#		WPS_CFG_NETWORK_ASSOC_FAILURE = 7,
+	#		WPS_CFG_NO_DHCP_RESPONSE = 8,
+	#		WPS_CFG_FAILED_DHCP_CONFIG = 9,
+	#		WPS_CFG_IP_ADDR_CONFLICT = 10,
+	#		WPS_CFG_NO_CONN_TO_REGISTRAR = 11,
+	#		WPS_CFG_MULTIPLE_PBC_DETECTED = 12,
+	#		WPS_CFG_ROGUE_SUSPECTED = 13,
+	#		WPS_CFG_DEVICE_BUSY = 14,
+	#		WPS_CFG_SETUP_LOCKED = 15,
+	#		WPS_CFG_MSG_TIMEOUT = 16,
+	#		WPS_CFG_REG_SESS_TIMEOUT = 17,
+	#		WPS_CFG_DEV_PASSWORD_AUTH_FAILURE = 18,
+	#		WPS_CFG_60G_CHAN_NOT_SUPPORTED = 19,
+	#		WPS_CFG_PUBLIC_KEY_HASH_MISMATCH = 20
+	#	}
+	
+	code=`echo $param4 | awk -F "=" '{print $2}'`
+	case $code in
+		"18")
+			ledcli WPS_ERROR
+			
+			 # Cancel WPS on all other interafces
+			ifname=${interface_name%%.*}
+			target_ifname=wlan0
+			if [ "$ifname" = "wlan0" ]; then
+					target_ifname=wlan2
+			fi
+			cancel_wps $target_ifname
+
+		;;
+		*)
+			echo "-->wps_fail : unknown error event, code=$code" > /dev/console
+		;;
+	esac
+	;;
+	"WPS-OVERLAP-DETECTED")
+		ledcli WPS_OVERLAP
+
+		# Cancel WPS on all other interafces
+		ifname=${interface_name%%.*}
+		target_ifname=wlan0
+		if [ "$ifname" = "wlan0" ]; then
+				target_ifname=wlan2
+		fi
+		cancel_wps $target_ifname
+
+	;;
+	*)
+		echo "-->wps-hostapd-event: unknown cmd=$name on interface $interface_name" > /dev/console
+	;;
+esac
+

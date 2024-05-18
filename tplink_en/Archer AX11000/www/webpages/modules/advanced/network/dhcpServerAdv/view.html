@@ -1,0 +1,50 @@
+<div view="{dhcpServerAdvView}">
+    <div widget="htmlLoader" id="dhcp-server-setting-loader" data-bind="{dhcpServerSettingLoader}"></div>
+    <div widget="htmlLoader" id="dhcp-address-reservation-loader" data-bind="{dhcpAddressResvationLoader}"></div>
+    <div widget="htmlLoader" id="dhcp-client-list-loader" data-bind="{dhcpClientListLoader}"></div>
+</div>
+<div view="{addressReservationAdvView}">
+    <div widget="panel" title-label="{NETWORK_DHCP.ADDRESS_RESERVATION}" collapsible="{false}" instruction="{NETWORK_DHCP.ADDRESS_RESERVATION_INSTRUCTION}">
+        <div widget="grid" data-bind="{dhcpAddressList}" id="grid-addressList" class="m-card-grid" plugins="tBar|popEditor|paging" operation="add">
+            <div widget="fieldset" id="reservation-entry-edit" data-bind="{dhcpEditAddressReservation}">
+                <!--div widget="textbox" id="edit-reservation-entry-name"  label-field="{NETWORK_DHCP.NAME}" data-bind="{dhcpEditAddressReservation.name}" name="name"></div-->
+                <div widget="mac" id="edit-reservation-entry-mac"  label-field="{NETWORK_DHCP.MAC}" data-bind="{dhcpEditAddressReservation.mac}" name="mac"></div>
+                <div widget="button" id="edit-connected-device" class="full-line" text="{NETWORK_DHCP.CONNECTED_DEVICES_UPPERCASE}" data-bind="{enable}"></div>
+                <div widget="ip" id="edit-reservation-entry-ip"  label-field="{NETWORK_DHCP.IP}" data-bind="{dhcpEditAddressReservation.ip}" name="ip"></div>
+				<!-- <div widget="fieldset" class="btn-container inline-container" id="dhcp-edit-btns">
+					<div widget="button" id="dhcpAddressList-cancel-btn" class="btn-cancel" data-bind="{cancelDhcpBtn}" label-field="{false}" text="{OPERATION.CANCEL}"></div>
+					<div widget="button" id="dhcpAddressList-submit-btn" class="btn-submit" data-bind="{submitDhcpBtn}" label-field="{false}" text="{OPERATION.ADD}"></div>
+				</div> -->
+            </div>
+        </div>
+        <div widget="msg" type="window" id="connected-device-box" class="no-button-msg z-index-1000-msg" data-bind="addDevice"  msg-view="addressReservationAdvView" close-btn="{true}">
+            <div widget="fieldset">
+                <div widget="devicesList" id="connected-device-list" data-bind="{dhcpConnectedDeviceList}" scroll="{false}"></div>
+            </div>
+        </div>
+        <div widget="msg" type="prompt" id="add-address-reservation-err-msg" class="z-index-1000-msg" data-bind="{addAddressReservationErrMsg}" close-btn="{true}">
+            <div widget="paragraph" data-bind="{addAddressReservationErrText}"></div>
+        </div>
+    </div>
+</div>
+
+<div view="{dhcpClientListAdvView}">
+    <div widget="panel" title-label="{NETWORK_DHCP.CLIENT_LIST}" collapsible="{false}" instruction="{NETWORK_DHCP.CLIENT_LIST_INSTRUCTION}">
+        <div widget="grid" data-bind="{dhcpConnectedDeviceList}" id="grid-clientList" class="m-card-grid" plugins="tBar|statusBar|paging" operation="refresh"></div>
+    </div>
+</div>
+<div view="{dhcpServerSettingAdvView}">
+    <div widget="panel" class="m-widget-wrap-300" title-label="{NETWORK_DHCP.DHCP_SERVER}" collapsible="{false}" instruction="{NETWORK_DHCP.DHCP_SERVER_INSTRUCTION}">
+        <div widget="checkbox" class="block-title" data-bind="{dhcpServer.enable}" label-field="{NETWORK_DHCP.DHCP_SERVER}" box-label="{NETWORK_DHCP.ENABLE}" true-value="on" false-value="off"></div>
+        <div widget="fieldset" data-bind="{serverSettings}" >
+            <div widget="combination" data-bind="{ipRange}" class="time-container ip-pool" label-field="{NETWORK_DHCP.IP_POOL}" widget-separator="-">
+                <div widget="ip" label-field={false} id="ipaddr-start" data-bind="{dhcpServer.ipaddrStart}"></div>
+                <div widget="ip" label-field={false} id="ipaddr-end" data-bind="{dhcpServer.ipaddrEnd}" ></div>
+            </div>
+            <div widget="textbox" data-bind="{dhcpServer.leasetime}" label-field="{NETWORK_DHCP.ADDRESS_LEASE_TIME}" unit="{NETWORK_DHCP.TIME_UNIT}"></div>
+            <div widget="ip" data-bind="{dhcpServer.gateway}" id="default-gateway" label-field="{NETWORK_DHCP.GATEWAY}" short-tips="{NETWORK_DHCP.OPTIONAL}"></div>
+            <div widget="ip" data-bind="{dhcpServer.priDns}" label-field="{NETWORK_DHCP.PRIMARY_DNS}" short-tips="{NETWORK_DHCP.OPTIONAL}"></div>
+            <div widget="ip" data-bind="{dhcpServer.sndDns}" label-field="{NETWORK_DHCP.SECONDARY_DNS}" short-tips="{NETWORK_DHCP.OPTIONAL}"></div>
+        </div>
+    </div>
+</div>

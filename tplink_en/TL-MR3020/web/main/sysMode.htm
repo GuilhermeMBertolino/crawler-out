@@ -1,0 +1,208 @@
+<script language="javascript" type="text/javascript">
+var curMode;
+var curEwanBackup;
+var cur3gBackup;
+
+/*add by xieping */
+$('#USB_3G_only').on('click', function(e) {
+        $('#t_noteEwanBack').addClass("nd");
+        $('#t_noteEwan').addClass("nd");
+		$('#t_noteEwan3G').addClass("nd");
+    });
+
+$('#USB_3G_prefer').on('click', function(e) {
+        $('#t_noteEwanBack').removeClass("nd");
+        $('#t_noteEwan').addClass("nd");
+		$('#t_noteEwan3G').addClass("nd");
+    });
+	
+$('#ETH_only').on('click', function(e) {
+        $('#t_noteEwanBack').addClass("nd");
+        $('#t_noteEwan').removeClass("nd");
+		$('#t_noteEwan3G').addClass("nd");
+    });
+
+$('#ETH_prefer').on('click', function(e) {
+        $('#t_noteEwanBack').addClass("nd");
+        $('#t_noteEwan').addClass("nd");
+		$('#t_noteEwan3G').removeClass("nd");
+    });
+
+function sysModeInit() {
+	if (INCLUDE_LTEWAN) {
+       $("#lteMode").removeClass("nd");
+    }
+    if (INCLUDE_USB_3G_DONGLE) {
+        $("#mode3gOnly").removeClass("nd");
+		if (INCLUDE_EWAN_BACKUP) {
+			$("#mode3gPrefer").removeClass("nd");
+		}
+		if (INCLUDE_USB_3G_BACKUP) {
+			$("#ethPrefer").removeClass("nd");
+		}
+	}
+	if (INCLUDE_VDSLWAN) {
+        $("#modeDsl").removeClass("nd");
+    }
+    var sysMode = $.act(ACT_GET, SYS_MODE, null, null);
+    if (!$.exe()) {
+		curEwanBackup = INCLUDE_EWAN_BACKUP?sysMode.ewanBackup:0;
+		cur3gBackup = INCLUDE_USB_3G_BACKUP?sysMode.usb3gBackup:0;
+		curMode = sysMode.mode;
+        if (curMode == "DSL") {
+            $("#DSL").prop("checked", true);
+        } else if (curMode == "USB_3G") {
+	        $("#USB_3G_only").prop("checked", true);
+        	if (curEwanBackup == 1)
+			{
+	            $("#USB_3G_prefer").prop("checked", true);
+			}
+		} else if (INCLUDE_LTEWAN && curMode == "LTE") {
+            $("#LTE").prop("checked", true);
+		} else {
+	        $("#ETH_only").prop("checked", true);
+        	if (cur3gBackup == 1)
+			{
+	            $("#ETH_prefer").prop("checked", true);
+			}
+        }
+    }
+}
+
+/*in cmm Usb3gBackup actually take effect in obj WAN_USB_3G_LINK_CFG*/
+function saveUsb3gBackup(usb3gBackup)
+{
+	var usb3gList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["backupEnable"]);
+	if (!$.exe())
+	{
+		$.each(usb3gList, function() {
+			if (usb3gBackup != this.backupEnable)
+				$.act(ACT_SET, WAN_USB_3G_LINK_CFG, this.__stack, null, ["backupEnable="+usb3gBackup]);
+        });
+		$.exe();
+	}
+}
+
+function doSave() {
+    var sysModeArg = {};
+	var ewanBackup = 0;
+	var usb3gBackup= 0;
+    if ($("#DSL").prop("checked")) {
+        sysModeArg.mode = "DSL";
+		
+	} else if (INCLUDE_LTEWAN && $("#LTE").prop("checked")) {
+        sysModeArg.mode = "LTE";
+		
+    } else if ($("#USB_3G_only").prop("checked")) {
+        sysModeArg.mode = "USB_3G";
+		ewanBackup = 0;
+		usb3gBackup = 0;
+	} else if (INCLUDE_EWAN_BACKUP && $("#USB_3G_prefer").prop("checked")) {
+        sysModeArg.mode = "USB_3G";
+		ewanBackup = 1;
+		usb3gBackup = 0;
+	}
+    else if ($("#ETH_only").prop("checked")) {
+        sysModeArg.mode = "ETH";
+		usb3gBackup = 0;
+		ewanBackup = 0;
+    } else  if (INCLUDE_USB_3G_BACKUP){
+        sysModeArg.mode = "ETH";
+		usb3gBackup = 1;
+		ewanBackup = 0;
+    }
+	if (sysModeArg.mode == curMode && usb3gBackup == cur3gBackup 
+		&& ewanBackup == curEwanBackup)
+		return;
+	
+	if (INCLUDE_USB_3G_BACKUP)
+		sysModeArg.usb3gBackup = usb3gBackup;
+	if (INCLUDE_EWAN_BACKUP)
+		sysModeArg.ewanBackup = ewanBackup;
+	/*
+    if (sysModeArg.mode == curMode) {
+        $.addLoading($("#b_save"));
+        $.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+		if(INCLUDE_USB_3G_DONGLE)
+		{
+			saveUsb3gBackup(usb3gBackup);
+		}
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret)
+			{
+				initIndex();
+				 $.guage(["<span class='T_rebooting'>changing mode</span>", "<span class='T T_wait_reboot'>The device is changing mode. Please wait...</span>"], 20, 80, function() {
+					$.refresh();
+				});
+			}
+        });
+        return;
+    }*/
+    $.confirm(c_str.chgmod,
+        function() {
+            $.addLoading($("#b_save"));
+			if(INCLUDE_USB_3G_DONGLE)
+			{
+				saveUsb3gBackup(usb3gBackup);
+			}
+			/*
+            $.exe(function(ret) {
+                $.removeLoading();
+                if (!ret) 
+            });*/
+			doReboot(sysModeArg);
+        },
+        function() {
+            $.reload();
+        }
+    );
+}
+
+function doReboot(sysModeArg) {
+    $.guage(["<span class='T_rebooting'>" + s_str.rebooting + "</span>", "<span class='T T_wait_reboot'>" + s_str.wait_reboot + "</span>"], 100, $.guageInterval, function() {
+        $.refresh();
+    });
+	$.removeLoading();
+	$.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+    $.act(ACT_OP, ACT_OP_REBOOT);
+    $.exe(true);
+}
+</script>
+<h3 id="et">Operation Mode</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <p id="t_mode">Choose Operation Mode:</p>
+        <div id="modeDsl" class="nd">
+            <input type="radio" name="sysMode" id="DSL" value="DSL" />
+            <label id="t_sysmod1">ADSL Modem Router Mode</label>
+        </div>
+		<div id="lteMode" class="nd">
+            <input type="radio" name="sysMode" id="LTE" value="LTE" />
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+        <div id="mode3gOnly" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G_only" value="USB_3G" />
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+         <div id="mode3gPrefer" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G_prefer" value="USB_3G" />
+            <label id="t_sysmod4">3G/4G Router Mode With Ewan Backup</label>
+			<p  id="t_noteEwanBack" class="nd note_title" >Note: In this mode, you won't be able to get access to Router by ethernet port. You can only connect to Router by wireless</p>
+        </div>
+        <div id="ethOnly">
+            <input type="radio" name="sysMode" id="ETH_only" value="ETH" />
+            <label id="t_sysmod3">Wireless Router Mode</label>
+			<p  id="t_noteEwan" class="nd note_title" >Note: In this mode, you won't be able to get access to Router by ethernet port. You can only connect to Router by wireless</p>
+        </div>
+        <div id="ethPrefer" class="nd">
+            <input type="radio" name="sysMode" id="ETH_prefer" value="ETH" />
+            <label id="t_sysmod5">Wireless Router Mode With 3G/4G Backup</label>
+			<p  id="t_noteEwan3G" class="nd note_title" >Note: In this mode, you won't be able to get access to Router by ethernet port. You can only connect to Router by wireless</p>
+        </div>
+        <button type="submit" class="green T_save" value="Save" id="b_save" onclick="doSave()">Save</button>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+$.tpInit(sysModeInit);
+</script>

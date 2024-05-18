@@ -1,0 +1,405 @@
+#!/usr/bin/lua
+
+local dbg  = require "luci.tools.debug"
+local dtype = require "luci.tools.datatypes"
+local nixio = require "nixio"
+local uci = require "luci.model.uci"
+local util = require "luci.util"
+uci_r = uci.cursor()
+
+local DIAG_CONFIG_PATH = "diagnostic"
+local DIAG_STATE_PING = "/tmp/diag/ping_state"
+local DIAG_STATE_TRACE = "/tmp/diag/trace_state"
+local DIAG_RESULT_PING = "/tmp/diag/ping_result"
+local DIAG_RESULT_TRACE = "/tmp/diag/trace_result"
+
+local function reload_diag_ping()
+	local file = io.open("/tmp/run/myping.pid")
+	local line
+	if file then
+		line = file:read("*l")
+		file:close()
+	end
+
+	if line then 
+		os.execute("kill -9 %q" % line) 
+	end
+end
+
+local function reload_diag_trace()
+	local file = io.open("/tmp/run/mytrace.pid")
+	local line
+	if file then
+		line = file:read("*l")
+		file:close()
+	end
+
+	if line then 
+		os.execute("kill -9 %q" % line) 
+	end
+end
+
+local function lua_string_split(str, split_char)
+	local substr_tbl = {}
+	while true do
+		local pos = string.find(str, split_char)
+		if (not pos) then  -- not found we insert the last string into table --- 
+			local size_t =  table.getn(substr_tbl)
+			table.insert(substr_tbl, size_t+1, str)
+			break
+		end
+		--- if we found the tag , put string before tag into table  ---
+		local sub_str = string.sub(str, 1 ,pos - 1)
+		----- if sub_str is not NULL------ 
+		if sub_str ~= " " and  sub_str ~= "" then
+            local size_t = table.getn(substr_tbl)  ---table size ----
+			table.insert(substr_tbl, size_t+1, sub_str)   ----input to table --------
+		end
+
+		local t = string.len(str)
+		str = string.sub(str, pos + 1 , t)  ----the reset string  ----
+	end
+	return substr_tbl;
+end
+
+local function formatModify(str)
+	local result = "";
+	local tbl = lua_string_split(str, " ")
+	local size = table.getn(tbl)
+	local pos = {};
+	local size_t = 0
+	local flag_req_timeout = 0
+	local j = 3;
+	local username;
+	local userflag=0;
+	local tmp;
+
+	result = string.format("%s ", tbl[1]);
+	for i = 2, size, 1 do
+		if tbl[i]:find(".*%..*%..*") then  ----there is a IP--
+			size_t = table.getn(pos) + 1;  ---table size ----
+			table.insert(pos, size_t, i);   ----input to table -------- 
+		elseif not tbl[i]:find("!H") 
+			and not tbl[i]:find("!N") 
+			and not tbl[i]:find("!P") 	
+			and not tbl[i]:find("!S") 
+		then
+			j = i + 1;
+			if tbl[i]:find("%*") then
+				flag_req_timeout = 1;
+				result = string.format("%s %s", result, tbl[i]);
+			elseif j <= size then 
+					if tbl[j]:find("ms") then
+						result = string.format("%s %s", result, math.ceil(tbl[i]));
+					elseif not tbl[i]:find("ms") then 
+						userflag = 1;
+						username = tbl[i];
+					end
+			end
+		end
+	end
+
+	if flag_req_timeout == 1 then
+		result = string.format("%s %s", result, "Timeout");
+	elseif userflag == 1 then
+		tmp = string.format("%s %s", username, tbl[pos[1]]);
+		result = string.format("%s %s", result, tmp);
+	elseif size_t > 1 then
+		tmp = string.format("%s %s", tbl[pos[1]], tbl[pos[2]]);	
+		result = string.format("%s %s", result, tmp);
+	else
+		result = string.format("%s %s", result, tbl[pos[1]]);
+	end
+
+	return result, tbl[1]
+end
+
+local function pingDiagnoistic()
+    -- First, reload ping action
+	reload_diag_ping()
+	local pid = nixio.getpid()
+	dbg.printf("My pid: " .. pid)
+	os.execute("echo %d > /tmp/run/myping.pid" % {pid})
+
+	local host = uci_r:get(DIAG_CONFIG_PATH, "params", "host") or ""
+	local count = uci_r:get(DIAG_CONFIG_PATH, "params", "count") or 4
+	local pktsize = uci_r:get(DIAG_CONFIG_PATH, "params", "pktsize") or 64
+	local timeout = uci_r:get(DIAG_CONFIG_PATH, "params", "timeout") or 800
+
+	if host == "" then
+		os.execute("echo Error_CannotResolveHostName > " .. DIAG_STATE_PING)
+		os.execute("cwmp_cli -u diag")
+		dbg.print("Error_CannotResolveHostName")
+		os.execute("rm -rf /tmp/run/mytrace.pid")
+		os.exit(0)
+	end
+
+	-- check host
+	if host:match("^[a-zA-Z0-9%-%.:_]+$") then
+		-- check pktsize
+		pktsize = tonumber(pktsize)
+		if pktsize < 0 then
+			pktsize = 0
+		end
+
+		-- check timeout
+		timeout = tonumber(timeout)
+		if timeout > 1000 then
+			timeout = timeout/1000
+			timeout = math.floor(timeout)
+		else
+			timeout = 1
+		end
+
+		-- set state to requested
+		os.execute("echo Requested > " .. DIAG_STATE_PING)
+
+		if nixio.fs.access(DIAG_RESULT_PING) then
+			nixio.fs.remove(DIAG_RESULT_PING)
+		end
+
+		-- ping action
+		local MAX = 0
+		local MIN = 999999
+		local AVG = 0
+		local avg_tbl  = {}
+		local t_count  = 0
+		local bad_addr = 0
+		local pkt_loss = 0
+		local pkt_rcv  = 0
+		local t_time   = 0
+		local real_ip
+
+		-- ping loop
+		while true do
+			-- ping one time
+			t_count  = t_count + 1
+			local lines = util.exec("ping -c 1 -W %d -s %d %q 2>&1" % {timeout, pktsize, host})
+			if lines then
+				local timeout_id = 1
+				local ln_tbl = util.split(lines)
+				local ln
+				for i, ln in pairs(ln_tbl) do
+					-- write in the first line.
+					if t_count == 1 and i == 1 then
+						if ln:match("^PING") then
+							real_ip = ln:match(".*%((.*)%).*") or host
+						elseif ln:match("^ping") then
+							os.execute("echo Error_CannotResolveHostName > " .. DIAG_STATE_PING)
+							bad_addr = 1
+							break
+						elseif ln == "" then
+							os.execute("echo Error_CannotResolveHostName > " .. DIAG_STATE_PING)
+							bad_addr = 1
+							break
+						end
+					end
+
+					-- write in the result line, record the time
+					if ln:match("bytes from") then
+						if ln:find("time=") then
+							t_time = ln:match(".*time=([%d%.]+) ms.*")
+							avg_tbl[#avg_tbl + 1] = t_time
+						else
+							t_time = "0.1"
+							avg_tbl[#avg_tbl + 1] = t_time
+						end
+						pkt_rcv = pkt_rcv + 1
+						timeout_id = 0
+						if tonumber(t_time) < 200 then
+							os.execute("sleep 1")
+						end
+						break
+					elseif ln:find("^ping") then
+						os.execute("echo Error_NetworkIsUnreachable > " .. DIAG_STATE_PING)
+						bad_addr = 1
+						break
+					end
+
+				end
+
+				-- if no result line and no bad addr , write in the request time out and pktloss++
+				if timeout_id == 1 and bad_addr ~= 1 then
+					pkt_loss = pkt_loss + 1
+				end
+			end
+
+			--if bad_addr ,then stop
+			if bad_addr == 1 then 
+				break 
+			end
+
+			t_time   = tonumber(t_time)
+			count = tonumber(count)
+
+			if t_time > MAX then 
+				MAX = t_time 
+			end
+
+			if t_time < MIN then 
+				MIN = t_time 
+			end
+
+			if count <= t_count then 
+				break 
+			end
+		end
+
+		os.execute("echo 'Complete' > " .. DIAG_STATE_PING)
+
+		-- Add the statistic of the ping result if not bad_addr
+		if bad_addr == 0 then
+			local t_file
+			if pkt_rcv > 0 then
+				local SUM = 0
+				local count
+				for i, k in pairs(avg_tbl) do
+					SUM   = SUM + k
+					count = i
+				end
+				AVG = SUM / count
+				t_file = io.open(DIAG_RESULT_PING, "a")
+				while not t_file do
+					t_file = io.open(DIAG_RESULT_PING, "a")
+					dbg.printf("No file open")
+				end
+				MIN = math.ceil(MIN)
+				MAX = math.ceil(MAX)
+				AVG = math.ceil(AVG)
+				t_file:write("Recv=%d\nLost=%d\n" % {pkt_rcv, pkt_loss})
+				t_file:write("Avg=%d\nMin=%d\nMax=%d\n" % {MIN, AVG, MAX})
+				t_file:close()
+			else
+				t_file = io.open(DIAG_RESULT_PING, "a")
+				while not t_file do
+					t_file = io.open(DIAG_RESULT_PING, "a")
+					dbg.printf("No file open")
+				end
+				t_file:write("Recv=%d\nLost=%d\n" % {pkt_rcv, pkt_loss})
+				t_file:write("Avg=0\nMin=0\nMax=0\n")
+				t_file:close()
+			end
+		end
+	end
+	os.execute("rm -rf /tmp/run/myping.pid")
+end
+
+local function tracerouteDiagnostic()
+	-- First, reload traceroute action
+	reload_diag_trace()
+	local pid = nixio.getpid()
+	dbg.printf("My pid: " .. pid)
+	os.execute("echo %d > /tmp/run/mytrace.pid" % {pid})
+
+	local host = uci_r:get(DIAG_CONFIG_PATH, "params", "host") or ""
+	local count = uci_r:get(DIAG_CONFIG_PATH, "params", "count") or 3
+	local ttl = uci_r:get(DIAG_CONFIG_PATH, "params", "ttl") or 30
+
+	local bad_addr = 1
+	local flag_result = 0
+
+	-- check host
+	if host == "" then
+		os.execute("echo Error_CannotResolveHostName > " .. DIAG_STATE_TRACE)
+		os.execute("cwmp_cli -u diag")
+		dbg.print("Error_CannotResolveHostName")
+		os.execute("rm -rf /tmp/run/mytrace.pid")
+		os.exit(0)
+	end
+
+	-- check host
+	if host:match("^[a-zA-Z0-9%-%.:_]+$") then
+		-- check ttl
+		ttl = tonumber(ttl)
+		if ttl < 1 or ttl > 30 then
+			ttl = 30
+		end
+		-- check count
+		count = tonumber(count)
+		if count < 1 or count > 3 then
+			count = 3
+		end
+		if nixio.fs.access(DIAG_RESULT_TRACE) then
+			nixio.fs.remove(DIAG_RESULT_TRACE)
+		end
+		-- traceroute action
+		local t_util = io.popen("traceroute -I -w 1 -q %d -m %d %q 2>&1" % { count, ttl, host })
+		local firstline=0
+		local lnum=0
+		if t_util then
+			while true do
+				local ln = t_util:read("*l")
+				if bad_addr == 1 then
+					if ln and ln:find("traceroute to") then
+						if dtype.ipaddr(host) then
+							ln = ln:gsub(" %(.*%)", "")
+						end
+					else
+						ln = "BAD ADDRESS"
+					end
+					bad_addr = 0
+				end
+				if ln then
+					if ln:find("Network is unreachable") then
+						ln = " 1 *  *  *  !N"
+					end
+					if flag_result == 0 then
+						if ln:find("!H") then
+							flag_result=1
+						elseif ln:find("!N") then
+							flag_result=2
+						elseif ln:find("!P") then
+							flag_result=3
+						elseif ln:find("!S") then
+							flag_result=4
+						end
+					end
+					if firstline == 1 then
+						ln, lnum = formatModify(ln);
+						dbg.print(ln)
+					end
+					firstline=1;
+					local t_file = io.open(DIAG_RESULT_TRACE, "a")
+					while not t_file do
+						t_file = io.open(DIAG_RESULT_TRACE, "a")
+						dbg.print("No file open")
+					end
+					t_file:write(ln .. "\n")
+					t_file:close()
+				else
+					local t_file = io.open(DIAG_RESULT_TRACE, "a")
+					while not t_file do
+						t_file = io.open(DIAG_RESULT_TRACE, "a")
+						dbg.print("No file open")
+					end
+					lnum = "Hops=" .. lnum
+					t_file:write(lnum .. "\n")
+					t_file:close()
+					break
+				end
+			end
+			t_util:close()
+		end
+	end
+
+	-- Adding the finish message.
+	if flag_result  == 1 then
+		os.execute("echo Error_CannotResolveHostName > " .. DIAG_STATE_TRACE)
+	elseif flag_result == 2 then
+		os.execute("echo Error_NetworkUnreachable > " .. DIAG_STATE_TRACE)
+	elseif flag_result == 3 then
+		os.execute("echo Error_ProtocolUnreachable > " .. DIAG_STATE_TRACE)
+	elseif flag_result == 4 then
+		os.execute("echo Error_SourceRouteFailed > " .. DIAG_STATE_TRACE)
+	else
+		os.execute("echo Complete > " .. DIAG_STATE_TRACE)
+	end
+	os.execute("rm -rf /tmp/run/mytrace.pid")
+end
+
+if arg[1] == "ping" then
+	pingDiagnoistic()
+elseif arg[1] == "traceroute" then
+    tracerouteDiagnostic()
+end
+os.execute("cwmp_cli -u diag")

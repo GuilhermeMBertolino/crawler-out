@@ -1,0 +1,19 @@
+#!/bin/sh
+
+check_lan_conn()
+{	
+	local res=$(sed -n '1p' /proc/driver/phy/phyStatus)
+
+	for port in ${res}
+	do
+		if [ $port -eq 1 ]; then
+				return 0
+		fi
+	done
+
+	echo "lan not connected"
+	return 1
+}
+
+check_lan_conn
+return $?

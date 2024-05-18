@@ -1,0 +1,289 @@
+
+        <meta http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+        <script type="text/javascript">
+            function configIsChange()
+            {
+                if(document.getElementById("lcpMru").value != pppoeInf[9])
+                {
+                    return true;
+                }
+                if(document.getElementById("ServiceName").value != pppoeInf[10])
+                {
+                    return true;
+                }
+                if(document.getElementById("AcName").value != pppoeInf[11])
+                {
+                    return true;
+                }
+                if(document.getElementById("fixedIpEn").checked != pppoeInf[12])
+                {
+                    return true;
+                }
+                else
+                {
+                    if(document.getElementById("fixedIp").value != pppoeInf[13] || document.getElementById("EchoReq").value != pppoeInf[14])
+                    {
+                        return true;
+                    }
+                }
+                if(document.getElementById("manual").checked != pppoeInf[15])
+                {
+                    return true;
+                }
+                else
+                {
+                    if(document.getElementById("dnsserver").value != pppoeInf[16] || document.getElementById("dnsserver2").value != pppoeInf[17])
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        
+            function doBack()
+            {
+                var n = pppoeInf[5];
+                var s = "wan=" + n;
+                location.href = "/userRpm/PPPoECfgRpm.htm" + "?" + s;
+            }
+
+            function checkname(szname)
+            {
+                var c;
+                var ch = "0123456789ABCDEFabcdefGHIJKLMNOPQRSTUVWXYZghijklmnopqrstuvwxyz`~!@#$%^&*()-=_+[]{};:\'\"\\|/?.,<>/ ";
+
+                for(var i = 0; i < szname.length; i++)
+                {
+                    c = szname.charAt(i);
+                    if(ch.indexOf(c) == -1)
+                        return false;
+                }
+                return true;
+            }
+
+            function doSubmit()
+            {
+                if(document.forms[0].ServiceName.value != "" && !checkname(document.forms[0].ServiceName.value))
+                {
+                    alert( js_server_ill = "The service name contains illegal characters, please input another one!");
+                    return false;
+                }
+
+                if(document.forms[0].AcName.value != "" && !checkname(document.forms[0].AcName.value))
+                {
+                    alert( js_ac_name_ill = "The AC name contains illegal characters, please input another one!");
+                    return false;
+                }
+
+                if(!is_digit(document.forms[0].EchoReq.value))
+                {
+                    return false;
+                }
+
+                if(!is_digit(document.forms[0].lcpMru.value))
+                {
+                    element = document.forms[0].lcpMru;
+                    if(element)
+                    {
+                        element.focus();
+                        element.select();
+                    }
+                    return false;
+                }
+
+                if(document.forms[0].lcpMru.value > 1492 || document.forms[0].lcpMru.value < 576)
+                {
+                    alert( js_bad_mtu = "The MTU is invalid, please input another one(576 ~ 1492, the default is 1480)!");
+                    return false;
+                }
+                if(document.forms[0].manual.checked)
+                {
+                    if(!is_dnsaddr(document.forms[0].dnsserver.value))
+                    {
+                        element = document.forms[0].dnsserver;
+                        if(element)
+                        {
+                            element.focus();
+                            element.select();
+                        }
+                        return false;
+                    }
+                    if(document.forms[0].dnsserver2.value != "")
+                    {
+                        if(!is_dnsaddr(document.forms[0].dnsserver2.value))
+                        {
+                            element = document.forms[0].dnsserver2;
+                            if(element)
+                            {
+                                element.focus();
+                                element.select();
+                            }
+                            return false;
+                        }
+                    }
+                }
+                if(!is_number(document.forms[0].EchoReq.value))
+                {
+                    return false;
+                }
+                else if(document.forms[0].EchoReq.value < 0 || document.forms[0].EchoReq.value > 120)
+                {
+                    alert( js_dete_inter_err = "The Detect Online Interval value is invalid, please input again.");
+                    return false;
+                }
+                if(pppoeInf[26] == 1)
+                {
+                    if(!confirm( js_reboot_prompt = "Are you sure to reboot?"))
+                    {
+                        return false;
+                    }
+                }
+                if(true == configIsChange())
+                {
+                    alert(js_config_is_change = "The new advanced PPPoE parameters will not take effect until you dial-up again.");
+                }
+                return true;
+            }
+
+            function doSet1()
+            {
+                if(document.forms[0].fixedIpEn.checked)
+                {
+                    document.forms[0].fixedIp.disabled = false;
+                }
+                else
+                {
+                    document.forms[0].fixedIp.disabled = true;
+                }
+                return true;
+            }
+
+            function doSet()
+            {
+                if(document.forms[0].manual.checked)
+                {
+                    document.forms[0].dnsserver.disabled = false;
+                    document.forms[0].dnsserver2.disabled = false;
+                }
+                else
+                {
+                    document.forms[0].dnsserver.disabled = true;
+                    document.forms[0].dnsserver2.disabled = true;
+                }
+                return true;
+            }
+
+            function doLoad()
+            {
+                if(document.forms[0].manual.checked)
+                {
+                    document.forms[0].dnsserver.disabled = false;
+                    document.forms[0].dnsserver2.disabled = false;
+                }
+                else
+                {
+                    document.forms[0].dnsserver.disabled = true;
+                    document.forms[0].dnsserver2.disabled = true;
+                }
+                if(document.forms[0].fixedIpEn.checked)
+                {
+                    document.forms[0].fixedIp.disabled = false;
+                }
+                else
+                {
+                    document.forms[0].fixedIp.disabled = true;
+                }
+                return true;
+            }
+        </script>
+    </head>
+    <body onLoad="LoadHelp('PPPoECfgAdvHelpRpm.htm'); setTagStr(document,'ntw_pppoe_cfg_adv');resize(this);" onResize="resize(this);">
+        <center>
+            <form action="PPPoECfgAdvRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+                <table id="autoWidth">
+                    <tr>
+                        <td class=h1 colspan=2 id = "t_title">PPPoE Advanced Settings</td>
+                    </tr>
+                    <tr>
+                        <td class=blue colspan=2></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_mtu_size">MTU Size (in bytes):</td>
+                        <td><input type="text" id="lcpMru" name="lcpMru" class="text" value="" size="5" maxlength="4"><span id = "t_mtu_size_range">&nbsp;(The default is 1480, do not change unless necessary.)</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan=2></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_ser_name">Service Name:</td>
+                        <td><input type="text" id="ServiceName" name="ServiceName" class="text" value="" size="15" maxlength="31"></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_ac_name">AC Name:</td>
+                        <td><input type="text" id="AcName" name="AcName" class="text" value="" size="15" maxlength="31"></td>
+                    </tr>
+                    <tr>
+                        <td colspan=2></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input id="fixedIpEn" name="fixedIpEn" type="checkbox" onClick="doSet1();" value="2"><span id = "t_ip_addr_desc">&nbsp;Use IP address specified by ISP</span></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_isp_ip">ISP Specified IP Address:</td>
+                        <td><input id="fixedIp" name="fixedIp" type="text" class="text" value="" size="15" maxlength="15"></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_detect_interval">Detect Online Interval:</td>
+                        <td><input id="EchoReq" name="EchoReq" type="text" class="text" value="" size="3" maxlength="3"><span id="t_sec">&nbsp;Seconds	(0 ~ 120 seconds, the default is 0, 0 means not detecting.)</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan=2></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input id="manual" name="manual" type="checkbox" value="2" onClick="doSet();"><span id = "t_use_dns_ser">&nbsp;Use the following DNS Servers</span></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_pri_dns">Primary DNS:</td>
+                        <td><input id="dnsserver" name="dnsserver" type="text" class="text" value="" size="15" maxlength="15"></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id = "t_sec_dns">Secondary DNS:</td>
+                        <td><input id="dnsserver2" name="dnsserver2" type="text" class="text" value="" size="15" maxlength="15"><span id = "t_op">&nbsp;(Optional)</span></td>
+                    </tr>
+                    <tr>
+                        <td class=blue colspan=2></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input name="Save" type="submit" class="buttonBig" value="Save">&nbsp;&nbsp;
+                            <input name="Back" type="button" class="buttonBig" onClick="doBack();" value="Back">&nbsp;&nbsp;
+                            <input name="Advanced" type="hidden" value="Advanced">
+                            <input name="wan" type="hidden" value="">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </center>
+    </body>
+</html>
+<script type="text/javascript">
+document.forms[0].wan.value = pppoeInf[5];
+document.forms[0].lcpMru.value = pppoeInf[9];
+document.forms[0].ServiceName.value = pppoeInf[10];
+document.forms[0].AcName.value = pppoeInf[11];
+var tempB = (pppoeInf[12] == true) ? true : false;
+document.forms[0].fixedIpEn.checked = tempB;
+tempB = (pppoeInf[12] == true) ? false : true;
+document.forms[0].fixedIp.value = pppoeInf[13];
+document.forms[0].fixedIp.disabled = tempB;
+document.forms[0].EchoReq.value = pppoeInf[14];
+tempB = (pppoeInf[15] == 1) ? true : false;
+document.forms[0].manual.checked = tempB;
+tempB = (pppoeInf[15] == 0) ? true : false;
+document.forms[0].dnsserver.value = pppoeInf[16];
+document.forms[0].dnsserver.disabled = tempB;
+document.forms[0].dnsserver2.value = pppoeInf[17];
+document.forms[0].dnsserver2.disabled = tempB;
+</script>

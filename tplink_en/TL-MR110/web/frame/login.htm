@@ -1,0 +1,578 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="../img/favicon.ico">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/jquery.tp.min.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <script src="../js/jquery-1.8.3.min.js"></script>
+    <script src="../js/oid_str.js"></script>
+    <script src="../js/encrypt.js"></script>
+    <script src="../js/lib.js"></script>
+
+    <script>INCLUDE_MULTI_LANGUAGE?($.loadScript("../locale/language.js"),$.loadScript("../js/locale.js")):$.loadScript("../js/str.js"),INCLUDE_LOGIN_GDPR_ENCRYPT&&($.loadScript("../js/cryptoJS.min.js"),$.loadScript("../js/tpEncrypt.js"))</script>
+    <script src="../js/jquery.tp.min.js"></script>
+    <!--[if lte IE 8]>
+    <link href="./css/ie.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        .input-err-container .input-err-delta, #pc-scroll div.widget-error-tips span.widget-error-tips-delta {
+            top: 4px;
+            left: 96px;
+        }
+
+        .input-container .input-err-container, .button-error-tips {
+            left: -11px;
+            top: 30px;
+        }
+
+        .input-container .input-wrapper {
+            border-color: #b3b6b6;
+        }
+
+        .input-container.focus .input-wrapper {
+            border-color: #74ccd1;
+        }
+        
+        .input-container.err .input-wrapper {
+            border-color: #c11c66;
+        }
+
+        button.button-button {
+            background: url("../img/ie.png") no-repeat -255px -32px;
+        }
+
+        button.button-button:hover {
+            background: url("../img/ie.png") no-repeat 0px -32px;
+        }
+
+        #pc-scroll div.widget-error-tips div.widget-error-tips-wrap, .input-err-container .input-err-content {
+            border: 0;
+            box-shadow: none;
+        }
+
+        .shadow-top {
+            background: url("../img/ie-01.png") repeat-x 0 -5px;
+            top: -13px;
+            left: 0;
+            height: 13px;
+            margin: 0 17px 0 17px;
+        }
+
+        .shadow-bot {
+            background: url("../img/ie-01.png") repeat-x center bottom;
+            bottom: -13px;
+            left: 0;
+            height: 13px;
+            margin: 0 17px 0 17px;
+        }
+
+        .shadow-top-left, .shadow-top-right, .shadow-bot-left, .shadow-bot-right {
+            position: absolute;
+            width: 17px;
+            height: 11px;
+            background: url(../img/ie-06.png) no-repeat 0px -56px;
+        }
+
+        .shadow-top-left {
+            background-position: 0px -56px;
+            left: 4px;
+            top: 4px;
+        }
+
+        .shadow-top-right {
+            background-position: 0px -38px;
+            right: 0;
+            top: 3px;
+        }
+
+        .shadow-bot-left {
+            background-position: 0px -76px;
+            left: 3px;
+            bottom: 8px;
+        }
+
+        .shadow-bot-right {
+            background-position: 0px -95px;
+            right: 0;
+            bottom: 8px;
+        }
+
+        .shadow-left {
+            padding-left: 11px;
+            background: url(../img/ie-02.png) no-repeat 0px 0px;
+        }
+
+        .shadow-right {
+            padding-right: 11px;
+            background: url(../img/ie-02.png) no-repeat center right;
+        }
+
+    </style>
+    <![endif]-->
+</head>
+
+<body>
+<div id="cover" class="nd"></div>
+<div id="mask" class="mask"></div>
+<span class="load" style="display:none">for cache</span>
+
+<div id="pc-div" class="nd">
+<div id="pc-top">
+    <div id="pc-top-container">
+        <a id="pc-top-product" href="http://www.tp-link.com" target="_blank">
+            <span class="icon-logo"></span>
+        </a>
+        <div id="pc-top-country" class="top-country nv">
+            <select id="top-country" class="top-country-select">
+            </select>
+        </div>
+    </div>
+</div>
+<div id="pc-scroll">
+    <div id="pc-arrowBg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="426px" height="220px" viewBox="0 10 426 220">
+            <path class="arrowBg-c" d="M271.32,87.13a8.76,8.76,0,0,0,8.6,8.61H313v33.12a8.77,8.77,0,0,0,8.61,8.62h28.3V58.81H271.32Z"/>
+            <path class="arrowBg-c" d="M86.36,168.77a8.69,8.69,0,0,0,8.53,8.54h32.82v32.84a8.69,8.69,0,0,0,8.54,8.54h28.06v-78H86.36Z"/>
+            <path class="arrowBg-c" d="M241,39.36a3.38,3.38,0,0,0,3.32,3.33h12.79V55.48a3.39,3.39,0,0,0,3.32,3.33h10.94V28.42H241Z"/>
+            <path class="arrowBg-c" d="M349.94,149.49a3.38,3.38,0,0,0,3.33,3.32h12.79v12.8a3.38,3.38,0,0,0,3.32,3.32h10.94V138.55H349.94Z"/>
+            <path class="arrowBg-c" d="M0,164.68A3.39,3.39,0,0,0,3.32,168H16.11V180.8a3.39,3.39,0,0,0,3.33,3.33H30.37V153.74H0Z"/>
+            <path class="arrowBg-c" d="M403,205.25a2.57,2.57,0,0,0,2.53,2.52h9.69v9.71a2.57,2.57,0,0,0,2.53,2.52H426V197H403Z"/>
+            <path class="arrowBg-c" d="M365.13,24.16a3.38,3.38,0,0,0,3.32,3.33h12.79v12.8a3.38,3.38,0,0,0,3.33,3.32H395.5V13.23H365.13Z"/>
+            <path class="arrowBg-c" d="M39,62a3.38,3.38,0,0,0,3.32,3.33H55.09V78.07a3.39,3.39,0,0,0,3.32,3.33H69.35V51H39Z"/>
+            <path class="arrowBg-c" d="M257.35,157.44a6.18,6.18,0,0,0,6.07,6.07h23.33v23.34a6.17,6.17,0,0,0,6.06,6.07h19.95V137.48H257.35Z"/>
+            <path class="arrowBg-c" d="M219.8,112.15a4.33,4.33,0,0,0,4.26,4.25h16.37v16.38a4.33,4.33,0,0,0,4.25,4.26h14V98.14H219.8Z"/>
+        </svg>
+    </div>
+    <div id="pc-main">
+        <div class="pc-login-content" id="pc-login">
+            <div id="pc-login-forget" class="nd">
+                <h4 id="pc-login-forget-title"></h4>
+                <p id="pc-login-forget-text"></p>
+                <div class="button-container">
+                    <form class="pure-form">
+                        <button type="submit" class="green T_save pure-button tp-btn-custom" id="pc-login-forget-back"><span class="">Save</span></button>
+                    </form>
+                </div>
+            </div>
+            <div id="pc-login-main">
+                <div class="pc-login-field nd" id="pc-login-user-div">
+                    <div class="pc-inputarea">
+                        <label class="pc-login-username-label">
+                            <span class="icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <g>
+                                        <path class="controlIcon" d="M19.55,13.47l-2.71-2.71a1.2,1.2,0,0,0-1.65,0l-.71.71L12,13.93,9.56,11.47l-.71-.71a1.18,1.18,0,0,0-1.64,0L4.5,13.47,12,21Z"/>
+                                        <path class="controlIcon" d="M15.52,5.5A3.5,3.5,0,1,1,12,2a3.5,3.5,0,0,1,3.5,3.5"/>
+                                    </g>
+                                </svg>
+                            </span>
+                            <span class="text"></span>
+                        </label>
+                        <input type="text" id="pc-login-user" autocomplete="off">
+                    </div>
+                </div>
+                <div class="pc-login-field">
+                    <div class="pc-inputarea">
+                        <label class="pc-login-password-label">
+                            <span class="icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <g>
+                                        <path class="controlIcon" d="M15.73,6.21a1.51,1.51,0,0,0-1.06.44,1.49,1.49,0,0,0,0,2.12,1.5,1.5,0,0,0,2.12,0,1.49,1.49,0,0,0,0-2.12,1.51,1.51,0,0,0-1.06-.44Z"/>
+                                        <path class="controlIcon" d="M15.73,5.21A2.49,2.49,0,1,1,14,5.94a2.49,2.49,0,0,1,1.77-.73m0-2a4.5,4.5,0,1,0,3.18,1.32,4.48,4.48,0,0,0-3.18-1.32Z"/>
+                                        <path class="controlIcon" d="M12.65,9.38l-5,5L4.77,17.26l3.54,3.53,1-1.06a.5.5,0,0,0,0-.71L7.6,17.26,9,15.83l1.42,1.41,1.06-1a.53.53,0,0,0,0-.72l-1.06-1.05,3.62-3.63Z"/>
+                                        <path class="controlIcon" d="M12.55,12.31,5.48,19.38A1,1,0,1,1,4.06,18l7.07-7.07a1,1,0,0,1,1.42,1.42Z"/>
+                                    </g>
+                                </svg>
+                            </span>
+                        </label>
+                        <input type="password" id="pc-login-password" maxlength="32" autocomplete="off">
+                        <span class="pc-forgetPwd"><a href="#" id="pc-login-forgetPwd">For get password</a></span>
+                    </div>
+                </div>
+                <div id="pc-login-submit">
+                    <div class="button-wrapper">
+                        <button id="pc-login-btn" class="button-button" type="button">
+                            <span class="text button-text">Log in</span>
+                        </button>
+                        <div class="button-error-tips widget-error-tips">
+                            <div class="shadow-top-left"></div>
+                            <div class="shadow-top"></div>
+                            <div class="shadow-top-right"></div>
+                            <div class="shadow-left">
+                                <div class="shadow-right">
+                                    <span class="widget-error-tips-delta"></span>
+
+                                    <div class="widget-error-tips-wrap">
+                                        <div class="content error-tips-content">
+                                            <span class="errorContent"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="shadow-bot-left"></div>
+                            <div class="shadow-bot"></div>
+                            <div class="shadow-bot-right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="pc-login-content nd" id="pc-setPwd">
+            <div class="pc-login-field">
+                <div class="pc-inputarea">
+                    <label class="pc-login-password-label">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <g>
+                                        <path class="controlIcon" d="M15.73,6.21a1.51,1.51,0,0,0-1.06.44,1.49,1.49,0,0,0,0,2.12,1.5,1.5,0,0,0,2.12,0,1.49,1.49,0,0,0,0-2.12,1.51,1.51,0,0,0-1.06-.44Z"/>
+                                        <path class="controlIcon" d="M15.73,5.21A2.49,2.49,0,1,1,14,5.94a2.49,2.49,0,0,1,1.77-.73m0-2a4.5,4.5,0,1,0,3.18,1.32,4.48,4.48,0,0,0-3.18-1.32Z"/>
+                                        <path class="controlIcon" d="M12.65,9.38l-5,5L4.77,17.26l3.54,3.53,1-1.06a.5.5,0,0,0,0-.71L7.6,17.26,9,15.83l1.42,1.41,1.06-1a.53.53,0,0,0,0-.72l-1.06-1.05,3.62-3.63Z"/>
+                                        <path class="controlIcon" d="M12.55,12.31,5.48,19.38A1,1,0,1,1,4.06,18l7.07-7.07a1,1,0,0,1,1.42,1.42Z"/>
+                                    </g>
+                                </svg>
+                        </span>
+                    </label>
+                    <input type="password" id="pc-setPwd-new" maxlength="32" autocomplete="off">
+                </div>
+            </div>
+            <div id="pwdCheck" class="secLevel" style="">
+                <span id="pwdCheck-low" class="level1 ori">Low</span>
+                <span id="pwdCheck-middle" class="level2 ori">Middle</span>
+                <span id="pwdCheck-high" class="level3 ori">High</span>
+            </div>
+            <div class="pc-login-field">
+                <div class="pc-inputarea">
+                    <label class="pc-login-password-label">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <g>
+                                        <path class="controlIcon" d="M15.73,6.21a1.51,1.51,0,0,0-1.06.44,1.49,1.49,0,0,0,0,2.12,1.5,1.5,0,0,0,2.12,0,1.49,1.49,0,0,0,0-2.12,1.51,1.51,0,0,0-1.06-.44Z"/>
+                                        <path class="controlIcon" d="M15.73,5.21A2.49,2.49,0,1,1,14,5.94a2.49,2.49,0,0,1,1.77-.73m0-2a4.5,4.5,0,1,0,3.18,1.32,4.48,4.48,0,0,0-3.18-1.32Z"/>
+                                        <path class="controlIcon" d="M12.65,9.38l-5,5L4.77,17.26l3.54,3.53,1-1.06a.5.5,0,0,0,0-.71L7.6,17.26,9,15.83l1.42,1.41,1.06-1a.53.53,0,0,0,0-.72l-1.06-1.05,3.62-3.63Z"/>
+                                        <path class="controlIcon" d="M12.55,12.31,5.48,19.38A1,1,0,1,1,4.06,18l7.07-7.07a1,1,0,0,1,1.42,1.42Z"/>
+                                    </g>
+                                </svg>
+                        </span>
+                    </label>
+                    <input type="password" id="pc-setPwd-confirm" maxlength="32" autocomplete="off">
+                </div>
+            </div>
+
+            <div>
+                <div class="button-wrapper">
+                    <button id="pc-setPwd-btn" class="button-button" type="button">
+                        <span class="text button-text">Log in</span>
+                    </button>
+                    <div class="button-error-tips widget-error-tips">
+                        <div class="shadow-top-left"></div>
+                        <div class="shadow-top"></div>
+                        <div class="shadow-top-right"></div>
+                        <div class="shadow-left">
+                            <div class="shadow-right">
+                                <span class="widget-error-tips-delta"></span>
+
+                                <div class="widget-error-tips-wrap">
+                                    <div class="content error-tips-content">
+                                        <span class="errorContent"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="shadow-bot-left"></div>
+                        <div class="shadow-bot"></div>
+                        <div class="shadow-bot-right"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="pc-cloud" class="nd">
+            <div id="cloud-bind-main" class="pc-login-content nd">
+                <div id="login-bind-note-cnt">
+                    <span class="text" id="login-bind-note"></span>
+                </div>
+                <div class="pc-login-field nd" id="cloud-bind-user-div">
+                    <div class="pc-inputarea">
+                        <label class="pc-login-username-label">
+                            <span class="icon"></span>
+                            <span class="text"></span>
+                        </label>
+                        <input type="text" id="cloud-bind-user" autocomplete="off">
+                    </div>
+                </div>
+                <div class="pc-login-field">
+                    <div class="pc-inputarea">
+                        <label class="pc-login-password-label">
+                            <span class="icon"></span>
+                        </label>
+                        <input type="password" id="cloud-bind-password" maxlength="32" autocomplete="off">
+                    </div>
+                </div>
+                <div>
+                    <div class="button-wrapper">
+                        <button id="cloud-bind-btn" class="button-button" type="button">
+                            <span class="text button-text">Bind</span>
+                        </button>
+                        <div class="button-error-tips widget-error-tips">
+                            <div class="shadow-top-left"></div>
+                            <div class="shadow-top"></div>
+                            <div class="shadow-top-right"></div>
+                            <div class="shadow-left">
+                                <div class="shadow-right">
+                                    <span class="widget-error-tips-delta"></span>
+
+                                    <div class="widget-error-tips-wrap">
+                                        <div class="content error-tips-content">
+                                            <span class="errorContent"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="shadow-bot-left"></div>
+                            <div class="shadow-bot"></div>
+                            <div class="shadow-bot-right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="bound-error" class="nd">
+                <div class="note"></div>
+                <div class="switch-btn"></div>
+            </div>
+            <iframe frameborder="0" id="cloud-login" name="cloud-login" scrolling="no" class="nd"></iframe>
+
+        </div>
+        <div class="pc-bot nd">
+            <a href="javascript:void(0);" class="pb-phone ph-bot-phone"></a>
+            <span>|</span>
+            <a href="javascript:void(0);" class="pb-pc ph-bot-pc selected"></a>
+        </div>
+    </div>
+
+    <div id="pc-bottomContainer">
+        <div id="pc-bottom">
+            <span id="pc-bot-productName"></span>
+            <span id="pc-bot-app"></span>
+            <span id="pc-bot-modelDesc"></span>
+        </div>
+        <div class="pc-bottom-background"></div>
+        <div class="qr-code-container login nd" id="qr-code-container">
+            <div class="qr-code-container-wrapper">
+                <div class="qr-code">
+                    <span id="qr-close-icon" class="close-icon"></span>
+                    <div class="characters-illustrate">
+                        <span id="characters-illustrate-title" class="characters-illustrate-title"></span>
+                        <span id="characters-illustrate-note" class="characters-illustrate-note"></span>
+                    </div>
+                    <span class="qr-code-picture"></span>
+                    <div class="app-download-place">
+                        <a href="https://itunes.apple.com/us/app/tp-link-tether/id599496594?ls=1&mt=8" target="_blank"><span class="apple-store"></span></a>
+                        <a href="https://play.google.com/store/apps/details?id=com.tplink.tether" target="_blank"><span class="google-play"></span></a>
+                    </div>
+                </div>
+                <div class="qr-code-container-delta"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+<div id="alert-container" class="alert-container widget-container msg-container grid-popup-msg msg-container-center">
+    <div class="msg-container-wrapper">
+        <div class="position-top-left"></div>
+        <div class="position-top-center"></div>
+        <div class="position-top-right"></div>
+        <div class="position-center-left">
+            <div class="position-center-right">
+                <div class="msg-wrap"><a class="widget-close msg-close" href="javascript:void(0);"></a>
+
+                    <div class="msg-content-wrap">
+                        <div class="widget-content msg-content-container">
+                            <div class="grid-warning-msg"><span class="icon"></span><span class="text">The device will reboot. Are you sure to continue?</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="msg-btn-container">
+                    <div class="msg-btn-wrap">
+                        <div class="button-container in-line">
+                            <button type="button" class="button-button green pure-button btn-msg btn-msg-no btn-confirm" id="confirm-no">
+                                <span>No</span></button>
+                        </div>
+                        <div class="button-container in-line">
+                            <button type="button" class="button-button green pure-button btn-msg btn-msg-ok btn-confirm" id="confirm-yes">
+                                <span>Yes</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="position-bottom-left"></div>
+        <div class="position-bottom-center"></div>
+        <div class="position-bottom-right"></div>
+    </div>
+</div>
+<div id="welcome" class="nd">
+    <div class="wel-top">
+        <div class="icon-router sprite o-network-router"></div>
+        <div id="wel-usb" class="sprite icon icon-usb e-welcome-usb"></div>
+        <div id="wel-wireless" class="sprite icon icon-wireless e-welcome-wireless"></div>
+        <div id="wel-internet" class="sprite icon icon-internet e-welcome-internet"></div>
+        <div id="wel-guest" class="sprite icon icon-guest e-welcome-guest"></div>
+        <div id="wel-device" class="sprite icon icon-device e-welcome-device"></div>
+        <div id="wel-phone" class="sprite icon icon-phone e-welcome-phone"></div>
+    </div>
+    <div id="wel-logo" class="sprite n-logoPhone"></div>
+    <div class="company">TP-Link Corporation Limited.<br>All rights reserved</div>
+</div>
+<div id="ph-div" style="display:none">
+    <div id="tether-intro" class="tether-intro nd">
+        <div class="bg"></div>
+        <div class="bot-con">
+            <div class="logo-con">
+                <div class="tether-logo">
+                    <span class="icon-logo"></span>
+                </div>
+            </div>
+
+            <div class="text-con">
+                <h5 id="tether-title" class="title">tether</h5>
+                <p id="tether-intro-text">easy Network Management At Your Fingertips!</p>
+            </div>
+            <div class="btn-con">
+                <div>
+                    <a href="https://www.tp-link.com/app/qrcode/?app=tether" class="download-btn" id="download-btn" target="_blank">download now</a>
+                </div>
+                <div>
+                    <a href="javascript:void(0);" class="go-web-btn" id="go-web-btn">go to web ></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ph-header">
+            <div id="ph-language" class="ph-lan-container nv">
+                <select class="top-country-select"></select>
+            </div>
+        <div class="ph-logo">
+        </div>
+        
+    </div>
+    <div class="ph-form">
+        <form id="ph-setPwd">
+            <div class="form-line">
+                <span class="sprite c-login-password"></span>
+                <input type="password" id="ph-setPwd-new" maxlength="32" class="form-inputText" placeholder="New Password" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP">errTips</p>
+                </div>
+                <div id="passwordLevelP" class="password-level">
+                    <span id="pwdCheckP-low" class="low">Low</span>
+                    <span id="pwdCheckP-middle" class="middle">Middle</span>
+                    <span id="pwdCheckP-high" class="high">High</span>
+                </div>
+            </div>
+
+            <div class="mt11 form-line">
+                <span class="sprite c-login-password"></span>
+                <input type="password" id="ph-setPwd-confirm" maxlength="32" class="form-inputText" placeholder="Confirm Password" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP">errTips</p>
+                </div>
+            </div>
+
+            <div class="form-line mt20">
+                <input type="button" id="ph-setPwd-btn" class="form-lgBt" value="Let's Get Started">
+
+                <div id="ph-setPwd-note" class="noteDivP mt11">
+                    <p class="errTextP">errTips</p>
+                </div>
+            </div>
+        </form>
+        <form id="ph-login" class="nd">
+            <div class="mt11 form-line nd" id="ph-login-user-div">
+                <span class="sprite c-login-account"></span>
+            <input type="text" id="ph-login-user" class="form-inputText" placeholder="Username" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP"></p>
+                </div>
+            </div>
+            <div class="mt11 form-line">
+                <span class="sprite c-login-password"></span>
+                <input type="password" id="ph-login-password" maxlength="32" class="form-inputText" placeholder="Password" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP"></p>
+                </div>
+            </div>
+
+
+            <div class="form-line mt20">
+                <input type="button" id="ph-login-btn" class="form-lgBt" value="Login">
+
+                <div id="ph-login-note" class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP">errTips</p>
+                </div>
+            </div>
+        </form>
+        <form id="ph-cloud" class="nd">
+            <div class="mt11 form-line" id="ph-cloud-user-div">
+                <span class="sprite c-login-account"></span>
+                <input type="text" id="ph-cloud-user" class="form-inputText" placeholder="Username" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP"></p>
+                </div>
+            </div>
+            <div class="mt11 form-line">
+                <span class="sprite c-login-password"></span>
+                <input type="password" id="ph-cloud-password" class="form-inputText" placeholder="Password" autocomplete="off">
+
+                <div class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP"></p>
+                </div>
+            </div>
+
+
+            <div class="form-line mt20">
+                <input type="button" id="ph-cloud-btn" class="form-lgBt" value="Login">
+
+                <div id="ph-cloud-note" class="errDivP mt11 nd">
+                    <span class="sprite b-error-alert"></span>
+
+                    <p class="errTextP">errTips</p>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="ph-bot">
+        <a href="javascript:void(0);" class="pb-phone ph-bot-phone selected"></a>
+        <span>|</span>
+        <a href="javascript:void(0);" class="pb-pc ph-bot-pc"></a>
+    </div>
+</div>
+
+<script>$(function(){function initLanguageSelect(){for(var o=$(".top-country-select"),n=[{value:"de_DE",name:$.su.CHAR.LANGUAGE.DE_DE,include:"INCLUDE_LANGUAGE_DE_DE"},{value:"el_GR",name:$.su.CHAR.LANGUAGE.EL_GR,include:"INCLUDE_LANGUAGE_EL_GR"},{value:"en_US",name:$.su.CHAR.LANGUAGE.EN_US,include:"INCLUDE_LANGUAGE_EN_US"},{value:"es_ES",name:$.su.CHAR.LANGUAGE.ES_ES,include:"INCLUDE_LANGUAGE_ES_ES"},{value:"es_LA",name:$.su.CHAR.LANGUAGE.ES_LA,include:"INCLUDE_LANGUAGE_ES_LA"},{value:"fr_FR",name:$.su.CHAR.LANGUAGE.FR_FR,include:"INCLUDE_LANGUAGE_FR_FR"},{value:"it_IT",name:$.su.CHAR.LANGUAGE.IT_IT,include:"INCLUDE_LANGUAGE_IT_IT"},{value:"ko_KR",name:$.su.CHAR.LANGUAGE.KO_KR,include:"INCLUDE_LANGUAGE_KO_KR"},{value:"id_ID",name:$.su.CHAR.LANGUAGE.ID_ID,include:"INCLUDE_LANGUAGE_ID_ID"},{value:"pl_PL",name:$.su.CHAR.LANGUAGE.PL_PL,include:"INCLUDE_LANGUAGE_PL_PL"},{value:"ru_RU",name:$.su.CHAR.LANGUAGE.RU_RU,include:"INCLUDE_LANGUAGE_RU_RU"},{value:"fa_FA",name:$.su.CHAR.LANGUAGE.FA_FA,include:"INCLUDE_LANGUAGE_FA_FA"},{value:"pt_BR",name:$.su.CHAR.LANGUAGE.PT_BR,include:"INCLUDE_LANGUAGE_PT_BR"},{value:"ro_RO",name:$.su.CHAR.LANGUAGE.RO_RO,include:"INCLUDE_LANGUAGE_RO_RO"},{value:"th_TH",name:$.su.CHAR.LANGUAGE.TH_TH,include:"INCLUDE_LANGUAGE_TH_TH"},{value:"zh_TW",name:$.su.CHAR.LANGUAGE.ZH_TW,include:"INCLUDE_LANGUAGE_ZH_TW"},{value:"tr_TR",name:$.su.CHAR.LANGUAGE.TR_TR,include:"INCLUDE_LANGUAGE_TR_TR"}],e=0,t=0;t<n.length;t++)window[n[t].include]&&(o.append('<option value="'+n[t].value+'">'+n[t].name+"</option>"),e++);e>1?($('.top-country-select option[value="'+$.locale.locale+'"]').prop("selected",!0),$(".top-country-select").tpSelect({namespace:"language"}).on("click",function(){var o=$(this).data("value");setTimeout(function(){$.locale.set(o)},500)})):($(".top-country-select").hide(),$("#top-con .top-country").addClass("nv"))}function needSlideDownApp(){var o=0,n=0;window.innerHeight?o=window.innerHeight:document.body&&document.body.clientHeight&&(o=document.body.clientHeight),window.innerWidth?n=window.innerWidth:document.body&&document.body.clientWidth&&(n=document.body.clientWidth),0!=o&&0!=n&&(o<3.3*$("#qr-code-container").height()||n<980)&&$("#qr-code-container").hide()}function buttonError(o,n,e){var t=$(o).next(".widget-error-tips");!1!==n?(0==t.length&&(t=$('<div class="button-error-tips widget-error-tips"><span class="widget-error-tips-delta"></span><div class="widget-error-tips-wrap"><div class="content error-tips-content"><span class="errorContent"></span></div></div></div>').insertAfter($(o))),t.show().find(".errorContent").html(n),$("body").off("click.buttonError"),!0!==e&&$("body").on("click.buttonError",function(){t.hide(),$("body").off("click.buttonError")})):t.hide()}function lockWeb(o){$("#pc-login-password").tpInput("disabled",o),$("#pc-login-user").tpInput("disabled",o),$("#ph-login-password").prop("disabled",o),$("#ph-login-user").prop("disabled",o),$("#cloud-bind-password").tpInput("disabled",o),$("#cloud-bind-user").tpInput("disabled",o),$("#ph-cloud-password").prop("disabled",o),$("#ph-cloud-user").prop("disabled",o),$("#cloud-bind-password").tpInput("disabled",o)}function getHttpObject(o){var n=null;try{n=new XMLHttpRequest}catch(o){try{n=new ActiveXObject("Msxml2.XMLHTTP")}catch(o){try{n=new ActiveXObject("Microsoft.XMLHTTP")}catch(o){}}}return n.onreadystatechange=function(){4==n.readyState&&o&&o()},n}function getAuthParm(){var xmlHttpObj;(xmlHttpObj=getHttpObject(function(){200!=xmlHttpObj.status&&(window.location.href=window.location.protocol+"//"+window.location.host)})).open("POST",window.location.protocol+"//"+window.location.host+"/cgi/getParm",!1),xmlHttpObj.send(null),eval(xmlHttpObj.responseText),$.nn=nn,$.ee=ee,us=userSetting,INCLUDE_LOGIN_GDPR_ENCRYPT&&($.seq=seq,$.Iencryptor.setSeq($.seq),$.Iencryptor.setRSAKey($.nn,$.ee))}function getBusy(callback){var xmlHttpObj,retry=0,sendCgi=function(){(xmlHttpObj=getHttpObject(function(){200==xmlHttpObj.status?(eval(xmlHttpObj.responseText),callback.call(null,{isLogined:isLogined,isBusy:isBusy})):retry<1?(retry++,sendCgi()):window.location.href=window.location.protocol+"//"+window.location.host})).open("POST",window.location.protocol+"//"+window.location.host+"/cgi/getBusy",!!callback),xmlHttpObj.send(null)};if(sendCgi(),void 0===callback)return eval(xmlHttpObj.responseText),{isLogined:isLogined,isBusy:isBusy}}function inputError(o,n,e){!1===n?e?$(o).removeClass("err").next("div.errDivP").hide():$(o).tpInput("hideError"):!0===e?$(o).addClass("err").next("div.errDivP").show().find(".errTextP").html(n):$(o).tpInput("showError",n)}function doSetPassword(o,n){var e;if(0==us||3==us){if(e=getHttpObject(function(){200==e.status&&n&&n()}),void 0==$.nn&&getAuthParm(),INCLUDE_LOGIN_GDPR_ENCRYPT){$.Iencryptor.setHash("admin",o),$.Iencryptor.genAESKey(),$.newencryptorManager.recordEncryptor();var t=$.Iencryptor.AESEncrypt(o,1);e.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/setPwd?pwd="+encodeURIComponent(t.data)+"&sign="+t.sign,!0)}else{var i=encodeURIComponent(rsaEncrypt($.Base64Encoding(o),$.nn,$.ee));e.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/setPwd?pwd="+i,!0)}e.send(null)}}function checkPwd(o){var n=$("#pc-setPwd-new"),e=$("#pwdCheck"),t=n.tpInput("val");!0===o&&(n=$("#ph-setPwd-new"),e=$("#passwordLevelP"),t=n.val());var i=/[A-Z]/,l=/[a-z]/,a=/(.[^a-zA-Z0-9])/,r=/\d/,s=0,c=0,d=0,p=0,u=0;if(!1===/^(?=[^ ]+$)[\x21-\x7e]+$/.test(t))return e.removeClass("level1 level2 level3"),""==t?inputError(n,$.tpLang.login.tipsText,o):inputError(n,$.tpLang.login.tipsTextAscii,o),void(pwdCheckOK=!1);inputError(n,!1,o),s=i.test(t)?1:0,c=l.test(t)?1:0,d=r.test(t)?1:0,p=a.test(t)?1:0,u=s+c+d+(t.length>10?1:0)+p,t.length<=5?u<=2?e.removeClass("level2 level3").addClass("level1"):3!=u&&4!=u||e.removeClass("level1 level3").addClass("level2"):u<=1?e.removeClass("level2 level3").addClass("level1"):2==u||3==u?e.removeClass("level1 level3").addClass("level2"):u>=4&&e.removeClass("level2 level1").addClass("level3"),pwdCheckOK=!0}function initSetPwd(o){$("#pc-login").addClass("nd"),$("#pc-cloud").addClass("nd"),$("#pc-setPwd").removeClass("nd"),$("#qr-code-container").removeClass("nd"),buttonError($("#pc-setPwd-btn"),"<span class='red'>"+$.tpLang.login.notePart1+":</span> <br />"+$.tpLang.login.notePart2),$("#ph-setPwd").removeClass("nd"),$("#ph-login").addClass("nd"),$("#ph-cloud").addClass("nd"),$("#ph-setPwd-note").show().find(".errTextP").html("<span class='red'>"+$.tpLang.login.notePart1+":</span> <br />"+$.tpLang.login.notePart2)}function showWelcome(){$("#welcome").removeClass("nd"),$("#ph-div").addClass("nd");for(var o=["usb","wireless","internet","guest","device","phone"],n=0;n<o.length;n++)!function(){var e="wel-"+o[n],t=o[n]+"-show";setTimeout(function(){$("#"+e).addClass(t)},100*(n+1))}();setTimeout(function(){$("#wel-logo").addClass("logo-show")},1500),setTimeout(function(){showLoginMobile()},3500)}function showLoginMobile(){$("#welcome").addClass("nd"),$("#ph-div").removeClass("nd")}function initLogin(o){if($("#pc-div").removeClass("nd"),isCloudBind?($("#pc-login").addClass("nd"),$("#pc-cloud").removeClass("nd")):($("#pc-login").removeClass("nd"),$("#pc-cloud").addClass("nd")),$("#pc-setPwd").addClass("nd"),$("#ph-login").removeClass("nd"),$("#ph-setPwd").addClass("nd"),$("#ph-cloud").addClass("nd"),1==o&&1==authTimes&&"hasMobile"in window&&"1"===hasMobile?showWelcome():showLoginMobile(),INCLUDE_LOGIN_USERNAME&&($("#pc-login-user-div").removeClass("nd"),$("#ph-login-user-div").removeClass("nd"),$("#cloud-bind-user-div").removeClass("nd")),1==authTimes&&setErrorShowCookie(1),authTimes>1){var n=getErrorShowCookie(),e=$.tpLang.login.errorText;INCLUDE_LOGIN_USERNAME&&(e=$.tpLang.login.errorText2),authTimes>n&&(buttonError($("#pc-login-btn"),e),isCloudBind&&buttonError($("#cloud-bind-btn"),e),inputError($("#ph-login-password"),e,!0),setErrorShowCookie(authTimes)),INCLUDE_LOGIN_USERNAME&&$("#ph-login-password").removeClass("err")}if(authTimes>=6){isLocked=!0,lockWeb(!0);var t=600-forbidTime;buttonError($("#pc-login-btn"),timesText.replace("$",t),!0),isCloudBind&&buttonError($("#cloud-bind-btn"),timesText.replace("$",t),!0),inputError($("#ph-login-password"),timesText.replace("$",t),!0),INCLUDE_LOGIN_USERNAME&&$("#ph-login-password").removeClass("err"),setErrorShowCookie(1),setTimeout(function(){if(t<1)return buttonError($("#pc-login-btn"),!1),isCloudBind&&buttonError($("#cloud-bind-btn"),!1),inputError($("#ph-login-password"),!1,!0),isLocked=!1,lockWeb(!1),INCLUDE_LOGIN_USERNAME?(isMF&&$("#ph-login-user").focus(),isCloudBind?$("#cloud-bind-user").focus():$("#pc-login-user").focus()):(isMF&&$("#ph-login-password").focus(),isCloudBind?$("#cloud-bind-password").focus():$("#pc-login-password").focus()),void window.location.reload();t--,buttonError($("#pc-login-btn"),timesText.replace("$",t),!0),isCloudBind&&buttonError($("#cloud-bind-btn"),timesText.replace("$",t),!0),inputError($("#ph-login-password"),timesText.replace("$",t),!0),INCLUDE_LOGIN_USERNAME&&$("#ph-login-password").removeClass("err"),window.setTimeout(arguments.callee,1e3)},1e3)}else INCLUDE_LOGIN_USERNAME?(isMF&&$("#ph-login-user").focus(),isCloudBind?$("#cloud-bind-user").focus():$("#pc-login-user").focus()):isCloudBind?$("#cloud-bind-password").focus():$("#pc-login-password").focus()}function doLogin(name,auth,action,isMobile,btn,userInfo){isMobile?$.showCover():$.addLoading(btn);var xmlHttpObj=getHttpObject(function(){isMobile?$.hideCover():$.removeLoading(),eval(xmlHttpObj.responseText),HTTP_ERR_USER_PWD_NOT_CORRECT==$.ret?(authTimes=currAuthTimes,forbidTime=currForbidTime,1==authTimes&&authTimes++,isCloudBind=!$("#pc-cloud").hasClass("nd"),initPage(isPhoneUI)):window.location.href=isMobile?window.location.protocol+"//"+window.location.host+"/index.mobile.htm":window.location.protocol+"//"+window.location.host});INCLUDE_LOGIN_GDPR_ENCRYPT?xmlHttpObj.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/login?data="+encodeURIComponent(auth.data)+"&sign="+auth.sign+"&Action="+action+"&LoginStatus=0",!0):void 0!=userInfo?xmlHttpObj.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/login?UserName="+name+"&Passwd="+auth+"&Action="+action+"&cloudUserName="+$.Base64Encoding(userInfo.username)+"&Token="+userInfo.token+"&LoginStatus=0",!0):xmlHttpObj.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/login?UserName="+name+"&Passwd="+auth+"&Action="+action+"&LoginStatus=0",!0),getBusy(function(o){0==o.isLogined||cloudloginFlag?xmlHttpObj.send(null):tpConfirm($.tpLang.login.forceLogout,function(){if(isMobile?$.showCover():$.addLoading(btn),1==o.isBusy){var n=0,e=function(){getBusy(function(o){0==o.isBusy||n>=2?xmlHttpObj.send(null):(n++,setTimeout(e,1e3))})};setTimeout(e,1e3)}else xmlHttpObj.send(null);loginFlag=0},function(){isMobile?$.hideCover():$.removeLoading(),loginFlag=0},null,$.tpLang.login.login,$.tpLang.m_str.cancel)})}function getErrorShowCookie(){for(var o="loginErrorShow=",n=document.cookie.split(";"),e=0;e<n.length;e++){var t=n[e].trim();if(0==t.indexOf(o))return t.substring(o.length,t.length)}return"1"}function setErrorShowCookie(o){document.cookie="loginErrorShow="+o}function tpConfirm(o,n,e,t,i,l){$("#mask").show();var a=$("#alert-container");isMF?a.addClass("ph"):a.removeClass("ph"),a.show().find(".grid-warning-msg span.text").html(o),$("#confirm-no").html("<span>"+(l||$.tpLang.m_str.cancel)+"</span>").off("click").on("click",function(){$("#alert-container").hide(),$("#mask").hide(),e&&e()}),$("#alert-container .msg-close").off("click").on("click",function(){$("#alert-container").hide(),$("#mask").hide(),e&&e()}),$("#confirm-yes").html("<span>"+(i||$.tpLang.m_str.ok)+"</span>").off("click").on("click",function(){$("#alert-container").hide(),$("#mask").hide(),n&&n()})}function getEwebUrl(module){var xmlHttpObj;(xmlHttpObj=getHttpObject(function(){200!=xmlHttpObj.status&&(INCLUDE_USER_RESTRICTION?window.location.href=window.location.protocol+"//"+window.location.host+window.location.pathname:window.location.href=window.location.protocol+"//"+window.location.host)})).open("POST",window.location.protocol+"//"+window.location.host+"/cgi/getEwebUrl",!1),xmlHttpObj.send(null),eval(xmlHttpObj.responseText),$.cloudOrigin=EwebURL,$.setIframeSrc(module,!0)}function getBindStatus(username,token){var xmlHttpObj;if(xmlHttpObj=getHttpObject(function(){200!=xmlHttpObj.status&&(window.location.href=window.location.protocol+"//"+window.location.host)}),INCLUDE_LOGIN_GDPR_ENCRYPT){var info;$.Iencryptor.setHash(username,token),$.Iencryptor.genAESKey(),info=$.Iencryptor.AESEncrypt(username+"&"+token,1),$.newencryptorManager.recordEncryptor(),xmlHttpObj.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/getBindStatus?data="+encodeURIComponent(info.data)+"&sign="+info.sign,!1)}else xmlHttpObj.open("POST",window.location.protocol+"//"+window.location.host+"/cgi/getBindStatus?cloudUserName="+$.Base64Encoding(username)+"&Token="+token,!1);xmlHttpObj.send(null),eval(xmlHttpObj.responseText),$.BindStatus=BindStatus,$.Role=Role}function initCloud(){$("#pc-login").addClass("nd"),$("#pc-cloud").removeClass("nd"),$("#pc-setPwd").addClass("nd"),$("#ph-login").addClass("nd"),$("#ph-cloud").removeClass("nd"),$("#ph-setPwd").addClass("nd")}function onReceive(o){function n(){$.addLoading(),setTimeout(function(){getBindStatus($.userInfo.username,$.userInfo.token),void 0!=$.BindStatus&&(1==$.BindStatus?(localStorage.setItem("userInfo",JSON.stringify($.userInfo)),$.refresh()):2==$.BindStatus?($("#cloud-login").hide(),$("#cloud-bind-main").show(),$("#bound-error").hide(),$.removeLoading(),$("#cloud-bind-password").focus()):3==$.BindStatus?1==$.Role?(localStorage.setItem("userInfo",JSON.stringify($.userInfo)),$.refresh()):($("#cloud-login").hide(),$("#cloud-bind-main").hide(),$("#bound-error").show(),$.removeLoading()):($.alert($.tpLang.m_str.unknown),$.removeLoading()))},0)}var e=o.originalEvent||o;if(e.origin===$.cloudOrigin||"_self"===e.origin||void 0==e.origin){var t=e.data;if("string"==typeof e.data&&(t=$.parseJSON(t)),t)switch(t.eType){case"ev_login":t.validate&&($.userInfo.username=t.email,$.userInfo.token=t.token,getBusy(function(o){0==o.isLogined?n():tpConfirm($.tpLang.login.forceLogout,function(){if($.addLoading(),1==o.isBusy){var e=0,t=function(){getBusy(function(o){0==o.isBusy||e>=2?n():(e++,setTimeout(t,1e3))})};setTimeout(t,1e3)}else n()},function(){$.removeLoading()},null,$.tpLang.login.login,$.tpLang.m_str.cancel)}));break;case"ev_goto":t.url&&getEwebUrl(t.url),"login_switch"==t.index?($("#cloud-login").hide(),initLogin(isPhoneUI)):"findBackPassword"!=t.url&&"findBackPassword"!=t.index||$.showLoading();break;case"load":(l={}).locale=locale_language,l.force=!0,l.model=modelName,l.eType="ev_init";a=JSON.stringify(l);window.frames["cloud-login"]&&window.frames["cloud-login"].postMessage(a,$.cloudOrigin),$.clearWaitingEvent(),$.getDeviceInfo(!1),$("#cloud-login").show();case"ev_reset":$.iframeResize($("#cloud-login"),t.height);break;case"ev_error":$("#cloud-login").attr("src","../main/offlineError.htm"),$("#cloud-login").css({height:300});break;case"ev_windowResize":var i=!1;try{window.frames["cloud-login"]&&window.frames["cloud-login"].name}catch(o){i=!0}if(i){var l={};l.eType="ev_windowResize",l.windowHeight=$(window).height()-90,l.windowWidth=$(window).width(),l.iframeTop=$("#cloud-login").offset().top;var a=JSON.stringify(l);window.frames["cloud-login"].postMessage(a,$.su.url.cloudOrigin)}}}}function initPage(o){if(o){var n=document.createElement("script");n.type="text/javascript",n.innerHTML='var winX = $(window).width();var winY = $(window).height();var fontSize = 27 * ((winX < winY ? winX : winY) / 640);$("html").css("font-size", fontSize + "px");',$("head").append(n),$("#pc-div").hide(),$("#ph-div").show(),"hasMobile"in window&&"1"===hasMobile||($(".ph-header").hide(),$(".ph-form").hide(),$(".ph-bot").hide(),$("#tether-intro").show()),$("body").addClass("phoneBody")}else $("#pc-div").show(),$("#ph-div").hide(),$("body").removeClass("phoneBody");switch(setPwdFlag=loginFlag=cloudloginFlag=0,us){case 0:case 3:setErrorShowCookie(1),initSetPwd(o),PCSubWin=setPwdSubmit;break;case 2:case 1:default:initLogin(o),PCSubWin=loginSubmit}}function isMobile(){var o=!1;return function(n){(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(n)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(n.substr(0,4)))&&(o=!0)}(navigator.userAgent||navigator.vendor||window.opera),isMF=o,o}function checkPlatform(){var o;(o=document.createElement("meta")).id="viewport",o.name="viewport",isMobile()&&-1===document.cookie.search("UserChange=true")?(o.content="width=device-width, minimum-scale=1, maximum-scale=1,user-scalable=no",$("head").append($(o)),initPage(isPhoneUI=!0)):($("head").append($(o)),initPage(!1),needSlideDownApp(),"hasMobile"in window&&"1"===hasMobile&&-1!=document.cookie.search("UserChange=true")&&$(".pc-bot").show()),$("#pc-login-password").next("input").on("keydown",function(o){13==o.keyCode&&PCSubWin(isMF)}),$("#cloud-bind-password").next("input").on("keydown",function(o){13==o.keyCode&&cloudSubmit()})}var INCLUDE_LOGIN_USERNAME=0,isPhoneUI=!1,isCloudBind=!1,loginFlag=0,HTTP_ERR_USER_PWD_NOT_CORRECT=71233;if($.userInfo={},INCLUDE_LOGIN_GDPR_ENCRYPT&&(localStorage.removeItem("userInfo"),$.newencryptorManager=$.encrypt.encryptManager,$.newencryptorManager.cleanStorage(),$.Iencryptor=$.newencryptorManager.genEncryptor()),"https:"!=location.protocol&&"httpsLocalEnabled"in window&&"1"==httpsLocalEnabled&&(window.location.href="https://"+location.hostname+("httpsLocalPort"in window&&""==httpsLocalPort?"":":"+httpsLocalPort)),void 0===$("div")[0].style.borderRadius&&($.isIE=!0),INCLUDE_MULTI_LANGUAGE){$.locale=$.locale||{},$.locale.locale=locale_language;try{$.locale.load($.locale.locale,null,null,!1)}catch(o){}$("#pc-top-country").removeClass("nv"),$("#ph-language").removeClass("nv"),initLanguageSelect()}var timesText=$.tpLang.login.timesText;$("#pc-login-btn,#pc-cloud-btn").html('<span class="text button-text">'+$.tpLang.login.login+"</span>"),$("#pc-setPwd-btn").html('<span class="text button-text">'+$.tpLang.login.start+"</span>"),$("#cloud-bind-btn").html('<span class="text button-text">'+$.tpLang.login.BIND+"</span>"),$("#pwdCheck-low").html($.tpLang.login.low),$("#pwdCheck-middle").html($.tpLang.login.middle),$("#pwdCheck-high").html($.tpLang.login.high),$("#pc-login-forget-text").html($.tpLang.login.forgetNote),$("#pc-login-forget-title").html($.tpLang.login.forgetPwd),$("#pc-login-forget-back").html('<span class="text button-text">'+$.tpLang.m_str.back+"</span>"),$("#pc-bot-app").html($.tpLang.qrApp.HELP_APP),$("span#characters-illustrate-title").html($.tpLang.qrApp.CHARACTERS_ILLUSTRETE_TITLE),$("span#characters-illustrate-note").html($.tpLang.qrApp.CHARACTERS_ILLUSTRETE_NOTE),$("#qr-close-icon").on("click",function(){$("#qr-code-container").slideUp("2000"),document.cookie="qrClose=true"}),$("#pc-bot-app").on("click",function(){$("#qr-code-container").is(":visible")?($("#qr-code-container").slideUp("2000"),document.cookie="qrClose=true"):($("#qr-code-container").slideDown("2000"),$.deleteCookie("qrClose"))}),$("#pc-login-password").tpInput({placeholder:$.tpLang.login.password,parentClass:null,bubbleError:!0}),$("#pc-login-user").tpInput({placeholder:$.tpLang.login.userName,parentClass:null,bubbleError:!0}),$("#pc-setPwd-new").tpInput({placeholder:$.tpLang.login.newPassword,parentClass:null,bubbleError:!0}),$("#pc-setPwd-confirm").tpInput({placeholder:$.tpLang.login.confirmPassword,parentClass:null,bubbleError:!0}),$(".pb-phone").html($.tpLang.login.phone),$(".pb-pc").html($.tpLang.login.pc),$("#ph-setPwd-new").attr("placeholder",$.tpLang.login.newPassword),$("#ph-setPwd-confirm").attr("placeholder",$.tpLang.login.confirmPassword),$("#pwdCheckP-low").html($.tpLang.login.low),$("#pwdCheckP-middle").html($.tpLang.login.middle),$("#pwdCheckP-high").html($.tpLang.login.high),$("#ph-setPwd-btn").prop("value",$.tpLang.login.start),$("#ph-login-user").attr("placeholder",$.tpLang.login.userName),$("#ph-login-password").attr("placeholder",$.tpLang.login.password),$("#ph-login-btn").attr("value",$.tpLang.login.login),$("#ph-cloud-user").attr("placeholder",$.tpLang.login.email),$("#ph-cloud-password").attr("placeholder",$.tpLang.login.password),$("#ph-cloud-btn").attr("value",$.tpLang.login.login).on("click",function(){cloudSubmit(!0)}),$("#tether-title").html($.tpLang.login.TETHER),$("#tether-intro-text").html($.tpLang.login.TETHER_INTRO),$("#download-btn").html($.tpLang.login.DOWNLOAD),$("#go-web-btn").html($.tpLang.login.GO_WEB);var PCSubWin=function(){};try{modelName&&(document.title=modelName,$("#pc-bot-productName").html(modelName),$("#pc-bot-modelDesc").html(modelDesc||""),$("#ph-productName").html(modelName))}catch(o){}var isLocked=!1,isMF=0;$("body").on("keydown",function(o){$("#pc-cloud").hasClass("nd")?13==o.keyCode&&PCSubWin(isMF):13==o.keyCode&&cloudSubmit()});var rsaEncrypt=$.rsa.encrypt;$(".pb-pc").on("click",function(){-1==document.cookie.indexOf("UserChange")&&(document.cookie="UserChange=true",window.location.href=window.location.protocol+"//"+window.location.host)}),$("#go-web-btn").on("click",function(){document.cookie="UserChange=true",window.location.href=window.location.protocol+"//"+window.location.host}),$("#ph-setPwd-new, #ph-setPwd-confirm, #ph-login-user, #ph-login-password, #ph-cloud-user, #ph-cloud-password").on("focus",function(){$(this).removeClass("err").next("div.errDivP").hide()}),$(".pb-phone").on("click",function(){document.cookie.indexOf("UserChange")>-1&&($.deleteCookie("UserChange"),window.location.href=window.location.protocol+"//"+window.location.host)}),null!=document.getElementById("mainBody")&&function(o,n,e,t){if($.local)location.reload(!0);else{var i=window.parent.location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);window.parent.location.href=i[1]+"://"+i[2]+(i[3]?i[3]:"")+"/"+(i[4]?i[4]:"")}}();var pwdCheckOK=!1;$("#pc-setPwd-btn").on("click",function(){setPwdSubmit()}),$("#pc-setPwd-confirm").on("ev_focus",function(){0==pwdCheckOK&&($("#pc-setPwd-new").tpInput("focus"),checkPwd())}),$("#pc-setPwd-new").on("keyup",function(){checkPwd()}),$("#ph-setPwd-btn").on("click",function(){setPwdSubmit(!0)}),$("#ph-setPwd-confirm").on("focus",function(){0==pwdCheckOK&&($("#ph-setPwd-new").focus(),checkPwd(!0))}),$("#ph-setPwd-new").on("keyup",function(){checkPwd(!0)});var setPwdFlag=0,setPwdSubmit=function(o){var n=$("#pc-setPwd-new"),e=$("#pc-setPwd-confirm"),t=n.tpInput("val"),i=e.tpInput("val");!0===o&&(n=$("#ph-setPwd-new"),e=$("#ph-setPwd-confirm"),t=n.val(),i=e.val()),""!=t?t.length>32?inputError(n,$.tpLang.login.tipsTextLength,o):""!=i?i==t?1!=setPwdFlag&&(setPwdFlag=1,doSetPassword(t,function(){void 0==$.nn&&getAuthParm();var n=rsaEncrypt($.Base64Encoding(t),$.nn,$.ee),e=rsaEncrypt("admin",$.nn,$.ee);INCLUDE_LOGIN_GDPR_ENCRYPT&&(n=$.Iencryptor.AESEncrypt("admin\n"+t,1),$.newencryptorManager.recordEncryptor()),doLogin(e,n,1,o,o?$("#ph-setPwd-btn"):$("#pc-setPwd-btn"))})):inputError(e,$.tpLang.login.tipsTextConfirm,o):inputError(e,$.tpLang.login.tipsText,o):inputError(n,$.tpLang.login.tipsText,o)};$("#pc-login-password").on("ev_focus",function(){INCLUDE_LOGIN_USERNAME&&""==$("#pc-login-user").val()&&inputError($("#pc-login-user"),$.tpLang.login.tipsText)}),$("#pc-login-btn").on("click",function(){loginSubmit()}),$("#pc-login-forgetPwd").html($.tpLang.login.forgetPwd).on("click",function(o){$("#pc-login-forget").removeClass("nd"),$("#pc-login-main").addClass("nd")}),$("#pc-login-forget-back").on("click",function(o){return $("#pc-login-forget").addClass("nd"),$("#pc-login-main").removeClass("nd"),!1}),$("#ph-login-password").on("focus",function(){INCLUDE_LOGIN_USERNAME&&""==$("#ph-login-user").val()&&inputError($("#pc-login-user"),$.tpLang.login.tipsText,!0)}),$("#ph-login-btn").on("click",function(){loginSubmit(!0)});var loginSubmit=function(o){if(1!=isLocked){var n,e,t=$("#pc-login-password"),i=$("#pc-login-user"),l=$("#pc-login-password").tpInput("val");!0===o&&(t=$("#ph-login-password"),i=$("#ph-login-user"),l=t.val());var a=i.val();INCLUDE_LOGIN_USERNAME&&""==a?inputError(i,$.tpLang.login.tipsText,o):""!=l?(void 0==$.nn&&getAuthParm(),1!=loginFlag&&(loginFlag=1,INCLUDE_LOGIN_GDPR_ENCRYPT?(INCLUDE_LOGIN_USERNAME||(a="admin"),$.Iencryptor.setHash(a,l),$.Iencryptor.genAESKey(),n=$.Iencryptor.AESEncrypt(a+"\n"+l,1),$.newencryptorManager.recordEncryptor()):(n=rsaEncrypt($.Base64Encoding(l),$.nn,$.ee),e=INCLUDE_LOGIN_USERNAME?rsaEncrypt(a,$.nn,$.ee):rsaEncrypt("admin",$.nn,$.ee)),doLogin(e,n,1,o,o?$("#ph-login-btn"):$("#pc-login-btn")))):inputError(t,$.tpLang.login.tipsText,o)}},token;if($("#cloud-bind-btn").on("click",function(){cloudSubmit()}),$("#cloud-bind-user").tpInput({placeholder:$.tpLang.login.email,parentClass:null,bubbleError:!0}),$("#cloud-bind-password").on("ev_focus",function(){""==$("#cloud-bind-user").tpInput("val")&&inputError($("#cloud-bind-user"),$.tpLang.login.tipsText)}).tpInput({placeholder:$.tpLang.login.password,parentClass:null,bubbleError:!0}),"undefined"!=typeof INCLUDE_CLOUD_ACCOUNT&&INCLUDE_CLOUD_ACCOUNT){var loginSwitchBtn=$('<div class="login-switch-btn"><span>'+$.tpLang.login.LOGIN_WITH_TPLINK_ID+'</span></div><div class="login-switch-note nd">'+$.tpLang.login.LOGIN_SWITCH_NOTE+"</div>");$("#pc-login-submit").append(loginSwitchBtn)}$("span#login-bind-note").html($.tpLang.login.BIND_NOTE),$("#bound-error .note").text($.tpLang.login.BOUND_ERROR_NOTE),$("#bound-error .switch-btn").text($.tpLang.login.LOGIN_WITH_ROUTER_PASSWORD),$("#bound-error .switch-btn").click(function(){$("#bound-error").hide(),initLogin(isPhoneUI)}),$(".login-switch-btn").on("click",function(o){1!=isLocked&&($.addLoading(),void 0==$.nn&&getAuthParm(),isCloudBind=!1,$.checkCloudConn(function(){initCloud(),o.preventDefault(),$(".login-switch-note").hide(),onReceive({data:{eType:"ev_goto",url:"login"},source:null,origin:"_self"})},function(){$(".login-switch-note").show(),$.removeLoading()}))});var cloudloginFlag=0,cloudSubmit=function(o){if(1!=isLocked){$.addLoading();var n,e,t=$("#cloud-bind-password"),i=$("#cloud-bind-user"),l=t.tpInput("val"),a=i.tpInput("val");if(!0===o&&(t=$("#ph-cloud-password"),i=$("#ph-cloud-user"),l=t.val(),a=i.val()),INCLUDE_LOGIN_USERNAME&&""==a)inputError(i,$.tpLang.login.tipsText,o);else if(""!=l){if(INCLUDE_LOGIN_USERNAME||(a="admin"),void 0==$.nn&&getAuthParm(),1!=cloudloginFlag){if(cloudloginFlag=1,n=rsaEncrypt($.Base64Encoding(l),$.nn,$.ee),e=rsaEncrypt(a,$.nn,$.ee),INCLUDE_LOGIN_GDPR_ENCRYPT){var r=a+"\n"+l+"\n"+$.userInfo.username+"\n"+$.userInfo.token;$.Iencryptor.setHash(a,l),$.Iencryptor.genAESKey(),n=$.Iencryptor.AESEncrypt(r,1),$.newencryptorManager.recordEncryptor()}localStorage.setItem("userInfo",JSON.stringify($.userInfo)),doLogin(e,n,4,o,o?$("#ph-cloud-btn"):$("#pc-cloud-btn"),$.userInfo)}}else inputError(t,$.tpLang.login.tipsText,o)}};$(window).on("ev_watingTimeout",function(){$.clearWaitingEvent(),$("#cloud-login").attr("src","../main/offlineError.htm"),$("#cloud-login").css({height:300}),$("#cloud-login").show(),$.removeLoading()}),$(window).on("message",onReceive),checkPlatform()})</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+#!/usr/bin/lua
+
+local uci_m   = require "luci.model.uci"
+local nat_uci = uci_m.cursor()
+local form_m  = require "luci.tools.form"
+local form_m  = form_m.Form(nat_uci)
+
+--- Add one rule of virtual server
+local function forward_vs_rule_add(index)
+	nat_uci:section("nat", "rule_vs", nil, {
+        enable = "off",
+		index = index,
+		protocol = "TCP",
+		internal_port = "65531",
+		external_port = "65531",
+		ipaddr = "192.168.0.253",
+		key = index,
+		name = "temp",
+    })
+    nat_uci:commit("nat")
+end
+
+local function forward_vs_rule_del(index)
+	nat_uci:foreach("nat", "rule_vs",
+        function(section)
+            if section.index == index then
+				nat_uci:delete("nat", section[".name"])
+				nat_uci:commit("nat")
+				return
+			end
+        end
+    )
+end
+
+if arg[1] == "add" then
+	forward_vs_rule_add(arg[2])
+elseif arg[1] == "del" then
+	forward_vs_rule_del(arg[2])
+end

@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=48
+
+FT_LIBDIR=/lib/family_time
+crontab_cmd="0 0 \* \* \* \/sbin\/bonusTime_check"
+
+ft() {
+	. $FT_LIBDIR/core.sh
+	fw_$1
+}
+
+start() {
+	## Add crontab, clear todayBonusTime regularly
+	sed -i "/^${crontab_cmd}/d" /etc/crontabs/root
+	echo "0 0 * * * /sbin/bonusTime_check" >> /etc/crontabs/root
+
+	## Set default config
+	local enable=`uci -q get prental_control_v2.familytime.enable`
+	if [ x"$enable" == x"" ]; then
+		uci set parental_control_v2.familytime='global'
+		uci set parental_control_v2.familytime.enable='false'
+		uci set parental_control_v2.settings='global'
+		uci set parental_control_v2.settings.scan_count='0'
+		uci commit
+	fi
+	ft start
+}
+
+stop() {
+	ft stop
+}
+
+restart() {
+	ft restart
+}
+
+reload() {
+	ft reload
+}

@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>yandex DNS</title>
+<style>
+#yandex-setting .checkbox-label{
+	margin-left:-8px;
+}
+</style>
+</head>
+
+<body>
+<div class="func-container">
+	 <div id="yandex">
+	    	<input type="text"  id="enable_yandex" name="enable" value="" />
+	 </div>
+	 <form id="yandex-setting">
+		<input type="text"  id="yandex_mode" name="yandex_mode" value="" />
+	</form>
+	 <div id="yandex-special-list">
+ 		<div id="yandexGrid">
+     		
+		</div>
+	 </div>
+
+ 	<div id="own_editor">
+		<input id="mac_addr" name="mac" />
+		<button type="button"  id="device_view"></button>
+		<input id="editor_mode" name="mode" />
+		<input id="device_description" name="note" />
+	</div>
+	
+	<div id="device_survey">
+
+ 		<div id="device_result">
+     		
+		</div>
+ 	</div>	 
+	
+	 <div id="yandex_help"></div>
+</div>
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	
+	$("div.func-container").page({
+		title: $.su.CHAR.YANDEX_DNS.TITLE,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	$("div#yandex").panel({
+		title: $.su.CHAR.YANDEX_DNS.TITLE,
+		collapsible: false
+	});
+	
+	var URL_YANDEX = $.su.url("/admin/yandex_dns?form=enable");
+	
+	var yandexProxy = new $.su.Proxy({
+		url: URL_YANDEX
+	});
+	$("input#enable_yandex").switchbutton({
+		fieldLabel: $.su.CHAR.YANDEX_DNS.STATUS,
+		proxy: yandexProxy,
+		labelCls: 'xl',
+		cls:"form-inner",
+		field: {
+			"name": "enable"
+		}
+	});
+	
+	
+	var URL_YANDEX_SETTING = $.su.url("/admin/yandex_dns?form=setting"); 
+	var modeProxy = new $.su.Proxy({
+		url: URL_YANDEX_SETTING
+	});
+	$("#yandex-setting").form({
+		proxy: modeProxy,
+		cls:"no-padding",
+		submitBtn:"default",
+		fields: [
+			{name: "yandex_mode", mapping: "yandex_mode"}
+		],
+	});
+	$("input#yandex_mode").combobox({
+		fieldLabel: $.su.CHAR.YANDEX_DNS.ENABLE,
+		labelCls: 'xl',
+		cls: 'inline',
+		items: [
+			{"value": "disable", "name": $.su.CHAR.YANDEX_DNS.DISABLE,"selected":true},
+			{"value": "basic", "name": $.su.CHAR.YANDEX_DNS.BASIC},
+			{"value": "safe", "name": $.su.CHAR.YANDEX_DNS.SAFE},
+			{"value": "child", "name": $.su.CHAR.YANDEX_DNS.CHILD}
+		]
+	});
+	
+	
+	
+	$("div#yandex-special-list").panel({
+		title: $.su.CHAR.YANDEX_DNS.GRID_TITLE,
+		collapsible: false
+	});
+	
+	
+	
+	$("input#mac_addr").textbox({
+		fieldLabel: $.su.CHAR.YANDEX_DNS.MAC,
+		vtype:"mac",
+		maxLength:17,
+		allowBlank:false,
+		cls: 'inline',
+		vtype:"mac"
+	});
+	$("#device_view").button({
+		text: $.su.CHAR.YANDEX_DNS.SCAN,
+		cls: 'inline-block ml5',
+		handler:function(){
+			$("div#device_survey").msg("show");
+			result_store.load();
+		}
+	});
+	$("input#editor_mode").combobox({
+		fieldLabel: $.su.CHAR.YANDEX_DNS.CONTROL,
+		items: [
+			{"value": "basic", "name": $.su.CHAR.YANDEX_DNS.BASIC},
+			{"value": "safe", "name": $.su.CHAR.YANDEX_DNS.SAFE},
+			{"value": "child", "name": $.su.CHAR.YANDEX_DNS.CHILD}
+		]
+	});
+	$("input#device_description").textbox({
+		fieldLabel: $.su.CHAR.YANDEX_DNS.DES,
+		vtype:"string_visible_allow_blank",
+		maxLength:32,
+		tipsCls:"s",
+		allowBlank:true,
+		tips:$.su.CHAR.YANDEX_DNS.OPTIONAL
+	});
+	
+	
+	var existingService = $("div#device_survey").msg({
+		autoshow:false,
+		title:$.su.CHAR.PARENTAL_CTR.ACCESS_DEVICES_LIST,
+		type: "window"
+	});
+	
+
+	var URL_ONLINE_BLACK = $.su.url("/admin/access_control?form=black_devices");
+	var blackOnlineProxy = new $.su.Proxy({
+		url: URL_ONLINE_BLACK
+	});
+
+	var result_store = new $.su.Store({
+		proxy: blackOnlineProxy,//ACCESS_CTR的json文件；
+		fields: [
+			{name: "name"},
+		 	{name: "ipaddr"},
+		 	{name: "mac"}
+		],
+		autoLoad: false
+	});
+
+	var result_grid = $("div#device_result").grid({
+		store: result_store,
+		maxLines:5,
+		columns: [
+			{
+				text: $.su.CHAR.ACCESS_CTR.ID, 
+				xtype: "rownumberer",
+				width:40
+			},
+			{
+				text: $.su.CHAR.ACCESS_CTR.NAME, 
+				width:150,
+				dataIndex: "name"
+			},
+			{
+				text: $.su.CHAR.ACCESS_CTR.IP_ADDRESS, 
+				width:150,
+				dataIndex: "ipaddr"
+			},
+			{
+				text: $.su.CHAR.ACCESS_CTR.MAC_ADDRESS, 
+				width:170,
+				dataIndex: "mac"
+			},
+			{
+				text: $.su.CHAR.GRID.OPERATION, 
+				// width:100,
+				renderer:function(data, index){
+					//console.log(arguments);
+					return "<a href=\"javascript:void(0);\" data-index=\""+index+"\" class=\"choose-existing-service choose\" >"+$.su.CHAR.OPERATION.CHOOSE+"</a>"
+				}
+			}
+		]
+	});
+
+	$(result_grid).delegate("a.choose-existing-service", "click", function(e){
+		e.preventDefault();
+		var store = result_grid.grid("getStore"),
+			index = $(this).attr("data-index"),
+			data = store.data[index] || undefined;
+
+		if (data){
+			$("input#mac_addr").textbox("setValue", data["mac"]);
+			$("input#device_description").textbox("setValue", data["name"]);
+		};
+	
+		existingService.msg("close");
+    });
+	
+	var URL_YANDEX_SPECIAL_LIST = $.su.url("/admin/yandex_dns?form=device");
+	
+	var yandexSpecialProxy = new $.su.Proxy({
+		url: URL_YANDEX_SPECIAL_LIST
+	});
+
+	var list_store = new $.su.Store({
+		proxy: yandexSpecialProxy,
+		fields: [
+			{name: "mac"},
+		 	{name: "mode"},
+		 	{name: "note"}
+		],
+		autoLoad: true
+	});
+
+	var yandexGrid = $("#yandexGrid").grid({
+		store: list_store,
+		minLines:0,
+		paging: {},
+		editor: {
+			content: "#own_editor",
+			validator:function(){			
+				if($("input#editor_mode").combobox("getValue").length==0){
+					$("input#editor_mode").combobox("setError");
+					return false;
+				}
+				
+				var store = yandexGrid.grid("getStore"),
+					grid_array = store.data;
+				var editor = $(yandexGrid.grid("getEditor"));
+				var edit_mac = editor.find("input[name=mac]").val();
+				var len = grid_array.length;
+				if ($.isArray(grid_array) && len > 0) {
+					for(var k = 0; k < len; k++){
+						if(editor[0].editing){
+							if(grid_array[k].key == editor[0].editingId)
+						    {
+								continue;
+							}
+						}
+						var data = grid_array[k];
+						if (data["mac"].toUpperCase() == edit_mac.toUpperCase()) {
+							$(yandexGrid.grid("getEditor")).form("setError",$.su.CHAR.ERROR["00000051"]);
+							return false;
+						}
+
+					}
+				}	
+				return true;
+			},
+			fields: [
+				{name: "mac"},
+				{name: "mode"},
+				{name: "note"}				
+			]
+		},
+		columns: [
+			{
+				xtype: "checkcolumn",
+				width: 32
+			},
+			{
+				text: $.su.CHAR.YANDEX_DNS.ID, 
+				xtype: "rownumberer",
+				width:40
+			},
+			{
+				text: $.su.CHAR.YANDEX_DNS.MAC, 
+				width:190,
+				dataIndex: "mac"
+			},
+			{
+				text: $.su.CHAR.YANDEX_DNS.CONTROL, 
+				width:120,
+				dataIndex: "mode",
+				renderer:function(v,i,o){
+					return $.su.CHAR.YANDEX_DNS[v.toUpperCase()];
+				}
+			},
+			{
+				text: $.su.CHAR.YANDEX_DNS.DES, 
+				width:190,
+				dataIndex: "note"
+			},
+			{
+				xtype: "settings"
+			}
+		],
+		operation: "prompt|add|delete"
+	});
+	
+	var helpYandex = new $.su.Help({
+		container: "div#yandex_help",
+		content: ['YANDEX_DNS','YANDEX_DNS_GRID']
+	});
+});
+</script>
+</body>
+
+</html>

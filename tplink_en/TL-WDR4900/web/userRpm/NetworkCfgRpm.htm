@@ -1,0 +1,158 @@
+<meta http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<meta http-equiv="pragma" content="no-cache">
+<script type="text/javascript">
+<!--//
+function doSubmit()
+{
+	if(document.forms[0].lanip.value == "")
+	{
+		alert( js_pl_ip_addr = "Please input IP address!");
+		return false;
+	}
+
+	if((document.getElementById("lanmask").value == 3))
+	{
+		if(!is_maskaddr(document.forms[0].inputMask.value))
+		{
+			var element = document.forms[0].inputMask;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+
+	if(!is_ipaddr(document.forms[0].lanip.value))
+	{
+		var element = document.forms[0].lanip;
+		if(element)
+		{
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+
+	if (document.forms[0].lanip.value==lanPara[1] &&
+		document.forms[0].lanmask.value==lanPara[2] &&
+		document.forms[0].inputMask.value==lanPara[3] &&
+		document.forms[0].igmp_proxy.value==lanPara[6])
+	{
+		return false;
+	}
+
+	if (document.forms[0].lanip.value==lanPara[1] &&
+		document.forms[0].lanmask.value==lanPara[2] &&
+		document.forms[0].inputMask.value==lanPara[3])
+	{
+		//just igmp_proxy.value changed. Do not alert.
+	}
+	else
+	{
+		if (!confirm(js_modi_ip_addr="Modification of IP address or Subnet Mask will result in the rebooting of the Device, OK?"))
+		{
+			return false;
+    	}
+	}
+
+	return true;
+}
+
+function doOnchange(value)
+{
+	if(3 == value)
+	{
+		document.getElementById("otherMask").style.display = "";
+	}
+	else
+	{
+		document.getElementById("otherMask").style.display = "none";
+	}
+}
+//-->
+</script>
+<style>
+.text{
+	width:140px;
+}
+</style>
+</head>
+<body onLoad="setTagStr(document,'ntw_lan');LoadHelp('NetworkCfgHelpRpm.htm'); resize(this);" onResize="resize(this);">
+    <center>
+        <form action="NetworkCfgRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+            <table id="autoWidth" border=0>
+                <tbody>
+                    <tr>
+                        <td class=h1 colspan=5 id="t_title">LAN</td>
+                    </tr>
+                    <tr>
+                        <td class=blue colspan=5></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id="t_mac">MAC Address:</td>
+                        <td colspan="4"><DIV id="MAC"></DIV></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id="t_ip">IP Address:</td>
+                        <td colspan="4"><input name="lanip" type="text" class="text" id="lanip" value="192.168.1.1" size="15" maxlength="15"></td>
+                    </tr>
+                    <tr>
+                        <td class=Item id="t_mask">Subnet Mask:</td>
+                        <td>
+                        <select name="lanmask" id="lanmask" onChange="doOnchange(this.value)">
+                            <option value="0">255.0.0.0</option>
+                            <option value="1">255.255.0.0</option>
+                            <option value="2">255.255.255.0</option>
+                            <option value="3" id="t_other_mask">Other Mask</option>
+                        </select></td>
+                        <td id="otherMask" style="display:none"><input name="inputMask" type="text" class="text" value="255.255.255.0" size="15" maxlength="15"></td>
+                        <td width="30%">&nbsp;</td>
+                    </tr>
+                    <TBODY id="body_igmp">
+							      <TR>
+							          <TD class=Item id="t_igmp">IGMP Proxy:</TD>
+							          <TD><SELECT name="igmp_proxy" id="igmp_proxy" class="text">
+							              <OPTION value="1">Enabled</OPTION>
+							              <OPTION value="0">Disabled</OPTION>
+							            </SELECT>
+							          </TD>
+							        </TR>
+							        <TR>
+							          <TD class=Item id="t_note" style="color:red">Note:</TD>
+							          <TD id="t_note_content" style="color:red" colspan="4">IGMP(Internet Group Management Protocol) works for IPTV multicast stream.</TD>
+							        </TR>
+							        <TR>
+							          <TD></TD>
+							          <TD id="t_note_content2" style="color:red" colspan="4">The device supports both IGMP proxy with enabled/disabled option and IGMP snooping.</TD>
+							      </TR>
+							      </TBODY>
+                    <tr>
+                        <td class=blue colspan=5></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="4"><input name="Save" type="submit" class="buttonBig" value="Save"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </center>
+</body>
+</HTML>
+<script type="text/javascript">
+    document.getElementById("MAC").innerHTML = lanPara[0];
+    document.forms[0].lanip.value = lanPara[1];
+    document.forms[0].lanmask.value = lanPara[2];
+    document.forms[0].igmp_proxy.value = lanPara[6];
+    if(3 == lanPara[2])
+    {
+        document.getElementById("otherMask").style.display = "";
+        document.forms[0].inputMask.value = lanPara[3];
+    }
+    if (0 == lanPara[7])
+		{
+			document.getElementById("body_igmp").style.display="none";
+		}
+</script>

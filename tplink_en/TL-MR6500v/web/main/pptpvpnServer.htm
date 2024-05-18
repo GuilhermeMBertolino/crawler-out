@@ -1,0 +1,30 @@
+<script language="javascript">var curPvpnObj,newPvpnObj;function init(){if(curPvpnObj=$.act(ACT_GET,PPTPVPN,null,null),!$.exe()){$("#pptpvpnEn").prop("checked",1==curPvpnObj.enable),$("#cliIpStart").tpAddress("val",curPvpnObj.remoteIpStart);var e=curPvpnObj.remoteIpEnd.split(".");$("#cliIpEndNum").prop("value",e[3]);var r=new Array(e[0],e[1],e[2]).join(".");$("#cliIpSubnet").text("-"+r+"."),$("#username").prop("value",curPvpnObj.username),$("#password").prop("value",curPvpnObj.password)}}function checkParaValidity(){var e=$("#cliIpStart").tpAddress("val"),r=$("#cliIpEndNum").val(),p=$("#username").prop("value"),a=$("#password").prop("value"),t=e.split(".")[3];if(""==e||"0.0.0.0"==e)return $.alert(ERR_IP_FORMAT),$("#cliIpStart").focus().select(),!1;if(""!=e&&"0.0.0.0"!=e&&$.ifip(e,!0))return $.alert(ERR_IP_FORMAT),$("#cliIpStart").focus().select(),!1;if(parseInt(t,10)<1||254<parseInt(t,10))return $.alert(ERR_IP_FORMAT),$("#cliIpStart").focus().select(),!1;if(!$.isnum(r)||parseInt(r,10)<1||254<parseInt(r,10))return $.alert(ERR_IP_FORMAT),$("#cliIpEndNum").focus().select(),!1;if(parseInt(r,10)<t)return $.alert(ERR_PVPN_ERR_CLI_IP_STARTNUM_GREATER),$("#cliIpStart").focus().select(),!1;if(parseInt(r,10)>=parseInt(t,10)+10)return $.alert(ERR_PVPN_ERR_CLI_IP_MORE_THAN_TEN),$("#cliIpEndNum").focus().select(),!1;var n=/^[a-zA-Z0-9_-]+$/;return 0==n.test(p)||15<p.length?($.alert(ERR_PVPN_INVALID_USERNAME_PASSWORD),$("#username").focus().select(),!1):!(0==n.test(a)||15<a.length)||($.alert(ERR_PVPN_INVALID_USERNAME_PASSWORD),$("#password").focus().select(),!1)}function checkNothingChg(){if(1==curPvpnObj.enable&&0==$("#pptpvpnEn").prop("data-checked")||0==curPvpnObj.enable&&1==$("#pptpvpnEn").prop("data-checked"))return!1;var e=curPvpnObj.remoteIpEnd.split(".");return $("#cliIpStart").tpAddress("val")==curPvpnObj.remoteIpStart&&$("#cliIpEndNum").prop("value")==parseInt(e[3],10)&&($("#username").prop("value")==curPvpnObj.username&&$("#password").prop("value")==curPvpnObj.password)}$("#save").click(function(){$.addLoading($(this));var e=0,r=$.act(ACT_GL,UPNP_PORTMAPPING),p=$.act(ACT_GET,UPNP_CFG);if($.exe(),checkParaValidity()){if($.each(r,function(){"1723"==this.externalPort&&1==p.enable&&"UDP"!=this.portMappingProtocol&&(e=1)}),e)return $.alert(CMM_UPNP_CONFLICT_WITH_PVPN),$.removeLoading(),void $.reload();if(checkNothingChg())$.removeLoading();else{var a=$("#pptpvpnEn").prop("data-checked")?1:0,t=$("#cliIpStart").tpAddress("val"),n=t.split("."),l=new Array(n[0],n[1],n[2]).join(".")+"."+$("#cliIpEndNum").prop("value"),c=$("#username").prop("value"),s=$("#password").prop("value");if(1<parseInt(n[3],10))var u=new Array(n[0],n[1],n[2],parseInt(n[3],10)-1);else u=new Array(n[0],n[1],n[2],parseInt($("#cliIpEndNum").prop("value"),10)+1);var o=u.join(".");$.act(ACT_SET,PPTPVPN,null,null,["enable="+a,"remoteIpStart="+t,"remoteIpEnd="+l,"username="+c,"password="+s,"localIp="+o]),$.exe(function(e){$.removeLoading(),e||$.reload()})}}else $.removeLoading()})</script>
+<h3 id="t_pptpvpn">PPTP VPN</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b class="l" id="t_empty"></b>
+            <input type="checkbox" id="pptpvpnEn">
+            <label id="t_enPvpn">Enable VPN Server</label>
+        </div>
+        <div>
+            <b class="l" id="t_cliIp">Client IP Address:</b>
+            <input type="text" id="cliIpStart" class="l ip-address" required>
+            <span id="cliIpSubnet">-</span>
+            <input type="text" id="cliIpEndNum" class="s" required>
+            <span id="t_maxCli">(up to 10 clients)</span>
+        </div>
+        <div>
+            <b class="l" id="t_username">Username:</b>
+            <input type="text" id="username" class="xl" required>
+        </div>
+        <div>
+            <b class="l" id="t_password">Password:</b>
+            <input type="text" id="password" class="xl" required>
+        </div>
+        <div class="part-separate">
+            <button type="submit" class="green T_save" id="save">Save</button>
+        </div>
+    </form>
+</div>
+<script language="javascript">var headArray=[{text:'<div><input type="checkbox" id="staticAll" class="table-select-all" /><label></label></div>',width:"8%"},{text:"ID",width:"8%"},{text:"Username",width:"28%"},{text:"Password",width:"28%"},{text:table_str.modify,width:"28%"}];$.initTableHead($("#account-list"),headArray),$("#account-list").tpTable(),$.tpInit(init)</script>

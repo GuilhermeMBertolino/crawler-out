@@ -1,0 +1,14 @@
+#!/bin/sh
+echo "Processing /etc/rc.local"
+echo "get hostname"
+/bin/hostname -F /etc/hostname
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+#
+# Mount the RAM filesystem to /tmp
+#
+mount -t ramfs -n none /tmp
+mount -t ramfs -n none /var
+mount -t usbfs none /proc/bus/usb
+

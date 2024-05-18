@@ -1,0 +1,375 @@
+﻿<script language="javascript" type="text/javascript">
+var usb3gLinkCfgStk;
+var PPP3GStk;
+var pStk;
+var wanPPP3G;
+var wanUsb3g;
+var wanPPP3GArg = {};
+var wanUsb3gArg = {};
+var tag;
+
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+
+function escapeStr(str) 
+{
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function showLocation()
+{
+	var i = 0;
+	var selLocObj = $.id("location_sel");
+	
+	if(selLocObj.options.length > 0)
+	{
+		selLocObj.options.remove(0);
+	}
+	
+	for (tag in w3gisp_js)
+	{
+		i = parseInt(tag.substring(8,16));
+		var locOption = $.c("option");
+		
+		locOption.value = i;
+		locOption.text = w3gisp_js[tag]["location_name"];
+		try{
+			selLocObj.add(locOption,null);
+		}catch(e)
+		{
+			selLocObj.add(locOption);
+		}
+	}
+}
+
+function showISP()
+{
+	var location = "location" + $.id("location_sel").value;
+	var selIspObj = $.id("isp_sel");
+     
+	while((i = selIspObj.options.length) > 0)
+	{
+		selIspObj.remove(0);
+	}
+	
+	i = 0;
+	for (tag in w3gisp_js[location])
+	{
+		if (w3gisp_js[location][tag]["isp_name"] == undefined)
+		{
+			continue;
+		}
+		var ispOption = $.c("option");
+		ispOption.value = i;
+		ispOption.text = w3gisp_js[location][tag]["isp_name"];
+		try{
+			selIspObj.add(ispOption,null);
+		}catch(e)
+		{
+			selIspObj.add(ispOption);
+		}
+		i++;
+	}
+}
+
+function showParam(initFlag)
+{
+	var location = "location" + $.id("location_sel").value;
+	var isp = "isp" + $.id("isp_sel").value;
+	
+	if ($.id("manual_apn").checked == 0)
+	{
+		$.id("username").value = w3gisp_js[location][isp]["username"];
+		$.id("password").value = w3gisp_js[location][isp]["password"];
+		$.id("apn").value = w3gisp_js[location][isp]["apn"];
+		$.id("dial_num").value = w3gisp_js[location][isp]["dial_num"];
+	}
+	else if (initFlag == 1)
+	{
+		$.id("username").value = wanPPP3G.username;
+		$.id("password").value = wanPPP3G.password;
+		$.id("apn").value = wanUsb3g.APN;
+		$.id("dial_num").value = wanUsb3g.dialNumber;
+	}
+}
+
+function changeISP()
+{
+	showParam(0);
+}
+
+function changeLocation()
+{
+	showISP();
+	changeISP();
+}
+
+function doBackupEnClk()
+{
+	if (($.qd.sysMode != "USB_3G") && ($.id("usb3g_backup_en").checked != 1))
+	{
+		$.addClass($.id("usb3g_settings"), "nd");
+	}
+	else
+	{
+		$.removeClass($.id("usb3g_settings"), "nd");
+	}
+}
+
+function doManuallyAPN()
+{
+	if ($.id("manual_apn").checked == 1)
+	{
+		$.id("dial_num").disabled = false;
+		$.id("apn").disabled = false;
+		$.id("username").disabled = false;
+		$.id("password").disabled = false;
+		$.id("location_sel").disabled = true;
+		$.id("isp_sel").disabled = true;
+	}
+	else
+	{
+		$.id("dial_num").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["dial_num"];;
+		$.id("apn").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["apn"];
+		$.id("username").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["username"];
+		$.id("password").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["password"];
+		$.id("dial_num").disabled = true;
+		$.id("apn").disabled = true;
+		$.id("username").disabled = true;
+		$.id("password").disabled = true;
+		$.id("location_sel").disabled = false;
+		$.id("isp_sel").disabled = false;
+	}
+}
+
+function init()
+{
+	if ($.qd.usb3g === undefined)
+	{
+		var usb3gList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["backupEnable"]);
+		var wanPPPList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["enable", "transportType"]);
+		var wanTypes = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+		
+		if (!$.exe())
+		{
+			$.each(wanTypes, function()
+			{
+				if (this.WANAccessType == "USB_3G")
+					pStk = this.__stack;
+			});
+			
+			$.each(wanPPPList, function()
+			{
+				var tmpStk= $.stkPop(this.__stack, 2);
+				if (pStk == tmpStk) 
+				{
+					if (this.transportType == "PPP3G")
+					{
+						PPP3GStk = this.__stack;
+						wanPPP3G = $.act(ACT_GET, WAN_PPP_CONN, this.__stack, null, null);
+					}	
+				}
+			});
+			
+			$.each(usb3gList, function()
+			{
+				var tmpStk= $.stkPop(this.__stack, 1);
+				if (pStk == tmpStk) 
+				{
+					usb3gLinkCfgStk = this.__stack;
+					wanUsb3g = $.act(ACT_GET, WAN_USB_3G_LINK_CFG, this.__stack, null, null);
+				}
+			});
+			
+			if (!$.exe())
+			{
+				$.id("usb3g_backup_en").checked = (wanUsb3g.backupEnable == 1) ? 1 : 0;
+				showLocation();
+				$.id("location_sel").value = wanUsb3g.locationIdx;
+				showISP();
+				$.id("isp_sel").value = wanUsb3g.ispIdx;
+				
+				$.id("manual_apn").checked = (wanUsb3g.manualAPN == 1) ? 1 : 0;
+				showParam(1);
+				if (wanUsb3g.manualAPN == 1)
+				{
+					$.id("dial_num").disabled = false;
+					$.id("apn").disabled = false;
+					$.id("username").disabled = false;
+					$.id("password").disabled = false;
+					$.id("location_sel").disabled = true;
+					$.id("isp_sel").disabled = true;
+				}
+				else
+				{
+					$.id("dial_num").disabled = true;
+					$.id("apn").disabled = true;
+					$.id("username").disabled = true;
+					$.id("password").disabled = true;
+					$.id("location_sel").disabled = false;
+					$.id("isp_sel").disabled = false;
+				}
+				
+				if (wanPPP3G.PPPAuthenticationProtocol == "AUTO_AUTH")
+				{
+					$.id("ppp_authpro").value = "AUTO_AUTH";
+				}
+				else if (wanPPP3G.PPPAuthenticationProtocol == "PAP")
+				{
+					$.id("ppp_authpro").value = "PAP";
+				}
+				else if (wanPPP3G.PPPAuthenticationProtocol == "CHAP")
+				{
+					$.id("ppp_authpro").value = "CHAP";
+				}
+			}
+		}
+	}
+	else
+	{
+		$.id("usb3g_backup_en").checked = $.qd.usb3g.enable;
+		showLocation();
+		$.id("location_sel").value = $.qd.usb3g.locationIdx;
+		showISP();
+		$.id("isp_sel").value = $.qd.usb3g.ispIdx;
+		$.id("username").value = $.qd.usb3g.username;
+		$.id("password").value = $.qd.usb3g.password;
+		$.id("apn").value = $.qd.usb3g.apn;
+		$.id("dial_num").value = $.qd.usb3g.dial_num;
+		$.id("manual_apn").checked = $.qd.usb3g.manualAPN;
+		if ($.qd.usb3g.manualAPN == 1)
+		{
+			$.id("dial_num").disabled = false;
+			$.id("apn").disabled = false;
+			$.id("username").disabled = false;
+			$.id("password").disabled = false;
+			$.id("location_sel").disabled = true;
+			$.id("isp_sel").disabled = true;
+		}
+		else
+		{
+			$.id("dial_num").disabled = true;
+			$.id("apn").disabled = true;
+			$.id("username").disabled = true;
+			$.id("password").disabled = true;
+			$.id("location_sel").disabled = false;
+			$.id("isp_sel").disabled = false;
+		}
+		$.id("ppp_authpro").value = $.qd.usb3g.auth;
+	}
+	
+	if ($.qd.sysMode == "USB_3G")
+	{
+		$.addClass($.id("backup_info"), "nd");
+	}
+	else if ($.id("usb3g_backup_en").checked != 1)
+	{
+		$.addClass($.id("usb3g_settings"), "nd");
+	}
+}
+
+function doCollect() {
+	$.qd.usb3g = {};
+	$.qd.usb3g.linkCfgStk = usb3gLinkCfgStk;
+	$.qd.usb3g.PPP3GStk = PPP3GStk;
+	$.qd.usb3g.enable = ($.id("usb3g_backup_en").checked == 1) ? 1 : 0;
+	$.qd.usb3g.userSaved = 1;
+	$.qd.usb3g.locationIdx = $.id("location_sel").value;
+	$.qd.usb3g.ispIdx = $.id("isp_sel").value;
+	$.qd.usb3g.username = $.id("username").value;
+	$.qd.usb3g.password = $.id("password").value;
+	$.qd.usb3g.apn = $.id("apn").value;
+	$.qd.usb3g.dial_num = $.id("dial_num").value;
+	$.qd.usb3g.manualAPN = ($.id("manual_apn").checked == 1) ? 1 : 0;
+	$.qd.usb3g.auth = $.id("ppp_authpro").value;
+}
+
+function goNext() {
+	doCollect();
+	$.qf.next();
+}
+
+function goPrev() {
+	doCollect();
+	$.qf.prev();
+}
+</script>
+<p class="et T" id="et"><b>Quick Setup - 3G</b></p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<div id="backup_info">
+<p id="usb3gBackupEnable" class="L1">
+	<input type="checkbox" class="T" id="usb3g_backup_en" onclick="doBackupEnClk()"/>
+	<span class="T T_en3gbackup">Enable 3G as a backup solution for Internet access</span>
+</p>
+<p class="br"></p>
+<p id="usb3gBackupInfo">
+	<span class="T" id="t_info">3G can be set as a backup Internet access method. If you don't want to configure 3G settings now, just click the Next button and go ahead. Otherwise, you can enable 3G backup for configuration.</span>
+</p>
+<p class="bl"></p>
+</div>
+<div id="usb3g_settings">
+<p id="location_notice">
+	<span class="T" id="t_no_isp_start">If your location or ISP is not listed, or the default Dial Number / APN is not the latest one, please enable</span>
+	<b class="T T_muanl_3g_apn">Set the Dial Number, APN, Username and Password manually</b>
+	<span class="T" id="t_no_isp_end">, and fill in the right ones.</span>
+</p>
+<p class="L1">
+	<b class="item T T_loc3g">Location:</b>
+	<select id="location_sel" onchange="changeLocation()"></select>
+</p>
+<p class="L1">
+	<b class="item T T_isp3g">Mobile ISP:</b>
+	<select id="isp_sel" onchange="changeISP()"></select>
+</p>
+<p class="L1">
+	<b class="item">&nbsp;</b>
+	<input type="checkbox" class="T" id="manual_apn" onclick="doManuallyAPN()"/>
+	<span class="T T_muanl_3g_apn">Set the Dial Number, APN, Username and Password manually</span>
+</p>
+<p class="br"></p>
+<p class="L1">
+	<b class="item L T T_authtype">Authentication Type:</b>
+	<select id="ppp_authpro" class="L">
+		<option value="AUTO_AUTH" selected>AUTO_AUTH</option>
+		<option value="PAP">PAP</option>
+		<option value="CHAP">CHAP</option>
+	</select>
+</p>
+<p class="br"></p>
+<p class="L1">
+	<b class="item T T_dialnum3g">Dial Number:</b>
+	<input id="dial_num" type="text" class="text" size="15" maxlength="31"/>
+</p>
+<p class="L1">
+	<b class="item">APN:</b>
+	<input id="apn" type="text" class="text" size="15" maxlength="31"/>
+</p>
+<p class="L1">
+	<b class="item T T_username">Username:</b>
+	<input id="username" type="text" class="text" size="15" maxlength="31"/>
+	<span class="T T_optional">(optional)</span>
+</p>
+<p class="L1">
+	<b class="item T T_passwd">Password:</b>
+	<input id="password" type="text" class="text" size="15" maxlength="31"/>
+	<span class="T T_optional">(optional)</span>
+</p>
+<p class="bl"></p>
+</div>
+</div>
+<p class="tail" id="tail">
+<input type="button" class="button L T T_back" value="Back" onclick="goPrev()" />
+<input type="button" class="button L T T_next" value="Next" onclick="goNext()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+init();
+</script>

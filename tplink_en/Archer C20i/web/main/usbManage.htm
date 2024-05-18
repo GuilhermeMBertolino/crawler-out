@@ -1,0 +1,262 @@
+﻿<script language="javascript" type="text/javascript">
+var blank = "&nbsp;&nbsp;";
+var usbDeviceList;
+var volumeList;
+var numAliveDev = 0;
+var numAliveLog = 0;
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+function handleUsb(idx)
+{
+	var command = {};
+	$.addLoading($.id("refresh"));
+	if ("Online" == usbDeviceList[idx].status)
+	{
+		command.enable = 0;
+		usbDeviceList[idx].enable = 0;
+	}
+	else if (("Standby" == usbDeviceList[idx].status) && (1 == usbDeviceList[idx].enable))
+	{
+		usbDeviceList[idx].enable = 0;
+		command.enable = 0;
+	}
+	else
+	{
+		usbDeviceList[idx].enable = 1;
+		command.enable = 1;
+	}
+	
+	$.act(ACT_SET, USB_DEVICE, usbDeviceList[idx].__stack, null, command);
+	var usbDevice = $.act(ACT_GET, USB_DEVICE, usbDeviceList[idx].__stack, null, null);
+	$.exe(doReload);
+}
+function mountUsb(idx)
+{
+	var command = {};
+	
+	if (("Standby" == usbDeviceList[idx].status) && (1 == usbDeviceList[idx].enable))
+	{
+		$.addLoading($.id("refresh"));
+		command.enable = 1;
+		$.act(ACT_SET, USB_DEVICE, usbDeviceList[idx].__stack, null, command);
+		var usbDevice = $.act(ACT_GET, USB_DEVICE, usbDeviceList[idx].__stack, null, null);
+		$.exe(doReload);
+		return;
+	}
+}
+function handleVolume(idx)
+{
+	var command = {};
+	
+	if ("Online" == volumeList[idx].status)
+	{
+		command.enable = 0;
+	}
+	else if ("Error" == volumeList[idx].status)
+	{
+		return;
+	}
+	else if (("Offline" == volumeList[idx].status) && (1 == volumeList[idx].enable))
+	{
+		command.enable = 0;
+	}
+	else
+	{
+		command.enable = 1;
+	}
+	$.addLoading($.id("refresh"));
+	$.act(ACT_SET, LOGICAL_VOLUME, volumeList[idx].__stack, null, command);
+	var volume = $.act(ACT_GET, LOGICAL_VOLUME, volumeList[idx].__stack, null, null);
+	$.exe(doReload);
+}
+function handleVolumeForce(idx)
+{
+	var command = {};
+	$.addLoading($.id("refresh"));
+		
+	if (("Offline" == volumeList[idx].status) && (1 == volumeList[idx].enable))
+	{
+		command.enable = 1;
+		command.force = 1;
+		$.act(ACT_SET, LOGICAL_VOLUME, volumeList[idx].__stack, null, command);
+		var volume = $.act(ACT_GET, LOGICAL_VOLUME, volumeList[idx].__stack, null, null);
+		$.exe(doReload);
+		return;
+	}
+	$.removeLoading($.id("refresh"));
+}
+
+function init()
+{
+	usbDeviceList = $.act(ACT_GL, USB_DEVICE, null, null);
+	volumeList = $.act(ACT_GL, LOGICAL_VOLUME, null, null);
+	if (!$.exe())
+	{
+		if (0 == usbDeviceList.length)
+		{
+			$.removeClass($.id("t_usb_discon"), "nd");
+			return;
+		}
+		$.removeClass($.id("t_usb_con"), "nd");
+		var idx;
+		
+		/* Get Alive Number */
+		for (idx = 0; idx < usbDeviceList.length; idx++)
+		{
+			if ("Online" == usbDeviceList[idx].status)
+			{
+				numAliveDev++;
+			}
+		}
+		for (idx = 0; idx < volumeList.length; idx++)
+		{
+			if ("Online" == volumeList[idx].status)
+			{
+				numAliveLog++;
+			}
+		}
+
+		for (idx = 1; idx <= usbDeviceList.length; idx++)
+		{
+			$.append($.id("usb_drawing"),"<p class='L1'><span style='float:left;' id='usbInfo" + idx + "' ></span><span style='float:right;text-align:right;width:90px;' id='usbStatus" + idx + "' ></span><span class='a' style='float:right;' id='usbButton" + idx + "' onClick='handleUsb(" + (idx - 1) + ");'></span><span class='a' style='float:right;' id='usbButton2" + idx + "' onClick='mountUsb(" + (idx - 1) + ");'></span></p>");
+			
+			var diskInfo;
+			diskInfo = "<span class='T T_disk'>"+s_str.disk+"</span>" + idx + ": " + usbDeviceList[idx-1].vendor + " ( " + usbDeviceList[idx-1].model + " ) " + usbDeviceList[idx-1].serialNumber;
+			$.h($.id("usbInfo" + idx), diskInfo);
+			
+			// USB Device Status, Enumeration of Online, Standby, Disabled
+			if ("Online" == usbDeviceList[idx-1].status)
+			{
+				$.h($.id("usbStatus" + idx), ("<span class='T T_connected'>"+m_str.connected+"</span>" + blank));
+				$.id("usbStatus" + idx).style["color"] = "green";
+				$.id("usbButton" + idx).innerHTML = "<span class='T T_disconn'>" + m_str.disconn + "</span>";
+			}
+			else if (("Standby" == usbDeviceList[idx-1].status) && (1 == usbDeviceList[idx-1].enable))
+			{
+				$.h($.id("usbStatus" + idx), ("<span class='T T_standby'>"+s_str.standby+"</span>" + blank));
+				$.id("usbStatus" + idx).style["color"] = "#ff9900";
+				if (2 > numAliveDev)
+				{
+					/* alive Dev is smaller than Max number, allow Mount */
+					$.id("usbButton2" + idx).innerHTML = "<span class='T T_conn'>" + m_str.conn + "</span>";
+				}
+			}
+			else
+			{
+				$.h($.id("usbStatus" + idx), ("<span class='T T_disconnected'>"+m_str.disconnected+"</span>" + blank));
+				$.id("usbStatus" + idx).style["color"] = "red";
+				$.id("usbButton" + idx).innerHTML = "<span class='T T_conn'>" + m_str.conn + "</span>";
+			}
+			$.append($.id("usb_drawing"), "<table class='XL bdr tc' id='volumeTbl" + idx + "' width='80%' style='margin-top:5px' ><tr><td width=\"100px\"><span class='T T_volume'>"+s_str.volume+"</span></td><td width=\"100px\"><span class='T T_filesys'>"+s_str.filesys+"</span></td><td width=\"150px\"><span class='T T_capacity'>"+s_str.capacity+"</span></td><td width=\"100px\"><span class='T T_status'>"+s_str.status+"</span></td><td width=\"150px\"><span class='T T_action'>"+m_str.action+"</span></td></tr></table>");
+			var i;
+			for (i = 0; i < volumeList.length; i++)
+			{
+				if (((usbDeviceList[idx-1].__stack).split(','))[0] == ((volumeList[i].__stack).split(','))[0])
+				{
+					var tbl = $.id("volumeTbl" + idx);
+					var row = tbl.insertRow(-1);
+					var cell = row.insertCell(-1);
+					cell.innerHTML = volumeList[i].name;
+					var cell = row.insertCell(-1);	
+					cell.innerHTML = volumeList[i].fileSystem;
+					var cell = row.insertCell(-1);	
+					cell.innerHTML = volumeList[i].capacity;
+					// Logical Volume Status, Enumeration of Online, Offline, Disable
+					var cell = row.insertCell(-1);
+					var action;
+					if ("Online" == volumeList[i].status)
+					{
+						cell.innerHTML = "<span style=\"color:green\" class=\"T T_active1\">" + s_str.active1 + "</span>";
+						action = "<span class='a T T_deactivate' onClick='handleVolume(" + i + ");'>" + s_str.deactivate + "</span>";
+					}
+					else if ("Error" == volumeList[i].status)
+					{
+						cell.innerHTML = "<span style=\"color:red\" class=\"T T_err\">" + m_str.err + "</span>";
+						action = blank;
+					}
+					else if (("Offline" == volumeList[i].status) && (1 == volumeList[i].enable))
+					{
+						if (0) 
+						{
+							cell.innerHTML = "<span style=\"color:#ff9900\" class=\"T T_offline\">" + s_str.offline + "</span>";
+							action = "<span class='a T T_dis' onClick='handleVolume(" + i + ");'>" + m_str.dis + "</span>";
+							if (8 > numAliveLog)
+							{
+								/* alive Logical is smaller than Max number, allow Mount */
+								action += blank;
+								action += "<span class='a T T_activate' onClick='handleVolumeForce(" + i + ");'>" + s_str.activate + "</span>";
+							}
+						}
+						else
+						{
+							cell.innerHTML = "<span style=\"color:#ff9900\" class=\"T T_standby\">" + s_str.standby + "</span>";
+							if (8 > numAliveLog)
+							{
+								/* alive Logical is smaller than Max number, allow Mount */
+								action = "<span class='a T T_activate' onClick='handleVolumeForce(" + i + ");'>" + s_str.activate + "</span>";
+							}
+							else
+							{
+								action = "<span class='a T T_activate' disabled>" + s_str.activate + "</span>";
+							}
+						}
+					}
+					else
+					{
+						cell.innerHTML = "<span style=\"color:red\" class=\"T T_inactive\">" + s_str.inactive + "</span>";
+						action = "<span class='a T T_activate' onClick='handleVolume(" + i + ");'>" + s_str.activate + "</span>";
+					}
+					if((0 == usbDeviceList[idx-1].enable) || ("Online" != usbDeviceList[idx-1].status))
+					{
+						/* USB not online */
+						action = "<span class='T T_not_vailable'>" + s_str.not_vailable + "</span>";/*Not available*/
+					}
+					var cell = row.insertCell(-1);
+					cell.innerHTML = action;
+				}
+			}
+			$.append($.id("usb_drawing"),"<p class=\"br\"></p>");
+		}
+	}
+}
+function doRefresh()
+{
+	$.addLoading($.id("refresh"), 200, function(){$.reload()});
+}
+</script>
+
+<p class="et T" id="et">USB Mass Storage</p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="L1 T" id="t_info">This page provides the basic information about the connected USB mass storage, to configure Storage Sharing/FTP/Media Server, please click the corresponding menu on the left side.</p>
+<p class="br"></p>
+<p class="L1"><b class="T nd" id="t_usb_con">USB Mass storage List:</b><b class="T nd" id="t_usb_discon">USB Mass storage Disconnected!</b></p>
+<p class="br"></p>
+<div id="usb_drawing">
+</div>
+</div>
+<p class="bl"></p>
+<p class="tail">
+<input type="button" id="refresh" class="button L T T_refresh " value="Refresh" onclick="doRefresh()" />
+</p>
+<p class="br"></p>
+<!-- <p><span class="T T_note">Note</span>:</p>
+<p>1. <span class="T" id="t_step1">Click the REFRESH button to detect your USB device. The Router will automatically activate the first two USB storage devices or up to eight volumes;</span></p>
+<p>2. <span class="T" id="t_step2">If you want to use other volumes in your storage device(s), please "Deactivate" some unused volumes and "Activate" the other desired volumes;</span></p>
+<p>3. <span class="T" id="t_step3">Click "Disconnect" button before unplugging your USB device to avoid data loss or damage to the device.</span></p>
+<p>4. <b class="T" id="t_dev">Supported USB Mass Storage:</b> <span class="T" id="t_devlist">hard disk, flash disk or memory card reader</span>;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<b class="T" id="t_fs">Supported File Type:</b> <span class="T" id="t_fslist">FAT32 and NTFS</span>;</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<b class="T" id="t_vol">Supported Volumes: </b> <span class="T" id="t_volcnt">Only two USB storage devices with up to eight volumes could be activated simultaneously, up to four USB storage devices with about eighteen volumes could be recognized.</span></p> -->
+</div>
+<script language="javascript" type="text/javascript">
+$.loadHelpFrame("UsbMassHelp.htm");
+init();
+/*$.timeout(doRefresh, 10000);*/
+</script>

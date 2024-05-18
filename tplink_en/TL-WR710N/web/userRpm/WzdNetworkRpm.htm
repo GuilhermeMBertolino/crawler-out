@@ -1,0 +1,304 @@
+
+<SCRIPT language="javascript" src="../dynaform/custom.js" type="text/JavaScript"></SCRIPT>
+<SCRIPT language="javascript" src="../dynaform/common.js" type="text/javascript"></SCRIPT>
+<SCRIPT language="javascript" type="text/javascript"><!--
+var cf = document.forms[0];
+
+function charCompareA(szname,en_limit,cn_limit)
+{
+	var c;
+	var ch = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+	if(szname.length > en_limit)
+		return false;
+	for (var i = 0; i < szname.length; i++)
+	{
+		c = szname.charAt(i);
+		if (ch.indexOf(c) == -1)
+		{
+			if(szname.length > cn_limit)
+			return false;
+		}
+	}
+	return true;
+}
+
+function doSubmit()
+{
+	var cf = document.forms[0];
+	if(document.forms[0].lanip.value=="") 
+	{
+		alert(js_pl_ip_addr="Please input IP address!");
+		return false;
+	}
+	if(!is_ipaddr(document.forms[0].lanip.value))
+	{
+		var element =document.forms[0].lanip;
+		if(element)
+		{
+			element.focus();element.select();
+		}
+		return false;
+	}
+	if(cf.lanmask.value == 3)
+	{
+		if(!is_maskaddr(document.forms[0].inputMask.value))
+		{
+			return false;
+		}
+	}
+	if(cf.chg_acnt[1].checked == true)
+	{
+		if(cf.oldname.value == "" || cf.oldpassword.value == "" || cf.newname.value == "" || cf.newpassword.value == "" || cf.newpassword2.value == "")
+		{
+			alert(js_req_field="The User Name or Password can't be none!");
+			return false;
+		}
+		if(!charCompare(cf.oldname.value,14,0) || !charCompare(cf.oldpassword.value,14,0) || !charCompare(cf.newpassword2.value,14,0) || !charCompare(cf.newname.value,14,0) || !charCompare(cf.newpassword.value,14,0))
+		{
+			alert(js_ill_input="The input value contain illegal character, please input another one!");
+			return false
+		}
+		if( !charCompareA(cf.newname.value,14,0) )
+		{
+			alert(js_illegal_input2="The input value contains illegal characters, please input another one! (The illegal character is the character except for alphabet, number, '-' and '_'.)");
+			var element = document.forms[0].newname;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		if( !charCompareA(cf.newpassword.value,14,0) )
+		{
+			alert(js_illegal_input2="The input value contains illegal characters, please input another one! (The illegal character is the character except for alphabet, number, '-' and '_'.)");
+			var element = document.forms[0].newpassword;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		if( !charCompareA(cf.newpassword2.value,14,0) )
+		{
+			alert(js_illegal_input2="The input value contains illegal characters, please input another one! (The illegal character is the character except for alphabet, number, '-' and '_'.)");
+			var element = document.forms[0].newpassword2;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		if(document.forms[0].newpassword2.value != document.forms[0].newpassword.value)
+		{
+			alert(js_bad_conf_pwd="The confirm password must accord with the new password!");
+			var element = document.forms[0].newpassword2;
+			if(element)
+			{
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+	}
+	return true;
+}
+
+function doOnchange(value)
+{
+    if(3==value)
+    {
+        document.getElementById("inputMask").style.display="";
+    }   
+    else
+    {
+        document.getElementById("inputMask").style.display="none";
+    }
+}
+
+function doBack()
+{
+	if (window.parent == window)
+	{
+		window.close();
+	}
+	else
+	{
+		parent.bottomLeftFrame.collapseAll();
+		parent.mainFrame.location.href = "/userRpm/WzdNetworkRpm.htm?Return=Return";
+	}
+}
+
+function doChangeLogin(num)
+{
+	//set value on web_server
+	if(num == 0)
+	{
+		document.getElementById("t_acnt_dis").style.display = "none";
+	}
+	else
+	{
+		document.getElementById("t_acnt_dis").style.display = "";
+	}
+}
+//--></SCRIPT>
+</HEAD>
+<BODY onLoad="setTagStr(document,'ntw_wzd_lan');LoadHelp('WzdNetworkHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<CENTER>
+<FORM action="WzdNetworkRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth" border=0>
+<TBODY>
+	<TR id="t_progressbar">
+		<TD><TABLE><TR>	
+			<SCRIPT type="text/javascript">
+				if(sysModePara[0] == 1)//multiSysMode)
+				{
+					document.write('<TD class="h4" id="t_title">Working Mode</TD>');
+				}
+			</SCRIPT>
+			<TD class="h4" id="t_title">Operation Mode</TD>
+			<TD class="h4" id="t_title">Wireless Setting</TD>
+			<TD class="h5" id="t_title">Network Setting</TD>
+			<TD class="h4" id="t_title">Finish</TD>
+		</TR></TABLE></TD>	
+	</TR>
+	
+	<TR>
+	<TD colspan=4>
+	<TABLE>
+		<TR>
+			<TD class=blue colspan=4></TD>
+		</TR>
+		<TR>
+			<TD class=Item style="padding-left:60px;" id =" t_dhcp_srv">DHCP Server:</TD>
+			<TD colspan=3><INPUT name="dhcpserver" type="radio" value="0">
+			<SPAN id =" t_disable">Disable </SPAN>
+			<INPUT name="dhcpserver" type="radio" value="1">
+			<SPAN id =" t_enable">Enable</SPAN></TD>
+		</TR>
+		<TR id="t_warn">
+			<TD class="Item" style="padding-left:60px" disabled></TD>
+			<TD id="t_warnNote" style="COLOR: gray;" colspan=3 disabled>In most of the cases your root AP/router has enabled DHCP server function, 
+				<br>we highly recommended that you disable DHCP server fucntion on this device <br>to void any unpredictable problems.<br></TD>
+		</TR>
+
+		<TR>
+		  <TD colspan=4>&nbsp;</TD>
+		</TR>
+
+		<TR>
+		  <TD class=Item style="padding-left:60px;" id="t_ip">IP Address:</TD>
+		  <TD colspan=3><INPUT name="lanip" type="text" class="text" id="lanip" value="192.168.0.254" size="15" maxlength="15"></TD>
+		</TR>
+		<TR>
+			<TD class=Item style="padding-left:60px;" id="t_mask">Subnet Mask:</TD>
+
+			<TD colspan=3><SELECT name="lanmask" id="lanmask" onChange="doOnchange(this.value)">
+				<OPTION value="0">255.0.0.0</OPTION>
+				<OPTION value="1">255.255.0.0</OPTION>
+				<OPTION value="2">255.255.255.0</OPTION>
+				<OPTION value="3" id="t_other_mask">Other Mask</OPTION>
+				</SELECT>&nbsp;&nbsp;&nbsp;
+				<INPUT name="inputMask" id="inputMask" type="text" class="text" value="255.255.255.0" size="15" maxlength="15"></TD>
+
+		</TR>
+		<TR id="t_warn">
+			<TD class="Item" style="padding-left:60px" disabled></TD>
+			<TD colspan=3 id="t_warnNote" style="COLOR: gray;" disabled>We recommend you configure this AP with the same IP subnet and subnet <br>mask, but different IP address from your root AP/Router.</TD>
+		</TR>
+		<TR>
+		  <TD colspan=4>&nbsp;</TD>
+		</TR>
+
+		<TR>
+		  <TD class=Item style="padding-left:45px;" id="t_chg_account">Change the login account:</TD>
+		  <TD colspan=3>
+		    <INPUT name="chg_acnt" type="radio" value=0 id="chg_acnt" onclick="doChangeLogin(0);">NO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    <INPUT name="chg_acnt" type="radio" value=1 id="chg_acnt" onclick="doChangeLogin(1);">YES</TD>
+		</TR>
+		<TR id="t_acnt_dis" style="display:none;">
+		<TD colspan=4>
+		<TABLE>
+			<TR>
+				<TD class=Item></TD>
+				<TD><SPAN id="t_username_tips" style="color:#FF0000">
+					The username and password must not exceed 14 characters in length <br>and must not include any spaces!</SPAN>
+				</TD>
+			<TR>
+
+			<TR>
+				<TD class=Item style="padding-left:100px;" id ="t_old_user_name">Old User Name:</TD>
+				<TD colspan=3><INPUT class="text" maxlength="14" size="15" value="" name="oldname" id="oldname"></TD>
+			</TR>
+			<TR>
+				<TD class=Item id ="t_old_pwd">Old Password:</TD>
+				<TD colspan=3><INPUT class="text" type="password" maxlength="14" size="15" name="oldpassword" id="oldpassword"></TD>
+			</TR>
+
+			<TR>
+			<TD colspan=4></TD>
+			</TR>
+			<TR>
+				<TD class=Item id ="t_new_user_name">New User Name:</TD>
+				<TD colspan=3><INPUT class="text" maxlength="14" size="15" name="newname" id="newname"></TD>
+			</TR>
+			<TR>
+				<TD class=Item id ="t_new_pwd">New Password:</TD>
+				<TD colspan=3><INPUT class="text" type="password" maxlength="14" size="15" name="newpassword" id="newpassword"></TD>
+			</TR>
+			<TR>
+				<TD class=Item id ="t_conf_new_pwd">Confirm New Password:</TD>
+				<TD colspan=3><INPUT class="text" type="password" maxlength="14" size="15" name="newpassword2" id="newpassword2"></TD>
+			</TR>
+		</TABLE>
+
+		</TD>
+		</TR>
+		<TR>
+			<TD class=blue colspan=4></TD>
+		</TR>
+		<TR>
+			<TD></TD>
+			<TD colspan=3 >
+				<INPUT name="Return" type="button" class="buttonBig" id="Return" value="Back" onclick="return doBack();">
+				&nbsp; &nbsp;&nbsp;&nbsp;
+				<INPUT name="Next" type="Submit" class="buttonBig" id="Next"  value="Next">
+			</TD>
+		</TR>
+	</TABLE>
+	</TD>
+	</TR>
+</TBODY>
+</TABLE>
+</FORM>
+</CENTER>
+
+</BODY>
+<HEAD>
+<META http-equiv="pragma" content="no-cache">
+</HEAD>
+</HTML>
+<SCRIPT type="text/javascript">
+var cf = document.forms[0];
+if(wzdLanPara[0] == 1)
+{
+	cf.dhcpserver[1].checked = true;//enable
+}
+else
+{
+	cf.dhcpserver[0].checked = true;//disable
+}
+
+cf.lanip.value 	= wzdLanPara[1];
+cf.lanmask.value = wzdLanPara[2];
+if(wzdLanPara[3] == 3)
+{
+	cf.inputMask.value = wzdLanPara[3];
+}
+doOnchange(cf.lanmask.value);
+
+cf.chg_acnt[0].checked = true;
+doChangeLogin(cf.chg_acnt[1].checked);
+</SCRIPT>

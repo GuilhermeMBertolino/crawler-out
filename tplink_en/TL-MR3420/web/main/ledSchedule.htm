@@ -1,0 +1,67 @@
+<h3 id='t_led'>LED</h3>
+<form class='pure-form pure-form-aligned'>
+    <div>
+        <b id='t_nightMode'>Night Mode:</b>
+        <input type="checkbox" id='enableNightMode' />
+        <label id='t_en'>Enable Night Mode</label>
+    </div>
+    <div>
+        <b id='t_nightModePreiod'>Night Mode Period:</b>
+        <select id="startHour" class='xs inline'>
+        </select>
+        <b class='time-separater'>:</b>
+        <select id="startMinute" class='xs inline'></select>
+        <b class='time-separater' id="t_to">to</b>
+        <select id="endHour" class='xs inline'></select>
+        <b class='time-separater'>:</b>
+        <select id="endMinute" class='xs inline'></select>
+        <span id='t_nightModeTips' style='position:relative;left:20px;'>(HH:MM)</span>
+    </div>
+    <div class="part-separate" id="t_note"></div>
+    <div class="part-separate"></div>
+    <button type="submit" class="green T_save" id="save">Save</button>
+</form>
+<script>
+function init() {
+    var hourOptStr = '';
+    var minuteOptStr = '';
+    for (var i = 0; i < 24; i++) {
+        hourOptStr += "<option value='" + (i) + "'>" + i + "</option>";
+    }
+    for (var i = 0; i < 60; i++) {
+        minuteOptStr += "<option value='" + i + "'>" + i + "</option>";
+    }
+    $('#startHour').append(hourOptStr);
+    $('#startMinute').append(minuteOptStr);
+    $('#endHour').append(hourOptStr);
+    $('#endMinute').append(minuteOptStr);
+
+    var ledObj = $.act(ACT_GET, LED_SCHEDULE_CFG, null);
+    $.exe();
+    $('#enableNightMode').prop('checked', ledObj.enable == 1 ? true : false);
+    $('#startHour').find("option[value='" + parseInt(ledObj.startTime / 60) + "']").prop('selected', true);
+    $('#startMinute').find("option[value='" + parseInt(ledObj.startTime % 60) + "']").prop('selected', true);
+    $('#endHour').find("option[value='" + parseInt(ledObj.endTime / 60) + "']").prop('selected', true);
+    $('#endMinute').find("option[value='" + parseInt(ledObj.endTime % 60) + "']").prop('selected', true);
+
+}
+$('#save').click(function(e) {
+    $.addLoading();
+    var ledObj = {
+        enable: $('#enableNightMode').prop('checked') ? 1 : 0,
+        startTime: parseInt($('#startHour').data('value')) * 60 + parseInt($('#startMinute').data('value')),
+        endTime: parseInt($('#endHour').data('value')) * 60 + parseInt($('#endMinute').data('value'))
+    };
+	if(ledObj.startTime == ledObj.endTime)
+	{
+		$.alert(ERR_LED_SCHEDULE_TIME_INVAD);
+		return;
+	}
+    $.act(ACT_SET, LED_SCHEDULE_CFG, null, null, ledObj);
+    $.exe(function(err) {
+        $.removeLoading();
+        $.reload();
+    });
+});
+$.tpInit(init);
+</script>

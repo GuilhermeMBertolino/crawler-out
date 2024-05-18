@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/bcmenet/bcmenet_rtl8367s.sh
+
+config_load sysmode
+config_get mode sysmode mode
+
+if [ $mode = "ap" ] ; then
+	#echo 0x0f01 0x0 > /tmp/phypower_control
+	bcm_6750_port_power_down 1
+else
+	#echo 0x0f00 0x0 > /tmp/phypower_control
+	bcm_6750_port_power_down 0
+fi

@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>DMZ</title>
+</head>
+<body>
+	<div class="func-container">
+		<div id="dmz_setting">
+			<form id="dmz_enable_setting" class="natSeries">
+				<input type="text"  id="dmz_enable" name="enable" value="" />
+				<input type="text"  id="dmz_ipaddr" name="ipaddr" value="" />
+				<br/>
+				<span id="nat_notice" class="hidden"></span>				
+				<p class="note hidden" id="note_openvpn_title">
+					<span class="title note-title">Note:</span>
+					<span id="openvpn_note"></span>
+				</p>
+				<p class="note hidden" id="note_pptpvpn_title">
+					<span class="title note-title">Note:</span>
+					<span id="pptpvpn_note"></span>
+				</p>
+			</form>
+		</div>
+		<div id="dmz_alert_cnt">
+			<h4 class="title">
+		    	<span class="icon"></span>
+		 		<span class="text" id="dmz_confirm_content"></span>
+		 	</h4>
+		</div> 
+		<div id="dmz_help"></div>
+	</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}$(document).ready(function(h){var p=$.su.url("/admin/nat?form=dmz");var c=$.su.url("/admin/openvpn?form=config");var b=$.su.url("/admin/pptpd?form=config");var l=$.su.url("/admin/administration?form=remote");var f=new $.su.Proxy({url:l});$("#dmz_alert_cnt").msg({cls:"m warning",type:"alert"});$("#dmz_confirm_content").html($.su.CHAR.DMZ.NOTICE);var a="on";f.read({},function(q){a=q.enable});$("div.func-container").page({title:$.su.CHAR.DMZ.TITLE,help:""});$("div#dmz_setting").panel({title:$.su.CHAR.DMZ.TITLE,collapsible:false});$("span#nat_notice").html($.su.CHAR.DMZ.NAT_ENABLE_NOTICE);$("span#openvpn_note").html($.su.CHAR.DMZ.OPENVPN_CONFLICT_NOTICE);$("span#pptpvpn_note").html($.su.CHAR.DMZ.PPTPVPN_CONFLICT_NOTICE);$("input#dmz_enable").checkbox({fieldLabel:$.su.CHAR.DMZ.TITLE,items:[{boxlabel:$.su.CHAR.DMZ.ENABLE_DMZ,inputValue:"on",uncheckedValue:"off"}]}).on("ev_change",function(s,q,r){var t=(r[0]=="enable"||r[0]=="on")?"on":"off";switch(t){case"on":$("input#dmz_ipaddr").textbox("enable");break;case"off":$("input#dmz_ipaddr").textbox("disable");break}});$("input#dmz_ipaddr").textbox({fieldLabel:$.su.CHAR.DMZ.HARDWARESTATUS,vtype:"ip",textFormat:$.su.format.ip,allowBlank:false,vtypeText:$.su.CHAR.DMZ.IPERROR});var d=0;var o=0;var g=new $.su.Proxy({url:$.su.url("/admin/network?form=lan_ipv4")});g.read({},function(q){d=q.ipaddr;o=q.mask_type.toUpperCase()=="CUSTOM"?q.custom_value:q.mask_type});var n=new $.su.Proxy({url:p});var j=new $.su.Proxy({url:c});var i=new $.su.Proxy({url:b});$("form#dmz_enable_setting").form({proxy:n,fields:[{name:"enable",mapping:"enable"},{name:"ipaddr",mapping:"ipaddr"}],validator:function(){if($("input#dmz_enable").checkbox("getValue")[0]=="enable"){if(a!="off"){$("#dmz_alert_cnt").msg("show");return false}if(!$.su.func.isSameNet($("#dmz_ipaddr").textbox("getValue"),d,o)){$("#dmz_ipaddr").textbox("setError");$("form#dmz_enable_setting").form("setError",$.su.CHAR.ERROR["00000110"]);return false}if($("#dmz_ipaddr").textbox("getValue")==$.su.func.getLimitIp(d,o,"min")){$("#dmz_ipaddr").textbox("setError");$("form#dmz_enable_setting").form("setError",$.su.CHAR.ERROR["00000133"]);return false}if($("#dmz_ipaddr").textbox("getValue")==$.su.func.getLimitIp(d,o,"max")){$("#dmz_ipaddr").textbox("setError");$("form#dmz_enable_setting").form("setError",$.su.CHAR.ERROR["00000133"]);return false}if($("#dmz_ipaddr").textbox("getValue")==d){$("#dmz_ipaddr").textbox("setError");$("form#dmz_enable_setting").form("setError",$.su.CHAR.ERROR["00000077"]);return false}}return true},submitBtn:"default"});var k=new $.su.Proxy({url:$.su.url("/admin/nat?form=setting")});k.read({},function(q){if(q.enable=="off"){$("span#nat_notice").show()}else{$("span#nat_notice").hide()}});j.read({},function(q){if(q.enabled=="on"){$("form#dmz_enable_setting").form("disable");$("#note_openvpn_title").show()}});i.read({},function(q){if(q.enabled=="on"){$("form#dmz_enable_setting").form("disable");$("#note_pptpvpn_title").show()}});$("#dmz_enable_setting").on("click","a#go-to-openvpn",function(){$.su.menu.advanced.goTo("openvpn")});$("#dmz_enable_setting").on("click","a#go-to-pptpvpn",function(){$.su.menu.advanced.goTo("pptpvpn")});var m=new $.su.Help({container:"div#dmz_help",content:"DMZ"})});</script>
+</body>
+</html>

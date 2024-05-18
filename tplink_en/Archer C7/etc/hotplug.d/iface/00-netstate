@@ -1,0 +1,32 @@
+set_wan_ifname()
+{
+	. /lib/functions.sh
+	local iptv_enable iptv_mode
+	config_load network
+	config_get wantype  wan wan_type
+	config_get wanproto wan proto
+		
+	##when in pppoe sec is none & iptv bridge mode then set network.wan.ifname=br-wan to fix bug217352
+ 
+	if [ "$wantype" = "pppoe" -a "$wanproto" = "none" ] ; then
+		config_load iptv
+		config_get iptv_enable iptv enable
+		config_get iptv_mode iptv mode
+		if [ "$iptv_mode" = "Bridge" -a  "$iptv_enable" = "on" ] ;then
+			uci_toggle_state network wan ifname "br-wan" 
+		fi
+	fi
+
+}
+
+
+[ ifup = "$ACTION" ] && {
+	uci_toggle_state network "$INTERFACE" connect_time $(sed -ne 's![^0-9].*$!!p' /proc/uptime)
+	[ -n "$DEVICE" ] && {
+		uci_toggle_state network "$INTERFACE" device "$(uci -q get network.$INTERFACE.ifname)"
+		uci_toggle_state network "$INTERFACE" ifname "$DEVICE"
+		set_wan_ifname
+
+	}
+	uci_toggle_state network "$INTERFACE" up 1
+}

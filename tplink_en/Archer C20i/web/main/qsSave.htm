@@ -1,0 +1,384 @@
+﻿<script language="javascript" type="text/javascript">
+function doTrans() {
+	if (!INCLUDE_WAN_MODE || $.qd.sysMode == "DSL"){
+		$.qd.dsl.vpi = parseInt($.qd.dsl.vpi, 10);
+		$.qd.dsl.vci = parseInt($.qd.dsl.vci, 10);
+	}
+	
+	if ($.qd.type == "staip") {
+		$.qd.staip.ip = $.num2ip($.ip2num($.qd.staip.ip));
+		$.qd.staip.mask = $.num2ip($.ip2num($.qd.staip.mask));
+		$.qd.staip.gw = $.num2ip($.ip2num($.qd.staip.gw));
+		$.qd.staip.dns = $.qd.staip.dns ? $.num2ip($.ip2num($.qd.staip.dns)) : "0.0.0.0";
+		$.qd.staip.dns2 = $.qd.staip.dns2 ? $.num2ip($.ip2num($.qd.staip.dns2)) : "0.0.0.0";
+	}
+	
+	if ($.qd.type == "ipoa") {
+		$.qd.ipoa.ip = $.num2ip($.ip2num($.qd.ipoa.ip));
+		$.qd.ipoa.mask = $.num2ip($.ip2num($.qd.ipoa.mask));
+		$.qd.ipoa.gw = $.num2ip($.ip2num($.qd.ipoa.gw));
+		$.qd.ipoa.dns = $.qd.ipoa.dns ? $.num2ip($.ip2num($.qd.ipoa.dns)) : "0.0.0.0";
+		$.qd.ipoa.dns2 = $.qd.ipoa.dns2 ? $.num2ip($.ip2num($.qd.ipoa.dns2)) : "0.0.0.0";
+	}
+	
+	if ($.qd.type == "l2tp" && $.qd.l2tp.addrtype == "Static") {
+		$.qd.l2tp.ip = $.num2ip($.ip2num($.qd.l2tp.ip));
+		$.qd.l2tp.mask = $.num2ip($.ip2num($.qd.l2tp.mask));
+		$.qd.l2tp.gw = $.num2ip($.ip2num($.qd.l2tp.gw));
+		$.qd.l2tp.dns = $.qd.l2tp.dns ? $.num2ip($.ip2num($.qd.l2tp.dns)) : "0.0.0.0";
+		$.qd.l2tp.dns2 = $.qd.l2tp.dns2 ? $.num2ip($.ip2num($.qd.l2tp.dns2)) : "0.0.0.0";
+	}
+	
+	if ($.qd.type == "pptp" && $.qd.pptp.addrtype == "Static") {
+		$.qd.pptp.ip = $.num2ip($.ip2num($.qd.pptp.ip));
+		$.qd.pptp.mask = $.num2ip($.ip2num($.qd.pptp.mask));
+		$.qd.pptp.gw = $.num2ip($.ip2num($.qd.pptp.gw));
+		$.qd.pptp.dns = $.qd.pptp.dns ? $.num2ip($.ip2num($.qd.pptp.dns)) : "0.0.0.0";
+		$.qd.pptp.dns2 = $.qd.pptp.dns2 ? $.num2ip($.ip2num($.qd.pptp.dns2)) : "0.0.0.0";
+	}
+	
+	if ((!INCLUDE_WAN_MODE || $.qd.sysMode == "DSL") && $.qd.iptv && $.qd.iptv.en) {
+		$.qd.iptv.vpi = parseInt($.qd.iptv.vpi, 10);
+		$.qd.iptv.vci = parseInt($.qd.iptv.vci, 10);
+	}
+}
+</script>
+<p class="et T" id="et">Quick Setup - Confirm</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="T" id="t_info">The Quick Setup is completed. Please confirm all the parameters below. Click BACK button to modify or click SAVE button to save your configuration.</p>
+<p class="br"></p>
+<p class="T" id="t_summary">Parameters Summary:</p>
+<p class="L2 nd" id="t_pvc"><b class="item">DSL PVC:</b><span id="pvc"></span></p>
+<p class="L2" id="t_type"><b class="item T T_conntype">Connection Type:</b><span id="type"></span></p>
+<div id="con_ppp" class="nd">
+<p class="L2"><b class="item T T_username">Username:</b><span id="usr"></span></p>
+<p class="L2"><b class="item T T_passwd">Password:</b><span id="pwd"></span></p>
+<p class="L2"><b class="item T T_secondConn">Secondary Connection:</b><span id="secondConn"></span></p>
+<p class="L2 nd" id="secip"><b class="item T T_ipaddr">IP Address:</b><span id="secondip"></span></p>
+<p class="L2 nd" id="secmask"><b class="item T T_netmask">Subnet Mask:</b><span id="secondmask"></span></p>
+</div>
+<div id="con_staip" class="nd">
+<p class="L2"><b class="item T T_ipaddr">IP Address:</b><span id="ip"></span></p>
+<p class="L2"><b class="item T T_netmask">Subnet Mask:</b><span id="mask"></span></p>
+<p class="L2"><b class="item T T_gateway">Gateway:</b><span id="gw"></span></p>
+<p class="L2"><b class="item T T_dns">DNS Server:</b><span id="dns"></span></p>
+</div>
+<div id="con_l2tp" class="nd">
+<p class="L2"><b class="item T T_username">Username:</b><span id="usr_l2tp"></span></p>
+<p class="L2"><b class="item T T_passwd">Password:</b><span id="pwd_l2tp"></span></p>
+<p class="L2"><b class="item T T_addrType">Addressing Type:</b><span id="addrtype_l2tp"></span></p>
+<p class="L2"><b class="item T T_servipname">Server IP Address/Name:</b><span id="serv_l2tp"></span></p>
+<div id="con_sta_l2tp" class="nd">
+<p class="L2"><b class="item T T_ipaddr">IP Address:</b><span id="ip_l2tp"></span></p>
+<p class="L2"><b class="item T T_netmask">Subnet Mask:</b><span id="mask_l2tp"></span></p>
+<p class="L2"><b class="item T T_gateway">Gateway:</b><span id="gw_l2tp"></span></p>
+<p class="L2"><b class="item T T_dns">DNS Server:</b><span id="dns_l2tp"></span></p>
+</div>
+</div>
+<div id="con_pptp" class="nd">
+<p class="L2"><b class="item T T_username">Username:</b><span id="usr_pptp"></span></p>
+<p class="L2"><b class="item T T_passwd">Password:</b><span id="pwd_pptp"></span></p>
+<p class="L2"><b class="item T T_addrType">Addressing Type:</b><span id="addrtype_pptp"></span></p>
+<p class="L2"><b class="item T T_servipname">Server IP Address/Name:</b><span id="serv_pptp"></span></p>
+<div id="con_sta_pptp" class="nd">
+<p class="L2"><b class="item T T_ipaddr">IP Address:</b><span id="ip_pptp"></span></p>
+<p class="L2"><b class="item T T_netmask">Subnet Mask:</b><span id="mask_pptp"></span></p>
+<p class="L2"><b class="item T T_gateway">Gateway:</b><span id="gw_pptp"></span></p>
+<p class="L2"><b class="item T T_dns">DNS Server:</b><span id="dns_pptp"></span></p>
+</div>
+</div>
+<p class="br nd" id="br_3g"></p>
+<p class="L2 nd" id="qssave_3g_backup"><b class="item">3G Backup:</b><span id="backup_3g"></span></p>
+<div id="con_3g" class="nd">
+<p class="L2"><b class="item">Location:</b><span id="location"></span></p>
+<p class="L2"><b class="item">ISP:</b><span id="isp"></span></p>
+<p class="L2"><b class="item">Authentication Type:</b><span id="auth_type"></span></p>
+<p class="L2"><b class="item">Dial Number:</b><span id="dial_num"></span></p>
+<p class="L2"><b class="item">APN:</b><span id="apn"></span></p>
+<p class="L2"><b class="item">PPP3G Username:</b><span id="username"></span></p>
+<p class="L2"><b class="item">PPP3G passwd:</b><span id="passwd"></span></p>
+</div>
+<p class="br"></p>
+<div id="func_wl" class="nd">
+<p class="L2" id="wlname"><b class="item T T_wl" id="wireless">Wireless:</b><span id="wlen"></span></p>
+<p class="L2" id="wlname2g"><b class="item T T_wl2g" id="wireless_2g">Wireless 2.4GHz:</b><span id="wlen_2g"></span></p>
+<div id="con_wl" class="nd">
+<p class="L2"><b class="item"><span class="T T_wlname">Wireless Network Name</span>(SSID):</b><span id="ssid"></span></p>
+<p class="L2"><b class="item T T_channel">Channel:</b><span id="chnn"></span></p>
+<p class="L2"><b class="item T T_mode">Mode:</b><span id="mode"></span></p>
+<p class="L2"><b class="item T T_chnwidth">Channel Width:</b><span id="bandWidth"></span></p>
+<p class="L2"><b class="item T T_wlsec">Security:</b><span id="sec"></span></p>
+<p class="L2 nd" id="con_sec"><b class="item T T_wlpwd">Password:</b><span id="wlpwd"></span></p>
+</div>
+<p class="br"></p>
+</div>
+<div id="func_wl5g" class="nd">
+<p class="L2"><b class="item T T_wl5g">Wireless 5GHz:</b><span id="wlen5g"></span></p>
+<div id="con_wl5g" class="nd">
+<p class="L2"><b class="item"><span class="T T_wlname">Wireless Network Name</span>(SSID):</b><span id="ssid5g"></span></p>
+<p class="L2"><b class="item T T_channel">Channel:</b><span id="chnn5g"></span></p>
+<p class="L2"><b class="item T T_mode">Mode:</b><span id="mode5g"></span></p>
+<p class="L2"><b class="item T T_chnwidth">Channel Width:</b><span id="bandWidth5g"></span></p>
+<p class="L2"><b class="item T T_wlsec">Security:</b><span id="sec5g"></span></p>
+<p class="L2 nd" id="con_sec5g"><b class="item T T_wlpwd">Password:</b><span id="wlpwd5g"></span></p>
+</div>
+<p class="br"></p>
+</div>
+<div id="func_iptv" class="nd">
+<p class="L2"><b class="item">IPTV Function:</b><span id="iptven"></span></p>
+<div id="con_iptv" class="nd">
+<p class="L2"><b class="item">iTV Port:</b><span id="iptvport"></span></p>
+<p class="L2"><b class="item">IPTV PVC:</b><span id="iptvpvc"></span></p>
+</div>
+<p class="br"></p>
+</div>
+
+<div id="func_voip" class="nd">
+<p class="L2"><b class="item T">Voice Function:</b><span id="voice_en"></span></p>
+<div id="con_voiceAcc" class="nd">
+<p class="L2"><b class="item T">Phone Number:</b><span id="voice_extension"></span></p>
+<p class="L2"><b class="item T">Registrar:</b><span id="voice_registrar"></span></p>
+</div>
+<p class="br"></p>
+</div>
+
+<p id="del_warn" class="nd"><i class="T" id="t_note">Note: Some connection will be deleted:</i> <i id="delname"></i></p>
+</div>
+<p class="bl"></p>
+<p class="tail ctr">
+<input type="button" class="button L T T_back" value="Back" onclick="$.qf.prev();" />
+<input type="button" class="button L T T_save" value="Save" onclick="$.qf.next();" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+(function(){
+	$.loadHelpFrame("WzdConfirmHelpRpm.htm");
+	if (!$.mainParam) return $.loadMain("qsStart.htm");
+	if (INCLUDE_LAN_WLAN_DUALBAND)
+	{
+		$.addClass($.id("wlname"), "nd");
+	}
+	else
+	{
+		$.addClass($.id("wlname2g"), "nd");
+	}
+	doTrans();
+	if (!INCLUDE_WAN_MODE || $.qd.sysMode == "DSL"){
+		$.h($.id("pvc"), (INCLUDE_AUTO_PVC && $.qd.dsl.auto) ? "<span class='T T_auto'>"+m_str.auto+"</span>" : $.qd.dsl.vpi + "/" + $.qd.dsl.vci);
+		$.removeClass($.id("t_pvc"), "nd");
+	}
+	if($.qd.type)
+	{
+	$.h($.id("type"), $.qd.type == "ppp" && "PPPoE" || $.qd.type == "br" && "<span class='T T_bridge'>"+s_str.bridge+"</span>" || $.qd.type == "dhcp" && "<span class='T T_dynip'>"+s_str.dynip+"</span>" || $.qd.type == "staip" && "<span class='T T_staip'>"+s_str.staip+"</span>" || $.qd.type == "pppoa" && "PPPoA" || $.qd.type == "ipoa" && "IPoA" || $.qd.type == "l2tp" && "L2TP" || $.qd.type == "pptp" && "PPTP" || "error");
+	}
+	else
+	{
+		$.addClass($.id("t_type"),"nd");
+	}
+	
+	if ($.qd.sysMode != "USB_3G"){
+		if ($.qd.type == "ppp" || $.qd.type == "pppoa") {
+			$.h($.id("usr"), $.qd[$.qd.type].usr.replace(/\&/g, "&amp;").replace(/</g, "&lt;"));
+			for (var i = 0, l = $.qd[$.qd.type].pwd.length, pwd = ""; i < l; i++, pwd += "*");
+			$.h($.id("pwd"), pwd);
+			if ($.qd[$.qd.type].secondConnection == "sec_conn_staip") {
+				/*$.h($.id("secondConn"), "<span class='T T_staip'>"+s_str.staip+"</span>");
+				$.removeClass($.id("secip"), "nd");
+				$.removeClass($.id("secmask"), "nd");
+				$.h($.id("secondip"), $.qd[$.qd.type].externalIPAddress);
+				$.h($.id("secondmask"), $.qd[$.qd.type].subnetMask);*/
+				/* PPPoE SecondConnection patch for IGMP issue, yuanshang, 2015-5-27 */
+				if ($.qd[$.qd.type].externalIPAddress.substring(0,4) != "169.")
+				{
+					$.h($.id("secondConn"), "<span class='T T_staip'>"+s_str.staip+"</span>");
+					$.removeClass($.id("secip"), "nd");
+					$.removeClass($.id("secmask"), "nd");
+					$.h($.id("secondip"), $.qd[$.qd.type].externalIPAddress);
+					$.h($.id("secondmask"), $.qd[$.qd.type].subnetMask);
+				}
+				else
+				{
+					$.h($.id("secondConn"), "<span class=''T T_disabled'>"+m_str.disabled+"</span>");
+				}
+			}
+			else if ($.qd[$.qd.type].secondConnection == "sec_conn_dynip")
+				$.h($.id("secondConn"), "<span class='T T_dynip'>"+s_str.dynip+"</span>");
+			else 
+				$.h($.id("secondConn"), "<span class=''T T_disabled'>"+m_str.disabled+"</span>");
+			$.removeClass($.id("con_ppp"), "nd");
+		}
+		else if ($.qd.type == "staip" || $.qd.type == "ipoa") {
+			$.h($.id("ip"), $.qd[$.qd.type].ip);
+			$.h($.id("mask"), $.qd[$.qd.type].mask);
+			$.h($.id("gw"), $.qd[$.qd.type].gw);
+			$.h($.id("dns"), $.qd[$.qd.type].dns + "," + $.qd[$.qd.type].dns2);
+			$.removeClass($.id("con_staip"), "nd");
+		}
+		else if ($.qd.type == "l2tp") {
+			$.h($.id("usr_l2tp"), $.qd[$.qd.type].usr.replace(/\&/g, "&amp;").replace(/</g, "&lt;"));
+			for (var i = 0, l = $.qd[$.qd.type].pwd.length, pwd = ""; i < l; i++, pwd += "*");
+			$.h($.id("pwd_l2tp"), pwd);
+			$.h($.id("addrtype_l2tp"), $.qd.l2tp.addrtype);
+			$.h($.id("serv_l2tp"), $.qd.l2tp.server);
+			$.removeClass($.id("con_l2tp"), "nd");
+			if($.qd.l2tp.addrtype == "Static")
+			{
+				$.h($.id("ip_l2tp"), $.qd[$.qd.type].ip);
+				$.h($.id("mask_l2tp"), $.qd[$.qd.type].mask);
+				$.h($.id("gw_l2tp"), $.qd[$.qd.type].gw);
+				$.h($.id("dns_l2tp"), $.qd[$.qd.type].dns + "," + $.qd[$.qd.type].dns2);
+				$.removeClass($.id("con_sta_l2tp"), "nd");
+			}
+		}
+		else if ($.qd.type == "pptp") {
+			$.h($.id("usr_pptp"), $.qd[$.qd.type].usr.replace(/\&/g, "&amp;").replace(/</g, "&lt;"));
+			for (var i = 0, l = $.qd[$.qd.type].pwd.length, pwd = ""; i < l; i++, pwd += "*");
+			$.h($.id("pwd_pptp"), pwd);
+			$.h($.id("addrtype_pptp"), $.qd.pptp.addrtype);
+			$.h($.id("serv_pptp"), $.qd.pptp.server);
+			$.removeClass($.id("con_pptp"), "nd");
+			if($.qd.pptp.addrtype == "Static")
+			{
+				$.h($.id("ip_pptp"), $.qd[$.qd.type].ip);
+				$.h($.id("mask_pptp"), $.qd[$.qd.type].mask);
+				$.h($.id("gw_pptp"), $.qd[$.qd.type].gw);
+				$.h($.id("dns_pptp"), $.qd[$.qd.type].dns + "," + $.qd[$.qd.type].dns2);
+				$.removeClass($.id("con_sta_pptp"), "nd");
+			}
+		}
+	}
+	
+	if (INCLUDE_USB_3G_DONGLE)
+	{
+		$.h($.id("backup_3g"), $.qd.usb3g.enable == 1 && "Enabled" || "Disabled");
+
+		for (tag in w3gisp_js)
+		{
+			var locIndex = parseInt(tag.substring(8,16));
+			if ($.qd.usb3g.locationIdx == locIndex)
+			{
+				$.h($.id("location"), w3gisp_js[tag]["location_name"]);
+				break;
+			}
+		}
+
+		var ispIndex = 0;
+		var locationNum = "location" + $.qd.usb3g.locationIdx;
+		for (tag in w3gisp_js[locationNum])
+		{
+			if (w3gisp_js[locationNum][tag]["isp_name"] == undefined)
+			{
+				continue;
+			}
+			if ($.qd.usb3g.ispIdx == ispIndex)
+			{
+				$.h($.id("isp"), w3gisp_js[locationNum][tag]["isp_name"]);
+				break;
+			}
+			ispIndex++;
+		}
+		$.h($.id("auth_type"), $.qd.usb3g.auth);
+		$.h($.id("dial_num"), $.qd.usb3g.dial_num.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, '&gt;'));
+		$.h($.id("apn"), $.qd.usb3g.apn.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, '&gt;'));
+		$.h($.id("username"), $.qd.usb3g.username.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, '&gt;'));
+		$.h($.id("passwd"), $.qd.usb3g.password.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, '&gt;'));
+
+		if ($.qd.sysMode == "USB_3G")
+		{
+			$.h($.id("type"), "PPP3G");
+			$.addClass($.id("qssave_3g_backup"), "nd");
+			$.removeClass($.id("con_3g"), "nd");
+		}
+		else
+		{
+			$.removeClass($.id("br_3g"), "nd");
+			$.removeClass($.id("qssave_3g_backup"), "nd");
+			if($.qd.usb3g.enable == 1)
+				$.removeClass($.id("con_3g"), "nd");
+			else
+				$.addClass($.id("con_3g"), "nd")					
+		}
+		
+		if (($.qd.usb3g.username == "") && ($.qd.usb3g.password == ""))
+		{
+			$.addClass($.id("username"), "nd");
+			$.addClass($.id("passwd"), "nd");
+			$.addClass($.id("qssave_3g_username"), "nd");
+			$.addClass($.id("qssave_3g_passwd"), "nd");
+		}
+	}
+	
+	if ($.qd.wl) {
+		$.removeClass($.id("func_wl"), "nd");
+		if (INCLUDE_LAN_WLAN_DUALBAND)
+		{
+			$.h($.id("wlen_2g"), $.qd.wl.en ? "<span class='T T_enabled'>"+m_str.enabled+"</span>" : "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+		}
+		else
+		{
+		$.h($.id("wlen"), $.qd.wl.en ? "<span class='T T_enabled'>"+m_str.enabled+"</span>" : "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+		}
+		if ($.qd.wl.en) {
+			$.h($.id("ssid"), $.qd.wl.ssid.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;"));
+			$.h($.id("chnn"), $.qd.wl.chnn == "auto" ? "<span class='T T_auto'>"+m_str.auto+"</span>" : $.qd.wl.chnn);
+			$.h($.id("mode"), $.qd.wl.mode == "b" && "<span class='T T_wl11b'>"+s_str.wl11b+"</span>" || $.qd.wl.mode == "g-only" && "<span class='T T_wl11g'>"+s_str.wl11g+"</span>" || $.qd.wl.mode == "n-only" && "<span class='T T_wl11n'>"+s_str.wl11n+"</span>" || $.qd.wl.mode == "g" && "<span class='T T_wl11bg'>"+s_str.wl11bg+"</span>" || $.qd.wl.mode == "n" && "<span class='T T_wl11bgn'>"+s_str.wl11bgn+"</span>" || "error");
+			$.h($.id("bandWidth"), $.qd.wl.bandwidth == "Auto" ? "<span class='T T_auto'>"+m_str.auto+"</span>" : ($.qd.wl.bandwidth + "Hz"));
+			if ($.qd.wl.sec) {
+				$.h($.id("sec"), "WPA2-Personal");
+				if ($.qd.wl.pwd.length > 31) $.h($.id("wlpwd"), $.qd.wl.pwd.substr(0, 28).replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;") + "<span class=\"a\" title=\""+$.qd.wl.pwd.substr(28).replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;").replace(/ /g, "&nbsp;")+"\">...</span>");
+				else $.h($.id("wlpwd"), $.qd.wl.pwd.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;"));
+				$.removeClass($.id("con_sec"), "nd");
+			}
+			else $.h($.id("sec"), "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+			$.removeClass($.id("con_wl"), "nd");
+		}
+	}
+	if ($.qd.wl5g) {
+		$.removeClass($.id("func_wl5g"), "nd");
+		$.h($.id("wlen5g"), $.qd.wl5g.en ? "<span class='T T_enabled'>"+m_str.enabled+"</span>" : "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+		if ($.qd.wl5g.en) {
+			$.h($.id("ssid5g"), $.qd.wl5g.ssid.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;"));
+			$.h($.id("chnn5g"), $.qd.wl5g.chnn == "auto" ? "<span class='T T_auto'>"+m_str.auto+"</span>" : $.qd.wl5g.chnn);
+			$.h($.id("mode5g"), $.qd.wl5g.mode == "a" && "<span class='T T_wl11a'>"+s_str.wl11a+"</span>" || $.qd.wl5g.mode == "n-only" && "<span class='T T_wl11n'>"+s_str.wl11n+"</span>" || $.qd.wl5g.mode == "an" && "<span class='T T_wl11an'>"+s_str.wl11an+"</span>" || $.qd.wl5g.mode == "ac" && "<span class='T T_wl11ac'>"+s_str.wl11ac+"</span>" ||"error");
+			$.h($.id("bandWidth5g"), $.qd.wl5g.bandwidth == "Auto" ? "<span class='T T_auto'>"+m_str.auto+"</span>" : ($.qd.wl5g.bandwidth + "Hz"));
+			if ($.qd.wl5g.sec) {
+				$.h($.id("sec5g"), "WPA2-Personal");
+				if ($.qd.wl5g.pwd.length > 31) $.h($.id("wlpwd5g"), $.qd.wl5g.pwd.substr(0, 28).replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;") + "<span class=\"a\" title=\""+$.qd.wl5g.pwd.substr(28).replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;").replace(/ /g, "&nbsp;")+"\">...</span>");
+				else $.h($.id("wlpwd5g"), $.qd.wl5g.pwd.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;"));
+				$.removeClass($.id("con_sec5g"), "nd");
+			}
+			else $.h($.id("sec5g"), "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+			$.removeClass($.id("con_wl5g"), "nd");
+		}
+	}
+	if ((!INCLUDE_WAN_MODE || $.qd.sysMode == "DSL") && $.qd.iptv) {
+		$.removeClass($.id("func_iptv"), "nd");
+		$.h($.id("iptven"), $.qd.iptv.en ? "<span class='T T_enabled'>"+m_str.enabled+"</span>" : "<span class='T T_disabled'>"+m_str.disabled+"</span>");
+		if ($.qd.iptv.en) {
+			if ($.qd.iptv.port) $.h($.id("iptvport"), "LAN" + $.qd.iptv.port);
+			else $.h($.id("iptvport"), "WLAN");
+			$.h($.id("iptvpvc"), $.qd.iptv.vpi + "/" + $.qd.iptv.vci);
+			$.removeClass($.id("con_iptv"), "nd");
+		}
+	}
+	if ($.qd.voice) {
+            $.removeClass($.id("func_voip"), "nd");
+	    var tmp_en = ($.qd.type != "br" && null != $.qd.voice.multiProfileName && "" != $.qd.voice.multiProfileName);
+	    $.h($.id("voice_en"), tmp_en ? "<span class='T_en'>"+m_str.en+"</span>" : "<span class='T_dis'>Skip</span>");
+	    if (tmp_en) {
+		    $.h($.id("voice_extension"), $.qd.voice.multiExtension);
+		    $.h($.id("voice_registrar"), $.qd.voice.multiRegistrarServer + ":" + $.qd.voice.multiRegistrarServerPort);
+		    $.removeClass($.id("con_voiceAcc"), "nd");
+	    }
+	}
+	if ($.qd.del && $.qd.del.length) {
+		var delstr = [];
+		$.each($.qd.del, function(){delstr.push(this.name)});
+		$.h($.id("delname"), "(" + delstr.join(", ") + ")");
+		$.removeClass($.id("del_warn"), "nd");
+	}
+})();
+</script>

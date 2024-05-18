@@ -1,0 +1,379 @@
+<script>var voipCodecs,curdndObj,curStk=new Array,curIndex=-1,editFlag=0,telephonyProvider=new Array(["0","1&1 Internet"],["1","binomium"],["2","congstar"],["3","DUS.net"],["4","easybell"],["5","Kabel Deutschland"],["6","Personal-VoIP"],["7","QSC/Q-DSL home"],["8","sipgate"],["9","sipgate team"],["10","sipkom"],["11","sipload"],["12","solomo"],["13","TELEflash"],["14","Ventengo"],["15","you call us"],["16","Telekom"],["17","anderer Anbieter"]);function getStack(){var e=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiExtension"]);if(0==$.exe()){for(var r=0;r<e.length;r++)if(!e[r].multiExtension||""==e[r].multiExtension)return curStk=e[r].__stack,curIndex=r,!0;return!(curIndex=-1)}}function doDel(e){var r={multiExtension:""};$.act(ACT_SET,XTP_MULTI_ISP,e,null,r),actForSendMsg(),$.exe(function(e){e||$.reload()})}function doEdit(e){editFlag=1,curStk=e;var r=$.act(ACT_GET,XTP_MULTI_ISP,e,null,null);if(0==$.exe()){for(var t=r.multiIspName,u=0;u<telephonyProvider.length;u++)if(telephonyProvider[u][1]==t){$('#provider_list option[value="'+telephonyProvider[u][0]+'"]').prop("selected","selected");break}$("#provider_list").tpSelect({refresh:1}),"1&1 Internet"==t?($("#1_prefix").prop("value",r.multiVoipPrefixNum),$("#1_number").prop("value",r.multiVoipNum),$("#1_password").prop("value",r.multiAuthPassword)):"binomium"==t?($("#bino_number").prop("value",r.multiExtension),$("#bino_username").prop("value",r.multiAuthUserName),$("#bino_password").prop("value",r.multiAuthPassword)):"congstar"==t?($("#cong_number").prop("value",r.multiExtension),$("#cong_username").prop("value",r.multiAuthUserName),$("#cong_password").prop("value",r.multiAuthPassword)):"DUS.net"==t?($("#dus_number").prop("value",r.multiVoipNum),$("#dus_username").prop("value",r.multiExtension.slice(6)),$("#dus_password").prop("value",r.multiAuthPassword)):"easybell"==t?($("#easy_username").prop("value",r.multiExtension),$("#easy_password").prop("value",r.multiAuthPassword),$("#easy_number").prop("value",r.multiVoipNum)):"Kabel Deutschland"==t?($("#kabel_number").prop("value",r.multiExtension),$("#kabel_password").prop("value",r.multiAuthPassword),$("#kabel_registrar").prop("value",r.multiRegistrarServer),$("#kabel_proxyserver").prop("value",r.multiProxyServer)):"Personal-VoIP"==t?($("#personal_number").prop("value",r.multiExtension),$("#personal_password").prop("value",r.multiAuthPassword)):"QSC/Q-DSL home"==t?($("#qsc_prefix").prop("value",r.multiVoipPrefixNum),$("#qsc_number").prop("value",r.multiVoipNum),$("#qsc_password").prop("value",r.multiAuthPassword)):"sipgate"==t?($("#sipgate_number").prop("value",r.multiVoipNum),$("#sipgate_username").prop("value",r.multiExtension),$("#sipgate_password").prop("value",r.multiAuthPassword)):"sipgate team"==t?($("#sipgate_team_number").prop("value",r.multiVoipNum),$("#sipgate_team_username").prop("value",r.multiExtension),$("#sipgate_team_password").prop("value",r.multiAuthPassword)):"sipkom"==t?($("#sipkom_number").prop("value",r.multiExtension.slice(2)),$("#sipkom_password").prop("value",r.multiAuthPassword)):"sipload"==t?($("#sipload_number").prop("value",r.multiVoipNum),$("#sipload_username").prop("value",r.multiExtension),$("#sipload_password").prop("value",r.multiAuthPassword)):"solomo"==t?($("#solomo_number").prop("value",r.multiVoipNum),$("#solomo_username").prop("value",r.multiExtension),$("#solomo_password").prop("value",r.multiAuthPassword)):"TELEflash"==t?($("#teleflash_number").prop("value",r.multiExtension),$("#teleflash_username").prop("value",r.multiAuthUserName),$("#teleflash_password").prop("value",r.multiAuthPassword)):"Ventengo"==t?($("#ventengo_number").prop("value",r.multiVoipNum),$("#ventengo_username").prop("value",r.multiExtension),$("#ventengo_password").prop("value",r.multiAuthPassword)):"Telekom"==t?($("#telekom_prefix").prop("value",r.multiVoipPrefixNum),$("#telekom_number").prop("value",r.multiVoipNum),$("#telekom_username").prop("value",r.multiAuthUserName),$("#telekom_password").prop("value",r.multiAuthPassword)):"you call us"==t?($("#youcallus_number").prop("value",r.multiExtension),$("#youcallus_username").prop("value",r.multiAuthUserName),$("#youcallus_password").prop("value",r.multiAuthPassword)):"anderer Anbieter"==t&&($("#extension").prop("value",r.multiExtension),$("#regAddr").prop("value",r.multiRegistrarServer),$("#regPort").prop("value",r.multiRegistrarServerPort),$("#auName").prop("value",r.multiAuthUserName),$("#password").prop("value",r.multiAuthPassword),2==r.multiRegisterViaOB?$("#RegViaOB").prop("checked",!0):0==r.multiRegisterViaOB&&$("#RegViaOB").prop("checked",!1),$("#RegViaOB").tpCheckbox(),$("#ObProxyAddr").prop("value",r.multiOutboundProxy),$("#ObProxyPort").prop("value",r.multiOutboundProxyPort),$("#SipProxyAddr").prop("value",r.multiProxyServer),$("#SipProxyPort").prop("value",r.multiProxyServerPort))}}function enterCheck(){var e,r,t,u,o=$("#provider_list").data("text");try{if("1&1 Internet"==o)t="Prefix Number",r=$("#1_prefix"),u="1_prefix",e=getValue(u,t,0,10),r.get(0).value=e,checkSpecial(r,t),t="VoIP number",r=$("#1_number"),u="1_number",getValue(u,t,3,20),e=getValue(u,t,3,20),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="VoIP password",r=$("#1_password"),u="1_password",r.get(0).value=getValue(u,t,0,40);else if("binomium"==o)t="Internet telephone number",r=$("#bino_number"),u="bino_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="User name",r=$("#bino_username"),u="bino_username",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="Password",r=$("#bino_password"),u="bino_password",r.get(0).value=getValue(u,t,0,40);else if("congstar"==o)t="VoIP number",r=$("#cong_number"),u="cong_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="SIP user name",r=$("#cong_username"),u="cong_username",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="Contract password",r=$("cong_password"),u="cong_password",r.get(0).value=getValue(u,t,0,40);else if("DUS.net"==o)t="DUS.net number",r=$("#dus_number"),u="dus_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="SIP line",r=$("#dus_username"),u="dus_username",e=getValue(u,t,3,26),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#dus_password"),u="dus_password",r.get(0).value=getValue(u,t,0,40);else if("easybell"==o)t="Internet telephone number",r=$("#easy_number"),u="easy_number",e=getValue(u,t,0,28),r.get(0).value=e,checkSpecial(r,t),t="User name",r=$("#easy_username"),u="easy_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#easy_password"),u="easy_password",r.get(0).value=getValue(u,t,0,40);else if("Kabel Deutschland"==o)t="Number",r=$("#kabel_number"),u="kabel_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#kabel_password"),u="kabel_password",r.get(0).value=getValue(u,t,0,40),t="Registrar Address",r=$("#kabel_registrar"),u="kabel_registrar",e=getValue(u,t,1,40),r.get(0).value=e,checkBlank(r,t),1==isIP(e)&&"0.0.0.0"!=e&&(r.get(0).value=getIP(r,t)),t="Proxy server",r=$("#kabel_proxyserver"),u="kabel_proxyserver",e=getValue(u,t,0,40),0<(r.get(0).value=e).length?(checkBlank(r,t),1==isIP(e)&&"0.0.0.0"!=e&&(r.get(0).value=getIP(r,t))):r.get(0).value="0.0.0.0";else if("Personal-VoIP"==o)t="Internet telephone number",r=$("#personal_number"),u="personal_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#personal_password"),u="personal_password",r.get(0).value=getValue(u,t,0,40);else if("QSC/Q-DSL home"==o)t="Number Prefix",r=$("#qsc_prefix"),u="qsc_prefix",e=getValue(u,t,0,10),r.get(0).value=e,checkSpecial(r,t),t="Number",r=$("#qsc_number"),u="qsc_number",e=getValue(u,t,3,22),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#qsc_password"),u="qsc_password",r.get(0).value=getValue(u,t,0,40);else if("sipgate"==o)t="Telephone no",r=$("#sipgate_number"),u="sipgate_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="SIP ID",r=$("#sipgate_username"),u="sipgate_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="SIP password",r=$("#sipgate_password"),u="sipgate_password",r.get(0).value=getValue(u,t,0,40);else if("sipgate team"==o)t="Telephone no",r=$("#sipgate_team_number"),u="sipgate_team_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="SIP ID",r=$("#sipgate_team_username"),u="sipgate_team_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="SIP password",r=$("#sipgate_team_password"),u="sipgate_team_password",r.get(0).value=getValue(u,t,0,40);else if("sipkom"==o)t="Internet telephone number",r=$("#sipkom_number"),u="sipkom_number",e=getValue(u,t,3,30),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#sipkom_password"),u="sipkom_password",r.get(0).value=getValue(u,t,0,40);else if("sipload"==o)t="Internet telephone number",r=$("#sipload_number"),u="sipload_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="User name",r=$("#sipload_username"),u="sipload_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#sipload_password"),u="sipload_password",r.get(0).value=getValue(u,t,0,40);else if("solomo"==o)t="Internet telephone number",r=$("#solomo_number"),u="solomo_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="User name",r=$("#solomo_username"),u="solomo_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#solomo_password"),u="solomo_password",r.get(0).value=getValue(u,t,0,40);else if("TELEflash"==o)t="Internet telephone number",r=$("#teleflash_number"),u="teleflash_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="User name",r=$("#teleflash_username"),u="teleflash_username",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="Password",r=$("#teleflash_password"),u="teleflash_password",r.get(0).value=getValue(u,t,0,40);else if("Ventengo"==o)t="Internet telephone number",r=$("#ventengo_number"),u="ventengo_number",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="User name",r=$("#ventengo_username"),u="ventengo_username",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Password",r=$("#ventengo_password"),u="ventengo_password",r.get(0).value=getValue(u,t,0,40);else if("you call us"==o)t="Internet telephone number",r=$("#youcallus_number"),u="youcallus_number",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="User name",r=$("#youcallus_username"),u="youcallus_username",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="Password",r=$("#youcallus_password"),u="youcallus_password",r.get(0).value=getValue(u,t,0,40);else if("Telekom"==o)t="Telephone prefix",r=$("#telekom_prefix"),u="telekom_prefix",e=getValue(u,t,0,10),r.get(0).value=e,checkSpecial(r,t),t="Telephone number",r=$("#telekom_number"),u="telekom_number",e=getValue(u,t,3,22),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="E-mail address",r=$("#telekom_username"),u="telekom_username",e=getValue(u,t,0,32),r.get(0).value=e,checkSpecial(r,t),t="Password",r=$("#telekom_password"),u="telekom_password",r.get(0).value=getValue(u,t,0,40);else if("anderer Anbieter"==o){if(t="Phone Number",r=$("#extension"),u="extension",e=getValue(u,t,3,32),r.get(0).value=e,checkBlank(r,t),checkSpecial(r,t),t="Registrar Address",r=$("#regAddr"),u="regAddr",e=getValue(u,t,1,40),r.get(0).value=e,checkBlank(r,t),1==isIP(e)&&"0.0.0.0"!=e)r.get(0).value=getIP(r,t);else if("0.0.0.0"!=e)throw $.alert(ERR_VOIP_INVALID_IP,"("+t+")"),setFocus(r),!1;if(t="Registrar Port",r=$("#regPort"),u="regPort",e=getNumValue1(u,t,1,65535,!0),0==(r.get(0).value=e).length&&(r.get(0).value="5060"),t="Authentication ID",r=$("#auName"),u="auName",r.get(0).value=getValue(u,t,0,40),t="Password",r=$("#password"),u="password",r.get(0).value=getValue(u,t,0,40),t="Outbound Proxy",r=$("#ObProxyAddr"),u="ObProxyAddr",e=getValue(u,t,0,40),0<(r.get(0).value=e).length){if(checkBlank(r,t),1==isIP(e)&&"0.0.0.0"!=e)r.get(0).value=getIP(r,t);else if("0.0.0.0"!=e)throw $.alert(ERR_VOIP_INVALID_IP,"("+t+")"),setFocus(r),!1}else r.get(0).value="0.0.0.0";if(t="Outbound Proxy Port",r=$("#ObProxyPort"),u="ObProxyPort",e=getNumValue1(u,t,1,65535,!0),0==(r.get(0).value=e).length&&(r.get(0).value="5060"),t="SIP Proxy",r=$("#SipProxyAddr"),u="SipProxyAddr",e=getValue(u,t,0,40),0<(r.get(0).value=e).length){if(checkBlank(r,t),1==isIP(e)&&"0.0.0.0"!=e)r.get(0).value=getIP(r,t);else if("0.0.0.0"!=e)throw $.alert(ERR_VOIP_INVALID_IP,"("+t+")"),setFocus(r),!1}else r.get(0).value="0.0.0.0";t="SIP Proxy Port",r=$("#SipProxyPort"),u="SipProxyPort",e=getNumValue1(u,t,1,65535,!0),0==(r.get(0).value=e).length&&(r.get(0).value="5060")}}catch(e){if(!1===e)return!1;throw e}return!0}function initProIsp(){for(var e="",r=0;r<telephonyProvider.length;r++){var t=telephonyProvider[r][1];e+="<option value='"+telephonyProvider[r][0]+"' text='"+t+"' >"+t+"</option>"}$("#provider_list").empty().append(e);$("#provider_list").tpSelect({refresh:1})}function moreCfgSwitch(e){$(e).hasClass("cln")?($("#con_More").addClass("nd"),$(e).removeClass("cln")):($("#con_More").removeClass("nd"),$(e).addClass("cln"))}function initTable(){var t=new Array,e=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiProfileName","multiRegistrarServer","multiExtension","multiStatus","MultiIspName"]);if(0==$.exe()){var u=0;$.each(e,function(){var e=0;if(this.multiExtension&&""!=this.multiExtension){e=parseInt(this.multiStatus,10)<=0?0:1;var r="["+this.__stack+"]";e?t.push([{text:"<span class='table-grid-icon conn-status'></span>",width:"5%"},{text:this.multiProfileName,width:"25%"},{text:this.multiExtension,width:"30%"},{text:this.multiIspName,width:"25%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+u+"' onclick='doEdit("+r+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+u+"' onclick='doDel("+r+");'></span>",width:"20%"}]):t.push([{text:"<span class='table-grid-icon disconn-status'></span>",width:"5%"},{text:this.multiProfileName,width:"25%"},{text:this.multiExtension,width:"30%"},{text:this.multiIspName,width:"25%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+u+"' onclick='doEdit("+r+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+u+"' onclick='doDel("+r+");'></span>",width:"20%"}])}u++}),$.initTableBody($("#table-number"),t),initProIsp()}}$("#delAll").click(function(){$.addLoading($(this));var e=!1,r=$.act(ACT_GL,XTP_MULTI_ISP,null,null,["multiExtension"]);if(0==$.exe()){for(var t=0;t<r.length;t++)if(r[t].multiExtension&&""!=r[t].multiExtension){var u={multiExtension:""};0==e&&(e=!0),$.act(ACT_SET,XTP_MULTI_ISP,r[t].__stack,null,u)}e?(actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})):$.removeLoading()}}),$("#provider_list").click(function(){for(var e=$("#provider_list").data("value"),r=0;r<telephonyProvider.length;r++)telephonyProvider[r][0]==e?$("#isp_"+e).removeClass("nd"):$("#isp_"+r).addClass("nd")}),$("#cancel").click(function(){$.reload()}),$("#t_save").click(function(){$.addLoading($(this));var e=$("#provider_list").data("value"),r=telephonyProvider[e][1],t={},u={};if(0==enterCheck())return!1;if("1&1 Internet"==(t.multiIspName=r)?(u.prefix=$("#1_prefix").prop("value"),u.number=$("#1_number").prop("value"),u.username="",u.password=$("#1_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#1_number").val()?(t.multiExtension="49"+u.prefix+u.number,t.multiRegistrarServer="1und1.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=$("#1_password").prop("value"),t.multiVoipPrefixNum=$("#1_prefix").prop("value"),t.multiVoipNum=$("#1_number").prop("value")):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"binomium"==r?(u.prefix="",u.number=$("#bino_number").prop("value"),u.username=$("#bino_username").prop("value"),u.password=$("#bino_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#bino_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer="binomium.com",t.multiAuthUserName=u.username,t.multiAuthPassword=u.password,t.multiOutboundProxy="sip.binomium.com"):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiOutboundProxy="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"congstar"==r?(u.number=$("#cong_number").prop("value"),u.username=$("#cong_username").prop("value"),u.password=$("#cong_password").prop("value"),""!=$("#cong_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer="tel2.congstar.de",t.multiAuthUserName=u.username,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"DUS.net"==r?(u.prefix="",u.number=$("#dus_number").prop("value"),u.username=$("#dus_username").prop("value"),u.password=$("#dus_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#dus_username").prop("value")?(t.multiExtension="000387"+u.username,t.multiRegistrarServer="proxy.dus.net",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password,t.multiVoipNum=$("#dus_number").prop("value")):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"easybell"==r?(u.prefix="",u.number=$("#easy_number").prop("value"),u.username=$("#easy_username").prop("value"),u.password=$("#easy_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#easy_username").prop("value")?(t.multiExtension=u.username,t.multiRegistrarServer="sip.easybell.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password,t.multiVoipNum=$("#easy_number").prop("value")):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"Kabel Deutschland"==r?(u.prefix="",u.number=$("#kabel_number").prop("value"),u.username="",u.password=$("#kabel_password").prop("value"),u.registrar=$("#kabel_registrar").prop("value"),u.proxyserver=$("#kabel_proxyserver").prop("value"),""!=$("#kabel_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer=u.registrar,t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password,t.multiProxyServer=u.proxyserver):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiProxyServer="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServerPort="5060"):"Personal-VoIP"==r?(u.prefix="",u.number=$("#personal_number").prop("value"),u.username="",u.password=$("#personal_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#personal_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer="sip.personal-voip.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"QSC/Q-DSL home"==r?(u.prefix=$("#qsc_prefix").prop("value"),u.number=$("#qsc_number").prop("value"),u.username="",u.password=$("#qsc_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#qsc_number").prop("value")?(t.multiVoipPrefixNum=$("#qsc_prefix").prop("value"),t.multiExtension=u.prefix+u.number,t.multiRegistrarServer="sip.qsc.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"sipgate"==r?(u.prefix="",u.number=$("#sipgate_number").prop("value"),u.username=$("#sipgate_username").prop("value"),u.password=$("#sipgate_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#sipgate_username").prop("value")?(t.multiVoipNum=$("#sipgate_number").prop("value"),t.multiExtension=u.username,t.multiRegistrarServer="sipgate.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"sipgate team"==r?(u.prefix="",u.number=$("#sipgate_team_number").prop("value"),u.username=$("#sipgate_team_username").prop("value"),u.password=$("#sipgate_team_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#sipgate_team_username").prop("value")?(t.multiVoipNum=$("#sipgate_team_number").prop("value"),t.multiExtension=u.username,t.multiRegistrarServer="sipgate.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password,t.multiProxyServer="proxy.live.sipgate.de"):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiProxyServer="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServerPort="5060"):"sipkom"==r?(u.prefix="",u.number=$("#sipkom_number").prop("value"),u.username="",u.password=$("#sipkom_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#sipkom_number").prop("value")?(t.multiExtension="49"+u.number,t.multiRegistrarServer="sipkom.com",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"sipload"==r?(u.prefix="",u.number=$("#sipload_number").prop("value"),u.username=$("#sipload_username").prop("value"),u.password=$("#sipload_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#sipload_username").prop("value")?(t.multiVoipNum=$("#sipload_number").prop("value"),t.multiExtension=u.username,t.multiRegistrarServer="sip.sipload.com",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password,t.multiOutboundProxy="sip.sipload.com"):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiOutboundProxy="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"solomo"==r?(u.prefix="",u.number=$("#solomo_number").prop("value"),u.username=$("#solomo_username").prop("value"),u.password=$("#solomo_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#solomo_username").prop("value")?(t.multiVoipNum=$("#solomo_number").prop("value"),t.multiExtension=u.username,t.multiRegistrarServer="voip.solomo.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"TELEflash"==r?(u.prefix="",u.number=$("#teleflash_number").prop("value"),u.username=$("#teleflash_username").prop("value"),u.password=$("#teleflash_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#teleflash_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer="sip.teleflash.com",t.multiAuthUserName=u.username,t.multiAuthPassword=u.password,t.multiOutboundProxy="sip.teleflash.com"):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiOutboundProxy="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",t.multiRegisterViaOB=2,t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"Ventengo"==r?(u.prefix="",u.number=$("#ventengo_number").prop("value"),u.username=$("#ventengo_username").prop("value"),u.password=$("#ventengo_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#ventengo_username").prop("value")?(t.multiVoipNum=$("#ventengo_number").prop("value"),t.multiExtension=u.username,t.multiRegistrarServer="sip.ventengo.de",t.multiAuthUserName=t.multiExtension,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"you call us"==r?(u.prefix="",u.number=$("#youcallus_number").prop("value"),u.username=$("#youcallus_username").prop("value"),u.password=$("#youcallus_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#youcallus_number").prop("value")?(t.multiExtension=u.number,t.multiRegistrarServer="you-call.us",t.multiAuthUserName=u.username,t.multiAuthPassword=u.password,t.multiOutboundProxy="sip.you-call.us"):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword="",t.multiOutboundProxy="0.0.0.0"),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"Telekom"==r?(u.prefix=$("#telekom_prefix").prop("value"),u.number=$("#telekom_number").prop("value"),u.username=$("#telekom_username").prop("value"),u.password=$("#telekom_password").prop("value"),u.registrar="",(u.proxyserver="")!=$("#telekom_number").val()?(t.multiVoipPrefixNum=$("#telekom_prefix").prop("value"),t.multiVoipNum=$("#telekom_number").prop("value"),t.multiExtension=u.prefix+u.number,t.multiRegistrarServer="tel.t-online.de",t.multiAuthUserName=u.username,t.multiAuthPassword=u.password):(t.multiExtension="",t.multiRegistrarServer="",t.multiAuthUserName="",t.multiAuthPassword=""),t.multiRegistrarServerPort="5060",t.multiDomain="",u.moreCfg=!1,t.multiRegisterViaOB=2,t.multiOutboundProxy="0.0.0.0",t.multiOutboundProxyPort="5060",t.multiProxyServer="0.0.0.0",t.multiProxyServerPort="5060"):"anderer Anbieter"==r&&(u.prefix="",u.number="",u.username="",u.password="",u.registrar="",u.proxyserver="",t.multiExtension=$("#extension").prop("value"),t.multiRegistrarServer=$("#regAddr").prop("value"),t.multiRegistrarServerPort=$("#regPort").prop("value"),t.multiDomain="",t.multiAuthUserName=$("#auName").prop("value"),t.multiAuthPassword=$("#password").prop("value"),$("#RegViaOB").prop("data-checked")?t.multiRegisterViaOB=2:t.multiRegisterViaOB=0,t.multiOutboundProxy=$("#ObProxyAddr").prop("value"),t.multiOutboundProxyPort=$("#ObProxyPort").prop("value"),t.multiProxyServer=$("#SipProxyAddr").prop("value"),t.multiProxyServerPort=$("#SipProxyPort").prop("value")),editFlag)$.act(ACT_SET,XTP_MULTI_ISP,curStk,null,t),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()});else if(getStack()){if(voipCodecs=$.act(ACT_GS,XTP_MULTIISP_CODEC_LIST,null,curStk,["multiCodec","multiPacketizationPeriod","multiPriority"]),0!=$.exe())return;$.act(ACT_SET,XTP_MULTI_ISP,curStk,null,t);for(var o=0;o<voipCodecs.length;o++){var a={};"G.711MuLaw"==voipCodecs[o].multiCodec?(a.multiPriority=1,a.multiPacketizationPeriod="20"):"G.711ALaw"==voipCodecs[o].multiCodec?(a.multiPriority=2,a.multiPacketizationPeriod="20"):"G.726_32"==voipCodecs[o].multiCodec?(a.multiPriority=3,a.multiPacketizationPeriod="20"):"G.729a/b"==voipCodecs[o].multiCodec?(a.multiPriority=4,a.multiPacketizationPeriod="20"):"G.722"==voipCodecs[o].multiCodec?(a.multiPriority=11,a.multiPacketizationPeriod="20"):"X_TP_T38"==voipCodecs[o].multiCodec&&(a.multiPriority=500,a.multiPacketizationPeriod="20"),$.act(ACT_SET,XTP_MULTIISP_CODEC_LIST,voipCodecs[o].__stack,null,a)}actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}else $.alert(ERR_VOIP_ACCOUNT_MUCH_ADD_ERROR)}),$("#add").click(function(){$("#RegViaOB").prop("checked",!0),$("#RegViaOB").tpCheckbox()}),$("#refresh").click(function(){$.reload()})</script>
+<h3>Telephone Numbers</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="table-op" id="addItem">
+            <div class="table-btn">
+                <span id="add" class="add-icon"></span>
+                <label>Add</label>
+                <span id="refresh" class="refresh-icon"></span>
+                <label>Refresh</label>
+                <span id="delAll" class="delete-all-icon"></span>
+                <label>Delete All</label>
+            </div>
+        </div>
+        <table id="table-number">
+            <thead></thead>
+            <tbody id="body-number">
+                <tr id="edit-container-number" class="nd">
+                    <td colspan="5">
+                        <div>
+                            <b>Telephony Provider: </b>
+                            <select id="provider_list">
+                            </select>
+                        </div>
+                        <div class="nd" id="isp_0">
+                            <div>
+                                <b>Prefix Number</b>
+                                <input type="text" size="8" id="1_prefix">
+                            </div>
+                            <div>
+                                <b>VoIP number:</b>
+                                <input type="text" size="19" id="1_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>VoIP password:</b>
+                                <input type="password" size="30" id="1_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_1">
+                            <div>
+                                <b>Internet telephone number: </b>
+                                <input type="text" size="30" id="bino_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" class="text" size="30" id="bino_username">
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" class="text" size="30" id="bino_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_2">
+                            <div>
+                                <b>VoIP number:</b>
+                                <input type="text" size="30" id="cong_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>SIP user name:</b>
+                                <input type="text" size="30" id="cong_username">
+                            </div>
+                            <div>
+                                <b>Contract password:</b>
+                                <input type="password" size="30" id="cong_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_3">
+                            <div>
+                                <b>DUS.net number:</b>
+                                <input type="text" size="30" id="dus_number">
+                            </div>
+                            <div>
+                                <b>SIP line:</b>000387
+                                <input type="text" size="24" id="dus_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b class="item T T_password">Password:</b>
+                                <input type="password" size="30" id="dus_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_4">
+                            <div>
+                                <b>Internet telephone number:</b>0049
+                                <input type="text" size="26" id="easy_number">
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="easy_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="easy_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_5">
+                            <div>
+                                <b>Number:</b>
+                                <input type="text" size="30" id="kabel_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="kabel_password">
+                            </div>
+                            <div>
+                                <b>Registrar:</b>
+                                <input type="text" size="30" id="kabel_registrar">
+                            </div>
+                            <div>
+                                <b>Proxy server:</b>
+                                <input type="text" size="30" id="kabel_proxyserver">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_6">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" class="text" size="30" id="personal_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" class="text" size="30" id="personal_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_7">
+                            <div>
+                                <b>Number:</b>
+                                <input type="text" size="8" id="qsc_prefix">
+                                <span>&nbsp;-&nbsp;</span>
+                                <input type="text" size="19" id="qsc_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="qsc_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_8">
+                            <div>
+                                <b>Telephone no: </b>
+                                <input type="text" size="30" id="sipgate_number">
+                            </div>
+                            <div>
+                                <b>SIP ID:</b>
+                                <input type="text" size="30" id="sipgate_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>SIP password:</b>
+                                <input type="password" size="30" id="sipgate_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_9">
+                            <div>
+                                <b>Telephone no: </b>
+                                <input type="text" class="text" size="30" id="sipgate_team_number">
+                            </div>
+                            <div>
+                                <b>SIP ID:</b>
+                                <input type="text" class="text" size="30" id="sipgate_team_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>SIP password:</b>
+                                <input type="password" class="text" size="30" id="sipgate_team_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_10">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <span>49</span>
+                                <input type="text" class="text" size="28" id="sipkom_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="sipkom_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_11">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" size="30" id="sipload_number">
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="sipload_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="sipload_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_12">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" size="30" id="solomo_number">
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="solomo_username">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="solomo_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_13">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" size="30" id="teleflash_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="teleflash_username">
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="teleflash_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_14">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" size="30" id="ventengo_number">
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="ventengo_username">
+                                <span class="red">*</span>
+                                <p></p>
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="ventengo_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_15">
+                            <div>
+                                <b>Internet telephone number:</b>
+                                <input type="text" size="30" id="youcallus_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>User name:</b>
+                                <input type="text" size="30" id="youcallus_username">
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="youcallus_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_16">
+                            <div class="inline">
+                                <b>Telephone number:</b>
+                                <input type="text" size="8" id="telekom_prefix">
+                            </div>
+                            <div class="inline">
+                                <input type="text" size="19" id="telekom_number">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>E-mail address:</b>
+                                <input type="text" size="30" id="telekom_username">
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="telekom_password">
+                            </div>
+                        </div>
+                        <div class="nd" id="isp_17">
+                            <div>
+                                <b>Phone Number:</b>
+                                <input type="text" size="30" id="extension">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Registrar Address:</b>
+                                <input type="text" size="30" id="regAddr">
+                                <span class="red">*</span>
+                            </div>
+                            <div>
+                                <b>Authentication ID:</b>
+                                <input type="text" size="30" id="auName">
+                            </div>
+                            <div>
+                                <b>Password:</b>
+                                <input type="password" size="30" id="password">
+                            </div>
+                            <div class="advanced-block">
+                                <span class="advanced-icon advanced-hide-icon" id="moreCfg" onclick="moreCfgSwitch(this)"></span>
+                                <span class="T_adv">Advanced</span>
+                            </div>
+                            <div id="con_More" class="nd">
+                                <div>
+                                    <b>Registrar Port:</b>
+                                    <input type="text" size="30" id="regPort" value="5060">
+                                </div>
+                                <div>
+                                    <b>SIP Proxy:</b>
+                                    <input type="text" size="30" id="SipProxyAddr" value="0.0.0.0">
+                                </div>
+                                <div>
+                                    <b>SIP Proxy Port:</b>
+                                    <input type="text" size="30" id="SipProxyPort" value="5060">
+                                </div>
+                                <div>
+                                    <b>Outbound Proxy:</b>
+                                    <input type="text" size="30" id="ObProxyAddr" value="0.0.0.0">
+                                </div>
+                                <div>
+                                    <b>Outbound Proxy Port:</b>
+                                    <input type="text" size="30" id="ObProxyPort" value="5060">
+                                </div>
+                                <br>
+                                <div>
+                                    <input type="checkbox" id="RegViaOB">
+                                    <label for="RegViaOB">Register via Outbound Proxy</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-right">
+                            <button type="submit" class="green" id="t_save">Save</button>
+                            <button type="submit" class="green" id="cancel">Cancel</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div id="adv" class="content-container nd">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <b>Preferred Receive Ptime: </b>
+            <select>
+                <option value="10">10</option>
+                <option value="20" selected="selected">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+            </select>
+        </div>
+        <div>
+            <b>Display Name: </b>
+            <input type="text" id="DisplayName">
+        </div>
+        <div>
+            <b>Priority: </b>
+            <select>
+                <option id="t_high" value="1">1--high</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected="selected">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option id="t_low" value="8">8--low</option>
+            </select>
+        </div>
+        <div>
+            <b>MWI: </b>
+            <select>
+                <option value="1">Enable</option>
+                <option value="0" selected="selected">Disable</option>
+            </select>
+        </div>
+    </form>
+</div>
+<script>var headArray=[{text:"Status",width:"5%"},{text:"Profile Name",width:"25%"},{text:"Number",width:"30%"},{text:"Provider",width:"20%"},{text:"Modify",width:"20%"}];$.tpInit(),$.initTableHead($("#table-number"),headArray),$("#table-number").tpTable(initTable)</script>

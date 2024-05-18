@@ -1,0 +1,34 @@
+<h3 class="T_backup">Backup</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" action="/cgi/conf.bin" id="backupConf">
+        <p class="cfg-line" id="t_savecopy">Save a copy of current settings.</p>
+        <button type="submit" class="green T_backup xl" id="t_backup" value="Backup">Backup</button>
+    </form>
+</div>
+<h3 class="T_restore">Restore</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" action="/cgi/confup" enctype="multipart/form-data" method="post" id="reConf">
+    	<p class="cfg-line" id="t_restoreinfo">Restore previous settings from a saved file.</p>
+        <div class="file-container">
+            <b class="T" id="t_file">File:</b>
+            <input type="file" name="filename" id="filename">
+        </div>
+    </form>
+    <form class="pure-form pure-form-aligned">
+        <button type="submit" class="green T_restore xl" id="t_restore" value="Restore">Restore</button>
+    </form>
+</div>
+<div id="restore-div">
+<h3 id="t_facrestore">Factory Default Restore</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned nd" id="reset-form" style="margin-bottom:10px">
+        <p class="cfg-line" id="t_resetInfo" style="margin-bottom:10px">Revert all the configuration settings to their default values.</p>
+        <button type="submit" class="green T_restore xl" id="resetBtn">restore</button>
+    </form>
+    <form class="pure-form pure-form-aligned" id="factory-form">
+        <p class="cfg-line" id="t_facrestoreinfo">Restore all the configuration settings to their default values.</p>
+        <button type="submit" class="green T_facrestore xl ru-xxl it-xxxxl tr-xxxl" id="factoryBtn" value="Factory Restore">Factory Restore</button>
+    </form>
+</div>
+</div>
+<script>!function(){var t;INCLUDE_CLOUD&&($("#reset-form").removeClass("nd"),t=$.act(ACT_GET,CURRENT_USER,null,null,["userSetting","userRole"]),$.exe(),2==t.userSetting&&2==t.userRole&&($("#restore-div").addClass("nd"),$.displayHelp(!1,3))),$("#t_backup").click(function(){document.getElementById("backupConf").submit()}),$("#t_restore").click(function(){if(""==$("#filename").val())return $.alert(ERR_CONF_FILE_NONE),!1;if(!window.ActiveXObject&&0===$("#filename")[0].files[0].size)return $.alert(ERR_FILE_NOT_FOUND),!1;var t=document.getElementById("reConf");try{t.target="up_frame",t.action="/cgi/confup",t.submit()}catch(t){}$.guage(["<span class='T T_uploading'>"+s_str.uploading+"</span>","<span class='T T_wait_upload'>"+s_str.wait_upload+"</span>..."],10,100,function(){$.guage(["<span class='T T_rebooting'>"+s_str.rebooting+"</span>","<span class='T T_wait_restore'>"+s_str.wait_restore+"</span>"],100,$.guageInterval,function(){$.deleteCookie("Authorization"),$.refresh()}),$.cgi("/cgi/bnr",null,function(t){t&&t!=ERR_NETWORK&&t!=ERR_EXIT&&t!=ERR_NONE_FILE&&$.errBack(t,"backNRestore.htm")},!1,!0)})}),$("#factoryBtn").click(function(){$.confirm(c_str.cdefaults,function(){$.act(ACT_OP,ACT_OP_FACTORY_RESET),$.addLoading($("#factoryBtn")),$.exe(function(t){$.removeLoading(),t||$.guage(["<span class='T T_rebooting'>"+s_str.rebooting+"</span>","<span class='T T_wait_reboot'>"+s_str.wait_reboot+"</span>"],100,$.guageInterval,function(){$.local||0==clientLocal?window.location.reload():location.href="http://192.168.1.1:80"}),$.act(ACT_OP,ACT_OP_REBOOT),$.exe(function(t){},!0)})})}),$("#resetBtn").click(function(){!INCLUDE_CLOUD||2==t.userSetting&&2==t.userRole||$.confirm(c_str.cdefaults,function(){$.act(ACT_OP,ACT_OP_RESET),$.exe(function(t){t||$.guage(["<span class='T T_rebooting'>"+s_str.rebooting+"</span>","<span class='T T_wait_reboot'>"+s_str.wait_reboot+"</span>"],100,$.guageInterval,function(){$.local||0==clientLocal?window.location.reload():location.href="http://192.168.1.1:80"}),$.act(ACT_OP,ACT_OP_REBOOT),$.exe(function(t){},!0)})})}),$.tpInit()}()</script>

@@ -1,0 +1,136 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2013 The Linux Foundation. All rights reserved.
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=10
+STOP=98
+
+mtd_name=`cat /proc/mtd | grep "ART" | grep -o "mtd."`
+
+system_config() {
+	local cfg="$1"
+
+	local hostname conloglevel timezone
+
+	config_get hostname "$cfg" hostname 'OpenWrt'
+	echo "$hostname" > /proc/sys/kernel/hostname
+
+	config_get conloglevel "$cfg" conloglevel
+	config_get buffersize "$cfg" buffersize
+	[ -z "$conloglevel" -a -z "$buffersize" ] || dmesg ${conloglevel:+-n $conloglevel} ${buffersize:+-s $buffersize}
+
+	config_get timezone "$cfg" timezone 'UTC'
+	echo "$timezone" > /tmp/TZ
+
+	config_get zonename "$cfg" zonename
+	[ -n "$zonename" ] && [ -f "/usr/share/zoneinfo/$zonename" ] && ln -s "/usr/share/zoneinfo/$zonename" /tmp/localtime
+
+	# apply timezone to kernel
+	date -k
+
+	# Start logd
+	[ -x /etc/init.d/logd ] && /etc/init.d/logd start
+
+	if [ -x /sbin/klogd ]; then
+		config_get klogconloglevel "$cfg" klogconloglevel
+		args="${klogconloglevel:+-c $klogconloglevel}"
+		service_start /sbin/klogd $args
+	fi
+}
+
+apply_uci_config() {
+	sh -c '. /lib/functions.sh; include /lib/config; uci_apply_defaults'
+}
+
+start() {
+	[ -f /proc/mounts ] || /sbin/mount_root
+	[ -f /proc/jffs2_bbc ] && echo "S" > /proc/jffs2_bbc
+	[ -f /proc/net/vlan/config ] && vconfig set_name_type DEV_PLUS_VID_NO_PAD
+
+	mkdir -p /var/run
+	mkdir -p /var/log
+	mkdir -p /var/lock
+	mkdir -p /var/state
+	mkdir -p /tmp/.uci
+	chmod 0700 /tmp/.uci
+	touch /var/log/wtmp
+	touch /var/log/lastlog
+	touch /tmp/resolv.conf.auto
+	ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
+	grep -q debugfs /proc/filesystems && mount -t debugfs debugfs /sys/kernel/debug
+	[ "$FAILSAFE" = "true" ] && touch /tmp/.failsafe
+
+	mod_files=/etc/modules.d/*
+	#skip wlan driver modules.
+	load_modules `echo $mod_files|sed 's/\/etc\/modules.d\/33-qca-wifi.*-perf//'`	
+
+	# disable ipv6
+	[ -e /proc/sys/net/ipv6/conf/all/disable_ipv6 ] && echo 1 >/proc/sys/net/ipv6/conf/all/disable_ipv6
+	# allow wifi modules time to settle
+	# sleep 1
+	[ -c /dev/dk0 ] || mknod /dev/dk0 c 63 0                   
+	[ -c /dev/dk1 ] || mknod /dev/dk1 c 63 1
+	
+	#[ "$(/sbin/is_cal)" = "true" ] || {
+	#	/sbin/wifi default > /tmp/wireless.tmp
+	#	[ -s /tmp/wireless.tmp ] && {
+	#		cat /tmp/wireless.tmp >> /etc/config/wireless
+	#	}
+	#	rm -f /tmp/wireless.tmp
+	#}
+	/sbin/sound detect > /tmp/sound.tmp
+	[ -s /tmp/sound.tmp ] && {
+		cat /tmp/sound.tmp >> /etc/config/sound
+	}
+	rm -f /tmp/sound.tmp
+
+	## prepare tmp partition
+	#MTDDEV=$(grep rootfs_data /proc/mtd | cut -d ":" -f1)
+	#mkdir /tmp/mnt >/dev/console 2>&1
+	#mount -t jffs2 $MTDDEV /tmp/mnt >/dev/console 2>&1
+	loadconfig >/dev/console 2>&1
+	loadprofile >/dev/console 2>&1
+	loadqosdatabase >/dev/console 2>&1
+	[ -f /sbin/loadopenvpncert ] && loadopenvpncert >/dev/console 2>&1
+
+	apply_uci_config
+	config_load system
+	config_foreach system_config system
+
+	/sbin/network_firm	
+
+	[ -L /dev/caldata ] || ln -s /dev/${mtd_name} /dev/caldata
+	if [ "$(/sbin/is_cal)" != "true" ]; then
+		ifconfig eth0 up
+		ifconfig eth1 up
+		brctl addbr br-lan
+		brctl addif br-lan eth0
+		brctl addif br-lan eth1
+		ifconfig br-lan 192.168.0.1 up
+		/sbin/switch_link_up
+		/etc/init.d/tddp start
+		sleep 3
+		/etc/init.d/art start
+		cd /
+		sleep 240
+    fi	
+	
+	killall -q hotplug2
+	[ -x /sbin/hotplug2 ] && /sbin/hotplug2 --override --persistent \
+			--set-rules-file /etc/hotplug2.rules \
+			--set-coldplug-cmd /sbin/udevtrigger \
+			--max-children 1 >/dev/null 2>&1 &
+
+	# create /dev/root if it doesn't exist
+	[ -e /dev/root -o -h /dev/root ] || {
+		rootdev=$(cat /proc/cmdline | grep -o "root=.* " | cut -d " " -f1 | cut -d "=" -f2)
+
+		[ -n "$rootdev" ] && ln -s "$rootdev" /dev/root
+	}
+
+}
+
+stop() {
+	service_stop /sbin/klogd
+	[ -x /etc/init.d/logd ] && /etc/init.d/logd stop
+}

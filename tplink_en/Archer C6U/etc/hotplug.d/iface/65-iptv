@@ -1,0 +1,59 @@
+#!/bin/sh
+
+[ "$DEVICE" == "lo" ] && exit 0
+
+. /lib/functions.sh
+#add by wanghao
+[ "$INTERFACE" == "lan" -a "$ACTION" == "ifup" ] && {
+	#echo "running" > /tmp/run/network_running
+	local iptv_enable   snooping_enable
+	config_load iptv
+	config_get	iptv_enable iptv enable "off"
+	config_get snooping_enable iptv igmp_snooping_enable "off"
+
+	if [ -f "/tmp/dut_bootdone" ];then
+		/etc/hotplug.d/switch/65-iptv
+	else
+		if [ "$iptv_enable" = "on" -o "$snooping_enable" = "on" ];then
+			echo "do not do switch set in boot stage, when iptv on or snooping on" > /dev/console
+		else
+			/etc/hotplug.d/switch/65-iptv
+		fi
+	fi
+
+}
+#add end
+
+. /lib/functions/network.sh
+. /lib/iptv/iptv_func.sh
+. /lib/iptv/iptv_core.sh
+
+# Do the gc when 'iptv stop'.
+local en=$(uci_get_state iptv core enable)
+[ -z "$en" ] && exit 0
+[ "$en" != "1" ] && {
+	uci_revert_state iptv
+	exit 0
+}
+
+config_get mode "iptv" "mode"
+case "$mode" in
+	Bridge)
+	#Do nothing
+	;;
+	*)
+		local prio_pair=$(uci_get_state iptv core priority)
+		local ifname=
+		local prio=
+		for pair in $prio_pair; do
+			ifname=${pair%%-*}
+			prio=${pair##*-}
+			set_8021q_prio $ifname 0 $prio
+		done
+	;;
+esac
+
+# As IPTV would change the lan interface name, we need to redo the enable gro
+# to keep it work.
+[ -e /etc/hotplug.d/block/60-enable_gro ] && /etc/hotplug.d/block/60-enable_gro
+

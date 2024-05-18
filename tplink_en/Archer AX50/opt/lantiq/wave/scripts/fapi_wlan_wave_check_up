@@ -1,0 +1,31 @@
+#!/bin/sh
+# Check interfaces are up
+# Needed object: None
+# TODO: for gen5.
+
+script_name="$0"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+is_6x_platform=${CONFIG_IFX_MODEL_NAME/"_6X_"/}
+
+# If not equal then this is a 6x platfrom/model.
+if [ "$is_6x_platform" != "$CONFIG_IFX_MODEL_NAME" ] && [ ! -e "$FAPI_RPC" ]; then
+
+	interfaces_init_complete=${TEMP_DIR}/interfaces_init_check
+	boot_success=`interfaces_init_check $interfaces_init_complete`
+
+	if [ "$boot_success" != "1" ]; then
+		[ ! -e "$INIT_STOP_SET_DUT_MODE_FLAG" ] && \
+			echo -e " #############################################\n" \
+							"################# BOOT FAIL  ################\n" \
+							"#############################################\n"
+	else
+		echo -e " #############################################\n" \
+						"################# BOOT OK    ################\n" \
+						"#############################################\n"
+	fi
+fi
+
+# Configuration is completed successfully
+update_conf_out "wlan_configuration_status" "success"

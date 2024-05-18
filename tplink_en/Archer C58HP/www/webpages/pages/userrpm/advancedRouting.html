@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Advance</title>
+</head>
+<body>
+<div class="func-container">
+	 <div id="staticRoute">
+	 	<div id="staticRouteGrid">
+		</div>
+		<div id="add_staticRoute">
+			<input id="route_target" name="target"/>
+			<input id="route_netmask" name="netmask"/>
+			<input id="route_gateway" name="gateway"/>
+			<input id="route_interface" name="interface"/>
+			<input id="route_name" name="name"/>
+			<input id="route_enable" name="enable"/>
+		</div>
+	 </div>
+	 <div id="systemRoute">
+	 	<div id="systemRouteGrid">
+		</div>
+	 </div>
+	 <div id="advanced_routing_help"></div>
+</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}$(document).ready(function(k){var i=$.su.url("/admin/network?form=routes_static");var c=$.su.url("/admin/network?form=routes_system");var d=0;var l=0;var f=0;var b=0;var a=0;var j=0;var h=new $.su.Proxy({url:$.su.url("/admin/network?form=status_ipv4")});h.read({},function(m){d=m.lan_ipv4_ipaddr;l=m.lan_ipv4_netmask;f=m.wan_ipv4_ipaddr;b=m.wan_ipv4_netmask;m.wan_ipv4_snd_ipaddr?a=m.wan_ipv4_snd_ipaddr:1;m.wan_ipv4_snd_netmask?j=m.wan_ipv4_snd_netmask:1});$("div.func-container").page({title:$.su.CHAR.ADVANCED_ROUTING.STATIC_ROUTING,help:""});$("div#staticRoute").panel({title:$.su.CHAR.ADVANCED_ROUTING.STATIC_ROUTING,collapsible:false});$("div#systemRoute").panel({title:$.su.CHAR.ADVANCED_ROUTING.SYSTEM_ROUTING_TABLE,collapsible:false});$("input#route_target").textbox({fieldLabel:$.su.CHAR.ADVANCED_ROUTING.DESTINATION_NETWORK,labelCls:"s",textFormat:$.su.format.ip,allowBlank:false,vtype:"ip"});$("input#route_netmask").textbox({fieldLabel:$.su.CHAR.ADVANCED_ROUTING.SUBNET_MASK,labelCls:"s",allowBlank:false,vtype:{vtype:"netmask",allowAllOneFlag:true}});$("input#route_gateway").textbox({fieldLabel:$.su.CHAR.ADVANCED_ROUTING.DEFAULT_GATEWAY,labelCls:"s",textFormat:$.su.format.ip,allowBlank:false,vtype:{vtype:"ip",allowAllZeroFlag:true}});$("input#route_interface").combobox({fieldLabel:$.su.CHAR.ADVANCED_ROUTING.INTERFACE,labelCls:"s",defaultValue:["LAN"],allowBlank:false,items:[{value:"LAN",name:$.su.CHAR.ADVANCED_ROUTING.LAN},{value:"WAN",name:$.su.CHAR.ADVANCED_ROUTING.WAN}]});$("input#route_name").textbox({fieldLabel:$.su.CHAR.ADVANCED_ROUTING.DESCRIPTION,labelCls:"s",maxLength:32,vtype:"string_visible_allow_blank"});$("input#route_enable").checkbox({fieldLabel:"",labelCls:"s",items:[{boxlabel:$.su.CHAR.ADVANCED_ROUTING.ENABLE,inputValue:"on",uncheckedValue:"off",checked:true}]});$("div#staticRouteGrid").grid({store:{proxy:{url:i},fields:[{name:"target"},{name:"netmask"},{name:"gateway"},{name:"interface"},{name:"name"},{name:"enable"}],autoLoad:true},minLines:0,editor:{content:"#add_staticRoute",fields:[{name:"target"},{name:"netmask"},{name:"gateway"},{name:"interface"},{name:"name"},{name:"enable"}],validator:function(){var q=$("input#route_target").textbox("getValue");var n=$("input#route_netmask").textbox("getValue");var r=$("input#route_gateway").textbox("getValue");var p=false;var m=$("div#staticRouteGrid").grid("getEditor");if($("div#staticRouteGrid").grid("isEditing")){p=$(m).editor("getEditingId")}for(var o=0;o<$("div#staticRouteGrid").grid("getStore").data.length;o++){if(!p||($("div#staticRouteGrid").grid("isEditing")&&p!=$("div#staticRouteGrid").grid("getStore").data[o].key)){if(q==$("div#staticRouteGrid").grid("getStore").data[o].target&&n==$("div#staticRouteGrid").grid("getStore").data[o].netmask&&r==$("div#staticRouteGrid").grid("getStore").data[o].gateway){$("input#route_target").textbox("setError");$($("div#staticRouteGrid").grid("getEditor")).form("setError",$.su.CHAR.ERROR["00000107"]);return false}}}return true}},paging:{},columns:[{xtype:"checkcolumn",width:30},{text:$.su.CHAR.GRID.ID,xtype:"rownumberer",width:30},{text:$.su.CHAR.ADVANCED_ROUTING.DESTINATION_NETWORK,width:100,dataIndex:"target"},{text:$.su.CHAR.ADVANCED_ROUTING.SUBNET_MASK,width:100,dataIndex:"netmask"},{text:$.su.CHAR.ADVANCED_ROUTING.DEFAULT_GATEWAY,width:100,dataIndex:"gateway"},{text:$.su.CHAR.ADVANCED_ROUTING.INTERFACE,width:60,dataIndex:"interface"},{text:$.su.CHAR.ADVANCED_ROUTING.DESCRIPTION,width:100,dataIndex:"name"},{text:$.su.CHAR.GRID.STATUS,width:60,dataIndex:"enable",xtype:"statuscolumn"},{xtype:"settings"}],operation:"prompt|add|delete"});$("div#systemRouteGrid").grid({store:{proxy:{url:c},fields:[{name:"dest"},{name:"mask"},{name:"gateway"},{name:"interface"}],autoLoad:true},minLines:0,columns:[{text:$.su.CHAR.GRID.ID,xtype:"rownumberer",width:40},{text:$.su.CHAR.ADVANCED_ROUTING.DESTINATION_NETWORK,width:150,dataIndex:"dest"},{text:$.su.CHAR.ADVANCED_ROUTING.SUBNET_MASK,width:170,dataIndex:"mask"},{text:$.su.CHAR.ADVANCED_ROUTING.GATEWAY,width:120,dataIndex:"gateway"},{text:$.su.CHAR.ADVANCED_ROUTING.INTERFACE,dataIndex:"interface"}],operation:[{xtype:"totalCount",cls:"left",fieldLabel:$.su.CHAR.ADVANCED_ROUTING.CLIENT_NUMBER},"refresh"]});var g=new $.su.Help({container:"div#advanced_routing_help",content:["ADVANCED_ROUTING_STATIC_ROUTING","ADVANCED_ROUTING_SYSTEM_ROUTING_TABLE"]})});</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>LED</title>
+<style>
+	p.note{
+		margin-top:0;
+	}
+	.led-time-container{
+		margin: -8px 0 0 5px;
+		display: inline-block;
+    	vertical-align: top;
+	}
+	#eve{
+		position: absolute;
+		top: 96px;
+		font-size: 10px;
+	}
+	label#display{
+		display: inline-block;
+    	vertical-align: top;
+    	width: 164px;
+	}
+</style>
+</head>
+<body>
+<div class="func-container">
+	<div id="led_control">
+		<input id="led_status" name="enable" />
+	</div>
+	<div id="night_mode">
+		<form id="led_status_form">
+			<p class="note">
+				<span class="title note-title"></span>
+				<span class="text" id="led_tip"></span>
+				<input id="current_time" />
+			</p>
+			<input id="night_mode_status" name="enable"/>
+			<br />
+			<label id="display" class="widget-container"></label>
+			<div class="led-time-container">
+				<input id="schedule_start" name="time_start"/>
+				<input id="schedule_end" name="time_end"/>
+			</div>
+		</form>
+	</div>
+	<div id="led_help"></div>
+</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}$(document).ready(function(l){var d=false;$.ajax({type:"POST",url:$.su.url("/admin/time?form=hour24"),data:{operation:"read"},dataType:"json",success:function(r){d=r.data.hour24_enable=="on"?false:true},async:false});function p(s,r){var s=s.toString();while(s.length<r){s="0"+s}return s}function n(w){var u=w.split(":");var r=parseInt(u[0],10);var s=parseInt(u[1],10);var t=parseInt(u[2],10);var v="";if(r==0){v="12:"+p(s,2)+":"+p(t,2)+" AM"}else{if(r<12){v=r.toString()+":"+p(s,2)+":"+p(t,2)+" AM"}else{if(r==12){v="12:"+p(s,2)+":"+p(t,2)+" PM"}else{v=(r-12).toString()+":"+p(s,2)+":"+p(t,2)+" PM"}}}return v}var m=function(){j.read({},function(r){var s=r.hour24_enable;var t="";if(s=="off"){t=n(r.time)+", "+r.date}else{t=r.date+" "+r.time}$("#current_time").textbox("setValue",t)})};var g=new $.su.Proxy({url:$.su.url("/admin/ledgeneral?form=setting")});function c(){g.read({},function(r){if(!k){$("#led_status").switchbutton("setValue",r.enable)}})}c();var h=setInterval(c,2900);$("div#led_control").panel({title:$.su.CHAR.LED_CONTROL.TITLE,collapsible:false});$("div#night_mode").panel({title:$.su.CHAR.LED_CONTROL.NIGHT_MODE,collapsible:false});var k=false;$("#led_status").switchbutton({fieldLabel:$.su.CHAR.LED_CONTROL.STATUS,proxy:null,field:{name:"enable"}}).on("ev_click",function(){k=true;clearInterval(h);var r=$("#led_status").switchbutton("getValue");g.write({enable:r},function(s){$("#led_status").switchbutton("setValue",s.enable);k=!k;h=setInterval(c,2900)})});$("span.note-title").html($.su.CHAR.OPERATION.NOTE);$("span#led_tip").html($.su.CHAR.LED_CONTROL.LED_TIME_SETTINGS);$("label#display").html($.su.CHAR.LED_CONTROL.LED_OFF_TIME+":");$("#night_mode").on("click","a#go-to-time",function(){$.su.menu.advanced.goTo("time-settings")});var j=new $.su.Proxy({url:$.su.url("/admin/time?form=settings")});$("#current_time").textbox({fieldLabel:$.su.CHAR.TIMESET.CURRENT_TIME,inputCls:"xl",readOnly:true});m();var o=setInterval(function(){m()},1000);var q=new $.su.Proxy({url:$.su.url("/admin/ledpm?form=setting")});var b,i;$("form#led_status_form").form({proxy:q,fields:[{name:"enable"},{name:"time_start"},{name:"time_end"}],submitBtn:"default"}).on("ev_loadData",function(s,r){if(r.enable=="off"){$("label#display").addClass("disabled");$("input#schedule_start").timeset("disable");$("input#schedule_end").timeset("disable")}b=r.time_start;i=r.time_end;a()});$("input#night_mode_status").checkbox({fieldLabel:$.su.CHAR.LED_CONTROL.NIGHT_MODE,labelCls:"m",items:[{boxlabel:$.su.CHAR.OPERATION.ENABLE,inputValue:"on",uncheckedValue:"off",name:"enable"}]}).on("ev_change",function(s,r,t){if(t.length==0||t[0]=="off"){$("label#display").addClass("disabled");$("input#schedule_start").timeset("disable");$("input#schedule_end").timeset("disable")}else{$("label#display").removeClass("disabled");$("input#schedule_start").timeset("enable");$("input#schedule_end").timeset("enable")}});$("input#schedule_start").timeset({fieldLabel:$.su.CHAR.LED_CONTROL.FROM,labelCls:"xxs",hour12:d}).time("disable").on("ev_change",function(s,r){b=$(this).timeset("getValue");a()});$("input#schedule_end").timeset({fieldLabel:$.su.CHAR.LED_CONTROL.TO,labelCls:"xxs",hour12:d,tips:$.su.CHAR.LED_CONTROL.NEXT}).time("disable").on("ev_change",function(s,r){i=$(this).timeset("getValue");a()});$("input#schedule_end").timeset("hideTips");function a(){var u=b.split(":")[0]*1,t=b.split(":")[1]*1,r=i.split(":")[0]*1,s=i.split(":")[1]*1;if(u<r||(u==r&&t<s)){$("input#schedule_end").timeset("hideTips")}else{$("input#schedule_end").timeset("showTips")}}$("<div id='eve'>"+$.su.CHAR.LED_CONTROL.EVERYDAY+"</div>").insertAfter($("#night_mode_status"));var f=new $.su.Help({container:"div#led_help",content:["LED_CONTROL_SETTINGS"]});$.su.app.runningModule.addUnloadHandler(function(){clearInterval(o);clearInterval(h)})});</script>	
+</body>
+</html>

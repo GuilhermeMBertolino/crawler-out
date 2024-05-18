@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+
+START=34
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+start() {
+        setup_switch() { return 0; }
+		#. /lib/switch/switch.sh
+        setup_switch
+
+        . /lib/switch/core.sh
+	if [ "$1" == "hotplug" ]; then
+			unsetup_ports
+		else
+	unsetup_ports_all
+	fi
+        setup_vlan
+}
+
+restart() {
+		stop
+		start $1
+}
+
+shutdown() {
+		echo "Shutdown switch!"
+}
+
+stop() {
+		. /lib/switch/core.sh
+		unsetup_vlan
+		unsetup_ports
+        unsetup_switch() { return 0; }
+		#. /lib/switch/switch.sh
+		unsetup_switch
+}
+
+reload() {
+        start
+}

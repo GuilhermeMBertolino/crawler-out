@@ -1,0 +1,39 @@
+#!/bin/sh
+# Copyright (c) 2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : Sharon Lin <sharon.lin@tp-link.com>
+# Date    : 3 Mar 2016
+
+SMARTDHCP_MONITOR_PID="/var/run/smartdhcp_monitor.pid"
+TEST_SCRIPT="/lib/smartdhcp/smartdhcp.script"
+SMARTDHCP_LIB=/lib/smartdhcp
+
+. ${SMARTDHCP_LIB}/smartdhcp_functions.sh
+
+IFNAME="$1"
+CHECK_INTERVAL=$2
+
+[ -n $IFNAME ] || exit 0
+[ -n $CHECK_INTERVAL ] || exit 0
+
+#lock /var/run/smartdhcp_monitor.lock
+
+if [ -e "${SMARTDHCP_MONITOR_PID}" ]
+then
+    local pid match
+    pid=$(cat ${SMARTDHCP_MONITOR_PID})
+    match=$(ps | grep "^[\t ]*$pid")
+
+    if [ -n "$match" ]
+    then
+        smartdhcp_debug_print "kill previous $pid"
+        kill -9 $pid
+    fi
+    rm -f ${SMARTDHCP_MONITOR_PID}
+    [ -e ${SMARTDHCP_STATUS_FILE} ] && {
+        rm -f ${SMARTDHCP_STATUS_FILE}
+    }
+fi
+
+udhcpc -p ${SMARTDHCP_MONITOR_PID} -s ${TEST_SCRIPT} -O 33 -O 121 -O 249 -f -R -a -t 0 -i $IFNAME -H "$(getfirm MODEL)" -V MSFT 5.0 -B
+
+exit 0

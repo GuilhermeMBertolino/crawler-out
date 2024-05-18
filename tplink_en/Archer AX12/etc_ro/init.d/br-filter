@@ -1,0 +1,95 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=15
+
+guest_access_func() {
+	local guest_ifname_2g=$(uci get profile.@wireless[0].wireless_guest_ifname_2g -c "/etc/profile.d" -q)
+	local cfg="$1"
+	local local_access_enable=
+
+	[ "$guest_ifname_2g" = "" ] && guest_ifname_2g="wl0.1"
+	
+	guest_ifname_2g="$(uci get wireless.$guest_ifname_2g.ifname)"
+    
+	config_get enable "$cfg" enable
+    [ "$enable" = "on" ] || return 0 
+	
+	config_get guest "$cfg" guest
+    [ "$guest" = "on" ] || return 0
+
+	config_get ifname "$cfg" ifname
+    [ "$ifname" = "$guest_ifname_2g" ] || return 0
+
+	config_get_bool local_access_enable "$cfg" access 0
+	echo "$local_access_enable" > /proc/bridge_filter/local_access_flag	
+}
+
+start() {
+	local device_list=
+	local deny_all=
+	local guest_ifname_2g=$(uci get profile.@wireless[0].wireless_guest_ifname_2g -c "/etc/profile.d" -q)
+	local guest_ifname_5g=$(uci get profile.@wireless[0].wireless_guest_ifname_5g -c "/etc/profile.d" -q)
+	local guest_ifname_5g_2=$(uci get profile.@wireless[0].wireless_guest_ifname_5g_2 -c "/etc/profile.d" -q)
+	local guest_ifname_6g=$(uci get profile.@wireless[0].wireless_guest_ifname_6g -c "/etc/profile.d" -q)
+	local support_triband=$(uci get profile.@wireless[0].support_triband -c "/etc/profile.d" -q)
+	local support_fourband=$(uci get profile.@wireless[0].support_fourband -c "/etc/profile.d" -q)
+	local support_6g=$(uci get profile.@wireless[0].support_6g -c "/etc/profile.d" -q)
+		
+	local onemesh_version=$(uci get profile.@onemesh[0].version -c "/etc/profile.d" -q)
+	local config_ifname_2g config_vifname_2g
+	local config_ifname_5g config_vifname_5g
+	if [ "$onemesh_version" = "2" ]; then
+		config_vifname_2g=$(uci get profile.@wireless[0].config_ifname_2g -c "/etc/profile.d" -q)
+		config_ifname_2g=$(uci get onemesh.${config_vifname_2g}.ifname)
+		if [ "$config_ifname_2g" = "" ];then
+			deny_all="$deny_all wl1.4"
+		else
+			deny_all="$deny_all $config_ifname_2g"
+		fi
+		config_vifname_5g=$(uci get profile.@wireless[0].config_ifname_5g -c "/etc/profile.d" -q)
+		config_ifname_5g=$(uci get onemesh.${config_vifname_5g}.ifname)
+		if [ "$config_ifname_5g" = "" ];then
+			deny_all="$deny_all wl0.4"
+		else
+			deny_all="$deny_all $config_ifname_5g"
+		fi
+		echo "$deny_all" > /proc/bridge_filter/deny_all
+	fi
+
+	if [ "$guest_ifname_2g" = "" ];then
+		device_list="$device_list wl0.1"
+	else
+		guest_ifname_2g="$(uci get wireless.$guest_ifname_2g.ifname)"
+		device_list="$device_list $guest_ifname_2g"
+	fi
+	if [ "$guest_ifname_5g" = "" ];then
+		device_list="$device_list wl1.1"
+	else
+		guest_ifname_5g="$(uci get wireless.$guest_ifname_5g.ifname)"
+		device_list="$device_list $guest_ifname_5g"
+	fi
+
+	if [ "${support_triband}" == "yes" -a "${support_6g}" != "yes" -o "${support_fourband}" == "yes" ]; then
+		if [ "$guest_ifname_5g_2" = "" ];then
+			device_list="$device_list wl2.1"
+		else
+			guest_ifname_5g_2="$(uci get wireless.$guest_ifname_5g_2.ifname)"
+			device_list="$device_list $guest_ifname_5g_2"
+		fi
+	fi
+
+	if [ "${support_6g}" == "yes" ]; then
+		if [ "$guest_ifname_6g" = "" ];then
+			device_list="$device_list wl2.1"
+		else
+			device_list="$device_list $guest_ifname_6g"
+		fi
+	fi
+
+	config_load wireless
+	config_foreach guest_access_func wifi-iface
+
+	echo "$device_list" > /proc/bridge_filter/device_list
+}
+

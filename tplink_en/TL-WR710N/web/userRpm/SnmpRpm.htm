@@ -1,0 +1,173 @@
+
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<SCRIPT type="text/javascript"><!--//
+var i = 0;
+var snmpStatus = snmpParam[i++];
+var sysContact = snmpParam[i++];
+var sysName = snmpParam[i++];
+var sysLocation = snmpParam[i++];
+var getCommunity = snmpParam[i++];
+var getSource = snmpParam[i++];
+var setCommunity = snmpParam[i++];
+var setSource = snmpParam[i++];
+
+function  verify_ip_n_mask(val)  
+{  
+	if (val == "0.0.0.0" || val == "")
+		return true;
+	var pure_ip = /^(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])$/;
+	var ip_n_mask = /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})(\/([0-9]|[0-2][0-9]|3[0-2]))$/;
+	return (pure_ip.test(val) == true || ip_n_mask.test(val) == true);
+} 
+
+function  verify_community_name(val)  
+{  
+	var regex = /^[A-Za-z0-9_]+$/;	
+	if (val == "")
+		return true;
+	return regex.test(val);
+}
+
+function doSubmit()
+{
+	var element = document.forms[0].get_community;
+	var val = element.value;
+	if (verify_community_name(val) == false)
+	{
+		alert(js_invalid_get_comm = "Use 0 to 31 characters. You may use letters, numbers, and underscores.");
+		element.focus();
+		element.select();			
+		return false;
+	}
+	
+	element = document.forms[0].get_source;
+	val = element.value;
+	if (verify_ip_n_mask(val) == false)
+	{
+		alert(js_invalid_get_src = "Get Source must be a specific IP address (e.g. 10.10.10.1), or a subnet - represented as IP/BITS (e.g. 10.10.10.0/24). ");
+		element.focus();
+		element.select();			
+		return false;
+	}
+	
+	element = document.forms[0].set_community;
+	val = element.value;
+	if (verify_community_name(val) == false)
+	{
+		alert(js_invalid_set_comm = "Use 0 to 31 characters. You may use letters, numbers, and underscores.");
+		element.focus();
+		element.select();			
+		return false;
+	}
+	
+	element = document.forms[0].set_source;
+	val = element.value;
+	if (verify_ip_n_mask(val) == false)
+	{
+		alert(js_invalid_set_src = "Set Source must be a specific IP address (e.g. 10.10.10.1), or a subnet - represented as IP/BITS (e.g. 10.10.10.0/24). ");
+		element.focus();
+		element.select();			
+		return false;
+	}
+	
+	return true;
+}
+
+//--></SCRIPT>
+</HEAD>
+<BODY onLoad="setTagStr(document,'snmp_cfg');LoadHelp('SnmpHelpRpm.htm'); resize(this);" onResize="resize(this);">
+	<FORM action="SnmpRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+		<TABLE id="autoWidth" border=0>
+			<TBODY>
+				<TR>
+					<TD class=h1 colspan=5 id="t_title">SNMP Settings</TD>
+				</TR>
+				<TR>
+					<TD class=blue colspan=5>
+					</TD>
+				</TR>
+				<TR>
+					<TD class=Item align=left>
+						<B><SPAN id="t_snmp_agent">SNMP Agent:</SPAN></B>
+					</TD>
+					<TD width = "100%">
+						<INPUT type="radio" name="snmp_agent" value="1" id="enable_snmp">
+						<SPAN id="t_enable_snmp">Enable</SPAN>
+						<INPUT type="radio" name="snmp_agent" value="0" id="disable_snmp">
+						<SPAN id="t_disable_snmp">Disable</SPAN>
+					</TD>					
+				</TR>
+				
+				<TR><TD></TD></TR>
+				
+				<TR>
+					<TD class=Item id = "t_sys_contact">SysContact:</TD>
+					<TD>
+						<INPUT name="sys_contact" class="text" size="18" maxlength="31">
+					</TD>
+				</TR>
+				<TR>
+					<TD class=Item id = "t_sys_name">SysName:</TD>
+					<TD>
+						<INPUT name="sys_name" class="text" size="18" maxlength="31">
+					</TD>
+				</TR>
+				<TR>
+					<TD class=Item id = "t_sys_location">SysLocation:</TD>
+					<TD>
+						<INPUT name="sys_location" class="text" size="18" maxlength="31">
+					</TD>
+				</TR>
+				<TR><TD></TD></TR>
+				<TR>
+					<TD class=Item id = "t_get_community">Get Community:</TD>
+					<TD>
+						<INPUT name="get_community" class="text" size="18" maxlength="31">
+					</TD>
+				</TR>
+				<TR>
+					<TD class=Item id="t_get_src">Get Source:</TD>
+					<TD colspan="4">
+						<INPUT name="get_source" type="text" class="text" id="get_source" size="18" maxlength="18">
+					</TD>
+				</TR>
+				
+				<TR>
+					<TD class=Item id = "t_set_community">Set Community:</TD>
+					<TD>
+						<INPUT name="set_community" class="text" size="18" maxlength="31">
+					</TD>
+				</TR>
+				<TR>
+					<TD class=Item id="t_set_src">Set Source:</TD>
+					<TD colspan="4">
+						<INPUT name="set_source" type="text" class="text" id="set_source" size="18" maxlength="18">
+					</TD>
+				</TR>
+				<TR>
+					<TD class=blue colspan=5>
+					</TD>
+				</TR>
+				<TR>
+					<TD>
+					</TD>
+					<TD colspan="4">
+						<INPUT name="Save" type="submit" class="buttonBig" value="Save" onClick="return doSubmit();">
+					</TD>
+				</TR>
+			</TBODY>
+		</TABLE>
+	</FORM>
+</BODY>
+</HTML>
+<SCRIPT type="text/javascript">
+document.forms[0].snmp_agent[0].checked = snmpStatus;
+document.forms[0].snmp_agent[1].checked = !snmpStatus;
+document.forms[0].sys_contact.value = sysContact;
+document.forms[0].sys_name.value = sysName;
+document.forms[0].sys_location.value = sysLocation;
+document.forms[0].get_community.value = getCommunity;
+document.forms[0].get_source.value = getSource;
+document.forms[0].set_community.value = setCommunity;
+document.forms[0].set_source.value = setSource;
+</SCRIPT>

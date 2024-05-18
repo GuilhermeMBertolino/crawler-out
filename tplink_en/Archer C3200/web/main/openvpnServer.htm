@@ -1,0 +1,636 @@
+﻿<script language="javascript" type="text/javascript">
+var curOvpnObj;
+var newOvpnObj;
+var dynCfg;
+var noipCfg;
+var wanConn;
+
+var OVPN_CA_NOT_GENERATED       = 0;
+var OVPN_CA_GENERATED           = 1;
+var OVPN_CA_GENERATING          = 2;
+
+var fakeLink;
+var needToGen                   = false;
+var isConfirmWindow             = false;
+var DMVS_CONNECTING             = "Connecting";
+var DMVS_CONNECTED              = "Connected";
+var DYNDNS_STATE_DISCONNECTED   = 0;
+var DYNDNS_STATE_CONNECTING     = 1;
+var DYNDNS_STATE_CONNECTED      = 2;
+var NOIPDNS_STATE_DISCONNECTED  = 3;
+var NOIPDNS_STATE_CONNECTING    = 4;
+var NOIPDNS_STATE_CONNECTED     = 5;
+
+var glbExportingStr = s_str.exporting ? s_str.exporting : "Exporting";
+var glbGeneratingStr  = s_str.generating ? s_str.generating : "Generaging";
+
+// ddns not set will be noticed when enable openvpn and export config file 
+// wan ip not up will be noticed when customer export config file.
+function checkThenExportCliOvpn() {
+
+        needToGen = false;
+        isConfirmWindow = false;
+        var foundWanConn = false;
+        var ipList = $.act(ACT_GL, WAN_IP_CONN, null, null, ["Enable", "Name", "ConnectionStatus"]);
+        var pppList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["Enable", "Name", "ConnectionStatus"]);
+        if (INCLUDE_PPTP)
+            var pptpList = $.act(ACT_GL, WAN_PPTP_CONN, null, null, ["Enable", "Name", "ConnectionStatus"]);
+        if (INCLUDE_L2TP)
+            var l2tpList = $.act(ACT_GL, WAN_L2TP_CONN, null, null, ["Enable", "Name", "ConnectionStatus"]);
+        var l3Forward = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+
+        dynCfg = $.act(ACT_GET, DYN_DNS_CFG, null, null);
+        noipCfg = $.act(ACT_GET, NOIP_DNS_CFG, null, null); 
+        
+        $.exe(function(ret) {
+           if (ret) {
+                $.alert(ret);
+                return;
+            }
+
+            function ok() {
+                $("#export").prop("disabled", false);
+                $("#exportSt").html("");
+                fakeLink.click();
+                $.removeLoading();                
+            }
+
+            function back() {
+                $.reload();                
+            }
+
+            if (false == foundWanConn) {
+            $.each(ipList, function() { 
+                    if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                        wanConn = this;
+                        foundWanConn = true;
+                        return false;
+                    } else if (this.enable == 1) {
+                    wanConn = this;
+                }
+            });       
+            }  
+
+            if (false == foundWanConn) {    
+            $.each(pppList, function() {
+                    if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                        wanConn = this;
+                        foundWanConn = true;
+                        return false;
+                    } else if (this.enable == 1) {
+                    wanConn = this;
+                }             
+            });
+            }
+
+            if (false == foundWanConn) {
+            if (INCLUDE_PPTP) {
+                $.each(pptpList, function() {
+                        if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                            wanConn = this;
+                            foundWanConn = true;
+                            return false;
+                        } else if (this.enable == 1) {
+                        wanConn = this;
+                    } 
+                });
+            }
+            }
+
+            if (false == foundWanConn) {
+            if (INCLUDE_L2TP) {
+                $.each(l2tpList, function() {
+                        if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                            wanConn = this;
+                            foundWanConn = true;
+                            return false;
+                        } else if (this.enable == 1) {
+                        wanConn = this;
+                    } 
+                });
+            }
+            }
+
+            /*      $.alert() cannot be called sequently twice, use following judgmental array 
+             *                  DDNS_NOT_EN, EN_DISCONN, EN_CONN
+             *      WAN_DISCONN
+             *      WAN_CONN
+             */
+            if ((dynCfg.enable == 1 && dynCfg.state == DYNDNS_STATE_CONNECTING)     ||
+                (noipCfg.enable == 1 && noipCfg.state == NOIPDNS_STATE_CONNECTING)  ||
+                (wanConn.connectionStatus == DMVS_CONNECTING)) {
+                needToGen = false;
+                $("#export").prop("disabled", true);
+                $("#exportSt").html(glbExportingStr); //$("#export") 's click funtion has addLoading,no need here
+                setTimeout(checkThenExportCliOvpn, 1000);
+            
+            } else if (wanConn.connectionStatus != DMVS_CONNECTED) {
+                $.alert(ERR_OVPN_WAN_DISCONN); 
+                needToGen = false;
+                $.reload();
+            
+            } else if ((dynCfg.enable != 1)     &&
+                        (noipCfg.enable != 1)   &&
+                        (wanConn.connectionStatus == DMVS_CONNECTED)) {
+                needToGen = true;
+                isConfirmWindow = true;
+                $.confirm(c_str.ovpnDDNSNotEnWanConn, ok, back);
+
+            } else if ( ((dynCfg.enable == 1 && dynCfg.state == DYNDNS_STATE_CONNECTED)      ||
+                        (noipCfg.enable == 1 && noipCfg.state == NOIPDNS_STATE_CONNECTED))   &&
+                        (wanConn.connectionStatus == DMVS_CONNECTED)) {
+                needToGen = true;
+
+            } else if ( ((dynCfg.enable == 1 && dynCfg.state == DYNDNS_STATE_DISCONNECTED)      ||
+                        (noipCfg.enable == 1 && noipCfg.state == NOIPDNS_STATE_DISCONNECTED))   &&
+                        (wanConn.connectionStatus == DMVS_CONNECTED)) {
+                needToGen = true;
+                isConfirmWindow = true;
+                $.confirm(c_str.ovpnDDNSDisconnWanConn, ok, back);
+
+            } else {
+                needToGen = true;
+            }
+
+            if (needToGen == true  && isConfirmWindow == false) {
+                $("#export").prop("disabled", false);
+                $("#exportSt").html("");
+                fakeLink.click();
+                $.removeLoading();
+            }
+        });
+}
+
+function checkServerStatus() {
+    curOvpnObj = $.act(ACT_GET, OPENVPN, null, null);
+
+    $.exe(function(ret) {
+        if (ret) return;
+
+        if (curOvpnObj.initing == 0) {
+            $("#save").prop("disabled", false);
+            $("#export").prop("disabled", false);
+            $("exportSt").html("");
+            $("#expConfForm").find("span.load").closest('div').remove();
+            $("#genCert").prop("disabled", false);
+            $("#genCertSt").html("");
+            $("#genCertForm").find("span.load").closest('div').remove();
+        } else {
+            $("#save").prop("disabled", true);
+            $("#export").prop("disabled", true);
+            if (curOvpnObj.caGenerating == OVPN_CA_GENERATING) {
+                $("#genCert").prop("disabled", true);
+                $.addLoading($("#genCert"), null, null, 1);
+                $('#genCertSt').html(glbGeneratingStr);            
+            }
+            setTimeout(checkServerStatus, 1000);
+        }
+    });
+}
+
+function init() {
+    curOvpnObj = $.act(ACT_GET, OPENVPN, null, null);
+
+    if (!$.exe()) {
+        $("#openvpnEn").prop('checked', (curOvpnObj.enable == 1) ? true : false);
+        if (curOvpnObj.proto == "UDP") {
+            $("#serviceTypeUDP").prop('checked', 'checked');
+        } else if (curOvpnObj.proto == "TCP") {
+            $("#serviceTypeTCP").prop('checked', 'checked');
+        } else {
+            $.alert(CMM_INTERNAL_ERROR);
+        }
+        $("#servicePort").prop("value", curOvpnObj.port);
+        if (curOvpnObj.access == 1) {
+            $("#accessHome").prop('checked', 'checked');
+        } else if (curOvpnObj.access == 2) {
+            $("#accessInternetHome").prop('checked', 'checked');
+        } else {
+            $.alert(CMM_INTERNAL_ERROR);
+        }
+        $("#ovpnSubnet").prop("value", curOvpnObj.subnetAddress);
+        $("#ovpnNetmask").prop("value", curOvpnObj.subnetMask);
+
+        if (curOvpnObj.caGenerating == OVPN_CA_NOT_GENERATED) {
+            $("#noteCert").removeClass("nd");
+        } else {
+            $("#noteCert").addClass("nd");
+        }
+
+        checkServerStatus();
+    }
+}
+
+$("#save").click(function() {
+    var ovpnEn;
+    var serType;
+    var portNum;
+    var accessType;
+    var caNotGenExecOkFunc = 0;
+    var ovpnSubnetStr;
+    var ovpnNetmaskStr;
+
+    $.addLoading($(this));
+    if (!checkParaValidity()) {
+        return;
+    }
+    if (checkNothingChg()) {
+        $.removeLoading();
+        $.reload();
+        return;
+    }
+    if (($("#openvpnEn").prop('data-checked')) && (curOvpnObj.caGenerating == OVPN_CA_NOT_GENERATED)) {
+        /* donnot check dut time, just set it to 2015-01-02 when dut power is on
+        if (!checkCurrentTime()) {
+            $.removeLoading();
+            $.reload();
+            return;
+        } else {
+        */
+            caNotGenExecOkFunc = 1;
+            $.confirm(c_str.ovpnNoCertSave, ok, back, null, m_str.ok, m_str.cancel);      
+    }
+
+    function ok() {
+        /* when enable openVpn, do not remind customers, only remind them when they click "export"
+        if ($("#openvpnEn").prop('data-checked') && curOvpnObj.enable == 0) {
+            dynCfg = $.act(ACT_GET, DYN_DNS_CFG, null, null);
+            noipCfg = $.act(ACT_GET, NOIP_DNS_CFG, null, null); 
+            $.exe(function(ret) {
+                if (ret)  return;
+                if (dynCfg.enable != 1 && noipCfg != 1) {
+                    $.alert(ERR_OVPN_RECOMMEND_DDNS_EN);
+                }           
+            });
+        }
+        */
+
+        ovpnEn = $("#openvpnEn").prop('data-checked') ? 1 : 0;
+        if ($("#serviceTypeUDP").prop('checked')) {
+            serType = "UDP";
+        } else if ($("#serviceTypeTCP").prop('checked')) {
+            serType = "TCP";
+        }
+        var portNum = $("#servicePort").prop("value");
+        if ($("#accessHome").prop('checked')) {
+            accessType = 1;
+        } else if ($("#accessInternetHome").prop('checked')) {
+            accessType = 2;
+        }
+        ovpnSubnetStr   = $("#ovpnSubnet").val();
+        ovpnNetmaskStr  = $("#ovpnNetmask").val();
+
+        $.act(ACT_SET, OPENVPN, null, null, ["enable=" + ovpnEn, "proto=" + serType, "port=" + portNum, "subnetAddress=" + ovpnSubnetStr, "subnetMask=" + ovpnNetmaskStr, "access=" + accessType]);
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) {
+                if (0 == caNotGenExecOkFunc) {
+                    $.reload();
+                } else {
+                    /* logest time is 100*4200=420 000ms=7min, startToAsk() I change stepCurrent from 5 to 1  */
+                    $.guage(["<span class='T T_uploading'>" + s_str.generating + "</span>", "<span class='T T_wait_upload'>" + s_str.wait_generate + "</span>"], 100, 4200, function() {
+                        // window.location.reload();
+                        var closeProgressBar = function() {
+                            var tmp = $("div.alert-container");
+                            tmp.fadeOut(200, function() {
+                                tmp.css("display", "none");
+                            });
+                            $('body').off('mousedown.focus');
+                            $('body').off('keydown.focus');
+                            $.hideCover();
+                        };
+                        closeProgressBar();
+                        $.reload();
+                    }, null, null, null, {
+                        isComplete: function(callback_complete) {
+                            var curOvpnObj = $.act(ACT_GET, OPENVPN, null, null);
+
+                            $.exe(function(err) {
+                                if (err) {
+                                    return;
+                                }
+
+                                if (curOvpnObj.caGenerating == 1) {
+                                    if (callback_complete) {
+                                        callback_complete();
+                                    }
+                                }
+                    });      
+                        },
+                        startToAsk: function(stepCurrent, stepTotal) {
+                            return stepCurrent >= 1;
+                        },
+                        askInterval: 1000,
+                        progressbarClass: 'progressbar-blue'
+                    });                    
+                }
+            }
+        });
+    }
+    function back() { 
+        $.reload(); 
+    }
+
+    if (0 == caNotGenExecOkFunc) {
+        ok();
+    }
+});
+
+function checkNothingChg() {
+    if ( (curOvpnObj.enable == 1 && $("#openvpnEn").prop('data-checked') == false)
+        || (curOvpnObj.enable == 0 && $("#openvpnEn").prop('data-checked') == true) ) {
+        return false;
+    }
+    if ( (curOvpnObj.proto == "UDP" && $("#serviceTypeTCP").prop('checked') == true) 
+        || (curOvpnObj.proto == "TCP" && $("#serviceTypeUDP").prop('checked') == true) ) {
+        return false;
+    }
+    if (curOvpnObj.port != $("#servicePort").prop("value")) {
+        return false;
+    }
+    if ( (curOvpnObj.access == 1 && $("#accessInternetHome").prop('checked') == true)  
+        || (curOvpnObj.access == 2 && $("#accessHome").prop('checked') == true) ) {
+        return false
+    }
+    if ( ($("#ovpnSubnet").val() != curOvpnObj.subnetAddress) || 
+         ($("#ovpnNetmask").val() != curOvpnObj.subnetMask) ) {
+        return false;
+    }
+
+    return true;
+}
+
+function checkParaValidity() {
+    var portValue       = $("#servicePort").prop('value');
+    var ovpnSubnetStr   = $("#ovpnSubnet").val();
+    var ovpnSubnetNum = $.ip2num(ovpnSubnetStr);
+    var ovpnNetmaskStr  = $("#ovpnNetmask").val();
+    var ovpnNetmaskNum = $.ip2num(ovpnNetmaskStr);
+
+    if ( (portValue.length <= 0) || (!$.isnum(portValue)) || (portValue < 1024) || (portValue > 65535) ) {
+        $.alert(ERR_OVPN_PORT_INVALID); 
+        var element = $("#servicePort");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    } else if ((portValue == 21) || (portValue == 53) || (portValue == 70) || (portValue == 80) ||
+            (portValue == 119) || (portValue == 110) || (portValue == 1701) || (portValue == 1723) ||
+            (portValue == 25) || (portValue == 1080) || (portValue == 23) ||
+            (portValue == 33344) || (portValue == 20005) || (portValue == 1900) ||
+            (portValue == 7547) || (portValue == 139) || (portValue == 445)) {
+        $.alert(ERR_OVPN_PORT_EXISTS); 
+        var element = $("#servicePort");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    } 
+
+    if ($.ifip(ovpnSubnetStr, true)) {
+        $.alert(ERR_OVPN_SUBNET_INVAD);
+        element = $("#ovpnSubnet");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    if ($.mask(ovpnNetmaskStr, true)) {
+        $.alert(ERR_OVPN_NETMASK_INVAD);
+        element = $("#ovpnNetmask");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+
+    if (ovpnNetmaskNum >= $.ip2num("255.255.255.248")) {
+        $.alert(ERR_OVPN_NETMASK_INVAD_VALUE);
+        element = $("#ovpnNetmask");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;        
+    }
+
+    if (ovpnSubnetNum & ovpnNetmaskNum != ovpnSubnetNum) {
+        $.alert(ERR_OVPN_SUBNET_NETMASK_INVAD);
+        element = $("#ovpnSubnet");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+
+    return true;
+}
+
+function checkCurrentTime() {
+    var hour = $.act(ACT_GET, HOUR, null, null);
+
+    if (!$.exe()) {
+        if (hour.year < 2015 || hour.year > 2037) {
+            $.alert(ERR_OVPN_TIME_NOT_SET);
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
+$("#export").click(function() {
+    if (curOvpnObj.caGenerating == OVPN_CA_NOT_GENERATED) {
+        $.alert(ERR_OVPN_CERT_NOT_GEN_EXP);
+        return;
+    }
+
+    $.addLoading($(this));
+
+    fakeLink = document.createElement("a");
+    if (typeof(fakeLink.click) == 'undefined') {
+        location.href = "";
+    } else {
+        fakeLink.href = '/cgi/openvpn?cliOvpnDown';
+        document.body.appendChild(fakeLink);
+    }
+
+    checkThenExportCliOvpn();
+});
+
+$("#genCert").click(function() {
+    $.addLoading($(this)); 
+    $.act(ACT_OP, ACT_OVPN_REGEN_KEYS, curOvpnObj.__stack);
+    $.exe(function(err) {
+        if (err) {
+            $.alert(err);
+            return;
+        }
+        $.removeLoading();
+        /* logest time is 100*4200=420 000ms=7min, startToAsk() I change stepCurrent from 5 to 1  */
+        $.guage(["<span class='T T_uploading'>" + s_str.generating + "</span>", "<span class='T T_wait_upload'>" + s_str.wait_generate + "</span>"], 100, 4200, function() {
+            // window.location.reload();
+            var closeProgressBar = function() {
+                var tmp = $("div.alert-container");
+                tmp.fadeOut(200, function() {
+                    tmp.css("display", "none");
+                });
+                $('body').off('mousedown.focus');
+                $('body').off('keydown.focus');
+                $.hideCover();
+            };
+            closeProgressBar();
+            $.reload();
+        }, null, null, null, {
+            isComplete: function(callback_complete) {
+                var curOvpnObj = $.act(ACT_GET, OPENVPN, null, null);
+
+                $.exe(function(err) {
+                    if (err) {
+                        return;
+                    }
+
+                    if (curOvpnObj.caGenerating == 1) {
+                        if (callback_complete) {
+                            callback_complete();
+                        }
+                    }
+        });      
+            },
+            startToAsk: function(stepCurrent, stepTotal) {
+                return stepCurrent >= 1;
+            },
+            askInterval: 1000,
+            progressbarClass: 'progressbar-blue'
+        });
+    });
+});
+
+</script>
+<h3 id="t_openvpn">OpenVPN</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div id="noteCert" class="steps nd" style="margin:0px 0px;">
+            <p class="cfg-line" style="margin:0px 0px;">
+                <span class="T_note2 step">Note:</span>
+                <span id="t_noCertNote1">
+                	No certificate currently, please <b>Generate</b> one before enabling VPN Server.
+                </span>
+            </p>
+        </div>
+        <div>
+            <b class="l" id="t_empty"></b>
+            <input type="checkbox" id="openvpnEn" />
+            <label id="t_enOvpn">Enable VPN Server</label>
+        </div>
+
+        <div>
+            <b id="t_serType" class="l">Service Type:</b>
+            <input type="radio" name="serviceType" id="serviceTypeUDP" />
+            <label id="t_udp">UDP</label>
+            <input type="radio" name="serviceType" id="serviceTypeTCP" />
+            <label id="t_tcp">TCP</label>
+        </div>
+        <div>
+            <b id="t_serPort" class="l">Service Port:</b>
+            <input type="text" id="servicePort" class="l" required />
+        </div>
+        <div class="inline">
+            <b id="t_ovpnSubnetAndMask" class="l">VPN Subnet/Netmask:</b>
+            <input type="text" id="ovpnSubnet" class="l" required />
+            <input type="text" id="ovpnNetmask" class="l" required />
+        </div>
+        <div>
+            <b id="t_cliAccess" class="l">Client Access:</b>
+            <input type="radio" name="clientAccess" id="accessHome" />
+            <label id="t_home">Home Network Only</label>
+            <input type="radio" name="clientAccess" id="accessInternetHome" />
+            <label id="t_internetHome">Internet and Home Network</label>
+        </div>
+
+        <div class="part-separate">
+            <button type="submit" class="green T_save" id="save">Save</button>
+        </div>
+    </form>
+</div>
+
+<h3 id="t_genCert">Certificate</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" id="genCertForm">
+        <div class="pure-control-group">
+            <label class="label-title xxl" id="t_genText">Generate the certificate.</label>
+            <button type="submit" class="inline green T_generate" id="genCert">Generate</button>
+            <div class='inline' style="margin-left: 25px;">
+                <span id='genCertSt'></span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<h3 id="t_configFile">Configuration File</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned" id="expConfForm">
+        <div class="pure-control-group">
+            <label class="label-title xxl" id="t_exportConfig">Export the configuration.</label>
+            <button type="submit" class="inline green T_exportStr" id="export">Export</button>
+            <div class='inline' style="margin-left: 25px;">
+                <span id='exportSt'></span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<h3 id="t_vpnGuide">VPN Client Installtion Guide</h3>
+<div class="content-container">
+    <div class="para pure-control-group">
+        <p class="cfg-line">
+            <span id="t_guidePara1">To enable and connect your client devices to the OpenVPN server:</span>
+        </p> 
+        <p class="cfg-line">
+            <span id="t_guidePara2">Before you configure the OpenVPN server, please configure Dynamic DNS Service (recommended) or assign a static IP address for WAN port. Please make sure your external port of NAT settings is not the service port, and your System Time is synchronized with Internet.</span>
+        </p>               
+    </div>
+    <div class="steps pure-control-group">
+        <p class="cfg-line">
+            <span id="t_step1" class="bkGdBuleCircle">1</span>
+            <span id="t_note1">Select Enable VPN Server.</span>
+        </p>
+        <p class="cfg-line">
+            <span id="t_step2" class="bkGdBuleCircle">2</span>
+            <span id="t_note2">Configure the OpenVPN server parameters (Service Type, Service Port and Client Access) and click Save.</span>
+        </p>
+        <p class="cfg-line">
+            <span id="t_step3" class="bkGdBuleCircle">3</span>
+            <span id="t_note3">Click Export to save the configuration file.</span>
+        </p>
+        <p class="cfg-line">
+            <span id="t_step4" class="bkGdBuleCircle">4</span>
+            <span id="t_note4_1">On your client devices, download and install the OpenVPN client utility from</span>
+            <br>
+            <a target="_window" class="link" href="http://openvpn.net/index.php/download/community-downloads.html">http://openvpn.net/index.php/download/community-downloads.html</a>
+            <br>
+            <span id="t_note4_2">The official supported platforms include Windows, Mac OSX, Linux.</span>
+        </p>
+        <p class="cfg-line">
+            <span id="t_step5" class="bkGdBuleCircle">5</span>
+            <span id="t_note5">Launch the OpenVPN client utility and add a new VPN connection using the saved configuration file to connect your client device to the VPN server.</span>
+        </p>
+        <p class="cfg-line">
+            <span id="t_step6"></span>
+            <span id="t_note6">To learn more about OpenVPN clients, visit</span>
+            <br>
+            <a target="_window" class="link" href="http://openvpn.net/index.php/open-source/documentation/howto.html#quick">http://openvpn.net/index.php/open-source/documentation/howto.html#quick</a>            
+        </p>
+    </div> 
+</div>
+
+<script language="javascript" type="text/javascript">
+$.tpInit(init);
+</script>

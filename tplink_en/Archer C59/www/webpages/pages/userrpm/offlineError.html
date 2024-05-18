@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Account</title>
+<style type="text/css">
+    html{
+        font-family: Verdana, Geneva, sans-serif;
+        font-size: 12px;
+        color: #a8a9ad;
+    }
+    div.content{
+        padding-top: 11px;
+    }
+    a{
+        cursor: pointer;
+        color: #4acbd6;
+    }
+    h3#offline-title{
+        font-size: 32px;
+        font-weight: 500;
+        line-height: 32px;
+        color: #666666;
+        margin: 0 0 0 58px;
+        padding-bottom: 39px;
+        border-bottom: solid 1px #e5e5e5;
+    }
+    div#offline-content{
+        position: relative;
+    }
+    div#offline-content span.icon{
+        background: url(../../themes/green/img/icons.png) no-repeat -493px -180px;
+        height: 38px;
+        width: 38px;
+        display: inline-block;
+        position: absolute;
+        top: 36px;
+        left: 0px;
+    }
+    div#offline-text {
+        display: inline-block;
+        margin-left: 58px;
+    }
+    div#offline-text h4#offline-note-title{
+        margin-top: 42px;
+        margin-bottom: 50px;
+        font-size: 21px;
+        font-weight: normal;
+    }
+    div#offline-text p{
+        font-weight: normal;
+        margin: 0;
+        line-height: 22px;
+    }
+    button{
+        font-family: Verdana, Geneva, sans-serif;
+        color: #4d4d4d;
+    }
+
+    /*button*/
+    div.button-container button.button-button{
+        height: 30px;
+        min-width: 90px;
+        padding: 0;
+        width: 90px;
+        border-radius: 5px;
+        border: 0px none;
+        background-color: #4acbd6;;
+        color: #ffffff;
+        margin: 36px 0 0 58px;
+    }
+    div.button-container button.button-button span.text{
+        font-size: 14px;
+    }
+    div.button-container.clicked button.button-button,
+    div.button-container button.button-button:hover{
+        background-color: #23c4c4;
+    }
+    div.button-container.field-buttons{
+        margin: 8px 0;
+    }
+</style>
+</head>
+
+<body>
+    <div id="basic-account">
+        <h3 id="offline-title"></h3>
+        <div id ="offline-content">
+            <span class="icon"></span>
+            <div id ="offline-text">
+                <h4 id="offline-note-title" class="note"></h4>
+                <p id="offline-note-content1" class="note"></p>
+                <p id="offline-note-content2" class="note"></p>
+                <p id="offline-note-content3" class="note"></p>
+            </div>
+        </div>
+        <button id="refresh" type="button"></button>
+    </div>
+
+<script type="text/javascript">
+(function($){
+    $(document).ready(function(e){
+        document.getElementById("offline-title").innerHTML = $.su.CHAR.OFFLINE_ERROR.ERROR;
+        document.getElementById("offline-note-title").innerHTML = $.su.CHAR.OFFLINE_ERROR.TITLE;
+        document.getElementById("offline-note-content1").innerHTML = $.su.CHAR.OFFLINE_ERROR.NOTE1;
+        document.getElementById("offline-note-content2").innerHTML = $.su.CHAR.OFFLINE_ERROR.NOTE2;
+        document.getElementById("offline-note-content3").innerHTML = $.su.CHAR.OFFLINE_ERROR.NOTE3;
+
+        var button = document.getElementById("refresh");
+        $(button).button({
+            text: $.su.CHAR.OPERATION.REFRESH,
+            handler: function(){
+                var name = $("#ul-nav").find(".selected a").attr("name");
+                if(name){
+                    $.su.nav.goTo(name, $.su.app.runningModule.name);
+                }else{
+                    window.parent.location = "/";   
+                }
+            }
+        });
+
+        var support = document.getElementById("support");
+        $(support).attr("href", $.su.CHAR.SUPPORT[$.su.locale.locale.toUpperCase()] || "http://www.tp-link.com/en/Support/");
+
+    });
+
+})(window.parent.$);
+</script>
+</body>
+</html>

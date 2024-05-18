@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2012 OpenWrt.org
+
+START=99
+
+start()
+{
+	# wait for usb storage mounted with enough time 60s 
+	# to check whether start time machine
+
+	flock -x -w 10 "/var/run/tm_checkrun.lock" -c "sleep 60;/usr/sbin/tm_checkrun" &
+}
+

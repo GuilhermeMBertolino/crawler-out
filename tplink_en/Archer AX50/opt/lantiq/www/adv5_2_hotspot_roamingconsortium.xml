@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="hotspot_roamingconsortium">
+    <helptext></helptext>
+    <header>
+        <image>images/icons/hotspot.png</image>
+        <name>Hotspot Roaming Consortium</name>
+        <description>Hotspot Roaming Consortium page.</description>
+    </header>  
+    <object viewtype="form"> 
+        <object name="temp">
+            <parameter  name="SSID"  type="dropdown" ddfun="wizardDropdown" firstselect="true" url="cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;LowerLayers=Device.WiFi.Radio.3.&amp;SSID=" webname="SSID" child="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.RoamingConsortium.*"></parameter>
+        </object>
+    </object>  
+<object viewtype="form" Display="No" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20">
+        <parameter access="readonly" Display="No" name="Enable" type="dropdown" url="hotspotenable" webname="Hotspot Mode" firstselect="true"></parameter>
+    </object>
+    <object name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.RoamingConsortium.*" viewtype="tablePlus" dependsonparamvalue="'true'|| 'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable">
+        <parameter name="RoamingConsortium" type="stringA" required="false" webname="Roaming Consortium"/>
+        <parameter name="delete" action="post" routeurl="tableplusCustomdelete($event,$index,user)" type="button" webname="delete" maxlen="64"/>
+        <parameter name="edit" action="post" routeurl="tableplusstaticedit($data,$index,user.localadd)" type="button" webname="Edit" maxlen="64"/>
+        <parameter name="Add" action="post" routeurl="localadd($event)" type="button" webname="Add" maxlen="64"/>
+    </object>
+    <parameter name="Modify" type="submitbutton" buttontype="true" routeurl="relationalFormsApply($event,'hotspot_conf')" webname="Apply" maxlen="64"/>
+    
+</view>

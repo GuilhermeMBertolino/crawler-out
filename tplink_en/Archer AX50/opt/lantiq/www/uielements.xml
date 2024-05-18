@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+    <header>
+    <name>Local Network Settings | IPV4</name>
+        <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sed turpis turpis, eu mattis sem. Sed tristique porta cursus. Class aptent <a href="#">taciti sociosqu</a> ad litora torquent per conubia nostra, per inceptos himenaeos. Donec vestibulum, enim nec condimentum ullamcorper, magna ipsum sagittis sapien, vel egestas lorem mi et neque.</description>
+    </header>
+    <object name="Device.IP.Interface.1.IPv4Address.1" viewtype="form" title="Device Details">
+        <parameter  name="IPAddress"  type="string" webname="Device Ip Address" ></parameter>
+        <parameter  name="Modify"  action="post" routeurl="Apply($event,'dhcpview')" type="button" webname="Apply" maxlen="64"></parameter>
+        <parameter  name="Cancel"  routeurl="reset()" action="post" type="button" webname="Reset" maxlen="64"></parameter>
+    </object>
+    <object name="Device.DHCPv4.Server.Pool.1" viewtype="form" title="DHCP Server Config With Hidden Display">
+        <parameter  name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+    </object>
+    <object name="Device.DHCPv4.Relay.Forwarding.1" viewtype="form" title="Checkbox">
+        <parameter  name="Enable"  type="checkbox" Display="yes" Value="1" webname="Begin Address" ></parameter>
+    </object>
+    <object name="Device.X_LANTIQ_COM_Mcast.X_LANTIQ_COM_IGMPParameters"  viewtype="form" Type="string" title="Toggle And Dropdown">
+        <parameter  name="DSL"  type="toggle" webname="DSL"></parameter>
+        <parameter  disable="DSL" name="DSLPhy"  type="dropdown"  webname="DSL Phy" Value="Auto,ADSL–AUTO,ADSL-ATM,ADSL-PTM,VDSL-AUTO,VDSL-ATM,VDSL-PTM" ></parameter>
+    </object>
+    <object name="Device.X_LANTIQ_COM_Mcast.X_LANTIQ_COM_IGMPParameters"  viewtype="form" Type="string" title="Dependent Dropdown">
+        <object name="temp"> 
+            <parameter  name="DHCPMode"  type="dropdown" Value="Server,Relay,Disable" webname="DHCP Mode"  ></parameter>
+        </object>  
+        <object name="Device.DHCPv4.Server.Pool.*" parent="Server">
+            <parameter  parent="'Server'"  parentname="temp" depends="DHCPMode" name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+            <parameter  parent="'Server'" parentname="temp" depends="DHCPMode" name="MinAddress"  type="string" Display="Yes" webname="Begin Address" ></parameter>
+            <parameter  parent="'Server'" parentname="temp" depends="DHCPMode" name="MaxAddress"  type="string" Display="Yes" webname="End Address" ></parameter>
+            <parameter  parent="'Server'" parentname="temp" depends="DHCPMode" name="SubnetMask"  type="string" Display="Yes" webname="Subnet Mask" ></parameter>
+        </object>
+        <object name="Device.DHCPv4.Relay.Forwarding.*" parent="Relay">
+            <parameter  parent="'Relay'" parentname="temp" depends="DHCPMode" name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+            <parameter  parent="'Relay'" parentname="temp" depends="DHCPMode" name="DHCPServerIPAddress"  type="string" webname="Relay IP Address" ></parameter>
+        </object>   
+    </object>  
+</view>
+

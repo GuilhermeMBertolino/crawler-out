@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. /lib/wifi/mtk_wlan_var.sh
+
+get_wlan_ini FLASH_TYPE
+is_btn_test=false
+
+if [ "${FLASH_TYPE}" = "nor" ]; then
+	get_wlan_ini NOR_BTN_OFFSET
+	get_wlan_ini NOR_BTN_BYTES
+
+	is_btn_test=`lua /sbin/is_btn_test.lua ${FLASH_TYPE} ${NOR_BTN_OFFSET} ${NOR_BTN_BYTES}`
+fi
+
+#TODO
+#if [ "${FLASH_TYPE}" = "nand" ]; then
+#fi
+
+echo $is_btn_test

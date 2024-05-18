@@ -1,0 +1,20 @@
+#!/bin/sh
+
+local online_status=1
+
+while true
+do
+    if [ $online_status = 0 ]; then
+        local cache_exp_time=$(uci -q get speed_test.service_status.cache_exp_time)
+        if [ $cache_exp_time -eq 0 ]; then
+            source /etc/speed-test/get_service_status.sh
+            exit 0
+        else
+            exit 0
+        fi
+    else
+        sleep 60
+        online-test
+        online_status=$?
+    fi
+done

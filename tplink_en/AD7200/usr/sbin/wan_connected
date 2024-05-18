@@ -1,0 +1,12 @@
+#!/bin/sh
+
+local WAN=$(uci get switchport_map.switchport_map.wan)
+
+ssdk_sh port linkstatus get $WAN | grep "ENABLE" 1>/dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    return 0
+fi
+
+return 1
+

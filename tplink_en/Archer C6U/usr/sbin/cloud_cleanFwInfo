@@ -1,0 +1,15 @@
+#!/usr/bin/lua
+
+--this file called in nvrmamanager after firmware up ok
+local uci_r = require("luci.model.uci").cursor()
+local sys = require "luci.sys"
+
+uci_r:delete("cloud_config", "new_firmware")
+uci_r:delete("cloud_config", "upgrade_info")
+uci_r:set("cloud_config", "new_firmware", "cloud_push")
+uci_r:set("cloud_config", "upgrade_info", "cloud_reply")
+uci_r:set("cloud_config", "info", "show_flag", "0")
+uci_r:set("cloud_config", "info", "tcsp_status", "1")
+uci_r:commit("cloud_config")
+
+sys.fork_call(". /lib/wportal/wportal.sh && wportalctrl_clear_upgrade_mac")

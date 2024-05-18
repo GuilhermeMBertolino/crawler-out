@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start() {
+	local count=0
+	local rftestflag=$( nvram kget rftestflag )
+	if [ "$rftestflag" != "1" ]; then
+		echo "rftestflag != 1,return from wifi_check" >/dev/console
+		return 0
+	fi
+	
+	while [ "$( nvram get wifi_start )" != "1" ]
+	do
+		sleep 1
+		count=$(($count + 1))
+		if [ $count == "40" ]; then
+			echo "===>>>wifi init too long, will reload wifi!!!" >/dev/console
+			break
+		fi
+	done
+	nvram set wifi_start="0"
+	echo "will come in wifi_check" >/dev/console
+	/sbin/wifi check
+	return 0
+}

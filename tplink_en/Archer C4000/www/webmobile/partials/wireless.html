@@ -1,0 +1,247 @@
+<div class="main-page form-container" ng-hide="form.menuItem">
+	<div form-header title="WIRELESS.WIRELESS"></div>
+	<div class="form-content-container">
+		<div class="fieldset-container">
+			<div jump-item separator="space" label="WIRELESS.WIRELESS_SETTINGS" menu-option="form.menuItem" value="settings"></div>
+			<!-- <div jump-item separator="" label="s000195" menu-option="form.menuItem" value="schedule"></div> -->
+			<div jump-item separator="space" label="WIRELESS.WPS" menu-option="form.menuItem" value="wps"></div>
+		</div>
+	</div>
+</div>
+
+<div class="main-page wireless-settings" ng-switch on="form.menuItem">
+	<div class="form-container" ng-controller="wirelessSettings" ng-switch-when="settings">
+		<form novalidate name="wireless" class="form-horizontal">
+			<div form-header title="WIRELESS.WIRELESS_SETTINGS">
+				<div button cls="button-back" icon-cls="back-button" position="left" text="FORM.BACK" on-click="back()"></div>
+				<div button type="submit" position="right" text="FORM.SAVE" on-click="save()" ng-model="form.submitBtn"></div>
+			</div>
+			<div class="form-content-container">
+				<div class="fieldset-container hidden"><!--wireless setting 控件集-->
+					<div class="fieldset-content-container">
+						<div combo-field label="WIRELESS.REGION" separator=":" ng-model="form.data.country" on-change="changeRegion()"></div>
+					</div>
+				</div>
+				<div button-group class="wirelss-mode-switch" ng-model="form.modeSwitchBtn"></div>
+				<div class="fieldset-container"><!--wireless setting 控件集-->
+					<div class="fieldset-content-container">
+						<div on="form.modeSwitchBtn.data" ng-switch>
+							<div ng-switch-when="2g" ng-controller="2g">
+								<div checkbox-switch label="WIRELESS.ENABLE_WIRELESS" separator=":" ng-model="form.data.enable" class="checkbox-orange"></div>
+								<div>
+									<div text-field label="WIRELESS.WIRELESS_NETWORK_NAME" separator=":" ng-model="form.data.ssid"></div>
+									<div checkbox-switch class="hidden-ssid" label="WIRELESS.HIDE_SSID" ng-model="form.data.hidden"></div>
+									<div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key" ng-if="form.data.encryption.data =='psk'"></div>
+
+									<div expander-field title="FORM.MORE" iconInitCls="basic-icon" iconClickCls="advanced-icon" ng-model="spread">
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.SECURITY" separator=":" ng-model="form.data.encryption" on-change="changeEncryption()"></div>
+										<div on="form.data.encryption.data" ng-switch>
+											<div ng-switch-when="psk">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.psk_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.psk_cipher" ng-change="cipherChange()"></div>
+												<!-- <div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key"></div> -->
+											</div>
+											<div ng-switch-when="wpa">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.wpa_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.wpa_cipher" on-change="cipherChange()"></div>
+												<div ip-field label="WIRELESS.RADIUS_SERVER_IP" separator=":" ng-model="form.data.server"></div>
+												<div text-field label="WIRELESS.RADIUS_PORT" separator=":" ng-model="form.data.port"></div>
+												<div text-field label="WIRELESS.RADIUS_PASSWORD" separator=":" ng-model="form.data.wpa_key"></div>
+											</div>
+											<div ng-switch-when="wep">
+												<div combo-field label="WIRELESS.TYPE" separator=":" ng-model="form.data.wep_mode"></div>
+												<div combo-field label="WIRELESS.WEP_KEY_FORMAT" separator=":" ng-model="form.data.wep_format1"></div>
+												<div combo-field label="WIRELESS.KEY_TYPE" separator=":" ng-model="form.data.wep_type1"></div>
+												<div text-field label="WIRELESS.KEY_VALUE" separator=":" ng-model="form.data.wep_key1"></div>
+											</div>
+										</div>
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.MODE" separator=":" ng-model="form.data.hwmode" on-change="modeChange()"></div>
+										<div combo-field label="WIRELESS.CHANNEL_WIDTH" separator=":" ng-model="form.data.htmode"></div>
+										<div combo-field label="WIRELESS.CHANNEL" separator=":" ng-model="form.data.channel"></div>
+										<div combo-field label="WIRELESS.TRANSMIT_POWER" separator=":" ng-model="form.data.txpower"></div>
+										<div class="divide-bottom"></div>
+									</div>
+								</div>
+							</div>
+							<div ng-switch-when="5g" ng-controller="5g">
+								<div checkbox-switch label="WIRELESS.ENABLE_WIRELESS" separator=":" ng-model="form.data.enable" class="checkbox-orange"></div>
+								<div>
+									<div text-field label="WIRELESS.WIRELESS_NETWORK_NAME" separator=":" ng-model="form.data.ssid"></div>
+									<div checkbox-switch class="hidden-ssid" label="WIRELESS.HIDE_SSID" ng-model="form.data.hidden"></div>
+									<div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key" ng-if="form.data.encryption.data =='psk'"></div>
+
+									<div expander-field title="FORM.MORE" iconInitCls="basic-icon" iconClickCls="advanced-icon" ng-model="spread">
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.SECURITY" separator=":" ng-model="form.data.encryption"></div>
+										<div on="form.data.encryption.data" ng-switch>
+											<div ng-switch-when="psk">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.psk_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.psk_cipher"></div>
+												<!-- <div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key"></div> -->
+											</div>
+											<div ng-switch-when="wpa">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.wpa_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.wpa_cipher"></div>
+												<div ip-field label="WIRELESS.RADIUS_SERVER_IP" separator=":" ng-model="form.data.server"></div>
+												<div text-field label="WIRELESS.RADIUS_PORT" separator=":" ng-model="form.data.port"></div>
+												<div text-field label="WIRELESS.RADIUS_PASSWORD" separator=":" ng-model="form.data.wpa_key"></div>
+											</div>
+											<div ng-switch-when="wep">
+												<div combo-field label="WIRELESS.TYPE" separator=":" ng-model="form.data.wep_mode"></div>
+												<div combo-field label="WIRELESS.WEP_KEY_FORMAT" separator=":" ng-model="form.data.wep_format1"></div>
+												<div combo-field label="WIRELESS.KEY_TYPE" separator=":" ng-model="form.data.wep_type1"></div>
+												<div text-field label="WIRELESS.KEY_VALUE" separator=":" ng-model="form.data.wep_key1"></div>
+											</div>
+										</div>
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.MODE" separator=":" ng-model="form.data.hwmode"></div>
+										<div combo-field label="WIRELESS.CHANNEL_WIDTH" separator=":" ng-model="form.data.htmode"></div>
+										<div combo-field label="WIRELESS.CHANNEL" separator=":" ng-model="form.data.channel"></div>
+										<div combo-field label="WIRELESS.TRANSMIT_POWER" separator=":" ng-model="form.data.txpower"></div>
+										<div class="divide-bottom"></div>
+									</div>
+								</div>
+							</div>
+
+							<div ng-switch-when="5g_2" ng-controller="5g_2">
+								<div checkbox-switch label="WIRELESS.ENABLE_WIRELESS" separator=":" ng-model="form.data.enable" class="checkbox-orange"></div>
+								<div>
+									<div text-field label="WIRELESS.WIRELESS_NETWORK_NAME" separator=":" ng-model="form.data.ssid"></div>
+									<div checkbox-switch class="hidden-ssid" label="WIRELESS.HIDE_SSID" ng-model="form.data.hidden"></div>
+									<div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key" ng-if="form.data.encryption.data =='psk'"></div>
+
+									<div expander-field title="FORM.MORE" iconInitCls="basic-icon" iconClickCls="advanced-icon" ng-model="spread">
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.SECURITY" separator=":" ng-model="form.data.encryption"></div>
+										<div on="form.data.encryption.data" ng-switch>
+											<div ng-switch-when="psk">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.psk_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.psk_cipher"></div>
+												<!-- <div text-field label="WIRELESS.WIRELESS_PASSWORD" separator=":" ng-model="form.data.psk_key"></div> -->
+											</div>
+											<div ng-switch-when="wpa">
+												<div combo-field label="WIRELESS.VERSION" separator=":" ng-model="form.data.wpa_version"></div>
+												<div combo-field label="WIRELESS.ENCRYPTION" separator=":" ng-model="form.data.wpa_cipher"></div>
+												<div ip-field label="WIRELESS.RADIUS_SERVER_IP" separator=":" ng-model="form.data.server"></div>
+												<div text-field label="WIRELESS.RADIUS_PORT" separator=":" ng-model="form.data.port"></div>
+												<div text-field label="WIRELESS.RADIUS_PASSWORD" separator=":" ng-model="form.data.wpa_key"></div>
+											</div>
+											<div ng-switch-when="wep">
+												<div combo-field label="WIRELESS.TYPE" separator=":" ng-model="form.data.wep_mode"></div>
+												<div combo-field label="WIRELESS.WEP_KEY_FORMAT" separator=":" ng-model="form.data.wep_format1"></div>
+												<div combo-field label="WIRELESS.KEY_TYPE" separator=":" ng-model="form.data.wep_type1"></div>
+												<div text-field label="WIRELESS.KEY_VALUE" separator=":" ng-model="form.data.wep_key1"></div>
+											</div>
+										</div>
+										<div class="divide-div"></div>
+										<div combo-field label="WIRELESS.MODE" separator=":" ng-model="form.data.hwmode"></div>
+										<div combo-field label="WIRELESS.CHANNEL_WIDTH" separator=":" ng-model="form.data.htmode"></div>
+										<div combo-field label="WIRELESS.CHANNEL" separator=":" ng-model="form.data.channel"></div>
+										<div combo-field label="WIRELESS.TRANSMIT_POWER" separator=":" ng-model="form.data.txpower"></div>
+										<div class="divide-bottom"></div>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<!-- <div class="form-container" ng-controller="wirelessSchedule" ng-switch-when="schedule">
+		<form novalidate name="wireless" class="form-horizontal">
+			<div form-header title="s000161">
+				<div button position="left" text="s000005" on-click="back()"></div>
+				<div button position="right" text="s000006" on-click="save()" ng-model="form.save"></div>
+			</div>
+			<div class="form-content-container">
+				<div class="fieldset-container">
+					<div class="fieldset-content-container">
+						<div switch-field label="s000315" ng-model="form.data.schedule"></div>
+					</div>
+				</div>
+
+				<div class="fieldset-container">
+				<div legend-field title="s000316"></div>
+					<div class="fieldset-content-container">
+						
+					</div>
+				</div>
+			</div>
+		</form>
+	</div> -->
+
+	<div class="form-container" ng-controller="wps" ng-switch-when="wps">
+		<form novalidate name="wireless" class="form-horizontal">
+			<div form-header title="WIRELESS.WPS">
+				<div button cls="button-back" icon-cls="back-button" position="left" text="FORM.BACK" on-click="back()"></div>
+			</div>
+			<div class="form-content-container">
+				<div class="fieldset-container">
+					<div class="fieldset-content-container" ng-hide="wizardOn">
+						<div combo-field label="WIRELESS.WPS_METHOD" separator=":" ng-model="setupmethod" on-change="changeMethod()"></div>
+					</div>
+				</div>
+
+				<div ng-show="setupmethod.data == 0">
+					<div class="wps-push-button">
+						<button class="push-connect-button" ng-hide="pushConnectBtn.visible===false"  ng-click="pushConnect()">
+							<div class="wps-button-text">
+								<span translate>WIRELESS.START</span><br>
+								<span class="small" translate>WIRELESS.WPS_LOWERCASE</span>
+							</div>
+						</button>
+						<div class="push-cancel-button-container" ng-hide="pushCancelBtn.visible===false">
+							<button class="push-cancel-button" ng-click="pushCancel()">
+								<div class="wps-button-text">
+									<span translate>WIRELESS.CANCEL</span><br>
+									<span class="small" translate>WIRELESS.WPS_LOWERCASE</span>
+								</div>
+							</button>
+						</div>
+					</div>
+                    <div class="push-status {{push_status.status}}">
+                    	<span class="push_status_icon"></span>
+                        <span class="push_status_text" translate>{{push_status.text | translate}}</span>
+                    </div>
+					<div note-field content="WIRELESS.PUSH_DES"></div>
+				</div>
+
+				<div ng-show="setupmethod.data == 1">
+					<div class="fieldset-container" ng-hide="wizardOn">
+						<div class="fieldset-content-container">
+							<div text-field ng-model="form.data.wps_pin" label="WIRELESS.CLIENT_PIN" separator=":"></div>
+							<div button cls="button" text="WIRELESS.CONNECT" on-click="pinConnect()"  ng-model="pinConnectBtn" class="wps-connect-button"></div>
+                            <span class="pin_status {{pin_status.status}}" translate>{{pin_status.text | translate}}</span>
+						</div>
+						<div note-field content="WIRELESS.CLIENT_PIN_DES"></div>
+					</div>
+
+					<div class="fieldset-container" >
+						<div class="fieldset-content-container">
+							<div switch-field label="WIRELESS.ROUTE_PIN" ng-model="wpsSwitch"></div>
+							<div class="field-horizontal">
+								<div text-field class="pin-field" ng-model="form.data.client_pin"></div>
+								<div class="button-group">
+									<div button class="button-inline" text="WIRELESS.GENERATE" on-click="generate()" ng-model="generateBtn"></div>
+									<div button class="button-inline" text="WIRELESS.DEFAULT" on-click="default()"  ng-model="defaultBtn"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div note-field content="WIRELESS.ROUTERS_PIN_INFO"></div>
+				</div>
+
+			</div>
+		</form>
+		<div message id="pin-progress-msg">
+			<div progress-bar ng-model="pinProgressBar"></div>
+		</div>
+	</div>
+
+</div>
+

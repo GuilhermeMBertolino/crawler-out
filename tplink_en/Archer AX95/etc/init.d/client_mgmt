@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+START=70
+STOP=70
+
+client_mgmt_v6_support=`uci get profile.@ipv6[0].client_mgmt_v6_support -c /etc/profile.d/ -q`
+
+start()
+{
+	service_start /usr/bin/client_mgmt
+	if [ "$client_mgmt_v6_support" == "yes" ]; then
+		echo "* * * * * lua -e 'require(\"luci.model.tm_clientmgmt_ipv6\").get_access_device_list_v6()' &" > /tmp/client6_cron
+		crontab -l | grep -v "get_access_device_list_v6" | cat - "/tmp/client6_cron" | crontab -
+		rm -f /tmp/client6_cron
+	fi
+	return 0
+}
+
+stop()
+{
+	service_stop /usr/bin/client_mgmt
+	if [ "$client_mgmt_v6_support" == "yes" ]; then
+		crontab -l | grep -v "get_access_device_list_v6" | crontab -
+	fi
+	return 0
+}

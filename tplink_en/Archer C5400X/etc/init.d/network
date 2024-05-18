@@ -1,0 +1,76 @@
+#!/bin/sh /etc/rc.common
+
+START=25
+STOP=90
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+NETWORK_MOD_ID=290
+LOGX_ID_NETIFD_START=200
+LOGX_ID_NETIFD_STOP=201
+
+start() {
+	local pid=""
+	local enable
+	config_load tfstats
+	config_get enable "switch" enable
+
+	# BCM4908: work around a flow cache bug
+	if [ -d /proc/fcache/ ] ; then
+		local internet_proto=`uci get network.internet.proto 2>/dev/null`
+		if [[ "$internet_proto" == "pptp" || "$internet_proto" == "l2tp" ]] ; then
+			fcctl config --gre 0
+		else
+			fcctl config --gre 1
+		fi
+	fi
+
+	stop
+
+	[ -e /proc/sys/kernel/core_pattern ] && {
+		ulimit -c unlimited
+		echo '/tmp/%e.%p.%s.%t.core' > /proc/sys/kernel/core_pattern
+	}
+
+	# netifd depends on "statistics" kern module
+	insmod statistics
+	if [ "$enable" = "on" ] ; then
+		ubus call tfstats on || true
+	fi
+	service_start /sbin/netifd
+
+	pid=$(pidof netifd)
+	if [ x"$pid" != x ]; then
+		logx -p $pid $NETWORK_MOD_ID $LOGX_ID_NETIFD_START
+	fi
+}
+
+restart() {
+	start
+}
+
+shutdown() {
+	stop
+}
+
+stop() {
+	local pid=$(pidof netifd)
+
+	ifdown -a
+	if [ x"$pid" != x ]; then
+		sleep 1
+	fi
+
+	service_stop /sbin/netifd
+	ubus call tfstats off || true
+	rmmod statistics
+
+	if [ x"$pid" != x ]; then
+		logx -p $pid $NETWORK_MOD_ID $LOGX_ID_NETIFD_STOP
+	fi
+}
+
+reload() {
+	ubus call network reload
+}

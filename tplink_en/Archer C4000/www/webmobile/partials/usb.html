@@ -1,0 +1,177 @@
+<div class="main-page" on="menuItem" ng-switch>
+	<div class="form-container" ng-show="menuItem==''">
+		<div form-header title="USB.TITLE"></div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div legend-field title="USB.FILE_SHARE"></div>
+				<div class="fieldset-content-container">
+					<div jump-item separator="" label="USB.DISK_SET" menu-option="menuItem" value="device"></div>
+					<div jump-item separator="" label="USB.SHARING_SETTING" menu-option="menuItem" value="sharing"></div>
+					<div jump-item separator="" label="USB.SHARE_FOLDER" menu-option="menuItem" value="folder"></div>
+					<div jump-item separator="" label="USB.ACCOUNT_TITLE" menu-option="menuItem" value="account"></div>
+				</div>
+			</div>
+			<div class="fieldset-container printer-server-menu-item" ng-if="!noPrinter">
+				<div class="fieldset-content-container">
+					<div jump-item separator="" label="USB.PRINT_SERVER" menu-option="menuItem" value="printer"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+
+
+
+	<!-- device setting -->
+	<div class="form-container device-settings" ng-controller="device" ng-switch-when="device">
+		<div form-header title="USB.DISK_SET">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="backBtn"></div>
+			<div button position="right" text="USB.SCAN" on-click="scan()" ng-model="scanBtn"></div>
+		</div>
+		<div device ng-model="deviceList" safe-remove="removeDevice()" has-switch="true"></div>
+	</div>
+
+	<!-- Sharing setting -->
+	<div class="form-container" ng-controller="sharing" ng-switch-when="sharing">
+		<div form-header title="USB.SHARING_SETTING">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="backBtn"></div>
+			<div button position="right"  text="FORM.SAVE" on-click="save()" ng-model="form.submitBtn"></div>
+		</div>
+		<div class="form-content-container">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div text-field label="USB.SERVER_NAME" ng-model="form.data.server"></div>
+				</div>
+			</div>
+			<div class="fieldset-container">
+				<div legend-field title="USB.METHOD"></div>
+				<div class="fieldset-content-container">
+					<div class="widget-access-container" ng-repeat="method in access">
+						<div checkbox-switch  label="{{method.protocol.data}}" ng-model="method.enable" class="checkbox-orange"></div>
+						<div ng-switch on="method.edit.data">
+							<div class="inline" translate >{{method.link.data}}</div>
+							<div text-field ng-switch-when="true" ng-model="method.port"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- folder sharing -->
+	<div class="form-container" ng-controller="folder" ng-switch-when="folder">
+
+		<div class="form-content-container" ng-switch on="chooseGrid">
+			<div class="fieldset-container" ng-hide="gridEditing">
+				<div class="fieldset-content-container">
+					<div label="USB.SHAREING_ALL" switch-field ng-model="form.data.share_all"></div>
+					<div label="USB.ENABLE_AUTHENTICATION" switch-field ng-model="form.data.authentication"></div>
+					
+					
+				</div>
+				<div note-field ng-show="form.data.authentication.data=='on'&&form.data.share_all.data=='on'" content="USB.ACCESS_NOTE"></div>
+			</div>
+			<div class="fieldset-container" ng-switch-when="folderGrid" ng-controller="shareFolder">
+				<div grid="grid" editor="form" config="$parent.folderGridConfig">
+					<div class="fieldset-content-container" ng-hide="form.data.path.item=='path'">
+						<div combo-field label="USB.VOLUMN_NAME" ng-model="form.data.volumn"></div>
+						<div class="fieldset-content-container">
+							<div jump-item class="folder-jump" separator="" label="USB.FOLDER_PATH" menu-option="form.data.path.item" ng-model="form.data.path" value="path" ></div>
+						</div>
+						<div text-field label="USB.FOLDER_NAME" ng-model="form.data.name" mask=true></div>
+						<div class="fieldset-content-container">
+							<div checkbox-switch label="USB.GUEST_ACCESS" ng-model="form.data.guest_network" ng-init="form.data.guest_network.data=form.data.guest_network.data?form.data.guest_network.data:'on'" class="checkbox-orange"></div>
+						</div>
+						<div class="fieldset-content-container">		
+							<div checkbox-switch label="USB.ENABLE_AUTHENTICATION" ng-model="form.data.authentication"  class="checkbox-orange"></div>
+						</div>
+						<div class="fieldset-content-container">
+							<div checkbox-switch label="USB.ENABLE_WRITE_ACCESS" ng-model="form.data.writable" ng-init="form.data.writable.data=form.data.writable.data?form.data.writable.data:'on'" class="checkbox-orange"></div>
+						</div>
+						<div class="fieldset-content-container">
+							<div checkbox-switch label="USB.ENABLE_MEDIA_SHARE" ng-model="form.data.media_server" ng-init="form.data.media_server.data=form.data.media_server.data?form.data.media_server.data:'on'" class="checkbox-orange"></div>
+						</div>
+					</div>
+
+					<div class="form-container" ng-if="form.data.path.item=='path'">
+						<div form-header title="USB.ADD_FOLDER">
+							<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="backBtn"></div>
+							<div button position="right" text="FORM.DONE" on-click="done()" ng-model="doneBtn"></div>
+						</div>
+						<div class="fieldset-container">
+							<div folder-scan ng-model="form.data.path"></div>
+						</div>
+					</div>				
+
+				</div>
+			</div>			
+			<div class="fieldset-container" ng-switch-when="all" ng-controller="shareAll">
+				<div grid="grid" editor="form" config="$parent.allGridConfig">
+				</div>
+			</div>
+
+		</div>
+	</div>
+	<!-- sharing account -->
+	<div class="form-container" ng-controller="account" ng-switch-when="account">
+		<div form-header title="USB.ACCOUNT_TITLE">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="backBtn"></div>
+			<div button position="right" text="FORM.SAVE" on-click="save()" ng-model="form.submitBtn"></div>
+		</div>
+		<div class="form-content-container">
+			<div note-field content="USB.AC_NOTE"></div>
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div combo-field label="" ng-model="form.data.account"></div>
+				</div>
+			</div>
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div text-field label="USB.USERNAME" ng-model="form.data.username"></div>
+					<div password label="USB.PASSWORD" ng-model="form.data.password" vtype="password" btn-visible="false" level-visible="true"></div>
+					<div password label="USB.CONFIRM" ng-model="form.data.confirm" vtype="password" btn-visible="false" level-visible="false"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- printer server -->
+	<div class="form-container" ng-controller="printer" ng-switch-when="printer">
+		<div form-header title="USB.PRINT_SERVER">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="backBtn"></div>
+		</div>
+		<div class="form-content-container">
+			
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div label="USB.ENABLE_PRINT_SERVER" switch-field ng-model="form.data.enable"></div>
+					<div display-field label="USB.PINTER_NAME" ng-model="form.data.name"></div>
+				</div>
+			</div>
+			<div note-field title="USB.NOTE_TITLE">
+				<div class="step-container">
+					<div translate class="step">USB.STEP1</div>
+					<div translate class="step-content">USB.NOTE1</div>
+				</div><br/>
+				<div class="step-container">
+					<div translate class="step">USB.STEP2</div>
+					<div translate class="step-content">USB.NOTE2</div>
+				</div><br/>
+				<div class="step-container">
+					<div translate class="step">USB.STEP3</div>
+					<div translate class="step-content">USB.NOTE3</div>
+				</div><br/>
+
+			</div>
+		</div>
+	</div>
+
+	<div class="page-msg">
+		<div message id="device-msg">
+		</div>
+		<div message id="folder-save-msg">
+		</div>
+		
+	</div>
+
+
+</div>

@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+
+START=40
+
+start() {
+    local apsd_agent_only=$(uci get profile.@onemesh[0].easymesh_apsd_agent_only -c /etc/profile.d)
+    local sysmode=`uci get sysmode.sysmode.mode`
+    local factory_mode=`uci get factory.factorymode.enable`
+    local mesh_enable=$(uci get meshd.meshd.enable)
+
+    [ "$mesh_enable" != "on" ] && return
+
+    [ "$sysmode" != "repeater" -a "$sysmode" != "router" ] && return
+    [ "$factory_mode" = "yes" ] && return
+
+    if [ x"${apsd_agent_only}" == x"yes" -a "$sysmode" == "router" ]; then
+        echo "========>>>>>>>>>>> insmod hyfi-bridging hyfi_linux_bridge=br-lan hyfi_bridge_mode=AP" > /dev/console
+        insmod /lib/modules/iplatform/hyfi-bridging.ko hyfi_linux_bridge="br-lan" hyfi_bridge_mode="AP"
+    else
+        echo "========>>>>>>>>>>> insmod hyfi-bridging" > /dev/console
+        insmod /lib/modules/iplatform/hyfi-bridging.ko
+    fi
+}
+
+stop() {
+    return 0
+}
+
+reload() {
+    return 0
+}

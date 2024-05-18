@@ -1,0 +1,201 @@
+#!/bin/sh
+. /lib/functions.sh
+
+SMARTIP_UCI_FILE="smartip"
+SMARTIP_UCI_TYPE="smartip"
+
+DHCPS_UCI_FILE="dhcp_server"
+DHCPS_UCI_TYPE="dhcp_server"
+RESERVATION_UCI_TYPE="reservation"
+
+SMARTIP_CONFIG_FILE="/tmp/smartipd.conf"
+UDHCPD_CONFIG_FILE="/var/etc/dnsmasq.conf"
+UDHCPD_INFO_FILE="/tmp/udhcpd.info"
+LANIP_CHANGE_FILE="/tmp/lanip_change"
+
+ipBegin="192.168.0.100"
+ipEnd="192.168.0.199"
+lease=0
+router="192.168.0.1"
+primaryDns="0.0.0.0"
+secondary="0.0.0.0"
+lanip="192.168.0.1"
+mask="255.255.255.0"
+dns="192.168.0.1"
+static_lease_mac="00:00:00:00:00:00"
+static_lease_ip="192.168.0.1"
+
+add() {
+	local value=$1
+	echo "$value" >> $SMARTIP_CONFIG_FILE
+}
+
+smartip_handler() {
+	local section="$1"
+	local options="gw lanip lantype mask"
+	local value
+
+	for option in $options; do
+		config_get value $section $option
+		add "$option=$value"
+	done
+}
+
+
+generate_smartipd_conf() {
+	echo -n "" > $SMARTIP_CONFIG_FILE
+
+	config_load $SMARTIP_UCI_FILE
+	config_foreach smartip_handler $SMARTIP_UCI_TYPE
+	config_clear
+}
+
+get_lanip_change() {
+	if [ -f $LANIP_CHANGE_FILE ]; then
+		read change < $LANIP_CHANGE_FILE
+		add "lanip_change=$change"
+		rm -f $LANIP_CHANGE_FILE
+	fi
+}
+
+get_lan() {
+	local section=$1
+	local value
+
+	config_get value $section lanip
+	lanip=$value
+	config_get value $section mask
+	mask=$value
+}
+
+get_dhcps() {
+	local section=$1
+	local value
+
+	config_get value $section startIpAddress
+	ipBegin=$value
+
+	config_get value $section endIpAddress
+	ipEnd=$value
+
+	config_get value $section primaryDns
+	primaryDns=$value
+
+	config_get value $section secondaryDns
+	secondaryDns=$value
+
+	config_get value $section dhcpServer
+	echo "$value" > $UDHCPD_INFO_FILE
+
+	config_get value $section defaultGateway
+	router=$value
+
+	config_get value $section dhcpLeaseTime
+	lease=$value
+	let "lease = $lease * 60"
+}
+
+get_reservation_list() {
+	local section=$1
+	local value
+	config_get value $section enable
+
+	echo "value: $value"
+
+	if [ "$value" == "on" ]; then
+		config_get value $section mac
+		static_lease_mac=$value
+
+		config_get value $section ip
+		static_lease_ip=$value
+
+		echo "static_lease $static_lease_mac $static_lease_ip" >> $UDHCPD_CONFIG_FILE
+	fi
+}
+
+generate_udhcps_conf() {
+	config_load $DHCPS_UCI_FILE
+	config_foreach get_dhcps $DHCPS_UCI_TYPE
+	config_clear
+
+	config_load $SMARTIP_UCI_FILE
+	config_foreach get_lan $SMARTIP_UCI_TYPE
+	config_clear
+
+	if [ "$primaryDns" == "0.0.0.0" -a "$secondaryDns" == "0.0.0.0" ]; then
+		dns=$lanip
+	elif [ "$primaryDns" != "0.0.0.0" ]; then
+		dns=$primaryDns
+	elif [ "$secondaryDns" != "0.0.0.0"]; then
+		dns=$secondaryDns
+	fi
+
+	echo -n "" > $UDHCPD_CONFIG_FILE
+
+cat << END	>> $UDHCPD_CONFIG_FILE
+start		$ipBegin
+end			$ipEnd
+opt lease	$lease
+opt dns		$dns
+opt router	$lanip
+opt subnet	$mask
+interface	br0
+max_leases	100
+auto_time	60
+lease_file	/tmp/udhcpd.leases
+pidfile		/tmp/udhcpd.pid
+END
+
+	# add static lease entries
+	config_load $DHCPS_UCI_FILE
+	config_foreach get_reservation_list $RESERVATION_UCI_TYPE
+	config_clear
+}
+
+start() {
+	generate_smartipd_conf
+	generate_udhcps_conf
+
+	# start smartip daemon
+	/usr/bin/smartipd
+}
+
+stop() {
+	[ -f $SMARTIP_CONFIG_FILE ] && rm -f $SMARTIP_CONFIG_FILE
+	killall -SIGTERM smartipd
+}
+
+restart() {
+	stop
+	generate_smartipd_conf
+	get_lanip_change
+	generate_udhcps_conf
+	# start smartip daemon
+	/usr/bin/smartipd 
+}
+
+reload() {
+	generate_udhcps_conf
+}
+
+resetlan() {
+	lanip=$1
+	mask=$2
+	uci set network.lan.ipaddr="$lanip"
+	uci set network.lan.netmask="$mask"
+}
+
+action="$1"
+smart_lanip="$2"
+smart_mask="$3"
+case $action in
+	start)		start ;;
+	stop)		stop ;;
+	restart)	restart ;;
+	reload)		reload ;;
+	resetlan)	resetlan "$smart_lanip" "$smart_mask";;
+	*)		;;
+esac
+
+exit 0
+

@@ -1,0 +1,29 @@
+<script language="javascript" type="text/javascript">function doUpload(){if($.id("filename").value==""){$.alert(ERR_USB_3G_FILE_NONE);return false}$.id("upload").disabled=true;$.id("back").disabled=true;var formObj=$.d.forms[0];try{formObj.target="up_frame";formObj.action="/cgi/usb3gup";formObj.submit()}catch(e){}$.guage(["<span class='T T_uploading'>"+s_str.uploading+"</span>","<span class='T T_wait_upload'>"+s_str.wait_upload+"</span>..."],10,100,function(){doBack();$.cgi("/cgi/usb3gupburn",null,function(ret){if(ret&&ret!=ERR_NETWORK&&ret!=ERR_EXIT&&ret!=ERR_NONE_FILE){$.errBack(ret,"usb3gUpload.htm")}},false,true)})}function doBack(){$.loadMain("usb3gModemList.htm")}var tpNewWin;function openWindow(){if(tpNewWin){tpNewWin.close()}tpNewWin=window.open("http://www.tp-link.com","","")};</script>
+<p class="et T" id="et">Upload 3G USB Modem Configuration File</p>
+<div class="con1 L">
+	<p class="ct"></p>
+	<p class="bl"></p>
+	<div class="con2">
+		<p class="br"></p>
+		<form action="/cgi/usb3gup" enctype="multipart/form-data" method="post">
+			<p class="L1">
+				<b class="item T" id="t_file">File:</b>
+				<input type="file" name="filename" id="filename" />
+			</p>
+		</form>
+		<p class="L1">
+			<span class="T" id="t_info">Please Note: If you restore the Device's factory setting, the bin file will be lost.In the event that you do lose the bin file, you will need to re-upload it, or download our latest firmware from </span>
+			<a href="#" onclick="openWindow();">
+				<span id="website">www.tp-link.com</span>
+			</a>
+			<span class="T" id="t_info2">. The updated firmware will be installed into your 3G Device and restore all of its functions.</span>
+		</p>
+	</div>
+	<div id="back_line_btn">
+	<p class="bl"></p>
+	<p class="tail">
+		<input type="button" class="button L T" id="upload" value="Upload" onclick="return doUpload()"/>
+		<input type="button" class="button L T T_back" id="back" value="Back" onclick="doBack()"/>
+	</p>
+	</div>
+</div>

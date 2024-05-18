@@ -1,0 +1,294 @@
+<script>var curdndObj,voipX_TP_CallFireWallCfg,voipBlackLists,voipDialPlan=[],voipAccounts=[],editOutFlag=0,editInFlag=0,curOutIndex=-1,curInIndex=-1,anonyFlag=!1,freshFlag=!0,curStk=new Array(-1,-1,-1,-1,-1,-1),preArray=new Array,otherType=4,attrType=8,curOutType=-1,curOutPrefixArray=new Array,curInNum=-1;function getPrefix(e,t){if(""==e)return!1;for(var a=e.split("-"),n=0;n<a.length;n++)t.push(a[n]);return t}function enterCheck(e,t,a){var n=n_str.voice_callblocks.t_number,l=$("#incomNum");try{for(var i=0;i<a.length;i++){l.get(0).value=a[i];var o=a[i];if(0==o.length)throw $.alert(ERR_VOIP_NOT_EMPTY,"("+n+")"),setFocus(l),!1;if(o.length<3||16<o.length)throw $.alert(ERR_VOIP_VALUE_LEN_ERROR,"("+n+":[3,16])"),setFocus(l),!1;checkNum(l,n)}if(10<=e.length)throw $.alert(ERR_VOIP_ENTRY_MAX_ERROR),!1;for(i=0;i<t.length;i++)for(var r=0;r<e.length;r++)if(t[i]==e[r].replace(/(^\s*)|(\s*$)/g,""))throw $.alert(ERR_VOIP_LIST_CONFILICT,"incoming list"),setFocus(l),!1;if(10<e.length+a.length)throw $.alert(ERR_VOIP_ENTRY_MAX_ERROR),!1}catch(e){if(!1===e)return!1;throw e}return!0}function outEnterCheck(){var e,t,a=$("#outNum");try{e=n_str.voice_callblocks.t_addpre,t=getValue("outNum",e,1,16),a.get(0).value=t,checkNum(a,e)}catch(e){if(!1===e)return!1;throw e}return!0}function matchType(e){for(var t=[],a=0;a<preArray.length;a++){t=[],t=preArray[a].split("-");for(var n=0;n<t.length;n++)if(t[n]==e)return a}return 4}function isPrefix(e){for(var t=0;t<preArray.length;t++)for(var a=preArray[t].split("-"),n=0;n<a.length;n++)if(a[n]==e)return t;return 4}function doDel(n){$.confirm(c_str.voice_del_con,function(){if(-2!=n){$.addLoading($(this));for(var e=0;e<voipBlackLists.length;)voipBlackLists[e]==n?voipBlackLists.splice(e,1):e++;var t={};t.incomingBlackList=voipBlackLists.join("|"),$.act(ACT_SET,XTP_IGD_CALL_FIREWALL_CFG,voipX_TP_CallFireWallCfg.__stack,null,t),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}else{$.addLoading($(this));var a=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_AnonymousCallBlockStart"]);if(0!=$.exe())return;$.each(a,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,["X_TP_AnonymousCallBlockStart=0"])}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}})}function doOutDel(d,s){$.confirm(c_str.voice_del_con,function(){var e;$.addLoading($(this));var t=1<<BARRING_SHIFT,a=$.act(ACT_GET,XTP_IGD_MULTIISPDP_LIST,s,null,["prefix","type"]),n=$.act(ACT_GL,XTP_IGD_MULTIISPDP_LIST,null,null,["attr","prefix","replace","type"]);if(0==$.exe()){var l=[];$.each(n,function(e,t){(parseInt(this.attr,10)&BARRING_MASK)>>>BARRING_MASK!=0&&l.push(this)});var i=[];if("other"==d)i.push(a.prefix),e=otherType;else{var o=isPrefix(a.prefix);i=preArray[o].split("-"),e=attrType}for(var r=0;r<l.length;r++)for(var c=0;c<i.length;c++)if(l[r].prefix==i[c]){$.act(ACT_DEL,XTP_IGD_MULTIISPDP_LIST,l[r].__stack,null,["attr="+t,"type="+e]);break}actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}})}function doOutEdit(e,t){freshFlag=!1;var a=$.act(ACT_GET,XTP_IGD_MULTIISPDP_LIST,t,null);if(0==$.exe()){var n={refresh:1};4!=(curOutType=matchType(a.prefix))&&"other"!=e?($('#numType option[value="'+curOutType+'"]').prop("selected","selected"),$("#numType").tpSelect(n),curOutPrefixArray=preArray[curOutType].split("-")):(curOutType=4,$("#numType option[value='4']").prop("selected","selected"),$("#numType").tpSelect(n),$("#outNum").prop("value",a.prefix),curOutPrefixArray.push(a.prefix)),editOutFlag=1,curStk=t}}function doInEdit(e){editInFlag=!(freshFlag=!1),curInIndex=e;var t="<option value='0' text='Input numbers'>"+n_str.voice_callblocks.t_addnumber+"</option>",a="<option value='0' text='Input numbers'>"+n_str.voice_callblocks.t_addnumber+"</option><option value='1' text='Anonymous calls'>"+n_str.voice_callblocks.t_addanonymous+"</option>";1==anonyFlag?$("#sel").empty().append(t):$("#sel").empty().append(a);$("#sel").tpSelect({refresh:1}),$("#incomNum").val(voipBlackLists[e])}function freshIncomingTable(){if(freshFlag){voipX_TP_CallFireWallCfg=$.act(ACT_GET,XTP_IGD_CALL_FIREWALL_CFG,null,null,["IncomingBlackList"]);var e=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_AnonymousCallBlockStart"]);if(0!=$.exe())return;0<(voipBlackLists=voipX_TP_CallFireWallCfg.incomingBlackList.split("|")).length&&""==voipBlackLists[voipBlackLists.length-1]&&voipBlackLists.pop(),0<voipBlackLists.length&&""==voipBlackLists[0]&&voipBlackLists.shift(),$("#table-incoming").find("tbody tr:not(.nd)").remove();var t=new Array,a=0;if($.each(voipBlackLists,function(){t.push([{text:this,width:"30%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+a+"' onclick='doInEdit("+a+")'></span><span class='table-grid-icon edit-trash-icon' id='del_"+a+"' onclick='doDel("+this+");'></span>",width:"10%"}]),a++}),1==e[0].X_TP_AnonymousCallBlockStart){anonyFlag=!0,t.push([{text:n_str.voice_callblocks.t_addanonymous,width:"30%"},{text:"<span class='table-grid-icon edit-trash-icon' id='del_"+a+"' onclick='doDel("+-2+");'></span>",width:"10%"}])}else anonyFlag=!1;return $.initTableBody($("#table-incoming"),t),t}}function freshOutgoingTable(){if(freshFlag){var e=$.act(ACT_GL,XTP_IGD_MULTIISPDP_LIST,null,null,["attr","prefix","replace","type"]);if(0!=$.exe())return;voipDialPlan=[],$.each(e,function(e,t){(parseInt(this.attr,10)&BARRING_MASK)>>>BARRING_MASK!=0&&voipDialPlan.push(this)}),$("#table-outgoing").find("tbody tr:not(.nd)").remove();var n=new Array,l=new Array(0,0,0,0),i=0;$.each(voipDialPlan,function(){var e=this.prefix,t=(parseInt(this.attr,10),isPrefix(e)),a="["+this.__stack+"]";0<=t&&t<=3?(this.type&attrType&&0==l[t]&&(l[t]=1,n.push([{text:typeArray[t],width:"30%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+i+"' onclick='doOutEdit(\"type\","+a+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+i+"' onclick='doOutDel(\"type\","+a+");'></span>",width:"10%"}])),this.type&otherType&&n.push([{text:this.prefix,width:"30%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+i+"' onclick='doOutEdit(\"other\", "+a+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+i+"' onclick='doOutDel(\"other\", "+a+");'></span>",width:"10%"}])):n.push([{text:this.prefix,width:"30%"},{text:"<span class='table-grid-icon edit-modify-icon' id='edit_"+i+"' onclick='doOutEdit(\"other\", "+a+");'></span><span class='table-grid-icon edit-trash-icon' id='del_"+i+"' onclick='doOutDel(\"other\", "+a+");'></span>",width:"10%"}]),i++}),$.initTableBody($("#table-outgoing"),n)}}function initOutgoingTable(){$.auto(freshOutgoingTable,VOICE_FRESH_TIME,!0)}function initIncomingTable(){$("#anony").prop("checked",!1),$.auto(freshIncomingTable,VOICE_FRESH_TIME,!0)}function init(){var e=$.act(ACT_GL,VOICE_PROF,null,null,["region"]);if(0==$.exe()){var t=e[0].region;t&&telephonyProvider[t]&&telephonyProvider[t].voip_callPrefix&&(preArray=telephonyProvider[t].voip_callPrefix);var a="";""!=preArray&&(preArray[0]&&""!=preArray[0]&&(a+='<option class="T" id="t_mobile" value="0">'+$.tpLang.voice_callblocks_nstr.t_mobile+"</option>"),preArray[1]&&""!=preArray[1]&&(a+='<option class="T" id="t_telephone" value="1">'+$.tpLang.voice_callblocks_nstr.t_telephone+"</option>"),preArray[2]&&""!=preArray[2]&&(a+='<option class="T" id="t_long" value="2">'+$.tpLang.voice_callblocks_nstr.t_long+"</option>"),preArray[3]&&""!=preArray[3]&&(a+='<option class="T" id="t_inter" value="3">'+$.tpLang.voice_callblocks_nstr.t_inter+"</option>")),a+='<option class="T" id="t_other" value="4">'+$.tpLang.voice_callblocks_nstr.t_other+"</option>",$("#numType").empty().append(a);$("#numType").tpSelect({refresh:1}),curdndObj=$.act(ACT_GET,XTP_VOICE_DND,null,null,null),0==$.exe()&&(0==curdndObj.type?($("#dndRadio0").prop("checked",!0),$("#dndRadio0").tpRadio()):2==curdndObj.type?($("#dndRadio1").prop("checked",!0),$("#dndRadio1").tpRadio()):1==curdndObj.type&&($("#dndRadio2").prop("checked",!0),$("#dndRadio2").tpRadio()),$('#starthour option[value="'+curdndObj.startHour+'"]').prop("selected","selected"),$('#startminute option[value="'+curdndObj.startMinute+'"]').prop("selected","selected"),$('#endhour option[value="'+curdndObj.endHour+'"]').prop("selected","selected"),$('#endminute option[value="'+curdndObj.endMinute+'"]').prop("selected","selected"),0==curdndObj.enable?($("#t_off").addClass("selected"),$("#t_on").removeClass("selected"),$("#dndRadio0").prop("disabled",!0),$("#dndRadio1").prop("disabled",!0),$("#dndRadio2").prop("disabled",!0),$("#starthour").prop("disabled",!0),$("#startminute").prop("disabled",!0),$("#endhour").prop("disabled",!0),$("#endminute").prop("disabled",!0)):($("#t_off").removeClass("selected"),$("#t_on").addClass("selected"),$("#dndRadio0").prop("disabled",!1),$("#dndRadio1").prop("disabled",!1),$("#dndRadio2").prop("disabled",!1),$("#starthour").prop("disabled",!1),$("#startminute").prop("disabled",!1),$("#endhour").prop("disabled",!1),$("#endminute").prop("disabled",!1)))}}$("#numType").click(function(){4==$("#numType").data("value")?$("#outPrex").removeClass("nd"):$("#outPrex").addClass("nd")}),$("#outAdd").click(function(){editOutFlag=0,curOutType=-1,curOutPrefixArray=[]}),$("#sel").click(function(){"1"==$("#sel").data("value")?$("#num").addClass("nd"):$("#num").removeClass("nd")}),$("#inAdd").click(function(){freshFlag=!1;var e="<option value='0' text='Input numbers'>"+n_str.voice_callblocks.t_addnumber+"</option>",t="<option value='0' text='Input numbers'>"+n_str.voice_callblocks.t_addnumber+"</option><option value='1' text='Anonymous calls'>"+n_str.voice_callblocks.t_addanonymous+"</option>";1==anonyFlag?$("#sel").empty().append(e):$("#sel").empty().append(t);$("#sel").tpSelect({refresh:1})}),$("#outAdd").click(function(){freshFlag=!1}),$("#cancel1").click(function(){curInNum=-1,$.reload()}),$("#cancel2").click(function(){curOutType=-1,curOutPrefixArray=[],$.reload()}),$("#save1").click(function(){if($.addLoading($(this)),editInFlag){var e=voipBlackLists.slice();e.splice(curInIndex,1),voipX_TP_CallFireWallCfg=$.act(ACT_GET,XTP_IGD_CALL_FIREWALL_CFG,null,null,["IncomingBlackList"]);var t=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_AnonymousCallBlockStart"]);if(0!=$.exe())return;if("0"==$("#sel").data("value")){var a=[],n=[];n=$("#incomNum").prop("value").split(",");for(var l=0;l<n.length;l++)a.push(n[l].replace(/(^\s*)|(\s*$)/g,""));if(0==enterCheck(e,a,n))return;a=[curInIndex,1].concat(a),Array.prototype.splice.apply(voipBlackLists,a)}else{voipBlackLists.splice(curInIndex,1);var i={};if(1==t[0].X_TP_AnonymousCallBlockStart)return void $.alert(ERR_VOIP_ANONYMOUS_CONFILICT_ERROR);i.X_TP_AnonymousCallBlockStart=1,$.each(t,function(e,t){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,i)})}return(r={callFireWallMode:1}).incomingBlackList=voipBlackLists.join("|"),$.act(ACT_SET,XTP_IGD_CALL_FIREWALL_CFG,voipX_TP_CallFireWallCfg.__stack,null,r),actForSendMsg(),void $.exe(function(e){$.removeLoading(),editInFlag=!(freshFlag=!0),curInIndex=-1,$.removeLoading(),e||$.reload()})}voipX_TP_CallFireWallCfg=$.act(ACT_GET,XTP_IGD_CALL_FIREWALL_CFG,null,null,["IncomingBlackList"]);t=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_AnonymousCallBlockStart"]);if(0==$.exe()){0<(voipBlackLists=voipX_TP_CallFireWallCfg.incomingBlackList.split("|")).length&&""==voipBlackLists[voipBlackLists.length-1]&&voipBlackLists.pop(),0<voipBlackLists.length&&""==voipBlackLists[0]&&voipBlackLists.shift();a=[],n=[];"0"==$("#sel").data("value")&&(n=$("#incomNum").prop("value").split(","));for(l=0;l<n.length;l++)a.push(n[l].replace(/(^\s*)|(\s*$)/g,""));var o=voipBlackLists;if("0"!=$("#sel").data("value")||0!=enterCheck(o,a,n)){if("1"==$("#sel").data("value")){i={};if(1==t[0].X_TP_AnonymousCallBlockStart)return void $.alert(ERR_VOIP_ANONYMOUS_CONFILICT_ERROR);i.X_TP_AnonymousCallBlockStart=1,$.each(t,function(e,t){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,i)})}else for(l=0;l<n.length;l++)voipBlackLists.push(n[l]);var r;(r={callFireWallMode:1}).incomingBlackList=voipBlackLists.join("|"),$.act(ACT_SET,XTP_IGD_CALL_FIREWALL_CFG,voipX_TP_CallFireWallCfg.__stack,null,r),actForSendMsg(),$.exe(function(e){$.removeLoading(),freshFlag=!0,$.removeLoading(),e||$.reload()})}}}),$("#save2").click(function(){var e=0;if(voipDialPlan=[],$.addLoading($(this)),voipDialPlanAll=$.act(ACT_GL,XTP_IGD_MULTIISPDP_LIST,null,null,["attr","prefix","replace","type"]),0==$.exe()){if($.each(voipDialPlanAll,function(e,t){(parseInt(this.attr,10)&BARRING_MASK)>>>BARRING_MASK!=0&&voipDialPlan.push(this)}),!editOutFlag&&60<=voipDialPlan.length)return $.alert(ERR_VOIP_ENTRY_MAX_ERROR),void $.reload();var t=$("#numType").data("value"),a=[];if(0<=t&&t<4){if(a=preArray[t].split("-"),!editOutFlag&&60<a.length+voipDialPlan.length)return $.alert(ERR_VOIP_ENTRY_MAX_ERROR),void $.reload();e=8}else if(4==t){if(0==outEnterCheck())return!1;var n=$("#outNum").prop("value");a.push(n),e=4}if(editOutFlag){if(t!=curOutType||4==t&&a[0]!=curOutPrefixArray[0]){for(var l=0;l<a.length;l++){for(var i=0,o=0;o<8;o++)i|=1<<BARRING_SHIFT+o;$.act(ACT_ADD,XTP_IGD_MULTIISPDP_LIST,null,null,["attr="+i,"prefix="+a[l],"type="+e])}for(l=0;l<curOutPrefixArray.length;l++){for(o=0;o<voipDialPlan.length&&voipDialPlan[o].prefix!=curOutPrefixArray[l];o++);if(o<voipDialPlan.length){i=1<<BARRING_SHIFT;$.act(ACT_DEL,XTP_IGD_MULTIISPDP_LIST,voipDialPlan[o].__stack,null,["attr="+i,"type="+(4==curOutType?otherType:attrType)])}}}}else for(l=0;l<a.length;l++){for(i=0,o=0;o<8;o++)i|=1<<BARRING_SHIFT+o;$.act(ACT_ADD,XTP_IGD_MULTIISPDP_LIST,null,null,["attr="+i,"prefix="+a[l],"type="+e])}actForSendMsg(),$.exe(function(e){$.removeLoading(),freshFlag=!0,e||$.reload()})}}),$("#t_on").click(function(){$.addLoading($(this)),$("#dndRadio0").prop("disabled",!1),$("#dndRadio1").prop("disabled",!1),$("#dndRadio2").prop("disabled",!1),$("#starthour").prop("disabled",!1),$("#startminute").prop("disabled",!1),$("#endhour").prop("disabled",!1),$("#endminute").prop("disabled",!1);var e={refresh:1};$("#dndRadio0").tpRadio(),$("#dndRadio1").tpRadio(),$("#dndRadio2").tpRadio(),$("#starthour").tpSelect(e),$("#startminute").tpSelect(e),$("#endhour").tpSelect(e),$("#endminute").tpSelect(e),$.act(ACT_SET,XTP_VOICE_DND,curdndObj.__stack,null,["enable=1"]),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#t_off").click(function(){$.addLoading($(this)),$("#dndRadio0").prop("disabled",!0),$("#dndRadio1").prop("disabled",!0),$("#dndRadio2").prop("disabled",!0),$("#starthour").prop("disabled",!0),$("#startminute").prop("disabled",!0),$("#endhour").prop("disabled",!0),$("#endminute").prop("disabled",!0);var e={refresh:1};$("#dndRadio0").tpRadio(),$("#dndRadio1").tpRadio(),$("#dndRadio2").tpRadio(),$("#starthour").tpSelect(e),$("#startminute").tpSelect(e),$("#endhour").tpSelect(e),$("#endminute").tpSelect(e),$.act(ACT_SET,XTP_VOICE_DND,curdndObj.__stack,null,["enable=0"]),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}),$("#dndSave").click(function(){$.addLoading($(this));var e={};$("#dndRadio0").prop("checked")?e.type=0:$("#dndRadio1").prop("checked")?e.type=2:$("#dndRadio2").prop("checked")&&(e.type=1),e.startHour=parseInt($("#starthour").data("value"),10),e.startMinute=parseInt($("#startminute").data("value"),10),e.endHour=parseInt($("#endhour").data("value"),10),e.endMinute=parseInt($("#endminute").data("value"),10),e.startHour!=e.endHour||e.startMinute!=e.endMinute?($.act(ACT_SET,XTP_VOICE_DND,curdndObj.__stack,null,e),actForSendMsg(),$.exe(function(e){$.removeLoading(),freshFlag=!0,e||$.reload()})):$.alert(ERR_VOIP_DND_TIME_ERROR)}),$("#inDelAll").click(function(){$.confirm(c_str.voice_del_allcon,function(){$.addLoading($(this));var e=$.act(ACT_GL,VOICE_PROF_LINE_CALLFEAT,null,null,["X_TP_AnonymousCallBlockStart"]);if(0==$.exe()){var t={incomingBlackList:""};$.act(ACT_SET,XTP_IGD_CALL_FIREWALL_CFG,voipX_TP_CallFireWallCfg.__stack,null,t),$.each(e,function(){$.act(ACT_SET,VOICE_PROF_LINE_CALLFEAT,this.__stack,null,["X_TP_AnonymousCallBlockStart=0"])}),actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}})}),$("#outDelAll").click(function(){$.confirm(c_str.voice_del_allcon,function(){$.addLoading($(this));var e=1<<BARRING_SHIFT,t=$.act(ACT_GL,XTP_IGD_MULTIISPDP_LIST,null,null,["attr","prefix","replace","type"]);if(0==$.exe()){var a=[];$.each(t,function(e,t){(parseInt(this.attr,10)&BARRING_MASK)>>>BARRING_MASK!=0&&a.push(this)});for(var n=0;n<a.length;n++)$.act(ACT_DEL,XTP_IGD_MULTIISPDP_LIST,a[n].__stack,null,["attr="+e,"type="+a[n].type]);actForSendMsg(),$.exe(function(e){$.removeLoading(),e||$.reload()})}})})</script>
+<h3 class="T" id="t_et1">DND Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="button-group-container">
+            <b class="T" id="t_endnd">Enable DND:</b>
+            <ul>
+                <li>
+                    <button id="t_on" class="fst" value="on">On</button>
+                </li>
+                <li>
+                    <button id="t_off" class="lst" value="off">Off</button>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <input type="radio" name="dndMode" id="dndRadio0">
+            <label class="T" id="t_dndlabel1">Daily</label>
+        </div>
+        <div>
+            <input type="radio" name="dndMode" id="dndRadio1">
+            <label class="T" id="t_dndlabel2">Saturday and Sunday</label>
+        </div>
+        <div>
+            <input type="radio" name="dndMode" id="dndRadio2">
+            <label class="T" id="t_dndlabel3">Monday through Friday</label>
+        </div>
+        <div>
+            <b class="T l" id="t_dndtimefrom">DND Time From:</b>
+            <select id="starthour" class="xs inline">
+                <option value="0" id="t_hour0">0</option>
+                <option value="1" id="t_hour1">1</option>
+                <option value="2" id="t_hour2">2</option>
+                <option value="3" id="t_hour3">3</option>
+                <option value="4" id="t_hour4">4</option>
+                <option value="5" id="t_hour5">5</option>
+                <option value="6" id="t_hour6">6</option>
+                <option value="7" id="t_hour7">7</option>
+                <option value="8" id="t_hour8">8</option>
+                <option value="9" id="t_hour9">9</option>
+                <option value="10" id="t_hour10">10</option>
+                <option value="11" id="t_hour11">11</option>
+                <option value="12" id="t_hour12">12</option>
+                <option value="13" id="t_hour13">13</option>
+                <option value="14" id="t_hour14">14</option>
+                <option value="15" id="t_hour15">15</option>
+                <option value="16" id="t_hour16">16</option>
+                <option value="17" id="t_hour17">17</option>
+                <option value="18" id="t_hour18">18</option>
+                <option value="19" id="t_hour19">19</option>
+                <option value="20" id="t_hour20">20</option>
+                <option value="21" id="t_hour21">21</option>
+                <option value="22" id="t_hour22">22</option>
+                <option value="23" id="t_hour23">23</option>
+            </select>
+            <b class="time-separater">:</b>
+            <select id="startminute" class="xs inline">
+                <option value="0" id="t_min0">0</option>
+                <option value="1" id="t_min1">1</option>
+                <option value="2" id="t_min2">2</option>
+                <option value="3" id="t_min3">3</option>
+                <option value="4" id="t_min4">4</option>
+                <option value="5" id="t_min5">5</option>
+                <option value="6" id="t_min6">6</option>
+                <option value="7" id="t_min7">7</option>
+                <option value="8" id="t_min8">8</option>
+                <option value="9" id="t_min9">9</option>
+                <option value="10" id="t_min10">10</option>
+                <option value="11" id="t_min11">11</option>
+                <option value="12" id="t_min12">12</option>
+                <option value="13" id="t_min13">13</option>
+                <option value="14" id="t_min14">14</option>
+                <option value="15" id="t_min15">15</option>
+                <option value="16" id="t_min16">16</option>
+                <option value="17" id="t_min17">17</option>
+                <option value="18" id="t_min18">18</option>
+                <option value="19" id="t_min19">19</option>
+                <option value="20" id="t_min20">20</option>
+                <option value="21" id="t_min21">21</option>
+                <option value="22" id="t_min22">22</option>
+                <option value="23" id="t_min23">23</option>
+                <option value="24" id="t_min24">24</option>
+                <option value="25" id="t_min25">25</option>
+                <option value="26" id="t_min26">26</option>
+                <option value="27" id="t_min27">27</option>
+                <option value="28" id="t_min28">28</option>
+                <option value="29" id="t_min29">29</option>
+                <option value="30" id="t_min30">30</option>
+                <option value="31" id="t_min31">31</option>
+                <option value="32" id="t_min32">32</option>
+                <option value="33" id="t_min33">33</option>
+                <option value="34" id="t_min34">34</option>
+                <option value="35" id="t_min35">35</option>
+                <option value="36" id="t_min36">36</option>
+                <option value="37" id="t_min37">37</option>
+                <option value="38" id="t_min38">38</option>
+                <option value="39" id="t_min39">39</option>
+                <option value="40" id="t_min40">40</option>
+                <option value="41" id="t_min41">41</option>
+                <option value="42" id="t_min42">42</option>
+                <option value="43" id="t_min43">43</option>
+                <option value="44" id="t_min44">44</option>
+                <option value="45" id="t_min45">45</option>
+                <option value="46" id="t_min46">46</option>
+                <option value="47" id="t_min47">47</option>
+                <option value="48" id="t_min48">48</option>
+                <option value="49" id="t_min49">49</option>
+                <option value="50" id="t_min50">50</option>
+                <option value="51" id="t_min51">51</option>
+                <option value="52" id="t_min52">52</option>
+                <option value="53" id="t_min53">53</option>
+                <option value="54" id="t_min54">54</option>
+                <option value="55" id="t_min55">55</option>
+                <option value="56" id="t_min56">56</option>
+                <option value="57" id="t_min57">57</option>
+                <option value="58" id="t_min58">58</option>
+                <option value="59" id="t_min59">59</option>
+            </select>
+            <div>
+                <b class="T l" id="t_dndtimeto">DND Time To:</b>
+                <select id="endhour" class="xs inline">
+                    <option value="0" id="t_hour0">0</option>
+                    <option value="1" id="t_hour1">1</option>
+                    <option value="2" id="t_hour2">2</option>
+                    <option value="3" id="t_hour3">3</option>
+                    <option value="4" id="t_hour4">4</option>
+                    <option value="5" id="t_hour5">5</option>
+                    <option value="6" id="t_hour6">6</option>
+                    <option value="7" id="t_hour7">7</option>
+                    <option value="8" id="t_hour8">8</option>
+                    <option value="9" id="t_hour9">9</option>
+                    <option value="10" id="t_hour10">10</option>
+                    <option value="11" id="t_hour11">11</option>
+                    <option value="12" id="t_hour12">12</option>
+                    <option value="13" id="t_hour13">13</option>
+                    <option value="14" id="t_hour14">14</option>
+                    <option value="15" id="t_hour15">15</option>
+                    <option value="16" id="t_hour16">16</option>
+                    <option value="17" id="t_hour17">17</option>
+                    <option value="18" id="t_hour18">18</option>
+                    <option value="19" id="t_hour19">19</option>
+                    <option value="20" id="t_hour20">20</option>
+                    <option value="21" id="t_hour21">21</option>
+                    <option value="22" id="t_hour22">22</option>
+                    <option value="23" id="t_hour23">23</option>
+                </select>
+                <b class="time-separater">:</b>
+                <select id="endminute" class="xs inline">
+                    <option value="0" id="t_min0">0</option>
+                    <option value="1" id="t_min1">1</option>
+                    <option value="2" id="t_min2">2</option>
+                    <option value="3" id="t_min3">3</option>
+                    <option value="4" id="t_min4">4</option>
+                    <option value="5" id="t_min5">5</option>
+                    <option value="6" id="t_min6">6</option>
+                    <option value="7" id="t_min7">7</option>
+                    <option value="8" id="t_min8">8</option>
+                    <option value="9" id="t_min9">9</option>
+                    <option value="10" id="t_min10">10</option>
+                    <option value="11" id="t_min11">11</option>
+                    <option value="12" id="t_min12">12</option>
+                    <option value="13" id="t_min13">13</option>
+                    <option value="14" id="t_min14">14</option>
+                    <option value="15" id="t_min15">15</option>
+                    <option value="16" id="t_min16">16</option>
+                    <option value="17" id="t_min17">17</option>
+                    <option value="18" id="t_min18">18</option>
+                    <option value="19" id="t_min19">19</option>
+                    <option value="20" id="t_min20">20</option>
+                    <option value="21" id="t_min21">21</option>
+                    <option value="22" id="t_min22">22</option>
+                    <option value="23" id="t_min23">23</option>
+                    <option value="24" id="t_min24">24</option>
+                    <option value="25" id="t_min25">25</option>
+                    <option value="26" id="t_min26">26</option>
+                    <option value="27" id="t_min27">27</option>
+                    <option value="28" id="t_min28">28</option>
+                    <option value="29" id="t_min29">29</option>
+                    <option value="30" id="t_min30">30</option>
+                    <option value="31" id="t_min31">31</option>
+                    <option value="32" id="t_min32">32</option>
+                    <option value="33" id="t_min33">33</option>
+                    <option value="34" id="t_min34">34</option>
+                    <option value="35" id="t_min35">35</option>
+                    <option value="36" id="t_min36">36</option>
+                    <option value="37" id="t_min37">37</option>
+                    <option value="38" id="t_min38">38</option>
+                    <option value="39" id="t_min39">39</option>
+                    <option value="40" id="t_min40">40</option>
+                    <option value="41" id="t_min41">41</option>
+                    <option value="42" id="t_min42">42</option>
+                    <option value="43" id="t_min43">43</option>
+                    <option value="44" id="t_min44">44</option>
+                    <option value="45" id="t_min45">45</option>
+                    <option value="46" id="t_min46">46</option>
+                    <option value="47" id="t_min47">47</option>
+                    <option value="48" id="t_min48">48</option>
+                    <option value="49" id="t_min49">49</option>
+                    <option value="50" id="t_min50">50</option>
+                    <option value="51" id="t_min51">51</option>
+                    <option value="52" id="t_min52">52</option>
+                    <option value="53" id="t_min53">53</option>
+                    <option value="54" id="t_min54">54</option>
+                    <option value="55" id="t_min55">55</option>
+                    <option value="56" id="t_min56">56</option>
+                    <option value="57" id="t_min57">57</option>
+                    <option value="58" id="t_min58">58</option>
+                    <option value="59" id="t_min59">59</option>
+                </select>
+            </div>
+        </div>
+        <div class="btn-right">
+            <button type="submit" class="green T_save" id="dndSave">Save</button>
+        </div>
+    </form>
+</div>
+<h3 class="T" id="t_et2">Call Blocks</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div class="pure-g">
+            <div class="pure-u-1-2">
+                <div class="content">
+                    <p class="cfg-line green" id="t_et3" style="margin-bottom:10px">Incoming Calls</p>
+                    <div class="table-op" id="inAdd">
+                        <div class="table-btn">
+                            <span class="add-icon" id="inAdd"></span>
+                            <label class="T_add">Add</label>
+                            <span id="inDelAll" class="delete-all-icon"></span>
+                            <label class="T_delall">Delete All</label>
+                        </div>
+                    </div>
+                    <table id="table-incoming">
+                        <thead></thead>
+                        <tbody id="body-incoming">
+                            <tr id="edit-container-incoming" class="nd">
+                                <td colspan="2">
+                                    <div>
+                                        <p class="T" id="t_incomingInfo">Select add number or anonymous call:</p>
+                                        <select class="spec-callblock" id="sel">
+                                        </select>
+                                    </div>
+                                    <div id="num">
+                                        <b class="T" id="t_number">Number: </b>
+                                        <input type="text" id="incomNum">
+                                    </div>
+                                    <div class="btn-right" style="margin-top:40px">
+                                        <button type="submit" class="green T_cancel" id="cancel1">Cancel</button>
+                                        <button type="submit" class="green T_save" id="save1">Save</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pure-u-1-2">
+                <div class="content">
+                    <p class="cfg-line green" id="t_et4" style="margin-bottom:10px">Outgoing Calls</p>
+                    <div class="table-op" id="outAdd">
+                        <div class="table-btn">
+                            <span class="add-icon" id="outAdd"></span>
+                            <label class="T_add">Add</label>
+                            <span id="outDelAll" class="delete-all-icon"></span>
+                            <label class="T_delall">Delete All</label>
+                        </div>
+                    </div>
+                    <table id="table-outgoing">
+                        <thead></thead>
+                        <tbody id="body-outgoing">
+                            <tr id="edit-container-virtual" class="nd">
+                                <td colspan="2">
+                                    <div>
+                                        <p class="T" id="t_numbertype">Number type:</p>
+                                        <select class="l" id="numType">
+                                        </select>
+                                    </div>
+                                    <div id="outPrex">
+                                        <b class="T" id="t_addpre">Add number prefix: </b>
+                                        <input type="text" id="outNum">
+                                    </div>
+                                    <div class="btn-right" style="margin-top:40px">
+                                        <button type="submit" class="green T_cancel" id="cancel2">Cancel</button>
+                                        <button type="submit" class="green T_save" id="save2">Save</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>var headArray1=[{text:table_str.numbertype,width:"30%"},{text:table_str.modify,width:"10%"}],headArray2=[{text:table_str.prefixtype,width:"30%"},{text:table_str.modify,width:"10%"}];$.tpInit(init),$.initTableHead($("#table-incoming"),headArray1),$("#table-incoming").tpTable(initIncomingTable),$.initTableHead($("#table-outgoing"),headArray2),$("#table-outgoing").tpTable(initOutgoingTable)</script>

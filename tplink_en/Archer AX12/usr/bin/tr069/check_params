@@ -1,0 +1,1639 @@
+#!/usr/bin/lua
+
+local bit       = require "bit"
+local nixio     = require "nixio"
+local socket    = require "socket"
+local json      = require "luci.json"
+local uci       = require "luci.model.uci"
+local ctypes    = require "luci.model.checktypes"
+local appnet    = require "luci.model.network"
+local ctl       = require "luci.model.controller"
+local dbg       = require "luci.tools.debug"
+local network   = require "luci.controller.admin.network"
+local dhcps     = require "luci.controller.admin.dhcps"
+local wireless  = require "luci.controller.admin.wireless"
+local security  = require "luci.controller.admin.security_settings"
+local nat       = require "luci.controller.admin.nat"
+local iptv      = require "luci.controller.admin.iptv"
+local _ubus     = require("ubus").connect()
+
+local TEMP_UCI_PATH = "/tmp/tr069/"
+local uci_r     = uci.cursor()
+local uci_t     = uci.cursor(TEMP_UCI_PATH)
+
+debug_on = true
+config = "check"
+
+uci_t:foreach(config, "params",
+    function(section)               
+        uci_t:delete(config, section[".name"])                
+    end
+)  
+
+local tmp = {}
+uci_t:section(config, "params", "result", tmp)
+uci_t:set(config, "result", "set_result", "0")
+
+local function form_dump(form)
+    if debug_on == true then
+        dbg.print("================form================")
+        dbg.dumptable(form)
+        dbg.print("====================================")
+    end
+end
+
+local function form_pad_l2tp_pptp(form)
+    form_w = form
+    if form_w.dyn_server == "" then
+        form_w.dyn_server = "default.com"
+    end
+    if form_w.static_server == "" then
+        form_w.static_server = "default.com"
+    end
+    if form_w.static_ip == "" then
+        form_w.static_ip = "192.168.88.100"
+    end
+    if form_w.static_netmask == "" then
+        form_w.static_netmask = "255.255.255.0"
+    end
+    if form_w.static_gateway == "" then 
+        form_w.static_gateway = "192.168.88.1"
+    end
+    if form_w.static_pridns == "" then
+        form_w.static_pridns = "8.8.8.8"
+    end
+end
+
+local function invalid_args(msg)
+    msg = msg or "invalid args"  
+    return false, msg
+end
+
+local function parse_dns_string(dns_string)
+    local ip_format = "%d+.%d+.%d+.%d+"
+    local i = 0
+    local j = 0
+    local dns_table = {}
+    local count = 0
+
+    while count < 2 do 
+        i, j = string.find(dns_string, ip_format, i)
+        if i == nil then
+            break
+        end
+        local tmp = string.sub(dns_string, i, j)
+        table.insert(dns_table,tmp)
+        count = count+1
+        i = i + #tmp
+    end 
+    
+    local pri_dns
+    local sec_dns 
+    if count ==1 then 
+        pri_dns = dns_table[1]
+        if pri_dns ~= "" and ctypes.check_unicast_ipv4(tostring(pri_dns)) ~= true  then
+            dbg.print("the format of DNS is not right")
+            return false
+        end
+        return pri_dns
+    end
+
+    if count == 2 then 
+        pri_dns = dns_table[1]
+        sec_dns = dns_table[2]  
+        if ctypes.check_unicast_ipv4(pri_dns) == true and ctypes.check_unicast_ipv4( sec_dns ) == true then
+            return pri_dns, sec_dns
+        elseif ctypes.check_unicast_ipv4(pri_dns) == true then
+            return pri_dns
+        elseif ctypes.check_unicast_ipv4(sec_dns) == true then 
+            return sec_dns
+        else 
+            dbg.print("the format of DNS is not right")
+            return false
+        end
+    end 
+end
+
+local function check_start_ip(ip, lan_ip, lan_mask)
+    if not ip or not lan_ip or not lan_mask then
+        return false
+    end
+
+    local ip_num = ctypes.ip_to_number(ip)
+    local mask_num = ctypes.ip_to_number(lan_mask)
+    if bit.band(bit.bnot(mask_num), ip_num) == 0 then
+        return false
+    end
+
+    return true
+end
+
+local function dhcps_set_enabel(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = dhcps.dhcp_dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local dhcps_info = info.data
+    
+    if tr_form.param1 == "on" or tr_form.param1 == "1" then
+        dhcps_info.enable = "on"
+    else
+        dhcps_info.enable = "off"
+    end
+    
+    form_w = dhcps_info
+    form_w.form = "setting"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = dhcps.dhcp_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("dhcps_enable set result: " .. tostring(result.success))
+end 
+
+local function dhcps_set_leasetime(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = dhcps.dhcp_dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local dhcps_info = info.data
+    
+    dhcps_info.leasetime = tr_form.param1
+    
+    form_w = dhcps_info
+    form_w.form = "setting"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = dhcps.dhcp_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("dhcps_leasetime set result: " .. tostring(result.success))
+end 
+
+local function dhcps_set_iprange(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = dhcps.dhcp_dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local dhcps_info = info.data
+    
+    dhcps_info.ipaddr_start = tr_form.param1
+    dhcps_info.ipaddr_end = tr_form.param2
+    
+    form_w = dhcps_info
+    form_w.form = "setting"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = dhcps.dhcp_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("dhcps_iprange set result: " .. tostring(result.success))
+end 
+
+local function network_set_lanip(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "lan_ipv4"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local lan_info = info.data
+
+    lan_info.ipaddr = tr_form.param1
+    
+    form_w.ipaddr = lan_info.ipaddr
+    form_w.mask_type = lan_info.mask_type
+    form_w.macaddr = lan_info.macaddr
+    form_w.form = "lan_ipv4"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("lanip set result: " .. tostring(result.success) .. ", errorcode: " .. tostring(result.errorcode))
+end
+
+local function network_set_lanmask(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "lan_ipv4"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local lan_info = info.data
+
+    if tr_form.param1 == "255.255.255.0" or
+        tr_form.param1 == "255.255.0.0" or
+        tr_form.param1 == "255.0.0.0" then
+        form_w.mask_type = tr_form.param1
+    else
+        form_w.mask_type = "custom"
+        form_w.custom_value = tr_form.param1
+    end
+    
+    form_w.ipaddr = lan_info.ipaddr
+    form_w.macaddr = lan_info.macaddr
+    form_w.form = "lan_ipv4"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("lanmask set result: " .. tostring(result.success))
+end
+
+local function dhcps_set_landns(tr_form)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    local pri_dns
+    local snd_dns
+    
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = dhcps.dhcp_dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local dhcps_info = info.data
+    
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then dhcps_info.pri_dns = pri_dns end
+    if sec_dns then dhcps_info.snd_dns = sec_dns end
+    
+    form_w = dhcps_info
+    form_w.form = "setting"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = dhcps.dhcp_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("landns set result: " .. tostring(result.success))
+end
+
+local function network_set_wantype(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    local wan_info = {}
+    
+    if tr_form.param1 == "static_ip" then
+        form_r.form = "wan_ipv4_staticip"
+        form_r.operation = "read"
+        info = network.dispatch(form_r)
+        if info == nil or info.success ~= true then 
+            dbg.print("prep get info fail!!")
+            return
+        end
+        wan_info = info.data
+        
+        if wan_info.gateway == "" then 
+            wan_info.gateway = "192.168.88.1"
+        end
+
+        if wan_info.ipaddr == "" then 
+            wan_info.ipaddr = "192.168.88.100"
+        end
+
+        if wan_info.pri_dns == "" then 
+            wan_info.pri_dns= "192.168.88.1"
+        end
+
+        if wan_info.netmask == "" then 
+            wan_info.netmask="255.255.255.0"
+        end
+        
+        form_w.form = "wan_ipv4_staticip"
+    else 
+        form_r.form = "wan_ipv4_dynamic"
+        form_r.operation = "read"
+        info = network.dispatch(form_r)
+        if info == nil or info.success ~= true then 
+            dbg.print("prep get info fail!!")
+            return
+        end
+        wan_info = info.data
+        
+        form_w.form = "wan_ipv4_dynamic"
+    end
+    
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wantype set result: " .. tostring(result.success))
+end
+
+local function network_set_wanip(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_staticip"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    if wan_info.gateway == "" then 
+        wan_info.gateway = "192.168.88.1"
+    end
+
+    if wan_info.ipaddr == "" then 
+        wan_info.ipaddr = "192.168.88.100"
+    end
+
+    if wan_info.pri_dns == "" then 
+        wan_info.pri_dns= "192.168.88.1"
+    end
+
+    if wan_info.netmask == "" then 
+        wan_info.netmask="255.255.255.0"
+    end
+
+    form_w.form = "wan_ipv4_staticip"
+    form_w.operation = "write"
+    form_w.ipaddr = tr_form.param1
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wanip set result: " .. tostring(result.success))
+end
+
+local function network_set_wanmask(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_staticip"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    if wan_info.gateway == "" then 
+        wan_info.gateway = "192.168.88.1"
+    end
+
+    if wan_info.ipaddr == "" then 
+        wan_info.ipaddr = "192.168.88.100"
+    end
+
+    if wan_info.pri_dns == "" then 
+        wan_info.pri_dns= "192.168.88.1"
+    end
+
+    if wan_info.netmask == "" then 
+        wan_info.netmask="255.255.255.0"
+    end
+    
+    form_w.form = "wan_ipv4_staticip"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = tr_form.param1
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wanmask set result: " .. tostring(result.success))
+end
+
+local function network_set_wangate(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_staticip"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    if wan_info.gateway == "" then 
+        wan_info.gateway = "192.168.88.1"
+    end
+
+    if wan_info.ipaddr == "" then 
+        wan_info.ipaddr = "192.168.88.100"
+    end
+
+    if wan_info.pri_dns == "" then 
+        wan_info.pri_dns= "192.168.88.1"
+    end
+
+    if wan_info.netmask == "" then 
+        wan_info.netmask="255.255.255.0"
+    end
+
+    form_w.form = "wan_ipv4_staticip"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = tr_form.param1
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wangate set result: " .. tostring(result.success))
+end
+
+local function network_set_wandns_static(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    local pri_dns
+    local snd_dns
+    
+    form_r.form = "wan_ipv4_staticip"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then wan_info.pri_dns = pri_dns end
+    if sec_dns then wan_info.snd_dns = sec_dns end
+
+    form_w.form = "wan_ipv4_staticip"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wandns static set result: " .. tostring(result.success))
+end
+
+local function network_set_wandns_dhcp(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    local pri_dns
+    local snd_dns
+    
+    form_r.form = "wan_ipv4_dynamic"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then wan_info.manual_pridns = pri_dns end
+    if sec_dns then wan_info.manual_snddns = sec_dns end
+
+    form_w.form = "wan_ipv4_dynamic"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+    form_w.dns_mode = "static"
+    form_w.manual_pridns = wan_info.manual_pridns
+    form_w.manual_snddns = wan_info.manual_snddns
+    form_w.unicast = wan_info.unicast
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wandns dhcp set result: " .. tostring(result.success))
+end
+
+local function network_set_wandns_mode(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    
+    form_r.form = "wan_ipv4_dynamic"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    form_w.form = "wan_ipv4_dynamic"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+    form_w.dns_mode = tr_form.param1 == "0" and "dynamic" or "static" 
+    form_w.manual_pridns = wan_info.manual_pridns
+    form_w.manual_snddns = wan_info.manual_snddns
+    form_w.unicast = wan_info.unicast
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+end
+
+local function network_set_wanunicast_enable(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    
+    form_r.form = "wan_ipv4_dynamic"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local wan_info = info.data
+
+    form_w.form = "wan_ipv4_dynamic"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.netmask = wan_info.netmask
+    form_w.gateway = wan_info.gateway
+    form_w.pri_dns = wan_info.pri_dns
+    form_w.snd_dns = wan_info.snd_dns
+    form_w.unicast = tr_form.param1
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wanunicast_enable set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_enable(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    local pppoe_info = info.data
+    
+    form_w.username = pppoe_info.username
+    form_w.password = pppoe_info.password
+    form_w.snd_conn = pppoe_info.snd_conn
+    form_w.form = "wan_ipv4_pppoe"
+    if tr_form.param1 == "on" or tr_form.param1 == "1" then 
+        form_w.operation = "write"
+    else
+        form_w.operation = "disconnect"
+    end
+
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_enable set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_password(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    local pppoe_info = info.data
+    
+    pppoe_info.password = tr_form.param1
+
+    form_w.username = pppoe_info.username
+    form_w.password = pppoe_info.password
+    form_w.snd_conn = pppoe_info.snd_conn
+    
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_password set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_username(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    local pppoe_info = info.data
+    
+    pppoe_info.username = tr_form.param1
+
+    form_w.username = pppoe_info.username
+    form_w.password = pppoe_info.password
+    form_w.snd_conn = pppoe_info.snd_conn
+    
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_username set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_dnsenable(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    local pppoe_info = info.data
+        
+    if tr_form.param1 == "off" then
+        pppoe_info.dns_mode = "static"
+        if pppoe_info.static_pridns == nil or pppoe_info.static_pridns == "" then
+            pppoe_info.static_pridns = "8.8.8.8"
+        end
+    else
+        pppoe_info.dns_mode = "dynamic"
+        pppoe_info.static_pridns = nil
+        pppoe_info.static_snddns = nil
+    end
+    
+    form_w.username = pppoe_info.username
+    form_w.password = pppoe_info.password
+    form_w.snd_conn = pppoe_info.snd_conn
+    form_w.dns_mode =pppoe_info.dns_mode
+    form_w.static_pridns = pppoe_info.static_pridns
+    form_w.static_snddns = pppoe_info.static_snddns
+
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_dnsenable set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_dnsServer(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+    local pri_dns
+    local snd_dns
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    local pppoe_info = info.data
+
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then pppoe_info.static_pridns = pri_dns end
+    if sec_dns then pppoe_info.static_snddns = sec_dns end
+
+    form_w.username = pppoe_info.username
+    form_w.password = pppoe_info.password
+    form_w.snd_conn = pppoe_info.snd_conn
+    form_w.dns_mode = "static"
+    form_w.static_pridns = pppoe_info.static_pridns
+    form_w.static_snddns = pppoe_info.static_snddns
+
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_dnsServer set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_servicename(tr_form)
+    local form_w = {}
+
+    form_w.server = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_servicename set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_mru(tr_form)
+    local form_w = {}
+
+    form_w.mtu = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_mru set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_access(tr_form)
+    local form_w = {}
+
+    form_w.access = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_access set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_lpcecho(tr_form)
+    local form_w = {}
+
+    form_w.interval = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_lpcEcho set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_usestaticip(tr_form)
+    local form_w = {}
+
+    form_w.ip_mode = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    if form_w.ip_mode == "static" then form_w.specific_ip="1.1.1.1" end
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_usestaticip set result: " .. tostring(result.success))
+end
+
+local function network_set_pppoe_connmode(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pppoe"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    pppoe_info = info.data
+
+    form_w.snd_conn = pppoe_info.snd_conn
+    form_w.dns_mode =pppoe_info.dns_mode
+    if pppoe_info.static_pridns == "" then
+        form_w.static_pridns = "1.1.1.1"
+    else
+        form_w.static_pridns = pppoe_info.static_pridns
+    end
+    form_w.static_snddns = pppoe_info.static_snddns
+
+    form_w.conn_mode = tr_form.param1
+    form_w.form = "wan_ipv4_pppoe"
+    form_w.operation = "write"
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pppoe_connmode set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_username(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.username = tr_form.param1
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_username set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_password(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.password = tr_form.param1
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_password set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_connmode(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.conn_mode = tr_form.param1
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_connmode set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_serveriporname(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.static_server = tr_form.param1
+    form_w.dyn_server = tr_form.param1
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_server_ip_or_name set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_mru(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.mtu = tr_form.param1
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_mru set result: " .. tostring(result.success))
+end
+
+local function network_set_l2tp_dnsserversip(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_l2tp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then form_w.static_pridns = pri_dns end
+    if sec_dns then form_w.static_snddns = sec_dns end
+    form_w.form = "wan_ipv4_l2tp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("l2tp_dns_servers_ip set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_username(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.username = tr_form.param1
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_username set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_password(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.password = tr_form.param1
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_password set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_connmode(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.conn_mode = tr_form.param1
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_connmode set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_serveriporname(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.static_server = tr_form.param1
+    form_w.dyn_server = tr_form.param1
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_server_ip_or_name set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_mru(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    form_w.mtu = tr_form.param1
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_mru set result: " .. tostring(result.success))
+end
+
+local function network_set_pptp_dnsserversip(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_pptp"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data
+
+    pri_dns, sec_dns = parse_dns_string(tr_form.param1)
+    if pri_dns then form_w.static_pridns = pri_dns end
+    if sec_dns then form_w.static_snddns = sec_dns end
+    form_w.form = "wan_ipv4_pptp"
+    form_w.operation = "write"
+    form_pad_l2tp_pptp(form_w)
+    form_dump(form_w)
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("pptp_dns_servers_ip set result: " .. tostring(result.success))
+end
+
+local function network_set_dynamic_mtu(tr_form)
+    local form_w = {}
+
+    form_w.mtu = tr_form.param1
+    form_w.form = "wan_ipv4_dynamic"
+    form_w.operation = "write"
+
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("dynamic_mtu set result: " .. tostring(result.success))
+end
+
+local function network_set_static_mtu(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "wan_ipv4_staticip"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    wan_info = info.data
+    
+    if wan_info.gateway == "" then 
+        wan_info.gateway = "192.168.88.1"
+    end
+    if wan_info.ipaddr == "" then 
+        wan_info.ipaddr = "192.168.88.100"
+    end
+    if wan_info.pri_dns == "" then 
+        wan_info.pri_dns= "192.168.88.1"
+    end
+    if wan_info.netmask == "" then 
+        wan_info.netmask="255.255.255.0"
+    end
+    form_w.mtu = tr_form.param1
+    form_w.form = "wan_ipv4_staticip"
+    form_w.operation = "write"
+    form_w.ipaddr = wan_info.ipaddr
+    form_w.gateway = wan_info.gateway
+    form_w.netmask = wan_info.netmask
+    form_w.pri_dns = wan_info.pri_dns
+    form_dump(form_w)
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("static_mtu set result: " .. tostring(result.success))
+end
+
+local function nat_set_enable(tr_form)
+    local info = {}
+    local form_w = {}
+    local form_r = {}
+
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = nat.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local info_data = info.data
+
+    form_w.boost_enable = info_data.boost_enable
+    form_w.enable = tr_form.param1
+    form_w.form = "setting"
+    form_w.operation = "write"
+
+    local result = nat.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("nat_enable set result: " .. tostring(result.success))
+end
+
+local function security_set_spiFirwallEnable(tr_form)
+    local form_w = {}
+
+    form_w.enable = tr_form.param1
+    form_w.form = "spi_enable"
+    form_w.operation = "write"
+    
+    local result = security.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("spiFirwallEnable set result: " .. tostring(result.success))
+end
+
+local function iptv_igmpproxy_set_enable(tr_form)
+    local form_w = {}
+
+    form_w.igmp_enable = tr_form.param1
+    form_w.form = "setting"
+    form_w.operation = "write"
+    
+    local result = iptv.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("igmpproxy_enable set result: " .. tostring(result.success))
+end
+
+local function iptv_vlan_set_enable(tr_form)
+    local form_w = {}
+--[[    local form_r = {}
+    local info = {}
+
+    form_r.form = "setting"
+    form_r.operation = "read"
+    info = iptv.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    form_w = info.data ]]--
+
+    form_w.enable = tr_form.param1
+    form_w.form = "setting"
+    form_w.operation = "write"
+    form_dump(form_w)
+
+    local result = iptv.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("iptv_vlan_enable set result: " .. tostring(result.success))
+end
+
+local function wireless_2g_set(tr_form)
+    local form_w = {}
+    
+    form_w.form = "wireless_2g"
+    form_w.operation = "write"
+    form_w[tr_form.param1] = tr_form.param2
+    
+    form_dump(form_w)
+    
+    local result = wireless.wireless_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wireless_2g set " .. tr_form.param1 .. " result: " .. tostring(result.success))
+end
+
+local function wireless_2g_set_channel(tr_form)
+    local form_w = {}
+
+    form_w.channel = tr_form.param1
+    form_w.form = "wireless_2g"
+    form_w.operation = "write"
+
+    form_dump(form_w)
+    local result = wireless.wireless_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wireless_2g_set_channel set result: " .. tostring(result.success))
+end
+
+local function wireless_5g_set(tr_form)
+    local form_w = {}
+    
+    form_w.form = "wireless_5g"
+    form_w.operation = "write"
+    form_w[tr_form.param1] = tr_form.param2
+    
+    form_dump(form_w)
+    
+    local result = wireless.wireless_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wireless_5g set " .. tr_form.param1 .. " result: " .. tostring(result.success))
+end
+
+local function wireless_5g_set_channel(tr_form)
+    local form_w = {}
+
+    form_w.channel = tr_form.param1
+    form_w.form = "wireless_5g"
+    form_w.operation = "write"
+
+    form_dump(form_w)
+    local result = wireless.wireless_dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("wireless_5g_set_channel set result: " .. tostring(result.success))
+end
+
+local dispatch_tbl = {
+    dhcps_enable = {
+        ["write"] = {cb = dhcps_set_enabel}
+    },
+    dhcps_leasetime = {
+        ["write"] = {cb = dhcps_set_leasetime}
+    },
+    dhcps_startip = {
+        ["write"] = {cb = dhcps_set_iprange}
+    },
+    dhcps_endip = {
+        ["write"] = {cb = dhcps_set_iprange}
+    },
+    dhcps_dns = {
+        ["write"] = {cb = dhcps_set_landns}
+    },
+
+    lan_ip = {
+        ["write"] = {cb = network_set_lanip}
+    },
+    lan_mask = {
+        ["write"] = {cb = network_set_lanmask}
+    },
+    
+    wan_type = {
+        ["write"] = {cb = network_set_wantype}
+    },
+    wan_ip = {
+        ["write"] = {cb = network_set_wanip}
+    },
+    wan_mask = {
+        ["write"] = {cb = network_set_wanmask}
+    },
+    wan_gate = {
+        ["write"] = {cb = network_set_wangate}
+    },
+    wan_dns_static = {
+        ["write"] = {cb = network_set_wandns_static}
+    },
+    wan_dns_dhcp = {
+        ["write"] = {cb = network_set_wandns_dhcp}
+    },
+    wan_dns_mode = {
+        ["write"] = {cb = network_set_wandns_mode}
+    },
+    wan_unicast_enable = {
+        ["write"] = {cb = network_set_wanunicast_enable}
+    },
+    
+    pppoe_enable = {
+        ["write"] = {cb = network_set_pppoe_enable}
+    },
+    pppoe_username = {
+        ["write"] = {cb = network_set_pppoe_username}
+    },
+    pppoe_password = {
+        ["write"] = {cb = network_set_pppoe_password}
+    },
+    pppoe_dnsEnable = {
+        ["write"] = {cb = network_set_pppoe_dnsenable}
+    },
+    pppoe_dnsServer = {
+        ["write"] = {cb = network_set_pppoe_dnsServer}
+    },
+    pppoe_servicename = {
+        ["write"] = {cb = network_set_pppoe_servicename}
+    },
+    pppoe_mru = {
+        ["write"] = {cb = network_set_pppoe_mru}
+    },
+    pppoe_access = {
+        ["write"] = {cb = network_set_pppoe_access}
+    },
+    pppoe_lpcecho = {
+        ["write"] = {cb = network_set_pppoe_lpcecho}
+    },
+    pppoe_usestaticip = {
+        ["write"] = {cb = network_set_pppoe_usestaticip}
+    },
+    pppoe_connmode = {
+        ["write"] = {cb = network_set_pppoe_connmode}
+    },
+
+    l2tp_username = {
+        ["write"] = {cb = network_set_l2tp_username}
+    },
+    l2tp_password = {
+        ["write"] = {cb = network_set_l2tp_password}
+    },
+    l2tp_connmode = {
+        ["write"] = {cb = network_set_l2tp_connmode}
+    },
+    l2tp_serveriporname = {
+        ["write"] = {cb = network_set_l2tp_serveriporname}
+    },
+    l2tp_mru = {
+        ["write"] = {cb = network_set_l2tp_mru}
+    },
+    l2tp_dnsserversip = {
+        ["write"] = {cb = network_set_l2tp_dnsserversip}
+    },
+    
+    pptp_username = {
+        ["write"] = {cb = network_set_pptp_username}
+    },
+    pptp_password = {
+        ["write"] = {cb = network_set_pptp_password}
+    },
+    pptp_connmode = {
+        ["write"] = {cb = network_set_pptp_connmode}
+    },
+    pptp_serveriporname = {
+        ["write"] = {cb = network_set_pptp_serveriporname}
+    },
+    pptp_mru = {
+        ["write"] = {cb = network_set_pptp_mru}
+    },
+    pptp_dnsserversip = {
+        ["write"] = {cb = network_set_pptp_dnsserversip}
+    },
+
+    dynamic_mtu = {
+        ["write"] = {cb = network_set_dynamic_mtu}
+    },
+
+    static_mtu = {
+        ["write"] = {cb = network_set_static_mtu}
+    },
+
+    nat_enable = {
+        ["write"] = {cb = nat_set_enable}
+    },
+
+    security_spiFirewallEnable = {
+        ["write"] = {cb = security_set_spiFirwallEnable}
+    },
+
+    iptv_vlan_enable = {
+        ["write"] = {cb = iptv_vlan_set_enable}
+    },
+    iptv_igmpproxy_enable = {
+        ["write"] = {cb = iptv_igmpproxy_set_enable}
+    },
+
+    wireless_2g = {
+        ["write"] = {cb = wireless_2g_set}
+    },
+    wireless_2g_channel = {
+        ["write"] = {cb = wireless_2g_set_channel}
+    },
+    wireless_5g = {
+        ["write"] = {cb = wireless_5g_set}
+    },
+    wireless_5g_channel = {
+        ["write"] = {cb = wireless_5g_set_channel}
+    },
+}
+
+local function dispatch(tr_form)
+    return ctl.dispatch(dispatch_tbl, tr_form)
+end
+
+-- translation form prepare
+local tr_form = {}
+tr_form.form = arg[1]
+tr_form.operation = "write"
+for i = 2, 100, 1 do
+    if arg[i] ~= nil then
+        tr_form["param" .. tostring(i - 1)] = arg[i]
+    else
+        break
+    end
+end
+
+dispatch(tr_form)
+
+uci_t:commit_without_write_flash(config)

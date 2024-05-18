@@ -1,0 +1,161 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2012 OpenWrt.org
+
+START=99
+DEFAULT_NANDFLASH_LOGO_PATH="/storage/portal_logo_default.jpg"
+DEFAULT_NANDFLASH_BACK_PATH="/storage/portal_back_default.jpg"
+USER_NANDFLASH_LOGO_PATH="/storage/portal_logo_user.jpg"
+USER_NANDFLASH_BACK_PATH="/storage/portal_back_user.jpg"
+LOGO_TMP_PATH="/tmp/portal_logo.jpg"
+BACK_TMP_PATH="/tmp/portal_back.jpg"
+firmware_lock="/tmp/firmware_lock.lua"
+DEFAULT_LOGO_PATH="/etc/wifidog/portal-head.png"
+DEFAULT_BACK_PATH="/etc/wifidog/portal.jpg"
+setyet="0"
+
+local triband=$(uci get profile.@wireless[0].support_triband -c "/etc/profile.d" -q)
+local gmac3=$(uci get profile.@wireless[0].support_guest_network_gmac3 -c "/etc/profile.d" -q)
+
+portal_jpg() {
+	if [ -f $USER_NANDFLASH_LOGO_PATH ]; then
+		cp $USER_NANDFLASH_LOGO_PATH $LOGO_TMP_PATH
+	else
+		if [ -f $DEFAULT_NANDFLASH_LOGO_PATH ]; then
+			cp $DEFAULT_NANDFLASH_LOGO_PATH $LOGO_TMP_PATH
+		else
+			if [ -f $DEFAULT_LOGO_PATH ]; then
+				cp $DEFAULT_LOGO_PATH $LOGO_TMP_PATH
+			fi
+		fi
+	fi
+	if [ -f $LOGO_TMP_PATH ]; then
+		chmod 644 $LOGO_TMP_PATH
+	fi
+	if [ -f $USER_NANDFLASH_BACK_PATH ]; then
+		cp $USER_NANDFLASH_BACK_PATH $BACK_TMP_PATH
+	else
+		if [ -f $DEFAULT_NANDFLASH_BACK_PATH ]; then
+			cp $DEFAULT_NANDFLASH_BACK_PATH $BACK_TMP_PATH
+		else
+			if [ -f $DEFAULT_BACK_PATH ]; then
+				cp $DEFAULT_BACK_PATH $BACK_TMP_PATH
+			fi
+		fi
+	fi
+	if [ -f $BACK_TMP_PATH ]; then
+		chmod 644 $BACK_TMP_PATH
+	fi
+}
+
+setlanguage() {
+	
+	config_load locale
+	local locale
+	config_get locale sysinfo locale
+	local portal_lan_path="/etc/wifidog/locale/$locale/lan.js"
+    local portal_lan_path_default="/etc/wifidog/lan.js"
+    if [ -f $portal_lan_path ]; then
+         cp  $portal_lan_path $portal_lan_path_default 
+    fi
+
+}
+
+wifidog_header() {
+	local mode guest encryption authentication_type authentication_timeout portal_password redirect redirect_url
+	local ssid device enable
+        config_get mode $1 mode
+        if [ $mode = "ap" ]; then
+                config_get guest $1 guest
+                if [ -z "$guest" ]; then 
+                        echo "not guest" > /dev/console
+                else
+                    config_get enable $1 enable
+                	if [ $enable = "on" -a "$setyet" = "0" ]; then  
+                        config_get device $1 device
+                        	config_get encryption $1 encryption
+                        	if [ $encryption = "portal" ]; then
+	                            config_get ssid $1 ssid
+	                            config_get authentication_type $1 authentication_type
+	                            config_get authentication_timeout $1 authentication_timeout
+	                            config_get portal_password $1 portal_password
+	                            config_get redirect $1 redirect
+	                            config_get redirect_url $1 redirect_url
+	                            config_get content $1 content
+                                config_get title $1 title
+	                            
+	                            setyet="1"
+
+				    			local brname
+								get_brname brname
+
+								# interface issue:
+								# when GMAC3 on, interface will be eth0.$guestvid
+								# when triband on, interface will be wl0.1 wl1.1 wl 1.2
+								# otherwise, interface will be wl0.1 wl1.1
+								local guest_ifnames=""
+								if [ "$gmac3" == "yes" ]; then
+									local guestvid
+	                            	config_load switch
+				    				config_get guestvid switch0 guestvid
+				    				guest_ifnames="eth0.$guestvid"
+								else
+									if [ "$triband" == yes ]; then
+										guest_ifnames="wl0.1 wl1.1 wl2.1"
+									else
+										guest_ifnames="wl0.1 wl1.1"
+									fi
+								fi
+
+								fw flush 4 m guest_portal_mark
+								fw del 4 m PREROUTING guest_portal_mark
+
+								# add firewall chain to set mark
+								fw add 4 m guest_portal_mark
+								fw add 4 m PREROUTING guest_portal_mark
+
+								# add firewall interface mark for guestnetwork
+        						for guset_ifname in $guest_ifnames; do
+        							fw add 4 m guest_portal_mark "MARK --set-mark 3" " -m physdev --physdev-in $guset_ifname"
+        							fw add 4 m guest_portal_mark "MARK --set-mark 3" "-m physdev --physdev-out $guset_ifname"
+        						done	
+				    	
+	                            mkdir -p /var/etc
+	                            sed -e "s#PARAuthType#$authentication_type#g" \
+	                            	-e "s#PARAuthPassword#$portal_password#g" \
+	                            	-e "s#PARRediEnable#$redirect#g" \
+	                            	-e "s#PARAuthTimeout#$authentication_timeout#g" \
+	                            	-e "s#PARGatewayInterface#$brname#g" \
+                				-e '/^RediUrl/'d \
+                				-e '/^AuthTitle/'d \
+                				-e '/^AuthTerm/'d \
+                				-e "/^RediEnable/a RediUrl $redirect_url "\
+                				-e "/^AuthType/a AuthTitle $title "\
+                				-e "/^AuthTimeout/a AuthTerm $content "\
+	                                   /etc/wifidog/wifidog.conf > /var/etc/wifidog.conf
+	                            [ -e /var/etc/wifidog.conf ] && [ ! -s /var/etc/wifidog.conf ] && echo "error: wifidog.conf is empty" > /dev/console
+								/usr/bin/wifidog &
+							
+                        	fi
+                    fi
+                fi
+        fi
+}
+ 
+ 
+start() {
+	/usr/bin/wdctl stop
+    portal_jpg
+    setlanguage
+	config_load wireless
+	config_foreach wifidog_header wifi-iface
+}
+
+stop() {
+	service_stop /usr/bin/wifidog
+	service_stop /usr/bin/wdctl
+
+	# remove mark list
+	fw flush m 4 guest_portal_mark
+	fw del 4 m PREROUTING guest_portal_mark
+	fw del m 4 guest_portal_mark
+}

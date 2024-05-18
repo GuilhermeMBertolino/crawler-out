@@ -1,0 +1,63 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=99
+SERVICE_USE_PID=1
+
+ROOT_CRONTAB="/etc/crontabs/root"
+TMP_CRONTAB="/tmp/cron"
+
+
+start() {
+		local sysmode
+		config_load "sysmode"	
+		config_get sysmode sysmode mode  
+		[ x"$sysmode" != x"router" ] && exit 1	
+
+        local hour minute cron_item new_cron_item
+
+        config_load auto_upgrade
+        config_get enabled "upgrade" "enable" "off"
+        config_get time "upgrade" "time" "03:00"
+
+
+	    [ -z "$(ls /etc/crontabs/)" ] && exit 1
+
+        hour=`echo $time | awk -F':' '{printf "%d\n", $1}'`
+		
+		munite=$(randomNum 119)
+		if [ "$munite" -ge 60 ];then
+			hour=$(((hour+1)%24))
+			munite=$((munite-60))
+		fi
+				
+		new_cron_item="${munite} ${hour} * * * sh /usr/sbin/dut_auto_upgrade"
+
+        cron_item=`grep "dut_auto_upgrade" ${ROOT_CRONTAB}`
+		if [ "x$enabled" == "xon" ] ; then
+                [ "${cron_item}" != "${new_cron_item}" ] && {
+                        cp -f $ROOT_CRONTAB ${TMP_CRONTAB}
+                        [ "x${cron_item}" != "x" ] && sed '/dut_auto_upgrade/d' $ROOT_CRONTAB > ${TMP_CRONTAB}
+                        echo "${new_cron_item}" >> ${TMP_CRONTAB}
+                        crontab ${TMP_CRONTAB}
+                        rm -f ${TMP_CRONTAB}
+                }
+
+		else
+                [ "x${cron_item}" != "x" ] && {
+                        sed '/dut_auto_upgrade/d' $ROOT_CRONTAB > ${TMP_CRONTAB}
+                        crontab ${TMP_CRONTAB}
+                        rm -f ${TMP_CRONTAB}
+                }
+		fi
+
+
+}
+
+stop() {
+        start $@
+}
+
+restart() {
+        start $@
+}

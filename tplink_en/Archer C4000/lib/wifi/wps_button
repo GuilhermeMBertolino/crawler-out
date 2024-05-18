@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# start wps pbc
+if [ "$(nvram get rftestflag)" == "1" ]; then
+	lua -e "require 'luci.controller.admin.wireless'.wireless_wps_connect({option = 'connect'})"
+else
+	if [ ! -e /tmp/btn_check ];then
+		echo 0 > /tmp/btn_check
+	fi
+	ret=$(cat /tmp/btn_check)
+	ret=$(($ret | 0x8))
+	echo $ret > /tmp/btn_check
+fi
