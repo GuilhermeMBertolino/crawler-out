@@ -1,1 +1,0 @@
-!function(e){e.su.storeManager.define("wlStatisticsStore",{type:"store",fields:[{name:"deviceType"},{name:"name"},{name:"type"},{name:"mac"},{name:"encryption"},{name:"rxBytes",mapping:"rx_bytes"},{name:"txBytes",mapping:"tx_bytes"}],proxy:{url:e.su.url("/admin/wireless?form=statistics")}})}(jQuery);

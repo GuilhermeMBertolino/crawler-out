@@ -1,1 +1,0 @@
-!function(e){e.su.modelManager.define("geForceUpnpEnable",{type:"model",fields:[{name:"upnp_enable"}],proxy:{url:e.su.url("/admin/smart_network?form=gfn_qos")}}),e.su.modelManager.define("geForceQoSEnable",{type:"model",fields:[{name:"qos_enable"}],proxy:{url:e.su.url("/admin/smart_network?form=gfn_qos")}})}(jQuery);

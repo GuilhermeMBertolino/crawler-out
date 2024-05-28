@@ -1,1 +1,0 @@
-jQuery.su.storeManager.define("guestSecurityStore",{});

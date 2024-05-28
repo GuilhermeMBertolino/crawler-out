@@ -1,1 +1,0 @@
-jQuery.su.moduleManager.define("google",{views:["googleView"],listeners:{ev_on_launch:function(e,n,i,o,u,t,g){}},init:function(e,n,i,o,u,t){}},function(e,n,i,o,u,t){return{}});

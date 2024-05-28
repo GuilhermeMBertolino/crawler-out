@@ -1,1 +1,0 @@
-../etc_ro/init.d

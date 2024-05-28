@@ -1,1 +1,0 @@
-../init.d/ltq_hwmon.sh

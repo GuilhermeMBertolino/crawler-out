@@ -1,1 +1,0 @@
-$.su.modelManager.define("alg",{type:"model",fields:[{name:"pptp"},{name:"l2tp"},{name:"ipsec"},{name:"ftp"},{name:"tftp"},{name:"rtsp"},{name:"h323"},{name:"sip"},{name:"tips"}],proxy:{url:$.su.url("/admin/nat?form=alg")}});
