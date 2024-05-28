@@ -1,0 +1,199 @@
+﻿<div>
+    <div class="titleBar">
+        <a url="usbSettings.mobile.htm"><span class="icon-back sprite c-arrow-blue-left" ></span></a>
+        <h1>Sharing Account</h1>
+        <a id="tb_Save" data-status="save">Save</a>
+    </div>
+
+    <div class="section-note mt15">
+        <span>
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.folderSharing_nstr.t_info1%>
+            </script>     
+        </span>
+    </div>
+    <div class="item-list mt15">
+        <div class="section-container">
+        <div class="section-box">
+            <label class="section-labelTitle">
+                <script type="text/html" class="title-string">
+                    <%=$.tpLang.folderSharing_nstr.t_account%>
+                </script>
+            </label>
+            <select id="accountType">
+                <option value="loginAccount">
+                    <script type="text/html" class="title-string">
+                        <%=$.tpLang.folderSharing_nstr.t_ula%>
+                    </script>
+                </option>
+                <option value="followingAccount">
+                    <script type="text/html" class="title-string">
+                        <%=$.tpLang.folderSharing_nstr.t_ufa%>
+                    </script>
+                </option>
+            </select>
+        </div>
+    </div>
+    </div>
+    <div class="item-list mt15">
+        <div id="div_newAccount" class="section-container">
+        <div class="section-box">
+            <input type="text" id="username" />
+        </div>
+        <div class="section-box">
+            <input type="password" id="password" class="has-confirm" />
+        </div>
+    </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+(function() {
+    $.tpLocal('title-string', $.tpLang);
+    $('.titleBar').titleBar();
+    $('.titleBar').titleBar('title', $.tpLang.menu_str.sAccount);
+    $('#tb_Save').titleButton('status', 'save', $.tpLang.m_str.save);
+
+    var userTbl = [];
+    var userCfg;
+    var userList;
+
+    $('#accountType').selectMobile()
+        .on('change', function() {
+            if ($('#accountType').selectMobile('value') == 'loginAccount') {
+                $('#username').inputBoxMobile({
+                    'value': userCfg.adminName
+                });
+                $('#password').inputBoxMobile({
+                    'value': userCfg.adminPwd,
+                    'notice': $.tpLang.folderSharing_nstr.t_salp
+                });
+                if (($('#password').parent().find('.password-level')).length > 0) {
+                    $('#password').passwordLevel('destroy');
+                }
+                $.disableBlock('div_newAccount');
+            }
+            if ($('#accountType').selectMobile('value') == 'followingAccount') {
+                $('#username').inputBoxMobile({
+                    'value': userList[0].username
+                });
+                $('#password').inputBoxMobile({
+                    'value': userList[0].password,
+                    'notice': ''
+                }).passwordLevel({
+                    'confirmTitle': $.tpLang.s_str.cfmpwd,
+                    'differentWarning': e_str[ERR_USER_NAME_PWD_CONFLICT],
+                    'nullWarning': e_str[ERR_USER_NAME_PWD_CONFLICT]
+                });
+                $.enableBlock('div_newAccount');
+            }
+        });
+
+    $('#username').inputBoxMobile({
+        'title': $.tpLang.s_str.username,
+        'warnings': [{
+            func: function() {
+                var arg = $('#username').inputBoxMobile('option', 'value');
+                if (arg === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_NAME_EMPTY]
+        }, {
+            func: function() {
+                var arg = $('#username').inputBoxMobile('option', 'value');
+                if ($.asc(arg, true) !== 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_NAME_ASCII]
+        }, {
+            func: function() {
+                var arg = $('#username').inputBoxMobile('option', 'value');
+                if ((/[\\\/:\*\?'<>|[\]@\+=;,\.\ ()$]+/).test(arg)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_INVALID_CHAR_IN_USER_NAME]
+        }]
+    });
+
+
+    $('#password').inputBoxMobile({
+        'title': $.tpLang.s_str.passwd,
+        'warnings': [{
+            func: function() {
+                var arg = $('#password').inputBoxMobile('option', 'value');
+                if (arg === '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_PWD_EMPTY]
+        }, {
+            func: function() {
+                var asciiWithoutSpace = /^(?=[^ ]+$)[\x21-\x7f]+$/;
+                var arg = $('#password').inputBoxMobile('option', 'value');
+                if ($.asc(arg, true) !== 0 || asciiWithoutSpace.test(arg) == false) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USER_PWD_ASCII]
+        }]
+    });
+
+    (function init() {
+        userList = $.act(ACT_GL, USER_ACCOUNT, null, null);
+        userCfg = $.act(ACT_GET, USER_CFG, null, null, null);
+
+        var index;
+
+        if (!$.exe()) {
+            userTbl[0] = {};
+            userTbl[0].stack = userList[0].__stack;
+
+            if (userList[0].X_TP_UseLoginAccount == 1) {
+                $('#accountType').selectMobile('value', 'loginAccount');
+            } else {
+                $('#accountType').selectMobile('value', 'followingAccount');
+            }
+        }
+
+    })();
+
+
+    $('#tb_Save').click(function() {
+        var command = {};
+        $.startWaitingMobile($.tpLang.m_str.waiting);
+
+        if ($('#accountType').selectMobile('value') == 'loginAccount') {
+            command.X_TP_UseLoginAccount = 1;
+        } else {
+            command.X_TP_UseLoginAccount = 0;
+            if (!$.checkAllInput()) return false;
+            userTbl[0].name = $('#username').inputBoxMobile('option', 'value');
+            userTbl[0].pwd = $('#password').inputBoxMobile('option', 'value');
+            command.username = userTbl[0].name;
+            command.password = userTbl[0].pwd;
+        }
+
+        $.act(ACT_SET, USER_ACCOUNT, userTbl[0].stack, null, command);
+
+        if (!$.exe()) {
+            $.stopWaitingMobile();
+            $.loadPhoneMain('sharingAccount.mobile.htm');
+        }
+
+    });
+
+})();
+</script>

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. /lib/wifi/gmac3_guest.sh
+
+if [ "$ACTION" = "add" ]; then
+	local vlanid="$(($(get_old_guest_vlanid)))"
+	local vlandev="$HWNAME.$vlanid"
+	if [ "$vlanid" != "0" ] && [ -f /proc/net/vlan/$vlandev ] ; then
+		/sbin/fw block_rt_access dev "$vlandev" &
+	fi
+fi

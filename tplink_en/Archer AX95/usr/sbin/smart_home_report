@@ -1,0 +1,97 @@
+#!/usr/bin/lua
+
+-- 
+-- smart_home_report.lua
+-- [in]     upload_client_mac
+-- 
+
+local nixio = require "nixio"
+local uci = require "luci.model.uci"
+local json  = require "luci.json"
+local dbg = require "luci.tools.debug"
+
+local function smart_home_report_check()
+    local uci_r = uci.cursor()
+    local smart_home_support = uci_r:get_profile("smart_home", "support") or "no"
+    if smart_home_support and smart_home_support == "yes" then
+        local smart_home_enable = uci_r:get_bool("smart_home", "info", "enable")
+        local client_report_enable = uci_r:get_bool("smart_home", "info", "clientInfo")
+        if smart_home_enable and client_report_enable then
+            return true
+        end
+    end
+    return false
+end
+
+local function smart_home_new_access_report(upload_clients)
+    local smart_home_upload = require "cloud.smart_home.smart_home_upload"
+    local cause = smart_home_upload.RULE_TRIGGER
+    dbg.printf("[SMART HOME] ====> clients:" .. json.encode(upload_clients))
+    --smart_home_upload.upload_property_change_client("clientInfo", cause, upload_clients)
+    smart_home_upload.batch_upload_property_change_clients("clientInfo", cause, upload_clients)
+end
+
+local function remove_new_access_clients(file_path)
+    if file_path and nixio.fs.access(file_path) then
+        os.remove(file_path)
+    end
+end
+
+local function read_new_access_clients(file_path)
+    local clients = {}
+
+    if not file_path or not nixio.fs.access(file_path) then
+        return nil
+    end
+
+    local fp = io.open(file_path, "r")
+    if not fp then
+        return nil
+    end
+    for line in fp:lines() do
+        dbg.printf("[SMART HOME] ====> MAC:" .. line:trim() .. " to upload")
+        local client = {
+          clientMac = line:trim():gsub("[:-]",""):upper(),
+          new = true                           
+        }
+        clients[#clients + 1] = client
+    end
+    fp:close()    
+
+    remove_new_access_clients(file_path)
+    
+    return clients
+end
+
+local function online_check()
+    local sys = require "luci.sys"
+    if sys.call("online-test") ~= 0 then
+        return false
+    else
+        return true
+    end
+end
+
+local function main()
+    -- TODO: mv into client-mgmt?
+    if not smart_home_report_check() then
+        dbg.printf("[SMART HOME] ====> clientInfo report disabled, ignore.")
+        remove_new_access_clients(arg[1])
+        return
+    end
+
+    -- Notice: rm smart_home_new_clients file
+    if not online_check() then
+        dbg.printf("[SMART HOME] ====> DUT is offline, ignore now.")
+        remove_new_access_clients(arg[1])
+        return
+    end
+    
+    local client_list = read_new_access_clients(arg[1])    
+    if client_list and #client_list > 0 then    
+        smart_home_new_access_report(client_list)        
+    end    
+end
+
+main()
+

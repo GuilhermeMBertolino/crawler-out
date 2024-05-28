@@ -1,0 +1,1 @@
+jQuery.su.moduleManager.define("tpSignUp",{services:[],stores:[],views:["tpSignUpView"],deps:["login"],listeners:{}},function(e,i,n,s,r,t){return{}});

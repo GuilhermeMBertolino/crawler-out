@@ -1,0 +1,28 @@
+#!/bin/sh
+
+cmd=$1
+shift
+
+case $cmd in
+    *ACTIVE) 
+		#echo "------------offline_download------tsched-------active----" > /dev/console
+		local cfg_enable=$(uci get offline_download.global.enable)
+		if [ "$cfg_enable" == "off" ]; then
+			uci set offline_download.global.enable='on'
+			uci commit offline_download
+		fi
+    ;;
+
+    *DORM)
+		#echo "------------offline_download------tsched-------dorm----" > /dev/console
+		local cfg_enable=$(uci get offline_download.global.enable)
+		if [ "$cfg_enable" == "on" ]; then
+			uci set offline_download.global.enable='off'
+			uci commit offline_download
+		fi
+    ;;
+
+    *RESET)
+        ;;
+esac
+

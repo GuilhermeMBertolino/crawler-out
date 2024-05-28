@@ -1,0 +1,168 @@
+<script language="javascript" type="text/javascript">var curChannel2g;var curChannel5g;function disableDiv(objname,status){function canBeDis(elem){if(elem.nodeType==1){if(elem.tagName=="SELECT"||elem.tagName=="INPUT"){return true}}return false}function disablechildnodes(elem,status){if(canBeDis(elem)){elem.disabled=status}if(elem.nodeType==1){for(var i=0;i<elem.children.length;i++){disablechildnodes(elem.children[i],status)}}}disablechildnodes($.id(objname),status)}function isHex(str){str=str.toLowerCase();for(var i=0;i<str.length;i++){if((str.charAt(i)>="0"&&str.charAt(i)<="9")||(str.charAt(i)>="a"&&str.charAt(i)<="f")){continue}else{$.alert(ERR_WLAN_WDS_HEX_KEY_INVALID);return false}}if(parseInt(str,16)==0){$.alert(ERR_WLAN_WDS_HEX_KEY_OUTRANGE);return false}return true}if(INCLUDE_LAN_WLAN_WDS_DETECT){function changeAddrMode(idfix){if(idfix=="5g"){wlan5gObj.bridgeAddrMode=$.id("addrMode"+idfix).value}else{wlan2gObj.bridgeAddrMode=$.id("addrMode"+idfix).value}}}function hide_wep(idfix){$.addClass($.id("authType-ctn"+idfix),"nd");$.addClass($.id("wepKeyIndex-ctn"+idfix),"nd");$.addClass($.id("keyText-ctn"+idfix),"nd");$.id("wepKeyIndex"+idfix).disabled=true;$.id("keyText"+idfix).disabled=true;$.id("authType"+idfix).disabled=true}function show_wep(idfix){$.removeClass($.id("authType-ctn"+idfix),"nd");$.removeClass($.id("wepKeyIndex-ctn"+idfix),"nd");$.removeClass($.id("keyText-ctn"+idfix),"nd");$.id("wepKeyIndex"+idfix).disabled=false;$.id("keyText"+idfix).disabled=false;$.id("authType"+idfix).disabled=false}function hide_psk(idfix){$.addClass($.id("keyText-ctn"+idfix),"nd");$.addClass($.id("secType-ctn"+idfix),"nd");$.id("secType"+idfix).disabled=true;$.id("keyText"+idfix).disabled=true}function show_psk(idfix){$.removeClass($.id("keyText-ctn"+idfix),"nd");$.removeClass($.id("secType-ctn"+idfix),"nd");$.id("secType"+idfix).disabled=false;$.id("keyText"+idfix).disabled=false}function changeWDSKeyType(idfix){var keyType=$.id("keyType"+idfix).value;if("None"==keyType){hide_wep(idfix);hide_psk(idfix)}else{if("WEP-HEX"==keyType||"WEP-ASCII"==keyType){hide_psk(idfix);show_wep(idfix)}else{hide_wep(idfix);show_psk(idfix)}}}function resetSSID(custom,base){var ssidLen=$.realLen(custom.value);if(ssidLen>32){custom.value=base.value}}function checkWDS(idfix){if(!$.id("t_en"+idfix).checked){return true}var ssidfix=idfix=="5g"?"5G":"";var briSSID=$.id("bridgeSSID"+idfix);var ssidLen=$.realLen(briSSID.value);if(ssidLen<=0){$.alert(ERR_WLAN_WDS_SSID_IS_EMPTY);briSSID.focus();briSSID.select();return false}else{if(ssidLen>32){$.alert(ERR_WLAN_WDS_SSID_LEN_OUTRANGE);briSSID.focus();briSSID.select();return false}}if($.id("copy").checked==false){ssidLen=$.realLen($.id("customSSID"+ssidfix).value);if(ssidLen<=0){$.alert(ERR_WLAN_SSID_IS_EMPTY);$.id("customSSID"+ssidfix).focus();$.id("customSSID"+ssidfix).select();return false}else{if(ssidLen>32){$.alert(ERR_WLAN_SSID_LEN_OUTRANGE);$.id("customSSID"+ssidfix).focus();$.id("customSSID"+ssidfix).select();return false}}ssidLen=$.realLen($.id("customSSID5G").value);if(ssidLen<=0){$.alert(ERR_WLAN_SSID_IS_EMPTY);$.id("customSSID5G"+ssidfix).focus();$.id("customSSID5G"+ssidfix).select();return false}else{if(ssidLen>32){$.alert(ERR_WLAN_SSID_LEN_OUTRANGE);$.id("customSSID5G"+ssidfix).focus();$.id("customSSID5G"+ssidfix).select();return false}}}var bss=$.id("bridgeBSSID"+idfix);if(bss.value.length==0){$.alert(ERR_WLAN_WDS_BSSID_IS_EMPTY);bss.focus();bss.select();return false}else{if($.mac(bss.value,true)){$.alert(ERR_WLAN_WDS_BSSID_INVALID);bss.focus();bss.select();return false}}var key=$.id("keyText"+idfix);if($.id("keyType"+idfix).value=="None"){}else{if($.id("keyType"+idfix).value=="WEP-ASCII"){if(key.value.length!=5&&key.value.length!=13&&key.value.length!=16){$.alert(ERR_WLAN_WDS_ASCII_KEY_OUTRANGE);key.focus();key.select();return false}else{if($.asc(key.value,true)){$.alert(ERR_WLAN_WDS_ASCII_KEY_INVALID);key.focus();key.select();return false}}}else{if($.id("keyType"+idfix).value=="WEP-HEX"){if(key.value.length!=10&&key.value.length!=26&&key.value.length!=32){$.alert(ERR_WLAN_WDS_HEX_KEY_OUTRANGE);key.focus();key.select();return false}else{if(!isHex(key.value)){key.focus();key.select();return false}}}else{if(key.value.length>64||key.value.length<8){$.alert(ERR_WLAN_WDS_PSK_OUTRANGE);key.focus();key.select();return false}else{if(key.value.length==64){if(!isHex(key.value)){key.focus();key.select();return false}}else{if($.asc(key.value,true)){$.alert(ERR_WLAN_WDS_ASCII_KEY_INVALID);key.focus();key.select();return false}}}}}}return true}function initWDS(band){var idfix="";if(band=="5g"){idfix="5g"}if(!INCLUDE_LAN_WLAN_WDS_DETECT){$.addClass($.id("wdsdetect"+idfix),"nd")}else{if(1==wdsObj.bridgeEnable){$.id("addrMode"+idfix).value=wdsObj.bridgeAddrMode}}if($.mainParam&&($.mainParam[band]!=null)&&$.mainParam[band].wdsExist==1){if(band=="2g"){$.qd.wds.enable=1;curChannel2g=$.mainParam[band].channel}if(band=="5g"){$.qd.wds5g.enable=1;curChannel5g=$.mainParam[band].channel}$.id("t_en"+idfix).checked=1;$.id("bridgeSSID"+idfix).value=$.mainParam[band].SSID;$.id("bridgeBSSID"+idfix).value=$.mainParam[band].BSSID;if($.mainParam[band].authMode==0&&$.mainParam[band].wepStatus==1){$.id("keyType"+idfix).selectedIndex=0}else{if($.mainParam[band].wepStatus==0){$.id("keyType"+idfix).selectedIndex=1;if($.mainParam[band].authMode==1){$.id("authType"+idfix).selectedIndex=1}else{if($.mainParam[band].authMode=0){$.id("authType"+idfix).selectedIndex=0}}}else{if($.mainParam[band].authMode==4){$.id("keyType"+idfix).selectedIndex=3}else{$.id("keyType"+idfix).selectedIndex=4}if($.mainParam[band].wepStatus==4){$.id("secType"+idfix).selectedIndex=0}else{$.id("secType"+idfix).selectedIndex=1}}}}else{if(band=="2g"&&1==$.qd.wds.enable){$.id("t_en"+idfix).checked=1;$.id("bridgeSSID"+idfix).value=$.qd.wds.ssid;$.id("bridgeBSSID"+idfix).value=$.qd.wds.bssid;if($.qd.wds.authMode=="Open"&&$.qd.wds.encryptMode=="None"){$.id("keyType"+idfix).selectedIndex=0}else{if($.qd.wds.encryptMode=="WEPEncryption"){if($.qd.wds.authMode=="SharedAuthentication"){$.id("authType"+idfix).selectedIndex=1}else{if($.qd.wds.authMode="Open"){$.id("authType"+idfix).selectedIndex=0}}$.id("keyText"+idfix).value=$.qd.wds.key;if($.qd.wds.key.length==5||$.qd.wds.key.length==13||$.qd.wds.key.length==16){$.id("keyType"+idfix).selectedIndex=1}else{if($.qd.wds.key.length==10||$.qd.wds.key.length==26||$.qd.wds.key.length==32){$.id("keyType"+idfix).selectedIndex=2}}$.id("wepKeyIndex"+idfix).selectedIndex=Number($.qd.wds.wepKeyIndex)-1}else{if($.qd.wds.authMode=="PSKAuthentication"){$.id("keyType"+idfix).selectedIndex=3}else{$.id("keyType"+idfix).selectedIndex=4}if($.qd.wds.encryptMode=="TKIPEncryption"){$.id("secType"+idfix).selectedIndex=0}else{$.id("secType"+idfix).selectedIndex=1}$.id("keyText"+idfix).value=$.qd.wds.key}}}else{if(band=="5g"&&1==$.qd.wds5g.enable){$.id("t_en"+idfix).checked=1;$.id("bridgeSSID"+idfix).value=$.qd.wds5g.ssid;$.id("bridgeBSSID"+idfix).value=$.qd.wds5g.bssid;if($.qd.wds5g.authMode=="Open"&&$.qd.wds5g.encryptMode=="None"){$.id("keyType"+idfix).selectedIndex=0}else{if($.qd.wds5g.encryptMode=="WEPEncryption"){if($.qd.wds5g.authMode=="SharedAuthentication"){$.id("authType"+idfix).selectedIndex=1}else{if($.qd.wds5g.authMode="Open"){$.id("authType"+idfix).selectedIndex=0}}$.id("keyText"+idfix).value=$.qd.wds5g.key;if($.qd.wds5g.key.length==5||$.qd.wds5g.key.length==13||$.qd.wds5g.key.length==16){$.id("keyType"+idfix).selectedIndex=1}else{if($.qd.wds5g.key.length==10||$.qd.wds5g.key.length==26||$.qd.wds5g.key.length==32){$.id("keyType"+idfix).selectedIndex=2}}$.id("wepKeyIndex"+idfix).selectedIndex=Number($.qd.wds5g.wepKeyIndex)-1}else{if($.qd.wds5g.authMode=="PSKAuthentication"){$.id("keyType"+idfix).selectedIndex=3}else{$.id("keyType"+idfix).selectedIndex=4}if($.qd.wds5g.encryptMode=="TKIPEncryption"){$.id("secType"+idfix).selectedIndex=0}else{$.id("secType"+idfix).selectedIndex=1}$.id("keyText"+idfix).value=$.qd.wds5g.key}}}}}changeWDSKeyType(idfix)}function initParam(){if(!$.mainParam){return}if($.mainParam["2g"]==null||$.mainParam["5g"]==null){return}function setWlanObj(tmpObj,param){tmpObj.SSID=param.ssid;tmpObj.standard=param.standard;tmpObj.channel=param.channel;tmpObj.autoChannelEnable=param.autoChannel;tmpObj.X_TP_Bandwidth=param.bandWidth;tmpObj.X_TP_Band=param.band;if(!INCLUDE_LAN_WLAN_HWSWITCH){tmpObj.enable=1}tmpObj.SSIDAdvertisementEnabled=param.SSIDAdvertisementEnabled}setWlanObj(wlan2gObj,$.mainParam["2g"]);setWlanObj(wlan5gObj,$.mainParam["5g"]);$.qd.wds.enable=$.mainParam["2g"].wdsExist;$.qd.wds5g.enable=$.mainParam["5g"].wdsExist}function apScan(obj){$.qf.prev()}function doCollectWlanCfg(idfix,wlchanel,tmpwdsObj,tmpwlObj,enable){var authMode,encryptMode,addrMode,enable;if(INCLUDE_LAN_WLAN_WDS_DETECT){if($.id("addrMode"+idfix).value=="detect"){addrMode="detect"}else{if($.id("addrMode"+idfix).value=="addr4"){addrMode="addr4"}else{addrMode="addr3"}}}if($.id("keyType"+idfix).value=="None"){authMode="Open";encryptMode="None"}else{if($.id("keyType"+idfix).value=="WEP-ASCII"||$.id("keyType"+idfix).value=="WEP-HEX"){encryptMode="WEPEncryption";if($.id("authType"+idfix).value=="open"){authMode="Open"}else{authMode="SharedAuthentication"}}else{if($.id("keyType"+idfix).value=="WPA-PSK"){authMode="PSKAuthentication"}else{authMode="PSK2Authentication"}if($.id("secType"+idfix).value=="tkip"){encryptMode="TKIPEncryption"}else{encryptMode="AESEncryption"}}}if(enable){if(INCLUDE_LAN_WLAN_WDS_DETECT){tmpwdsObj.addrMode=addrMode}tmpwdsObj.ssid=$.id("bridgeSSID"+idfix).value;tmpwdsObj.bssid=$.id("bridgeBSSID"+idfix).value;tmpwdsObj.key=$.id("keyType"+idfix).value;tmpwdsObj.wepKeyIndex=$.id("wepKeyIndex"+idfix).value;tmpwdsObj.authMode=authMode;tmpwdsObj.encryptMode=encryptMode;tmpwdsObj.key=$.id("keyText"+idfix).value}tmpwlObj.chnn=wlchanel;if(encryptMode!="None"){tmpwlObj.authMode=authMode;tmpwlObj.encryptMode=encryptMode;tmpwlObj.pwd=$.id("keyText"+idfix).value;tmpwlObj.sec=true}else{tmpwlObj.sec=false}}function doCollect(){if(!$.id("t_en").checked&&!$.id("t_en5g").checked){return false}$.qd.wds.enable=$.id("t_en").checked?1:0;$.qd.wds5g.enable=$.id("t_en5g").checked?1:0;if(true!=checkWDS("")){return}if(true!=checkWDS("5g")){return}if($.qd.wds.enable){doCollectWlanCfg("",curChannel2g,$.qd.wds,$.qd.wl,true)}else{doCollectWlanCfg("5g",curChannel2g,$.qd.wds,$.qd.wl,false)}if($.qd.wds5g.enable){doCollectWlanCfg("5g",curChannel5g,$.qd.wds5g,$.qd.wl5g,true)}else{doCollectWlanCfg("",curChannel5g,$.qd.wds5g,$.qd.wl5g,false)}if($.qd.sysMode=="Client"){$.qd.wl.ssidAdver=0;$.qd.wl5g.ssidAdver=0}if($.qd.sysMode=="Repeater"){if($.id("copy").checked==true){$.qd.wl.customize=false;$.qd.wl5g.customize=false;$.qd.wl.ssid=$.id("copySSID").value;$.qd.wl5g.ssid=$.id("copySSID5G").value}else{$.qd.wl.customize=true;$.qd.wl5g.customize=true;$.qd.wl.ssid=$.id("customSSID").value;$.qd.wl5g.ssid=$.id("customSSID5G").value}}return true}function changeSsid(type){if(type==0){$.id("copySSID").disabled=false;$.id("copySSID5G").disabled=false;$.id("customSSID").disabled=true;$.id("customSSID5G").disabled=true}else{$.id("copySSID").disabled=true;$.id("copySSID5G").disabled=true;$.id("customSSID").disabled=false;$.id("customSSID5G").disabled=false}}function doWdsEn(obj,band){if(obj.checked==true){disableDiv("div_"+band,0)}else{disableDiv("div_"+band,1)}if(!$.id("t_en").checked&&!$.id("t_en5g").checked){$.id("wdsNextBtn").disabled=1}else{$.id("wdsNextBtn").disabled=0}}function goNext(){if(!doCollect()){return}$.qf.next()}function goPrev(){$.qf.prev()};</script>
+<p class="et T" id="et">Quick Setup - Wireless</p>
+<div class="con1 M">
+    <p class="ct"></p>
+    <p class="bl"></p>
+    <div class="con2">
+      <p class="br"></p>
+      <p>
+          <b class="item T T_wl2g">Wireless 2.4G</b>
+          <input type="checkbox" id="t_en" onclick="doWdsEn(this,'2g')"/>
+          <span class="T T_en"></span>
+      </p>
+      <div id="div_2g">
+        <p>
+            <b class="item T" id="t_brssid">SSID(to be bridged):</b>
+            <input type="text" class="text" size="32" maxlength="32" id="bridgeSSID" />
+        </p>
+        <p>
+            <b class="item T" id="t_brbssid">MAC Address(to be bridged):</b>
+            <input type="text" class="text" maxlength="17" size="17" id="bridgeBSSID" />&nbsp;
+            <span class="T" id="t_eg">e.g. 00:1D:0F:11:22:33</span>
+        </p>
+        <div id="wdsdetect">
+            <p><b class="item T" id="t_wdsdetect">AddrMode:</b>
+                <select id="addrMode" name="addrMode" style="width:150px" onchange="changeAddrMode('');">
+                    <option value="detect">Auto Detect</option>
+                    <option value="addr3">Three Addr</option>
+                    <option value="addr4">Four Addr</option>
+                </select>
+            </p>
+        </div>
+        <p><b class="item T T_keytype">Key Type:</b>
+            <select id="keyType" name="keyType" style="width:150px" onchange="changeWDSKeyType('');">
+                <option class="T T_noneEnc" value="None">None</option>
+                <option value="WEP-ASCII">WEP(ASCII)</option>
+                <option value="WEP-HEX">WEP(HEX)</option>
+                <option value="WPA-PSK">WPA-PSK</option>
+                <option value="WPA2-PSK">WPA2-PSK</option>
+            </select>
+        </p>
+        <p id="wepKeyIndex-ctn"><b class="item T" id="t_wepidx">WEP Index:</b>
+            <select id="wepKeyIndex" name="wepKeyIndex" style="width:150px">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=3>3</option>
+                <option value=4>4</option>
+            </select>
+        </p>
+        <p id="authType-ctn"><b class="item T T_authtype">Authentication Type:</b>
+            <select id="authType" name="authType" style="width:150px">
+                <option class="T T_opensys" value="open">Open System</option>
+                <option class="T T_sharekey" value="shared">Shared Key</option>
+            </select>
+        </p>
+        <p id="secType-ctn"><b class="item T T_encryption">Encryption:</b>
+            <select id="secType" name="authType" style="width:150px">
+                <option value="tkip">TKIP</option>
+                <option value="aes">AES</option>
+            </select>
+        </p>
+        <p id="keyText-ctn"><b class="item T T_passwd">Password:</b>
+            <input type=text class="text" id="keyText" size="32" />
+        </p>
+      </div>
+
+      <p class="br"></p>
+      <p>
+          <b class="item T T_wl5g">Wireless 5G</b>
+          <input type="checkbox" id="t_en5g" onclick="doWdsEn(this, '5g')"/>
+          <span class="T T_en"></span>
+      </p>
+      <div id="div_5g">
+        <p>
+            <b class="item T" id="t_brssid5g">SSID(to be bridged):</b>
+            <input type="text" class="text" size="32" maxlength="32" id="bridgeSSID5g" />
+        </p>
+        <p>
+            <b class="item T" id="t_brbssid5g">MAC Address(to be bridged):</b>
+            <input type="text" class="text" maxlength="17" size="17" id="bridgeBSSID5g" />&nbsp;
+            <span class="T" id="t_eg5g">e.g. 00:1D:0F:11:22:33</span>
+        </p>
+        <div id="wdsdetect5g">
+            <p><b class="item T" id="t_wdsdetect5g">AddrMode:</b>
+                <select id="addrMode5g" name="addrMode5g" style="width:150px" onchange="changeAddrMode('5g');">
+                    <option value="detect">Auto Detect</option>
+                    <option value="addr3">Three Addr</option>
+                    <option value="addr4">Four Addr</option>
+                </select>
+            </p>
+        </div>
+        <p><b class="item T T_keytype">Key Type:</b>
+            <select id="keyType5g" name="keyType5g" style="width:150px" onchange="changeWDSKeyType('5g');">
+                <option class="T T_noneEnc" value="None">None</option>
+                <option value="WEP-ASCII">WEP(ASCII)</option>
+                <option value="WEP-HEX">WEP(HEX)</option>
+                <option value="WPA-PSK">WPA-PSK</option>
+                <option value="WPA2-PSK">WPA2-PSK</option>
+            </select>
+        </p>
+        <p id="wepKeyIndex-ctn5g"><b class="item T" id="t_wepidx5g">WEP Index:</b>
+            <select id="wepKeyIndex5g" name="wepKeyIndex5g" style="width:150px">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=3>3</option>
+                <option value=4>4</option>
+            </select>
+        </p>
+        <p id="authType-ctn5g"><b class="item T T_authtype">Authentication Type:</b>
+            <select id="authType5g" name="authType5g" style="width:150px">
+                <option class="T T_opensys" value="open">Open System</option>
+                <option class="T T_sharekey" value="shared">Shared Key</option>
+            </select>
+        </p>
+        <p id="secType-ctn5g"><b class="item T T_encryption">Encryption:</b>
+            <select id="secType5g" name="authType5g" style="width:150px">
+                <option value="tkip">TKIP</option>
+                <option value="aes">AES</option>
+            </select>
+        </p>
+        <p id="keyText-ctn5g"><b class="item T T_passwd">Password:</b>
+            <input type=text class="text" id="keyText5g" size="32" />
+        </p>
+      </div>
+
+        <p>
+            <b class="item">&nbsp;</b>
+            <input type="button" class="button L T nd" id="t_scan" value="Scan" onclick="apScan(this);" />
+        </p>
+
+        <div id="rangeExtend" class="nd">
+            <p>
+                <b class="item" id="repeater_wlname">Wireless Name of Range Extender</b>
+                <input type="radio" name="wlNameMode" value="copy" id="copy" onclick="changeSsid(0)">
+                <span id="t_copy">Copy from Root AP</span>
+            </p>
+            <p>
+                <b class="item">Extended 2.4GHz SSID:</b>
+                <input type="text" id="copySSID" readonly>
+            </p>
+            <p>
+                <b class="item">Extended 5GHz SSID:</b>
+                <input type="text" id="copySSID5G" readonly>
+            </p>
+            <p>
+                <b class="item">&nbsp;</b>
+                <input type="radio" name="wlNameMode" value="custom" checked id="custom" onclick="changeSsid(1)">
+                <span id="t_custom">Customize</span>
+            </p>
+            <p>
+                <b class="item">Extended 2.4GHz SSID:</b>
+                <input type="text" id="customSSID">
+            </p>
+            <p>
+                <b class="item">Extended 5GHz SSID:</b>
+                <input type="text" id="customSSID5G">
+            </p>
+        </div>
+    </div>
+
+</div>
+</div>
+<p class="bl"></p>
+<p class="tail ctr">
+    <input type="button" class="button L T T_back" value="Back" onclick="goPrev()" />
+    <input type="button" id="wdsNextBtn" class="button L T T_next" value="Next" onclick="goNext()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">var wdsObj,wlan2gObj,wds2gObj,wlan5gObj,wds5gObj;(function(){$.loadHelpFrame("QsWlClientHelpRpm.htm");if(!$.mainParam){return $.loadMain("qsStart.htm")}if(!$.qm[$.curPage].__v){$.qd.wl={};$.qd.wl5g={};var wls=$.act(ACT_GL,LAN_WLAN,null,null,["name","X_TP_Band","enable","standard","SSID","regulatoryDomain","possibleChannels","autoChannelEnable","channel","X_TP_PreSharedKey","X_TP_Bandwidth","SSIDAdvertisementEnabled","beaconType","basicAuthenticationMode","WEPKeyIndex"]);var wlKeys=$.act(ACT_GL,LAN_WLAN_WEPKEY,null,null);if($.exe()){return}wlan2gObj=wls[0];wlan5gObj=wls[1];$.qd.wl.stack=wlan2gObj.__stack;$.qd.wl.en=1;$.qd.wl.ssid=wlan2gObj.SSID;$.qd.wl.domain=wlan2gObj.regulatoryDomain;$.qd.wl.chnns=wlan2gObj.possibleChannels;$.qd.wl.autoChan=wlan2gObj.autoChannelEnable;$.qd.wl.chnn=wlan2gObj.channel;$.qd.wl.mode=wlan2gObj.standard;$.qd.wl.bandwidth=wlan2gObj.X_TP_Bandwidth;$.qd.wl.ssidAdver=wlan2gObj.SSIDAdvertisementEnabled;$.qd.wl.authMode=wlan2gObj.basicAuthenticationMode;if(wlan2gObj.beaconType=="None"){$.qd.wl.encryptMode="None";$.qd.wl.sec=false}else{if(wlan2gObj.beaconType=="Basic"){$.qd.wl.encryptMode="WEPEncryption";$.qd.wl.pwd=wlKeys[Number(wlan2gObj.WEPKeyIndex)-1].WEPKey;$.qd.wl.sec=true}else{$.qd.wl.encryptMode="AESEncryption";$.qd.wl.pwd=wlan2gObj.X_TP_PreSharedKey;$.qd.wl.sec=true}}curChannel2g=wlan2gObj.channel;$.qd.wl5g.stack=wlan5gObj.__stack;$.qd.wl5g.en=1;$.qd.wl5g.ssid=wlan5gObj.SSID;$.qd.wl5g.domain=wlan5gObj.regulatoryDomain;$.qd.wl5g.chnns=wlan5gObj.possibleChannels;$.qd.wl5g.autoChan=wlan5gObj.autoChannelEnable;$.qd.wl5g.chnn=wlan5gObj.channel;$.qd.wl5g.mode=wlan5gObj.standard;$.qd.wl5g.bandwidth=wlan5gObj.X_TP_Bandwidth;$.qd.wl5g.ssidAdver=wlan5gObj.SSIDAdvertisementEnabled;$.qd.wl5g.authMode=wlan5gObj.basicAuthenticationMode;if(wlan5gObj.beaconType=="None"){$.qd.wl5g.encryptMode="None";$.qd.wl5g.sec=false}else{if(wlan5gObj.beaconType=="Basic"){$.qd.wl5g.encryptMode="WEPEncryption";$.qd.wl5g.pwd=wlKeys[Number(wlan5gObj.WEPKeyIndex)+3].WEPKey;$.qd.wl5g.sec=true}else{$.qd.wl5g.encryptMode="AESEncryption";$.qd.wl5g.pwd=wlan5gObj.X_TP_PreSharedKey;$.qd.wl5g.sec=true}}curChannel5g=wlan5gObj.channel;$.qd.wds={};$.qd.wds5g={};wds2gObj=$.act(ACT_GET,LAN_WLAN_WDSBRIDGE,wlan2gObj.__stack,null,["BridgeEnable","BridgeAddrMode","BridgeBSSID","BridgeSSID","BridgeAuthMode","BridgeEncryptMode","BridgeKey","BridgeWepKeyIndex"]);wds5gObj=$.act(ACT_GET,LAN_WLAN_WDSBRIDGE,wlan5gObj.__stack,null,["BridgeEnable","BridgeAddrMode","BridgeBSSID","BridgeSSID","BridgeAuthMode","BridgeEncryptMode","BridgeKey","BridgeWepKeyIndex"]);if($.exe()){return}if(INCLUDE_LAN_WLAN_WDS_DETECT){$.qd.wds.addrMode=wds2gObj.bridgeAddrMode}$.qd.wds.bssid=wds2gObj.bridgeBSSID;$.qd.wds.ssid=wds2gObj.bridgeSSID;$.qd.wds.authMode=wds2gObj.bridgeAuthMode;$.qd.wds.encryptMode=wds2gObj.bridgeEncryptMode;$.qd.wds.key=wds2gObj.bridgeKey;$.qd.wds.wepKeyIndex=wds2gObj.bridgeWepKeyIndex;if(INCLUDE_LAN_WLAN_WDS_DETECT){$.qd.wds5g.addrMode=wds5gObj.bridgeAddrMode}$.qd.wds5g.bssid=wds5gObj.bridgeBSSID;$.qd.wds5g.ssid=wds5gObj.bridgeSSID;$.qd.wds5g.authMode=wds5gObj.bridgeAuthMode;$.qd.wds5g.encryptMode=wds5gObj.bridgeEncryptMode;$.qd.wds5g.key=wds5gObj.bridgeKey;$.qd.wds5g.wepKeyIndex=wds5gObj.bridgeWepKeyIndex;if($.mainParam["2g"]!=null&&$.mainParam["5g"]!=null){$.qd.wds.enable=$.mainParam["2g"].wdsExist;$.qd.wds5g.enable=$.mainParam["5g"].wdsExist}else{$.qd.wds.enable=wds2gObj.bridgeEnable;$.qd.wds5g.enable=wds5gObj.bridgeEnable}}initParam();initWDS("2g");initWDS("5g");if($.qd.wds.enable!=1){disableDiv("div_2g",1)}if($.qd.wds5g.enable!=1){disableDiv("div_5g",1)}if($.qd.wds.enable!=1&&$.qd.wds5g.enable!=1){$.id("wdsNextBtn").disabled=1}if($.qd.sysMode=="Repeater"){$.removeClass($.id("rangeExtend"),"nd");var suffix2g="";var suffix5g="5g";if(!$.qd.wds.enable&&$.qd.wds5g.enable){suffix2g="5g"}if(!$.qd.wds5g.enable&&$.qd.wds.enable){suffix5g=""}$.id("copySSID").value=$.id("bridgeSSID"+suffix2g).value;$.id("copySSID5G").value=$.id("bridgeSSID"+suffix5g).value;if($.id("bridgeSSID"+suffix2g).value.length!=0){$.id("customSSID").value=$.id("bridgeSSID"+suffix2g).value+"_Ext"}if($.id("bridgeSSID"+suffix5g).value.length!=0){$.id("customSSID5G").value=$.id("bridgeSSID"+suffix5g).value+"_Ext_5G"}if(suffix2g==suffix5g){$.id("copySSID5G").value=$.id("copySSID5G").value+"_5G"}resetSSID($.id("customSSID"),$.id("copySSID"));resetSSID($.id("copySSID5G"),$.id("copySSID"));resetSSID($.id("customSSID5G"),$.id("copySSID"));if($.qd.wl&&$.qd.wds&&$.qd.wds.enable&&$.qd.wl.customize){changeSsid(1);$.id("custom").checked=true;$.id("customSSID").value=$.qd.wl.ssid;$.id("customSSID5G").value=$.qd.wl5g.ssid}else{if($.qd.wl5g&&$.qd.wds5g&&$.qd.wds5g.enable&&$.qd.wl5g.customize){changeSsid(1);$.id("custom").checked=true;$.id("customSSID").value=$.qd.wl.ssid;$.id("customSSID5G").value=$.qd.wl5g.ssid}}if($.qd.wl5g.customize==false&&$.qd.wl.customize==false){changeSsid(0);$.id("copy").checked=true;$.id("copySSID").value=$.qd.wl.ssid;$.id("copySSID5G").value=$.qd.wl5g.ssid}}})();</script>

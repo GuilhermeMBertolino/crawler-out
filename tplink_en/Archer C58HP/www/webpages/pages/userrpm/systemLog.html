@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>log_filter_form Control</title>
+</head>
+<body>
+<div class="func-container">
+	<div id="log_filter_form">
+		<form id="account_setting">
+			<div class="widget-container">
+				<div class="widget-fieldlabel-wrap xxs">
+					<label id="filter" class="widget-fieldlabel"></label>
+				</div>
+				<label style="position: relative; top: 6px;" id="lbl_type"></label>
+				<input type="text"  id="type" name="type" value="" />
+				<label style="position: relative; top: 6px;" id="lbl_level"></label>
+				<input type="text"  id="level" name="level" value="" />
+			</div>
+			<div id="log_prompt" class="form-prompt successed hidden pos">
+				<div class="bg"></div>
+				<div class="content">
+					<span class="icon"></span>
+					<span class="text text-successed"></span>
+					<span class="text text-failed"></span>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div id="log_list"></div>
+	<form id="save-setting" enctype="multipart/form-data">
+		<input type="hidden" />	
+	</form>
+	<div id="adv_btn" class="advanced-block  part-seperate" type="button">
+		<span class="advanced-icon"></span>
+		<span class="advanced-text"></span>
+	</div>
+	<div id="mail" class="hidden system-log-mail-container">
+		<form id="mail-setting">
+			<input type="text"  id="log_from" name="from" value="" />
+			<input type="text"  id="log_to" name="to" value="" />
+			<input type="text"  id="log_smtp" name="smtp_server" value="" />
+			<input type="text"  id="log_auth" name="auth" value="" />
+			<div id="auth_cnt">
+				<input type="text"  id="username"  name="user" value="" />
+				<input   id="password"  type="password" name="password" value="" />
+			</div>
+			<input type="text"  id="log_mail" name="auto_mail" value="" />
+			<div id="mail_cnt">
+				<input type="text"  id="auto_mail_type" name="auto_mail_type" value="" />
+				<input type="text"  id="time_range" name="every_day_time" value="" />
+				<div id="hour_cnt" class="mp5">
+					<input type="text"  id="hour" name="every_hours" value="" />
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="part-seperate button-context ">
+		<button id="mail_log"></button>
+		<button id="save_log"></button>
+		<input id="dyndns-status" name="status" />
+	</div>
+	<div id="help_system_log"></div>
+</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}$(document).ready(function(i){var o="./data/log.grid.json";var n="./data/syslog.mail.json";var l="./data/syslog.filter.json";var h="./data/syslog.types.json";var c=$.su.url("/admin/syslog?form=log");var j=$.su.url("/admin/syslog?form=mail");var a=$.su.url("/admin/syslog?form=filter");var d=$.su.url("/admin/syslog?form=types");$("div.func-container").page({title:$.su.CHAR.SYSLOG.TITLE,help:""});$("div#log_filter_form").panel({title:$.su.CHAR.SYSLOG.TITLE,collapsible:false});$("#filter").html($.su.CHAR.SYSLOG.LOG_FILTER);$("#lbl_type").html($.su.CHAR.SYSLOG.TYPE_EQ);$("input#type").combobox({fieldLabel:null,inputCls:"xl",cls:"s inline-block",items:[]}).on("ev_change",function(r,p,q){if(p.length!=0){$("form#account_setting").form("submit",{},function(){b.load()})}});var m=$.su.loadComboData(d,{},[{srcKey:"value",dstKey:"value"},{srcKey:"name",dstKey:"name",para:$.su.CHAR.SYSLOG,func:function(r,p){var q=p[r];if(!q){q=r}return q}}]);$("#type").combobox("loadData",m);$("form#account_setting").form({proxy:{url:a},showPrompt:false,cls:"no-padding",fields:[{name:"type",mapping:"type"},{name:"level",mapping:"level"}],autoLoad:false});$("#lbl_level").text($.su.CHAR.SYSLOG.AND+" "+$.su.CHAR.SYSLOG.LEVEL+"=");$("input#level").combobox({fieldLabel:null,inputCls:"m",cls:"s inline-block",items:[{value:$.su.CHAR.SYSLOG.ALL,name:$.su.CHAR.SYSLOG.ALL},{value:$.su.CHAR.SYSLOG.EMERGENCY,name:$.su.CHAR.SYSLOG.EMERGENCY},{value:$.su.CHAR.SYSLOG.ALERT,name:$.su.CHAR.SYSLOG.ALERT},{value:$.su.CHAR.SYSLOG.CRITICAL,name:$.su.CHAR.SYSLOG.CRITICAL},{value:$.su.CHAR.SYSLOG.ERROR,name:$.su.CHAR.SYSLOG.ERROR},{value:$.su.CHAR.SYSLOG.WARNING,name:$.su.CHAR.SYSLOG.WARNING},{value:$.su.CHAR.SYSLOG.NOTICE,name:$.su.CHAR.SYSLOG.NOTICE},{value:$.su.CHAR.SYSLOG.INFO,name:$.su.CHAR.SYSLOG.INFO},{value:$.su.CHAR.SYSLOG.DEBUG,name:$.su.CHAR.SYSLOG.DEBUG}]}).on("ev_change",function(r,p,q){if(p.length!=0){$("form#account_setting").form("submit",{},function(){b.load()})}});$("form#account_setting").form("load");var b=new $.su.Store({proxy:{url:c},fields:[{name:"time"},{name:"type"},{name:"level"},{name:"content"}],updateMode:"complete",autoLoad:true});$("div#log_list").grid({store:b,minLines:0,paging:{numPerPage:50},columns:[{text:$.su.CHAR.VIRTUAL_SERVERS.ID,xtype:"rownumberer",width:38},{text:$.su.CHAR.SYSLOG.TIME,width:140,dataIndex:"time"},{text:$.su.CHAR.SYSLOG.TYPE,width:120,renderer:function(r,p){var q=$.su.CHAR.SYSLOG[r];if(!q){q=r}return q},dataIndex:"type"},{text:$.su.CHAR.SYSLOG.LEVEL_COL,width:100,dataIndex:"level"},{text:$.su.CHAR.SYSLOG.CONTENT,dataIndex:"content"}],operation:["refresh","deleteAll"]});$("span.advanced-text").html($.su.CHAR.SYSLOG.MAIL_SETTING);$("#mail_log").button({fieldLabel:null,text:$.su.CHAR.SYSLOG.MAIL_LOG,cls:"inline-block gap",handler:function(q){var p=b.proxy;p.write({operation:"mail"},function(r){if(typeof r.send!="undefined"){if(r.send){g.status("setSuccess",$.su.CHAR.SYSLOG.SEND_OK)}else{g.status("setFailed",$.su.CHAR.SYSLOG.SEND_FAILED)}}},function(){})}});var g=$("input#dyndns-status").status({cls:"inline-block",proxy:{url:c}});$("div#adv_btn").on("click",function(){var p=$(this);if(p.hasClass("basic-block")){p.removeClass("basic-block").addClass("advanced-block");p.find("span.basic-icon").removeClass("basic-icon").addClass("advanced-icon");p.find("span.basic-text").removeClass("basic-icon").addClass("advanced-text");$("#mail").css("display","none")}else{p.removeClass("advanced-block").addClass("basic-block");p.find("span.advanced-icon").removeClass("advanced-icon").addClass("basic-icon");p.find("span.advanced-text").removeClass("advanced-text").addClass("basic-text");$("#mail").fadeIn(150)}});$("#log_prompt .text-successed").html($.su.CHAR.OPERATION.FORM_SAVED);$("#log_prompt .text-failed").html($.su.CHAR.OPERATION.FORM_FAILED);$("#save-setting").form({proxy:{url:c},formEnctype:"multipart/form-data",traditional:true,hiddenFrame:true,autoLoad:false});$("#save_log").button({fieldLabel:null,text:$.su.CHAR.SYSLOG.SAVE_LOG,cls:"inline-block",handler:function(p){$("#save-setting").form("submit",{operation:"save"})}});$("div#mail").panel({title:$.su.CHAR.SYSLOG.AUTOMAILTITLE,collapsible:false});$("input#log_from").textbox({fieldLabel:$.su.CHAR.SYSLOG.FROM,allowBlank:false,minLength:6,maxLength:128,vtype:"email"});$("input#log_to").textbox({fieldLabel:$.su.CHAR.SYSLOG.TO,allowBlank:false,minLength:6,maxLength:128,vtype:"email"});$("input#log_smtp").textbox({fieldLabel:$.su.CHAR.SYSLOG.SMTP_SERVER,allowBlank:false,vtype:"string_ip_domain"});$("input#log_auth").checkbox({fieldLabel:"",items:[{boxlabel:$.su.CHAR.SYSLOG.ENABLE_AUTHENTICATION,uncheckedValue:"off",inputValue:"on"}]}).on("ev_change",function(r,p,q){var s=(q[0]=="auth"||q[0]=="on")?"on":"off";switch(s){case"on":$("#auth_cnt").fieldset("show");break;case"off":$("#auth_cnt").fieldset("hide");break}});$("#auth_cnt").fieldset({fields:[{name:"username"},{name:"password"}]}).hide();$("#username").textbox({fieldLabel:$.su.CHAR.SYSLOG.USERNAME,minLength:1,maxLength:96,vtype:"string_visible"});$("#password").password({fieldLabel:$.su.CHAR.SYSLOG.PASSWORD,showLevel:false,minLength:1,maxLength:32,vtype:"string_visible"});$("#password").on("ev_change",function(){var p=$("#password").password("getValue")});$("#confirm").on("ev_change",function(){var p=$("#password").password("getValue")});$("input#log_mail").checkbox({fieldLabel:"",items:[{boxlabel:$.su.CHAR.SYSLOG.AUTO_MAIL,uncheckedValue:"off",inputValue:"on"}]}).on("ev_change",function(r,p,q){var s=(q[0]=="auto_mail"||q[0]=="on")?"on":"off";switch(s){case"on":$("#mail_cnt").fieldset("show");break;case"off":$("#mail_cnt").fieldset("hide");break}});$("#mail_cnt").fieldset({fields:[{name:"auto_mail_type"},{name:"time_range"},{name:"hour"}]}).hide();$("#auto_mail_type").radio({fieldLabel:"",columns:1,cls:"inline-block",items:[{boxlabel:$.su.CHAR.SYSLOG.LOG_AT,inputValue:"day_time",contentCls:"inline-block time_padding",content:"#time_range"},{boxlabel:$.su.CHAR.SYSLOG.LOG_EVERY,inputValue:"hours",contentCls:"inline-block hour_padding",content:"#hour_cnt"}]}).on("ev_change",function(r,p,q){if(q=="day_time"){$("#time_range").time("enable");$("#hour").textbox("disable")}else{$("#time_range").time("disable");$("#hour").textbox("enable")}});$("#time_range").time({fieldLabel:null,tips:$.su.CHAR.SYSLOG.HH_MM,cls:"inline-block",format:"h:m",tipsCls:"s"});$("#hour").textbox({fieldLabel:null,tips:$.su.CHAR.SYSLOG.HOURS,inputCls:"xs",vtype:{vtype:"number",min:1,max:24},maxLength:2,textFormat:$.su.format.number,cls:"inline-block"});var k=new $.su.Proxy({url:j});$("form#mail-setting").form({proxy:k,fields:[{name:"from",mapping:"from"},{name:"to",mapping:"to"},{name:"smtp_server",mapping:"smtp_server"},{name:"auth",mapping:"auth"},{name:"user",mapping:"user"},{name:"password",mapping:"password"},{name:"auto_mail",mapping:"auto_mail"},{name:"auto_mail_type",mapping:"auto_mail_type"},{name:"every_day_time",mapping:"every_day_time"},{name:"every_hours",mapping:"every_hours"}],validator:function(){var q=$("#log_mail").checkbox("getValue");var r=$("#auto_mail_type").radio("getValue");if(q[0]=="auto_mail"){if(r=="hours"){var p=$("#hour").textbox("getValue");if(p==""){$("#hour").textbox("setError",$.su.CHAR.VTYPETEXT.BLANKTEXT);return false}}}return true},submitBtn:"default"}).on("ev_loadData",function(q,p){if(p.auto_mail_type==""||!p.auto_mail_type){$("#auto_mail_type").radio("setValue","day_time")}});var f=new $.su.Help({container:"div#help_system_log",content:"SYSTEM_LOG"})});</script>
+</body>
+</html>

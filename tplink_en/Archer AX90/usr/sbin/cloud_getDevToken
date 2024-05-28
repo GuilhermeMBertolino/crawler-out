@@ -1,0 +1,35 @@
+#!/usr/bin/lua
+
+local cloud_https = require "cloud_req.cloud_https"
+local dbg   = require "luci.tools.debug"
+
+local req = {}
+req.params = {}
+
+local service
+if arg[1] == nil then
+	service = "eweb"
+else
+	service = tostring(arg[1])
+end
+
+--just no retry when fail
+local retrycount = 1
+local ret, data = cloud_https.cloud_https_fetch_devicetoken(service, retrycount)
+
+-- connection error
+if ret == -1000 then
+	os.exit(1)
+elseif ret == -5000 then
+	os.exit(2)
+elseif ret ~= 0 then
+	os.exit(3)
+end
+
+-- handler err_code
+--dbg.print("cloud https get token %s and url %s by service id %s" % {data.token, data.url, service})
+if data.error_code ~= 0 then
+	os.exit(3)
+else
+	os.exit(0)
+end

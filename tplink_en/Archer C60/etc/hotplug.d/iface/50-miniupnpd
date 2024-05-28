@@ -1,0 +1,77 @@
+#!/bin/sh
+iface_file="/var/miniupnpd_ext_iface"
+. /lib/functions.sh
+. /lib/functions/network.sh
+/etc/init.d/miniupnpd enabled && [ "$ACTION" = "ifup" ] && {
+	#initial launch of miniupnpd now that interfaces are up
+	local wanif
+	local lanif
+	local old_ifname
+	local net_type
+	
+	net_type=$(uci_get network internet)
+	old_ifname=$(cat ${iface_file})
+
+	local ifname
+	if [ -n "$net_type" ]; then    
+		uci set upnpd.config.external_iface="internet"
+		uci commit upnpd               
+		network_get_device ifname "internet"
+	else   
+		uci set upnpd.config.external_iface="wan"
+		uci commit upnpd 		
+		network_get_device ifname ${iface:-wan}
+	fi
+	wanif=$(uci_get upnpd config external_iface)
+	lanif=$(uci_get upnpd config internal_iface)
+	#Changes of WAN or LAN interface
+	[ "$wanif" = "$INTERFACE" -o "$lanif" = "$INTERFACE" -o "mobile" = "$INTERFACE" ] || return
+	echo $ifname > $iface_file
+
+#when wan side is ready, the daemon will check and bring up
+#if the interface name is not changed, we needn't retart the 
+#daemon
+	if [ $wanif = "$INTERFACE" -o "mobile" = "$INTERFACE" ]; then
+		[ $ifname = $old_ifname ] && return
+	fi
+	
+	for iface in $(uci_get upnpd config internal_iface; uci_get upnpd config external_iface) mobile; do
+		[ "$INTERFACE" = "$iface" ] &&  /etc/init.d/miniupnpd restart
+	done
+
+	# UPNP环回功能patch
+	local nat_index=$(iptables -t nat -nL zone_lan_prerouting --line-number | grep MINIUPNPD | awk -F ' ' '{print $1}')
+    local filter_index=$(iptables -t filter -nL zone_lan_forward --line-number | grep MINIUPNPD | awk -F ' ' '{print $1}')
+    local iface="$INTERFACE"
+    local iface_wan="wan"
+    local iface_internet="internet"
+    local wan_addr=
+    local internet_addr=
+    local iface_addr=
+
+
+    if [ "$iface" != "$iface_wan" -a "$iface" != "$iface_internet" ] ; then
+        network_get_ipaddr iface_addr "$iface"
+    fi
+
+    ubus list | grep -q network.interface.wan && network_get_ipaddr wan_addr "$iface_wan"
+    ubus list | grep -q network.interface.internet && network_get_ipaddr internet_addr "$iface_internet"
+
+    # in order to be as one single para without space passed into lua script,
+    # connect internet_ip/wan_ip and so on with ',' for ip_list
+    for ip in $iface_addr $internet_addr $wan_addr; do
+        if [ -n "$ip" ] ; then
+            if [ -n "$nat_index" ] ; then
+                iptables -t nat -R zone_lan_prerouting ${nat_index} -j MINIUPNPD -d ${ip}
+            else
+                iptables -t nat -I zone_lan_prerouting -j MINIUPNPD -d ${ip}
+            fi
+            if [ -n "$filter_index" ] ; then
+                iptables -t filter -R zone_lan_forward ${filter_index} -j MINIUPNPD -d ${ip}
+            else
+                iptables -t filter -I zone_lan_forward -j MINIUPNPD -d ${ip}
+            fi
+            break
+        fi
+    done
+}

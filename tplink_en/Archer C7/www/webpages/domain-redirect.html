@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<link rel="stylesheet" type="text/css" href="./themes/green/css/domain-redirect.1657876653358.css" />
+	<script type="text/javascript" src="js/libs/jquery.min.1657876653358.js"></script>
+
+</head>
+<body>
+	<div class="domain-redirect" id="domain-redirect">
+		<div class="border-round border-top-left"></div>
+		<div class="border-round border-top-right"></div>
+		<div class="border-round border-bottom-left"></div>
+		<div class="border-round border-bottom-right"></div>
+		<div class="domain-redirect-content">
+			<span class="icon"></span>
+			<div class="domain-redirect-content-wrapper">
+				<div class="domain-redirect-note">
+					<h1>Change of Web Address</h1>
+					<h2 id="user_note">Dear Customer:</h2>
+					<p id="redirect_note">The address you have entered is no longer being used by TP-Link products. To connect to your web management page, please visit <a href="http://tplinkwifi.net">tplinkwifi.net</a>.</p>
+				</div>
+				<div class="button-wrapper">
+					<div class="domain-redirect-btn still">
+						<a id="to_tplogin" href="http://ww2.tplinklogin.net">No, take me to tplinklogin.net</a>
+					</div>
+					<div class="domain-redirect-btn change">
+						<a id="to_tpwifi" href="http://tplinkwifi.net">Continue to tplinkwifi.net</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript" src="js/su/locale.js?t=1657876653358"></script>
+	<script type="text/javascript">
+	//<![CDATA[
+		try{
+			$.su.locale.URL_LAN_CHECK =  $.su.url("/locale?form=lang");//"./data/lan.json";
+			$.su.locale.get();
+		}catch(error){
+			location.href = "./error.1657876653358.html";
+		};
+	//]]>
+	</script>
+	<script type="text/javascript">
+		$("#user_note").html($.su.CHAR.TPLOGIN_REDIRECT.USER_NOTE);
+		$("#redirect_note").html($.su.CHAR.TPLOGIN_REDIRECT.REDIRETC_NOTE);
+		//某些国家以下字符串太长会导致UI问题，暂不引用翻译。
+		//$("#to_tplogin").html($.su.CHAR.TPLOGIN_REDIRECT.TO_TPLOGIN);
+		//$("#to_tpwifi").html($.su.CHAR.TPLOGIN_REDIRECT.TO_TPWIFI);
+		var isPhone = false;
+		var platformIdentify = function(){
+			var platforms = [{
+				property: 'userAgent',
+				regex: /iPhone/i,
+				identity: 'iPhone'
+			},{
+				property: 'userAgent',
+				regex: /Android/i,
+				identity: 'Android'
+			},{
+				property: 'userAgent',
+				regex: /Windows Phone/i,
+				identity: 'Windows'
+			}];
+
+			var ln = platforms.length,
+			i, platform;
+
+			for (i = 0; i < ln; i++) {
+				platform = platforms[i];
+				if(platform.regex.test(navigator[platform.property])){
+					isPhone = true;
+				}
+			}
+		}
+		platformIdentify();
+
+		var verticalCenter = function(){
+			var message = document.getElementById("domain-redirect");
+
+			var winWidth = window.innerWidth || document.documentElement.clientWidth;
+			var winHeight = window.innerHeight || document.documentElement.clientHeight;
+			var t1 = winHeight - 455;
+			var t2 = winWidth - 953;
+			var margin = 20;
+			if(t1 > 40){
+				margin = t1/2;
+				message.style.marginTop = margin + "px";
+			}
+			else{
+				message.style.marginTop = "20px";
+			}
+			
+
+			if(t2 < 40){
+				message.style.marginLeft = "20px";
+			}
+			else{
+				message.style.marginLeft = "auto";
+				message.style.marginRight = "auto";
+			}
+		}
+
+		var fontSizeAdjust = function(){
+			var devicePixelRatio = Math.floor(window.devicePixelRatio);
+			var scale = 1 / devicePixelRatio;
+
+			var viewport = "initial-scale=" + scale +", maximum-scale=" + scale + ", user-scalable=no";
+
+			var meta = document.getElementsByTagName('meta')[1];
+			var html = document.getElementsByTagName('html')[0];
+			meta.setAttribute("content", viewport);
+
+			var setRootFontSize = function(){
+				var winWidth = window.innerWidth;
+
+				if(winWidth / devicePixelRatio > 540){
+					winWidth = 540 * devicePixelRatio;
+				}
+
+				var v = devicePixelRatio >= 3 ? 24 : 20;
+				var rootFontSize = winWidth / v;
+				html.style.fontSize = rootFontSize + "px";
+			}
+
+			setRootFontSize();
+		}
+
+		if(isPhone){
+			var meta1 = document.createElement('meta');
+			meta1.httpEquiv = "X-UA-Compatible";
+			meta1.content = "IE=edge,chrome=1";
+			var meta2 = document.createElement('meta');
+			meta2.name = "viewport";
+			meta2.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0";
+
+			document.getElementsByTagName('head')[0].appendChild(meta1);
+			document.getElementsByTagName('head')[0].appendChild(meta2);
+
+			document.getElementById('domain-redirect').setAttribute("class", "domain-redirect phone");
+			document.getElementsByTagName('body')[0].style.height = "100%";
+
+			window.onload = fontSizeAdjust;
+			window.onresize = fontSizeAdjust;
+		}
+		else {
+			document.getElementById('domain-redirect').setAttribute("class", "domain-redirect pc");
+			window.onload = verticalCenter;
+			window.onresize = verticalCenter;
+		}
+		var URL = "/cgi-bin/luci/;stok=/domain_redirect?form=get";
+		$.post(URL,{opeartion:"read"},function(res){
+			$(".still a").attr("href",location.protocol+"//" + res.data.url)
+		})
+	</script>
+</body>
+</html>

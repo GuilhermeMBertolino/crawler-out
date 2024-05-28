@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="wisp">
+   <object viewtype="form" name="Device.X_INTEL_COM_WISP.EndPoint.2">
+     <object name="Device.X_INTEL_COM_WISP.EndPoint.2">
+          <parameter name="Enable"  type="toggle"  webname="WISP Feature Status" access="readonly"></parameter>
+     </object>
+     <object  name="Device.X_INTEL_COM_WISP.Profile.2" title="WiFi Backhaul Settings">
+     <row>
+	     <col>
+		 <parameter name="SSID"  type="string"  webname="Wireless Network Name" required="false"></parameter>
+		 </col>
+		 <col>
+		 <parameter name="Scan" action="post" routeurl="openWispScanResultsModal('wisp_scan_5')" id="Scan" type="eventbutton" webname="Scan" />
+		 </col>
+	   </row>
+	</object> 
+	<object name="Device.WiFi.EndPoint.2">
+		<parameter name="X_LANTIQ_COM_Vendor_ConnectionStatus"  interval="5000" polling="true" access="readonly" webname="SVAP Status" type="string" required="false"></parameter> 
+	</object>
+	<object name="Device.X_INTEL_COM_WISP.Profile.2.Security">
+		<parameter  name="ModeEnabled" type="dropdown" validvalues="WPA-Personal,WPA2-Personal,WPA-WPA2-Personal,WPA2-Enterprise,WEP-64,WEP-128,None" webname="Authentication Method" required="false"></parameter>
+		<parameter  name="WEPKey" type="string" webname="WEP Key" dependsonparamvalue="'WEP-64'" minlen="10" maxlen="10" dependsonobject="Device.X_INTEL_COM_WISP.Profile.2.Security" dependsonparam="ModeEnabled"></parameter>
+		<parameter  name="WEPKey" type="string" webname="WEP Key" dependsonparamvalue="'WEP-128'" minlen="26" maxlen="26" dependsonobject="Device.X_INTEL_COM_WISP.Profile.2.Security" dependsonparam="ModeEnabled"></parameter>
+		<parameter  name="KeyPassphrase" type="password" webname="Pass phrase" dependsonparamvalue="'WPA-Personal', 'WPA2-Personal' ,'WPA-WPA2-Personal'"
+		dependsonobject="Device.X_INTEL_COM_WISP.Profile.2.Security" dependsonparam="ModeEnabled"></parameter>
+     </object>
+    <parameter name="Modify" action="post" dependsonobject="Device.X_INTEL_COM_WISP.EndPoint.2" dependsonparamvalue="false" dependsonparam="Enable" routeurl="Apply($event)" type="connectbutton" webname="Connect" ></parameter>
+    </object>
+</view>

@@ -1,0 +1,164 @@
+﻿<script language="javascript" type="text/javascript">
+var showNum=10;
+
+var authMode = new Array(
+	s_str.opensys, 		/* Ndis802_11AuthModeOpen = 0 */
+	s_str.sharekey, 	/* Ndis802_11AuthModeShared = 1 */
+	s_str.auto, 		/* Ndis802_11AuthModeAutoSwitch = 2 */
+	"WPA", 				/* Ndis802_11AuthModeWPA = 3 */
+	"WPA-PSK", 			/* Ndis802_11AuthModeWPAPSK = 4 */
+	"WPA-None", 		/* Ndis802_11AuthModeWPANone = 5 */
+	"WPA2",				/* Ndis802_11AuthModeWPA2 = 6 */
+	"WPA2-PSK", 		/* Ndis802_11AuthModeWPA2PSK = 7 */
+	"WPA/WPA2", 		/* Ndis802_11AuthModeWPA1WPA2 = 8 */
+	"WPA/WPA2-PSK" 		/* Ndis802_11AuthModeWPA1PSKWPA2PSK = 9 */
+);
+
+var wepStatus = new Array (
+	"WEP", 							/* Ndis802_11WEPEnabled = 0,
+	Ndis802_11Encryption1Enabled = Ndis802_11WEPEnabled, */
+	"EncryptionDisabled", 			/* Ndis802_11WEPDisabled = 1,
+	Ndis802_11EncryptionDisabled = Ndis802_11WEPDisabled, */
+	"KeyAbsent", 		  			/* Ndis802_11WEPKeyAbsent = 2,
+	Ndis802_11Encryption1KeyAbsent = Ndis802_11WEPKeyAbsent, */
+	"EncryptionNotSupported", 		/* Ndis802_11WEPNotSupported = 3,
+	Ndis802_11EncryptionNotSupported = Ndis802_11WEPNotSupported, */
+	"TKIP", 						/* Ndis802_11TKIPEnable = 4,
+	Ndis802_11Encryption2Enabled = Ndis802_11TKIPEnable, */
+	"TKIP KeyAbsent", 				/* Ndis802_11Encryption2KeyAbsent = 5, */
+	"AES", 							/* Ndis802_11AESEnable = 6,
+	Ndis802_11Encryption3Enabled = Ndis802_11AESEnable, */
+	"AES KeyAbsent", 				/* Ndis802_11Encryption3KeyAbsent = 7, */
+	"TKIP or AES mix", 				/* Ndis802_11TKIPAESMix = 8, 
+	Ndis802_11Encryption4Enabled = Ndis802_11TKIPAESMix,	/* TKIP or AES mix */
+	"TKIP or AES mix KeyAbsent", 	/* Ndis802_11Encryption4KeyAbsent = 9, */
+	"GroupWEP40", 					/* Ndis802_11GroupWEP40Enabled = 10, */
+	"GroupWEP104" 					/* Ndis802_11GroupWEP104Enabled = 11,*/
+);
+
+function removeAll()
+{
+	var tlb=$.id("apTbl");
+	while(tlb.rows.length>1)
+		tlb.deleteRow(-1);
+}
+
+function connect(apObj)
+{
+	var param = new Object();
+	
+	param.ssid=$.mainParam.ssid;
+	param.standard=$.mainParam.standard;
+	param.channel=$.mainParam.channel;
+	param.autoChannel=$.mainParam.autoChannel;
+	param.bandWidth=$.mainParam.bandWidth;
+	if(!INCLUDE_LAN_WLAN_HWSWITCH)
+	{
+		param.apEn=$.mainParam.apEn;
+	}
+	param.SSIDAdvertisementEnabled=$.mainParam.SSIDAdvertisementEnabled;
+	param.wdsExist=0;
+	if(apObj!=null)
+	{
+		param.wdsExist=1;
+		param.SSID=apObj.SSID;
+		param.BSSID=apObj.BSSID;
+		param.channel=apObj.channel;
+		param.authMode = apObj.authMode;
+		param.wepStatus = apObj.wepStatus;
+	}
+	$.addLoading($.id("backBtn"),500,function(){$.loadMain('wlBasic.htm',param);});
+}
+
+function getTbl(apTable, page)
+{
+	var tbl = $.id("apTbl");
+	removeAll();
+	$.each(apList,function(arg,index){
+		row = tbl.insertRow(-1);
+		cell = row.insertCell(-1);
+		cell.innerHTML=index+1;
+		cell.width="26px";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.BSSID;
+		cell.width="117px";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.SSID.replace(/\&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "&nbsp;");
+		cell.width="240px";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.RSSI;
+		cell.width="100px";
+		cell=row.insertCell(-1);
+		cell.innerHTML=this.channel;
+		cell.width="65px";
+		cell=row.insertCell(-1);
+		if(0==this.securityEnable)
+			cell.innerHTML="<span class='T T_none'>"+ m_str.none + "</span>";
+		else
+		{
+			var encryptType = authMode[this.authMode] + "/" + wepStatus[this.wepStatus];
+			cell.innerHTML="<span>"+ encryptType + "</span>";
+			/*cell.innerHTML="<span class='T T_encryption'>"+ s_str.encryption + "</span>";*/
+		}
+			
+		cell.width="80px";
+		cell=row.insertCell(-1);
+		cell.innerHTML="<span class=a onclick=connect(apList["+index+"]);><span class='T T_conn'>"+m_str.conn+"</span><\/span>";
+		cell.width="65px";
+	});
+	$.resize(tbl,showNum);
+}
+function refresh(obj)
+{
+	$.addLoading(obj);
+	$.act(ACT_OP, ACT_OP_WLAN_SCAN, wlanObj.__stack);
+	$.exe(function(ret){
+		if (ret) return;
+		apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlanObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"]);
+		$.exe(function(ret){
+			if (ret) return;
+			setTip(apList.length);
+			getTbl(apList);
+			$.removeLoading();
+		});
+	});
+}
+function setTip(apNum)
+{
+	$.h($.id("tip"),apNum);
+}
+</script>
+<p class="et T" id="et">AP List</p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="line">
+<span class="T" id="t_info">The scanned APs are as follows</span>
+</p>
+<p align="left"><span class="T" id="t_aps">AP numbers:</span> <i class="bd" id="tip"></i><input type="button" class="button L ml T T_refresh" id="refresh" value="Refresh" onclick="refresh(this)" /></p>
+<div class="thead"><table class="XL bdr tc" id="apTbl"><tr><th width="26px">ID</th><th width="117px">BSSID</th><th width="240px">SSID</th><th width="100px" class="T" id="t_signal">Signal strength</th><th width="65px" class="T T_channel">Channel</th><th width="80px" class="T T_encryption">Encryption</th><th width="65px" class="T T_conn">Connect</th></tr></table></div>
+</div>
+<p class="bl"></p>
+<p class="tail"><input type="button" id="backBtn" class="button L T T_back" onclick="connect(null);" value="Back"/></p>
+</div>
+<script language="javascript" type="text/javascript">
+var apList, wlanList, wlanObj;
+wlanList=$.act(ACT_GL,LAN_WLAN,null,null,["name","X_TP_Band"]);
+if (!$.exe())
+{
+	$.each(wlanList,function()
+	{
+		if("2.4GHz"==this.X_TP_Band)
+		{
+			wlanObj = this;
+		}
+	});
+}
+apList=$.act(ACT_GS,LAN_WLAN_BSSDESC_ENTRY,null,wlanObj.__stack,["SSID","BSSID","SecurityEnable","Channel","RSSI","authMode","wepStatus"]);
+if (!$.exe())
+{
+    setTip(apList.length);
+    getTbl(apList, 1);
+}
+</script>

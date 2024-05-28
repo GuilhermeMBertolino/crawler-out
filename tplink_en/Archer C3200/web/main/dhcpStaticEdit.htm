@@ -1,0 +1,135 @@
+<script type="text/javascript">
+function initStaticEdit() {
+
+    if (isEdit) // The operation is to EDIT current entry.
+    {
+        /*$("#groupView").removeClass('nd');
+        $("#groupSel").addClass('nd');
+
+        $.each(brLanList, function() {
+            if ((staticIpList[staticEditIndex].__stack).split(',')[0] == (this.__stack).split(',')[0]) {
+                $("#brName").html(this.bridgeName);
+            }
+        });*/
+
+        $("#staticMac").val(staticIpList[staticEditIndex].chaddr);
+        $("#staticIP").val(staticIpList[staticEditIndex].yiaddr);
+		$("#description").val(staticIpList[staticEditIndex].description);
+        $("#staticEn").prop('checked', staticIpList[staticEditIndex].enable == 1 ? true : false);
+    } else // The operation is to ADD one entry.
+    {
+        /*$("#groupView").addClass('nd');
+        $("#groupSel").removeClass('nd');
+
+        $.each(brLanList, function() {
+            var option = "<option value=" + this.__stack + ">" + this.bridgeName + "</option>";
+            $("#staticGroup").append(option);
+        });*/
+    }
+}
+
+
+function clickOK() {
+    var element;
+    var staticSettings = {};
+    /*var groupSettings = {};
+    var groupParentStack;*/
+
+    staticSettings.chaddr = $("#staticMac").val().toUpperCase();
+    staticSettings.yiaddr = $("#staticIP").val();
+    staticSettings.description = $("#description").val();
+    staticSettings.enable = $("#staticEn").prop('data-checked') ? 1 : 0;
+
+
+    if ($.mac(staticSettings.chaddr)) {
+        element = $("#staticMac");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    if ($.ifip(staticSettings.yiaddr)) {
+        element = $("#staticIP");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    
+	if (staticSettings.description.length > 31) {
+		$.alert(ERR_DHCP_ADDRES_LENGTH_INVALID);
+        element = $("#description");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+
+    if (isEdit) {
+        $.act(ACT_SET, LAN_DHCP_STATIC_ADDR, staticIpList[staticEditIndex].__stack, null, staticSettings);
+    } else {
+        /*groupParentStack = $("#staticGroup").data("value");
+        $.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, groupParentStack, staticSettings);*/
+		$.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, brLanList[0].__stack, staticSettings);
+    }
+
+    if (!$.exe()) {
+        $.removeLoading();
+        $.reload();
+    }
+}
+
+
+function clickCancel() {
+    $.reload();
+}
+</script>
+
+<div class="content-container" id="staticContent">
+    <form class="pure-form pure-form-aligned" id="staticForm">
+        <div>
+            <b class="T_macaddr">Mac Address:</b>
+            <input type="text" id="staticMac" required />
+            <span></span>
+        </div>
+
+        <div>
+            <b id="t_resvip">Reserved IP Address:</b>
+            <input type="text" id="staticIP" required />
+            <span></span>
+        </div>
+
+		<div>
+            <b id="t_description">Description:</b>
+            <input type="text" id="description">
+            <span></span>
+        </div>
+        <div>
+            <b></b>
+            <input type="checkbox" id="staticEn" checked="true" />
+            <label class="T_c_enable">Enable this entry</label>
+        </div>
+
+        <div class="inline-btn-right">
+            <button type="submit" class="green inline T_cancel" id="editCancel">Cancel</button>
+            <button type="submit" class="green inline T_ok" id="editOK">OK</button>
+        </div>
+        <p class="br"></p>
+    </form>
+</div>
+
+<script type="text/javascript">
+$("#editOK").on('click', function(e) {
+    $.addLoading($(this));
+    clickOK();
+});
+
+$("#editCancel").on('click', function(e) {
+    clickCancel();
+});
+
+$.tpInit(initStaticEdit);
+</script>

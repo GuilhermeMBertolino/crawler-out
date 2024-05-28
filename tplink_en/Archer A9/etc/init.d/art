@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (c) 2013 Qualcomm Atheros, Inc..
+#
+# All Rights Reserved.
+# Qualcomm Atheros Confidential and Proprietary.
+#
+
+# We don't want to start ART2 automatically at boot time as we want the
+# default to be a working user configuration.
+# At the end of the boot process, the user can start art using:
+# /etc/init.d/art start
+
+MAX_TRY_COUNT=150
+
+start() {
+	# ART2 conflicts with the WiFi driver so we don't start anything here
+	# We'll just prepare the field in case we want to start nart.out
+
+	local flag=0
+	for i in `seq $MAX_TRY_COUNT`;
+	do
+		cd /tmp
+		echo "download art tools from server..." > /dev/console
+		tftp -gr autoCal_2g.sh 192.168.0.100 >/dev/console
+		[ -s autoCal_2g.sh ] && {
+			flag=1
+			echo "file autoCal_2g exists!" >/dev/console
+			break
+		}
+	done
+	[ $flag -eq 1 ] && {
+		chmod a+x autoCal_2g.sh
+		./autoCal_2g.sh
+	}
+}
+
+stop() {
+    echo "art failed..." > /dev/console 
+}

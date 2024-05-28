@@ -1,0 +1,1243 @@
+﻿<div class="titleBar">
+    <a id="back">
+        <span class="icon-back sprite c-arrow-blue-left"></span>
+    </a>
+    <h1></h1>
+    <a id="next" data-status="next"></a>
+</div>
+
+<div id="qs-processFlow" class=""></div>
+<div class="stepDiv item-list nd">
+    <div class="section-container">
+        <div class="section-box nd">
+            <label class="section-labelTitle" for="region">
+                <script type="text/html" class="trans">
+                <%= $.tpLang.s_str.region %>
+                </script>
+            </label>
+            <select id="region" class="fu">
+                <option value="none">
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.time_nstr.t_plssel %>
+                    </script>
+                </option>
+            </select>
+        </div>
+
+        <div class="section-box">
+            <label class="section-labelTitle" for="timezone">
+                <script type="text/html" class="trans">
+                <%= $.tpLang.s_str.timezone %>
+                </script>
+            </label>
+            <select id="timezone">
+            </select>
+        </div>
+
+    </div>
+</div>
+<script type="text/javascript">
+step0 = {};
+(function() {
+    //        page init
+    var options_timezone = [{
+        'value': '-12:00',
+        'text': $.tpLang.s_str['city1']
+    }, {
+        'value': '-11:00',
+        'text': $.tpLang.s_str['city2']
+    }, {
+        'value': '-10:00',
+        'text': $.tpLang.s_str['city3']
+    }, {
+        'value': '-09:00',
+        'text': $.tpLang.s_str['city4']
+    }, {
+        'value': '-08:00',
+        'text': $.tpLang.s_str['city5']
+    }, {
+        'value': '-07:00',
+        'text': $.tpLang.s_str['city6']
+    }, {
+        'value': '-06:00',
+        'text': $.tpLang.s_str['city7']
+    }, {
+        'value': '-05:00',
+        'text': $.tpLang.s_str['city8']
+    }, {
+        'value': '-04:30',
+        'text': $.tpLang.s_str['city9']
+    }, {
+        'value': '-04:00',
+        'text': $.tpLang.s_str['city10']
+    }, {
+        'value': '-03:30',
+        'text': $.tpLang.s_str['city11']
+    }, {
+        'value': '-03:00',
+        'text': $.tpLang.s_str['city12']
+    }, {
+        'value': '-02:00',
+        'text': $.tpLang.s_str['city13']
+    }, {
+        'value': '-01:00',
+        'text': $.tpLang.s_str['city14']
+    }, {
+        'value': '+00:00',
+        'text': $.tpLang.s_str['city15']
+    }, {
+        'value': '+01:00',
+        'text': $.tpLang.s_str['city16']
+    }, {
+        'value': '+02:00',
+        'text': $.tpLang.s_str['city17']
+    }, {
+        'value': '+03:00',
+        'text': $.tpLang.s_str['city18']
+    }, {
+        'value': '+03:30',
+        'text': $.tpLang.s_str['city19']
+    }, {
+        'value': '+04:00',
+        'text': $.tpLang.s_str['city20']
+    }, {
+        'value': '+04:30',
+        'text': $.tpLang.s_str['city21']
+    }, {
+        'value': '+05:00',
+        'text': $.tpLang.s_str['city22']
+    }, {
+        'value': '+05:30',
+        'text': $.tpLang.s_str['city23']
+    }, {
+        'value': '+05:45',
+        'text': $.tpLang.s_str['city24']
+    }, {
+        'value': '+06:00',
+        'text': $.tpLang.s_str['city25']
+    }, {
+        'value': '+06:30',
+        'text': $.tpLang.s_str['city26']
+    }, {
+        'value': '+07:00',
+        'text': $.tpLang.s_str['city27']
+    }, {
+        'value': '+08:00',
+        'text': $.tpLang.s_str['city28']
+    }, {
+        'value': '+09:00',
+        'text': $.tpLang.s_str['city29']
+    }, {
+        'value': '+09:30',
+        'text': $.tpLang.s_str['city30']
+    }, {
+        'value': '+10:00',
+        'text': $.tpLang.s_str['city31']
+    }, {
+        'value': '+11:00',
+        'text': $.tpLang.s_str['city32']
+    }, {
+        'value': '+12:00',
+        'text': $.tpLang.s_str['city33']
+    }, {
+        'value': '+13:00',
+        'text': $.tpLang.s_str['city34']
+    }];
+    $('#timezone').selectMobile().selectMobile('appendOptions', options_timezone)
+	
+	/* delete for AC3150 by jy */
+	/*
+    $("#region").selectMobile().on('change', function() {
+		
+        $.qd.country = $(this).selectMobile("text");
+    })*/
+    //   append options to region and choose the selected region
+
+    function initRegionList() {
+        var regions = $("#region");
+        // if ($.local) {
+        //     basicList[0] = [{
+        //         regulatoryDomain: "GB ",
+        //         __stack: "1,1,0,0,0,0"
+        //     }];
+        // }
+
+        for (var i = 0; i < regionCodeInfo.length; i++) {
+            if ($.qd.dmRegion == regionCodeInfo[i][1])
+                regions.append("<option value='" + i + "' selected>" + regionCodeInfo[i][4] + "</option>");
+            else
+                regions.append("<option value='" + i + "'>" + regionCodeInfo[i][4] + "</option>");
+        }
+        regions.selectMobile('refresh');
+    }
+    //    choose the selected timezone
+
+    function initTimezone() {
+        var timeSelect = $("#timezone").selectMobile('value', $.qd.timezone);
+    }
+
+    function saveWlanRegion() {
+		/* delete for AC3150 by jy */
+		/* 
+        for (var i = 0; i < regionCodeInfo.length; i++) {
+            if ($.qd.country == regionCodeInfo[i][4])
+                break;
+            }
+        if (i >= regionCodeInfo.length)
+            return;
+
+        $.act(ACT_SET, LOCAL, null, null, ["Country=" + regionCodeInfo[i][1].substring(0, 2)]);
+		*/
+        // var wlanObj = {};
+        // for (var i = 0; i < regionCodeInfo.length; i++) {
+        //     if ($("#region").selectMobile('text') == regionCodeInfo[i][4]) {
+        //         break;
+        //     }
+        // }
+        // if (i >= regionCodeInfo.length) {
+        //     return;
+        // }
+        // wlanObj.regulatoryDomain = regionCodeInfo[i][1];
+        // wlanObj.autoChannelEnable = 1;
+
+        // $.each($.qd.wlanList, function() {
+        //     if (this.regulatoryDomain == regionCodeInfo[i][1]) {
+        //         return true;
+        //     }
+        //     if (("JP " == regionCodeInfo[i][1] ||
+        //             "CR " == regionCodeInfo[i][1] ||
+        //             "EC " == regionCodeInfo[i][1] ||
+        //             "RU " == regionCodeInfo[i][1] ||
+        //             "UA " == regionCodeInfo[i][1]) &&
+        //         "5GHz" == this.X_TP_Band) {
+        //         wlanObj.X_TP_Bandwidth = "20M";
+        //     }
+
+        //     $.act(ACT_SET, LAN_WLAN, this.__stack, null, wlanObj);
+        //     //            $.exe();
+        // });
+
+    }
+
+    function saveTimeZone() {
+        var time = {};
+        time.localTimeZone = $('#timezone').selectMobile('value');
+        $.act(ACT_SET, TIME, null, null, time);
+    }
+
+    step0.init = function() {
+        initRegionList();
+        initTimezone();
+    }
+    step0.save = function() {
+        saveWlanRegion();
+        saveTimeZone();
+    }
+    step0.styleInit = function() {
+        $('#back').titleButton('hide');
+        $('#next').titleButton('status', 'next', $.tpLang.m_str.next);
+        $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.c_regionTZ);
+    }
+})();
+</script>
+<div id="step1AndStep2Div"></div>
+
+</div>
+<div class="stepDiv nd pb26">
+    <div id="wireless_2g" class="item-list">
+        <div class="section-container">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="wlEn_2g" />
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <input maxlength="32" id="ssid_2g" type="text" />
+            </div>
+            <div class="section-box">
+                <input type="text" maxlength="64" id="wpa2PersonalPwd_2g">
+            </div>
+        </div>
+    </div>
+
+    <div id="wireless_5g" class="item-list mt15">
+        <div class="section-container">
+            <div class="section-box">
+                <div></div>
+                <input type="checkbox" id="wlEn_5g" />
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <input maxlength="32" id="ssid_5g" type="text" />
+            </div>
+            <div class="section-box">
+                <input type="text" maxlength="64" id="wpa2PersonalPwd_5g">
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+step3 = {};
+(function() {
+    $('#wlEn_2g').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.s_str.ghz24
+    });
+
+    $('#ssid_2g, #ssid_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.wlname,
+        'warnings': [{
+            func: function() {
+                var s = $(this);
+                var ssidLen = $.realLen(s.prop('value'));
+
+                if (INCLUDE_LAN_WLAN_MSSID && INCLUDE_LAN_WLAN_GUESTNETWORK) {
+                    if (s.prop('value') == guestVap_2g.SSID || s.prop('value') == guestVap_5g.SSID) {
+                        return e_str[CMM_WLAN_SSID_CONFLICTE_WITH_GUESTNET];
+                    }
+
+                }
+                if (ssidLen <= 0) {
+                    return e_str[ERR_WLAN_SSID_IS_EMPTY];
+
+                } else if (ssidLen > 32) {
+                    return e_str[ERR_WLAN_SSID_LEN_OUTRANGE];
+                }
+                return true;
+            }
+        }]
+    });
+
+    $('#wpa2PersonalPwd_2g, #wpa2PersonalPwd_5g').inputBoxMobile({
+        'title': $.tpLang.s_str.wlpwd,
+        'warnings': [{
+            func: function() {
+                var pwd = $(this).val();
+
+                if (pwd.length == 0) {
+                    //                    return e_str[ERR_WLAN_WPA_PSK_EMPTY];
+                    return true;
+                } else if (pwd.length < 8) {
+                    return e_str[ERR_WLAN_WPA_PSK_LENGTH_INVALID];
+                } else if (pwd.length >= 64) {
+                    if (!isHex(pwd, 0)) {
+                        return e_str[ERR_WLAN_WPA_PSK_HEX_INVALID];
+                    }
+                    $(this).prop('value', $(this).prop('value').substr(0, 64));
+                } else {
+                    if ($.asc(pwd, true)) {
+                        return e_str[ERR_WLAN_WPA_PSK_ASCII_INVALID];
+                    }
+                }
+                return true;
+            }
+        }]
+    });
+    //for 5g
+    $('#wlEn_5g').checkboxMobile({
+        'hasTitle': true,
+        'title': $.tpLang.s_str.ghz5
+    });
+    //    logical
+
+    var wlanObj_2g,
+        wlanObj_5g,
+        mssidObj_2g,
+        mssidObj_5g,
+        vapList_2g,
+        vapList_5g,
+        guestnetObj_2g,
+        guestnetObj_5g,
+        guestVap_2g,
+        guestVap_5g,
+        qssEnable_2g,
+        qssEnable_5g;
+
+    function isHex(str, arg) {
+        str = str.toLowerCase();
+        for (var i = 0; i < str.length; i++) {
+            if ((str.charAt(i) >= '0' && str.charAt(i) <= '9') || (str.charAt(i) >= 'a' && str.charAt(i) <= 'f'))
+                continue;
+            else {
+                if (arg != 0)
+                    $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+                return false;
+            }
+        }
+        if (parseInt(str, 16) == 0) {
+            if (arg != 0)
+                $.alert(ERR_WLAN_WEP_KEY_HEX_INVALID);
+            return false;
+        }
+        return true;
+    }
+
+    function init() {
+        var basicList = $.act(ACT_GL, LAN_WLAN, null, null, [
+            "name",
+            "Standard",
+            "SSID",
+            "X_TP_Band",
+            "Enable",
+            "RegulatoryDomain",
+            "SSIDAdvertisementEnabled",
+            "BeaconType",
+            "BasicEncryptionModes",
+            "WPAEncryptionModes",
+            "IEEE11iEncryptionModes",
+            "beaconType",
+            "BasicEncryptionModes",
+            "BasicAuthenticationMode",
+            "WPAEncryptionModes",
+            "WPAAuthenticationMode",
+            "IEEE11iEncryptionModes",
+            "IEEE11iAuthenticationMode",
+            "X_TP_PreSharedKey"
+        ]);
+        if (!$.exe()) {
+            $.each(basicList, function() {
+                if ("2.4GHz" == this.X_TP_Band) {
+                    wlanObj_2g = this;
+                } else if ( /*INCLUDE_LAN_WLAN_DUALBAND &&*/ "5GHz" == this.X_TP_Band) {
+                    wlanObj_5g = this;
+                }
+            });
+
+            wpsObj_2g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_2g.__stack, null, ["Enable"]);
+            wpsObj_5g = $.act(ACT_GET, LAN_WLAN_WPS, wlanObj_5g.__stack, null, ["Enable"]);
+            mssidObj_2g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_2g.__stack, null, ["MultiSSIDEnable"]);
+            mssidObj_5g = $.act(ACT_GET, LAN_WLAN_MULTISSID, wlanObj_5g.__stack, null, ["MultiSSIDEnable"]);
+            vapList_2g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_2g.__stack, ["Name"]);
+            vapList_5g = $.act(ACT_GS, LAN_WLAN_MSSIDENTRY, null, wlanObj_5g.__stack, ["Name"]);
+            guestnetObj_2g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_2g.__stack, null, ["Enable", "Name"]);
+            guestnetObj_5g = $.act(ACT_GET, LAN_WLAN_GUESTNET, wlanObj_5g.__stack, null, ["Enable", "Name"]);
+            if (!$.exe()) {
+                qssEnable_2g = wpsObj_2g.enable;
+                qssEnable_5g = wpsObj_5g.enable;
+                $.each(vapList_2g, function(arg, index) {
+                    if (this.name == guestnetObj_2g.name)
+                        guestVap_2g = this;
+                });
+                $.each(vapList_5g, function(arg, index) {
+                    if (this.name == guestnetObj_5g.name)
+                        guestVap_5g = this;
+                });
+            }
+        }
+
+        initParamShow(wlanObj_2g, '_2g');
+        initParamShow(wlanObj_5g, '_5g');
+        initWpa2Personal(wlanObj_2g, '_2g');
+        initWpa2Personal(wlanObj_5g, '_5g');
+
+    }
+
+    function initParamShow(wlanObj, band) {
+        if (wlanObj.enable == 1) {
+            $('#wlEn' + band).checkboxMobile({
+                'checked': true
+            });
+            $('#wlEn' + band).checkboxMobile({
+                'disabled': false
+            });
+        } else if ((wlanObj.regulatoryDomain == 'BD ' ||
+            wlanObj.regulatoryDomain == 'KZ ' ||
+            wlanObj.regulatoryDomain == 'SY ' ||
+            wlanObj.regulatoryDomain == 'YE ') && band == '_5g') {
+            $('#wlEn' + band).checkboxMobile({
+                'checked': false
+            });
+            $('#wlEn' + band).checkboxMobile({
+                'disabled': true
+            });
+        }
+
+        $('#ssid' + band).inputBoxMobile('option', 'value', wlanObj.SSID);
+
+    }
+
+
+    function initWpa2Personal(wlanObj, band) {
+        $('#wpa2PersonalPwd' + band).inputBoxMobile('option', 'value', wlanObj.X_TP_PreSharedKey);
+    }
+
+    function check(band) {
+        if (!$('#ssid' + band).inputBoxMobile('checkValue')) {
+            return false;
+        }
+        if (!$('#wpa2PersonalPwd' + band).inputBoxMobile('checkValue')) {
+            return false;
+        }
+    }
+    //保存数据的逻辑
+
+    function saveDM(wlanObj, band) {
+        var wlSettings = {};
+        var type;
+
+        wlSettings.enable = $('#wlEn' + band).checkboxMobile('option', 'checked') ? 1 : 0;
+        wlSettings.SSID = $('#ssid' + band).prop('value');
+        var pwd = $('#wpa2PersonalPwd' + band).prop('value');
+        if (pwd.length === 0) {
+            wlSettings.beaconType = 'Basic';
+            wlSettings.basicEncryptionModes = 'None';
+            wlSettings.basicAuthenticationMode = 'None';
+        } else {
+            wlSettings.WPAEncryptionModes = wlSettings.IEEE11iEncryptionModes = 'TKIPandAESEncryption';
+            wlSettings.WPAAuthenticationMode = wlSettings.IEEE11iAuthenticationMode = "PSKAuthentication";
+            wlSettings.X_TP_PreSharedKey = pwd;
+            wlSettings.beaconType = '11i'
+
+        }
+
+        $.act(ACT_SET, LAN_WLAN, wlanObj.__stack, null, wlSettings);
+    }
+
+    //    $('#save').on('click.wlBasic', function(e) {
+    //        if (!$('#wlEn_2g').prop('disabled')) {
+    //            if (check('_2g') == false) {
+    //                return;
+    //            }
+    //            $.addLoading($(this));
+    //            saveDM(wlanObj_2g, '_2g');
+    //        }
+    //        if (!$('#wlEn_5g').prop('disabled')) {
+    //            if (check('_5g') == false) {
+    //                return;
+    //            }
+    //            $.addLoading($(this));
+    //            saveDM(wlanObj_5g, '_5g');
+    //        }
+    //
+    //        $.exe(function() {
+    //            $.removeLoading();
+    //        });
+    //    });
+
+    step3.init = function() {
+        init();
+    }
+    step3.check = function() {
+        if (check('_2g') == false) {
+            return false;
+        }
+        if (check('_5g') == false) {
+            return false;
+        }
+        return true;
+    }
+    step3.save = function() {
+        saveDM(wlanObj_2g, '_2g');
+        saveDM(wlanObj_5g, '_5g');
+    }
+    step3.styleInit = function() {
+        $('#next').titleButton('status', 'next', $.tpLang.m_str.next);
+        $('.titleBar').titleBar('title', $.tpLang.s_str.wireless);
+    }
+})();
+</script>
+<div class="stepDiv nd pb26">
+    <div id="summaryTotal" class="summaryDiv info-list">
+        <div class="section-container">
+            <div class="section-box nd">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.region %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumRegion"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.timezone %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumTZ"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.quicksetup_nstr.c_connType %>
+                    </script>:</span>
+                <span class="text-readonly" id="sumLinkType"></span>
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.ghz24 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumEn2g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.networkMap_nstr.c_ssid %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumSSID2g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumPwd2g"></span>
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.ghz5 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumEn5g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.networkMap_nstr.c_ssid %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumSSID5g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumPwd5g"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="summaryDiv nd" id="summaryWireless">
+        <p class="section-note">
+            <script type="text/html" class="trans">
+            <%= $.tpLang.quicksetup_nstr.c_reconnTips %>
+            </script>
+        </p>
+        <div class="item-list mt15">
+            <div class="section-container">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.ghz24 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumReSSID2g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumRePwd2g"></span>
+            </div>
+        </div>
+        <div class="section-container mtNo">
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.ghz5 %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumReSSID5g"></span>
+            </div>
+            <div class="section-box">
+                <span>
+                    <script type="text/html" class="trans">
+                    <%= $.tpLang.s_str.wlpwd %>
+                    </script>
+                </span>
+                <span class="text-readonly" id="sumRePwd5g"></span>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="summaryDiv info-list nd" id="summaryFail">
+        <div class="section-container">
+            <div class="section-box">
+            <em class="qs-bigMsg">
+                <script type="text/html" class="trans">
+                <%= $.tpLang.quicksetup_nstr.c_failed %>
+                </script>
+            </em>
+            </div>
+            <p class="qs section-tips">
+                <script type="text/html" class="trans">
+                <%= $.tpLang.quicksetup_nstr.c_failTips %>
+                </script>
+            </p>
+            <div class="section-box">
+                <input type="button" id="summaryOk">
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+step4 = {};
+
+(function() {
+    $('#summaryOk').buttonMobile({
+        text: $.tpLang.m_str.ok
+    }).on('click', function() {
+        step4.reconnect();
+    });
+
+    function setSummaryData() {
+        $('#sumRegion').html($('#region').selectMobile('text'));
+        $('#sumTZ').html($('#timezone').selectMobile('value'));
+        if ($.qd.realMode == "DSL") {
+            if ($('#radio_l2_intf_type').selectMobile('value') == "vdsl_radio") {
+                $('#sumLinkType').html($('#vdslConnectionType').selectMobile('text'));
+            } else {
+                $('#sumLinkType').html($('#adslConnectionType').selectMobile('text'));
+            }
+        } else if ($.qd.realMode == "ETH") {
+            $('#sumLinkType').html($('#link_type').selectMobile('text'));
+        }
+        $('#sumEn2g').html($('#wlEn_2g').checkboxMobile('option', 'checked') ? $.tpLang.s_str.on : $.tpLang.s_str.off);
+        $('#sumSSID2g').html($('#ssid_2g').val());
+        $('#sumPwd2g').html($('#wpa2PersonalPwd_2g').val());
+        $('#sumEn5g').html($('#wlEn_5g').checkboxMobile('option', 'checked') ? $.tpLang.s_str.on : $.tpLang.s_str.off);
+        $('#sumSSID5g').html($('#ssid_5g').val());
+        $('#sumPwd5g').html($('#wpa2PersonalPwd_5g').val());
+        $('#sumReSSID2g').html($('#ssid_2g').val());
+        $('#sumRePwd2g').html($('#wpa2PersonalPwd_2g').val());
+        $('#sumReSSID5g').html($('#ssid_5g').val());
+        $('#sumRePwd5g').html($('#wpa2PersonalPwd_5g').val());
+    }
+
+
+    step4.init = function() {
+        setSummaryData();
+    };
+    step4.isReConnect = function(hook) {
+        var isConnected = false;
+        var count = 0;
+        var handle = function() {
+            if (count < 9 && !isConnected) {
+                if (count++ % 3 === 0) {
+                    type = "GET";
+                    url = "/main/status.htm?_=" + (+new Date());
+                    var xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
+                    xhr.open(type, url, true);
+                    xhr.setRequestHeader("Content-Type", "text/plain");
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            isConnected = true;
+                        }
+                    }
+                    xhr.send(null);
+                }
+            } else {
+                //                    $.auto_interval = 1;
+                return false;
+            }
+        };
+
+        var newHook = function() {
+            hook(isConnected)
+        };
+
+        $.auto(handle, 1000, true, null, newHook);
+    };
+
+    step4.reconnect = function() {
+        $.startWaitingMobile();
+        step4.isReConnect(function(isConnected) {
+            $.stopWaitingMobile();
+            if (isConnected) {
+                step4.styleInitReconnectSuccess();
+
+            } else {
+                step4.styleInitFail();
+
+            }
+        });
+    }
+    step4.styleInit = function() {
+        $('#next').titleButton('status', 'unSave', $.tpLang.m_str.save);
+        $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+    }
+    step4.styleInitSaveSuccess = function() {
+        $('#back').titleButton('hide');
+        $('#next').titleButton('status', 'reconnect', $.tpLang.m_str.next).titleButton('show');
+        $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+        $('.summaryDiv').hide();
+        $('#summaryWireless').show();
+    }
+    step4.styleInitReconnectSuccess = function() {
+        $('#next').titleButton('status', 'next', $.tpLang.m_str.next).click();
+    }
+    step4.styleInitFail = function() {
+        $('#back').titleButton('hide');
+        $('#next').titleButton('hide');
+        $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+        $('.summaryDiv').hide();
+        $('#summaryFail').show();
+    }
+
+})();
+</script>
+<div class="stepDiv item-list nd">
+    <div class="section-container">
+        <div class="section-box">
+        <em class="qs-bigMsg">
+            <script type="text/html" class="trans">
+            <%= $.tpLang.quicksetup_nstr.c_congra %>
+            </script>
+        </em>
+        </div>
+        <p class="qs section-tips">
+            <script type="text/html" class="trans">
+            <%= $.tpLang.quicksetup_nstr.c_completeTips %>
+            </script>
+        </p>
+        <div class="section-box">
+            <input type="button" id="testConnect">
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+//    step5
+step5 = {};
+(function() {
+    $('#testConnect').buttonMobile({
+        text: $.tpLang.quicksetup_nstr.c_testInternet
+    }).on('click', function() {
+        $.startWaitingMobile();
+        internetDiagInit(function() {
+            bDiagFinished = false;
+        doInternetDiag();
+    });
+    });
+
+    var bStart, step;
+    var wanConnStack, intfCfgStack, wanType, wanAccessType, currDslType, usb3gLinkCfg;
+    var bDiagFinished;
+    var internetDiagId = $.getAsync();
+
+    function internetDiagInit(callback) {
+        var l3Forward = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+        var ipList = $.act(ACT_GL, WAN_IP_CONN, null, null, ["Enable", "Name", "ConnectionType"]);
+        var pppList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["Enable", "Name"]);
+        var commonIntfList = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+        var dslIntfCfgList = INCLUDE_VDSLWAN ? $.act(ACT_GL, WAN_DSL_INTF_CFG, null, null, ["LinkEncapsulationUsed"]) : {};
+        var connStack = "";
+        var found = false;
+
+        if (INCLUDE_IPV6)
+            var l3ForwardIpv6 = $.act(ACT_GET, L3_IP6_FORWARDING, null, null, ["__ifAliasName"]);
+
+        if (INCLUDE_PPTP)
+            var pptpList = $.act(ACT_GL, WAN_PPTP_CONN, null, null, ["Enable", "Name"]);
+        if (INCLUDE_L2TP)
+            var l2tpList = $.act(ACT_GL, WAN_L2TP_CONN, null, null, ["Enable", "Name"]);
+
+        if (INCLUDE_WAN_MODE)
+            var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["Mode"]);
+
+        if (INCLUDE_USB_3G_DONGLE)
+            var usb3gLinkCfgList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["Enable", "CardName"]);
+
+        bStart = false;
+        step = 0;
+        $.exe(function(err) {
+            if (err) {
+                $.stopWaitingMobile();
+                return;
+            }
+        $.each(ipList, function() {
+            if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                wanConnStack = this.__stack;
+                intfCfgStack = $.stkPop(wanConnStack, 2);
+                wanType = "ip";
+                found = true;
+                return false;
+            } else if (this.enable == 1 && this.connectionType == "IP_Bridged") {
+                wanType = "ip";
+                wanConnStack = this.__stack;
+                intfCfgStack = $.stkPop(wanConnStack, 2);
+            }
+        });
+        if (found == false) {
+            $.each(pppList, function() {
+                if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                    wanType = "ppp";
+                    found = true;
+                    return false;
+                }
+            });
+            }
+        if (INCLUDE_PPTP && found == false) {
+            $.each(pptpList, function() {
+                if (this.enable && this.name == l3Forward.__ifAliasName) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 1);
+                    wanType = "pptp";
+                    found = true;
+                    return false;
+                }
+            });
+        }
+        if (INCLUDE_L2TP && found == false) {
+            $.each(l2tpList, function() {
+                if (this.enable && this.name == l3Forward.__ifAliasName) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 1);
+                    wanType = "l2tp";
+                    found = true;
+                    return false;
+                }
+            });
+        }
+
+        if (found == false) {
+            $.each(ipList, function() {
+                if (this.enable == 1 && (INCLUDE_IPV6 && this.name == l3ForwardIpv6.__ifAliasName)) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                    wanType = "ip";
+                    found = true;
+                    return false;
+                } else if (this.enable == 1 && this.connectionType == "IP_Bridged") {
+                    wanType = "ip";
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                }
+            });
+            }
+
+        if (found == false) {
+            $.each(pppList, function() {
+                if (this.enable == 1 && (INCLUDE_IPV6 && this.name == l3ForwardIpv6.__ifAliasName)) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                    wanType = "ppp";
+                    found = true;
+                    return false;
+                }
+            });
+            }
+
+        if (found == false) {
+            if (INCLUDE_WAN_MODE) {
+                if (sysMode.mode == "DSL")
+                    wanAccessType = "DSL";
+                else if (sysMode.mode == "ETH")
+                    wanAccessType = "Ethernet";
+                else if (INCLUDE_USB_3G_DONGLE && sysMode.mode == "USB_3G")
+                    wanAccessType = "USB_3G";
+            }
+
+            $.each(commonIntfList, function() {
+                if (this.WANAccessType == wanAccessType) {
+                    intfCfgStack = this.__stack;
+                    return false;
+                }
+            });
+        } else {
+            $.each(commonIntfList, function() {
+                if (this.__stack == intfCfgStack) {
+                    wanAccessType = this.WANAccessType;
+                    intfCfgStack = this.__stack;
+                    return false;
+                }
+            });
+        }
+
+        if (wanAccessType == "DSL") {
+            if (INCLUDE_VDSLWAN) {
+                $.each(dslIntfCfgList, function() {
+                    if (this.__stack == intfCfgStack) {
+                        if (this.linkEncapsulationUsed == "G.992.3_Annex_K_ATM")
+                            currDslType = "adsl";
+                        else if (this.linkEncapsulationUsed == "G.993.2_Annex_K_PTM")
+                            currDslType = "vdsl";
+                    }
+                });
+            }
+        } else if (wanAccessType == "Ethernet") {
+            if (wanType == "pptp" || wanType == "l2tp")
+                intfCfgStack = wanConnStack;
+            else
+                intfCfgStack = $.stkPop(wanConnStack, 1);
+        } else if (INCLUDE_USB_3G_DONGLE && wanAccessType == "USB_3G") {
+            $.each(usb3gLinkCfgList, function() {
+                if (this.enable == 1 && $.stkPop(this.__stack, 1) == intfCfgStack) {
+                    usb3gLinkCfg = this;
+                    return false;
+                }
+            });
+        }
+
+            if (callback) {
+                callback();
+            }
+        });
+    }
+
+    function doInternetDiag() {
+        var dslIntfConfig = {};
+        var ethIntfConfig = {};
+        var wanConn = {};
+        var phyLinkStatus = "";
+        var diagTool = {};
+        if (!$.checkAsync(internetDiagId)) {
+            $.stopWaitingMobile();
+            return;
+        }
+        switch (step) {
+            case 0:
+                var linkDiagFunc = function(err) {
+                    if (err) {
+                        $.alert(err);
+                        bDiagFinished = true;
+                        return;
+                    }
+                    if (wanAccessType == "DSL") {
+                        if (dslIntfConfig.status == "Up") {
+                            step++;
+                            doInternetDiag();
+                        } else if (dslIntfConfig.status == "NoSignal" || dslIntfConfig.status == "Disabled") {
+                            //                                $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                            $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+                            bDiagFinished = true;
+                        } else {
+                            setTimeout(doInternetDiag, 1000);
+                        }
+                    } else if (wanAccessType == "Ethernet") {
+                        if (ethIntfConfig.ethernetLinkStatus == "Up") {
+                            step++;
+                            doInternetDiag();
+                        } else if (ethIntfConfig.ethernetLinkStatus == "Unavailable" || ethIntfConfig.ethernetLinkStatus == "Down") {
+                            //                                $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                            $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+
+                            bDiagFinished = true;
+                        } else {
+                            setTimeout(doInternetDiag, 1000);
+                        }
+                    }
+                };
+
+                //                    $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+
+                if (wanAccessType == "DSL") {
+                    dslIntfConfig = $.act(ACT_GET, WAN_DSL_INTF_CFG, intfCfgStack, null, ["Status"]);
+                    $.exe(linkDiagFunc);
+                } else if (wanAccessType == "Ethernet") {
+                    ethIntfConfig = $.act(ACT_GET, WAN_ETH_LINK_CFG, intfCfgStack, null, ["EthernetLinkStatus"]);
+                    $.exe(linkDiagFunc);
+                }
+
+                break;
+            case 1:
+                if (wanType == "ppp")
+                    wanConn = $.act(ACT_GET, WAN_PPP_CONN, wanConnStack, null, ["LastConnectionError", "ConnectionStatus"]);
+                else if (wanType == "ip")
+                    wanConn = $.act(ACT_GET, WAN_IP_CONN, wanConnStack, null, ["ConnectionStatus", "ConnectionType", "X_TP_TransportType"]);
+                else if (INCLUDE_PPTP && wanType == "pptp")
+                    wanConn = $.act(ACT_GET, WAN_PPTP_CONN, wanConnStack, null, ["ConnectionStatus"]);
+                else if (INCLUDE_PPTP && wanType == "l2tp")
+                    wanConn = $.act(ACT_GET, WAN_L2TP_CONN, wanConnStack, null, ["ConnectionStatus"]);
+                else {
+                    //                        $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                    $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+                    bDiagFinished = true;
+                    return;
+                }
+                $.exe(function(err) {
+                    if (err) {
+                        $.alert(err);
+                        bDiagFinished = true;
+                        return;
+                    }
+                    if (wanType == "ip" && wanConn.connectionType == "IP_Bridged") {
+                        //                            $('.map-internet-state').addClass("map-internet-state-ok").removeClass("map-internet-state-error");
+                        $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+                        bDiagFinished = true;
+                        return;
+                    }
+                    if (wanConn.connectionStatus == "Connected") {
+                        step++;
+                        doInternetDiag();
+                    } else if (wanConn.connectionStatus == "Connecting") {
+                        setTimeout(doInternetDiag, 1000);
+                    } else {
+                        //                            $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                        $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+                        bDiagFinished = true;
+                    }
+                });
+                break;
+            case 2:
+                diagTool = $.act(ACT_GET, DIAG_TOOL, null, null, ["LastResult"]);
+                $.exe(function(err) {
+                    if (err) {
+                        $.alert(err);
+                        bDiagFinished = true;
+                        return;
+                    }
+                    if (diagTool.lastResult == 3) {
+                        setTimeout(doInternetDiag, 1000);
+                    } else {
+                        if (bStart == true) {
+                            if (diagTool.lastResult == 1) {
+                                //                                    $('.map-internet-state').addClass("map-internet-state-ok").removeClass("map-internet-state-error");
+                                $.toastMobile($.tpLang.quicksetup_nstr.c_connSuccess);
+
+                            } else {
+                                //                                    $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                                $.alert($.tpLang.quicksetup_nstr.c_internetConnFailed);
+                            }
+                            step++;
+                            bDiagFinished = true;
+                        } else {
+                            bStart = true;
+                            $.act(ACT_OP, ACT_OP_DIAG_DNSDIAG, diagTool.__stack);
+                            $.exe(function(err) {
+                                if (err) {
+//                                    $.alert(err);
+                                    bDiagFinished = true;
+                                    return;
+                                }
+                                setTimeout(doInternetDiag, 1000);
+                            });
+                        }
+                    }
+                });
+                break;
+        }
+    }
+
+    step5.init = function() {
+//        internetDiagInit();
+    }
+
+    step5.styleInit = function() {
+        $('#back').titleButton('hide');
+        $('#next').titleButton('status', 'finish', $.tpLang.m_str.finish).titleButton('show');
+        $('.titleBar').titleBar('title', $.tpLang.quicksetup_nstr.t_summary);
+    }
+})();
+</script>
+
+
+
+
+<script type="text/javascript">
+//    INCLUDE_GERMANY_SPEC = 0;
+(function() {
+    function loadSubPage(id, path) {
+        //        var id = "subPage";
+        $.startWaitingMobile($.tpLang.s_str.loading)
+        $.loadPagePhone(
+            id,
+            path,
+            function() {
+                //                        $("#" + id).css("display", "none");
+                //                        $.unlock();
+            },
+            function() {
+                //                        $("#" + id).fadeIn();
+                $.stopWaitingMobile();
+            }
+        );
+    }
+
+    //      以下都拷贝自pc上。
+    $.qd = {};
+
+    function init() {
+		var realSysMode = {};
+        if (INCLUDE_WAN_MODE)
+            realSysMode = $.act(ACT_GET, SYS_MODE, null, null);
+		else
+			realSysMode.mode = "ETH";
+
+        $.qd.wlanList = $.act(ACT_GL, LAN_WLAN, null, null, ["Enable", "SSID", "X_TP_Band", "X_TP_PreSharedKey", "beaconType", "WPAAuthenticationMode", "IEEE11iAuthenticationMode", "RegulatoryDomain", "Standard"]);
+        oldUsrCfg = $.act(ACT_GET, USER_CFG, null, null, ["AdminPwd"]);
+        timeObj = $.act(ACT_GET, TIME, null, null, ["LocalTimeZone"]);
+		
+		/* delete for AC3150 by jy*/
+        //var localRegion = $.act(ACT_GET, LOCAL, null, null, ["Country"]);
+
+        //            reset isFD.but is it related to INCLUDE_GERMANY_SPEC?
+        if ($.isFD == 1) {
+            $.act(ACT_SET, IGD_DEV_INFO, null, null, ["X_TP_IsFD=3"]);
+            $.isFD = 3;
+        }
+        if ($.exe())
+            return;
+
+		/* delete for AC3150 by jy */
+        //$.qd.dmRegion = localRegion.country + " ";
+        $.qd.timezone = timeObj.localTimeZone;
+        if (INCLUDE_WAN_MODE) {
+            if (realSysMode.mode != "DSL") {
+                //                    var funcGoSysMode = function() {
+                //                        $("#advanced").click();
+                //                        setTimeout(function() {
+                //                            $("#menuTree").find("a[url='sysMode.htm']").click();
+                //                        }, 100);
+                //                    };
+                //                    var funcCancle = function() {
+                //                        $("#basic").click();
+                //                    };
+                //                    $.confirm(n_str["quicksetup"].t_sysModeNote, funcGoSysMode, funcCancle, 'Go');
+            }
+            if (realSysMode.mode == "DSL")
+                $.qd.realMode = "DSL";
+            else if (realSysMode.mode == "USB_3G")
+                $.qd.realMode = "USB_3G";
+            else
+                $.qd.realMode = "ETH";
+
+            $.qd.sysMode = $.qd.realMode;
+        } else {
+			$.qd.realMode = "ETH";
+			$.qd.sysMode = $.qd.realMode;
+		}
+
+		/* delete for AC3150 by jy */
+		/*
+        if (INCLUDE_GERMANY_SPEC) {
+            var found = false;
+            for (var i = 0; i < regionCodeInfo.length; i++) {
+                if (regionCodeInfo[i][1] == $.qd.dmRegion) {
+                    $.qd.country = regionCodeInfo[i][4]
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                $.qd.country = "Germany"
+        }*/
+
+        if (realSysMode.mode == "DSL") {
+            loadSubPage('step1AndStep2Div', 'quickSetupDsl.mobile.htm');
+        } else if (realSysMode.mode == "ETH") {
+            loadSubPage('step1AndStep2Div', 'quickSetupEth.mobile.htm');
+        }
+
+
+        $.qd.internetDiag = 0;
+    }
+
+    init();
+})();
+</script>

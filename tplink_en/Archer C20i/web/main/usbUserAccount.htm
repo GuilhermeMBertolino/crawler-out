@@ -1,0 +1,254 @@
+﻿<script language="javascript" type="text/javascript">
+var userTbl = new Array();
+var userList;
+var idx,i;
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+
+function escapeStr(str) 
+{
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function doSave()
+{
+	
+	var record = 0;
+
+	for (idx = 0; (idx < userTbl.length) && (idx < userList.length); idx++)
+	{
+		var change = 0;
+		var command = {};
+		if (userTbl[idx].name != userList[idx].username)
+		{
+			command.username = userTbl[idx].name;
+			change = 1;
+		}
+		else if (!userTbl[idx].name)
+		{
+			continue;
+		}
+		if (userTbl[idx].pwd != userList[idx].password)
+		{
+			command.password = userTbl[idx].pwd;
+			change = 1;
+		}
+		if ($.id("status_en_" + idx).checked != userList[idx].enable)
+		{
+			if ($.id("status_en_" + idx).checked)
+				command.enable = 1;
+			else
+				command.enable = 0;
+			change = 1;
+		}
+		if (1 == change)
+		{
+			$.act(ACT_SET, USER_ACCOUNT, userTbl[idx].stack, null, command);
+			record++;
+		}
+	}
+	if (0 != record)
+	{
+		$.addLoading($.id("setBtn"));
+		$.exe(doReload);
+		return;
+	}
+}
+function doRefresh()
+{
+	$.addLoading($.id("setBtn"));
+	$.reload();
+}
+function doSet()
+{
+	var newName;
+	var newPwd;
+	var current = $.id("indexList").value;
+	
+	
+	if (($.id("newName").value == "") && ($.id("newPwd").value == "") && ($.id("cfmPwd").value == ""))
+	{
+		doSave();
+		return;
+	}
+	
+	newName = $.id("newName").value;
+	if (newName === "")
+		return $.alert(ERR_USER_NAME_EMPTY);
+	if ($.asc(newName, true))
+		return $.alert(ERR_USER_NAME_ASCII);
+	if ((/[\\\/:\*\?"<>|[\]@\+=;,\.\ ()$]+/).test(newName))
+	{
+		$.alert(ERR_USB_INVALID_CHAR_IN_USER_NAME);
+		return;
+	}
+	
+	for (idx = 0; idx < userTbl.length; idx++)
+	{
+		if ((idx != current) && (newName == userTbl[idx].name))
+		{
+			$.alert(ERR_USB_CONFLICT_USER_NAME);
+			return;
+		}
+	}
+	
+	newPwd = $.id("newPwd").value;
+	if (newPwd === "")
+		return $.alert(ERR_USER_PWD_EMPTY);
+	if ($.asc(newPwd, true))
+		return $.alert(ERR_USER_PWD_ASCII);
+		
+	if (newPwd !== $.id("cfmPwd").value)
+		return $.alert(ERR_USER_NAME_PWD_CONFLICT);	
+	if ("" == userTbl[current].name)
+	{
+		userTbl[current].enable = 1;
+	}
+	userTbl[current].name = newName;
+	userTbl[current].pwd = newPwd;
+	if (1 == userList[current].X_TP_SupperUser)
+	{
+		$.id("userName" + current).innerHTML = "<b>" + escapeStr(newName) + "*</b>";
+		$.id("enable" + current).innerHTML = "<input name=\"radio" + current + "\" id=\"status_en_" + current + "\" type=\"radio\" /><span class=\"T T_en\" checked>Enable</span><input name=\"radio" + current + "\" id=\"status_dis_" + current + "\" type=\"radio\" checked /><span class=\"T T_dis\">Disable</span>";
+	}
+	else
+	{
+		$.id("userName" + current).innerHTML = "<b>" + escapeStr(newName) + "</b>";
+		$.id("enable" + current).innerHTML = "<input name=\"radio" + current + "\" id=\"status_en_" + current + "\" type=\"radio\" /><span class=\"T T_en\" checked>Enable</span><input name=\"radio" + current + "\" id=\"status_dis_" + current + "\" type=\"radio\" checked /><span class=\"T T_dis\">Disable</span>&nbsp;<span class='a T T_del' onClick='doDel(" + current + ")'>"+m_str.del+"</span>";
+	}
+
+	if (1 == userTbl[current].enable)
+	{
+		$.id("status" + current).innerHTML = m_str.enabled;//"Enabled";
+		$.id("status_en_" + current).checked = 1;
+	}
+	else
+	{
+		$.id("status" + current).innerHTML = m_str.disabled;//"Disabled";
+		$.id("status_dis_" + current).checked = 1;
+	}
+	
+	doSave();
+	
+}
+function doDel(deleteId)
+{
+	var command = {};
+	command.username = "";
+	command.password = "";
+	command.enable = 0;
+	$.act(ACT_SET, USER_ACCOUNT, userTbl[deleteId].stack, null, command);
+	$.addLoading($.id("setBtn"));
+	$.exe(doReload);
+	return;
+}
+function init()
+{
+	var sel = $.id("indexList");
+	
+	userList = $.act(ACT_GL, USER_ACCOUNT, null, null);
+	if(!$.exe())
+	{
+		for (idx = 0; idx < userList.length; idx++)
+		{
+
+			var user_tbl = $.id("user_tbl");
+			var newrow = user_tbl.insertRow(-1);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = idx + 1;
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id=\"userName" + idx + "\"></span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id=\"status" + idx + "\"></span>";
+			
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id=\"enable" + idx + "\" ></span>";
+			
+			var option = $.c("option");
+			option.value = idx;
+			option.text = idx + 1;
+			try{sel.add(option, null);}catch(e){sel.add(option);}
+			
+
+			userTbl[idx] = {};
+			userTbl[idx].name = userList[idx].username;
+			userTbl[idx].pwd = userList[idx].password;
+			userTbl[idx].enable = userList[idx].enable;
+			userTbl[idx].stack = userList[idx].__stack;
+			
+
+			if (1 == userList[idx].X_TP_SupperUser)
+			{
+				$.id("userName" + idx).innerHTML = "<b>" + escapeStr(userTbl[idx].name) + "*</b>";
+			}
+			else
+			{
+				$.id("userName" + idx).innerHTML = "<b>" + escapeStr(userTbl[idx].name) + "</b>";
+			}
+			
+			if (userTbl[idx].name)
+			{
+				if (1 == userList[idx].X_TP_SupperUser)
+				{
+					$.id("enable" + idx).innerHTML = "<input name=\"radio" + idx + "\" id=\"status_en_" + idx + "\" type=\"radio\" /><span class=\"T T_en\">Enable</span><input name=\"radio" + idx + "\" id=\"status_dis_" + idx + "\" type=\"radio\" checked /><span class=\"T T_dis\" checked>Disable</span>";
+				}
+				else
+				{
+					$.id("enable" + idx).innerHTML = "<input name=\"radio" + idx + "\" id=\"status_en_" + idx + "\" type=\"radio\" /><span class=\"T T_en\">Enable</span><input name=\"radio" + idx + "\" id=\"status_dis_" + idx + "\" type=\"radio\" checked /><span class=\"T T_dis\" checked>Disable</span>&nbsp;<span class='a T T_del' onClick='doDel(" + idx + ")'>"+m_str.del+"</span>";
+				}
+				if (1 == userTbl[idx].enable)
+				{
+					$.id("status" + idx).innerHTML = m_str.enabled//"Enabled";
+					$.id("status_en_" + idx).checked = 1;
+				}
+				else
+				{
+					$.id("status" + idx).innerHTML = m_str.disabled//"Disabled";
+					$.id("status_dis_" + idx).checked = 1;
+				}
+			}
+		}
+	}
+}
+</script>
+<p class="et T" id="et">User Accounts</p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="L1 T" id="t_info">This page allows you to configure user accounts for Storage Sharing/FTP Server. Please click Set button to make your configuration take effect.</p>
+<p class="br"></p>
+<div id="user_drawing">
+<table class='XL bdr tc' id='user_tbl' width='100%' >
+<tr>
+	<th width="40px" class="T T_index">Index</th>
+	<th width="300px" class="T T_username">User Name</th>
+	<th width="80px" class="T T_status">Status</th>
+	<th width="160px" class="T T_action">Action</th>
+</tr>
+</table>
+<p>* : <span class="T" id="t_note">"Super User". It has full-access permission (Read & Write) to all active volume(s) and share folder(s).</span></p>
+<p class="br"></p>
+</div>
+<p class="bl"></p>
+<p class="br"></p>
+<p><b class="item L T" id="t_chidx">Choose Index:</b><select id="indexList" style="width:80px"></select></p>
+<p><b class="item L T" id="t_newusr">New User Name:</b><input type="text" class="text" size="31" maxlength="31" id="newName" /></p>
+<p><b class="item L T" id="t_newpwd">New Password:</b><input type="password" class="text" size="31" maxlength="31" id="newPwd" /></p>
+<p><b class="item L T T_cfmpwd">Confirm Password:</b><input type="password" class="text" size="31" maxlength="31" id="cfmPwd" /></p>
+
+</div>
+<p class="bl"></p>
+<p class="tail">
+<input type="button" id="setBtn" class="button M T T_set" value="Set" onclick="doSet()"/>
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+$.loadHelpFrame("UsbAccountHelp.htm");
+init();
+</script>

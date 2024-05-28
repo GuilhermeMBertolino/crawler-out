@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2012-2019 TPLINK
+
+START=80
+STOP=25
+
+CRON_TASK_SCRIPT=/etc/monit/monit_proclist
+
+add_cron(){
+	local replace=$(sed -n '/^#local url_class/p' "$CRON_TASK_SCRIPT")
+	local line_num=$(awk '/^#local url_class/{print NR}' "$CRON_TASK_SCRIPT")
+	
+	if [ -n "$replace" ];then
+		sed -i "${line_num}c ${replace#*#}" "$CRON_TASK_SCRIPT"
+	fi
+}
+
+del_cron(){
+	local replace=$(sed -n '/^local url_class/p' "$CRON_TASK_SCRIPT")
+	local line_num=$(awk '/^local url_class/{print NR}' "$CRON_TASK_SCRIPT")
+	
+	if [ -n "$replace" ];then
+		sed -i "${line_num}c #$replace" "$CRON_TASK_SCRIPT"
+	fi
+}
+
+read_from_partition(){
+    if [ ! -f "/tmp/auc_tp.session" ];then
+        nvrammanager -r /tmp/auc_tp_session.tar.gz -p auc_data
+        tar -zxf /tmp/auc_tp_session.tar.gz -C /tmp/
+        rm /tmp/auc_tp_session.tar.gz 
+    fi
+}
+
+write_to_partition(){
+    if [ -f "/tmp/auc_tp.session" ];then
+        tar -zcf /tmp/auc_tp_session.tar.gz /tmp/auc_tp.session
+        nvrammanager -w /tmp/auc_tp_session.tar.gz -p auc_data
+        rm /tmp/auc_tp_session.tar.gz 
+    fi
+}
+
+start() {
+	export LD_LIBRARY_PATH=/usr/lib/avira:$LD_LIBRARY_PATH
+	
+	local mode=$(uci get sysmode.sysmode.mode)
+	if [ "x$mode" != "xrouter" ]; then
+		return
+	fi
+
+	read_from_partition
+	add_cron
+	service_start /usr/sbin/url-class
+	
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+}
+
+stop() {
+	del_cron
+	service_stop /usr/sbin/url-class
+
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+}

@@ -1,0 +1,521 @@
+﻿<div class="titleBar"></div>
+<div class="map-container">
+    <div class="map-content">
+        <div class="map-bgcircle-1"></div>
+        <div class="map-bgcircle-2"></div>
+        <div class="center">
+            <div class="circle-1"></div>
+            <div class="circle-2"></div>
+            <div class="circle-3 nd"></div>
+            <div class="sprite f-network-router"></div>
+            <div class="router-name">Archer C3150</div>
+            </div>
+        <div class="func-icons">
+            <div class="sprite map-icon map-internet">
+                <div class="map-icon-text"><span id="internetName">
+                <script type="text/html" class="title-string">
+                    <%=$.tpLang.menu_str.internet%>
+                </script>
+                </span></div>
+        </div>
+            <div class="sprite map-icon map-wireless">
+                <div class="map-icon-text"><span>
+                <script type="text/html" class="title-string">
+                    <%=$.tpLang.menu_str.wl%>
+                </script>
+                </span></div>
+        </div>
+            <div class="sprite map-icon map-device">
+                <div class="map-device-number">0</div>
+                <div class="map-icon-text"><span>
+                <script type="text/html" class="title-string">
+                        <%=$.tpLang.networkMap_nstr.t_access%>
+                </script>
+                </span></div>
+        </div>
+            <div class="sprite map-icon map-telephone nd">
+                <div class="map-icon-text"><span>
+                <script type="text/html" class="title-string">
+                        <%=$.tpLang.networkMap_nstr.c_phone%>
+                </script>
+                </span></div>
+            </div>
+            <div class="sprite map-icon map-guest">
+                <div class="map-icon-text"><span>
+                <script type="text/html" class="title-string">
+                        <%=$.tpLang.menu_str.wlguest%>
+                </script>
+                </span></div>
+        </div>
+            <div class="sprite map-icon map-usb">
+                <div class="map-icon-text"><span>
+                <script type="text/html" class="title-string">
+                        <%=$.tpLang.networkMap_nstr.t_usbdev%>
+                </script>
+                </span></div>
+        </div>
+    </div>
+    <div class="phoneBot">
+        <a href="javascript:void(0);" class="phoneBot-phone selected">
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.networkMap_nstr.c_phone%>
+            </script>
+        </a>
+        <span>|</span>
+        <a href="javascript:void(0);" class="phoneBot-pc" id="changeToPC">
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.dhcp_nstr.t_pc%>
+            </script>
+        </a>
+    </div>
+</div>
+</div>
+
+
+<script type="text/javascript">
+    (function() {
+        var bStart, step;
+        var wanConnStack, intfCfgStack, wanType, wanAccessType, currDslType, usb3gLinkCfg;
+        var bDiagFinished;
+        var internetDiagId = $.getAsync();
+        var landScape = false;
+
+        $('.titleBar').titleBar({hide: true});
+        $.tpLocal('title-string', $.tpLang);
+        init();
+
+        function internetDiagInit() {
+            var l3Forward = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+            var ipList = $.act(ACT_GL, WAN_IP_CONN, null, null, ["Enable", "Name", "ConnectionType"]);
+            var pppList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["Enable", "Name"]);
+            var commonIntfList = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+            var dslIntfCfgList = INCLUDE_VDSLWAN ? $.act(ACT_GL, WAN_DSL_INTF_CFG, null, null, ["LinkEncapsulationUsed"]) : {};
+            var connStack = "";
+            var found = false;
+
+            if (INCLUDE_IPV6)
+                var l3ForwardIpv6 = $.act(ACT_GET, L3_IP6_FORWARDING, null, null, ["__ifAliasName"]);
+
+            if (INCLUDE_PPTP)
+                var pptpList = $.act(ACT_GL, WAN_PPTP_CONN, null, null, ["Enable", "Name"]);
+            if (INCLUDE_L2TP)
+                var l2tpList = $.act(ACT_GL, WAN_L2TP_CONN, null, null, ["Enable", "Name"]);
+
+            if (INCLUDE_WAN_MODE)
+                var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["Mode"]);
+
+            if (INCLUDE_USB_3G_DONGLE)
+                var usb3gLinkCfgList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["Enable", "CardName"]);
+
+            bStart = false;
+            step = 0;
+            if ($.exe())
+                return false;
+            $.each(ipList, function() {
+                if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                    wanType = "ip";
+                    found = true;
+                    return false;
+                } else if (this.enable == 1 && this.connectionType == "IP_Bridged") {
+                    wanType = "ip";
+                    wanConnStack = this.__stack;
+                    intfCfgStack = $.stkPop(wanConnStack, 2);
+                }
+            });
+            if (found == false) {
+                $.each(pppList, function() {
+                    if (this.enable == 1 && (this.name == l3Forward.__ifAliasName)) {
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 2);
+                        wanType = "ppp";
+                        found = true;
+                        return false;
+                    }
+                });
+            };
+            if (INCLUDE_PPTP && found == false) {
+                $.each(pptpList, function() {
+                    if (this.enable && this.name == l3Forward.__ifAliasName) {
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 1);
+                        wanType = "pptp";
+                        found = true;
+                        return false;
+                    }
+                });
+            }
+            if (INCLUDE_L2TP && found == false) {
+                $.each(l2tpList, function() {
+                    if (this.enable && this.name == l3Forward.__ifAliasName) {
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 1);
+                        wanType = "l2tp";
+                        found = true;
+                        return false;
+                    }
+                });
+            }
+
+            if (found == false) {
+                $.each(ipList, function() {
+                    if (this.enable == 1 && (INCLUDE_IPV6 && this.name == l3ForwardIpv6.__ifAliasName)) {
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 2);
+                        wanType = "ip";
+                        found = true;
+                        return false;
+                    } else if (this.enable == 1 && this.connectionType == "IP_Bridged") {
+                        wanType = "ip";
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 2);
+                    }
+                });
+            };
+
+            if (found == false) {
+                $.each(pppList, function() {
+                    if (this.enable == 1 && (INCLUDE_IPV6 && this.name == l3ForwardIpv6.__ifAliasName)) {
+                        wanConnStack = this.__stack;
+                        intfCfgStack = $.stkPop(wanConnStack, 2);
+                        wanType = "ppp";
+                        found = true;
+                        return false;
+                    }
+                });
+            };
+
+            if (found == false) {
+                if (INCLUDE_WAN_MODE) {
+                    if (sysMode.mode == "DSL")
+                        wanAccessType = "DSL";
+                    else if (sysMode.mode == "ETH")
+                        wanAccessType = "Ethernet";
+                    else if (INCLUDE_USB_3G_DONGLE && sysMode.mode == "USB_3G")
+                        wanAccessType = "USB_3G";
+                } else {
+					sysMode.mode = "ETH";
+					wanAccessType = "Ethernet";
+				}
+
+                $.each(commonIntfList, function() {
+                    if (this.WANAccessType == wanAccessType) {
+                        intfCfgStack = this.__stack;
+                        return false;
+                    }
+                });
+            } else {
+                $.each(commonIntfList, function() {
+                    if (this.__stack == intfCfgStack) {
+                        wanAccessType = this.WANAccessType;
+                        intfCfgStack = this.__stack;
+                        return false;
+                    }
+                });
+            }
+
+            if (wanAccessType == "DSL") {
+                if (INCLUDE_VDSLWAN) {
+                    $.each(dslIntfCfgList, function() {
+                        if (this.__stack == intfCfgStack) {
+                            if (this.linkEncapsulationUsed == "G.992.3_Annex_K_ATM")
+                                currDslType = "adsl";
+                            else if (this.linkEncapsulationUsed == "G.993.2_Annex_K_PTM")
+                                currDslType = "vdsl";
+                        }
+                    });
+                }
+            } else if (wanAccessType == "Ethernet") {
+                if (wanType == "pptp" || wanType == "l2tp")
+                    intfCfgStack = wanConnStack;
+                else
+                    intfCfgStack = $.stkPop(wanConnStack, 1);
+            } else if (INCLUDE_USB_3G_DONGLE && wanAccessType == "USB_3G") {
+                $.each(usb3gLinkCfgList, function() {
+                    if (this.enable == 1 && $.stkPop(this.__stack, 1) == intfCfgStack) {
+                        usb3gLinkCfg = this;
+                        return false;
+                    }
+                });
+            }
+            return true;
+        }
+        function doInternetDiag() {
+            var dslIntfConfig = {};
+            var ethIntfConfig = {};
+            var wanConn = {};
+            var phyLinkStatus = "";
+            var diagTool = {};
+
+            if (!$.checkAsync(internetDiagId))
+                return;
+
+            switch (step) {
+                case 0:
+                    var linkDiagFunc = function(err) {
+                        if (err) {
+                            $.alert(err);
+                            bDiagFinished = true;
+                            return;
+                        }
+                        if (wanAccessType == "DSL") {
+                            if (dslIntfConfig.status == "Up") {
+                                step++;
+                                doInternetDiag();
+                            } else if (dslIntfConfig.status == "NoSignal" || dslIntfConfig.status == "Disabled") {
+                                $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                                bDiagFinished = true;
+                            } else {
+                                setTimeout(doInternetDiag, 1000);
+                            }
+                        } else if (wanAccessType == "Ethernet") {
+                            if (ethIntfConfig.ethernetLinkStatus == "Up") {
+                                step++;
+                                doInternetDiag();
+                            } else if (ethIntfConfig.ethernetLinkStatus == "Unavailable" || ethIntfConfig.ethernetLinkStatus == "Down") {
+                                $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                                bDiagFinished = true;
+                            } else {
+                                setTimeout(doInternetDiag, 1000);
+                            }
+                        } else if (INCLUDE_USB_3G_DONGLE && wanAccessType == "USB_3G") {
+                            if (usb3gLinkCfg.cardName == "Unplugged" || usb3gLinkCfg.cardName == "Unknown") {
+                                $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                                bDiagFinished = true;
+                            } else if (usb3gLinkCfg.cardName == "Identifying...") {
+                                setTimeout(doInternetDiag, 1000);
+                            } else {
+                                step++;
+                                doInternetDiag();
+                            }
+                        }
+                    };
+
+                    $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+
+                    if (wanAccessType == "DSL") {
+                        dslIntfConfig = $.act(ACT_GET, WAN_DSL_INTF_CFG, intfCfgStack, null, ["Status"]);
+                        $.exe(linkDiagFunc);
+                    } else if (wanAccessType == "Ethernet") {
+                        ethIntfConfig = $.act(ACT_GET, WAN_ETH_LINK_CFG, intfCfgStack, null, ["EthernetLinkStatus"]);
+                        $.exe(linkDiagFunc);
+                    } else if (INCLUDE_USB_3G_DONGLE && wanAccessType == "USB_3G") {
+                        usb3gLinkCfg = $.act(ACT_GET, WAN_USB_3G_LINK_CFG, usb3gLinkCfg.__stack, null, ["CardName"]);
+                        $.exe(linkDiagFunc);
+                    }
+
+                    break;
+                case 1:
+                    if (wanType == "ppp")
+                        wanConn = $.act(ACT_GET, WAN_PPP_CONN, wanConnStack, null, ["LastConnectionError", "ConnectionStatus"]);
+                    else if (wanType == "ip")
+                        wanConn = $.act(ACT_GET, WAN_IP_CONN, wanConnStack, null, ["ConnectionStatus", "ConnectionType", "X_TP_TransportType"]);
+                    else if (INCLUDE_PPTP && wanType == "pptp")
+                        wanConn = $.act(ACT_GET, WAN_PPTP_CONN, wanConnStack, null, ["ConnectionStatus"]);
+                    else if (INCLUDE_PPTP && wanType == "l2tp")
+                        wanConn = $.act(ACT_GET, WAN_L2TP_CONN, wanConnStack, null, ["ConnectionStatus"]);
+                    else {
+                        $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                        bDiagFinished = true;
+                        return;
+                    }
+                    $.exe(function(err) {
+                        if (err) {
+                            $.alert(err);
+                            bDiagFinished = true;
+                            return;
+                        }
+                        if (wanType == "ip" && wanConn.connectionType == "IP_Bridged") {
+                            $('.map-internet-state').addClass("map-internet-state-ok").removeClass("map-internet-state-error");
+                            bDiagFinished = true;
+                            return;
+                        }
+                        if (wanConn.connectionStatus == "Connected") {
+                            step++;
+                            doInternetDiag();
+                        } else if (wanConn.connectionStatus == "Connecting") {
+                            setTimeout(doInternetDiag, 1000);
+                        } else {
+                            $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                            bDiagFinished = true;
+                        }
+                    });
+                    break;
+                case 2:
+                    diagTool = $.act(ACT_GET, DIAG_TOOL, null, null, ["LastResult"]);
+                    $.exe(function(err) {
+                        if (err) {
+                            $.alert(err);
+                            bDiagFinished = true;
+                            return;
+                        }
+                        if (diagTool.lastResult == 3) {
+                            setTimeout(doInternetDiag, 1000);
+                        } else {
+                            if (bStart == true) {
+                                if (diagTool.lastResult == 1) {
+                                    $('.map-internet-state').addClass("map-internet-state-ok").removeClass("map-internet-state-error");
+                                } else {
+                                    $('.map-internet-state').removeClass("map-internet-state-ok").addClass("map-internet-state-error");
+                                }
+                                step++;
+                                bDiagFinished = true;
+                            } else {
+                                bStart = true;
+                                $.act(ACT_OP, ACT_OP_DIAG_DNSDIAG, diagTool.__stack);
+                                $.exe(function(err) {
+                                    if (err) {
+                                        $.alert(err);
+                                        bDiagFinished = true;
+                                        return;
+                                    }
+                                    setTimeout(doInternetDiag, 1000);
+                                });
+                            }
+                        }
+                    });
+                    break;
+            }
+        }
+
+        function deviceInit() {
+            var deviceNum = 0;
+            var lanHostList = $.act(ACT_GS, LAN_HOST_ENTRY, null, null, ["active"]);
+            $.exe(function(ret) {
+				$.each(lanHostList, function() {
+					if (this.active == 1) {
+                        deviceNum = deviceNum + 1;
+					}					
+				});
+
+                $('.map-device-number').html(deviceNum);
+            });
+        }
+        function showFailInfo(info) {
+        }
+        function init() {
+            internetDiagInit();
+            doInternetDiag();
+            deviceInit();
+            $(window).resize(resizeIcon);
+            resizeIcon('init');
+			if (INCLUDE_ROUTER_MODE && $.routerMode == 'AP') {
+					$('#internetName').text($.tpLang.menu_str.network);
+			}
+
+            $(".map-internet").on("click", function() {
+				if (INCLUDE_ROUTER_MODE && $.routerMode == 'AP') {
+					$.loadPhoneMain("internetSummaryAP.mobile.htm");
+				}else{
+					$.loadPhoneMain("internetSummary.mobile.htm");
+				}
+            });
+            $(".map-wireless").on("click", function() {
+                $.loadPhoneMain("wirelessSummary.mobile.htm", 'status');
+            });
+            $(".map-guest").on("click", function() {
+                $.loadPhoneMain("guestNetworkSummary.mobile.htm", 'status');
+            });
+            $(".map-usb").on("click", function() {
+                $.loadPhoneMain("usbDisk.mobile.htm");
+            });
+            $(".map-device").on("click", function() {
+                $.loadPhoneMain("accessDevices.mobile.htm");
+            });
+
+            if (INCLUDE_VOIP) {
+                $(".map-telephone").show();
+                $(".map-telephone").on("click", function() {
+                    $.loadPhoneMain("voipSummary.mobile.htm");
+                });
+            } else {
+                $(".map-telephone").hide();
+            }
+        }
+
+        $("#changeToPC").click(function() {
+            document.cookie = 'UserChange=true';
+            $.refresh();
+        });
+
+        function resizeIcon(option) {
+            var winX = $(window).width();
+            var winY = $(window).height();
+
+            // 检测横竖屏变化
+            var tempLandScape = winX > winY;
+            var animation;
+
+            var y = winX < winY ? winY : winX;
+            var pageHeight = $("html").css('font-size').slice(0, -2) * 42;
+
+            if (option == 'init') {
+                animation = true;
+            } else {
+                animation = !(tempLandScape == landScape) ;
+                landScape = tempLandScape;
+            }
+
+            if (pageHeight > y) {
+                var rate = y/pageHeight;
+                $('.map-content').css({"transform": 'scale('+rate+')'});
+            }
+
+            $('.map-container .circle-3').removeClass('nd');
+            $('.map-container .center').removeClass('router-show');
+            $('.map-container .circle-3').removeClass('bg-show');
+            $('.map-container .map-internet').removeClass('internet-show internet-show-l');
+            $('.map-container .map-wireless').removeClass('wireless-show wireless-show-l');
+            if (!INCLUDE_VOIP) {
+                $('.map-container .map-guest').removeClass('guest-show-5 guest-show-l-5').addClass('map-guest-5');
+                $('.map-container .map-usb').removeClass('usb-show-5 usb-show-l-5').addClass('map-usb-5');
+            } else {
+            $('.map-container .map-guest').removeClass('guest-show guest-show-l');
+            $('.map-container .map-usb').removeClass('usb-show usb-show-l');
+            }
+            $('.map-container .map-device').removeClass('device-show device-show-l');
+            $('.map-container .map-telephone').removeClass('telephone-show telephone-show-l');
+
+            ($.mainParam == 'menu') && animation && showFrame();
+        }
+
+        function showFrame() {
+            $('.map-bgcircle-1, .map-bgcircle-2').hide();
+            $('.map-container .circle-3').removeClass('nd');
+            $('.map-container .center').addClass('router-show');
+
+            if ($(window).width() > $(window).height()) {
+                $('.map-container .map-internet').addClass('internet-show-l');
+                $('.map-container .map-wireless').addClass('wireless-show-l');
+                if (!INCLUDE_VOIP) {
+                    $('.map-container .map-guest').addClass('guest-show-l-5');
+                    $('.map-container .map-usb').addClass('usb-show-l-5');
+                } else {
+                $('.map-container .map-guest').addClass('guest-show-l');
+                $('.map-container .map-usb').addClass('usb-show-l');
+                }
+                $('.map-container .map-device').addClass('device-show-l');
+                $('.map-container .map-telephone').addClass('telephone-show-l');
+            } else {
+                $('.map-container .map-internet').addClass('internet-show');
+                $('.map-container .map-wireless').addClass('wireless-show');
+                if (!INCLUDE_VOIP) {
+                    $('.map-container .map-guest').addClass('guest-show-5');
+                    $('.map-container .map-usb').addClass('usb-show-5');
+                } else {
+                $('.map-container .map-guest').addClass('guest-show');
+                $('.map-container .map-usb').addClass('usb-show');
+                }
+                $('.map-container .map-device').addClass('device-show');
+                $('.map-container .map-telephone').addClass('telephone-show');
+            }
+            setTimeout(function() {
+                $('.map-container .circle-3').addClass('bg-show');
+                setTimeout(function() {
+                    $('.map-bgcircle-1, .map-bgcircle-2').show();
+                }, 5200);
+            }, 700);
+        }
+    })();
+</script>

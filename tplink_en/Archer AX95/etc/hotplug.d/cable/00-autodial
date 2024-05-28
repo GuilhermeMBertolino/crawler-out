@@ -1,0 +1,10 @@
+#!/bin/sh
+
+device=`uci get profile.@wan[0].wan_ifname -c /etc/profile.d/`
+[ "$device" = "$DEVICE" -a up = "$ACTION" ] && {                                                                
+    local autodial_flag=`uci get network.wan.autodial_flag`
+    [ $autodial_flag -eq 1 ] && [ ! -e /tmp/reboot ] && {
+        echo autodial begin !!!! > /dev/console                                     
+        wan_connected && lua /lib/autodial/auto_dial.lua auto_dial &
+    }                                                           
+}

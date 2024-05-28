@@ -1,0 +1,81 @@
+<div id="device-mask" class="mask"></div>
+<h3 class="widget-title msg-title"><span class="msg-title-container T" id="t_qosRule">Qos Rule</span></h3>
+<form class="pure-form pure-form-aligned">
+    <div id="ruleType"><b class="T T_type">Type:</b>
+        <input type="radio" name="radioNameRuleType" id="radioByDevice" checked="true">
+        <label class="T" id="t_byDevice">By Device</label>
+        <input type="radio" name="radioNameRuleType" id="radioByApp">
+        <label class="T" id="t_byApp">By App</label>
+    </div>
+    <div id="ruleByDevice" class="">
+        <div>
+            <b id="t_devname" class="ru-m">Device Name:</b>
+            <input type="text" id="deviceName" maxlength="32" oninput="$.maxlength(this)" required>
+            <button type="submit" class="blue msg-inline-btn" class="T_scan" id="scan">scan</button>
+        </div>
+        <div>
+            <b class="ru-m T T_macaddr">Mac Address:</b>
+            <input type="text" class="tp-input-text mac-address" maxlength="17" id="macAddress">
+        </div>
+    </div>
+    <div id="ruleByApp" class="nd">
+        <h4 class="type-title" id="t_app">app</h4>
+        <div id="div_app" class="app-info-cnt">
+            <div class="widget-wrap-outer">
+                <div class="checkbox-group-wrap">
+                    <ul class="checkbox-group-list-wrap" id="groupList0">
+                    </ul>
+                    <ul class="checkbox-group-list-wrap" id="groupList1">
+                    </ul>
+                    <ul class="checkbox-group-list-wrap" id="groupList2">
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+        <h4 class="type-title" id="title_custom"><span id="t_custom">custom app</span><span class="qos-toggle-icon"></span></h4>
+        <div id="div_custom" class="nd content-container">
+            <form class="pure-form pure-form-aligned">
+                <div class="inline">
+                    <b class="m" id="t_name">name</b>
+                    <input type="text" class="xl" id="cusApp_name" maxlength="32" oninput="$.maxlength(this)">
+                </div>
+                <b class="m T_proto">protocol</b>
+                <select id="cusApp_protocol" class="xl">
+                    <option value="all" class="T_all">all</option>
+                    <option value="tcp" id="t_tcp">tcp</option>
+                    <option value="udp" id="t_udp">udp</option>
+                </select>
+                <div class="inline">
+                    <b class="m T_c_port">port</b>
+                    <input type="text" class="xl" id="cusApp_Port">
+                    <div class="textbox-tips">
+                        <span id="t_port_range"></span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="inline-btn-right">
+        <button type="submit" class="green T_cancel" id="editCancel">Cancel</button>
+        <button type="submit" class="green T_save" id="editOk">Save</button>
+    </div>
+</form>
+<div>
+    <form class="pure-form pure-form-aligned">
+        <div id="accessDevList" class="nd">
+            <div id="closeDeviceList" class="table-op">
+                <div class="table-btn">
+                    <span class="close-icon table-icon"></span>
+                </div>
+            </div>
+
+            <table id="tableAccessDevicesList">
+                <thead></thead>
+                <tbody id="bodyAccessDevicesList">
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<script language="javascript">!function(){"use strict";function e(){var e=[{text:table_str.id,width:"10%"},{text:table_str.devname,width:"20%"},{text:table_str.ip,width:"20%"},{text:table_str.mac,width:"20%"},{text:table_str.operation,width:"20%"}];$.initTableHead($("#tableAccessDevicesList"),e),$("#tableAccessDevicesList").tpTable(t),$.setFixedCentral($("#accessDevList"))}function t(){var e=[],t=1,s=$.act(ACT_GL,LAN_HOST_ENTRY,null,null);$.exe(function(a){a||($.each(s,function(){1==this.active&&(e.push([{text:t,width:"5%"},{text:$.htmlEncodeStr(this.hostName),width:"10%"},{text:this.IPAddress,width:"10%"},{text:this.MACAddress.replace(/\:/g,"-"),width:"15%"},{text:"<span class='table-grid-icon add-icon'></span>",width:"15%"}]),t++)}),$.initTableBody($("#tableAccessDevicesList"),e),$.tablePages($("#tableAccessDevicesList"),8),$("span.add-icon").click(function(){var e=$(this).parents("tr").find("td:eq(1)").text().match(/^.{1,32}/),t=$(this).parents("tr").find("td:eq(3)").text();$("#deviceName").val(e),$("#macAddress").tpAddress("val",t),$("#accessDevList").fadeOut(20,function(){$("#accessDevList").removeClass("on-mask msg-container").addClass("nd")}),$("#device-mask").hide()}))})}function s(){if(n=$.act(ACT_GL,IQOS_CONF,null,null),!$.exe()){var e=$("#div_app").find("ul.checkbox-group-list-wrap").length,t=Math.ceil(n.length/e),s=0;$.each(n,function(){var e=Math.floor(s/t);$('<li><div class="app-info-name"><input type="checkbox" id="appList_'+s+'" /><label>'+this.appName+"</label></div></li>").appendTo($("#groupList"+e));s++})}}function a(e){if(""!=e){var t=e.split("-"),s=t[0];if(""==s||!$.isnum(s)||0==parseInt(s,10)||parseInt(s,10)>65535)return!1;if(1==t.length)return[parseInt(s,10),parseInt(s,10)];if(2==t.length){var a=t[1];return!(""==a||!$.isnum(a)||0==parseInt(a,10)||parseInt(a,10)>65535)&&(parseInt(a,10)>parseInt(s,10)?[parseInt(s,10),parseInt(a,10)]:"order")}}return!1}function i(e){e&&(e.focus(),e.select())}var n;$("#radioByDevice").click(function(){$("#ruleByDevice").removeClass("nd"),$("#ruleByApp").addClass("nd"),$("#ruleByPort").addClass("nd")}),$("#radioByApp").click(function(){$("#ruleByDevice").addClass("nd"),$("#ruleByApp").removeClass("nd"),$("#ruleByPort").addClass("nd")}),$("#radioByPort").click(function(){$("#ruleByDevice").addClass("nd"),$("#ruleByApp").addClass("nd"),$("#ruleByPort").removeClass("nd")}),$("#scan").on("click",function(){$("#accessDevList").fadeIn(20,function(){$("#accessDevList").removeClass("nd").addClass("on-mask msg-container")}),$("#device-mask").show()}),$("#closeDeviceList").click(function(){$("#accessDevList").fadeOut(20,function(){$("#accessDevList").removeClass("on-mask msg-container").addClass("nd")}),$("#device-mask").hide()}),$("#title_custom").on("click",function(){$(this).toggleClass("selected"),$(this).hasClass("selected")?$("#div_custom").removeClass("nd"):$("#div_custom").addClass("nd")}),$("#editCancel").on("click",function(){$("#complex-msg-container").tpMsg("hide")}),$("#editOk").on("click",function(){var e={};if(1==$("#radioByDevice").prop("checked")){if(!$.isname($("#deviceName").val()))return $.alert(ERR_FW_ENTRYNAME_INVAD),$("#deviceName").focus().select(),!1;if(e.macAddress=$("#macAddress").tpAddress("val"),""==e.macAddress||$.mac(e.macAddress,!0))return $.alert(ERR_MAC_FORMAT),$("#macAddress").tpAddress("focus"),!1;e.appName=$("#deviceName").prop("value"),e.class_=$.qosVar.newRuleClass,e.type=11,$.act(ACT_ADD,IQOS_RULE,null,null,e),$.addLoading($(this)),$.exe()||($("#complex-msg-container").tpMsg("hide"),$.removeLoading(),$.reload())}else if(1==$("#radioByApp").prop("checked")){var t=0,s=$.act(ACT_GL,IQOS_RULE,null,null);if(!$.exe()){for(c=0;c<n.length;c++)1==$("#appList_"+c).prop("data-checked")&&t++;if(t+s.length>16)return $.alert(CMM_REACH_MAX_INSTANCE_NUM),!1;for(var c=0;c<n.length;c++)1==$("#appList_"+c).prop("data-checked")&&(e.appName=n[c].appName,e.class_=$.qosVar.newRuleClass,e.type=30,e.confId=n[c].id,$.act(ACT_ADD,IQOS_RULE,null,null,e))}if(!$("#div_custom").hasClass("nd")){if(e={},!$.isname($("#cusApp_name").val()))return $.alert(ERR_FW_ENTRYNAME_INVAD),i($("#cusApp_name")),!1;var l=a($("#cusApp_Port").val());if(0==l)return $.alert(CMM_IQOS_RULE_PORT_FORMAT_ERR),i($("#cusApp_Port")),!1;if("order"==l)return $.alert(ERR_PORT_ORDER_INVAD),i($("#cusApp_Port")),!1;e.appName=$("#cusApp_name").prop("value");var d=$("#cusApp_protocol").data("value");"tcp"==d?e.type=21:"udp"==d?e.type=22:"all"==d&&(e.type=23),e.srcPort=l[0],e.endPort=l[1],e.class_=$.qosVar.newRuleClass,$.act(ACT_ADD,IQOS_RULE,null,null,e)}$.addLoading($(this)),$.exe()||($("#complex-msg-container").tpMsg("hide"),$.removeLoading(),$.reload())}}),$.tpInit(function(){e(),s()})}()</script>

@@ -1,1 +1,0 @@
-/tmp/udisk/etc/strongswan.d

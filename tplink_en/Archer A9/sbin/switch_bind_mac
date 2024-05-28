@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+bind_mac() {
+    local device_name
+    local switch_port
+    
+    config_get device_name "$1" name
+    config_get switch_port "$1" switch_port
+
+    lan_ifname=$(uci get network.lan.ifname)
+    wan_ifname=$(uci get network.wan.ifname)
+
+    if [[ "$device_name" == "$lan_ifname" ]] && [ $switch_port ]; then
+        lan_mac=$(network_firm lan)
+        ssdk_sh fdb entry add "${lan_mac//:/-}" 1 forward forward "$switch_port" yes no no no no no no 2>&1 1>-
+    elif [[ "$device_name" == "$wan_ifname" ]] && [ $switch_port ]; then
+        wan_mac=$(network_firm wan)
+        ssdk_sh fdb entry add "${wan_mac//:/-}" 5 forward forward "$switch_port" yes no no no no no no 2>&1 1>-
+    fi
+}
+
+ssdk_sh fdb entry flush 1 2>&1 1>-
+
+config_load network
+
+config_foreach bind_mac device

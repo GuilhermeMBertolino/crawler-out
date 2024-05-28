@@ -1,0 +1,1 @@
+!function(n){n.su.modelManager.define("firewall",{type:"model",fields:[{name:"enable"},{name:"lanPing",mapping:"lan_ping"},{name:"wanPing",mapping:"wan_ping"}],proxy:{url:n.su.url("/admin/security_settings?form=new_enable")}})}(jQuery);

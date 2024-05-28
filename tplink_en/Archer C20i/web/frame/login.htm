@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<META http-equiv=Content-Type content="text/html; charset=utf-8" />
+<META http-equiv=Pragma content=no-cache>
+<META http-equiv=Expires content=0>
+<style type="text/css">
+body
+{
+	font-family:Arial, sans-serief;
+	background-color:#E5E5E5;
+	margin:0;
+	padding:0;
+}
+div.loginBox
+{
+	display: block;
+	position:relative;
+	margin-top:10%;
+	text-align:center;
+}
+.noteDiv
+{
+	color:gray;	
+	font-family:Arial;	
+	width:395px;	
+	text-align:left;	
+	margin:0 auto;	
+	font-size:14px;
+	font-weight:bold;
+}
+#note
+{
+	display:inline-block;
+	vertical-align:top;
+	_display:inline;
+	_zoom:1;
+	width:50px;
+	font-weight:bold;
+}
+#tip
+{
+	display:inline-block;
+	vertical-align:top;
+	_display:inline;
+	_zoom:1;
+	width:340px;
+}
+div.panelThre
+{
+	margin-top:10px;
+}
+div.picDiv
+{
+	width:395px;
+	height:276px;
+	background:url(../img/login/bg2.png);
+	position:relative;
+}
+input.pcPassword
+{
+	width:300px;
+	height:50px;
+	line-height:50px;
+	padding-left:20px;
+}
+div.PCBtnDiv
+{
+	position:relative;
+	margin-top:20px;
+}
+img.logoPic
+{
+	width:100%;
+}
+/*topLogo
+{
+	background:url(../img/login/top_bg.jpg);
+	height:90px;
+}*/
+ul
+{
+	padding:60px 0 0 0;
+	margin:0;
+	list-style:none;
+}
+ul li
+{
+	height:34px;
+	width:222px;
+}
+li.unLi
+{
+	background:url(../img/login/idunselect.png);
+}
+li.pwLi
+{
+	background:url(../img/login/pwunselect.png);
+}
+li.blank
+{
+	height:15px;
+}
+button.loginBtn
+{
+	border:none;
+	height:34px;
+	display:inline-block;
+	width:113px;
+	margin-top:30px;
+	background:url(../img/login/login.png);
+	cursor:pointer;
+}
+input.text
+{
+	border:0;
+	height:26px;
+	line-height:26px;
+	width:175px;
+	padding:0;
+	margin:4px 0 0 30px;
+	font-size:14px;
+	color:#6a6969;
+	font-family:"Verdana","Arial";
+	outline: none;
+}
+#copyright
+{
+	-webkit-text-size-adjust:none;
+	font-size:9px;
+	color:#6a6969;
+	font-family:"Verdana";
+	margin-top:40px;
+	display:inline-block;
+}
+.nd	
+{
+	display: none !important;
+}
+</style>
+
+<script type="text/javascript">
+
+var url = window.location.href;
+if (url.indexOf("tplinklogin.net") >= 0)
+{
+    url = url.replace("tplinklogin.net", "tplinkwifi.net");
+    window.location = url;
+}
+
+var isLocked = false;
+
+deleteCookie("Authorization");
+if (window.parent != window)
+{
+	var refresh = function(domain, port, frame, page) {
+		if ($.local) location.reload(true);
+			else {
+				var ret = window.parent.location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+				window.parent.location.href = ret[1] + "://" + (domain ? domain : ret[2]) + (port ? ":" + port : (ret[3] ? ret[3] : "")) + "/" + (frame ? frame : (ret[4] ? ret[4] : "")) + (page ? "#__" + page.match(/\w+\.htm$/) : "");
+			}
+	}
+	refresh();
+}
+
+function Base64Encoding(input) 
+{
+	var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	var output = "";
+	var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+	var i = 0;
+	input = utf8_encode(input);
+	while (i < input.length) 
+	{
+		chr1 = input.charCodeAt(i++);
+		chr2 = input.charCodeAt(i++);
+		chr3 = input.charCodeAt(i++);
+		enc1 = chr1 >> 2;
+		enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+		enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+		enc4 = chr3 & 63;
+		
+		if (isNaN(chr2)) 
+		{
+			enc3 = enc4 = 64;
+		} 
+		else if (isNaN(chr3)) 
+		{
+			enc4 = 64;
+		}
+		output = output + keyStr.charAt(enc1) + keyStr.charAt(enc2) + keyStr.charAt(enc3) + keyStr.charAt(enc4);
+	}
+	return output;
+}
+
+function utf8_encode (string) 
+{
+	string = string.replace(/\r\n/g,"\n");
+	var utftext = "";
+	
+	for (var n = 0; n < string.length; n++) 
+	{
+		var c = string.charCodeAt(n);
+		if (c < 128) 
+		{
+			utftext += String.fromCharCode(c);
+		}
+		else if((c > 127) && (c < 2048)) 
+		{
+			utftext += String.fromCharCode((c >> 6) | 192);
+			utftext += String.fromCharCode((c & 63) | 128);
+		}
+		else
+		{
+			utftext += String.fromCharCode((c >> 12) | 224);
+			utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+			utftext += String.fromCharCode((c & 63) | 128);
+		}
+	}	
+	return utftext;
+}
+
+function PCWin(event)
+{
+	if (event.keyCode == 13)
+	{
+		PCSubWin();
+	}
+}
+
+function PCSubWin()
+{	
+	if (isLocked == true)
+	{
+		return ;
+	}
+		
+	var auth;
+	var password = $("pcPassword").value;
+	var userName = $("userName").value;
+
+/*	if (forbidAdminLogin == 1){
+		$("note").innerHTML = "NOTE:";
+		$("tip").innerHTML = "The router allows only one administrator to login at the same time, please try again later.";
+		return;
+	}*/
+
+	auth = "Basic "+Base64Encoding(userName+":"+password);
+	document.cookie = "Authorization=" + auth;
+	window.location.reload();
+}
+
+function deleteCookie(name) 
+{ 
+    var LargeExpDate = new Date ();
+    document.cookie = name + "=; expires=" +LargeExpDate.toGMTString(); 
+}
+
+function $(id)
+{
+	return document.getElementById(id);
+}
+
+function lockWeb(bLock)
+{
+	$("userName").disabled = bLock;
+	$("pcPassword").disabled = bLock;
+	$("pcPassword").blur();
+	$("userName").blur();
+}
+
+function resize()
+{
+	bodyObj = document.body;
+	bodyObj.style["width"] = (document.documentElement.clientWidth < 1000 ? 1000 : document.documentElement.clientWidth) + "px";
+}
+
+function pageLoad()
+{
+	resize();
+	window.onresize = resize;
+	var tip = $("tip"), tipStr="", note = $("note");
+	var unLi = $("unLi");
+	var pwLi = $("pwLi");
+	var userName = $("userName");
+	var pcPassword = $("pcPassword");
+	
+	deleteCookie("Authorization");
+
+	pcPassword.onfocus = function()
+	{
+		pwLi.style.background = "url(../img/login/pwselect.png)";
+	};
+	
+	pcPassword.onblur = function()
+	{
+		pwLi.style.background = "url(../img/login/pwunselect.png)";
+	};
+	   
+	userName.onfocus = function()
+	{
+		unLi.style.background = "url(../img/login/idselect.png)";
+	};
+	   
+	userName.onblur = function()
+	{
+		unLi.style.background = "url(../img/login/idunselect.png)";
+	};
+	
+	try { 
+		if (modelName) 
+		{
+				document.title = modelName; 
+				$("mnum").innerHTML = "Model No. " + modelName;	
+			}	
+		if(modelDesc)
+		{
+			$("mname").innerHTML = modelDesc;
+		}
+	}catch(e) {}
+
+	if (forbidAdminLogin == 1)
+	{
+		$("note").innerHTML = "NOTE:";
+		$("tip").innerHTML = "The router allows only one administrator to login at the same time, please try again later.";
+		forbidAdminLogin = 0;
+		authTimes = 0;
+		if (usernameIsAdmin) 
+		{
+			userName.value = "admin";
+			pcPassword.focus();
+			pcPassword.select();
+		}
+		lockWeb(true);
+		return;
+	}		
+	
+	if (authTimes > 0)
+	{
+		$("note").innerHTML = "NOTE:";
+		$("tip").innerHTML = "The username or password is incorrect, please try again.";
+	}	
+	
+	if (authTimes >= 10)
+	{
+		isLocked = true;
+		lockWeb(true);
+		$("note").innerHTML = "NOTE：";
+		tipStr = "You have exceeded ten attempts. Please try again in ";
+		count = 7200 - forbidTime;
+		$("tip").innerHTML = tipStr + count + "s.";		
+		window.setTimeout(function()
+		{
+			if (count < 1)
+			{
+				$("note").innerHTML = "";
+				$("tip").innerHTML = "";
+				isLocked = false;
+				lockWeb(false);
+				userName.focus();
+				deleteCookie("Authorization");
+				window.location.reload();
+				return ;
+			}
+			count--;
+			$("tip").innerHTML = tipStr + count + "s.";
+			window.setTimeout(arguments.callee, 1000);
+		}, 1000);
+	}
+	else
+	{
+		userName.focus();
+	}
+	if (usernameIsAdmin) 
+	{
+		userName.value = "admin";
+		pcPassword.focus();
+		pcPassword.select();
+	}
+}
+</script>
+</head>
+
+<body onkeypress="PCWin(event)" onload="pageLoad()">
+<div class="nd" style="height: 0; background: url(../img/login/1.jpg);"></div>
+<div style="height: 90px; background: #09C url(../img/login/top_bg.jpg) repeat-x;">
+	<a href="http://www.tp-link.com"><img id="logo" src="../img/login/top1_1.jpg" style="float: left;" border="0" /></a>
+	<div id="mod" style="height: 87px; margin: 0; text-align: right; overflow: hidden; background: url(../img/login/top1_2.jpg) no-repeat right;" >
+	<p id="mname" style="font-size: 16px; font-weight: bold; color: #fff; margin: 37px 24px 0 0; padding: 0;"></p>
+	<p id="mnum" style="font-size: 12px; font-weight: bold; color: #fff; margin: 2px 24px 0 0; padding: 0;"></p>
+	</div>
+	<img id="bhr" src="../img/login/top2.jpg" style="height: 3px; width: 100%; display: block;" />
+</div>
+<div class="loginBox">
+	<div class="noteDiv">
+		<span id="note"></span>
+		<span id="tip"></span>
+	</div>
+	<div class="panelThre" align="center">
+		<div class="picDiv">
+			<ul>
+				<li id="unLi" class="unLi"><input class="text" id="userName" type="text" maxlength="15" autocomplete="off"/></li>
+				<li class="blank"></li>
+				<li id="pwLi" class="pwLi"><input class="text" id="pcPassword" type="password" maxlength="15" autocomplete="off"/></li>
+			</ul>			
+			<button id="loginBtn" class="loginBtn" onclick="PCSubWin()"></button>
+			<div>
+				<label id="copyright">Copyright &copy; 2015 TP-LINK Technologies Co., Ltd. All rights reserved. </label>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>

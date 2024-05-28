@@ -1,0 +1,218 @@
+#!/bin/sh
+. /lib/config/uci.sh
+
+AVIRAMASTER_PROG="/etc/init.d/aviraservicemaster"
+AVIRAMASTER_PROG_START="$AVIRAMASTER_PROG start"
+AVIRAMASTER_PROG_STOP="$AVIRAMASTER_PROG stop"
+AVIRAMASTER_PROG_RESTART="$AVIRAMASTER_PROG restart"
+
+AVIRA_RUNTIME_CONF="/tmp/aviraruntime.conf"
+
+NTP_CHECKING_FLAG_FILE="/tmp/aviraservice_ntp_checking"
+NTPD_OUTPUT_FILE="/tmp/NTPServer"
+AVIRA_NTP_LIST_CONF_DEFAULT="ntp1.net.nortonlifelock.com;ntp2.net.nortonlifelock.com;ntp3.net.nortonlifelock.com;"
+
+AVIRA_LICENSE_CHECK_BEGIN="aviraserviceselector.licenseCheckBegin"
+AVIRA_LICENSE_CHECK_BEGIN_VAL_DEFAULT=10
+AVIRA_LICENSE_CHECK_BEGIN_VAL_SLOW=10
+AVIRA_LICENSE_CHECK_BEGIN_VAL_FAST=10
+AVIRA_LICENSE_CHECK_BEGIN_CONF_DEFAULT="${AVIRA_LICENSE_CHECK_BEGIN}=${AVIRA_LICENSE_CHECK_BEGIN_VAL_DEFAULT}"
+AVIRA_LICENSE_CHECK_BEGIN_CONF_SLOW="${AVIRA_LICENSE_CHECK_BEGIN}=${AVIRA_LICENSE_CHECK_BEGIN_VAL_SLOW}"
+AVIRA_LICENSE_CHECK_BEGIN_CONF_FAST="${AVIRA_LICENSE_CHECK_BEGIN}=${AVIRA_LICENSE_CHECK_BEGIN_VAL_FAST}"
+
+AVIRA_LICENSE_CHECK_INTERVAL="aviraserviceselector.licenseCheckInterval"
+AVIRA_LICENSE_CHECK_INTERVAL_VAL_DEFAULT=300
+AVIRA_LICENSE_CHECK_INTERVAL_VAL_SLOW=3600
+AVIRA_LICENSE_CHECK_INTERVAL_VAL_FAST=120
+AVIRA_LICENSE_CHECK_INTERVAL_CONF_DEFAULT="${AVIRA_LICENSE_CHECK_INTERVAL}=${AVIRA_LICENSE_CHECK_INTERVAL_VAL_DEFAULT}"
+AVIRA_LICENSE_CHECK_INTERVAL_CONF_SLOW="${AVIRA_LICENSE_CHECK_INTERVAL}=${AVIRA_LICENSE_CHECK_INTERVAL_VAL_SLOW}"
+AVIRA_LICENSE_CHECK_INTERVAL_CONF_FAST="${AVIRA_LICENSE_CHECK_INTERVAL}=${AVIRA_LICENSE_CHECK_INTERVAL_VAL_FAST}"
+
+homeshield_self() {
+	local changed="n"
+	local only_avira_info_status_changed="n"
+	local state=$(uci get avira.info.state -q)
+	local service=$(uci get avira.info.service -q)
+	local status=$(uci get avira.info.status -q)
+	
+	if [ "x$1" != "x$state" ]; then
+		uci set avira.info.state="$1"
+		changed="y"
+	fi
+
+	if [ "x$3" == "xunavailable" -o "x$3" == "xlibauc_available" ]; then
+		if [ "x$1" == "xpaid" ]; then
+			uci set avira.info.service="start"
+		else
+			uci set avira.info.service="stop"
+		fi
+	else
+		if [ "x$2" != "x$service" ]; then
+			uci set avira.info.service="$2"
+			changed="y"
+		fi
+	fi
+
+	if [ "x$3" != "x$status" ]; then
+		uci set avira.info.status="$3"
+		changed="y"
+	fi
+
+	if [ "x$1" == "x$state" ] && [ "x$2" == "x$service" ] && [ "x$3" != "x$status" ]; then
+		only_avira_info_status_changed="y"
+	fi
+
+	if [ "x$changed" == "xy" ]; then
+		uci commit avira
+		uci_commit_flash
+		$AVIRAMASTER_PROG_STOP
+		$AVIRAMASTER_PROG_START
+
+		### NOTE mv from avirasentinel lite/full script
+		if [ "$1" == "free" ]; then
+			echo 0 > /proc/pctl/payment
+			lua /usr/sbin/report_upload_components lite y $only_avira_info_status_changed
+		else
+			echo 1 > /proc/pctl/payment
+			lua /usr/sbin/report_upload_components full y $only_avira_info_status_changed
+		fi
+	fi
+}
+
+update() {
+	if [ ! -f /etc/config/avira ]; then
+	    touch /etc/config/avira
+	    uci set avira.info='global'
+	fi
+
+	if [ -n "$3" ]; then
+		echo "### homeshield_self aviraservice update: [$1] [$2] [$3]###" > /dev/console
+		homeshield_self $1 $2 $3
+		return
+	fi
+
+	local pay_decouple_support=$(uci get profile.@avira[0].pay_decouple_support -c "/etc/profile.d" -q)
+	if [ "${pay_decouple_support}" = "yes" ]; then
+		local changed="n"
+		local state=$(uci get avira.info.state -q)
+		local service=$(uci get avira.info.service -q)
+
+		echo "### aviraservice update: [$1] [$2] ###" > /dev/console
+		
+		if [ "x$1" != "x$state" ]; then
+			uci set avira.info.state="$1"
+			changed="y"
+		fi
+
+		if [ -n $2 ]; then
+			if [ "x$2" != "x$service" ]; then
+				uci set avira.info.service="$2"
+				changed="y"
+			fi
+		fi
+
+		if [ "x$changed" == "xy" ]; then
+			uci commit avira
+			uci_commit_flash
+			$AVIRAMASTER_PROG_STOP
+			$AVIRAMASTER_PROG_START
+
+			### NOTE mv from avirasentinel lite/full script
+			if [ "$1" == "free" ]; then
+				echo 0 > /proc/pctl/payment
+				lua /usr/sbin/report_upload_components lite y
+			else
+				echo 1 > /proc/pctl/payment
+				lua /usr/sbin/report_upload_components full y
+			fi
+		fi
+	else
+		local service=$(uci get avira.info.service -q)
+		
+		echo "### aviraservice update: [$1] [$service]###" > /dev/console
+		
+		if [ "x$1" != "x$service" ]; then
+			uci set avira.info.service="$1"
+			uci commit
+			uci_commit_flash
+			$AVIRAMASTER_PROG_STOP
+			$AVIRAMASTER_PROG_START
+
+			### NOTE mv from avirasentinel lite/full script
+			if [ "$1" == "stop" ]; then
+				echo 0 > /proc/pctl/payment
+				lua /usr/sbin/report_upload_components lite "y"
+			else
+				echo 1 > /proc/pctl/payment
+				lua /usr/sbin/report_upload_components full "y"
+			fi
+		fi
+	fi
+}
+
+ntp_update() {
+	### check and update ntp server for sentinel
+	if [ -e $NTP_CHECKING_FLAG_FILE ]; then
+		echo "###[aviraservice] ntp checking, don't call again." > /dev/console
+		exit
+	fi
+	touch $NTP_CHECKING_FLAG_FILE
+	sleep 5
+	local count=0
+
+	while [ "${count}" -lt 5 ]; do	
+		if [ -s $NTPD_OUTPUT_FILE ]; then
+			local process=$(uci_get_state avira.info.process)
+			local ntp_ip=$(cat $NTPD_OUTPUT_FILE)
+			local H1=$(($ntp_ip & 0x000000ff))
+			local H2=$((($ntp_ip & 0x0000ff00) >> 8))
+			local L1=$((($ntp_ip & 0x00ff0000) >> 16))
+			local L2=$((($ntp_ip & 0xff000000) >> 24))
+			ntp_ip="$H1.$H2.$L1.$L2"
+			
+			if [ x"full" = x$process ]; then
+				echo "### new ntp server:[$ntp_ip], reload avira sentinel[full]" > /dev/console
+				echo "ntp_server_list=$ntp_ip;$AVIRA_NTP_LIST_CONF_DEFAULT" > $AVIRA_RUNTIME_CONF
+				echo "$AVIRA_LICENSE_CHECK_BEGIN_CONF_DEFAULT" >> $AVIRA_RUNTIME_CONF
+	            echo "$AVIRA_LICENSE_CHECK_INTERVAL_CONF_DEFAULT" >> $AVIRA_RUNTIME_CONF
+				/etc/init.d/avirasentinelfull reload			
+				break
+			elif [ x"lite" = x$process ]; then
+				echo "### new ntp server:[$ntp_ip], reload avira sentinel[lite]" > /dev/console
+				echo "ntp_server_list=$ntp_ip;$AVIRA_NTP_LIST_CONF_DEFAULT" > $AVIRA_RUNTIME_CONF
+				echo "$AVIRA_LICENSE_CHECK_BEGIN_CONF_DEFAULT" >> $AVIRA_RUNTIME_CONF
+	            echo "$AVIRA_LICENSE_CHECK_INTERVAL_CONF_DEFAULT" >> $AVIRA_RUNTIME_CONF
+				/etc/init.d/avirasentinellite reload
+				break
+			fi
+		fi
+
+		count=$((count+1))
+		sleep 20
+	done
+	rm -f $NTP_CHECKING_FLAG_FILE
+	echo "###[aviraservice] ntp checking end" > /dev/console
+}
+
+set_check() {
+	### set avira runtime config
+	if [ "$1" = "fast" ]; then
+		sed -i "s/\($AVIRA_LICENSE_CHECK_BEGIN=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_BEGIN_VAL_FAST/" $AVIRA_RUNTIME_CONF
+		sed -i "s/\($AVIRA_LICENSE_CHECK_INTERVAL=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_INTERVAL_VAL_FAST/" $AVIRA_RUNTIME_CONF
+	elif [ "$1" = "slow" ]; then
+		sed -i "s/\($AVIRA_LICENSE_CHECK_BEGIN=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_BEGIN_VAL_SLOW/" $AVIRA_RUNTIME_CONF
+		sed -i "s/\($AVIRA_LICENSE_CHECK_INTERVAL=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_INTERVAL_VAL_SLOW/" $AVIRA_RUNTIME_CONF
+	else
+		### default
+		sed -i "s/\($AVIRA_LICENSE_CHECK_BEGIN=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_BEGIN_VAL_DEFAULT/" $AVIRA_RUNTIME_CONF
+		sed -i "s/\($AVIRA_LICENSE_CHECK_INTERVAL=\)\(.*\)/\1$AVIRA_LICENSE_CHECK_INTERVAL_VAL_DEFAULT/" $AVIRA_RUNTIME_CONF
+	fi
+}
+
+if [ "$1" == "update" ]; then
+	update $2 $3 $4
+elif [ "$1" == "ntp" ]; then
+	ntp_update
+elif [ "$1" == "check" ]; then
+	set_check $2
+fi

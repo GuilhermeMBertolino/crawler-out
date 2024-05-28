@@ -1,0 +1,100 @@
+#!/bin/sh
+
+[ "$DEVICE" == "lo" ] && exit 0
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /lib/domain_login/domain_login_core.sh
+
+if [ "$INTERFACE" == "lan" ]; then
+	case "$ACTION" in
+		ifup)
+			dlogin_iface_event "$INTERFACE" &
+		;;
+		*)
+			echo "ifdown no operation." 
+		;;
+	esac
+else
+	[ "$ACTION" == "ifup" ] && {
+		local iface="$INTERFACE"
+		local iface_wan="wan"
+		local iface_internet="internet"
+		local lan_addr=
+		local wan_addr=
+		local internet_addr=
+		local iface_addr=
+		local dns_addr=
+		local wan_dns_addr=
+		local internet_dns_addr=
+		local mask=
+		local ip_list=
+
+		network_get_ipaddr lan_addr "$DLOGIN_LAN_IFACE"
+		network_get_subnet mask "$DLOGIN_LAN_IFACE"
+		if [ "$iface" != "$iface_wan" -a "$iface" != "$iface_internet" ] ; then
+			network_get_ipaddr iface_addr "$iface"
+			network_get_dnsserver dns_addr "$iface"
+		fi
+
+		ubus list | grep -q network.interface.wan &&  network_get_ipaddr wan_addr "$iface_wan" && network_get_dnsserver wan_dns_addr "$iface_wan"
+		ubus list | grep -q network.interface.internet && network_get_ipaddr internet_addr "$iface_internet" && network_get_dnsserver internet_dns_addr "$iface_internet"
+
+		# in order to be as one single para without space passed into lua script, 
+		# connect internet_ip/wan_ip/pri_dns_ip/sec_dns_ip and so on with ',' for ip_list
+		for ip in $iface_addr $wan_addr $internet_addr $dns_addr $wan_dns_addr $internet_dns_addr; do
+			if [ -n "$ip" ] ; then
+				if [ -n "$ip_list" ] ; then
+					ip_list="$ip"",""$ip_list"
+				else
+					ip_list="$ip"
+				fi
+			fi
+		done
+
+		mask="${mask#*/}"
+
+		[ ! -e ${DLOGIN_LIB_PATH}/domain_login_tools.lua ] && exit 0
+
+		# chmod 777 ${DLOGIN_LIB_PATH}/domain_login_tools.lua
+
+		local sysmode
+		config_load sysmode
+		config_get sysmode sysmode mode "router"
+
+		local same_subnet=$(lua ${DLOGIN_LIB_PATH}/domain_login_tools.lua checklist $lan_addr $ip_list $mask)
+		[ "$sysmode" = "router" -a "$same_subnet" = "true" ] && {
+			echo "lanIP($lan_addr/$mask) is conflict with wanIP/DnsIP($ip_list)" > /dev/console
+			local old_mask=
+			config_load network
+
+			# Before changing the lan ip address, it needs to record old lan mask
+			config_get old_mask "$DLOGIN_LAN_IFACE" netmask
+
+			# Set conflict true before change the lan address
+			lua $DLOGIN_LIB_PATH/domain_login_config.lua $DLOGIN_MOD_NAME tp_domain conflict on
+			lua $DLOGIN_LIB_PATH/domain_login_config.lua $DLOGIN_MOD_NAME tp_domain old_addr $lan_addr
+			lua $DLOGIN_LIB_PATH/domain_login_config.lua $DLOGIN_MOD_NAME tp_domain old_mask $mask
+
+			# before changing the lan ip address, pre get new lan ip
+			local rslt=$(lua ${DLOGIN_LIB_PATH}/domain_login_tools.lua getnew $ip_list $mask)
+			[ -n "$rslt" -a "$rslt" != "false" ] && {
+				local new_addr new_mask
+				new_addr=${rslt%/*}
+				new_mask=${rslt#*/}
+
+				#update new lan ip addr,move it back from "dlogin_network_do"
+				lua $DLOGIN_LIB_PATH/domain_login_config.lua $DLOGIN_MOD_NAME tp_domain new_addr $new_addr
+
+				# Domain login ip conflict tips flow
+				echo "lanIP will change to $rslt" > /dev/console
+				eval "/usr/sbin/domain_login conflict $lan_addr $old_mask $new_addr $new_mask"
+
+				# Clear web session
+				lua ${DLOGIN_LIB_PATH}/domain_login_tools.lua ksess
+				sleep 2
+				lua ${DLOGIN_LIB_PATH}/domain_login_tools.lua ipchg $new_addr $new_mask
+			}
+		}
+	}
+fi

@@ -1,0 +1,81 @@
+<div class="titleBar">
+    <a id="back" url="lanSettings.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.menu_str.dhcpclilist%>
+        </script>
+    </h1>
+</div>
+
+<div class="section-title mt15">
+    <script type="text/html" class="title-string">
+        <%=$.tpLang.dhcp_nstr.t_clientNum%>
+    </script>
+    <span class="dhcp-n"></span>
+</div>
+<div id="dhcp-clients-list" class="info-list">
+
+</div>
+
+<script type="text/javascript">
+    (function() {
+        $.tpLocal('title-string', $.tpLang);
+        $('.titleBar').titleBar();
+
+        init();
+
+        function init() {
+            var listNum = 0;
+            var dhcpClientList = $.act(ACT_GL, LAN_HOST_ENTRY, null, null);
+            if (!$.exe()) {
+                $.each(dhcpClientList, function(index) {
+                    if (this.leaseTimeRemaining !== '0') {
+                        listNum++;
+                        $('#dhcp-clients-list').append(
+                                '<div class="section-container">'+
+                                '<div class="section-box">'+
+                                '<div class="device-div">'+
+                                '<div class="device-label">'+
+                                '<span class="sprite grid-row-device"></span>'+
+                                '</div>'+
+                                '<div class="device-content">'+
+                                '<div class="device-line">'+
+                                '<div class="device-info">'+
+                                '<div class="device-info-name">'+this.hostName+'</div>'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">'+$.tpLang.s_str.macaddr+'</span>'+
+                                '<span class="device-info-text device-info-mac">'+this.MACAddress+'</span>'+
+                                '</div>'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">'+$.tpLang.dhcp_nstr.t_assignIP+'</span>'+
+                                '<span class="device-info-text">'+this.IPAddress+'</span>'+
+                                '</div>'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">'+$.tpLang.dhcp_nstr.t_lease+'</span>'+
+                                '<span class="device-info-text">'+getTime(this.leaseTimeRemaining)+'</span>'+
+                                '</div></div>'+
+                                '</div></div></div></div>');
+                    }
+                });
+
+                $.each($('.device-div'), function() {
+                    $.addDeviceBlock(this);
+                });
+                if (listNum == 0) {
+                    $('#dhcp-clients-list').addClass('nd');
+                }
+                $('.dhcp-n').text(listNum);
+            }
+        }
+        function getTime(time) {
+            hours = parseInt((time) / (60 * 60), 10);
+            hours = hours < 10 ? '0' + hours : hours;
+            minutes = parseInt(((time) / 60), 10) % 60;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = (time) % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            leaseTime = hours + ":" + minutes + ":" + seconds;
+            return leaseTime;
+        }
+    })();
+</script>

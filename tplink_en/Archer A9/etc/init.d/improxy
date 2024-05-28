@@ -1,0 +1,120 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2014 The Linux Foundation. All rights reserved.
+# Copyright (C) 2010-2014 OpenWrt.org
+
+START=99
+STOP=10
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+CONF_FILE="/etc/improxy.conf"
+
+improxy_pinstance() {
+	local upstream downstream ipv4 pppv4
+
+	#default WAN
+	config_load network
+	config_get ifname wan ifname
+	config_get wantype  wan wan_type
+	config_get wanproto wan proto
+
+	if [ "$wantype" = "pppoe" -o "$wantype" = "pppoeshare" ] ; then
+		if [ "$wantype" = "pppoe" ]; then
+			local pppif="pppoe-internet" # Ugly, we should get the pppoe interface dynamicly.
+		else
+			local pppif="share-internet" # Ugly, we should get the pppoe interface dynamicly.
+		fi
+		pppv4=`ip addr show "$pppif" | grep "inet "`
+        	if [ -n "$pppv4" ]; then
+			upstream=$pppif
+        	fi
+        	if [ "$wanproto" = "none" ] ; then
+            		local macaddr=$(ip link show "$ifname" | grep ether | cut -d' ' -f6)
+            		local byte5=$(echo "$macaddr" | cut -d':' -f5)
+            		local byte6=$(echo "$macaddr" | cut -d':' -f6)
+            		ip addr add $(printf "169.254.%d.%d" "0x$byte5" "0x$byte6")/16 dev "$ifname"
+            		ip route del 169.254.0.0/16
+		fi			
+		[ -n "$upstream" ] && echo -e "upstream \t$upstream" >>$CONF_FILE
+		upstream=$ifname
+	else
+		upstream=$ifname
+	fi
+
+	ipv4=`ip addr show $upstream |grep "inet "`
+	if [ -n "$ipv4" ];then
+		echo -e "upstream \t$upstream" >>$CONF_FILE
+	fi
+	
+	#default LAN
+	config_get downstream lan ifname
+	echo -e "downstream \t$downstream" >>$CONF_FILE
+	
+	if [ -n "$ipv4" -o -n "$pppv4" ];then
+    		echo -e "igmp \tenable \tversion \t$1" >>$CONF_FILE
+	else                               
+    		echo -e "igmp \tdisable \tversion \t$1" >>$CONF_FILE
+	fi 
+}
+
+igmp_add_fw_rules() {
+	local r1 r2 r3
+	
+	r1=$(fw list 4 f zone_wan|grep "\-p igmp")
+	[ -z "$r1" ] && fw add 4 f zone_wan ACCEPT ^ { -p igmp }
+	
+	r2=$(fw list 4 f zone_wan|grep "\-d 224.0.0.0/4")
+	[ -z "$r2" ] && fw add 4 f zone_wan ACCEPT ^ { -p udp -d 224.0.0.0/4 }
+	
+	r3=$(fw list 4 f zone_wan_forward|grep "\-d 224.0.0.0/4")
+	[ -z "$r3" ] && fw add 4 f zone_wan_forward zone_lan_ACCEPT ^ { -p udp -d 224.0.0.0/4 }
+}
+
+igmp_del_fw_rules() {
+	fw del 4 f zone_wan ACCEPT { -p igmp }
+	fw del 4 f zone_wan ACCEPT { -p udp -d 224.0.0.0/4 }
+	fw del 4 f zone_wan_forward zone_lan_ACCEPT { -p udp -d 224.0.0.0/4 }
+}
+
+start() {
+#	local status
+#	config_load network
+	local igmp_enable 
+	local igmp_version
+	config_load iptv
+	
+#	config_get status "lan" igmp_snooping
+	config_get igmp_enable "iptv" igmp_enable 
+#	if [ "$status" = "1" -a "$iptv_on" = "on" ]; then
+	if [ "$igmp_enable" = "on" ]; then
+		config_get igmp_version "iptv" igmp_version "2"
+		echo $igmp_version > /proc/sys/net/ipv4/conf/all/force_igmp_version
+		echo 60 > /proc/sys/net/ipv4/igmp_max_memberships
+		
+		igmp_add_fw_rules			
+		
+		echo "" >$CONF_FILE
+		improxy_pinstance $igmp_version
+
+		echo -e "mld \tenable" >>$CONF_FILE
+		
+		service_start /usr/sbin/improxy -c $CONF_FILE -p "/var/run/improxy.pid"
+	else
+		igmp_del_fw_rules
+		echo 2 > /proc/sys/net/ipv4/conf/all/force_igmp_version
+	fi
+	
+	return 0
+}
+
+stop() {
+	config_load network
+	config_get ifname wan ifname
+    local macaddr=$(ip link show "$ifname" | grep ether | cut -d' ' -f6)
+    local byte5=$(echo "$macaddr" | cut -d':' -f5)
+    local byte6=$(echo "$macaddr" | cut -d':' -f6)
+    ip addr del $(printf "169.254.%d.%d" "0x$byte5" "0x$byte6")/16 dev "$ifname"
+	service_stop /usr/sbin/improxy
+	return 0
+}
+

@@ -1,0 +1,33 @@
+state="off"
+
+obtain_state() {
+	local disabled
+	local dev="$1"
+	config_get disabled $1 disabled
+
+	if [ "$ACTION" = "released" -a "$BUTTON" = "wireless" -a $SEEN -ge 2 ]; then
+		if [ "$disabled" = "off" ]; then
+			state="on"
+			ledcli WIFI2G_OFF
+			ledcli WIFI5G_OFF
+			ledcli WPS_OFF
+		else
+			ledcli WIFI2G_ON
+			ledcli WIFI5G_ON
+		fi
+	fi
+}
+
+do_toggle() {
+    local dev="$1"
+
+    if [ "$ACTION" = "released" -a "$BUTTON" = "wireless" -a $SEEN -ge 2 ]; then
+        uci set wireless.$dev.disabled=$state
+        wifi_commit
+    fi
+}
+
+config_load wireless
+config_foreach obtain_state wifi-device
+config_foreach do_toggle wifi-device
+[ "$ACTION" = "released" -a "$BUTTON" = "wireless" -a $SEEN -ge 2 ] && wifi

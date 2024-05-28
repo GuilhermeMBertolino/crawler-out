@@ -1,0 +1,42 @@
+#!/bin/sh
+
+is_calibrated(){
+	[ -f /tmp/dut_is_not_cal ] && echo "false" || echo "true"
+}
+
+if [ "$(is_calibrated)" = "true" ]; then
+	if [ "$(uci get ledctrl.GENERAL.enable)" == "off" -a -f "/tmp/led_enable" ]
+	then
+		rm -f /tmp/led_enable
+	fi
+
+	if [ "$(uci get ledctrl.GENERAL.enable)" == "on" ]
+	then
+		uci set ledctrl.GENERAL.enable="off"
+	else
+		uci set ledctrl.GENERAL.enable="on"
+	fi
+
+
+	if [ "$(uci get ledctrl.GENERAL.enable)" == "off" -a "$(uci get ledctrl.NIGHT.enable)" == "on" ]
+	then
+		touch /tmp/led_enable
+		ledcli NIGHT
+		return 0
+	fi
+
+	uci commit ledctrl
+	ledcli GENERAL
+	
+else
+	if [ ! -e /tmp/btn_check ]; then
+		echo 0 > /tmp/btn_check
+	fi
+	ret=$(cat /tmp/btn_check)
+	ret=$(($ret | 0x4))
+	echo $ret > /tmp/btn_check
+fi	
+
+
+
+

@@ -1,0 +1,80 @@
+#!/bin/sh /etc/rc.common
+
+START=66
+STOP=34
+
+start () {
+		local mode=$(uci get sysmode.sysmode.mode)
+		if [ "x$mode" != "xrouter" ]; then
+			return 0
+		fi
+
+        export LD_LIBRARY_PATH=/usr/lib/avira:$LD_LIBRARY_PATH
+        export PATH=/usr/bin/avira:$PATH
+		local username=$(uci get cloud_config.device_status.accountid)
+		local userid=$(echo "$username" | md5sum)
+		userid=${userid:0:32}
+		
+		local deviceid=$(echo "dev_id:"$(getfirm DEV_ID) | md5sum)
+		deviceid=${deviceid:0:32}
+		
+		local hardwareid=$(echo $userid$deviceid | md5sum)
+		hardwareid=${hardwareid:0:32}
+
+		local model=$(getfirm MODEL)
+		local hw_version=$(getfirm HARDVERSION)
+		local sw_version=$(getfirm SOFTVERSION)
+
+		local paired=$(uci get cloud_config.device_status.bind_status)
+		if [ "$paired" == "1" ]; then
+			paired="true"
+		else 
+			paired="false"
+		fi
+		
+		local activated="true"
+		
+		local gateway=$(uci get sysmode.sysmode.mode)
+		if [ "$gateway" == "router" ]; then
+			gateway="true"
+		else 
+			gateway="false"
+		fi
+		
+		#tmp solution
+		local tmp_hardwareid
+		tmp_hardwareid=${hardwareid:0:4}"-"
+		tmp_hardwareid=${tmp_hardwareid}${hardwareid:4:4}"-"
+		tmp_hardwareid=${tmp_hardwareid}${hardwareid:8:4}"-"
+		tmp_hardwareid=${tmp_hardwareid}${hardwareid:12:4}"-"
+		tmp_hardwareid=${tmp_hardwareid}${hardwareid:16:4}"-"
+		tmp_hardwareid=${tmp_hardwareid}${hardwareid:20:4}
+		tmp_hardwareid=$(echo $tmp_hardwareid | tr 'a-z' 'A-Z')
+		
+		echo "# this file is generated automatically, don't edit" > /tmp/avira.conf
+		echo "paired=$paired" >> /tmp/avira.conf
+		echo "activated=$activated" >> /tmp/avira.conf
+		echo "userid=$userid" >> /tmp/avira.conf
+		echo "hardwareid=$hardwareid" >> /tmp/avira.conf
+		echo "deviceid=$deviceid" >> /tmp/avira.conf
+		echo "gateway=$gateway" >> /tmp/avira.conf
+		echo "hw_model=$model $hw_version" >> /tmp/avira.conf
+		echo "sw_version=$sw_version" >> /tmp/avira.conf
+
+		local avirasentinelfull_ramlimitmb=$(uci get profile.@avira[0].avirasentinelfull_ramlimitmb -c "/etc/profile.d" -q)
+		local avirasentinellite_ramlimitmb=$(uci get profile.@avira[0].avirasentinellite_ramlimitmb -c "/etc/profile.d" -q)
+		
+		if [ -n "$avirasentinelfull_ramlimitmb" ]; then
+			echo "avirasentinelfull.ramlimitmb=$avirasentinelfull_ramlimitmb" >> /tmp/avira.conf
+		fi
+
+		if [ -n "$avirasentinellite_ramlimitmb" ]; then
+			echo "avirasentinellite.ramlimitmb=$avirasentinellite_ramlimitmb" >> /tmp/avira.conf
+		fi
+		
+        service_start /usr/bin/avira/aviraserviceselector/aviraserviceselector
+}
+
+stop() {
+        service_stop /usr/bin/avira/aviraserviceselector/aviraserviceselector
+}

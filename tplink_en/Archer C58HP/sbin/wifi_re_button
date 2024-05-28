@@ -1,0 +1,114 @@
+#!/bin/sh
+# Copyright (c) 2017 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author  : Hung Yu Chen <hungyu.chen@tp-link.com>
+# Date    : 11 May 2017
+
+. /lib/functions.sh
+
+WIFI_RE_BUTTON_PID="/var/run/wifi_re_button.pid"
+
+config_load sysmode
+config_load wireless
+
+local pid sysmode
+
+[ -e ${WIFI_RE_BUTTON_PID} ] && {
+        local pid=$(cat ${WIFI_RE_BUTTON_PID})
+        echo "$0: Kill pid $pid." > /dev/console
+        [ -n "$pid" ] && kill -9 $pid
+        rm -f ${WIFI_RE_BUTTON_PID}
+}
+echo $$ > $WIFI_RE_BUTTON_PID
+echo "$0: my pid $$." > /dev/console
+
+sleep 2
+
+bringup_wifi() {
+	local disabled
+	config_get_bool disabled $1 disabled "1"
+	if [ "$disabled" == "1" ]; then
+		uci set wireless.$1.disabled="off"
+	fi
+}
+
+bringup_vap() {
+	local enable guest
+	config_get_bool enable $1 enable
+	config_get_bool guest $1 guest "0"
+	if [ "$guest" == "0" -a "$enable" == "0" ]; then
+		if [ "$1" != "ath12" ]; then
+			uci set wireless.$1.enable="on"
+		fi
+	fi
+}
+
+fixup_vap() {
+	local key
+	config_get key $1 psk_key
+	if [ "$key" == "" ]; then
+		uci set wireless.$1.encryption="none"
+	fi
+}
+
+
+config_get sysmode sysmode mode
+
+if [ "$sysmode" != "re" ]; then
+	uci set sysmode.sysmode.mode="re"
+fi
+config_foreach bringup_wifi wifi-device
+config_foreach bringup_vap wifi-iface
+config_foreach fixup_vap wifi-iface
+uci commit
+#wifi down
+wifi reload
+
+for dir in /var/run/wpa_supplicant-*; do
+	[ -d "$dir" ] || continue
+	pid=/var/run/wps-hotplug-${dir#"/var/run/wpa_supplicant-"}.pid
+
+	#[ "`wpa_cli -p $dir status| grep wpa_state| cut -d = -f 2`" != "COMPLETED" ] || continue
+
+	local num=$((`wpa_cli -p $dir list_networks| wc -l`-2))
+	until [ "$num" -le 0 ]; do
+		num=$(($num-1))
+		wpa_cli -p $dir remove_network $num
+	done
+
+	wpa_cli -p "$dir" wps_pbc
+	[ -f $pid ] || {
+		wpa_cli -p"$dir" -a/lib/wifi/wps-supplicant-update-uci -P$pid -B
+	}
+done
+
+for i in `seq 0 1 4`; do
+	if [ "`find /var/run/ -name wps-hotplug-* -type f`" != "" ]; then
+		break
+	else
+		sleep 1
+	fi
+done
+
+local wait=0
+	while [ "`find /var/run/ -name wps-hotplug-* -type f`" != "" ]
+	do
+	echo "[RE]wait WPS process...($wait)" > /dev/console
+	sleep 1
+	wait=$(($wait+1))
+	if [ "$wait" -gt 120 ]; then
+		break
+	fi
+	done
+
+if [ "$sysmode" != "re" -a -n "$sysmode" -a -f  /etc/change_config ]; then
+	/etc/change_config "re" "$sysmode" 
+else
+	uci_commit_flash
+fi
+
+if [ "$sysmode" != "re" ]; then
+	reboot
+else
+	wifi reload
+fi
+

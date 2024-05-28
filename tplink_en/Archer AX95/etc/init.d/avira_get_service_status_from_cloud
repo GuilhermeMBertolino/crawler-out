@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=99
+
+start () {
+	local mode=$(uci get sysmode.sysmode.mode)
+	if [ "x$mode" != "xrouter" ]; then
+		return 0
+	fi
+#	local mode=$(uci get avira.info.status)
+#	if [ "$mode" == "unavailable" ]; then
+#		echo "Now avira status is unavailable! Skip request from cloud when boot!" > /dev/console
+#		return 0
+#	fi 
+    report_get_device_status&
+}
+
+stop() {
+	echo "report_get_device_status boot stop!" > /dev/console
+	crontab -l | grep -v "report_get_device_status" | crontab -
+}

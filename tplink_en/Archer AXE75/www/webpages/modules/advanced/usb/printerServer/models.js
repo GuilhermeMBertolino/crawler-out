@@ -1,0 +1,1 @@
+!function(e){e.su.modelManager.define("printerSharing",{type:"model",fields:[{name:"enable"},{name:"printerCount"},{name:"name"}],convert:function(e){return"on"===e.enable?e.enable=1:"off"===e.enable&&(e.enable=0),e},serialize:function(e){return 1===e.enable?e.enable="on":0===e.enable&&(e.enable="off"),e},proxy:{url:e.su.url("/admin/print_server")}})}(jQuery);

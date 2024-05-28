@@ -1,0 +1,26 @@
+#!/bin/sh
+
+if [ "$(nvram kget rftestflag)" == "1" ]; then
+	# rmmod blockingx to release module space for WLTEST wl.ko
+	/etc/init.d/url_class stop
+	/etc/init.d/parental_control stop
+	rmmod xt_pctl.ko
+	rmmod blockingx.ko
+
+	# kill acsd2, it may change the channel or stop TX.
+	# delete pid file of acsd2 at /tmp/dm/ first, or debug_monitor will start acsd2
+	acsd_pid=`ps|grep acsd2|grep -v grep|awk -F " " '{print $1}'`
+	rm -rf /tmp/dm/${acsd_pid}
+	killall acsd2
+
+	rmmod wl
+	rmmod dhd
+	rmmod igs
+	rmmod emf
+	rmmod hnd
+	nvram kset rftestflag=0
+	mv /tp_data/radio_bk /tmp/radio_bk_tmp
+	wifi start
+	hapdsupport -f
+	mv /tmp/radio_bk_tmp /tp_data/radio_bk
+fi

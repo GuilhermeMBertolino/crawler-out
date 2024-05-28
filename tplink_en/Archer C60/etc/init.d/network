@@ -1,0 +1,97 @@
+#!/bin/sh /etc/rc.common
+
+START=25
+STOP=90
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+NETWORK_MOD_ID=290
+LOGX_ID_NETIFD_START=200
+LOGX_ID_NETIFD_STOP=201
+
+start() {
+	local pid=""
+
+	stop
+
+	# update wan's mac address and bind to switch port
+	/sbin/ifmac
+	/sbin/switch_bind_mac
+
+	[ -e /proc/sys/kernel/core_pattern ] && {
+		ulimit -c unlimited
+		echo '/tmp/%e.%p.%s.%t.core' > /proc/sys/kernel/core_pattern
+	}
+
+	#grep -q '^statistics' /proc/modules || insmod statistics
+	service_start /sbin/netifd
+
+	pid=$(pidof netifd)
+	if [ x"$pid" != x ]; then
+		logx -p $pid $NETWORK_MOD_ID $LOGX_ID_NETIFD_START
+	fi
+	start_ipv6
+}
+start_ipv6(){
+	config_load protocol
+	config_get is_enable wanv6 enable
+
+	config_load /etc/config/network
+	config_get wan_type wanv6 wan_type
+	config_get ifname wanv6 ifname
+	config_get proto wanv6 proto
+	
+	# enable ipv6 if config is enable 
+	case "$is_enable" in 
+	on)
+		while [ -n "$wan_type" ]
+		do 
+			[ -n "$(ubus list | grep 'network.interface.wanv6')" ] && break;
+			sleep 1
+		done
+		
+	    echo "0" > /proc/sys/net/ipv6/conf/all/disable_ipv6
+	    [ -f /proc/sys/net/ipv6/conf/$ifname/disable_ipv6 ] && [ $proto = "dhcp6c" ] && {
+			echo 1 > /proc/sys/net/ipv6/conf/$ifname/disable_ipv6
+			sleep 1
+			echo 0 > /proc/sys/net/ipv6/conf/$ifname/disable_ipv6
+	    }
+	    ;;
+	off)
+	    # disable wan ipv6
+	    echo "1" > /proc/sys/net/ipv6/conf/all/disable_ipv6
+	    ;;
+	*) 
+	    ;;
+	esac
+}
+restart() {
+	start
+}
+
+shutdown() {
+	stop
+}
+
+stop() {
+	local pid=$(pidof netifd)
+
+	ifdown -a
+	if [ x"$pid" != x ]; then
+		sleep 1
+	fi
+
+	#/sbin/wifi down
+	service_stop /sbin/netifd
+	#grep -q '^statistics' /proc/modules && rmmod statistics
+	(ubus list | grep -q "tfstats") && ubus call tfstats delete "{'ip': 'all'}"
+
+	if [ x"$pid" != x ]; then
+		logx -p $pid $NETWORK_MOD_ID $LOGX_ID_NETIFD_STOP
+	fi
+}
+
+reload() {
+	ubus call network reload
+}

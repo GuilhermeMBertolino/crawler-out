@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+boot()
+{
+	start
+}
+
+start()
+{
+	local nat_enable=$(uci get nat.@nat_global[0].enable)
+	local hw_enable=$(uci get nat.@nat_global[0].hw_enable)
+	[ "$nat_enable" == "off" -o "$hw_enable" == "off" ] && {
+		stop
+		return
+	}
+	
+	$(ppacmd getppefpstatus | grep 'enable' -Eq) && return	
+	
+	echo "Enable the HW acceleration..." > /dev/console	
+	# echo enable > /proc/ppa/pae/accel
+	# echo enable > /proc/ppa/mpe/accel
+	ppacmd setppefp -f 1
+	ppacmd setswfp -f 1
+	
+	config_ppa	
+}	
+
+stop()
+{
+	$(ppacmd getppefpstatus | grep 'enable' -Eq) || return
+	
+	echo "Enable the SW acceleration..." > /dev/console	
+	# echo disable > /proc/ppa/pae/accel
+	# echo disable > /proc/ppa/mpe/accel
+	ppacmd setppefp -f 0
+	#ppacmd setswfp -f 1
+	
+	config_ppa
+}

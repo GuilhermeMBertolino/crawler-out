@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start () {
+	if [ ! -f /etc/config/sysmode ];then
+		touch /etc/config/sysmode
+		uci set sysmode.sysmode=global
+		uci set sysmode.sysmode.support=yes
+		uci set sysmode.sysmode.mode=router
+		uci commit
+		uci_commit_flash
+	fi 
+
+	local sysmode
+	config_load sysmode
+	config_get sysmode sysmode mode "router"
+
+	if [ "$sysmode" = "ap" ]; then
+		[ -d /sys/class/net/eth0.4094 ] || (vconfig add eth0 4094 && ifconfig eth0.4094 up)
+		brctl addif br-lan eth0.4094
+		/etc/init.d/smartip restart
+	fi
+	return 0
+}

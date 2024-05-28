@@ -1,0 +1,1 @@
+jQuery.su.moduleManager.define("alexa",{services:[],stores:[],models:[],views:["alexaView"],listeners:{"ev_on_launch":function(e,i,n,t,s,a,l){}},init:function(e,i,n,t,s,a){this.configViews({id:"alexaView",items:[]}),this.listen({}),this.control({})}},function(e,i,n,t,s,a){return{checkFileName:function(e,i){return a.vtype.validate(e,{vtype:"string_file",extension:i})}}});

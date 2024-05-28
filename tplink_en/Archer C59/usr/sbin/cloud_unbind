@@ -1,0 +1,11 @@
+#!/usr/bin/lua
+
+local cloud_account = require("luci.controller.admin.cloud_account")
+local uci   = require "luci.model.uci"
+local dbg   = require "luci.tools.debug"
+local uci_r = uci.cursor()
+
+local need_unbind = uci_r:get("cloud_config", "device_status", "need_unbind")
+if tonumber(need_unbind) == 1 then
+	cloud_account.cloud_unbind()
+end

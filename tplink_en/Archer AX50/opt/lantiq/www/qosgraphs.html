@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            /*.status_box{height:56px; }
+            .connection_status{width:96%;display: inline-block;padding:8px 12px; }
+            .green_bg{color: green;}
+            .gray_bg{color: gray;}
+            .connection_status label{display:block;margin:5px 0px 0px; color: #ffffff}
+            .home_bg{background:#847cc5 !important;}
+            .mrn_bg{background:#e66454 !important;}
+            .org_bg{background:#f0ad4e !important;}
+            .grn_bg{background:#00a489 !important;}
+            .blu_bg{background:#428bca !important;}
+            .ltgrn_bg{background:#79b260 !important;}
+            .pilot_bg{background:#7266ba !important;}            
+            .yel_bg{background:#f49b00 !important;}
+            .black_bg{background:#2f2f2f !important;}
+            .port_status{min-height: 1px;min-width:150px;float:left;margin:0px 4px;  }
+            .lanport{text-align: center;margin:0px 8px; }
+            .lanport>img{width:35px;}
+            .lanport p{font-family:arial;font-size:8px;color:#2e2e2e;  margin:5px auto; text-align: center;}
+            .chart-custom{padding-right: 0px;}
+            .html_widget .chart{width:98% !important;}
+            #g2, #g3, #g4 {
+                width:150px; height:120px;
+                display: inline-block;
+                margin: 1em;
+            }
+            .chart-legend li{
+                list-style: none;
+            }
+            .chart-legend li span{
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                margin-right: 5px;
+            }
+            .values{
+                padding-left: 55px;
+            }
+            #js-legend{
+                text-align: center;
+            }
+            .chart-legend{
+                list-style-type: none;
+                padding-left: 0px;
+            }
+            .chart-legend li {
+                display: inline-block;
+                margin-right: 10px;
+            }
+            .basichome_chatbody {
+                -moz-column-count:2; 
+                -webkit-column-count:2; 
+                column-count:2;
+            }
+            .chatitem {
+                display: inline-block;
+                padding: .25rem;
+                width: 100%; 
+            }
+            .chatitem_body {
+                position:relative;
+                display: block;
+            }*/
+        </style>
+    </head>
+    <body>
+        <div ng-controller="qosGraphsController">
+<!--Breadscrumbs starts here -->                                                                                                      
+    <div class="row ltq_breadcrumbs">                                                                                                     
+        <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+            <ng-switch on="$first">                                                                                                               
+                <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                    <div class="ltq_brd_home" >                                                                                                           
+                    <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                        <i class="fa fa-home"></i>                                                                                                            
+                            {{breadcrumb.name}}                                                                                                                   
+                    </a>                                                                                                                                  
+                    </div>                                                                                                                                
+                </div>                                                                                                                                
+
+                <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                    <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>                                                                                                                               
+                    <span ng-if ="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>                                                                                                                               
+                </div>                                                                                                                                 
+
+            </ng-switch>                                                                                                                            
+        </div>                                                                                                                                   
+    </div>                                                                                                                                  
+<!--Breadscrumbs ends here --> 
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="form-group">
+                    <label class="control-label col-lg-3 col-md-3">Interface</label>
+                    <div class="col-lg-6 col-md-6">
+                        <select id="DeviceIPInterface_Name" name="Name" class="form-control" ng-model="DeviceIPInterface.Name" ng-change="textChange('DeviceIPInterface.Name')" ng-options="obj.id as obj.name for obj in Name" ng-init="dropdownUrlRequest('DeviceIPInterface', 'Name', 'cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&amp;X_LANTIQ_COM_UpStream=true&amp;Name=')">
+                        </select>
+                    </div>                                                
+                </div>
+            </div>
+            <div class="chatitem">
+                <div class="chatitem_body">
+                    <occupancy-chart
+                        title="Occupancy Chart"
+                        icon="dsl-panel-icon" 
+                        color="green_bg"
+                        fillcolors='["rgba(255,0,0,0.5)", "rgba(118,31,100,0.5)", "rgba(221,91,130,0.5)", "rgba(150,191,168,0.5)", "rgba(190,118,121,0.5)", "rgba(118,31,100,0.5)", "rgba(221,91,130,0.5)", "rgba(150,191,168,0.5)"]'
+                        strokecolors='["rgba(255,0,0,0.8)", "rgba(118,31,100,0.8)", "rgba(221,91,130,0.8)", "rgba(150,191,168,0.8)", "rgba(190,118,121,0.8)", "rgba(118,31,100,0.8)", "rgba(221,91,130,0.8)", "rgba(150,191,168,0.8)"]'
+                        highlightfill='["rgba(255,0,0,0.75)", "rgba(118,31,100,0.75)", "rgba(221,91,130,0.75)", "rgba(150,191,168,0.75)", "rgba(190,118,121,0.75)", "rgba(118,31,100,0.75)", "rgba(221,91,130,0.75)", "rgba(150,191,168,0.75)"]'
+                        highlightstroke='["rgba(255,0,0,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)", "rgba(190,118,121,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)"]'
+                        url="cgi_get?Object=Device.QoS.QueueStats"
+                        units="%"
+                        pollinterval="5000"
+                        interface="interfacevalue"> 
+                    </occupancy-chart>
+                    <qos-chart
+                        title="Tx Time graph" 
+                        icon="dsl-panel-icon"
+                        color="green_bg"
+                        fillcolors='["rgba(255,0,0,0.2)", "rgba(118,31,100,0.2)", "rgba(221,91,130,0.2)", "rgba(150,191,168,0.2)", "rgba(190,118,121,0.2)", "rgba(118,31,100,0.2)", "rgba(221,91,130,0.2)", "rgba(150,191,168,0.2)"]'
+                        strokecolors='["rgba(255,0,0,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)", "rgba(190,118,121,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)"]'
+                        highlightfill='["rgba(255,0,0,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)", "rgba(190,118,121,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)"]'
+                        url="cgi_get?Object=Device.QoS.QueueStats"
+                        units="Packets/sec"
+                        pollinterval="5000"
+                        interface="interfacevalue"> 
+                    </qos-chart>
+                    <qos-chart1
+                        title="Rx Time graph" 
+                        icon="dsl-panel-icon"
+                        color="green_bg"
+                        fillcolors='["rgba(255,0,0,0.2)", "rgba(118,31,100,0.2)", "rgba(221,91,130,0.2)", "rgba(150,191,168,0.2)", "rgba(190,118,121,0.2)", "rgba(118,31,100,0.2)", "rgba(221,91,130,0.2)", "rgba(150,191,168,0.2)"]'
+                        strokecolors='["rgba(255,0,0,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)", "rgba(190,118,121,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)"]'
+                        highlightfill='["rgba(255,0,0,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)", "rgba(190,118,121,1)", "rgba(118,31,100,1)", "rgba(221,91,130,1)", "rgba(150,191,168,1)"]'
+                        url="cgi_get?Object=Device.QoS.QueueStats"
+                        units="Packets/sec"
+                        pollinterval="5000"
+                        interface="interfacevalue">
+                    </qos-chart1>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

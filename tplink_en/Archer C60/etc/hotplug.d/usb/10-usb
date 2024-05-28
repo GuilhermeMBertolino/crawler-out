@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Copyright (C) 2009 OpenWrt.org
+
+# echo ACTION=$ACTION, DEVPATH=$DEVPATH, SUBSYSTEM=$SUBSYSTEM, BUSNUM=$BUSNUM >/dev/console
+
+case "$BUSNUM" in
+    001)
+        USB="USB1"
+        ;;
+    003)
+        USB="USB3"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+[ $DEVNUM = "001" ] && exit 0
+
+case "$ACTION" in
+	add)
+        ledcli "$USB"_ON
+		;;
+	remove)
+        ledcli "$USB"_OFF
+		;;
+esac	
+		

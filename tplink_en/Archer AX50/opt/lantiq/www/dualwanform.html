@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="translation" class="hide">dualwanform</div>
+        <div ng-controller="dualwanFormController" ng-cloak>
+            <!--Breadscrumbs starts here -->                                                                                                      
+            <div class="row ltq_breadcrumbs">                                                                                                     
+                <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+                    <ng-switch on="$first">                                                                                                               
+                        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                            <div class="ltq_brd_home" >                                                                                                           
+                                <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                                    <i class="fa fa-home"></i>                                                                                                            
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </div>                                                                                                                                
+                        </div>                                                                                                                                
+
+                        <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                            <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                                {{breadcrumb.name}}                                                                                                               
+                            </span>                                                                                                                               
+                            <span ng-if ="breadcrumb.path != 'nothing' &&
+                                                $last == false">                                                                                                                              
+                                <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                                    <i></i>                                                                                                                               
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </span>                                                                                                                               
+                        </div>                                                                                                                                 
+
+                    </ng-switch>                                                                                                                            
+                </div>                                                                                                                                   
+            </div>                                                                                                                                  
+            <!--Breadscrumbs ends here --> 
+            <div class="subheader">
+                <div>
+                    <img src="images/icons/lan.png" class="iconDetails" alt="img">
+                </div>
+                <div style="margin-left:40px;"><h4 ng-bind="'dualwanform.headername' | translate"></h4></div>
+                <p ng-bind="'dualwanform.headerdescription' | translate"></p>
+            </div>
+            <div class="row" ng-show="multiwanformpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('multiwanformpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="multiwanformpopupval"></span>
+                </div>
+            </div>
+            <div class="row" ng-show="multiwanformpostpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('multiwanformpostpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="multiwanformpostpopupval"></span>
+                </div>
+            </div>
+	    <div class="help_toggle helpshow" ng-class="$root.scopevariable ? 'helpshow' : 'helphide'" ng-init="$root.scopevariable=true">
+                    <div class="help_txtcontent">
+                        <a helpfile="languages/*/{{'dualwanform.helpkey' | translate}}" ng-click="helpTextDetails($event)" href="">
+                            <i class="fa fa-info circle_bg"></i>
+                        </a>
+                        <div class="help_content" ng-include="$root.helpfile"></div>
+                    </div>
+            </div>
+            <div class="row no-margin-hr">
+                <form class="form-horizontal lantiq-form-text row" role="form" name="dualwanform" novalidate>
+                    <div class="col-lg-12 col-md-12">
+                        <div class="panel">
+                            <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/lan.png" alt="panel-icon"/></span><span ng-bind="'dualwanform.Multi WAN' | translate"></span></div>
+                            <div class="panel-body">
+
+                                <div class="row" ng-show="!DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled">
+                                    <div class="form-group col-lg-6 col-md-6">
+                                        <label class="control-label col-lg-6 col-md-6 col-sm-6" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.TProxy' | translate"></label>
+                                       <div class="col-sm-6">
+                                            <switch ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwan.TProxy" ng-click="DeviceX_LANTIQ_COM_MultiwanMultiwan.TProxy = !DeviceX_LANTIQ_COM_MultiwanMultiwan.TProxy;tproxyClick($event);textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTProxy');" ng-change="" id="DeviceX_LANTIQ_COM_MultiwanMultiwan_TProxy" name="TProxy" on="ON" off="OFF" ng-true-value="'1'" ng-false-value="'0'"></switch>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" ng-show="!DeviceX_LANTIQ_COM_MultiwanMultiwan.TProxy">
+                                    <div class="form-group col-lg-6 col-md-6">
+                                        <label class="control-label col-lg-6 col-md-6 col-sm-6" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.MPTCP' | translate"></label>
+                                        <div class="col-sm-6">
+                                            <switch ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled" ng-click="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled = !DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled;mptcpClick($event);textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCPEnabled');" ng-change="" id="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_Enabled" name="Enabled" on="ON" off="OFF" ng-true-value="'1'" ng-false-value="'0'"></switch>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled">
+                                    <div class="form-group required col-lg-3 col-md-3">
+                                        <div class="input-field col-sm-12">
+                                            <input id="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerIP" type="text" class="form-control" name='ServerIP'  ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.ServerIP" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCPServerIP')" placeholder=" "  ng-required="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled">
+                                            <label class="active required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.Server IP' | translate"></label>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerIP" ng-show="dualwanformstatus && dualwanform.ServerIP.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.ServerIP.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerIP" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerIPresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerIPval">
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group required col-lg-3 col-md-3">
+                                        <div class="input-field col-sm-12"> 
+                                            <input id="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerPort" type="text" class="form-control" name='ServerPort'  ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.ServerPort" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCPServerPort')" placeholder=" "  ng-required="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled">
+                                            <label class="active required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.Server Port' | translate"></label>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerPort" ng-show="dualwanformstatus && dualwanform.ServerPort.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.ServerPort.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerPort" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerPortresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP_ServerPortval">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-6 col-md-6">
+                                        <label class="control-label col-lg-6 col-md-6 col-sm-6" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.MPTCP.TCP Ping' | translate"></label>
+                                        <div class="col-sm-6">
+                                            <switch ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled" ng-click="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled = !DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled;tcpClick($event);textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPingEnabled');" ng-change="" id="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Enabled" name="TCPPingEnabled" on="ON" off="OFF"></switch>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled">
+                                    <div class="form-group required col-lg-3 col-md-3">                                        
+                                        <div class="input-field col-sm-12">
+                                            <input id="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_IP" type="text" class="form-control" name='IP'  ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.IP" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPingIP')" placeholder=" "  ng-required="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled">
+                                            <label class="active required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.TCPPing.TCP Ping IP' | translate"></label>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_IP" ng-show="dualwanformstatus && dualwanform.IP.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.TCPPing.IP.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_IP" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_IPresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_IPval">
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group required col-lg-3 col-md-3">                                        
+                                        <div class="input-field col-sm-12"> 
+                                            <input id="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Port" type="text" class="form-control" name='Port'  ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Port" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPingPort')" placeholder=" "  ng-required="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing.Enabled">
+                                            <label class="active required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.TCPPing.TCP Ping Port' | translate"></label>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Port" ng-show="dualwanformstatus && dualwanform.Port.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.TCPPing.Port.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Port" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Portresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanTCPPing_Portval">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="form-group required col-lg-6 col-md-6">
+                                        <label class="control-label col-lg-12 col-md-12 col-sm-12" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.Name' | translate"></label>
+                                        <div class="col-sm-12">
+                                            <select id="DeviceX_LANTIQ_COM_MultiwanMultiwanType_Name" class="form-control" name='dualwantype' ng-required="true" ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTypeName')" ng-options="obj.id as obj.name for obj in Name" ng-init="dropdownUrlRequest('DeviceX_LANTIQ_COM_MultiwanMultiwanType', 'Name', 'Name')">
+                                            </select>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_Name" ng-show="dualwanformstatus && dualwanform.dualwantype.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.Name.$error.required' | translate">
+
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_Name" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwan_Nameresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanType_Nameval">
+
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+ 				<div class="row">
+                                    <div class="form-group required col-lg-6 col-md-6">
+                                        <div class="input-field col-sm-12"> 
+                                            <input id="DeviceX_LANTIQ_COM_MultiwanMultiwanType_DestIp" ng-required="true" type="text" class="form-control" name='dualwantesturlipaddress'  ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanType.DestIp" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTypeDestIp')" placeholder="{{'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.DestIp.Enter IP Address'| translate}}"  ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/)(?:[0-9]$|[1-2][0-9]$|3[0-2]?)$/">
+                                            <label class="required active" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.Destination IP' | translate"></label>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_DestIp" ng-show="dualwanformstatus && dualwanform.dualwantesturlipaddress.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.DestIp.$error.required' | translate">
+                                            </span>
+                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_DestIp" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwan_DestIpresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwan_DestIpval">
+                                            </span>
+											<span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_DestIp" ng-show="dualwanformstatus && dualwanform.dualwantesturlipaddress.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.DestIp.$error.pattern' | translate"></span>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!--                                    <select id="source" multiple="multiple" name="source" ng-model="selected"  ng-options="obj.id as obj.name for obj in Interface" ng-init="dropdownUrl('DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections', 'Interface', 'cgi_get_filterbyfirstparamval?Object=Device.IP.Interface&X_LANTIQ_COM_UpStream=true&amp;Name=')">
+                                    
+                                                                        </select>-->
+                                    <div id="test" class="col-lg-6 col-xs-12">
+                                        <table width="100%" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td width="40%">
+                                                    <div class="selector-available">
+                                                        <h2 ng-bind="'Device.X_LANTIQ_COM_NwHardware.WANConnection.*.Internet Connections' | translate"></h2>
+                                                        <div class="selector-filter hide">\
+                                                            <table width="100%" border="0">
+                                                                <tr>
+                                                                    <td style="width:30px">
+                                                                        <i class="fa fa-search"></i>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div style="padding:10px 0 0;">
+                                                                            <input type="text" class="filter-input">
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                        <select multiple="multiple" class="filtered remaining">
+                                                        </select>
+                                                        <a href="#" class="selector-chooseall hide">Choose all</a>
+                                                    </div>
+                                                </td>
+                                                <td width="10%">
+                                                    <div class="selector-chooser">
+                                                        <a  class="selector-add" id="selector-add-id"><i class="fa fa-arrow-right btn-info"></i></a>
+                                                        <a  class="selector-remove" id="selector-remove-id"><i class="fa fa-arrow-left btn-info"></i></a>
+                                                    </div>
+                                                </td>
+                                                <td width="40%">
+                                                    <div class="selector-chosen">
+                                                        <h2 ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Multi WAN Entries' | translate"></h2>
+                                                        <div class="selector-filter right hide">
+                                                            <p>Select then click</p><span class="illustration"></span>
+                                                        </div>
+                                                        <select multiple="multiple" class="filtered target">
+                                                        </select>
+                                                        <a href="#" class="selector-clearall hide">Clear all</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>                                
+                                                                <!--                                <div class="row">
+                                                                    <div class="form-group required col-lg-6 col-md-6">
+                                                                        <label class="control-label col-lg-12 col-md-12 col-sm-12" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.Policy' | translate"></label>
+                                                                        <div class="col-sm-12">
+                                                                            <select id="DeviceX_LANTIQ_COM_MultiwanMultiwanType_Policy" class="form-control" name='dualwanpolicy' ng-required="true" ng-model="DeviceX_LANTIQ_COM_MultiwanMultiwanType.Policy" ng-change="textChange('DeviceX_LANTIQ_COM_MultiwanMultiwanTypePolicy')" ng-options="obj.id as obj.name for obj in Policy" ng-init="dropdownUrlRequest('DeviceX_LANTIQ_COM_MultiwanMultiwanType', 'Policy', 'Policy')">
+                                                                            </select>
+                                                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_Policy" ng-show="dualwanformstatus && dualwanform.dualwanpolicy.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.Type.Policy.$error.required' | translate">
+                                
+                                                                            </span>
+                                                                            <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwan_Policy" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwan_Policyresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwan_Policyval">
+                                
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>-->
+                                <!--  Advanced Option -->
+                                <div class="row">
+                                    <div class="form-group col-lg-6 col-md-6">
+                                        <label class="control-label col-lg-6 col-md-6 col-sm-6" ng-bind="'temp.Advanced' | translate"></label>
+                                        <div class="col-sm-6">
+                                            <switch ng-init="temp.Advanced=false" ng-model="temp.Advanced" ng-click="temp.Advanced = !temp.Advanced;" ng-change="" id="temp_Advanced" name="Advanced" on="ON" off="OFF" ng-true-value="'1'" ng-false-value="'0'"></switch>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--  Advanced Option -->
+                                <div class="row">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Interface' | translate"></label>
+                                            <div class="col-sm-3 col-lg-3" ng-repeat="interfaces in multiwanchildobjects">
+                                               <p><span ng-show="$index === 0 && DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name=='FailOver'"ng-bind="'dualwanform.primary' | translate"></span><span ng-show="$index !==0 && DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name =='FailOver'" ng-bind="'dualwanform.secondary' | translate" ></span><span ng-show="$index!==0 && DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name=='FailOver'">{{" "+$index}}</span>	</p>
+                                                <input id="interface" ng-change="textChange('{{interfaces.objectname + 'Interface'}}')" name="Interface" type="text" class="form-control" ng-model="interfaces.Interface" disabled="disabled">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Interface" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Interfaceresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Interfaceval">
+
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name=='LoadBalanced' || (DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name!='FailOver' && temp.Advanced)">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Weight' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="weights in multiwanchildobjects">
+                                                <input id="weight" ng-change="textChange('{{weights.objectname + 'Weight'}}')" name="Weight" ng-pattern="/^[0-9]*$/" type="text" min="0" class="form-control" ng-model="weights.Weight">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weightresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weightval">
+
+                                                </span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Weight.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weightminval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Weight.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Weight.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name=='LoadBalanced' || (DeviceX_LANTIQ_COM_MultiwanMultiwanType.Name!='FailOver' && temp.Advanced)">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Bandwidth' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="bandwidths in multiwanchildobjects">
+                                                <input id="bandwidth" ng-change="textChange('{{bandwidths.objectname + 'Bandwidth'}}')" name="Bandwidth" ng-pattern="/^[0-9]*$/" type="text" min="0" class="form-control" ng-model="bandwidths.Bandwidth">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidth" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidthresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidthval">
+
+                                                </span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidth" ng-show="dualwanformstatus && dualwanform.Bandwidth.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidthminval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Bandwidth" ng-show="dualwanformstatus && dualwanform.Bandwidth.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Bandwidth.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Reliability' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="reliability in multiwanchildobjects">
+                                                <input id="reliability" ng-change="textChange('{{reliability.objectname + 'Reliability'}}')" name="Reliability" ng-pattern="/^[0-9]*$/" type="text" class="form-control" ng-init="reliability.Reliability = 1" ng-model="reliability.Reliability">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Reliability" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Reliabilityresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Reliabilityval">
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Reliability" ng-show="dualwanformstatus && dualwanform.Reliability.$error.max" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Reliabilitymaxval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Reliability.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Reliability.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Count' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="count in multiwanchildobjects">
+                                                <input id="count" ng-change="textChange('{{count.objectname + 'Count'}}')" name="Count" ng-pattern="/^[0-9]*$/" type="text" min="0" class="form-control" ng-model="count.Count">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Count" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Countresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Countval">
+
+                                                </span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Count" ng-show="dualwanformstatus && dualwanform.Count.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Countminval' | translate"></span>
+                                                  <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Count.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Count.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                                
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Timeout' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="timeout in multiwanchildobjects">
+                                                <input id="timeout" ng-change="textChange('{{timeout.objectname + 'Timeout'}}')" name="Timeout" ng-pattern="/^[0-9]*$/" type="text" class="form-control" ng-model="timeout.Timeout" min="0">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Timeout" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Timeoutresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Timeoutval">
+
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Timeout" ng-show="dualwanformstatus && dualwanform.Timeout.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Timeoutminval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Timeout.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Timeout.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Interval' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="interval in multiwanchildobjects">
+                                                <input id="interval" ng-change="textChange('{{interval.objectname + 'Interval'}}')" name="Interval" ng-pattern="/^[0-9]*$/" type="text" class="form-control" ng-model="interval.Interval">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Interval" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Intervalresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Intervalval">
+
+                                                </span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Interval" ng-show="dualwanformstatus && dualwanform.Interval.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Intervalminval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Interval.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Interval.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Up' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="up in multiwanchildobjects">
+                                                <input id="up" ng-change="textChange('{{up.objectname + 'Up'}}')" name="Up" ng-pattern="/^[0-9]*$/" type="text" min="0" class="form-control" ng-model="up.Up">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Up" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Upresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Upval">
+
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Up" ng-show="dualwanformstatus && dualwanform.Up.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Upminval' | translate"></span>
+                                                  <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Up.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Up.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Down' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="down in multiwanchildobjects">
+                                                <input id="down" ng-change="textChange('{{down.objectname + 'Down'}}')" name="Down" ng-pattern="/^[0-9]*$/" type="text" min="0" class="form-control" ng-model="down.Down">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Down" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Downresponsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Downval">
+
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Down" ng-show="dualwanformstatus && dualwanform.Down.$error.min" ng-bind="'DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Downminval' | translate"></span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_Weight" ng-show="dualwanformstatus && dualwanform.Down.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.Down.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group required">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp1' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="trackip1 in multiwanchildobjects">
+                                                <input id="trackip1" ng-change="textChange('{{trackip1.objectname + 'TrackIp1'}}')" ng-required="true" name="trackip1" type="text" class="form-control" ng-model="trackip1.TrackIp1" ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp1" ng-show="dualwanformstatus && dualwanform.trackip1.$error.required" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp1.$error.required' | translate"
+                                                      ></span>
+
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp1" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp1responsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp1val">
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp1" ng-show="dualwanformstatus && dualwanform.trackip1.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp1.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+				<div class="row" ng-show="!DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled && temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp2' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="trackip2 in multiwanchildobjects">
+                                                <input id="trackip2" ng-change="textChange('{{trackip2.objectname + 'TrackIp2'}}')" name="trackip2" type="text" class="form-control" ng-model="trackip2.TrackIp2" ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp2" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp2responsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp2val">
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp2" ng-show="dualwanformstatus && dualwanform.trackip2.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp2.$error.pattern' | translate"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+				<div class="row" ng-show="!DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled  && temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp3' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="trackip3 in multiwanchildobjects">
+                                                <input id="trackip3" ng-change="textChange('{{trackip3.objectname + 'TrackIp3'}}')" name="trackip3" type="text" class="form-control" ng-model="trackip3.TrackIp3" ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp3" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp3responsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp3val">
+                                                </span>
+                                                 <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp3" ng-show="dualwanformstatus && dualwanform.trackip3.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp3.$error.pattern' | translate">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+				<div class="row" ng-show="!DeviceX_LANTIQ_COM_MultiwanMultiwanMPTCP.Enabled && temp.Advanced">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <label style="margin-top: 15px;" class="control-label col-sm-2" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp4' | translate"></label>
+                                            <div class="col-sm-1 col-lg-2" ng-repeat="trackip4 in multiwanchildobjects">
+                                                <input id="trackip4" ng-change="textChange('{{trackip4.objectname + 'TrackIp4'}}')" name="trackip4" type="text" class="form-control" ng-model="trackip4.TrackIp4" ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/">
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp4" ng-show="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp4responsestatus" ng-bind="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp4val">
+                                                </span>
+                                                <span class="error" forname="DeviceX_LANTIQ_COM_MultiwanMultiwanWANConnections_TrackIp4" ng-show="dualwanformstatus && dualwanform.trackip4.$error.pattern" ng-bind="'Device.X_LANTIQ_COM_Multiwan.Multiwan.*.WANConnections.*.TrackIp4.$error.pattern' | translate">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12 text-right">
+                                        <div class="btn-align custom_btn_add">
+                                            <input id="Add" formstatus="{{dualwanform.$valid}}" class="btn btn-info waves-effect waves-light" type="button" ng-click="Add($event)"  value="{{'Save'|translate}}">
+                                            <input id="Modify" formstatus="{{dualwanform.$valid}}" class="btn btn-info waves-effect waves-light" type="button" ng-click="Modify($event)"  value="{{'Save'|translate}}">
+                                        </div>
+                                        <div class="btn-group text-center">
+                                            <button class="btn btn-info waves-effect waves-light" id="Close" value="Close" ng-click="Cancel('dualwan')" title="Cancel" ><span ng-bind="'Cancel' | translate"></span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>            
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

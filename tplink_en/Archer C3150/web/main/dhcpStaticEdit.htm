@@ -1,0 +1,248 @@
+﻿<script type="text/javascript">
+function initAccessDevicesListTable() {
+
+    var array = [];
+    var index = 1;
+    var deviceOnline = $.act(ACT_GL, LAN_HOST_ENTRY, null, null);
+
+    $.exe(function(err) {
+        if (err) return;
+
+        $.each(deviceOnline, function() {
+            if (this.active != 1)
+                return;
+
+            array.push([{
+                "text": index,
+                "width": "5%"
+            }, {
+                "text": this.hostName,
+                "width": "10%"
+            }, {
+                "text": this.IPAddress,
+                "width": "10%"
+            }, {
+                "text": this.MACAddress,
+                "width": "15%"
+            }, {
+                "text": "<span class='table-grid-icon add-icon'></span>",
+                "width": "15%"
+            }]);
+            index++
+        });
+
+        $.initTableBody($("#tableAccessDevicesList"), array);
+        $.tablePages($("#tableAccessDevicesList"), 8);
+
+        $("span.add-icon").click(function() {
+            var macAddress = $(this).parents("tr:eq(0)").find("td:eq(3)").text();
+            var ipAddress = $(this).parents("tr:eq(0)").find("td:eq(2)").text();
+
+            $("#staticMac").val( macAddress);
+            $("#staticIP").val(ipAddress);
+            $("#accessDevList").fadeOut(20, function() {
+                $("#accessDevList").removeClass("on-mask msg-container").addClass("nd");
+            });
+
+            $("#mask").hide();
+        });
+    });
+}
+
+function initStaticEdit() {
+    if (isEdit) // The operation is to EDIT current entry.
+    {
+        /*$("#groupView").removeClass('nd');
+        $("#groupSel").addClass('nd');
+
+        $.each(brLanList, function() {
+            if ((staticIpList[staticEditIndex].__stack).split(',')[0] == (this.__stack).split(',')[0]) {
+                $("#brName").html(this.bridgeName);
+            }
+        });*/
+
+        $("#staticMac").val(staticIpList[staticEditIndex].chaddr);
+        $("#staticIP").val(staticIpList[staticEditIndex].yiaddr);
+		$("#description").val(staticIpList[staticEditIndex].description);
+        $("#staticEn").prop('checked', staticIpList[staticEditIndex].enable == 1 ? true : false);
+    } else // The operation is to ADD one entry.
+    {
+        /*$("#groupView").addClass('nd');
+        $("#groupSel").removeClass('nd');
+
+        $.each(brLanList, function() {
+            var option = "<option value=" + this.__stack + ">" + this.bridgeName + "</option>";
+            $("#staticGroup").append(option);
+        });*/
+    }
+}
+
+
+function clickOK() {
+    var element;
+    var staticSettings = {};
+    /*var groupSettings = {};
+    var groupParentStack;*/
+
+    staticSettings.chaddr = $("#staticMac").val().toUpperCase();
+    staticSettings.yiaddr = $("#staticIP").val();
+    staticSettings.description = $("#description").val();
+    staticSettings.enable = $("#staticEn").prop('data-checked') ? 1 : 0;
+
+
+    if ($.mac(staticSettings.chaddr)) {
+        element = $("#staticMac");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    if ($.ifip(staticSettings.yiaddr)) {
+        element = $("#staticIP");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    
+	if (staticSettings.description.length > 31) {
+		$.alert(ERR_DHCP_ADDRES_LENGTH_INVALID);
+        element = $("#description");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    /* 预防xss攻击 */
+if (staticSettings.description != "")
+{
+    if (!($.isname(staticSettings.description))) {
+        $.alert(ERR_WLAN_MAC_FILTER_DESCRIP_INVALID);
+        element = $("#description");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+}
+    if (isEdit) {
+        $.act(ACT_SET, LAN_DHCP_STATIC_ADDR, staticIpList[staticEditIndex].__stack, null, staticSettings);
+    } else {
+        /*groupParentStack = $("#staticGroup").data("value");
+        $.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, groupParentStack, staticSettings);*/
+		$.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, brLanList[0].__stack, staticSettings);
+    }
+
+    if (!$.exe()) {
+        $.removeLoading();
+        $.reload();
+    }
+}
+
+
+function clickCancel() {
+    $.reload();
+}
+</script>
+<style type="text/css">
+#accessDevList {
+    width: 426px;
+}
+#accessDevList td{
+    text-align: center;
+    border-color: #ccc;
+    border-radius: 0;
+    border-bottom: none;
+    border-right: none;
+    padding: 0 3px;
+}
+#accessDevList td:first-child{
+    border-left: none;
+}
+</style>
+<div  id="staticContent">
+    <form class="pure-form pure-form-aligned" id="staticForm">
+        <div>
+            <b class="T_macaddr">Mac Address:</b>
+            <input type="text" id="staticMac" required />
+            <div style="display:inline-block;">
+                <button type="submit" class="blue T_scan" id="t_viewdevDhcp">Scan</button>
+            </div>
+        </div>
+
+        <div>
+            <b id="t_resvip">Reserved IP Address:</b>
+            <input type="text" id="staticIP" required />
+            <span></span>
+        </div>
+
+		<div>
+            <b id="t_description">Description:</b>
+            <input type="text" id="description">
+            <span></span>
+        </div>
+        <div>
+            <b></b>
+            <input type="checkbox" id="staticEn" checked="true" />
+            <label class="T_c_enable">Enable this entry</label>
+        </div>
+
+        <div class="inline-btn-right">
+            <button type="submit" class="green inline T_cancel" id="editCancel">Cancel</button>
+            <button type="submit" class="green inline T_save" id="editOK">Save</button>
+        </div>
+        <p class="br"></p>
+    </form>
+</div>
+
+<script type="text/javascript">
+$("#editOK").on('click', function(e) {
+    $.addLoading($(this));
+    clickOK();
+});
+
+$("#editCancel").on('click', function(e) {
+    clickCancel();
+});
+/* changed by CCy for c3200, change its id from t_viewdev to t_viewdevDhcp, or it will be affected by multi-language lan.css */
+$("#t_viewdevDhcp").click(function() {
+    $("#accessDevList").fadeIn(20, function() {
+        $("#accessDevList").removeClass("nd").addClass("on-mask msg-container");
+    });
+    $.setFixedCentral($("#accessDevList"));
+    $("#mask").show();
+});
+$("#closeDeviceList").click(function() {
+    $("#accessDevList").fadeOut(20, function() {
+        $("#accessDevList").removeClass("on-mask msg-container").addClass("nd");
+    });
+
+    $("#mask").hide();
+});
+
+var AccessDevicesListHeadArray = [{
+    "text": table_str.id,
+    "width": "10%"
+}, {
+    "text": table_str.devname,
+    "width": "20%"
+}, {
+    "text": table_str.ip,
+    "width": "20%"
+}, {
+    "text": table_str.mac,
+    "width": "20%"
+}, {
+    "text": table_str.operation,
+    "width": "20%"
+}];
+$.initTableHead($("#tableAccessDevicesList"), AccessDevicesListHeadArray);
+$("#tableAccessDevicesList").tpTable(initAccessDevicesListTable);
+
+$.tpInit(initStaticEdit);
+</script>
+

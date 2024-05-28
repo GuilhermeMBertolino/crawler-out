@@ -1,0 +1,87 @@
+﻿<script language="javascript" type="text/javascript">
+var realMode;
+
+function sysModeInit() {
+    if (INCLUDE_USB_3G_DONGLE) {
+        $("#mode3g").removeClass("nd");
+    }
+
+    var sysMode = $.act(ACT_GET, SYS_MODE, null, null);
+    if (!$.exe()) {
+        if (sysMode.mode == "DSL") {
+            realMode = "DSL";
+            $("#DSL").prop("checked", true);
+        } else if (sysMode.mode == "USB_3G") {
+            realMode = "USB_3G";
+            $("#USB_3G").prop("checked", true);
+        } else {
+            realMode = "ETH";
+            $("#ETH").prop("checked", true);
+        }
+    }
+}
+
+function doSave() {
+    var sysModeArg = {};
+    if ($("#DSL").prop("checked")) {
+        sysModeArg.mode = "DSL";
+    } else if ($("#USB_3G").prop("checked")) {
+        sysModeArg.mode = "USB_3G";
+    } else {
+        sysModeArg.mode = "ETH";
+    }
+
+    if (sysModeArg.mode == realMode) {
+        $.addLoading($("#b_save"));
+        $.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+        $.exe(function(ret) {
+            $.removeLoading();
+            if (!ret) $.reload();
+        });
+        return;
+    }
+    $.confirm(c_str.chgmod,
+        function() {
+            $.addLoading($("#b_save"));
+            $.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+            $.exe(function(ret) {
+                $.removeLoading();
+                if (!ret) doReboot();
+            });
+        },
+        function() {
+            $.reload();
+        }
+    );
+}
+
+function doReboot() {
+    $.guage(["<span class='T_rebooting'>" + s_str.rebooting + "</span>", "<span class='T T_wait_reboot'>" + s_str.wait_reboot + "</span>"], 100, $.guageInterval, function() {
+        $.refresh();
+    });
+    $.act(ACT_OP, ACT_OP_REBOOT);
+    $.exe(true);
+}
+</script>
+<h3 id="et">Operation Mode</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <p id="t_mode">Choose Operation Mode:</p>
+        <div>
+            <input type="radio" name="sysMode" id="DSL" value="DSL" />
+            <label id="t_sysmod1">ADSL Modem Router Mode</label>
+        </div>
+        <div id="mode3g" class="nd">
+            <input type="radio" name="sysMode" id="USB_3G" value="USB_3G" />
+            <label id="t_sysmod2">3G/4G Router Mode</label>
+        </div>
+        <div>
+            <input type="radio" name="sysMode" id="ETH" value="ETH" />
+            <label id="t_sysmod3">Wireless Router Mode</label>
+        </div>
+        <button type="submit" class="green T_save" value="Save" id="b_save" onclick="doSave()">Save</button>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+$.tpInit(sysModeInit);
+</script>

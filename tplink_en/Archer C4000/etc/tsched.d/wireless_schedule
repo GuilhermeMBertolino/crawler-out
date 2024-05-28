@@ -1,0 +1,32 @@
+#!/bin/sh
+
+WIRELESS_SCHEDULE_LIBDIR=/lib/wifi
+. ${WIRELESS_SCHEDULE_LIBDIR}/wireless_schedule_func.sh
+
+. /lib/functions.sh
+
+cmd=$1
+shift
+
+LEDPM_SET_TIME="/tmp/ledpm_enable"
+
+case $cmd in
+    *ACTIVE)
+		if [ -f "$LEDPM_SET_TIME" ]; then
+			config_load wireless_schedule
+			config_get enable "$1" enable
+			if [ "$enable" = "off" ]; then
+				/etc/init.d/wireless_schedule restart
+			else
+				wireless_schedule_handle_active "$1"
+			fi
+		fi
+        ;;
+
+    *DORM)
+		if [ -f "$LEDPM_SET_TIME" ]; then
+				wireless_schedule_handle_dorm "$1"
+		fi
+        ;;
+esac
+

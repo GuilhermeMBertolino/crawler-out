@@ -1,0 +1,54 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=47
+
+PC_LIBDIR=/lib/parental_control
+
+pc() {
+	. $PC_LIBDIR/core.sh
+	fw_$1
+}
+
+start() {
+	if [ ! -f /etc/config/parental_control_v2 ];then
+		touch /etc/config/parental_control_v2
+		touch /etc/config/history_list
+		touch /etc/config/client_mgmt
+		uci commit
+	fi
+	
+	local support_pctl_v2_optimize=$(uci get profile.@parental_control_v2[0].support_pctl_v2_optimize -c "/etc/profile.d" -q)
+	#parental control optimize
+	if [ "$support_pctl_v2_optimize" = "yes" ]; then
+		config_load /etc/config/parental_control_v2
+		if [ -z "$(config_get settings enable)" ]; then
+			echo "[parental_control_v2] no parent_control_v2.settings.enable , create!" > /dev/console
+			uci set parental_control_v2.settings="global"
+			uci set parental_control_v2.settings.enable="on"
+			uci commit
+		fi
+		config_clear
+		# old software upgrade new software, parameter conversion
+		lua -e 'require("luci.model.parental_control_v2").old_to_new_params_convert()'
+		
+		local pctl_enable=`uci get parental_control_v2.settings.enable`
+		if [ "A$pctl_enable" == "Aon" ]; then
+			pc start
+		fi
+	else
+		pc start
+	fi
+}
+
+stop() {
+	pc stop
+}
+
+restart() {
+	pc restart
+}
+
+reload() {
+	pc reload
+}

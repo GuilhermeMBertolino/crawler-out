@@ -1,0 +1,39 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.05
+ waitquiet 1 0.2
+
+:start
+send "AT"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATZ"
+print "Start...\n"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1 Z"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1 S0=0"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1 S0=0 &C1"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1 S0=0 &C1 &D2"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+
+:continue
+exit 0
+
+:fail
+print "ERROR\n"
+exit 1

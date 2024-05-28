@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view>
+	<header>
+         <image>images/icons/wireless.png</image>
+    <name>VAP Settings</name>
+        <description>Configure the Virtual Access Points for 2.4GHz band.</description>
+    </header>    
+    <object viewtype="form" title="Settings" icon="settings-1" >
+	<object name="Device.WiFi.SSID.*" >
+	<row>
+	<col>
+            <parameter  name="SSID"  type="string" webname="SSID" ></parameter>
+	</col>
+	<col>
+            <parameter  name="LowerLayers"  type="string" Display="No" webname="SSID" Value="Device.WiFi.Radio.1." ></parameter>
+	</col>
+	</row>
+        </object>
+	<object name="Device.WiFi.AccessPoint.*">
+	<row>
+<col>
+            <parameter  name="IsolationEnable"  type="toggle" webname="AP Isolation" ></parameter>
+</col>
+<col>
+            <parameter  name="SSIDAdvertisementEnabled"  type="toggle" webname="Advertise SSID"></parameter>
+</col>            
+<col>
+            <parameter  name="MaxAssociatedDevices"  type="number" Value="64" webname="Max connected STAs" ></parameter>       
+</col>
+<col>
+            <parameter  name="UAPSDEnable"  type="checkbox" webname="WMM-PS" ></parameter>
+</col>
+	</row>
+            <parameter  name="Alias"  type="string" Display="No"  Value="" webname="Alias" ></parameter>
+        </object>
+        <object name="Device.WiFi.AccessPoint.*.Security" >
+            <parameter  name="ModeEnabled"  type="dropdown" validvalues="WPA-Personal,WPA2-Personal,WPA-WPA2-Personal,WPA2-Enterprise,WEP-64,WEP-128,None" webname="Security type"></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-WPA2-Personal','WPA-WPA2-Enterprise','WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="GcmpMode" type="dropdown" validvalues="None,GCMP,GCMP256" webname="Security GCMP mode" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" minlen="8" maxlen="63" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="KeyPassphrase"  type="password" webname="Passphrase" ></parameter>
+            <parameter  parent="'WPA2-Personal','WPA-Personal','WPA-WPA2-Personal'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RekeyingInterval"  type="string" webname="Rekey Interval" ></parameter>
+            <parameter  parent="'WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusServerIPAddr"  type="string" webname="RADIUS Server IP" ></parameter>
+            <parameter  parent="'WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusServerPort"  type="string" webname="RADIUS Server Port" ></parameter>
+            <parameter  parent="'WPA2-Enterprise'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="RadiusSecret"  type="password" webname="RADIUS Secret" ></parameter>
+            <parameter  parent="'WEP-64'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="WEPKey"  type="string" webname="Key(Exactly 10 Hex digits)" ></parameter>
+             <parameter  parent="'WEP-128'" parentname="Device.WiFi.AccessPoint.*.Security" depends="ModeEnabled" name="WEPKey"  type="string" webname="Key(Exactly 26 Hex digits)" ></parameter>
+        </object>
+        <parameter name="Add"  action="post" routeurl="Apply($event, 'adv_ssid_table')"  type="submitbutton" webname="Save"></parameter>
+    </object>
+</view>

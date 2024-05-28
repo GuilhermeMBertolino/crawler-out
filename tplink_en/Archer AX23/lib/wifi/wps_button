@@ -1,0 +1,51 @@
+#!/bin/sh
+. /lib/wifi/mtk_wlan_var.sh
+
+wps_status()
+{
+	. /lib/functions.sh
+	config_load wireless
+	
+	get_wlan_ini PERFIX_WLAN_2G
+	get_wlan_ini PERFIX_WLAN_5G
+	suffix="0"
+	VIF_HOME_2G=${PERFIX_WLAN_2G}${suffix}
+	VIF_HOME_5G=${PERFIX_WLAN_5G}${suffix}
+
+	config_get wps_2g_state ${VIF_HOME_2G} wps "on"
+	config_get wps_5g_state ${VIF_HOME_5G} wps "on"
+	if [ "$wps_2g_state" == "on" -o "$wps_5g_state" == "on" ]; then
+		config_get enable_2g ${VIF_HOME_2G} enable "off"
+		config_get enable_5g ${VIF_HOME_5G} enable "off"
+		if [ "$enable_2g" == "on" -o "$enable_5g" == "on" ];then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 1
+	fi
+}
+
+
+# start wps pbc
+if [ "$(uci get factory.factorymode.enable)" != "yes" -a "$(/sbin/is_cal)" = "true" ];	then
+	### don't execute wps before dut boot done
+	[ ! -f /tmp/dut_bootdone ] && return
+	wps_status || return
+	lua -e "require 'luci.controller.admin.wireless'.wireless_wps_connect({option = 'connect'})"
+else
+	echo "wps button will lose function now![not cal or in fac mode]" >/dev/console
+	
+	# wps button check 
+	# FEATURE_WPS_BTN_CHK is defined in wlan.ini
+	get_wlan_ini FEATURE_WPS_BTN_CHK
+	if [ "$FEATURE_WPS_BTN_CHK" = "y" ]; then
+		if [ ! -e /tmp/btn_check ]; then
+			echo 0 > /tmp/btn_check
+		fi
+		ret=$(cat /tmp/btn_check)
+		ret=$(($ret | 0x8))
+		echo $ret > /tmp/btn_check
+	fi
+fi

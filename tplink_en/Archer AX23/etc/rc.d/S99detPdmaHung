@@ -1,0 +1,82 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+INTERVAL=5
+val1=
+val2=
+val3=
+val4=
+val1_old=$(regs d 0x1e100110 |grep Value |cut -d ":" -f 2)
+val2_old=$(regs d 0x1e100118 |grep Value |cut -d ":" -f 2)
+val3_old=$(regs d 0x1e100100 |grep Value |cut -d ":" -f 2)
+val4_old=$(regs d 0x1e100A04 |grep Value |cut -d ":" -f 2)
+count=0
+BIT1_SEL=0x2
+bit1=0
+
+
+start_detect(){
+	#regs w 1e100100 0x6030000C
+	#regs w 1e100004 0x1
+	#local regVal=$(regs d 0x1e100100 |grep Value |cut -d ":" -f 2)
+	#echo "set free page to 0x30; 0x1e100100 = $regVal " > /dev/console
+
+	while true;
+	do
+		val1=$(regs d 0x1e100110 |grep Value |cut -d ":" -f 2)
+		val2=$(regs d 0x1e100118 |grep Value |cut -d ":" -f 2)
+		val3=$(regs d 0x1e100100 |grep Value |cut -d ":" -f 2)
+		val4=$(regs d 0x1e100A04 |grep Value |cut -d ":" -f 2)
+
+
+		if [ $val1 != $val1_old -o "$val1" = " 0x0" ];then
+			count=0
+		fi
+
+		if [ $val2 != $val2_old -o "$val2" == " 0x0" ];then
+			count=0
+		fi
+
+		if [ $val3 != $val3_old -o "$val3" = " 0x6060000C" ];then
+			count=0
+		fi
+
+		bit1=$((val4&BIT1_SEL))
+		if [ $bit1 -ne 2 ];then
+			count=0
+		fi
+
+		count=$((count+1))
+		val1_old=$val1
+		val2_old=$val2
+		val3_old=$val3
+		val4_old=$val4
+
+		if [ $count -gt 3 ];then
+			echo "-------detect PDMA hung, then reset network to recovery -------" > /dev/console
+			/etc/init.d/network restart  &
+			sleep 30
+			count=0
+		fi
+
+		sleep $INTERVAL
+	done &
+}
+
+start() {
+	start_detect
+	return 0
+}
+
+restart() {
+	return 0
+}
+
+stop() {
+	return 0
+}
+
+reload() {
+	return 0
+}

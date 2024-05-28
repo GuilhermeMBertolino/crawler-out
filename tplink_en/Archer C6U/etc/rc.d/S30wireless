@@ -1,0 +1,61 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (c) 2019 TP-LINK Technologies Co., Ltd.
+# All Rights Reserved.
+
+START=30
+STOP=90
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+wifi_sys_led_flick(){
+	hz=2		#flick 2 times per second
+	sleeptime=`expr 1000000 / $hz / 2`
+	while true
+	do
+		ledcli WIFI2G_ON
+		ledcli WIFI5G_ON
+		usleep $sleeptime
+		ledcli WIFI2G_OFF
+		ledcli WIFI5G_OFF
+		usleep $sleeptime
+	done
+}
+
+start() {
+	# TODO: add the calibration process.
+	[ "$(/sbin/is_cal)" = "false" ] && {
+		echo "wireless is not calibrated, starting ated..." > /dev/console
+		/sbin/ated_iwpriv &
+		/sbin/ated_iwpriv &
+		wifi_sys_led_flick &		
+	}
+
+	echo "wireless is starting..." > /dev/console
+
+	/sbin/wifi_firm
+	/sbin/wifi_check_country
+	/sbin/wifi init
+
+	return 0
+}
+
+restart() {
+	/sbin/wifi
+	return 0
+}
+
+shutdown() {
+	/sbin/wifi down
+	return 0
+}
+
+stop() {
+	/sbin/wifi down
+	return 0
+}
+
+reload() {
+	/sbin/wifi reload
+	return 0
+}

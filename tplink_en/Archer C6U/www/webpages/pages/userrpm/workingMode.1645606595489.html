@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Working Mode</title>
+<style>
+	.img-container div{
+		position:static;
+		display:inline-block;
+	}
+	.img-container{    
+		display: inline-block;
+		margin-left:32px;
+		position:relative;
+	}
+	.cut-off{
+		border-top: 2px dotted #b3b3b3;
+		margin: 0 10px 28px;
+		width: 40px;
+	}
+	.cut-off.solid{
+		border-top: 2px solid #b3b3b3;
+		margin: 0 10px 28px;
+		width: 40px;
+	}
+	#switch_mode_form .wireless-img{
+		position: absolute;
+		right: 85px;
+		top: 23px;
+		width: 24px;
+		height: 24px;
+		background: #fff url(./themes/green/img/icons.1645606595489.png) no-repeat -105px -100px;
+	}
+</style>
+</head>
+
+<body>
+<div class="func-container">
+	<div id="switch-mode">
+		<div id="switch_mode_form">
+			<input id="switch_mode_input" name="mode" type="text" class=""/>
+			<div id="mode_ap_div">
+			<p id="mode_ap_tips" class="mode-slt-p"></p>
+				<div class="img-container">
+					<div class="map-icon-internet"></div>
+					<div class="cut-off"></div>
+					<div class="map-icon-router"></div>
+					<div class="cut-off solid"></div>
+					<div class="map-icon-router map-icon-router-conn"></div>
+					<div class="cut-off"></div>
+					<div class="wireless-img"></div>
+					<div class="map-icon-wireless"></div>
+				</div>
+			</div>
+			<div id="mode_router_div">
+			<p id="mode_router_tips" class="mode-slt-p"></p>
+				<div class="img-container">
+					<div class="map-icon-internet"></div>
+					<div class="cut-off"></div>
+					<div class="map-icon-router map-icon-router-conn"></div>
+					<div class="cut-off"></div>
+					<div class="wireless-img"></div>
+					<div class="map-icon-wireless"></div>
+				</div>
+			</div>
+			<p id="mode_repeater_tips" class="mode-slt-p"></p>
+			<button type="button" id="mode_submit"></button>
+		</div>
+	</div>
+
+	<div id="switch_confirm_msg" class="hidden warning">
+		<h4 class="title">
+			<span class="icon"></span>
+			<span class="text" id="switch_confirm_text"></span>
+		</h4>
+	</div>
+
+	<div id="reboot_msg" clsaa="reboot-loading-msg hidden">
+		<h4>
+			<span id="reboot_text" class="text"></span>
+		</h4>
+		<input id="reboot_progressbar" />
+		<p></p>
+	</div>
+
+	<div id="switch_fail_msg" class="hidden warning">
+		<h4 class="title">
+			<span class="icon"></span>
+			<span id="switch_fail_title" class="text"></span>
+		</h4>
+	</div>
+</div>
+<script>try{
+	$
+}catch(e){
+	location.href = "/";
+};
+$(document).ready(function(e){
+	var modeProxy = new $.su.Proxy({
+		url: $.su.url('/admin/system?form=sysmode')
+	});
+
+	var firmwareProxy = new $.su.Proxy({
+		url: $.su.url("/admin/firmware?form=config")
+	});
+	var totalTime = 60*1000;
+	
+	$('p#mode_ap_tips').html($.su.CHAR.SWITCH_MODE.ACCESS_POINT_TIPS);
+	$('p#mode_router_tips').html($.su.CHAR.SWITCH_MODE.ROUTER_TIPS);
+	$('p#mode_repeater_tips').html($.su.CHAR.SWITCH_MODE.REPEATER_TIPS);
+	$("#switch_confirm_text").html($.su.CHAR.SWITCH_MODE.MODE_REBOOT_TIP);
+	$("#reboot_text").html($.su.CHAR.SWITCH_MODE.MODE_CHANGING);
+	$('span#switch_fail_title').html($.su.CHAR.SWITCH_MODE.MODE_FAIL_TIP);
+	$('#reboot_msg p').html($.su.CHAR.SWITCH_MODE.MODE_CHANGING_TIPS_1);
+
+	$("#switch-mode").panel({
+		title: $.su.CHAR.SWITCH_MODE.TITLE,
+		collapsible: false
+	});
+
+	$('input#switch_mode_input').radio({
+		fieldLabel: null,
+		items:[
+			{boxlabel: $.su.CHAR.SWITCH_MODE.ROUTER + (sysMode=="router"?$.su.CHAR.SWITCH_MODE.CURRENT_MODE:""), inputValue: 'router', id:'router', name:'mode', content:'#mode_router_div'},
+			{boxlabel: $.su.CHAR.SWITCH_MODE.ACCESS_POINT + (sysMode=="ap"?$.su.CHAR.SWITCH_MODE.CURRENT_MODE:""), inputValue: 'ap', id:'ap', name:'mode', content:'#mode_ap_div'},
+			{boxlabel: $.su.CHAR.SWITCH_MODE.REPEATER, inputValue: 'repeater', id:'repeater', name:'mode', content:'#mode_repeater_tips'}
+		]
+	});
+	$("#mode_repeater_tips").closest("li").hide();
+
+	$("#mode_submit").button({
+		text: $.su.CHAR.OPERATION.SAVE,
+		cls: "submit",
+		handler: function(){
+			var modePara = $('input#switch_mode_input').radio('getValue');
+
+			if(sysMode.toUpperCase() != modePara.toUpperCase()){
+				switchConfirmMsg.msg('show');
+			}else{
+				$("#switch_mode_form").form("prompt", true);
+			}
+		}
+	});
+
+	$("#switch_mode_form").form({
+		proxy: modeProxy,
+		fields: [
+			{"name": "mode"}
+		],
+		submitBtn: "#mode_submit"
+	}).on("ev_loadData", function(e, data){
+		sysMode = data.mode;
+		if(sysMode == "router"){
+			$('#reboot_msg p').html($.su.CHAR.SWITCH_MODE.MODE_CHANGING_TIPS_1);
+		}
+		else{
+			$('#reboot_msg p').html($.su.CHAR.SWITCH_MODE.MODE_CHANGING_TIPS_2);
+		}
+	});
+
+	firmwareProxy.read({},function(data){
+		totalTime = data.totaltime*1000;
+	})
+
+	var switchConfirmMsg = $("div#switch_confirm_msg").msg({
+		type: "confirm",
+		closeBtn: false,
+		cls: "l",
+		okHandler: function(){
+			$("#switch_mode_form").form("submit", {}, function(data){
+				switchConfirmMsg.msg("close");
+				rebootMsg.msg('hideButtons');
+				rebootMsg.msg("show");
+                
+	            reboot_probar.progressbar("reset").progressbar('animate',  0, 1, totalTime, function(){
+					if (localStorage){
+						localStorage.setItem("token", "");
+					};
+
+	                if(data.mode=='router'){
+	                    window.location = 'http://tplinkwifi.net';
+					}else{
+	                    window.location = 'http://tplinkwifi.net';
+	                }
+				});
+			}, function(){
+				switchFailMsg.msg("show");
+			}, function(){
+				switchFailMsg.msg("show");
+			});
+		}
+	});
+
+	var rebootMsg = $("div#reboot_msg").msg({
+		type: "confirm",
+		closeBtn: false,
+		cls: "l"
+	});
+
+	var reboot_probar = $('input#reboot_progressbar').progressbar({
+		fieldLabel: null,
+		width: 326,
+		height: 6,
+		isProgressbar: true
+	});
+
+	var switchFailMsg = $("div#switch_fail_msg").msg({
+		type: "alert",
+		closeBtn: false,
+		cls: "l"
+	});
+});
+</script>
+</body>
+</html>

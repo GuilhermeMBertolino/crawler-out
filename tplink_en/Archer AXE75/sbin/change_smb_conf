@@ -1,0 +1,41 @@
+#!/bin/sh
+#echo "change smb start" > /dev/console
+local auth=$1
+local username=$2
+local password=$3
+local smbconf="/etc/samba/smb.conf.template"
+local alias_file="/etc/proftpd/alias.conf"
+local sftp_support="$(uci -q -c /etc/profile.d get profile.@sftp[0].sftp_support)"
+
+if [ "$auth" = "off" ]; then
+    sed -i 's/\#map to guest = Bad User/map to guest = Bad User/g' $smbconf
+    smbpasswd -x guest
+    passwd -d guest
+    ftp_alias stop $username guest
+    ftp_alias start anonymous guest
+    if [ "$sftp_support" == "yes" ]; then
+        if [ "$username" = "guest" ]; then
+            sftp_alias stop guest
+        else
+            sftp_alias stop $username
+        fi
+    fi
+else
+    sed -i 's/^.*map to guest = Bad User$/\#map to guest = Bad User/g' $smbconf
+    echo -e $password'\n'$password'\n' | smbpasswd -s -a guest 1>/dev/console 2>&1
+    echo -e $password'\n'$password'\n' | passwd guest 1>/dev/null 2>&1
+    ftp_alias stop anonymous guest
+    if [ "$username" != "guest" ]; then
+        ftp_alias start $username guest
+    fi
+    if [ "$sftp_support" == "yes" ]; then
+        if [ "$username" = "guest" ]; then
+            sftp_alias stop guest
+            sftp_alias start guest
+        else
+            sftp_alias stop $username
+            echo -e $password'\n'$password'\n' | passwd $username 1>/dev/null 2>&1
+            sftp_alias start $username
+        fi
+    fi
+fi

@@ -1,0 +1,674 @@
+﻿<style type="text/css">
+.gray {
+    color: #808080;
+}
+</style>
+<div>
+    <div class="titleBar">
+        <a url="usbSettings.mobile.htm"><span class="icon-back sprite c-arrow-blue-left" ></span></a>
+        <h1>Sharing Settings</h1>
+        <a id="tb_Save" data-status="save">Save</a>
+    </div>
+
+    <div class="item-list mt15">
+        <div class="section-container">
+        <div class="section-box">
+            <input type="text" id="server_name" />
+        </div>
+    </div>
+    </div>
+
+    <div class="section-title mt15">
+        <span>
+            <script type="text/html" class="title-string">
+                <%=$.tpLang.table_str.acMethod%>
+            </script>  
+        </span>
+    </div>
+    <div class="item-list">
+        <div class="section-container">
+        <div class="section-box">
+            <div>
+                <span id="mediaServer_method"></span>
+                <br />
+            </div>
+            <input type="checkbox" id="mediaServer" />
+        </div>
+    </div>
+    <div class="section-container mtNo">
+        <div class="section-box">
+            <div>
+                <span id="samba_method"></span>
+                <br />
+                <span class="gray" id="samba_access"></span>
+            </div>
+            <input type="checkbox" id="samba" />
+        </div>
+    </div>
+    <div class="section-container mtNo">
+        <div class="section-box">
+            <div>
+                <span id="innerFtp_method"></span>
+                <br />
+                <span class="gray" id="innerFtp_access"></span>
+            </div>
+            <input type="checkbox" id="innerFtp" />
+        </div>
+        <div class="section-box" id="div_port">
+            <input type="text" id="port" />
+        </div>
+    </div>
+    <div class="section-container mtNo" id="div_ftpServer">
+        <div class="section-box">
+            <div>
+                <span id="outerFtp_method"></span>
+                <br />
+                <span class="gray" id="outerFtp_access"></span>
+            </div>
+            <input type="checkbox" id="outerFtp" />
+        </div>
+    </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+(function() {
+    $.tpLocal('title-string', $.tpLang);
+    $('.titleBar').titleBar();
+    $('.titleBar').titleBar('title', $.tpLang.menu_str.sSett);
+    $('#tb_Save').titleButton('status', 'save', $.tpLang.m_str.save);
+
+    var smbService;
+    var ftpServer;
+    var dlnaService;
+
+    $('#server_name').inputBoxMobile({
+        'title': $.tpLang.folderSharing_nstr.t_nsn,
+        'warnings': [{
+            func: function() {
+                if ($('#server_name').inputBoxMobile('option', 'value') == '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_DLNA_SERVER_NAME_EMPTY]
+        }, {
+            func: function() {
+                if ($.asc($('#server_name').inputBoxMobile('option', 'value'), true) != 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_DLNA_SERVER_NAME_NOT_ASCII]
+        }, {
+            func: function() {
+                if ((/[\\\/\*\?=:;,"<>|\[\]\ ]+/).test($('#server_name').inputBoxMobile('option', 'value'))) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_DLNA_INVALID_SERVER_NAME]
+        }, {
+            func: function() {
+                if ($('#server_name').inputBoxMobile('option', 'value').length >= 16) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            },
+            text: e_str[CMM_USB_SERVER_NAME_LENGTH]
+        }]
+    });
+
+
+    $('#port').inputBoxMobile({
+        'warnings': [{
+            func: function() {
+                var portValue = $('#port').inputBoxMobile('option', 'value');
+                if (portValue == '') {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_FTP_PORT_EMPTY]
+        }, {
+            func: function() {
+                var portValue = $('#port').inputBoxMobile('option', 'value');
+                if (!$.isnum(portValue)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_FTP_PORT_NOT_NUM]
+        }, {
+            func: function() {
+                var portValue = $('#port').inputBoxMobile('option', 'value');
+                if ((portValue < 1) || (portValue > 65535)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_FTP_PORT_RANGE]
+        }, {
+            func: function() {
+                var portValue = $('#port').inputBoxMobile('option', 'value');
+                if ((portValue == 53) || (portValue == 70) || (portValue == 80) ||
+                    (portValue == 119) || (portValue == 110) || (portValue == 1723) ||
+                    (portValue == 25) || (portValue == 1080) || (portValue == 23) ||
+                    (portValue == 33344) || (portValue == 20005) || (portValue == 1900) ||
+                    (portValue == 7547) || (portValue == 139) || (portValue == 445)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            text: e_str[ERR_USB_FTP_PORT_CONFLICT]
+        }]
+    })
+
+    $('input[type="checkbox"]').checkboxMobile({
+        'hasTitle': true
+    });
+
+    function initAccessTab() {
+        var index;
+        var ipv4Addr;
+        var wanIpv4 = '0.0.0.0';
+        var brList = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ['bridgeName']);
+		if (INCLUDE_WAN_MODE)
+			var realSysMode = $.act(ACT_GET, SYS_MODE, null, null);
+        var wans = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ['WANAccessType']);
+        var l3f = $.act(ACT_GET, L3_FORWARDING, null, null, ['__ifAliasName']);
+        if (INCLUDE_VDSLWAN) {
+            vdsls = $.act(ACT_GL, WAN_PTM_LINK_CFG, null, null, ['X_TP_Used', 'X_TP_VID']);
+        }
+        if (INCLUDE_L2TP) {
+            var wanL2tpList = $.act(ACT_GL, WAN_L2TP_CONN, null, null, ['enable', 'name', 'addressingType', 'transportType', 'externalIPAddress']);
+        }
+        if (INCLUDE_PPTP) {
+            var wanPptpList = $.act(ACT_GL, WAN_PPTP_CONN, null, null, ['enable', 'name', 'addressingType', 'transportType', 'externalIPAddress']);
+        }
+
+
+        if (INCLUDE_WAN_VLAN) {
+            var ips = $.act(ACT_GL, WAN_IP_CONN, null, null, ['name', 'connectionType', 'addressingType', 'externalIPAddress', 'subnetMask', 'defaultGateway', 'DNSServers', 'X_TP_8021QEnabled', 'X_TP_VlanID']);
+            var ppps = $.act(ACT_GL, WAN_PPP_CONN, null, null, ['name', 'transportType', 'username', 'password', 'X_TP_8021QEnabled', 'X_TP_VlanID', 'externalIPAddress']);
+        } else {
+            var ips = $.act(ACT_GL, WAN_IP_CONN, null, null, ['name', 'connectionType', 'addressingType', 'externalIPAddress', 'subnetMask', 'defaultGateway', 'DNSServers']);
+            var ppps = $.act(ACT_GL, WAN_PPP_CONN, null, null, ['name', 'transportType', 'username', 'password', 'externalIPAddress']);
+        }
+
+        if (!$.exe()) {
+			if (INCLUDE_WAN_MODE)
+				var systemMode = realSysMode.mode;
+			else
+				var systemMode = "ETH";
+				
+            for (index = 0; index < brList.length; index++) {
+                var lanIPv4Cfg = $.act(ACT_GS, LAN_IP_INTF, null, brList[index].__stack, ['IPInterfaceIPAddress']);
+                if (!$.exe()) {
+                    ipv4Addr = lanIPv4Cfg[0].IPInterfaceIPAddress;
+                }
+            }
+
+            if (systemMode == 'DSL') {
+                $.merge(ips, ppps);
+                $.each(ips, function() {
+                    if ($.arr2obj(wans, '__stack')[$.stkPop(this.__stack, 2)].WANAccessType === 'DSL') {
+                        if (this.name === l3f.__ifAliasName) {
+                            var obj;
+                            wanIpv4 = this.externalIPAddress;
+                        }
+                    }
+                });
+            } else if (systemMode == 'ETH') {
+                $.merge(ips, ppps);
+                $.each(ips, function() {
+                    if ($.arr2obj(wans, '__stack')[$.stkPop(this.__stack, 2)].WANAccessType === 'Ethernet') {
+                        if (this.name === l3f.__ifAliasName) {
+                            wanIpv4 = this.externalIPAddress;
+                        }
+                    }
+                });
+
+                if (INCLUDE_PPTP) {
+                    $.each(wanPptpList, function() {
+                        if ($.arr2obj(wans, '__stack')[$.stkPop(this.__stack, 1)].WANAccessType === 'Ethernet') {
+                            if (this.name === l3f.__ifAliasName) {
+                                wanIpv4 = this.externalIPAddress;
+                            }
+                        }
+                    });
+                }
+
+                if (INCLUDE_L2TP) {
+                    $.each(wanL2tpList, function() {
+                        if ($.arr2obj(wans, '__stack')[$.stkPop(this.__stack, 1)].WANAccessType === 'Ethernet') {
+                            if (this.name === l3f.__ifAliasName) {
+                                wanIpv4 = this.externalIPAddress;
+                            }
+                        }
+                    });
+                }
+            }
+
+
+            $('#mediaServer_method').html($.tpLang.table_str.mediaServer);
+
+            $('#samba_method').html($.tpLang.table_str.netNeig);
+            $('#samba_access').html('\\\\' + smbService.serverName);
+
+            $('#innerFtp_method').html($.tpLang.table_str.ftp);
+            $('#innerFtp_access').html($.tpLang.table_str.ftpSign + ipv4Addr + ':' + g_ftpPort);
+
+            $('#outerFtp_method').html($.tpLang.table_str.ftpInternet);
+            $('#outerFtp_access').html($.tpLang.table_str.ftpSign + wanIpv4 + ':' + g_ftpPort);
+
+            if (ftpServer.enable == 0) {
+                $('#div_ftpServer').addClass('nd');
+                $('#div_port').addClass('nd');
+            }
+            $('#innerFtp').bind('check.checkboxMobile', function() {
+                    $('#div_ftpServer').removeClass('nd');
+                    $('#div_port').removeClass('nd');
+                })
+                .bind('uncheck.checkboxMobile', function() {
+                    $('#div_ftpServer').addClass('nd');
+                    $('#div_port').addClass('nd');
+                });
+            return;
+        }
+    };
+
+    (function init() {
+        smbService = $.act(ACT_GET, SMB_SERVICE, null, null, null);
+        ftpServer = $.act(ACT_GET, FTP_SERVER, null, null, null);
+
+        dlnaService = $.act(ACT_GET, DLNA_MEDIA_SERVER, null, null, null);
+
+        var index;
+
+        if (!$.exe()) {
+            g_ftpPort = ftpServer.portNumber;
+            initAccessTab();
+
+            if (dlnaService.serverState == 1) {
+                $('#mediaServer').checkboxMobile({
+                    'checked': true
+                });
+            } else {
+                $('#mediaServer').checkboxMobile({
+                    'checked': false
+                });
+            }
+
+            if (smbService.enable == 1) {
+                $('#samba').checkboxMobile({
+                    'checked': true
+                });
+            } else {
+                $('#samba').checkboxMobile({
+                    'checked': false
+                });
+            }
+
+            if (ftpServer.enable == 1) {
+                $('#innerFtp').checkboxMobile({
+                    'checked': true
+                });
+            } else {
+                $('#innerFtp').checkboxMobile({
+                    'checked': false
+                });
+            }
+
+            if (ftpServer.accessFromInternet == 1) {
+                $('#outerFtp').checkboxMobile({
+                    'checked': true
+                });
+            } else {
+                $('#outerFtp').checkboxMobile({
+                    'checked': false
+                });
+            }
+
+            $('#port').inputBoxMobile({
+                'value': ftpServer.portNumber
+            });
+
+            $('#server_name').inputBoxMobile({
+                'value': smbService.serverName
+            });
+
+
+        }
+    })();
+
+    function vtlServList_IP_ConfiltPort(port) {
+        var vtlServList_IP = $.act(ACT_GL, WAN_IP_CONN_PORTMAPPING, null, null);
+        var stacks = [];
+        var confilt = 0;
+        var index = 0;
+        var i;
+        var cancel = 0;
+
+        if (!$.exe()) {
+            $.each(vtlServList_IP, function() {
+                if ((this.portMappingEnabled == 1) &&
+                    (((port == this.externalPort) || (port == this.X_TP_ExternalPortEnd)) ||
+                        ((this.externalPort > 0) && (this.externalPort < port) && (port < this.X_TP_ExternalPortEnd)))) {
+                    stacks[index] = this.__stack;
+                    index++;
+                    confilt = 1;
+                }
+            });
+            if (1 == confilt) {
+                $.confirmMobile($.tpLang.c_str.ftp_vs_conflict, function() {
+                    for (i = 0; i < index; i++) {
+                        $.act(ACT_SET, WAN_IP_CONN_PORTMAPPING, stacks[i], null, ["portMappingEnabled=0"]);
+                    }
+                    if (!$.exe()) {
+                        return (vtlServList_PPP_ConfiltPort(port));
+                    }
+                }, function() {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                });
+            } else {
+                return (vtlServList_PPP_ConfiltPort(port));
+            }
+        }
+    }
+
+    function vtlServList_PPP_ConfiltPort(port) {
+        var vtlServList_PPP = $.act(ACT_GL, WAN_PPP_CONN_PORTMAPPING, null, null);
+        var stacks = [];
+        var confilt = 0;
+        var index = 0;
+        var i;
+        var cancel = 0;
+
+        if (!$.exe()) {
+            $.each(vtlServList_PPP, function() {
+                if ((this.portMappingEnabled == 1) &&
+                    (((port == this.externalPort) || (port == this.X_TP_ExternalPortEnd)) ||
+                        ((this.externalPort < port) && (port < this.X_TP_ExternalPortEnd)))) {
+                    stacks[index] = this.__stack;
+                    index++;
+                    confilt = 1;
+                }
+            });
+            if (1 == confilt) {
+                $.confirmMobile($.tpLang.c_str.ftp_vs_conflict, function() {
+                    for (i = 0; i < index; i++) {
+                        $.act(ACT_SET, WAN_PPP_CONN_PORTMAPPING, stacks[i], null, ["portMappingEnabled=0"]);
+                    }
+
+                    if (!$.exe()) {
+                        return (portTrigList_IP_ConfiltPort(port));
+                    }
+                }, function() {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                });
+            } else {
+                return (portTrigList_IP_ConfiltPort(port));
+            }
+        }
+    }
+
+
+    function portTrigList_IP_ConfiltPort(port) {
+        var portTrigList_IP = $.act(ACT_GL, IP_CONN_PORTTRIGGERING, null, null);
+        var stacks = [];
+        var confilt = 0;
+        var index = 0;
+        var i;
+        var cancel = 0;
+
+        if (!$.exe()) {
+            $.each(portTrigList_IP, function() {
+                if ((this.enable == 1) && ((port == this.triggerPort) || checkPort(port, this.openPort))) {
+                    stacks[index] = this.__stack;
+                    index++;
+                    confilt = 1;
+                }
+            });
+
+            if (1 == confilt) {
+                $.confirmMobile($.tpLang.c_str.ftp_pt_conflict, function() {
+                    for (i = 0; i < index; i++) {
+                        $.act(ACT_SET, IP_CONN_PORTTRIGGERING, stacks[i], null, ["enable=0"]);
+                    }
+
+                    if (!$.exe()) {
+                        return (portTrigList_PPP_ConfiltPort(port));
+                    }
+                }, function() {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                });
+            } else {
+                return (portTrigList_PPP_ConfiltPort(port));
+            }
+        }
+    }
+
+    function portTrigList_PPP_ConfiltPort(port) {
+        var portTrigList_PPP = $.act(ACT_GL, PPP_CONN_PORTTRIGGERING, null, null);
+        var stacks = [];
+        var confilt = 0;
+        var index = 0;
+        var i;
+        var cancel = 0;
+
+        if (!$.exe()) {
+            $.each(portTrigList_PPP, function() {
+                if ((this.enable == 1) && ((port == this.triggerPort) || checkPort(port, this.openPort))) {
+                    stacks[index] = this.__stack;
+                    index++;
+                    confilt = 1;
+                }
+            });
+
+            if (1 == confilt) {
+                $.confirmMobile($.tpLang.c_str.ftp_pt_conflict, function() {
+                    for (i = 0; i < index; i++) {
+                        $.act(ACT_SET, PPP_CONN_PORTTRIGGERING, stacks[i], null, ["enable=0"]);
+                    }
+                    if (!$.exe()) {
+                        return (dmzCfg_ConfiltPort(port));
+                    }
+                }, function() {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                });
+            } else {
+                return (dmzCfg_ConfiltPort(port));
+            }
+        }
+    }
+
+    function dmzCfg_ConfiltPort(port) {
+        var dmzCfg = $.act(ACT_GET, DMZ_HOST_CFG, null, null);
+        var cancel = 0;
+
+        if (!$.exe()) {
+            if (dmzCfg.enable == 1) {
+                $.confirmMobile($.tpLang.c_str.ftp_dmz_conflict, function() {
+                    $.act(ACT_SET, DMZ_HOST_CFG, null, null, ["enable=0", "IPAddress=" + dmzCfg.IPAddress]);
+                    if (!$.exe()) {
+                        return (upnpCfgObj_ConfiltPort(port));
+                    }
+                }, function() {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                });
+            } else {
+                return (upnpCfgObj_ConfiltPort(port));
+            }
+        }
+    }
+
+    function upnpCfgObj_ConfiltPort(port) {
+        var upnpCfgObj = $.act(ACT_GET, UPNP_CFG);
+        var stacks = [];
+        var confilt = 0;
+        var index = 0;
+        var i;
+        var cancel = 0;
+
+        if (!$.exe()) {
+            if (upnpCfgObj.enable == 1) {
+                var portMappingList = $.act(ACT_GL, UPNP_PORTMAPPING, null, null);
+                if ($.exe()) {
+                    return 0;
+                }
+                $.each(portMappingList, function() {
+                    if ((this.portMappingEnabled == 1) && ((port == this.externalPort) || (port == this.internalPort))) {
+                        stacks[index] = this.__stack;
+                        index++;
+                        confilt = 1;
+                    }
+                });
+
+                if (1 == confilt) {
+                    $.confirmMobile($.tpLang.c_str.ftp_upnp_conflict, function() {
+                        for (i = 0; i < index; i++) {
+                            $.act(ACT_DEL, UPNP_PORTMAPPING, stacks[i], null, null);
+                        }
+                        if (!$.exe()) {
+                            if ($("#innerFtp").checkboxMobile('option', 'checked') == true) {
+                                $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=1"]);
+                            } else {
+                                $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=0"]);
+                            }
+
+                            $.act(ACT_SET, FTP_SERVER, null, null, ["portNumber=" + port]);
+                            $.act(ACT_SET, FTP_SERVER, null, null, ["modified=0"]);
+
+                            if (!$.exe()) {
+                                $.stopWaitingMobile();
+                                $.loadPhoneMain("sharingSettings.mobile.htm");
+                            }
+                        }
+                    }, function() {
+                        $.stopWaitingMobile();
+                        $.loadPhoneMain("sharingSettings.mobile.htm");
+                    });
+                } else {
+                    if ($("#innerFtp").checkboxMobile('option', 'checked') == true) {
+                        $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=1"]);
+                    } else {
+                        $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=0"]);
+                    }
+                    $.act(ACT_SET, FTP_SERVER, null, null, ["portNumber=" + port]);
+                    $.act(ACT_SET, FTP_SERVER, null, null, ["modified=0"]);
+
+                    if (!$.exe()) {
+                        $.stopWaitingMobile();
+                        $.loadPhoneMain("sharingSettings.mobile.htm");
+                    }
+                }
+            } else {
+                if ($("#innerFtp").checkboxMobile('option', 'checked') == true) {
+                    $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=1"]);
+                } else {
+                    $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=0"]);
+                }
+                $.act(ACT_SET, FTP_SERVER, null, null, ["portNumber=" + port]);
+                $.act(ACT_SET, FTP_SERVER, null, null, ["modified=0"]);
+
+                if (!$.exe()) {
+                    $.stopWaitingMobile();
+                    $.loadPhoneMain("sharingSettings.mobile.htm");
+                }
+            }
+        }
+    }
+
+    function checkPort(ftpPort, port) {
+        port = port.toString();
+        var ports = port.split(",");
+        var conflict = false;
+        var index;
+
+        for (index = 0; index < ports.length; index++) {
+            var c = ports[index].split("-");
+            if (c.length == 1) {
+                if (parseInt(c[0]) == parseInt(ftpPort)) {
+                    conflict = true;
+                    break;
+                }
+            } else if (c.length == 2) {
+                if (parseInt(c[0]) <= parseInt(ftpPort) && parseInt(c[1]) >= parseInt(ftpPort)) {
+                    conflict = true;
+                    break;
+                }
+            }
+        }
+
+        return conflict;
+    }
+
+    $('#tb_Save').on('click', function() {
+        var portValue;
+        var port;
+
+        var newDlnaObj = {};
+        $.startWaitingMobile($.tpLang.m_str.waiting);
+
+        if (!$.checkAllInput()) return false;
+
+        newDlnaObj.serverName = $("#server_name").inputBoxMobile('option', 'value');
+
+        var command = {};
+        command.serverName = $("#server_name").inputBoxMobile('option', 'value');
+
+        $.act(ACT_SET, DLNA_MEDIA_SERVER, null, null, newDlnaObj);
+        $.act(ACT_SET, SMB_SERVICE, null, null, command);
+
+        if ($("#mediaServer").checkboxMobile('option', 'checked') == true) {
+            $.act(ACT_SET, DLNA_MEDIA_SERVER, null, null, ["serverState=1"]);
+        } else {
+            $.act(ACT_SET, DLNA_MEDIA_SERVER, null, null, ["serverState=0"]);
+        }
+
+        if ($("#samba").checkboxMobile('option', 'checked') == true) {
+            $.act(ACT_SET, SMB_SERVICE, null, null, ["enable=1"]);
+        } else {
+            $.act(ACT_SET, SMB_SERVICE, null, null, ["enable=0"]);
+        }
+
+        if ($("#innerFtp").checkboxMobile('option', 'checked') == true) {
+            $.act(ACT_SET, FTP_SERVER, null, null, ["enable=1"]);
+        } else {
+            $.act(ACT_SET, FTP_SERVER, null, null, ["enable=0"]);
+        }
+
+        portValue = $("#port").inputBoxMobile('option', 'value');
+        port = parseInt(portValue, 10);
+
+        if ($("#outerFtp").checkboxMobile('option', 'checked') == true) {
+            return (vtlServList_IP_ConfiltPort(port));
+        } else {
+            $.act(ACT_SET, FTP_SERVER, null, null, ["portNumber=" + port]);
+            $.act(ACT_SET, FTP_SERVER, null, null, ["modified=0"]);
+            $.act(ACT_SET, FTP_SERVER, null, null, ["accessFromInternet=0"]);
+
+            if (!$.exe()) {
+                $.stopWaitingMobile();
+                $.loadPhoneMain("sharingSettings.mobile.htm");
+            }
+        }
+    });
+
+})();
+</script>

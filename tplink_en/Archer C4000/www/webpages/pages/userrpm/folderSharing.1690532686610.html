@@ -1,0 +1,1687 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script src="js/libs/excanvas.1690532686610.js"></script>
+<script src="js/libs/Chart.1690532686610.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Internet</title>
+<style type="text/css">
+	a.act{
+		color: #78AF19;
+		margin-right: 10px;
+		text-decoration: underline;
+	}
+	.chart_cnt{
+	
+	}
+	#chart_mask{    
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		z-index: 998;
+		top: 0;
+		left: 0;
+		display: none;
+	}
+	canvas{
+		cursor:pointer;
+		position:absolute;
+		z-index:2;
+	}
+	canvas.bg-line{
+		z-index:0;
+		left: -100px;
+		top: -100px;
+	}
+	.device_chart{
+		display: inline-block;
+		position: relative;
+		width:140px;
+		height:140px;
+		margin: 130px 0 100px 0;
+	}
+	.device_chart.odd{
+		margin: 130px 200px 100px 100px;
+	}
+	.device_info{
+		position:absolute;
+		/*border-bottom:2px solid #000;*/
+		width:105px;
+		height:48px;
+		box-sizing:border-box;    
+		z-index: 4;
+	}
+	.device_info h4{    
+		font-size: 14px;
+		color: #4d4d4d;
+	}
+	.device_info ul{
+		list-style-type:disc;
+	}
+	.device_info ul li:first-Child{
+		color:#4acbd6
+	}
+	.device_info ul li{
+		color:#a7a9ac;
+		letter-spacing:-1px;
+	}
+	.device_info ul li.alert{
+		color:#c11c66
+	}
+	.device_info_ul{
+	    position: absolute;
+		width: 300px;
+		top: -90px;
+		left: -75px;
+		text-align:center;
+	}
+	.device_info_li{
+	    display: inline-block;
+		width: 60px;
+		margin-left: 0px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+	}
+	.device_info_li span{
+	
+	}
+	.device_info_li div{
+		width: 15px;
+		height: 15px;
+		margin-right: 3px;
+		margin-right: 3px;
+		margin-bottom: -3px;
+		display: inline-block;
+	}
+	.line{
+		position:absolute;
+		border-top:2px solid #000;
+		width: 98px;
+		margin-left: -29px;
+		margin-top: -4px;
+		height:0;
+		top:50%;
+		transform-origin:100% 100%;
+		-webkit-transform-origin:100% 100%;
+		-moz-transform-origin:100% 100%;
+		-ms-transform-origin:100% 100%;
+		-o-transform-origin:100% 100%;
+	}
+	.device_total{
+		position: absolute;
+		font-weight: bold;
+		width: 72px;
+		line-height: 72px;
+		top: 34px;
+		left: 34px;
+		text-align: center;
+		background:#fff;
+		border-radius:50%;
+		-webkit-border-radius:50%;
+		-moz-border-radius:50%;
+		-ms-border-radius:50%;
+		-o-border-radius:50%;
+	}
+	.bottom_button{
+		position: absolute;
+		top: 215px;
+		left: 30px;
+		z-index: 1;
+	}
+	#authentication_grid .btn-delete{
+		display:none;
+	}
+	#authentication_grid .grid-content-td .password-wrap{
+	    border: 0;
+		background-color: transparent;
+	}
+	#sharing_content_edit{
+		position:absolute;
+		right:15px;
+		top:25px;
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -1px -21px;
+		display: inline-block;
+		width: 18px;
+		height: 18px;
+		cursor: pointer;
+ 		z-index: 999;
+	}	
+	#sharing_content_edit.disable{
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -739px -1px;
+		cursor: default;
+	}
+	#sharing_content{
+		position:relative;
+	}
+	#sharing_content_widget{
+		/*position:relative;*/
+		height:300px;
+		background:#eee;
+		overflow:scroll;
+	}
+	#sharing_content_status,
+	.volumn-folder{
+		position:relative;
+		margin:20px 0 20px 50px;
+		color:#b3b3b3;
+	}
+	.volumn-folder:before{
+		display:block;
+		content:"";
+		position:absolute;
+		top:1px;
+		left:-25px;
+		width: 13px;
+		height: 13px;    
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -189px -1px;
+	}
+	.volumn-folder li{
+		margin-bottom: 7px;
+	}
+	.volumn-progress-text span{
+		display:inline-block;
+		float:right;
+		color:#b3b3b3;
+	}
+	.volumn-progress-text span:first-Child{
+		float:left;
+		color:#4acdb6;
+	}
+	.volumn-progress-text span.grid_alert{
+		float:left;
+		color:#c11c66;
+	}
+	.volumn-folder-enable{
+		background:url(./themes/green/img/icons.1690532686610.png) no-repeat -319px -1px;
+		width: 18px;
+		height: 18px;    
+		margin-left: 16px;
+		cursor: pointer;
+	}
+	.volumn-folder-enable.disable{
+		background-position:-499px -1px;
+	}
+	.volumn-remove{
+		margin:0 auto;
+		display:inline-block;
+		content:"";
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -377px -200px;
+		width: 14px;
+		height: 19px;
+		cursor: pointer;
+	}
+	.auth-switch{
+		margin-top: 30px;
+	}
+	.access-auth{
+		margin: 30px 0 -10px 0px !important;
+	}
+	#chart_tips{
+		position: absolute;
+		z-index: 999;
+		color: #fff;
+		font-size: 18px;
+		top: 115px;
+		left: 230px;
+		text-align: center;	
+	}
+	#chart_tips #chart_tips_button{
+		border: 3px dashed #fff;
+		display: inline-block;
+		padding: 4px 17px;
+		border-radius: 10px;
+		position: relative;
+		top: 30px;
+		cursor:pointer;
+	}
+	#chart_tips #chart_tips_point{
+		width: 3px;
+		height: 35px;
+		top: 25px;
+		left: 25px;
+		background: #fff;
+		position: absolute;
+		transform: rotate(-145deg);
+		-webkit-transform: rotate(-145deg);
+		-moz-transform: rotate(-145deg);
+		-ms-transform: rotate(-145deg);
+		-o-transform: rotate(-145deg);
+	}
+	#chart_tips_point:before{
+		content: "";
+		position: absolute;
+		display: block;
+		height: 0;
+		width: 0;
+		top: -20px;
+		left: -2px;
+		border-bottom: 20px solid #fff;
+		border-left: 4px solid transparent;
+		border-right: 4px solid transparent;
+	}
+	#disk_grid {
+		margin-top:5px;
+	}
+	#disk_grid *{
+		overflow:hidden\9;
+	}
+	#disk_grid .progressbar-value.grid_alert{
+		background:#c11c66;
+	}
+	div.progressbar-container div.progressbar-content{
+		background-color: #a7a9ac;
+	}
+	.how-to-show{
+		width: 22px;
+		height: 22px;
+		background: #4acbd6;
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -417px -198px;
+		display: inline-block;
+		float: right;
+		margin-left: 10px;
+		cursor: pointer;
+	}
+	.how-to-show.selected{
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -394px -198px;
+	}
+	#grid_show{
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -459px -198px;
+	}
+	#grid_show.selected{
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -439px -198px;
+	}
+	#switch_tips{
+		line-height: 22px;
+		width: auto;
+		background: none;
+		color: #c11c66;
+	}
+	div.foldertree-container div.foldertree-root span.foldertree-root.foldertree-has-branch,
+	div.foldertree-container div.foldertree-root span.foldertree-root.foldertree-has-branch.opened{
+		height: 24px;
+		width: 24px;
+		margin-right:3px;
+		background: url(./themes/green/img/icons1.1690532686610.png) -39px -1px;
+		cursor: pointer;
+		vertical-align: middle;
+	}
+	div.foldertree-container div.foldertree-root span.foldertree-root.foldertree-has-branch.opened{
+		background-position: -15px -1px;
+	}
+	div.foldertree-container.last div.foldertree-root span.foldertree-root.foldertree-has-branch,
+	div.foldertree-container.last div.foldertree-root span.foldertree-root.foldertree-has-branch.opened{
+		height: 24px;
+		width: 24px;
+		margin-right:3px;
+		background: url(./themes/green/img/icons1.1690532686610.png) -39px -29px;
+		cursor: pointer;
+		vertical-align: middle;
+	}
+	div.foldertree-container.last div.foldertree-root span.foldertree-root.foldertree-has-branch.opened{
+		background-position: -15px -29px;
+	}
+	div.foldertree-container div.foldertree-root {
+		background: url(./themes/green/img/icons1.1690532686610.png) transparent repeat-y -118px -1px;
+	}
+	div.foldertree-container.last div.foldertree-root {
+		background: none;
+	}
+	div.foldertree-container div.router span.icon{
+		background-position: -594px -184px;
+	}
+	#sharing_content_folder .router{
+		display:none;
+		font-size: 14px;
+		line-height: 40px;
+	}
+	#sharing_content_folder .foldertree-container{
+		margin-top: -10px;
+	}
+	#sharing_content_folder .foldertree-container.first{
+		margin-top: 10px;
+	}
+	#sharing_content_folder .foldertree-container.first .router{
+		display:block;
+	}
+	div#setGrid a.address-edit{
+		display: inline-block;
+	}
+</style>
+</head>
+
+<body>
+<div class="func-container">
+	
+	<div id="disk">
+		<button id="scan_btn"></button>
+		<div id="grid_show" class="how-to-show"></div>
+		<div id="canvas_show" class="how-to-show"></div>
+		<div id="switch_tips" class="how-to-show hidden"></div>
+		<div id="chart_cnt">
+		</div>
+		<div id="chart_mask">
+		</div>
+		<div id="chart_tips" class="hidden">
+			<div id="chart_tips_point"></div>
+			<p></p>
+			<div id="chart_tips_button"></div>
+		</div>
+		<div id="disk_grid">
+		</div>
+	</div> 
+	<div id="folder">
+		<form id="folder-setting">
+			<input type="text"  id="network_server" name="server" value="" />
+			<div id="setGrid" class="folder-sharing-set-grid">
+				
+			</div>
+			<button id="total_save" type="button"></button>
+		</form>
+		<div id="leave" class="user-defined">
+			<div class="msg-content">
+				<h4 class="title">
+					<span class="icon"></span>
+					<span class="text" id="notice"></span>
+					
+				</h4>
+			</div>
+			<div class="button-container msg-btn-container">
+				<div class="msg-btn-wrap">
+					<span class="save_failed hidden" id="save_failed"></span>
+					<button id="notice_cancel"></button>
+					<button id="continue"></button>
+					<button id="save_continue"></button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="folder2">
+		<div id="sharing_content">
+			<p id="sharing_content_title"></p>
+			<div id="sharing_content_widget">
+				<p id="sharing_content_status"></p>
+				<div id="sharing_content_edit"></div>
+			</div>
+		</div>
+		<div id="sharing_content_folder">
+		</div>
+		<input type="text"  id="authentication" name="authentication" value="" />
+		<div id="authentication_grid"></div>
+		<div id="authentication_grid_editor">
+			<input id="authentication_username" name="username" />
+			<input id="authentication_password" name="password" />
+		</div>
+		<input id="enable_media" name="media_sharing" value="" />
+	</div>
+	<div id="help_disk_setting">
+	</div>
+</div>
+
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+
+	var DISK_QUERY_URL_NEW = $.su.url("/admin/disk_setting?form=metadata");
+	var DISK_LIST_URL_NEW = $.su.url("/admin/disk_setting?form=contents");
+	var DISK_REMOVE_URL_NEW = $.su.url("/admin/disk_setting?form=remove");
+	var DISK_SCAN_URL_NEW = $.su.url("/admin/disk_setting?form=scan");
+	
+	var SHARE_FOLDER_URL_NEW = $.su.url("/admin/folder_sharing?form=server");
+	var SHARE_SET_URL_NEW = $.su.url("/admin/folder_sharing?form=settings");
+	
+	var SHARE_ALL_URL_NEW = $.su.url("/admin/folder_sharing?form=mode");	
+	var SHARE_TREE_URL_NEW = $.su.url("/admin/folder_sharing?form=tree");
+	
+	
+	var SHARE_VOLUMN_URL_NEW = $.su.url("/admin/folder_sharing?form=volumn");
+	
+	
+	var SHARE_AUTH_URL_NEW = $.su.url("/admin/folder_sharing?form=auth");
+	var SHARE_AUTH_GRID_URL_NEW = $.su.url("/admin/folder_sharing?form=partial");
+	
+	
+	var MEDIA_URL_NEW = $.su.url("/admin/folder_sharing?form=media");
+	
+	
+	var DISK_QUERY_FIRST_URL_NEW = $.su.url("/admin/disk_setting?form=first");
+	
+	var proxyCheckFirst = new $.su.Proxy({
+		url:DISK_QUERY_FIRST_URL_NEW,
+		async:false
+	});
+	var firstTips = true;
+	proxyCheckFirst.read({},function(data){
+		firstTips = data.is_first;
+	})
+	
+	$("div.func-container").page({
+		title: $.su.CHAR.DISK_SETTING.DISK_SET,
+		help: ""
+	});
+
+	$("div#disk").panel({
+		title: $.su.CHAR.DISK_SETTING.DISK_SET,
+		collapsible: false
+	});
+	function scan(showType){
+			$.ajax({
+					url:DISK_SCAN_URL_NEW, 
+					dataType:"json",
+					error:function(){
+					},
+					success:function(data){
+						if(typeof data.data == "undefined")
+						{
+							return;
+						}
+						var result_str = $.su.CHAR.DISK_SETTING.SCAN_RESULT.replace("%n", data.data.number);
+				render_list(data,showType);
+					}
+			});			
+		}
+	$("#scan_btn").button({
+		fieldLabel: null,
+		text: $.su.CHAR.DISK_SETTING.SCAN,
+		cls:"inline-block",
+		handler:function(){
+			scan();
+		}
+	});
+	var overFive;
+	$("#grid_show").click(function(){
+		if($(this).hasClass("selected")) return;
+		scan("grid");
+		$(this).addClass("selected");
+		$("#canvas_show").removeClass("selected");
+	});
+	$("#canvas_show").click(function(){
+		if($(this).hasClass("selected")) return;
+		else if(overFive!=undefined && overFive){
+			$("#switch_tips").show();
+			return;
+		}
+		scan("canvas");
+		$(this).addClass("selected");
+		$("#grid_show").removeClass("selected");
+	});
+	$("#chart_tips p").text($.su.CHAR.FOLDER.DISK_TITLE);
+	$("#chart_tips_button").text($.su.CHAR.OPERATION.OK);
+	$("#switch_tips").text($.su.CHAR.FOLDER.SWITCH_TIPS);
+	function render_list(res,showType)
+	{
+		var showType;
+		if($("#grid_show").hasClass("selected")||$("#canvas_show").hasClass("selected")){
+			showType = $("#grid_show").hasClass("selected")?"grid":"canvas";
+		}
+
+		//var volumnNum = 0;
+		var diskCheck = 0;
+		var allDataCache = [];
+		$("#switch_tips").hide();
+		if(typeof res.data == "undefined"){
+			return;
+		}else{
+			$("#sharing_content_folder .msg-content-container").empty();
+			/*
+			 *		这部分是chart
+			 */
+			$("#disk_grid").empty();
+			$("#chart_cnt").empty();
+			//$("#chart_cnt").append("<div class=\"chart_tips\"><img />磁盘分区不可见</div>");
+			$("#list_cnt").html("");
+			var data=res.data,
+				len=res.data.list.length,
+				colorArray=["#4acbd6","#11bbbf","#0d9999","#86e2e2","#59e6ea"],
+				//highlightArray=["#5AD3D1","#FFC870","#55AAFF","#FF5A5E","#823815"],
+				div=[];
+				overFive = false;
+			if(len==0 || res.number==0 || len==undefined){
+				$("#chart_cnt").html($.su.CHAR.FOLDER.UNPLUGGED);
+				$("#sharing_content_edit").addClass("disable");
+			}
+			var UuidNmeSerial = {};
+			for(var i=0;i<len;i++){
+				div[i]=document.createElement("div");
+				if(i%2)
+				$(div[i]).attr("class","device_chart");
+				else
+					$(div[i]).attr("class","device_chart odd");
+				$("#chart_cnt").append(div[i]);
+				(function(i){
+					$.ajax({
+						async:false,
+						url:DISK_LIST_URL_NEW+"&serial="+data.list[i].serial,
+						data:{operation:"load"},
+						success:function(data){
+						if(data.data.length>5){
+							overFive=true;
+							showType = "grid";
+							$("#canvas_show").removeClass("selected");
+						}
+						diskCheck++;
+						//volumnNum+=data.data.length;
+						$.each(data.data,function(index,obj){
+							obj.serial=res.data.list[i].serial;
+							UuidNmeSerial[obj.uuid] = res.data.list[i]
+						})
+						allDataCache.push(data.data);
+						if(diskCheck==res.data.list.length && (((overFive||diskCheck>=3)&&!showType)||showType=="grid")){
+							$("#chart_cnt").hide();
+							$("#disk_grid").show();
+							var storeData=[];
+							for(var j=0;j<res.data.list.length;j++){
+								storeData=storeData.concat(allDataCache[j]);
+							}
+							//console.log(storeData)
+							var randomId="disk_grid"+Date.parse(new Date());
+							$("#disk_grid").append($("<div id=\""+randomId+"\"></div>"))
+							$("#"+randomId).grid({
+								store:{
+									fields: [
+										{name: "volumn"},
+										{name: "capacity"},
+										{name: "free"},
+										{name: "enable"},
+										{name: "uuid"}
+									],
+									autoLoad: false
+								},
+								minLines:0,
+								columns: [
+									{
+										text: $.su.CHAR.FOLDER.DISK_DRIVES, 
+										width:140,
+										dataIndex: "capacity",
+										renderer:function(v,i,o){
+											var inHTML = "<div class=\"container-weidget-container\">";
+												inHTML+= 	"<div key=\"key-"+i+"\" drivers=\""+o.serial+"\">";
+												for(var dIndex = 0; dIndex<diskCheck; dIndex++){
+													if(res.data.list[dIndex].serial==o.serial){
+														inHTML+=res.data.list[dIndex].name;
+													}
+												}
+												inHTML+= 	"</div>";
+												inHTML+= "</div>";	
+											return inHTML;
+										}
+									},
+									{
+										text: $.su.CHAR.FOLDER.PARTITION, 
+										width:140,
+										dataIndex: "volumn"
+									},
+									{
+										text: $.su.CHAR.FOLDER.CAPACITY, 
+										width:250,
+										dataIndex: "free",
+										renderer:function(v,i,o){
+											var percent = 1-$.su.func.capacityToNum(v)/$.su.func.capacityToNum(o.capacity),
+												len = percent*230;
+												isAlert = ($.su.func.capacityToNum(v)/$.su.func.capacityToNum(o.capacity)<0.1)?"grid_alert":"";
+											var inHTML="<div class=\"container widget-container progressbar-container progressbar-horizontal inline-block\">";
+												inHTML +=		"<div class=\"widget-wrap-outer progressbar-wrap-outer\">";
+												inHTML +=			"<div class=\"widget-wrap progressbar-wrap\" style=\"left: -2px;margin-bottom:10px;top:7px;\">";
+												inHTML +=				"<div class=\"widget-wrap progressbar-content\" style=\"width: 230px; height: 6px;\">";
+												inHTML +=					"<div class=\"progressbar-value "+isAlert+"\" style=\"width: "+len+"px; overflow: hidden;\"></div>";
+												inHTML +=				"</div>";
+												inHTML +=			"</div>";						
+												inHTML +=		"</div>";
+												inHTML +=	"<div class=\"volumn-progress-text\">";
+												inHTML +=		"<span class=\""+isAlert+"\">"+$.su.CHAR.FOLDER.USED+":"+$.su.func.changeUnit($.su.func.capacityToNum(o.used),1)+"B</span>";
+												inHTML +=		"<span>"+$.su.CHAR.FOLDER.FREE+":"+$.su.func.changeUnit($.su.func.capacityToNum(v),1)+"B</span>";
+												inHTML +=	"</div>";
+												inHTML +="</div>";
+											return inHTML
+										}
+									},
+									{
+										text: $.su.CHAR.FOLDER.STATUS, 
+										dataIndex: "enable",
+										width:50,
+										renderer:function(v,i,o){
+											var enableClass = v=="on"?"":"disable";
+											var inHTML = "<div class=\"container-weidget-container\">";
+												inHTML+= 	"<div class=\"volumn-folder-enable "+enableClass+"\" key=\"key-"+i+"\" serial=\""+o.serial+"\">";
+												inHTML+= 	"</div>";
+												inHTML+= "</div>";
+											var otherValue = $.extend(false,{},o);
+												otherValue.enable = (v=="on"?"off":"on");
+											$(this).on("click",".volumn-folder-enable[key=\"key-"+i+"\"]",function(){
+												$.post(DISK_LIST_URL_NEW+"&serial="+$(this).attr("serial"),{
+													"operation":"update",
+													"index":i,
+													"key":$(this).attr("key"),
+													"old":JSON.stringify(o),
+													"new":JSON.stringify(otherValue)
+												},function(){
+													$.post(DISK_QUERY_URL_NEW, function(data){
+															render_list(data);
+													},"json");
+												});
+											})	
+											return inHTML;
+										}
+									},
+									{
+										text: $.su.CHAR.OPERATION.REMOVE,
+										renderer:function(v,i,o){
+											//console.log(arguments)
+											var inHTML = "<div class=\"container-weidget-container\">";
+												inHTML+= 	"<div class=\"volumn-remove\" key=\"key-"+i+"\" serial=\""+o.serial+"\">";
+												//inHTML+=		$.su.CHAR.FOLDER.SELFLY_REMOVE
+												inHTML+= 	"</div>";
+												inHTML+= "</div>";
+											$(this).on("click",".volumn-remove[key=\"key-"+i+"\"][serial=\""+o.serial+"\"]",function(){
+												$.post(DISK_REMOVE_URL_NEW,{
+													"operation":"remove",
+													"serial":$(this).attr("serial")
+												},function(){
+													$.post(DISK_QUERY_URL_NEW, function(data){
+														render_list(data);
+													},"json");
+												});
+											})	
+											return inHTML;
+										}
+									}
+									
+								],
+							}).grid("getStore").loadData(storeData);
+							var rowspan={};
+							$.each($(".volumn-remove[serial]"),function(i,ele){
+								if(rowspan[$(ele).attr("serial")]){
+									rowspan[$(ele).attr("serial")]++;
+								}else{
+									rowspan[$(ele).attr("serial")]=1;
+								}
+							});
+							for(var s in rowspan){
+								$(".volumn-remove[serial="+s+"]").closest("td").hide();
+								$(".volumn-remove[serial="+s+"]:eq(0)").closest("td").show();
+								$(".volumn-remove[serial="+s+"]:eq(0)").closest("td").attr("rowspan",rowspan[s])
+							}
+							rowspan={};
+							$.each($("[drivers]"),function(i,ele){
+								if(rowspan[$(ele).attr("drivers")]){
+									rowspan[$(ele).attr("drivers")]++;
+								}else{
+									rowspan[$(ele).attr("drivers")]=1;
+								}
+							});
+							for(var s in rowspan){
+								$("[drivers="+s+"]").closest("td").hide();
+								$("[drivers="+s+"]:eq(0)").closest("td").show();
+								$("[drivers="+s+"]:eq(0)").closest("td").attr("rowspan",rowspan[s])
+							}
+							$("#grid_show").addClass("selected");
+						}else if(diskCheck==res.data.list.length && ((!overFive && diskCheck<=2 && !showType)||showType=="canvas")){
+							$("#chart_cnt").show();
+							$("#disk_grid").hide();
+							if(firstTips){
+									firstTips = false;
+									$.su.mask.dom.css("background","#000");
+									$.su.mask.dom.css("opacity",0.5);
+									$.su.mask.show("fold_sharing_first_tip");
+									$("#chart_tips").show();
+									if($.su.detect() == "desktop"){
+									$("div.function-container").getNiceScroll(0).doScrollTop(0, 250);
+									}else{
+										$("div.function-container").animate({scrollTop: 0}, 250);
+									}
+							}
+							for(var k=0;k<diskCheck;k++){
+								var totalCapacity=0,
+									totalFree=0,
+									formatData=[],
+									len=allDataCache[k].length;
+								var bgLine=document.createElement("canvas");
+									bgLine.className="bg-line";
+									bgLine.width=350;
+									bgLine.height=350;
+								var infoUl=document.createElement("ul");
+									infoUl.className="device_info_ul";
+								for(var j=0;j<len;j++){
+									totalCapacity+=$.su.func.capacityToNum(allDataCache[k][j].capacity);
+								}
+								for(j=0;j<len;j++){
+									totalFree+=$.su.func.capacityToNum(allDataCache[k][j].free);
+									(function(k,j,bgLine){
+										formatData.push({
+											value: Math.max($.su.func.capacityToNum(allDataCache[k][j].capacity),totalCapacity*0.05),
+											color: allDataCache[k][j].enable=="on"?colorArray[j%5]:"#a7a9ac",
+											//highlight: allDataCache[k][j].enable=="on"?highlightArray[j%5]:"grey",
+											label: allDataCache[k][j].volumn,
+											free: $.su.func.capacityToNum(allDataCache[k][j].free),
+											used: $.su.func.capacityToNum(allDataCache[k][j].used),
+											clickCallback:function(){
+												$("#chart_mask").show();
+												var otherValue = $.extend(false,{},allDataCache[k][j]);
+												otherValue.enable = (otherValue.enable=="on"?"off":"on");
+												$.post(DISK_LIST_URL_NEW+"&serial="+allDataCache[k][j]["serial"],{
+													"operation":"update",
+													"index":k*length+j,
+													"key":"key-"+(k*length+j),
+													"old":JSON.stringify(allDataCache[k][j]),
+													"new":JSON.stringify(otherValue)
+												},function(){
+													$.post(DISK_QUERY_URL_NEW, function(data){
+															render_list(data);
+															setTimeout(function(){
+																$("#chart_mask").hide();
+															},1500);
+													},"json");
+												});
+											},
+											showInfo:function(){
+												var angle = 0,
+													angleSum = 0,
+													total = 0;
+												var r = this.outerRadius;
+												var ctx = bgLine.getContext('2d');
+												$("#chart_cnt .device_chart:eq("+k+")").find("div.device_info").hide();
+												ctx.clearRect(0,0,350,350);
+												ctx.beginPath();
+												ctx.strokeStyle = this.fillColor;
+												ctx.lineWidth = 2;
+												ctx.moveTo(170,170);
+												
+												for(var i=0;i<allDataCache[k].length;i++){
+													total += Math.max($.su.func.capacityToNum(allDataCache[k][i].capacity),totalCapacity*0.05);
+													if(i<j)
+														angleSum += Math.max($.su.func.capacityToNum(allDataCache[k][i].capacity),totalCapacity*0.05);
+												}
+												angleSum = angleSum/total*2*Math.PI;
+												angle = this.value/total*2*Math.PI;
+												if(this.value==total) angle=2.3;
+												var changeX = ((angleSum + angle/2)>Math.PI)?-1:0;
+												
+												var div = $("#chart_cnt .device_chart:eq("+k+")").find("div.device_info:eq("+j+")");
+												ctx.lineTo(170+1.4*r*Math.sin(angleSum + angle/2),170-1.4*r*Math.cos(angleSum + angle/2));
+												ctx.lineTo(170+1.4*r*Math.sin(angleSum + angle/2)+ (changeX==0?1:-1)*div.width(),170-1.4*r*Math.cos(angleSum + angle/2));
+												ctx.stroke();
+												if ( isIE8 ){
+													ctx.beginPath();
+													ctx.fillStyle="#ffffff";
+													ctx.arc(170, 170, 36, 0, Math.PI*2, false);
+													ctx.fill();
+												}
+												div.show();
+											},
+											hideInfo:function(){
+												var ctx = bgLine.getContext('2d');
+												$("#chart_cnt .device_chart:eq("+k+")").find("div.device_info").hide();
+												ctx.clearRect(0,0,350,350);
+											}
+										});
+									})(k,j,bgLine)
+								}
+								$("#chart_cnt .device_chart:eq("+k+")").append(bgLine);
+								$("#chart_cnt .device_chart:eq("+k+")").append(infoUl);
+								var canvas=document.createElement("canvas");
+									canvas.width=140;
+									canvas.height=140;
+								$("#chart_cnt .device_chart:eq("+k+")").append(canvas);
+								// newfour
+								var isIE8 =( navigator.appName == "Microsoft Internet Explorer" && navigator.appVersion.split(";")[1].replace(/[ ]/g,"")=="MSIE8.0" )
+								if( isIE8 ){ 
+									canvas=window.G_vmlCanvasManager.initElement(canvas);
+									bgLine=window.G_vmlCanvasManager.initElement(bgLine);
+									$("#chart_tips_point").hide();
+								}
+								
+								(function(canvas,totalCapacity,bgLine){
+									new Chart(canvas.getContext("2d")).Doughnut(formatData, {
+										showTooltips: true,	
+										onAnimationComplete:function(){
+											var ctx=bgLine.getContext('2d');
+											var div,
+												li;
+												//line;
+											var angle,
+												angleSum=0;
+											var changeX=0,
+												changeY=0;
+											var r = this.outerRadius;
+											var usedValue,
+												freeValue;
+											for(var i=0;i<this.segments.length;i++){
+												angle = this.segments[i].value/this.total*2*Math.PI;
+												if(this.segments.length==1)angle=2.3;
+												div=document.createElement("div");
+												li=document.createElement("li");
+												//line=document.createElement("div");
+												div.className="device_info";
+												li.className="device_info_li";
+												li.style.width = 1/this.segments.length*100+"%";
+												//line.className="line";
+												$(canvas).closest(".device_chart").append(div);
+												$(canvas).closest(".device_chart").find(".device_info_ul").append(li);
+												//$(canvas).closest(".device_chart").append(line);
+												
+												changeX = ((angleSum + angle/2)>Math.PI)?-1:0;
+												changeY = -1;
+												
+												/*ctx.beginPath();
+												ctx.strokeStyle=this.segments[i].fillColor;
+												ctx.lineWidth=2;
+												ctx.moveTo(170,170);
+												ctx.lineTo(170+1.4*r*Math.sin(angleSum + angle/2),170-1.4*r*Math.cos(angleSum + angle/2));
+												ctx.lineTo(170+1.4*r*Math.sin(angleSum + angle/2)+ (changeX==0?1:-1)*div.offsetWidth,170-1.4*r*Math.cos(angleSum + angle/2));
+												ctx.stroke();*/
+												
+												$(div).css("top",parseInt(r - 1.4*r*Math.cos(angleSum + angle/2) + changeY*div.offsetHeight - 1)+"px");
+												$(div).css("left",parseInt(r + 1.4*r*Math.sin(angleSum + angle/2) + changeX*div.offsetWidth + 20)+"px");
+												//$(div).css("border-color",this.segments[i].fillColor);
+												
+												/*$(line).css("border-color",this.segments[i].fillColor);
+												//$(line).css("-webkit-transform","rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)");
+												$(line).css({
+															'-webkit-transform': "rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)",
+															'-moz-transform': "rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)",
+															'-ms-transform': "rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)",
+															'-o-transform': "rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)",
+															'transform': "rotate("+(angleSum + angle/2 +Math.PI/2 )/Math.PI*180+"deg)",
+															'zoom': 1
+												});*/
+												// usedValue = ((this.segments[i].value*1-this.segments[i].free*1+"").indexOf(".")>-1)?(this.segments[i].value*1-this.segments[i].free*1).toFixed(1):(this.segments[i].value*1-this.segments[i].free*1);
+												usedValue = ((this.segments[i].used*1+"").indexOf(".")>-1)?(this.segments[i].used*1).toFixed(1):(this.segments[i].used*1);
+												freeValue = ((this.segments[i].free*1+"").indexOf(".")>-1)?(this.segments[i].free*1).toFixed(1):(this.segments[i].free*1);
+												
+												div.innerHTML="<h4>"+this.segments[i].label+"</h4>"+"<ul><li class=\""+((usedValue/freeValue)>=9?"alert":"")+"\">"+$.su.CHAR.FOLDER.USED+": "+$.su.func.changeUnit(usedValue,1)+"B</li>"+"<li>"+$.su.CHAR.FOLDER.FREE+": "+$.su.func.changeUnit(freeValue,1)+"B</li></ul>";
+												li.innerHTML="<div style=\"background:"+this.segments[i].fillColor+"\"></div>"+this.segments[i].label;
+												angleSum+=angle;
+												div.style.display="none";
+												/*if ( isIE8 ) {
+													$(line).hide();
+												};*/
+											}
+											ctx.beginPath();
+											ctx.fillStyle="#ffffff";
+											ctx.arc(170, 170, 36, 0, Math.PI*2, false);
+											ctx.fill();
+											totalCapacity = ((totalCapacity+"").indexOf(".")>-1)?(totalCapacity*1).toFixed(1):(totalCapacity*1);
+											if ( isIE8 ) {
+												var total="<div class=\"device_total\" style=\"background:transparent;\">"+$.su.func.changeUnit(totalCapacity,1)+"B</div>";
+											}else{
+												var total="<div class=\"device_total\">"+$.su.func.changeUnit(totalCapacity,1)+"B</div>";
+											}
+											$(canvas).closest(".device_chart").append($(total));
+										}
+									});
+								})(canvas,totalCapacity,bgLine);
+							}
+							$("#canvas_show").addClass("selected");
+						}
+						
+						$("#chart_cnt .device_chart:eq("+i+")").append($("<button id=\"remove_button"+i+"\" class=\"bottom_button\"></button>"));
+						$("#remove_button"+i).button({
+							fieldLabel: null,
+							text: $.su.CHAR.OPERATION.REMOVE,
+							cls:"inline-block",
+							handler:function(){
+								$.post(DISK_REMOVE_URL_NEW, {"serial":res.data.list[i].serial}, function(data){
+									if(data.result){
+										$.post(DISK_QUERY_URL_NEW, function(data){
+												render_list(data);
+										},"json");
+									}else{
+										$.post(DISK_QUERY_URL_NEW, function(data){
+												render_list(data);
+										},"json");
+									}
+								},"json");
+							}
+						})
+					}, 
+					dataType:"json",
+					type:"POST"
+					
+					});
+				})(i);
+			}
+			renderVolumn(UuidNmeSerial,data);
+		}
+	}
+	$("#chart_tips_button").click(function(){
+		proxyCheckFirst.write({is_first:false},function(data){
+			firstTips = data.is_first;
+		})
+		$.su.mask.dom.css("opacity",0.3);
+		$.su.mask.dom.css("background","#b2b2b2");
+		$.su.mask.hide("fold_sharing_first_tip");
+		$("#chart_tips").hide();
+	});
+	
+	//进入页面时先读一遍USB
+	$.post(DISK_QUERY_URL_NEW, function(data){
+		render_list(data);
+	},"json");
+	
+	
+	$("div#folder").panel({
+		title: $.su.CHAR.FOLDER.TITLE,
+		collapsible: false
+	});
+	$("input#network_server").textbox({
+		fieldLabel: $.su.CHAR.FOLDER.SERVER_NAME,
+		cls:"form-inner",
+		vtype:"name_special",
+		maxLength:15,
+		allowBlank:false,
+		labelCls:"xl"
+	});
+	var store = new $.su.Store({
+		proxy: {
+			url: SHARE_SET_URL_NEW
+		},
+		fields: [
+			{name: "edit"},
+			{name: "enable"},
+			{name: "protocol"},
+			{name: "link"},
+			{name: "port"}
+		],
+		autoLoad: true
+
+	});
+	$("div#setGrid").grid({
+		store: store,
+		minLines:0,
+		//editor: "default",
+		columns: [
+			{
+				text: $.su.CHAR.FOLDER.ENABLE, 
+				width:100,
+				xtype: "actioncolumn",
+				dataIndex: "enable",
+				items: [
+					{
+						xtype: "checkbox",
+						name: "enable",
+						fieldLabel: null,
+						items:[
+							{boxlabel: "", uncheckedValue:"off",  inputValue: "on"}
+						]
+					}
+				]
+					
+				
+	
+			},
+			{
+				text: $.su.CHAR.FOLDER.METHOD, 
+				width:180,
+				dataIndex: "protocol",
+				renderer: function(val, index, data){
+					switch(val.toUpperCase()){
+						case 'SAMBA':
+							return $.su.CHAR.FOLDER.NETWORK_NEIGHBORHOOD;
+						case 'FTP':
+							return $.su.CHAR.FOLDER.FTP;
+						case 'FTPEX':
+							return $.su.CHAR.FOLDER.FTPEX;
+						case 'SFTP':
+							return $.su.CHAR.FOLDER.SFTP;
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.FOLDER.LINK, 
+				width:200,
+				dataIndex: "link",
+				renderer:function(val,index,data){
+					var edit = data.edit || $("div#setGrid").grid("getStore").data[index].edit;
+					if(edit == 0)
+					{
+						return "<a class='text selectable'>"+$.su.func.escapeHtml(val)+"</a>";
+					}
+					else
+					{
+						var ftpex_links = val.split(','),
+						ret = "",
+						len = ftpex_links.length, i;
+						for (i = 0; i < len - 1; i++)
+						{
+							ret += "<a class='text selectable'>" + $.su.func.escapeHtml(ftpex_links[i]) + "</a><br />";
+						}
+						ret += "<a class='text selectable'>" + $.su.func.escapeHtml(ftpex_links[i]) + "</a>&nbsp;&nbsp;<a href=\"javascript:void(0);\" class='text link address-edit'>"+ $.su.CHAR.OPERATION.EDIT +"</a>";
+						return ret;
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.FOLDER.PORT, 
+				
+				dataIndex: "port",
+				/*editor: {
+					xtype: "textbox"
+				},*/
+				xtype: "actioncolumn",
+				items: [
+					{
+						xtype: "textbox",
+						name: "port",
+						inputCls: "xsp",
+						fieldLabel: null,
+						properties: [
+							{
+								property: "readOnly",
+								index: "edit",
+								value: false
+							}
+
+						]
+					}
+				]
+			}
+		]
+	});
+	$("div#leave").msg({
+		autoshow: false,
+		width: 500,
+		cls:"l warning",
+		type: "window"
+	});
+	$("#notice").html($.su.CHAR.FOLDER.NOTICE);
+	$("#save_failed").html($.su.CHAR.FOLDER.SAVE_FAILED_NOTICE);
+	$("div#setGrid").delegate("a.link","click",function(e){
+		e.stopPropagation(); 
+		if(check_is_changed())
+		{
+			$("#save_continue").button("show");
+			$("#notice").html($.su.CHAR.FOLDER.NOTICE);
+		}
+		else
+		{
+			$("#save_continue").button("hide");
+			$("#notice").html($.su.CHAR.FOLDER.NO_CHANGE_NOTICE);
+		}
+		$("div#leave").msg("show");
+	});	
+	$("#notice_cancel").button({
+		text:$.su.CHAR.FOLDER.CANCEL,
+		handler:function(){
+
+			$("div#leave").msg("close");
+		},
+		cls:"inline submit"
+	});	
+	$("#continue").button({
+		text:$.su.CHAR.FOLDER.CONTINUE,
+		handler:function(){
+			$("div#leave").msg("close");
+			$.su.menu.advanced.goTo("dynamic-dns");
+		},
+		cls:"inline  submit"
+	});
+
+	$("#save_continue").button({
+		text:$.su.CHAR.FOLDER.CONTINUE_SAVE,
+		handler:function(){
+			para = {};
+			para.server = $("#network_server").textbox("getValue");
+			para.enable = "";
+			para.port = "";
+
+
+			var submit_port_arr = [];
+			var port_arr = $("div#setGrid span input[name=port]");
+			var len = port_arr.length;
+			for (var i = 0; i < len; i++) {
+				if(!port_arr[i].readOnly)
+				{
+					submit_port_arr.push(port_arr[i].value);
+				}
+				
+			};
+			para.port = submit_port_arr.join(",");
+
+
+			var submit_enable_arr = [];
+			var enable_arr = $("div#setGrid input.checkbox-checkbox[name=enable]");
+			var len = enable_arr.length;
+			for (var i = 0; i < len; i++) {
+				if(enable_arr[i].checked)
+				{
+					submit_enable_arr.push("on");
+				}
+				else
+				{
+					submit_enable_arr.push("off");
+				}
+			};
+			para.enable = submit_enable_arr.join(",");
+
+			store.proxy.write(para, function(data){
+
+					$("div#leave").msg("close");
+					$.su.menu.advanced.goTo("dynamic-dns");
+			}, function(){
+				$("#save_failed").removeClass("hidden");
+					return;
+			});
+		},
+		cls:"inline  submit"
+	});
+	function check_is_changed(){
+		var network_server_val = $("form#folder-setting").data("data").server;
+		var grid_store_data = store.data;
+		para = {};
+		para.server = $("#network_server").textbox("getValue");
+		para.enable = "";
+		para.port = "";
+
+
+		var submit_port_arr = [];
+		var port_arr = $("div#setGrid span input[name=port]");
+		var len = port_arr.length;
+		for (var i = 0; i < len; i++) {
+			if(!port_arr[i].readOnly)
+			{
+				submit_port_arr.push(port_arr[i].value);
+			}
+			
+		};
+		para.port = submit_port_arr.join(",");
+
+
+		var submit_enable_arr = [];
+		var enable_arr = $("div#setGrid input.checkbox-checkbox[name=enable]");
+		var len = enable_arr.length;
+		for (var i = 0; i < len; i++) {
+			if(enable_arr[i].checked)
+			{
+				submit_enable_arr.push("on");
+			}
+			else
+			{
+				submit_enable_arr.push("off");
+			}
+		};
+		// //console.dir(submit_enable_arr);
+		para.enable = submit_enable_arr.join(",");
+
+
+		if(network_server_val!=para.server)
+		{
+			// //console.log(network_server_val);
+			return true
+		}
+		var len = grid_store_data.length;
+		var j = 0;
+		// //console.dir(grid_store_data);
+		for (var i = 0; i < len; i++) {
+			if(grid_store_data[i].enable != submit_enable_arr[i])
+			{
+				// //console.log(grid_store_data[i].enable);
+				return true
+			}
+			// //console.log(i, grid_store_data[i].edit)
+			if(grid_store_data[i].edit)
+			{
+				if( (grid_store_data[i].port != "") && (grid_store_data[i].edit) )
+				{
+					if(grid_store_data[i].port != submit_port_arr[j])
+					{
+						// //console.log(grid_store_data[i].port);
+						return true
+					}
+					else
+					{
+						j++;
+					}
+				}
+			}
+			else
+			{
+				continue;
+			}
+		}
+
+		return false;
+
+	}
+	var ipv4Proxy = new $.su.Proxy({
+		url: SHARE_FOLDER_URL_NEW
+	});
+	$("#total_save").button({
+		text: $.su.CHAR.OPERATION.SAVE,
+		cls:"submit",
+		handler:function(){
+			if( !folderSettingForm.form("validate") ) return false;
+			folderSettingForm.form("showLoading");
+			store.proxy.write(para, function(data){
+				$("div#setGrid").grid("getStore").loadData(data);
+				$("#folder-setting").form("prompt", true);
+				folderSettingForm.form("hideLoading");
+			}, function(){
+				$("#folder-setting").form("prompt", false);
+				folderSettingForm.form("hideLoading");
+			});
+		}
+	});
+	var folderSettingForm = $("form#folder-setting").form({
+		proxy: ipv4Proxy,
+		cls:"no-padding",
+		fields: [
+			{name: "server", mapping: "server"}
+		],
+		validator: function(){
+			if(!$("#network_server").textbox("validate")){
+				return false;
+			}
+			para = {};
+			para.operation = "save";
+			para.server = $("#network_server").textbox("getValue");
+			para.enable = "";
+			para.port = "";
+
+
+			var submit_port_arr = [];
+			var port_arr = $("div#setGrid span input[name=port]");
+			var len = port_arr.length;
+			for (var i = 0; i < len; i++) {
+				if(!port_arr[i].readOnly)
+				{
+					submit_port_arr.push(port_arr[i].value);
+				}
+				else
+				{
+					continue;
+				}
+				var port_val = port_arr[i].value;
+				if(isNaN(port_val))
+				{
+					$(port_arr[i]).textbox("setError");
+					$("#folder-setting").form("setError", $.su.CHAR.ERROR["00000010"]);
+					return false;
+				}
+				if( (port_val!=21) && ((port_val<1024) || (port_val>65535)))
+				{
+					// //console.log(port_val);
+					$(port_arr[i]).textbox("setError");
+					$("#folder-setting").form("setError", $.su.CHAR.ERROR["00000009"]);
+					return false;
+				}
+				
+			};
+			$("#folder-setting").form("setNormal");
+			para.port = submit_port_arr.join(",");
+
+
+			var submit_enable_arr = [];
+			var enable_arr = $("div#setGrid input.checkbox-checkbox[name=enable]");
+			var len = enable_arr.length;
+			for (var i = 0; i < len; i++) {
+				if(enable_arr[i].checked)
+				{
+					submit_enable_arr.push("on");
+				}
+				else
+				{
+					submit_enable_arr.push("off");
+				}
+			};
+			// //console.dir(submit_enable_arr);
+			para.enable = submit_enable_arr.join(",");
+			return true;
+		},
+		submitBtn: "#total_save"
+	});
+	
+	
+	$("div#folder2").panel({
+		title: $.su.CHAR.FOLDER.SHARE_FOLDER_ADV,
+		collapsible: false
+	});
+	
+	var selectStatus;
+	var selectStatement=["NONE","SELECTED","ALL"];
+	var allFolder = [];
+	
+	var proxyAll = new $.su.Proxy({
+		url: SHARE_ALL_URL_NEW,
+		timeout: 12*1000
+	});
+	$("#sharing_content_title").text($.su.CHAR.FOLDER.SHAREING_CONTENT+":");
+	function renderVolumn(UuidNmeSerial,metaData){
+		$.ajax({
+			async:false,
+			url:SHARE_VOLUMN_URL_NEW, 
+			success:function(data){
+			if(typeof data.data == "undefined")
+			{
+				return;
+			}
+			else{
+				var selectAllCheckbox = $("<input id='select-all' name='select_all' />");
+				$("#sharing_content_folder .msg-content-container").append(selectAllCheckbox);
+				selectAllCheckbox.checkbox({
+					fieldLabel: null,
+					labelCls: 's',
+					tips:"",
+					items: [
+						{boxlabel: $.su.CHAR.FOLDER.SHAREING_ALL, inputValue: "on", uncheckedValue: "off"}
+					]
+				}).on("ev_click",function(e,n){
+					if(n=="select_all"){
+						for(var i=0;i<$("[id^=foldertree]").length;i++){
+						$("#foldertree"+i).next(".foldertree-root").children("a").attr("data-path")?$("#foldertree"+i).foldertree("setValue",[$("#foldertree"+i).next(".foldertree-root").children("a").attr("data-path")]):$("#foldertree"+i).foldertree("setValue",[]);
+						}
+					}else{
+						for(var i=0;i<$("[id^=foldertree]").length;i++){
+							$("#foldertree"+i).foldertree("setValue",[]);
+						}
+					}
+				});
+			$("#sharing_content_edit").addClass("disable");
+				for(var i=0;i<data.data.length;i++){
+					var a=$("<input id='foldertree"+i+"' serial='"+UuidNmeSerial[data.data[i].value].serial+"'/>")
+					$("#sharing_content_folder .msg-content-container").append(a);
+					var folderStore = new $.su.TreeStore({
+						proxy: {
+						url: SHARE_TREE_URL_NEW,
+						async:false
+						},
+						autoLoad: false
+					});
+					$("input#foldertree"+i).foldertree({
+						routerName: UuidNmeSerial[data.data[i].value].name,
+						multiple: true,
+						store: folderStore
+					});
+					(function(i){
+						folderStore.load({"path":"","uuid":data.data[i].value}, function(obj){
+							allFolder[i] = [];
+							allFolder[i] = [obj[0].path];
+					},function(){
+					},function(){
+						
+						});
+					})(i);
+					
+					$("input#foldertree"+i).get(0).multipleValue=[];
+					a=null;
+					folderStore=null;
+				}
+				for(var i=0; i<metaData.list.length; i++){
+					$("input[serial="+metaData.list[i].serial+"]").closest(".foldertree-container").first().addClass("first");
+					$("input[serial="+metaData.list[i].serial+"]").closest(".foldertree-container").last().addClass("last");
+				}
+				//判断是否全选
+				proxyAll.read({},function(folderData){
+					if(folderData.length==0){
+						selectStatus=0;
+					}else if(folderData.length==allFolder.length){
+						for(var i=0;i<allFolder.length;i++){
+							if(folderData[i][0]==allFolder[i][0] && folderData[i].length==allFolder[i].length) continue;
+							else break;
+						}
+						selectStatus=(i==allFolder.length)?2:1;
+					}else{
+						selectStatus=1;
+					}
+					render(folderData);
+				},function(){
+					$("#sharing_content_status").text($.su.CHAR.FOLDER["SHAREING_"+selectStatement[0]]);
+			
+					//console.log(arguments)
+				},function(){
+					$("#sharing_content_status").text($.su.CHAR.FOLDER["SHAREING_"+selectStatement[0]]);
+					//console.log(arguments)
+				});
+			}
+			},
+			dataType:"json",
+			type:"POST"
+		});
+	}
+	$("#sharing_content_folder").msg({
+		autoshow:false,
+		type: "prompt",
+		title:$.su.CHAR.FOLDER.SELECT_FOLDERS,
+		okText:$.su.CHAR.OPERATION.SAVE,
+		okHandler: function(){
+			var result=[];
+			for(var i=0;i<$("[id^=foldertree]").length;i++){
+				result=result.concat($("#foldertree"+i).get(0).multipleValue);
+			}
+			proxyAll.write({"folder":JSON.stringify(result),"share_all":$("#select-all").checkbox("getValue").length>0},function(folderData){
+				if(folderData.length==0){
+					selectStatus=0;
+				}else if(folderData.length==allFolder.length){
+					for(var i=0;i<allFolder.length;i++){
+						if(folderData[i][0]==allFolder[i][0] && folderData[i].length==allFolder[i].length) continue;
+						else break;
+					}
+					selectStatus=(i==allFolder.length)?2:1;
+				}else{
+					selectStatus=1;
+				}
+				$("#sharing_content_edit").removeClass("disable");
+				render(folderData);
+			});
+		},
+		cancelHandler:function(){
+			$("#sharing_content_edit").removeClass("disable");
+		}
+	}).on("ev_close",function(){
+		$("#sharing_content_edit").removeClass("disable");
+	});
+	$("#sharing_content_edit").click(function(){
+		if($(this).hasClass("disable")) return;
+		$("#sharing_content_edit").addClass("disable");
+		$("#sharing_content_folder").msg("show");
+		$("#sharing_content_folder").delegate("a.foldertree-text", "click", function(){
+			setTimeout(function(){
+				if($(".foldertree-root").children("a.selected").length==$(".foldertree-root").children("a").length){
+					$("#select-all").checkbox("setValue","on");
+				}else{
+					$("#select-all").checkbox("setValue","off");				
+				}
+			},100);
+		});
+		var data = [];
+		for(var i=0;i<$("#sharing_content_widget ul").length;i++){
+			data[i]=[];
+			for(var j=0;j<$("#sharing_content_widget ul:eq("+i+")").children("li").length;j++){
+				data[i][j]=$("#sharing_content_widget ul:eq("+i+")").children("li:eq("+j+")").text();
+			}
+		}
+		for(i=0;i<$("[id^=foldertree]").length;i++){
+			$("#foldertree"+i).foldertree("setValue",[]);
+			for(j=0; j<data.length; j++){
+				if(data[j].length>0){
+					var reg = new RegExp("^"+$("#foldertree"+i).get(0).store.data[0].path+"");
+					if(reg.test(data[j][0])){
+						$("#foldertree"+i).foldertree("setValue",data[j]);
+					}
+				}
+			}
+		}
+	});
+	
+	function render(data){
+		$("#sharing_content_status").text($.su.CHAR.FOLDER["SHAREING_"+selectStatement[selectStatus]]);
+		$("#sharing_content_widget ul").remove();
+		var innerHTML = "";
+		for(var i=0;i<data.length;i++){
+			if(!data[i][0]) {
+				innerHTML += "<ul class=\"empty-volumn-folder\" folder-index=\""+i+"\"></ul>";
+				continue;
+			}
+			innerHTML += "<ul class=\"volumn-folder\" folder-index=\""+i+"\" volumn=\""+data[i][0].split(":")[0]+":\">";
+			for(var j=0;j<data[i].length;j++){
+				innerHTML += "<li>"+data[i][j]+"</li>";
+			}
+			innerHTML += "</ul>";
+		}
+		$("#sharing_content_widget").append(innerHTML);
+		$("#sharing_content_edit").removeClass("disable");
+	}
+	
+	
+	var proxyAuth = new $.su.Proxy({
+		url: SHARE_AUTH_URL_NEW
+	});
+	$("#authentication").switchbutton({
+		fieldLabel: $.su.CHAR.FOLDER.AUTHENTICATION,
+		labelCls:"l",
+		cls:"access-auth auth-switch",
+		proxy: proxyAuth,
+		autoLoad: true,
+		field: {
+			"name": "authentication"
+		},
+		onHandler:function(){
+			$("div#authentication_grid").grid("show");
+			$(this).parent().addClass("access-auth");
+		},
+		offHandler:function(){
+			$("div#authentication_grid").grid("hide");
+			$(this).parent().removeClass("access-auth");
+		}
+	});
+	
+	$("#authentication_username").textbox({
+        fieldLabel: $.su.CHAR.LOGIN.USERNAME,
+        allowBlank: false,
+        vtype: "name",
+        maxLength: 15,
+        minLength: 1,
+        tabindex:0
+    });
+	$("#authentication_password").password({
+        showLevel: false,
+        fieldLabel: $.su.CHAR.LOGIN.PASSWORD,
+        vtype: "name",
+        maxLength: 15,
+        minLength: 1,
+        allowVisible: true,
+        allowBlank: false
+    });
+	var storeTest = new $.su.Store({
+		proxy: {
+			url: SHARE_AUTH_GRID_URL_NEW,
+			timeout: 12*1000
+		},
+		fields: [
+			{name: "type"},
+			{name: "username"},
+			{name: "password"},
+			{name: "permission"}
+		],
+		autoLoad: true,
+		updateMode: "operation"
+	});
+	$("div#authentication_grid").grid({
+		store:storeTest,
+		minLines:0,
+		paging: {
+		},
+		editor: {
+			content: "#authentication_grid_editor",
+			fields: [
+				{name: "username"},
+				{name: "password"}
+			],
+			beforeSubmit: function(){
+				var store = $("div#authentication_grid").grid("getStore");
+				var data = store.data;
+				for(var index = 0; index < data.length; index++){
+					if($("#authentication_grid .grid-content-tr-" + data[index]["key"]).hasClass("editing")){
+						continue;
+					}else{
+						if($("#authentication_username").textbox("getValue") == data[index]["username"]){
+							$("#authentication_username").textbox("setError", $.su.CHAR.FOLDER.USERNAME_CONFLICT);
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+
+		},
+		columns: [
+			{
+				xtype: "",
+				width: 140,
+				text: $.su.CHAR.FOLDER.ACCOUNT, 
+				/*renderer:function(v,i,o){
+					if(v==0)return $.su.CHAR.FOLDER.ADMIN;
+					else return $.su.CHAR.FOLDER.VISIT
+				},
+				dataIndex: "type"*/
+				dataIndex: "username"
+			},
+			{
+				text: $.su.CHAR.LOGIN.PASSWORD, 
+				width:240,
+				dataIndex: "password",
+				renderer:function(v,i,o){
+					setTimeout(function(){
+						$("#authentication_grid_password"+i).password({
+							showLevel: false,
+							inputCls: "l",
+							fieldLabel: null,
+							readOnly: true,
+							allowVisible: true,
+							allowBlank: false
+						});
+						$("#authentication_grid_password"+i).password("disable")
+						$("#authentication_grid_password"+i).password("setValue",v);
+					},200);
+					return "<input id='authentication_grid_password"+i+"'></input>";
+				}
+			},
+			{
+				text: $.su.CHAR.FOLDER.PERMISSION, 
+				width:140,
+				dataIndex: "permission",
+				renderer:function(v,i,o){
+					if(v=="rw"){
+						return $.su.CHAR.FOLDER.RW;
+					}else if(v=="r"){
+						return $.su.CHAR.FOLDER.R;
+					}
+				}
+			},
+			{
+				text: $.su.CHAR.GRID.MODIFY,
+				xtype: "settings"
+			}
+		],
+		operation: "prompt"
+	})/*.on("ev_load",function(){
+		$("div#authentication_grid").grid("disableRow",0);
+	})*/;
+	
+	
+	var proxyMedia=new $.su.Proxy({
+		url:MEDIA_URL_NEW
+	});
+	$("#enable_media").switchbutton({
+		fieldLabel: $.su.CHAR.FOLDER.MEDIA,
+		labelCls:"l",
+		proxy: proxyMedia,
+		autoLoad: true,
+		field: {
+			"name": "media_sharing"
+		}
+	});
+	var helpDiskSetting = new $.su.Help({
+		container: "div#help_disk_setting",
+		content: ["BASIC_DEVICE_SETTINGS","BASIC_SHARING_SETTINGS","FOLDER_SHARING"]
+	});
+   
+});
+</script>
+</body>
+
+</html>

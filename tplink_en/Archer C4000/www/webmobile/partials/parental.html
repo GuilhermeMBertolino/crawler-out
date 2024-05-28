@@ -1,0 +1,106 @@
+<div class="main-page form-container" ng-hide="form.menuItem">
+	<div form-header title="PARENTAL_CTR.TITLE"></div>
+	<div class="form-content-container">
+		<div class="fieldset-container">
+			<div class="fieldset-content-container">
+				<div switch-field label="PARENTAL_CTR.TITLE" ng-model="form.data.enable"></div>
+				<div jump-item separator="space" label="PARENTAL_CTR.DEVICE_CTR" menu-option="form.menuItem" value="device"></div>
+				<div jump-item separator="space" label="PARENTAL_CTR.RESTR" menu-option="form.menuItem" value="restriction"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="main-page" ng-switch on="form.menuItem">
+	
+	<div ng-controller="parentalDevice" ng-switch-when="device" >
+		<div class="form-container" ng-hide="form.accessTime || form.deviceList">
+
+			<div class="form-content-container">
+				<div class="fieldset-container parental-device">
+					<div grid="grid" editor="form" config="deviceGrid">
+						<div class="fieldset-content-container">
+							<div checkbox-switch label="PARENTAL_CTR.ENABLE_THIS_ENTRY" ng-model="form.data.enable" class="checkbox-orange"></div>
+							<div text-field label="PARENTAL_CTR.DEVICE" ng-model="form.data.name"></div>
+							<div button text="PARENTAL_CTR.BTN_VIEW" cls="button qos-btn" on-click="viewDevices()"></div>
+							<div mac-field label="PARENTAL_CTR.MAC_ADDRESS" ng-model="form.data.mac"></div>
+							<div text-field label="PARENTAL_CTR.DESCRIPTION" ng-model="form.data.note" placeholder="PARENTAL_CTR.OPTIONAL"></div>
+							<div jump-item separator="" label="PARENTAL_CTR.TIME" menu-option="form.accessTime" value="accessTime"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div ng-switch on="form.deviceList" ng-controller="parentalDeviceList">
+			<div class="form-container" ng-switch-when="deviceList">
+				<div form-header title="PARENTAL_CTR.BTN_VIEW">
+					<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+					<div button position="right" text="FORM.DONE" on-click="done()" ng-model="form.done"></div>
+				</div>
+				<div class="form-content-container">
+					<div class="fieldset-container">
+						<div legend-field title="PARENTAL_CTR.ACCESS_DEVICES_LIST"></div>
+						<div class="fieldset-content-container">
+							<div checkbox-group label="" type="radio" ng-model="checkedDeviceList" option="row"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div ng-show="form.accessTime == 'accessTime'">
+			<div class="form-container">
+				<div form-header title="PARENTAL_CTR.TIME">
+					<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()" ng-model="form.back"></div>
+					<div button position="right" text="FORM.DONE" on-click="done()" ng-model="form.done"></div>
+				</div>
+				<div class="form-content-container">
+					<div time-picker ng-model="form.data.calendar"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-container" ng-controller="restriction" ng-switch-when="restriction">
+		<div form-header title="PARENTAL_CTR.RESTR" ng-hide="form.mode">
+			<div button position="left" text="FORM.BACK" cls="button-back" icon-cls="back-button" on-click="back()"></div>
+			<div button position="right" text="FORM.SAVE" on-click="save()" ng-model="form.submitBtn"></div>
+		</div>
+		<div class="form-content-container" ng-hide="form.mode">
+			<div class="fieldset-container">
+				<div class="fieldset-content-container">
+					<div combo-field label="PARENTAL_CTR.TYPE" ng-model="form.data.access_mode"></div>
+				</div>
+			</div>
+
+			<div class="fieldset-container" ng-show="form.data.access_mode">
+				<div class="fieldset-content-container" ng-show="form.data.access_mode.data == 'black'">
+					<div jump-item separator="" label="PARENTAL_CTR.BLACKMODE" menu-option="form.mode" value="black"></div>					
+				</div>
+				<div class="fieldset-content-container" ng-show="form.data.access_mode.data == 'white'">
+					<div jump-item separator="" label="PARENTAL_CTR.WHITEMODE" menu-option="form.mode" value="white"></div>
+				</div>
+			</div>
+		</div>
+		
+		<div  class="form-content-container" ng-switch on="form.mode">
+			<div class="fieldset-container" ng-controller="black" ng-switch-when="black">
+				<div grid="grid" editor="form" config="blackGrid">
+					<div class="fieldset-content-container">
+						<div text-field label="PARENTAL_CTR.KEYWORD" ng-model="form.data.keyword"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="fieldset-container" ng-controller="white" ng-switch-when="white">
+				<div grid="grid" editor="form" config="whiteGrid">
+					<div class="fieldset-content-container">
+						<div text-field label="PARENTAL_CTR.DOMAIN_NAME" ng-model="form.data.domain"></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+</div>

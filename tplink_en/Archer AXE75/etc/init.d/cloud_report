@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=89
+STOP=89
+
+start() {
+	local mode=$(uci get sysmode.sysmode.mode)
+	if [ "x$mode" != "xrouter" ]; then
+		return 0
+	fi
+	
+	service_start /usr/sbin/cloud-report
+	
+	return 0
+}
+
+stop() {
+	service_stop /usr/sbin/cloud-report
+	
+	return 0
+}

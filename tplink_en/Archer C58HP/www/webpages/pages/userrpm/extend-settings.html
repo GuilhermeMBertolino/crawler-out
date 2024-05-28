@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Extend Settings</title>
+</head>
+<body>
+<div class="func-container">
+	<div id="settings-container">
+		<div id="region_tips_extend" class="region-tips-wrap hidden">
+			<span id="region_status_tips" class="region-status-tips"></span>
+			<button id="jump_to_basic" type="button"></button>
+		</div>
+		<div id="extend-form">
+			<div id="wireless-2g">
+				<input id="wireless_2g_radio" name="wireless_2g_enable"/>
+				<input id="wireless_2g_ssid"  name="wireless_2g_ssid"/>
+				<button type="button" id="btn_wireless_2g_same" type="button"></button>
+                <input id="wireless_2g_hide_ssid" name="wireless_2g_hidden"/>
+				<p class="note" id="note_pwd_2g">
+					<span class="title note-title"></span>
+					<span class="text" id="password_2g_tip"></span>
+				</p>
+			</div>
+			</br>
+			</br>
+			</br>
+			<div id="wireless-5g" class="margin-top-50">
+				<input id="wireless_5g_radio"  name="wireless_5g_enable"/>
+				<input id="wireless_5g_ssid"  name="wireless_5g_ssid"/>
+				<button type="button" id="btn_wireless_5g_same" type="button" class="hidden"></button>
+                <input id="wireless_5g_hide_ssid" name="wireless_5g_hidden"/>
+				<p class="note" id="note_pwd_5g">
+					<span class="title note-title"></span>
+					<span class="text" id="password_5g_tip"></span>
+				</p>
+			</div>
+			<input type="hidden"  id="wireless_2g_disabled_all" name="wireless_2g_disabled_all" value="on"/>
+	    	<input type="hidden"  id="wireless_5g_disabled_all" name="wireless_5g_disabled_all" value="on"/>
+		</div>
+		<button id="total_save" type="button"></button>
+	</div>
+	<div id="extend_help"></div>
+</div>
+<script type="text/javascript">try{$}catch(e){location.href="/"}function checkPassword(b,c,f){var d=/^[A-Fa-f0-9]+$/;var a=/^[A-Za-z0-9\`\~\!\@\#\$\%\^\&\*\(\)\-\=\_\+\[\]\{\}\;\:\'\"\\|\/\?\.\,\<\>\s]+$/;if(b=="wep"){if(c.length==5||c.length==13){if(!a.test(c)){f.textbox("setError",$.su.CHAR.ERROR["00000109"]);return false}}else{if(c.length==10||c.length==26){if(!d.test(c)){f.textbox("setError",$.su.CHAR.ERROR["00000109"]);return false}}else{f.textbox("setError",$.su.CHAR.ERROR["00000108"]);return false}}}else{if(b=="wpa"||b=="wpa2"||b=="wpa/wpa2"){if(c.length<8||c.length>64){f.textbox("setError",$.su.CHAR.ERROR["00000108"]);return false}else{if(c.length==64&&!d.test(c)){f.textbox("setError",$.su.CHAR.ERROR["00000109"]);return false}}}}return true}$(document).ready(function(h){$("div#settings-container").panel({title:$.su.CHAR.EXTEND_SETTINGS.TITLE,collapsible:false});var k=false;var c=false;var i="";var d="";var f;var b;var m="off";var n="off";$("span.note-title").html($.su.CHAR.OPERATION.NOTE);$("span#password_2g_tip").html($.su.CHAR.EXTEND_SETTINGS.PASSWORD_2G_TIP);$("span#password_5g_tip").html($.su.CHAR.EXTEND_SETTINGS.PASSWORD_5G_TIP);$("span#region_status_tips").html($.su.CHAR.EXTEND_SETTINGS.REGION_TIPS);$("button#jump_to_basic").button({text:$.su.CHAR.EXTEND_SETTINGS.GO_REGION,cls:"inline-block",handler:function(){$.su.menu.basic.goTo("region")}});var j=new $.su.Proxy({url:$.su.url("/admin/wireless?form=wireless_2g&form=wireless_5g")});var l=new $.su.Proxy({url:$.su.url("/admin/wireless?form=syspara_2g"),async:false});var a=new $.su.Proxy({url:$.su.url("/admin/wireless?form=syspara_5g"),async:false});l.read({},function(o){f=o});a.read({},function(o){b=o});$(j).on("ev_read",function(p,q){if(q.region_status==false){var r=setTimeout(function(){$("div#extend-form").form("disable");$("button#btn_wireless_2g_same").button("disable");$("button#btn_wireless_5g_same").button("disable");$("div#region_tips_extend").show()},50)}});$("div#extend-form").form({proxy:j,fields:[{name:"wireless_2g_enable",mapping:"wireless_2g_enable"},{name:"wireless_2g_hidden",mapping:"wireless_2g_hidden"},{name:"wireless_2g_ssid",mapping:"wireless_2g_ssid"},{name:"wireless_5g_enable",mapping:"wireless_5g_enable"},{name:"wireless_5g_hidden",mapping:"wireless_5g_hidden"},{name:"wireless_5g_ssid",mapping:"wireless_5g_ssid"}],submitBtn:"#total_save",validator:function(){return true}}).on("ev_loadData",function(o,p){if(p.wireless_2g_enable=="on"){$("#wireless_2g_disabled_all").val("off")}else{$("#wireless_2g_disabled_all").val("on")}if(p.wireless_5g_enable=="on"){$("#wireless_5g_disabled_all").val("off")}else{$("#wireless_5g_disabled_all").val("on")}if(p.wireless_2g_ssid!=f.ssid&&f.enable=="on"){k=true;if(p.wireless_2g_enable=="on"){$("button#btn_wireless_2g_same").button("enable")}}else{$("button#btn_wireless_2g_same").button("disable")}if(p.wireless_5g_ssid!=b.ssid&&b.enable=="on"){c=true;if(p.wireless_5g_enable=="on"){$("button#btn_wireless_5g_same").button("enable")}}else{$("button#btn_wireless_5g_same").button("disable")}i=f.ssid;d=b.ssid});$("button#total_save").button({text:$.su.CHAR.OPERATION.SAVE,cls:"submit",handler:function(){$("div#extend-form").form("submit")}});$("input#wireless_2g_radio").checkbox({proxy:null,fieldLabel:$.su.CHAR.EXTEND_SETTINGS.WIRELESS_24G,labelCls:"l",items:[{boxlabel:$.su.CHAR.EXTEND_SETTINGS.RADIO_2G,inputValue:"on",uncheckedValue:"off",name:"wireless_2g_enable"}]}).on("ev_change",function(p,o,q){if(q.length==0){$("#wireless_2g_disabled_all").val("on")}else{$("#wireless_2g_disabled_all").val("off")}if(q[0]=="on"||q[0]=="wireless_2g_enable"){$("input#wireless_2g_ssid").textbox("enable");$("input#wireless_2g_hide_ssid").checkbox("enable");$("p#note_pwd_2g").removeClass("disabled");if(k==true){$("button#btn_wireless_2g_same").button("enable")}}else{k=false;$("input#wireless_2g_ssid").textbox("disable");$("input#wireless_2g_ssid").textbox("setNormal");$("input#wireless_2g_hide_ssid").checkbox("disable");$("p#note_pwd_2g").addClass("disabled");$("button#btn_wireless_2g_same").button("disable")}});$("input#wireless_2g_hide_ssid").checkbox({fieldLabel:"",labelCls:"l",items:[{boxlabel:$.su.CHAR.EXTEND_SETTINGS.HIDE_SSID,inputValue:"on",name:"wireless_2g_hidden"}]});$("input#wireless_2g_ssid").textbox({fieldLabel:$.su.CHAR.EXTEND_SETTINGS.SSID_2G,labelCls:"l",cls:"inline-block",inputCls:"l",maxLength:32,minLength:0,allowBlank:false,autoTrim:false,vtype:{vtype:"utf8_lan",maxLength:32},validator:function(p){var o=encodeURIComponent(p);o=o.replace(/%[A-F\d]{2}/g,"U").length;if(o>32){return $.su.CHAR.ERROR["00000210"]}return true}}).on("ev_change blur",function(o,p){if(f.enable=="on"){if($("input#wireless_2g_ssid").textbox("getValue")==i){$("button#btn_wireless_2g_same").button("disable")}else{k=true;$("button#btn_wireless_2g_same").button("enable")}}else{$("button#btn_wireless_2g_same").button("disable")}var q=encodeURIComponent(p);q=q.replace(/%[A-F\d]{2}/g,"U").length;if(q==32){$(this).attr("maxLength",p.length)}else{if(q>32){$(this).attr("maxLength",p.length-1)}else{if(q<32){$(this).attr("maxLength",32)}}}});$("button#btn_wireless_2g_same").button({labelCls:"l",cls:"inline-block",text:$.su.CHAR.EXTEND_SETTINGS.KEEP_SAME,handler:function(){k=false;$("input#wireless_2g_ssid").textbox("setValue",i);$("button#btn_wireless_2g_same").button("disable")}});$("input#wireless_5g_radio").checkbox({proxy:null,fieldLabel:$.su.CHAR.EXTEND_SETTINGS.WIRELESS_5G,labelCls:"l",items:[{boxlabel:$.su.CHAR.EXTEND_SETTINGS.RADIO_5G,inputValue:"on",uncheckedValue:"off",name:"wireless_5g_enable"}]}).on("ev_change",function(p,o,q){if(q.length==0){$("#wireless_5g_disabled_all").val("on")}else{$("#wireless_5g_disabled_all").val("off")}if(q[0]=="on"||q[0]=="wireless_5g_enable"){$("input#wireless_5g_ssid").textbox("enable");$("input#wireless_5g_hide_ssid").checkbox("enable");$("p#note_pwd_5g").removeClass("disabled");if(c==true){$("button#btn_wireless_5g_same").button("enable")}}else{$("input#wireless_5g_ssid").textbox("disable");$("input#wireless_5g_ssid").textbox("setNormal");$("input#wireless_5g_hide_ssid").checkbox("disable");$("p#note_pwd_5g").addClass("disabled");$("button#btn_wireless_5g_same").button("disable")}});$("input#wireless_5g_hide_ssid").checkbox({fieldLabel:"",labelCls:"l",items:[{boxlabel:$.su.CHAR.EXTEND_SETTINGS.HIDE_SSID,inputValue:"on",name:"wireless_5g_hidden"}]});$("input#wireless_5g_ssid").textbox({fieldLabel:$.su.CHAR.EXTEND_SETTINGS.SSID_5G,labelCls:"l",cls:"inline-block",inputCls:"l",maxLength:32,minLength:0,allowBlank:false,autoTrim:false,vtype:{vtype:"utf8_lan",maxLength:32},validator:function(p){var o=encodeURIComponent(p);o=o.replace(/%[A-F\d]{2}/g,"U").length;if(o>32){return $.su.CHAR.ERROR["00000210"]}return true}}).on("ev_change blur",function(o,p){if(b.enable=="on"){if($("input#wireless_5g_ssid").textbox("getValue")==d){$("button#btn_wireless_5g_same").button("disable")}else{c=true;$("button#btn_wireless_5g_same").button("enable")}}else{$("button#btn_wireless_5g_same").button("disable")}var q=encodeURIComponent(p);q=q.replace(/%[A-F\d]{2}/g,"U").length;if(q==32){$(this).attr("maxLength",p.length)}else{if(q>32){$(this).attr("maxLength",p.length-1)}else{if(q<32){$(this).attr("maxLength",32)}}}});$("button#btn_wireless_5g_same").button({labelCls:"l",cls:"inline-block",text:$.su.CHAR.EXTEND_SETTINGS.KEEP_SAME,handler:function(){c=false;$("input#wireless_5g_ssid").textbox("setValue",d);$("button#btn_wireless_5g_same").button("disable")}});var g=new $.su.Help({container:"div#extend_help",content:["WIRELESS_EXTEND"]})});</script>
+</body>
+</html>

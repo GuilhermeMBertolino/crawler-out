@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+start() {
+	local flag=1
+	local rftestflag=$( nvram get rftestflag )
+	local bt_rftestflag=$( nvram get bt_rftestflag )
+	local btradiofile=$(cat /tmp/bt_radiobk)
+	
+	if [ "$rftestflag" != "1" ]; then
+		flag=0
+	fi
+	if [ -z "$bt_rftestflag" ] && [ -z "$btradiofile" ]; then
+		flag=0
+	fi
+	
+	if [ "$flag" == "0" ]; then
+		echo "need to calibrate,return from wifi_check" >/dev/console
+		return 0
+	fi
+	sleep 15
+	echo "will come in wifi_check" >/dev/console
+	/sbin/wifi check
+	return 0
+}

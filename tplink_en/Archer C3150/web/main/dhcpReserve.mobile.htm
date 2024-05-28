@@ -1,0 +1,372 @@
+﻿<input type="hidden" id="reserve-current-block" value="no-reser" />
+<div class="titleBar">
+    <a id="back" url="lanSettings.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.dhcp_nstr.t_staticTitle%>
+        </script>
+    </h1>
+    <a id="edit" data-status="edit">
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.m_str.edit%>
+        </script>
+    </a>
+</div>
+
+<div class="no-item" id="no-reser">
+    <div class="sprite grid-no-address"></div>
+    <span class="text-no-item">
+        <script type="text/html" class="title-string">
+            <%=$.tpLang.dhcp_nstr.t_noaddress%>
+        </script>
+    </span>
+    <input type="button" class="button-mobile add-button mt10" id="btn-add-reser">
+</div>
+
+<div class="dhcp-reserve nd" id="dhcp-reser">
+    <ul id="dhcp-reserve-list" class="device-list">
+    </ul>
+</div>
+
+<div class="add-reserve item-list mt15 nd" id="add-reser">
+    <div class="section-container">
+        <div class="section-box">
+            <input id="add-reserve-mac" type="text" />
+        </div>
+        <div class="section-box mtNo">
+            <input id="add-reserve-ip" type="text" />
+        </div>
+        <!--div class="section-box mtNo">
+            <label class="section-labelTitle" for="add-reserve-group">
+                <script type="text/html" class="title-string">
+                    <%=$.tpLang.s_str.group%>
+                </script>
+            </label>
+            <select id="add-reserve-group" class="section-inputText s">
+            </select>
+        </div-->
+        <div class="section-box mtNo">
+            <input id="add-reserve-description" type="text" />
+        </div>
+        <div class="section-box single mtNo">
+            <div id="reserve-enable">
+                <span></span>
+            </div>
+            <input type="checkbox" id="input-reserve-enable" />
+        </div>
+    </div>
+</div>
+
+
+<div class="botP-toolBar">
+</div>
+
+<script type="text/javascript">
+    (function() {
+        $.tpLocal('title-string', $.tpLang);
+        var staticIpList, brLanList;
+        var reserveStack = [];
+        var editStackIndex;
+        var isEdit = 0;
+
+        (function() {
+            $('.titleBar').titleBar();
+            $('.botP-toolBar').toolBar();
+
+            init();
+
+            $('#btn-add-reser').buttonMobile({ 'text': $.tpLang.dhcp_nstr.t_addaddress});
+            $('#input-reserve-enable').checkboxMobile({
+                'hasTitle': true,
+                'title': $.tpLang.dhcp_nstr.t_enaddress,
+                'checked': true
+            });
+            $('#add-reserve-mac').inputBoxMobile({
+                'value': '',
+                'title': $.tpLang.s_str.macaddr,
+                'ipOrMac': 'mac',
+                'warnings': [{
+                    func: function() {
+                        var ip = this.inputBoxMobile('option', 'value');
+                        var errCode = $.mac(ip, true);
+                        if (errCode === 0) {
+                            return true;
+                        } else {
+                            return e_str[errCode];
+                        }
+                    }
+                }]
+            });
+            $('#add-reserve-ip').inputBoxMobile({
+                'value': '',
+                'title': $.tpLang.s_str.ipaddr,
+                'ipOrMac': 'ip',
+                'warnings': [{
+                    func: function() {
+                        var ip = this.inputBoxMobile('option', 'value');
+                        var errCode = $.ifip(ip, true);
+                        if (errCode === 0) {
+                            return true;
+                        } else {
+                            return e_str[errCode];
+                        }
+                    }
+                }]
+            });
+
+			$('#add-reserve-description').inputBoxMobile({
+                'value': '',
+                'title': $.tpLang.dhcp_nstr.t_description,
+                'warnings': [{
+                    func: function() {
+                        var desc = this.inputBoxMobile('option', 'value');
+                        var errCode = checkDesc(desc);
+                        if (errCode === 0) {
+                            return true;
+                        } else {
+                            return e_str[errCode];
+                        }
+                    }
+                }]
+            });
+            /* $('#add-reserve-description').selectMobile();*/
+
+            $.each($('.turn-page'), function() {
+                $.initTurnPage(this);
+            });
+            $('#dhcp-reserve-list').editList();
+        })();
+		/* for ac3150 */
+		function checkDesc(desc) {
+			if (desc.length > 31) {
+				return ERR_DHCP_ADDRES_LENGTH_INVALID;
+			} 
+			if (desc != ""){
+				if (!($.isname(desc))) {
+					return ERR_WLAN_MAC_FILTER_DESCRIP_INVALID;
+				}
+			}
+			return 0;
+		}
+
+        function init() {
+            brLanList = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+            staticIpList = $.act(ACT_GL, LAN_DHCP_STATIC_ADDR, null, null, ["enable", "chaddr", "yiaddr", "description"]);
+            if (!$.exe()) {
+                /*var groupList = '';
+                $.each(brLanList, function() {
+                    groupList += '<option value="'+this.__stack+'">'+this.bridgeName+'</option>';
+                });
+                $('#add-reserve-group').html(groupList);
+				*/
+
+                if (staticIpList.length > 0) {
+                    var listStr = '';
+                    $('#no-reser').hide();
+                    $.each(staticIpList, function(index) {
+                        var id = 'reserveItem'+index;
+                        reserveStack[index] = this.__stack;
+                        listStr += '<li class="reserve-item">'+
+                                '<div id="'+id+'" class="li-content-div" data-index="'+index+'">'+
+                                '<div class="device-div">'+
+                                '<div class="device-label">'+
+                                '<span class="sprite grid-row-device"></span>'+
+                                '</div>'+
+                                '<div class="device-content">'+
+                                '<div class="device-line">'+
+                                '<div class="device-info">'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">MAC Address</span>'+
+                                '<span class="device-info-text">'+this.chaddr+'</span>'+
+                                '</div>'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">Reserved IP</span>'+
+                                '<span class="device-info-text">'+this.yiaddr+'</span>'+
+                                '</div>'+
+                                '<div class="device-info-item">'+
+                                '<span class="device-info-title">Status</span>'+
+                                '<span class="device-info-text">'+(this.enable === '1' ? 'On' : 'Off')+'</span>'+
+                                '</div></div>'+
+                                '<div class="op">'+
+                                '<span class="ctrl-arrow floatRight"></span>'+
+                                '</div></div></div></div></li>';
+                    });
+                    $('#dhcp-reserve-list').html(listStr);
+                    $('#dhcp-reser').show();
+                    var allDevices = $('#dhcp-reserve-list .device-div');
+                    $.each($('#dhcp-reserve-list .device-div'), function() {
+                        $.addDeviceBlock(this);
+                    });
+                }
+            }
+
+            setEvent();
+        }
+        function setEvent() {
+            $('#btn-add-reser').on('click', function () {
+                showAddReserve();
+            });
+            $('#dhcp-reserve-list')
+                    .on('delete.editlist', '.li-content-div', function() {
+                        var li = '#'+$(this).attr('id');
+                        deleteReserve(li);
+                    }).on('click', '.reserve-item .li-content-div', function() {
+                        editStackIndex = parseInt($(this).attr('data-index'));
+                        isEdit = 1;
+                        clearAddForm();
+                        $("#input-reserve-enable").checkboxMobile('option', 'checked', staticIpList[editStackIndex].enable === '1' ? true : false);
+                        $('#add-reserve-ip').inputBoxMobile('option', 'value', staticIpList[editStackIndex].yiaddr);
+                        $('#add-reserve-mac').inputBoxMobile('option', 'value', staticIpList[editStackIndex].chaddr);
+						$('#add-reserve-description').inputBoxMobile('option', 'value', staticIpList[editStackIndex].description);
+                        /*$.each(brLanList, function() {
+                            if ((staticIpList[editStackIndex].__stack).split(',')[0] == (this.__stack).split(',')[0]) {
+                                $('#add-reserve-group').selectMobile('value', this.__stack);
+                            }
+                        });
+						*/
+                        showAlterReserve();
+                    });
+            $('.botP-toolBar').on('click', '#tb-add', function() {
+                hideToolBar();
+                showAddReserve();
+            });
+            $('#edit').on('click', function() {
+                var status = $(this).titleButton('status');
+                if (status === 'edit') {
+                    showToolBar();
+                } else if (status == 'cancel') {
+                    hideToolBar();
+                } else if (status === 'save' || status === 'modify-save') {
+                    $.startWaitingMobile($.tpLang.m_str.waiting);
+                    if (saveReserve()) {
+                        var data = staticIpList.length === 0 ? false : true;
+                        $('#add-reser').hide();
+                        if (data) {
+                            $('#dhcp-reser').show();
+                            $('#reserve-current-block').val('dhcp-reser');
+                        } else {
+                            $('#no-reser').show();
+                            $('#reserve-current-block').val('no-reser');
+                        }
+                        $('.titleBar').titleBar('title', $.tpLang.dhcp_nstr.t_staticTitle);
+                        $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+                    } else {
+                        $.stopWaitingMobile();
+                    }
+                }
+            });
+            $('#back').on('click', function() {
+                var cur = $('#reserve-current-block').val();
+                if (cur === 'add-reser') {
+                    var data = staticIpList.length === 0 ? false : true;
+                    $('#add-reser').hide();
+                    isEdit = 0;
+                    if (data) {
+                        $('#dhcp-reser').show();
+                        $('#reserve-current-block').val('dhcp-reser');
+                    } else {
+                        $('#no-reser').show();
+                        $('#reserve-current-block').val('no-reser');
+                    }
+                    $('.titleBar').titleBar('title', $.tpLang.dhcp_nstr.t_staticTitle);
+                    $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+                } else if (cur === 'no-reser' || cur === 'dhcp-reser') {
+                    $.loadPhoneMain('lanSettings.mobile.htm');
+                }
+            });
+        }
+        function clearAddForm() {
+            $("#input-reserve-enable").checkboxMobile('option', 'checked', true);
+            $('#add-reserve-ip').inputBoxMobile('option', 'value', '');
+            $('#add-reserve-mac').inputBoxMobile('option', 'value', '');
+        }
+        function deleteReserve(li) {
+            var childStackIndex = $(li).attr('data-index');
+
+            $.act(ACT_DEL, LAN_DHCP_STATIC_ADDR, staticIpList[childStackIndex].__stack, null);
+
+            $.exe(function(err) {
+                if (!err) $.reload();
+            });
+        }
+        function showAddReserve() {
+            hideToolBar();
+            clearAddForm();
+            $('#no-reser').hide();
+            $('#dhcp-reser').hide();
+            $('#add-reser').show();
+            /*$('#add-reserve-group').prop('disabled', false)
+            $('#add-reserve-group').selectMobile('value', brLanList[0].__stack);*/
+            $('.titleBar').titleBar('title', $.tpLang.m_str.add);
+            $('#edit').titleButton('status', 'save', $.tpLang.m_str.save);
+            $('#back').titleButton('url', '');
+            $('#back').titleButton('show');
+            $('#reserve-current-block').val('add-reser');
+            $('.inputBox-mobile-div>input[type=text]').inputBoxMobile('hideWarnings');
+        }
+        function showAlterReserve() {
+            hideToolBar();
+            $('#no-reser').hide();
+            $('#dhcp-reser').hide();
+            $('#add-reser').show();
+            /*$('#add-reserve-group').prop('disabled', true);*/
+            $('.titleBar').titleBar('title', $.tpLang.table_str.modify);
+            $('#edit').titleButton('status', 'modify-save', $.tpLang.m_str.save);
+            $('#back').titleButton('url', '');
+            $('#reserve-current-block').val('add-reser');
+            $('.inputBox-mobile-div>input[type=text]').inputBoxMobile('hideWarnings');
+        }
+        function showToolBar() {
+            $('#dhcp-reserve-list').editList({
+                'listType': 'selectList'
+            });
+            $('.op span').removeClass('ctrl-arrow');
+            $('#edit').titleButton('status', 'cancel', $.tpLang.m_str.cancel);
+            $('#btn-add-reser').hide();
+            $('.botP-toolBar').toolBar('option', {
+                'hide': false
+            });
+        }
+        function hideToolBar() {
+            $('#dhcp-reserve-list').editList({
+                'listType': 'swipeList'
+            });
+            $('.op span').addClass('ctrl-arrow');
+            $('#edit').titleButton('status', 'edit', $.tpLang.m_str.edit);
+            $('#btn-add-reser').show();
+            $('.botP-toolBar').toolBar('option', {
+                'hide': true
+            });
+        }
+        function saveReserve() {
+            var staticSettings = {};
+            /*var groupParentStack;*/
+
+            $.startWaitingMobile($.tpLang.m_str.waiting);
+            if (!$('#add-reserve-mac').inputBoxMobile('checkValue') || !$('#add-reserve-ip').inputBoxMobile('checkValue')) {
+                return false;
+            }
+            /* for ac3150*/
+            if (!$('#add-reserve-description').inputBoxMobile('checkValue')) {
+                return false;
+            }
+            staticSettings.chaddr = $("#add-reserve-mac").val();
+            staticSettings.yiaddr = $("#add-reserve-ip").val();
+			staticSettings.description = $("#add-reserve-description").val();
+            staticSettings.enable = $('#input-reserve-enable').checkboxMobile('option', 'checked') ? 1 : 0;
+
+            if (isEdit) {
+                $.act(ACT_SET, LAN_DHCP_STATIC_ADDR, staticIpList[editStackIndex].__stack, null, staticSettings);
+            } else {
+                /*groupParentStack = $("#add-reserve-group").selectMobile('value')
+                $.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, groupParentStack, staticSettings);*/
+				$.act(ACT_ADD, LAN_DHCP_STATIC_ADDR, null, brLanList[0].__stack, staticSettings);
+            }
+
+            $.exe(function(err) {
+                $.stopWaitingMobile();
+                if (!err) $.loadPhoneMain('dhcpReserve.mobile.htm');
+            });
+        }
+    })();
+</script>

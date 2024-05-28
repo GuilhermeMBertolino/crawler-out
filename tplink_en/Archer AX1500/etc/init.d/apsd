@@ -1,0 +1,53 @@
+#!/bin/sh /etc/rc.common
+
+START=49
+SERVICE_DAEMONIZE=1
+SERVICE_PATH="/usr/bin/apsd"
+local ieee1905managed_bridge=lan
+
+boot()
+{
+    local agent_only=$(uci get profile.@onemesh[0].easymesh_apsd_agent_only -c /etc/profile.d)
+    local sysmode=$(uci get sysmode.sysmode.mode)
+    local mesh_enable=$(uci get meshd.meshd.enable)
+#    local mesh_role=$(uci get meshd.meshd.role)
+
+    [ "${mesh_enable}" == "off" ] && {
+        return
+    }
+
+    [ x"${agent_only}" == x"yes" ] && {
+        # only work for agent
+#        [ x"${mesh_role}" != x"agent" ] && {
+#            echo "========>>>>>>>>>>> do not start apsd for controller on boot" > /dev/console
+#            return
+#        }
+
+        # only work on RE mode if agent only
+        [ x"${sysmode}" != x"repeater" ] && {
+            echo "========>>>>>>>>>>> do not start apsd for mode ${sysmode} on boot" > /dev/console
+            return
+        }
+    }
+
+    echo "========>>>>>>>>>>> apsd start on boot" > /dev/console
+
+    ${SERVICE_PATH} -c /etc/apsd.json &
+}
+
+start() 
+{
+    echo "========>>>>>>>>>>> apsd start" > /dev/console
+
+    ${SERVICE_PATH} -c /etc/apsd.json &
+}
+
+stop() {
+    #do nothing
+    echo "stop apsd"
+}
+
+restart() {
+	stop
+	start
+}

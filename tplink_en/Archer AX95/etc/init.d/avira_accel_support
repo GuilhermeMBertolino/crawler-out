@@ -1,0 +1,112 @@
+#!/bin/sh /etc/rc.common
+
+START=81
+
+local found_url_cat=0
+
+accel_support_enable() {	
+	echo "enter accel_support_enable()">/dev/console
+	# only for bcm fcache now
+	[ -e /proc/fcache/ ] && {
+		if [ -z "$(grep avira_kctl /proc/modules)" ]; then
+			echo "accel_support_enable now!!!">/dev/console
+			# enable accel support
+			if [[ -f /lib/modules/iplatform/avira_kctl.ko ]]; then
+				insmod /lib/modules/iplatform/avira_kctl.ko
+			fi
+
+			# modify cpu affinity
+			if [[ x"$(uci_get_state avira info enable)" != x"on" ]]; then
+				uci_revert_state avira info enable
+				uci_set_state avira info enable "on"
+			fi
+			if [[ -f /etc/init.d/bcm_cpu_affinity ]]; then
+				/etc/init.d/bcm_cpu_affinity start
+			fi
+		fi
+	}
+}
+
+accel_support_disable() {	
+	# only for bcm fcache now
+	[ -e /proc/fcache/ ] && {
+		if [ -n "$(grep avira_kctl /proc/modules)" ]; then
+			echo "accel_support_disable now!!!">/dev/console
+			# disable accel support
+			rmmod avira_kctl
+
+			# modify cpu affinity
+			if [[ x"$(uci_get_state avira info enable)" = x"on" ]]; then
+				uci_revert_state avira info enable
+			fi
+			if [[ -f /etc/init.d/bcm_cpu_affinity ]]; then
+				/etc/init.d/bcm_cpu_affinity start
+			fi
+		fi
+	}
+}
+
+check_url_class()
+{
+	config_get filter_categories_list $1 filter_categories_list "0"
+	config_get available $1 available "false"
+	echo "filter_categories_list: $filter_categories_list" >/dev/console
+	echo "available: $available" >/dev/console
+	
+	if [ -n "$available" -a "$available" == "true" ];then
+		if [ -n "$filter_categories_list" -a "$filter_categories_list" != "0" ];then
+			found_url_cat=1
+			echo "found_url_cat: $found_url_cat" >/dev/console
+		fi
+	fi
+}
+
+should_load_avira_kctl() {
+	local mode=$(uci get sysmode.sysmode.mode)
+	local bind_status=$(uci get cloud_config.device_status.bind_status)
+	if [ "x$mode" != "xrouter" -o "x$bind_status" != "x1" ]; then
+		echo "0"
+		return
+	fi
+
+    local state=`uci -q get avira.info.state`
+    if [ "x$state" == "xpaid" ];then
+		echo "here...x$state" >/dev/console
+        echo "1"
+		return
+	fi
+
+	found_url_cat=0	
+	config_load parental_control_v2
+	config_foreach check_url_class owner
+
+	if [ "$found_url_cat" == "1" ]; then
+		echo "here...found_url_cat" >/dev/console
+		echo "1"
+		return
+	fi
+	
+	echo "not enable" >/dev/console
+	echo "0"
+	return
+}
+
+# start and restart will test if it need to be started
+start() {
+	local ret=$(should_load_avira_kctl)
+	if [ "x$ret" == "x1" ]; then
+		accel_support_enable
+	else
+		accel_support_disable
+	fi
+}
+
+#stop means force stop
+stop() {
+	accel_support_disable
+}
+
+# start and restart will test if it need to be started
+restart() {
+	start
+}

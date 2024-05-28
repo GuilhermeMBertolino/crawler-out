@@ -1,0 +1,3 @@
+#!/bin/sh
+export LD_LIBRARY_PATH=/usr/lib/avira/:$LD_LIBRARY_PATH
+/usr/bin/avira/aviraserviceselector/aviraserviceselector_rel-210604-2_prod/aviraserviceselector "$@"

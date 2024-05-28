@@ -1,0 +1,332 @@
+#!/usr/bin/lua
+--created by gaocongcong
+
+local error = require "cloud_report.report_error"
+local nixio = require "nixio"
+local dbg   = require "luci.tools.debug"
+local json  = require "luci.json"
+local io    = require "io"
+local sys   = require "luci.sys"
+local status    = require "luci.tools.status"
+local uci    = require "luci.model.uci"
+
+local CLOUD_HOMECARE_TOKEN_FILE     = "/tmp/cloud/cloud_token_homecare"
+local CLOUD_HASH_FILE_UPDATE_FLAG   = "/tmp/mali_url/need_update"
+local CLOUD_HASH_FILE_TMP           = "/tmp/mali_url/cloud_hash_file.gz"
+local CLOUD_HASH_FILE               = "/tmp/mali_url/cloud_hash_file"
+local RECV_HTTP_HEADER              = "/tmp/mali_url/file_http_header"
+
+local file_size_content_type    = "Content-type: application/x-www-form-urlencoded"
+local file_size_url_postfix     = "/v1/url-library/retrieve-malicious-size"
+local file_content_type         = "Content-type: application/json"
+local file_url_postfix          = "/v1/url-library/retrieve-all-malicious-url"
+
+local uci_s  = uci.cursor()
+local header_type = {"status", "version", "page", "maliciousurlnum", "compressalgorithm"}
+
+local function request_mali_file_pages(local_file_version, req_size)
+    -- request file size
+    local page_count = 0
+    local url_count = 0
+    local next_time = 0
+    local cloud_version = local_file_version
+
+    local retry = true
+    local retry_count = 0
+    while(retry_count <= 2) do
+        retry_count = retry_count + 1
+
+        if not nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+            sys.call("cloud_getDevToken homecare")
+        end
+
+        local fp
+        local token
+        local origin_url
+        if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+            fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+            token = fp:read("*line")
+            origin_url = fp:read("*line") .. file_size_url_postfix
+            fp:close()
+        else
+            -- try again when not get the homecare token
+            sys.call("cloud_getDevToken homecare")
+            if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+                fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+                token = fp:read("*line")
+                origin_url = fp:read("*line") .. file_size_url_postfix
+                fp:close()
+            else
+                break
+            end
+        end
+
+        -- create hash file update flag
+        if not nixio.fs.access(CLOUD_HASH_FILE_UPDATE_FLAG) then
+            sys.call("touch %s" % {CLOUD_HASH_FILE_UPDATE_FLAG})
+        else
+            sys.call("rm -rf %s && touch %s" % {CLOUD_HASH_FILE_UPDATE_FLAG, CLOUD_HASH_FILE_UPDATE_FLAG})
+        end
+
+        fp = io.open(CLOUD_HASH_FILE_UPDATE_FLAG, "w")
+        if fp then
+            local tmp_data = "0\n0"
+            fp:write(tmp_data)
+            fp:close()
+        end
+
+        local ret
+        local data = "requset mali file size"
+
+        sys.call("echo `date` >/var/log/cloud_request_hash_file.result; echo '%s' >>/var/log/cloud_request_hash_file.result" % {data})
+        dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload request]:", data)
+
+        --send post request
+        fp = io.popen("curl -S -l -H \"%s\" -H \"Authorization: %s\" -X POST -k --connect-timeout 8 %s --retry 3 --retry-delay 1 2>>/var/log/cloud_request_hash_file.result" % {file_size_content_type, token, origin_url})
+        if fp then
+            ret = fp:read("*all")
+            fp:close()
+        end
+
+        dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload response]:", ret)
+        ret = json.decode(ret)
+
+        if ret ~= nil then
+            sys.call("mkdir -p /tmp/mali_url")
+            if tonumber(ret.code) == error.ERROR_MSG.ERROR_INVALID_DEVICE_TOKEN[1] then
+                --refresh token and upload again
+                sys.call("rm " .. CLOUD_HOMECARE_TOKEN_FILE)
+                retry = true
+            end
+
+            if(tonumber(ret.code) == error.ERROR_MSG.ERROR_NONE[1]) then
+                next_time = os.time() + math.ceil(tonumber(ret.result["nextQueryInterval"]) / 1000)
+
+                -- local file version is up to date?
+                if tonumber(local_file_version) < tonumber(ret.result["version"]) then
+                    cloud_version = ret.result["version"]
+
+                    if tonumber(req_size) < tonumber(ret.result["pageSize"]) then
+                        -- req_size less than page_size
+                        page_count = -1
+                    else
+                        -- req_size more than page_size
+                        if tonumber(req_size) >= tonumber(ret.result["maliciousUrlNum"]) then
+                            -- req_size more than max_size
+                            page_count = ret.result["totalPage"]
+                            url_count = ret.result["maliciousUrlNum"]
+                        else
+                            page_count = math.floor(tonumber(req_size) / tonumber(ret.result["pageSize"]))
+                            url_count = page_count * ret.result["pageSize"]
+                        end
+                        retry = false
+                    end
+                else
+                    -- version is already up to date, delete update flag
+                    if nixio.fs.access(CLOUD_HASH_FILE_UPDATE_FLAG) then
+                        sys.call("rm -rf %s" % {CLOUD_HASH_FILE_UPDATE_FLAG})
+                    end
+                    -- the local file is already up to date
+                    page_count = 0
+                    sys.call("uci set tp_security.data.next_query_time=" .. next_time)
+                    sys.call("uci commit tp_security")
+                    sys.call("saveconfig a")
+                    retry = false
+                end
+            end
+        end
+
+        if retry == false then
+            break
+        end
+    end
+    return page_count, cloud_version, url_count, next_time
+end
+
+local function parser_status(str)
+    local status
+    local start = 1
+    local str_end = string.find(str, " ", start)
+    while str_end ~= nil do
+        local str_tmp = string.sub(str, start, str_end - 1)
+        if tonumber(str_tmp) ~= nil and tonumber(str_tmp) >= 100 and tonumber(str_tmp) < 600 then
+            status = str_tmp
+            return status
+        end
+        start = str_end + 1
+        str_end = string.find(str, " ", start)
+    end
+    return nil
+end
+
+local function parser_http_header()
+    local fp = io.open(RECV_HTTP_HEADER, "r")
+    if not fp then
+        return 
+    end
+
+    local header_table = {}
+    local status
+    local data
+    status = fp:read("*line")
+    header_table["status"] = parser_status(status)
+    while header_table["status"] == 100 do
+        fp:read("*line")
+        status = fp:read("*line")
+        header_table["status"] = parser_status(status)
+    end
+
+    data = fp:read("*line")
+    while data ~= nil do
+        local now = string.find(data, ":")
+        local str_end = string.find(data,"\r")
+        if now == nil or str_end == nil then
+            break
+        end
+        local str_type = string.sub(data, 1, now - 1)
+        local str_content = string.sub(data, now + 2, str_end - 1)
+        header_table[str_type] = str_content
+        data = fp:read("*line")
+    end
+    fp:close()
+    return header_table
+end
+
+local function request_mali_file(page_count, cloud_version, url_count, next_time)
+    if page_count <= 0 then
+        if tonumber(cloud_version) == tonumber(arg[1]) then
+            dbg.print("version is already up to date")
+        else
+            dbg.print("failed to obtain malicious file information from cloud")
+        end
+        return
+    end
+
+    local retry = true
+    local retry_count = 0
+    while(retry_count <= 2) do
+        retry_count = retry_count + 1
+
+        if not nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+            sys.call("cloud_getDevToken homecare")
+        end
+
+        local fp
+        local token
+        local origin_url
+        if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+            fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+            token = fp:read("*line")
+            origin_url = fp:read("*line") .. file_url_postfix
+            fp:close()
+        else
+            -- try again when not get the homecare token
+            sys.call("cloud_getDevToken homecare")
+            if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+                fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+                token = fp:read("*line")
+                origin_url = fp:read("*line") .. file_url_postfix
+                fp:close()
+            else
+                break
+            end
+        end
+
+        -- request file size
+        local header_table = {}
+        local ret = {}
+        local data = {
+            ["page"] = page_count,
+            ["version"] = arg[1],
+            ["compressAlgorithm"] = arg[2]
+        }
+        data = json.encode(data)
+        sys.call("echo `date` >/var/log/cloud_request_hash_file.result; echo '%s' >>/var/log/cloud_request_hash_file.result" % {data})
+        dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload request]:", data)
+
+        --send post request
+        sys.call("curl -S -l -H \"%s\" -H \"Authorization: %s\" -X POST -k -d \'%s\' \"%s\" -o %s -D %s --connect-timeout 8 2>>/var/log/cloud_request_hash_file.result" % {file_content_type, token, data, origin_url, CLOUD_HASH_FILE_TMP, RECV_HTTP_HEADER})
+
+        header_table = parser_http_header()
+        if tonumber(header_table["status"]) == 200 and tonumber(header_table["maliciousurlnum"]) == tonumber(url_count) then
+            ret = {
+                [header_type[1]] = header_table[header_type[1]],
+                [header_type[2]] = header_table[header_type[2]],
+                [header_type[3]] = header_table[header_type[3]],
+                [header_type[4]] = header_table[header_type[4]],
+                [header_type[5]] = header_table[header_type[5]]
+            }
+            ret = json.encode(ret)
+            dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload response]:", ret)
+        end
+
+        if tonumber(header_table.status) ~= 200 then
+            --refresh token and upload again
+            sys.call("rm " .. CLOUD_HOMECARE_TOKEN_FILE)
+            retry = true
+        else
+            if nixio.fs.access(CLOUD_HASH_FILE_TMP) then
+                if header_table["compressalgorithm"] == "none" then
+                    sys.call("mv -f %s %s" % {CLOUD_HASH_FILE_TMP, CLOUD_HASH_FILE})
+                elseif header_table["compressalgorithm"] == "gzip" then
+                    sys.call("gzip -df %s" % {CLOUD_HASH_FILE_TMP})
+                else
+                    dbg.print("compressalgorithm " .. header_table["compressalgorithm"] .. "is not support")
+                end
+
+                if nixio.fs.access(CLOUD_HASH_FILE) then
+                    retry = false
+
+                    -- create hash file update flag
+                    if not nixio.fs.access(CLOUD_HASH_FILE_UPDATE_FLAG) then
+                        sys.call("touch %s" % {CLOUD_HASH_FILE_UPDATE_FLAG})
+                    else
+                        sys.call("rm -rf %s && touch %s" % {CLOUD_HASH_FILE_UPDATE_FLAG, CLOUD_HASH_FILE_UPDATE_FLAG})
+                    end
+
+                    fp = io.open(CLOUD_HASH_FILE_UPDATE_FLAG, "w")
+                    if fp then
+                        local tmp_data = header_table["version"] .. "\n" .. header_table["maliciousurlnum"]
+                        fp:write(tmp_data)
+                        fp:close()
+                    end
+
+                    sys.call("uci set tp_security.data.next_query_time=" .. next_time)
+                    sys.call("uci commit tp_security")
+                    sys.call("saveconfig a")
+                else
+                    retry = true
+                end
+            else
+                retry = true
+            end
+        end
+
+        if retry == false then
+            break
+        end
+    end
+end
+
+local function main()
+    if #arg ~= 3 then
+        return
+    end
+
+    if tonumber(arg[1]) == 0 then
+        request_mali_file(request_mali_file_pages(arg[1], arg[3]))
+        return
+    end
+
+    local next_query_time = uci_s:get("tp_security", "data", "next_query_time")
+    if tonumber(next_query_time) ~= 0 then
+        if os.time() < tonumber(next_query_time) then
+            --dbg("hash file req is too early")
+            return
+        end
+        request_mali_file(request_mali_file_pages(arg[1], arg[3]))
+    elseif tonumber(arg[1]) ~= nil then
+        request_mali_file(request_mali_file_pages(arg[1], arg[3]))
+    end
+end
+main()

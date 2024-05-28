@@ -1,0 +1,48 @@
+#!/bin/sh /etc/rc.common
+
+SERVICE_DAEMONIZE=1
+
+START=98
+STOP=60
+
+clear_old_fw_cloud_account()
+{        
+	cloud_username=`uci get accountmgnt.@cloud_account[0].username`
+	if [ "A$cloud_username" != "A" ];then
+		echo "$cloud_username from old FW"
+		uci delete accountmgnt.@cloud_account[0].username
+		uci delete accountmgnt.@cloud_account[0].password
+		cloud_accountid=`uci get accountmgnt.@cloud_account[0].accountid`
+		uci set cloud_config.device_status.accountid=$cloud_accountid
+		uci commit
+	fi
+}
+
+boot()
+{
+	clear_old_fw_cloud_account
+	#generate the cloud service file
+	[ -f /usr/sbin/cloud_genSrvFile ] && /usr/sbin/cloud_genSrvFile
+
+	start
+}
+
+start()
+{
+	#local version=`getfirm SOFTVERSION|awk '{print $3}'`
+	#local curTime=${version:0-3:4}'-'${version:4-5:2}'-'${version:6-7:2}
+	#date -s $curTime" 00:00:00"
+	
+	service_start /usr/bin/cloud-brd -c /etc/cloud_config.cfg
+}
+
+stop()
+{
+	SERVICE_SIG=kill service_stop /usr/bin/cloud-brd
+}
+
+restart()
+{
+	stop
+	start
+}

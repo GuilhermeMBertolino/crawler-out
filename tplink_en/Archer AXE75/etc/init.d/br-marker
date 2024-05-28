@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=99
+interface=eth0
+
+start()
+{
+	tmctl setportshaper --devtype 0 --if $interface --shapingrate 2490000 --burstsize 3000
+	sw 0x80423028 1 1d
+	for id in $(seq 0 7)
+	do
+		tmctl setqcfg --devtype 0 --if $interface --qid $id --priority 0 --qsize 1024 --weight 10 --schedmode 2 --shapingrate 990000 --burstsize 2048 --minrate 0 > /dev/null
+	done
+	fc flush
+}

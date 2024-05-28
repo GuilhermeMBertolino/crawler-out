@@ -1,0 +1,98 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=47
+
+PC_LIBDIR=/lib/parental_control
+settime=0
+
+pc() {
+	. $PC_LIBDIR/core.sh
+	fw_$1 $2
+}
+
+pc_preconf() {
+	local create_time
+	local owner_id
+
+	config_get owner_id $1 owner_id
+	config_get create_time $1 create_time
+	if [ -z "$create_time" ]; then
+		uci set parental_control_v2.$owner_id.create_time=$2
+		settime=1
+	fi
+}
+
+start() {
+	if [ ! -f /etc/config/parental_control_v2 ];then
+		touch /etc/config/parental_control_v2
+		touch /etc/config/history_list
+		touch /etc/config/client_mgmt
+		uci commit
+	fi
+
+	local version=`getfirm SOFTVERSION | awk '{print $3}'`
+	local curDate=${version:0-3:4}'-'${version:4-5:2}'-'${version:6-7:2}
+	local curTime=`date -d "$curDate 00:00:00" +%s`
+	local support_pctl_v2_optimize=$(uci get profile.@parental_control_v2[0].support_pctl_v2_optimize -c "/etc/profile.d" -q)
+	
+	config_load parental_control_v2
+	config_foreach pc_preconf owner $curTime
+	
+	## Set default config
+	local setsec=0
+	local sec_enable=`uci -q get parental_control_v2.settings.sec_enable`
+	if [ x"$sec_enable" == x"" ]; then
+		uci set parental_control_v2.settings='global'
+		uci set parental_control_v2.settings.sec_enable='false'
+		setsec=1
+	fi
+
+	if [ $settime == 1 -o $setsec == 1 ]; then
+		uci commit parental_control_v2
+	fi
+	config_clear
+
+	#parental control optimize
+	if [ "$support_pctl_v2_optimize" = "yes" ]; then
+		config_load /etc/config/parental_control_v2
+		if [ -z "$(config_get settings enable)" ]; then
+			echo "[parental_control_v2] no parent_control_v2.settings.enable , create!" > /dev/console
+			uci set parental_control_v2.settings="global"
+			uci set parental_control_v2.settings.enable="on"
+			uci commit
+		fi
+		config_clear
+		# old software upgrade new software, parameter conversion
+		lua -e 'require("luci.model.parental_control").old_to_new_params_convert()'
+		
+		local pctl_enable=`uci get parental_control_v2.settings.enable`
+		if [ "A$pctl_enable" == "Aon" ]; then
+			pc start
+		fi
+	else
+		pc start
+	fi
+	
+	#add by wanghao
+	local mode=$(uci get sysmode.sysmode.mode)
+	local bind_status=$(uci get cloud_config.device_status.bind_status)
+	if [ "x$mode" == "xrouter" -a "$bind_status" == "1" ]; then
+		[ -e /usr/sbin/report_download_elapsedTime ] && {
+			lua /usr/sbin/report_download_elapsedTime &
+		}
+	fi
+	#add end
+}
+
+stop() {
+	pc stop $1
+}
+
+restart() {
+	pc restart
+}
+
+reload() {
+	pc reload
+}

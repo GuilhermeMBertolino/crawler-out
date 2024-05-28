@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            /*.codepriority{width:auto;margin: 0 auto;display:inline-block;  }
+            .codepriority_title{width:200px;text-align:center;display:block;font-size:16px;font-weight:400; }
+            .codepriority_title_txt{display:block;font-size:18px;font-weight:500;}
+            .list {list-style: none outside none;margin: 10px auto;padding-left:0px; }
+            .item {
+                width: 200px;
+                padding:4px 10px;
+                margin: 5px 0;
+                border: 1px solid #dedede;
+                border-radius: 5px;
+                background-color: #efefef;
+                font-size: 1.1em;
+                font-weight: normal;
+                text-align: center;
+                cursor: move;
+            }
+            .content_table_view{width:100%;border:1px solid #dedede;}
+            .content_table_view td{border:0px !important;padding:5px 8px !important  }*/
+        </style>
+    </head>
+    <body>
+        <div id="translation" class="hide">prioritycustom</div>
+        <!--Breadscrumbs starts here -->                                                                                                      
+    <div class="row ltq_breadcrumbs">                                                                                                     
+        <div  ng-repeat="breadcrumb in $root.breadcrumbs" >                                                                                   
+            <ng-switch on="$first">                                                                                                               
+                <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                    <div class="ltq_brd_home" >                                                                                                           
+                    <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                        <i class="fa fa-home"></i>                                                                                                            
+                            {{breadcrumb.name}}                                                                                                                   
+                    </a>                                                                                                                                  
+                    </div>                                                                                                                                
+                </div>                                                                                                                                
+
+                <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                    <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                        {{breadcrumb.name}}                                                                                                               
+                    </span>                                                                                                                               
+                    <span ng-if ="breadcrumb.path != 'nothing' &&
+                                            $last == false">                                                                                                                              
+                        <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                            <i></i>                                                                                                                               
+                            {{breadcrumb.name}}                                                                                                                   
+                        </a>                                                                                                                                  
+                    </span>                                                                                                                               
+                </div>                                                                                                                                 
+
+            </ng-switch>                                                                                                                            
+        </div>                                                                                                                                   
+    </div>                                                                                                                                  
+<!--Breadscrumbs ends here --> 
+	<div class="subheader">
+                <div>
+                    <img src="images/icons/voip.png" class="iconDetails" alt="img">
+                </div>
+            <div><h4 ng-bind="'prioritycustom.headername' | translate"></h4></div>
+                <p ng-bind="'prioritycustom.headerdescription' | translate"></p>
+    </div>
+        <div class="panel">
+            <!--<div class="panel-heading panel-info" ng-bind="'prioritycustom.Code Priority' | translate"></div>-->
+            <div class="panel-heading blu_bg"><span class="panel_heading_icon"><img src="images/icons/panel-heading-icon.png" alt="panel-icon"/></span><span ng-bind="'prioritycustom.Code Priority' | translate"></span></div>
+            <div class="panel-body" ng-controller="priorityController">
+                <div class="row" ng-show="prioritypostformnamepopup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('prioritypostformnamepopup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="prioritypostformnamepopupval"></span>
+                    </div>
+                </div>
+                <div class="row" ng-show="customprioritypopup">
+                    <div class="alert alert-danger">
+                        <a class="close" aria-label="close" ng-click="popupclose('customprioritypopup')">&times;</a>
+                        <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="customprioritypopupval"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        {{'prioritycustom.Drag and Drop Codecs Here' | translate}}
+                    </div>
+                </div>
+                <div  class="row">
+                    <div class="col-lg-6">
+                        <table class="content_table_view">
+                            <tr>
+                                <td>
+                                    <label class="control-label codepriority_title_txt text-center" ng-bind="'prioritycustom.Code Priority' | translate">
+                                        
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="control-label codepriority_title" ng-bind="'prioritycustom.Codec' | translate">
+                                        
+                                    </label>
+                                    <div class="codepriority" >
+
+                                        <ul ui-sortable="sortableOptions" ng-model="list" class="list">
+                                            <li ng-repeat="item in list" class="item">
+                                                {{item.displayname}}
+                                            </li>
+                                        </ul>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="table table-responsive">
+                            <table class="table tableCount content_table_view theme_intel">
+                                <thead>
+                                <th ng-bind="'prioritycustom.Codecs' | translate">
+                                    
+                                </th>
+                                <th ng-bind="'prioritycustom.Frame Size' | translate">
+                                    
+                                </th>
+                                <th ng-bind="'prioritycustom.Dynamic Payload type' | translate">
+                                    
+                                </th>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat='rowdata in tablist'>
+                                        <td>
+                                            {{rowdata.displayname}}
+                                        </td>
+                                        <td>
+                                   <!--         <input   ng-blur="textboxChange(rowdata.value, 'PacketizationPeriod', rowdata.PacketizationPeriod)" type="text"  ng-model="rowdata.PacketizationPeriod" placeholder="Enter Number Here"/>-->
+                                   <select id="packetizationperiod" name="PacketizationPeriod" class="form-control" ng-if="rowdata.displayname != 'G723'" ng-model="rowdata.PacketizationPeriod" ng-blur="textboxChange(rowdata.value, 'PacketizationPeriod', rowdata.PacketizationPeriod)">
+                                	<option value="10" selected="selected">10</option>
+                                	<option value="20" >20</option>   
+                                        <option value="30" >30</option>   
+                                   	<option value="40" >40</option>   
+                                   	<option value="60" >60</option>   
+                                   	</select>
+                                   	<select id="packetizationperiod" name="PacketizationPeriod" class="form-control" ng-if="rowdata.displayname == 'G723'" ng-model="rowdata.PacketizationPeriod" ng-blur="textboxChange(rowdata.value, 'PacketizationPeriod', rowdata.PacketizationPeriod)">
+                                   	<option value="30" selected="selected">30</option>
+                                   	<option value="60" >60</option>   
+                                   	</select>
+                                        </td>
+                                        <td ng-if="dyamicpayloadtypearray.indexOf(rowdata.displayname) > -1">
+                                            <input id="payloadtype" name="X_VENDOR_COM_PayloadType"  ng-blur="textboxChange(rowdata.value, 'X_VENDOR_COM_PayloadType', rowdata.X_VENDOR_COM_PayloadType)" type="text"  ng-model="rowdata.X_VENDOR_COM_PayloadType" placeholder="{{'Device.Services.VoiceService.1.VoiceProfile.1.Line.*.Codec.List.*.Enter Number Here' | translate}}"/>
+                                        </td>
+
+                                    </tr>
+                                </tbody>
+
+                            </table>    
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class=' text-right' style="margin: 10px;">
+                        <input  id="Save" class="btn btn-info" type="button" ng-click="Apply()" value="{{'Save' | translate}}" />
+                        <input  id="Close" class="btn btn-info" type="button" ng-click="cancel()" value="{{'cancel' | translate}}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

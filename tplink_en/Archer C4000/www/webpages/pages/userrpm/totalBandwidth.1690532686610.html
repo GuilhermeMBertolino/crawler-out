@@ -1,0 +1,871 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="./js/jquery.tpDial.1690532686610.js" type="text/javascript"></script>
+<script src="./js/libs/excanvas.1690532686610.js" type="text/javascript"></script>
+<script src="./js/libs/Chart.1690532686610.js" type="text/javascript"></script>
+<link href="./themes/green/css/jquery.tpDial.1690532686610.css" rel="stylesheet">
+<title>Total Bandwidth</title>
+<style type="text/css">
+	.sprite {display:inline-block; overflow:hidden; background-repeat: no-repeat;background-image:url(./themes/green/img/speedTest.1690532686610.png);}
+
+	div.bandwidth-container {
+		margin-bottom: 20px;
+		text-align: center;
+		font-size: 0;
+	}
+	div.bandwidth-container div.bandwidth-inner {
+		display: inline-block;
+		padding: 0 16px;
+		height: 30px;
+		line-height: 30px;
+		color: #36444b;
+		border-radius: 15px;
+		background-color: #F6F6F6;
+	}
+	div.bandwidth-container span.bandwidth-inner-before,
+	div.bandwidth-container span.bandwidth-inner-after {
+		display: none;
+	}
+	div.bandwidth-container span.bandwidth-title {
+		font-size: 14px;
+		margin-right: 10px;
+	}
+	div.bandwidth-container span.bandwidth-upload,
+	div.bandwidth-container span.bandwidth-download {
+		width: 100px;
+		color: #005564;
+		text-align: left;
+		display: inline-block;
+		margin-right: 5px;
+	}
+	div.bandwidth-container span.bandwidth-rate {
+		max-width: 45px;
+		display: inline-block;
+		overflow: hidden;
+		font-size: 13px;
+		margin-right: 5px;
+	}
+	div.bandwidth-container span.bandwidth-unit {
+		font-size: 13px;
+	}
+	div.bandwidth-container span.arrow-icon {
+		width: 9px;
+		height: 12px;
+		margin-right: 5px;
+		display: inline-block;
+		overflow: hidden;
+		background-repeat: no-repeat;
+		background-image: url(./themes/green/img/qos.1690532686610.png);
+	}
+	div.bandwidth-container span.bandwidth-upload span.arrow-icon {
+		background-position: -237px -50px;
+	}
+	div.bandwidth-container span.bandwidth-download span.arrow-icon {
+		background-position: -221px -50px;
+	}
+	div.bandwidth-container span.bandwidth-edit {
+		width: 19px;
+		height: 19px;
+		background-repeat: no-repeat;
+		background-image: url(./themes/green/img/qos.1690532686610.png);
+		background-position: -237px -50px;
+		display: inline-block;
+	}
+	div.bandwidth-container a.bandwidth-edit-btn {
+		width: 19px;
+		height: 19px;
+		background-repeat: no-repeat;
+		background-image: url(./themes/green/img/qos.1690532686610.png);
+		background-position: -166px -425px;
+		display: inline-block;
+		cursor: pointer;
+	}
+	div.bandwidth-container a.bandwidth-edit-btn:hover {
+		background-position: -195px -425px;
+	}
+	div#bandwidth-form div.radio-group-container div.widget-wrap {
+		border-left: 0;
+		padding-left: 0;
+	}
+	div#bandwidth-form div.radio-group-container div.widget-wrap label.radio-label {
+		border-left: 0;
+		padding-left: 0;
+	}
+	div.msg-container.bandwidth-edit-msg h3.panel-title span.panel-title-text {
+		font-size: 18px;
+		color: #36444b;
+	}
+	.qos-speed-test-note {
+		display: none;
+		margin: 0px 0px 7px 22px;
+		color: #a7a9ac;
+	}
+	#check-internet-msg {
+		position: absolute;
+		display: none;
+		left: 0px;
+		top: 186px;
+		z-index: 1000;
+	}
+	#check-internet-msg div.bg {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		background-color: #4acbd6;
+		opacity: 0.7;
+		border-radius: 5px;
+	}
+	#check-internet-msg div.content {
+		position: relative;
+		margin: 28px 24px;
+	}
+	#check-internet-msg span.icon {
+		display: inline-block;
+		width: 38px;
+		height: 38px;
+		margin-right: 5px;
+		background: url(./themes/green/img/icons.1690532686610.png) no-repeat -363px -155px;
+	}
+	#check-internet-msg span.text {
+		color: #ffffff;
+		font-size: 16px;
+	}
+	div.msg-container.speedtest-privacy-size {
+		width: 398px;
+	}
+	.row {
+		white-space: nowrap;
+	}
+	.row.dial-row {
+		margin-bottom: -10px;
+	}
+	.col {
+		display: inline-block;
+		margin-right: -4px;
+	}
+	.col50 {
+		width: 50%;
+	}
+	.dial-row .col {
+		height: 97px;
+	}
+	.col.border-right {
+		border-right: 1px solid #ccc;
+	}
+	.realSpeed-content {
+		font-size: 28px;
+	}
+	.realSpeed-content.left, .dial-wrapper.left {
+		text-align: left;
+		margin-left: 132px;
+	}
+	.realSpeed-content.right, .dial-wrapper.right {
+		text-align: right;
+		margin-right: 132px;
+	}
+	.realValue {
+		font-size: 28px;
+		margin-left: 12px;
+	}
+	.realUnit {
+		font-size: 18px;
+		margin-left: 7px;
+		vertical-align: baseline;
+	}
+	.test-time-wrapper {
+		text-align: center;
+		font-size: 14px;
+		color: #4ACBD6;
+		margin-bottom: 32px;
+		margin-top: 14px;
+		min-height: 17px;
+	}
+	#speedRating-box {
+		margin-top: 36px;
+		text-align: center;
+	}
+	.speedtest-info {
+		margin: 8px 0px 30px 0px;
+		height: 16px;
+		text-align: center;
+		font-size: 14px;
+		color: #4acbd6;
+	}
+	.speedtest-info.failed {
+		color: #c11c66;
+	}
+	#speedtest-msg {
+		height: 361px;
+	}
+	div.button-container.qos-speedtest-button-container.submit {
+		margin-top: 30px;
+		text-align: center;
+	}
+	#speedtest-panel {
+		height: 263px;
+	}
+	#qos-bandwidth-set-note {
+		display: block;
+		margin: 8px 0px 23px 0px;
+		color: #36444b;
+	}
+</style>
+<!--[if lte IE 8]>
+<style>
+	div.bandwidth-container div.bandwidth-inner {
+		padding-left: 0;
+		padding-right: 0;
+		border-radius: 0;
+	}
+	div.bandwidth-container span.bandwidth-inner-before,
+	div.bandwidth-container span.bandwidth-inner-after {
+		position: relative;
+		top: -1px;
+		width: 15px;
+		height: 30px;
+		display: inline-block;
+		background-image: url("./themes/green/img/qos.1690532686610.png");
+		background-repeat: no-repeat;
+	}
+	div.bandwidth-container span.bandwidth-inner-before {
+		background-position: -8px -470px;
+	}
+	div.bandwidth-container span.bandwidth-inner-after {
+		background-position: -54px -470px;
+	}
+</style>
+<![endif]-->
+</head>
+<body>
+	<div class="bandwidth-container">
+		<span class="bandwidth-inner-before"></span>
+		<div class="bandwidth-inner">
+			<span id="bandwidth-title" class="bandwidth-title"></span>
+			<span class="bandwidth-download">
+				<span class="arrow-icon"></span>
+				<span class="bandwidth-rate" id="bandwidth-download-value"></span>
+				<span class="bandwidth-unit" id="bandwidth-download-unit"></span>
+			</span>
+			<span class="bandwidth-upload">
+				<span class="arrow-icon"></span>
+				<span class="bandwidth-rate" id="bandwidth-upload-value"></span>
+				<span class="bandwidth-unit" id="bandwidth-upload-unit"></span>
+			</span>
+			<a id="bandwidth-edit-btn" class="bandwidth-edit-btn"></a>
+		</div>
+		<span class="bandwidth-inner-after"></span>
+	</div>
+
+	<div id="bandwidth-edit-msg" class="bandwidth-edit-msg hidden">
+		<div id="bandwidth-form">
+			<span id="qos-bandwidth-set-note"></span>
+			<input type="radio" id="bandwidth_mode" name="bandwidth_mode" value="" />
+			<div id="manual_cnt">
+				<div class="widget-container">
+					<input type="text"  id="up_band" name="up_band" value="" />
+					<input id="up_unit" name="up_unit" />
+				</div>
+				<div class="widget-container">
+					<input type="text" id="down_band" name="down_band" value="" />
+					<input id="down_unit" name="down_unit" />
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="check-internet-msg">
+		<div class="bg"></div>
+		<div class="content">
+			<span class="icon"></span>
+			<span class="text"></span>
+		</div>
+	</div>
+
+	<div id="speedtest-privacy-msg" class="warning hidden">
+		<div class="reboot-confirm-qa">
+			<h4 class="title">
+				<span class="icon"></span>
+				<span class="text" id="speedtest-privacy-text"></span>
+			</h4>
+		</div>
+	</div>
+
+	<div id="speedtest-msg" class="hidden">
+		<div id="speedtest-panel">
+			<div class="speedtest-info">
+				<span class="text"></span>
+			</div>
+			<div class="row dial-row">
+				<div class="col col50 border-right">
+					<div class="dial-wrapper left">
+						<div id="download-dial"></div>
+					</div>
+				</div>
+				<div class="col col50">
+					<div class="dial-wrapper right">
+						<div id="upload-dial"></div>
+					</div>
+				</div>
+			</div>
+			<button type="button" id="qosTestButton"></button>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$("#bandwidth-title").html($.su.CHAR.QOS.TOTAL_BANDWIDTH_P);
+			$("#bandwidth-upload-value").html("---");
+			$("#bandwidth-upload-unit").html($.su.CHAR.QOS.SPEED_K);
+			$("#bandwidth-download-value").html("---");
+			$("#bandwidth-download-unit").html($.su.CHAR.QOS.SPEED_K);
+
+			$("#qos-bandwidth-set-note").html($.su.CHAR.QOS.QOS_BANDWIDTH_SET_NOTE);
+
+			$("#check-internet-msg .text").html($.su.CHAR.QOS.NO_INTERNET_NOTE);
+			$("#speedtest-privacy-text").html($.su.CHAR.QOS.SPEEDTEST_PRIVACY_NOTE);
+
+			var TOTAL_BANDWIDTH_URL = $.su.url("/admin/smart_network?form=tm_qos");
+			var QUICKSETUP_CHECK_INTERNET_URL = $.su.url("/admin/quick_setup?form=check_internet");
+			var PRIVICY_CHECK_URL = $.su.url("/admin/qos?form=check_privicy");
+
+			var totalBandwidthProxy = new $.su.Proxy({
+				url: TOTAL_BANDWIDTH_URL
+			});
+			var checkInternetProxy = new $.su.Proxy({
+				url: QUICKSETUP_CHECK_INTERNET_URL
+			});
+			var checkPrivicyProxy = new $.su.Proxy({
+				url: PRIVICY_CHECK_URL
+			});
+
+			var speedGetId = 0;
+			var noRecord = false;
+	        var speedInfoProxy = new $.su.Proxy({
+	            url: $.su.url('/admin/status?form=speedtest')
+	        });
+
+	        var speedRecordProxy = new $.su.Proxy({
+	            url: $.su.url('/admin/status?form=speedtest'),
+	            async: false
+	        });
+
+			var getSpeedRecord = function (){
+				speedRecordProxy.read({operation: "get"}, function (data) {
+					if (data.length == 0 || !$.isArray(data)) {
+						noRecord = true;
+					}
+				});
+			}
+
+			// 判断 speed test 是否下线
+			var isAvailable = true
+
+			var isSpeedTestAvailable = function () {
+				speedInfoProxy.read({
+                    operation: "get_status"
+                }, function (data) {
+                    isAvailable = data.is_available != false
+
+					if (!isAvailable) {
+						$("#manual_cnt").fieldset("show");
+						$(".qos-speed-test-note").css("display", "none");
+						$('#bandwidth-form .radio-group-container').remove()
+					}
+
+					isAvailable && getSpeedRecord()
+                }, function () {
+                    getSpeedRecord()
+                }, function () {
+                    getSpeedRecord()
+                })
+        }
+        isSpeedTestAvailable()
+
+			var bandwidthEditMsg = $("#bandwidth-edit-msg").msg({
+				type: "confirm",
+				cls: "bandwidth-edit-msg xl",
+				yesText: $.su.CHAR.QOS.SAVE,
+				noText: $.su.CHAR.QOS.CANCEL,
+				okHandler: function() {
+					if(!$("#bandwidth-form").form("validate")) {
+						return false;
+					}
+					var submitData = {};
+					submitData.bandwidth_mode = $("#bandwidth_mode").radio("getValue");
+
+					if(!isAvailable){
+						submitData.bandwidth_mode = "manual"
+					}
+
+					if(submitData.bandwidth_mode === "manual") {
+						var uploadResult = {};
+						var downloadResult = {};
+						uploadResult.value = Number($("input#up_band").textbox("getValue"));
+						downloadResult.value = Number($("input#down_band").textbox("getValue"));
+						uploadResult.unit = $("input#up_unit").combobox("getValue")[0];
+						downloadResult.unit = $("input#down_unit").combobox("getValue")[0];
+						submitData.upstream_bandwidth = joinSpeed(uploadResult);
+						submitData.downstream_bandwidth = joinSpeed(downloadResult);
+
+						totalBandwidthProxy.write(submitData, function(){
+							$("#bandwidth-form").form("prompt", true);
+							setTimeout(function() {
+								bandwidthEditMsg.msg("close");
+							}, 1200);
+						}, function(){
+							$("#bandwidth-form").form("prompt", false);
+						});
+					}else{
+						// auto mode, need speedtest
+						checkInternetProxy.read({}, function(){
+							totalBandwidthProxy.write(submitData, function(){
+								if(noRecord){
+									checkPrivicyProxy.read({}, function(data){
+										bandwidthEditMsg.msg("close");
+										if(!data.enable){
+											speedtestPrivacyMsg.msg("show");
+										}else{
+											speedtestMsg.msg("show");
+											speedTest();
+										}
+									});
+								}else{
+									$("#bandwidth-form").form("load");
+									$("#bandwidth-form").form("prompt", true);
+									setTimeout(function() {
+										bandwidthEditMsg.msg("close");
+									}, 1200);
+								}
+							}, function(){
+								$("#bandwidth-form").form("prompt", false);
+							});
+						}, function(){
+							$("#check-internet-msg").css("display", "block");
+							setTimeout(function(){
+								$("#check-internet-msg").css("display", "none");
+							}, 3000);
+						}, function(){
+							$("#check-internet-msg").css("display", "block");
+							setTimeout(function(){
+								$("#check-internet-msg").css("display", "none");
+							}, 3000);
+						});
+					}
+
+					return false;
+				}
+			});
+			
+			$("#bandwidth-form").panel({
+				title: $.su.CHAR.QOS.TOTAL_BANDWIDTH,
+				collapsible: false
+			});
+
+			var max_upload = 0,
+				max_download = 0;
+
+			$("#bandwidth-form").form({
+				proxy: totalBandwidthProxy,
+				fields: [
+					{name: "bandwidth_mode", mapping: "bandwidth_mode"},
+					{name: "up_band", mapping: "up_band"},
+					{name: "down_band", mapping: "down_band"},
+					{name: "up_unit", mapping: "up_unit"},
+					{name: "down_unit", mapping: "down_unit"}
+				]
+			}).on("ev_loadData",function(e, data){
+				var unitChar = {
+					"mbps": $.su.CHAR.QOS.SPEED_M,
+					"kbps": $.su.CHAR.QOS.SPEED_K
+				};
+				var uploadResult = separateSpeed(data.upstream_bandwidth);
+				var downloadResult = separateSpeed(data.downstream_bandwidth);
+				if(uploadResult.value && uploadResult.value != "NaN" && data.upstream_bandwidth != -1){
+					$("#bandwidth-upload-value").html(uploadResult.value);
+					$("input#up_band").textbox("setValue", uploadResult.value);
+				}else{
+					$("#bandwidth-upload-value").html("---");
+					$("input#up_band").textbox("setValue", "");
+				}
+				$("#bandwidth-upload-unit").html(unitChar[uploadResult.unit]);
+				$("input#up_unit").combobox("setValue", uploadResult.unit);
+
+				if(downloadResult.value && downloadResult.value != "NaN" && data.upstream_bandwidth != -1){
+					$("#bandwidth-download-value").html(downloadResult.value);
+					$("input#down_band").textbox("setValue", downloadResult.value);
+				}else{
+					$("#bandwidth-download-value").html("---");
+					$("input#down_band").textbox("setValue", "");
+				}
+				$("#bandwidth-download-unit").html(unitChar[downloadResult.unit]);
+				$("input#down_unit").combobox("setValue", downloadResult.unit);
+
+				if(!isAvailable){
+					data.bandwidth_mode = "manual"
+				}
+
+				if(data.bandwidth_mode == "auto") {
+					$("#manual_cnt").fieldset("hide");
+					if(noRecord){
+						$(".qos-speed-test-note").css("display", "block");
+					}else{
+						$(".qos-speed-test-note").css("display", "none");
+					}
+				} else {
+					$("#manual_cnt").fieldset("show");
+					$(".qos-speed-test-note").css("display", "none");
+				}
+
+				max_upload = data.max_upload;
+				max_download = data.max_download;
+			});
+			
+			$("#manual_cnt").fieldset({
+				fields: [
+					{name: "up_band", mapping: "up_band"},
+					{name: "down_band", mapping: "down_band"},
+					{name: "up_unit", mapping: "up_unit"},
+					{name: "down_unit", mapping: "down_unit"}
+				]
+			}).fieldset("hide");
+
+			var bandwidthModeContent = "<span class=\"qos-speed-test-note\">"+$.su.CHAR.QOS.SPEED_TEST_NOTE+"</span>";
+			$("input#bandwidth_mode").radio({
+				fieldLabel: null,
+				items:[
+					{boxlabel: $.su.CHAR.QOS.BAND_TYPE_AUTO, inputValue: "auto", checked: "checked", content: bandwidthModeContent},
+					{boxlabel: $.su.CHAR.QOS.BAND_TYPE_MANUAL, inputValue: "manual"}
+				]
+			}).on("ev_change", function(e, oldValue, newValue){
+				// console.log(newValue);
+				if(newValue == "auto") {
+					$("#manual_cnt").fieldset("hide");
+					if(noRecord){
+						$(".qos-speed-test-note").css("display", "block");
+					}else{
+						$(".qos-speed-test-note").css("display", "none");
+					}
+				} else {
+					$("#manual_cnt").fieldset("show");
+					$(".qos-speed-test-note").css("display", "none");
+				}
+			});
+			$("input#up_band").textbox({
+				fieldLabel: $.su.CHAR.QOS.UPBANDWIDTH,
+				inputCls:'s',
+				vtype:{
+					vtype: 'internet_speed'
+				},
+				validator: function(val){
+					var val = parseFloat(val);
+					var up_unit = $("input#up_unit").combobox("getValue")[0];
+					if(up_unit === "kbps"){
+						if(val <= 0){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MIN.replace("%min", "0");
+						}
+						if(val >= max_upload){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MAX.replace("%max", max_upload.toString());
+						}
+					}else{
+						var max_upload_tmp = Math.floor(max_upload / 1024);
+						if(val <= 0){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MIN.replace("%min", "0");
+						}
+						if(val >= max_upload_tmp){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MAX.replace("%max", max_upload_tmp.toString());
+						}
+					}
+					return true;
+				},
+				allowBlank:false,
+				cls:"inline-block",
+				textFormat: $.su.format.floatFormat
+			});
+			$("input#up_unit").combobox({
+				fieldLabel:null,
+				inputCls:'s',
+				cls:"inline-block",
+				items: [
+					{value: "mbps", name: $.su.CHAR.QOS.SPEED_M, selected: "selected"},
+					{value: "kbps", name: $.su.CHAR.QOS.SPEED_K}
+				]
+			});
+			$("input#down_band").textbox({
+				fieldLabel: $.su.CHAR.QOS.DOWNBANDWIDTH,
+				inputCls:'s',
+				cls:"inline-block",
+				vtype:{
+					vtype: 'internet_speed'
+				},
+				validator: function(val){
+					var val = parseFloat(val);
+					var down_unit = $("input#down_unit").combobox("getValue")[0];
+					if(down_unit === "kbps"){
+						if(val <= 0){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MIN.replace("%min", "0");
+						}
+						if(val >= max_download){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MAX.replace("%max", max_download.toString());
+						}
+					}else{
+						var max_download_tmp = Math.floor(max_download / 1024);
+						if(val <= 0){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MIN.replace("%min", "0");
+						}
+						if(val >= max_download_tmp){
+							return $.su.CHAR.VTYPETEXT.NUMBER_MAX.replace("%max", max_download_tmp.toString());
+						}
+					}
+					return true;
+				},
+				allowBlank:false,
+				textFormat: $.su.format.floatFormat
+			});
+
+			$("input#down_unit").combobox({
+				fieldLabel:null,
+				inputCls:'s',
+				cls:"inline-block",
+				items: [
+					{value: "mbps", name: $.su.CHAR.QOS.SPEED_M, selected: "selected"},
+					{value: "kbps", name: $.su.CHAR.QOS.SPEED_K}
+				]
+			});
+			$("#bandwidth-edit-btn").on("click", function(e) {
+				if(!isAvailable){
+					$('#bandwidth-form .radio-group-container').remove()
+				}
+				bandwidthEditMsg.msg("show");
+			});
+
+			var speedtestPrivacyMsg = $("#speedtest-privacy-msg").msg({
+				type: "confirm",
+				cls: "speedtest-privacy-size",
+				noText: $.su.CHAR.QOS.CANCEL,
+				yesText: $.su.CHAR.QOS.AGREE,
+				okHandler: function(){
+					checkPrivicyProxy.write({
+						"enable": true
+					}, function(){
+						speedtestPrivacyMsg.msg("close");
+						speedtestMsg.msg("show");
+						speedTest();
+					});
+					
+					return false;
+				},
+				noHandler: function(){
+					bandwidthEditMsg.msg("show");
+				},
+				closeHandler: function(){
+					bandwidthEditMsg.msg("show");
+				}
+			});
+
+			var speedtestMsg = $("#speedtest-msg").msg({
+				type: "window",
+				closeHandler: function(){
+					bandwidthEditMsg.msg("show");
+				}
+			});
+
+			$("#speedtest-panel").panel({
+				title: $.su.CHAR.QOS.INTERNET_SPEED_TEST
+			});
+
+			
+            $("button#qosTestButton").button({
+	            text: $.su.CHAR.QOS.TRY_AGAIN,
+	            cls: "qos-speedtest-button-container submit",
+	            handler: function(){
+	            	speedTest();
+	                return false;
+	            }
+	        });
+	        $("button#qosTestButton").button("hide");
+
+
+	        var transformUnit = function(value){
+	            var unit = 0;
+	            unit = parseFloat((value/1024).toFixed(1));
+
+	            return unit;
+	        };
+
+	        function getSpeed(){
+	        	speedInfoProxy.read({}, function(data){
+	    			if(data.status=="idle"){
+	    				$(".speedtest-info").removeClass("failed");
+	    				$('#download-dial').tpDial('testing', false);
+	    				$('#upload-dial').tpDial('testing', false);
+
+	    				var down_speed = transformUnit(data.down_speed);
+	    				var up_speed = transformUnit(data.up_speed);
+
+	    				if (data.down_speed && data.down_speed != "NaN" && data.down_speed != -1){
+							$('#download-dial').tpDial('val', down_speed);
+						}else{
+							$('#download-dial').tpDial('val', null);
+						}
+							
+						if (data.up_speed && data.up_speed != "NaN" && data.up_speed != -1){
+							$('#upload-dial').tpDial('val', up_speed);
+						}else{
+							$('#upload-dial').tpDial('val', null);
+						}
+
+	    				speedtestMsg.msg("close");
+	    				$("#bandwidth-form").form("load");
+	    				noRecord = false;
+	    				clearInterval(speedGetId);
+	    			}
+	    			else if(data.status=="down_test"){
+	    				$(".speedtest-info .text").html($.su.CHAR.QOS.TESTING_DOWNLOAD_SPEED + "...");
+	    				$(".speedtest-info").removeClass("failed");
+
+	    				$('#upload-dial').tpDial('testing', false);
+	    				$('#download-dial').tpDial('testing', true);
+
+	    				var down_speed = transformUnit(data.down_speed);
+	    				var up_speed = transformUnit(data.up_speed);
+
+						if (data.down_speed && data.down_speed != "NaN" && data.down_speed != -1){
+							$('#download-dial').tpDial('val', down_speed);
+						}else{
+							$('#download-dial').tpDial('val', null);
+						}
+							
+						if (data.up_speed && data.up_speed != "NaN" && data.up_speed != -1){
+							$('#upload-dial').tpDial('val', up_speed);
+						}else{
+							$('#upload-dial').tpDial('val', null);
+						}
+	    			}
+	    			else if(data.status=="up_test"){
+	    				$(".speedtest-info .text").html($.su.CHAR.QOS.TESTING_UPLOAD_SPEED + "...");
+	    				$(".speedtest-info").removeClass("failed");
+
+	    				$('#download-dial').tpDial('testing', false);
+	                    $('#upload-dial').tpDial('testing', true);
+
+	                    var down_speed = transformUnit(data.down_speed);
+	                    var up_speed = transformUnit(data.up_speed);
+
+	                    if (data.down_speed && data.down_speed != "NaN" && data.down_speed != -1){
+	                    	$('#download-dial').tpDial('val', down_speed);
+	                    }else{
+	                    	$('#download-dial').tpDial('val', null);
+	                    }
+
+						if (data.up_speed && data.up_speed != "NaN" && data.up_speed != -1){
+							$('#upload-dial').tpDial('val', up_speed);
+						}else{
+							$('#upload-dial').tpDial('val', null);
+						}
+	    			}
+	    			else if(data.status=="fail"){
+	    				$(".speedtest-info .text").html($.su.CHAR.QOS.SPEED_TEST_FAILED);
+	    				$(".speedtest-info").addClass("failed");
+	    				
+	    				$('#download-dial').tpDial('testing', false);
+						$('#upload-dial').tpDial('testing', false);
+
+						var down_speed = transformUnit(data.down_speed);
+	    				var up_speed = transformUnit(data.up_speed);
+
+	    				if (data.down_speed && data.down_speed != "NaN" && data.down_speed != -1){
+	                    	$('#download-dial').tpDial('val', down_speed);
+	                    }else{
+	                    	$('#download-dial').tpDial('val', null);
+	                    }
+
+						if (data.up_speed && data.up_speed != "NaN" && data.up_speed != -1){
+							$('#upload-dial').tpDial('val', up_speed);
+						}else{
+							$('#upload-dial').tpDial('val', null);
+						}
+
+						$("button#qosTestButton").button("show");
+
+	    				clearInterval(speedGetId);
+					}
+					else{
+						$('#download-dial').tpDial('testing', false);
+						$('#upload-dial').tpDial('testing', false);
+
+						$('#download-dial').tpDial('val', null);
+	    				$('#upload-dial').tpDial('val', null);
+					}
+				}, function(errorcode, others, data){
+					$(".speedtest-info .text").html($.su.CHAR.QOS.SPEED_TEST_FAILED);
+					$(".speedtest-info").addClass("failed");
+					
+					$('#download-dial').tpDial('testing', false);
+					$('#upload-dial').tpDial('testing', false);
+
+					$("button#qosTestButton").button("show");
+
+					clearInterval(speedGetId);
+				});
+			}
+
+	        function speedTest(){
+	        	$('#download-dial').tpDial({
+	                speedUnitText: $.su.CHAR.SPEED_TEST.MBPS+" "+$.su.CHAR.SPEED_TEST.DOWNLOAD
+	            });
+	            $('#upload-dial').tpDial({
+	                speedUnitText: $.su.CHAR.SPEED_TEST.MBPS+" "+$.su.CHAR.SPEED_TEST.UPLOAD,
+	                downLoad: false
+	            });
+
+	            $('#download-dial').tpDial('val', null);
+                $('#upload-dial').tpDial('val', null);
+
+                if(speedGetId){
+                	clearInterval(speedGetId);
+                }
+
+                speedInfoProxy.write({operation: "start"}, function(data){
+                	// getSpeed();
+                	speedGetId = setInterval(getSpeed, 2000);
+                });
+	        }
+
+			function separateSpeed(val) {
+				var res = {
+					value: 0,
+					unit: "kbps"
+				};
+				var speed = val;
+				if (speed / 1024 < 1) {
+					if (speed < 1000) {
+						res.value = speed.toFixed(1);
+						res.unit = "kbps";
+					} else {
+						res.value = speed.toFixed(0);
+						res.unit = "kbps";
+					}
+				} else {
+					res.value = (speed / 1024).toFixed(1);
+					res.unit = "mbps";
+				}
+				return res;
+			}
+
+			function joinSpeed(data) {
+				var res = data.value;
+				if(data.unit === "mbps"){
+					res = res * 1024;
+				}
+				return res;
+			}
+
+			$.su.app.runningModule.addUnloadHandler(function(){
+				clearInterval(speedGetId);
+	        });
+		});
+	</script>
+</body>
+</html>

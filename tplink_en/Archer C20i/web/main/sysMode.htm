@@ -1,0 +1,226 @@
+﻿<script language="javascript" type="text/javascript">
+var realMode;
+function sysModeInit()
+{
+	if (INCLUDE_LAN_WLAN) $.removeClass($.id("sysmod2"), "nd");
+	else $.removeClass($.id("sysmod3"), "nd");
+	
+	if (!INCLUDE_USB_3G_DONGLE)
+	{
+		$.addClass($.id("USB_3G"), "nd");
+		$.addClass($.id("sysmod4"), "nd");
+	}
+	
+	if ($.mainParam)
+	{
+		if ($.qd.sysMode === undefined)
+		{
+			var sysMode = $.act(ACT_GET, SYS_MODE, null, null);
+			if (!$.exe())
+			{
+				if (sysMode.mode == "DSL")
+				{
+					$.id("DSL").checked = true;
+					$.qd.realMode = "DSL";
+				}
+				else if (sysMode.mode == "USB_3G")
+				{
+					$.id("USB_3G").checked = true;
+					$.qd.realMode = "USB_3G";
+				}
+				else
+				{
+					$.id("ETH").checked = true;
+					$.qd.realMode = "ETH";
+				}
+			}
+		}
+		else
+		{
+			if ($.qd.sysMode == "DSL")
+			{
+				$.id("DSL").checked = true;
+			}
+			else if ($.qd.sysMode == "USB_3G")
+			{
+				$.id("USB_3G").checked = true;
+			}
+			else
+			{
+				$.id("ETH").checked = true;
+			}
+		}
+		$.removeClass($.id("title_qs"), "nd");
+		$.removeClass($.id("b_prev"), "nd");
+		$.removeClass($.id("b_next"), "nd");
+	}
+	else
+	{
+		var sysMode = $.act(ACT_GET, SYS_MODE, null, null);
+		if (!$.exe())
+		{
+			if (sysMode.mode == "DSL")
+			{
+				realMode = "DSL";
+				$.id("DSL").checked = true;
+			}
+			else if (sysMode.mode == "USB_3G")
+			{
+				realMode = "USB_3G";
+				$.id("USB_3G").checked = true;
+			}
+			else
+			{
+				realMode = "ETH";
+				$.id("ETH").checked = true;
+			}
+		}
+		$.removeClass($.id("title_sysMode"), "nd");
+		$.removeClass($.id("b_save"), "nd");
+		$.removeClass($.id("tail"), "ctr");
+	}
+}
+function doSave()
+{
+	 
+	var sysModeArg = {};
+	if ($.id("DSL").checked)
+	{
+		sysModeArg.mode = "DSL";
+	}
+	else if ($.id("USB_3G").checked)
+	{
+		sysModeArg.mode = "USB_3G";
+	}
+	else
+	{
+		sysModeArg.mode = "ETH";
+	}
+	
+	if (sysModeArg.mode == realMode) 
+	{
+		$.addLoading($.id("b_save"));
+		$.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+		$.exe(function(ret){if (!ret) $.reload();});
+		return;
+	}
+	var r = confirm(c_str.chgmod);
+	if (r == true)
+	{
+		$.addLoading($.id("b_save"));
+		$.act(ACT_SET, SYS_MODE, null, null, sysModeArg);
+		$.exe(function(ret){if (!ret) doReboot();});
+	}
+	else
+	{
+	  $.reload();
+	}
+
+}
+function doReboot() {
+	$.guage(["<span class='T_rebooting'>"+s_str.rebooting+"</span>", "<span class='T T_wait_reboot'>"+s_str.wait_reboot+"</span>"], 100, $.guageInterval, function(){$.refresh();});
+	$.act(ACT_OP, ACT_OP_REBOOT);
+	$.exe(true);
+}
+function doCollect() {
+	if ($.id("DSL").checked)
+	{
+		$.qd.sysMode = "DSL";
+	}
+	else if ($.id("USB_3G").checked)
+	{
+		$.qd.sysMode = "USB_3G";
+	}
+	else
+	{
+		$.qd.sysMode = "ETH";
+	}
+}
+function goNext() {
+	doCollect();
+
+	if ($.qd.sysMode == "ETH")
+	{
+		var l3f = {};
+		var wans = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+		var ips = $.act(ACT_GL, WAN_IP_CONN, null, null, ["name", "connectionType", "addressingType", "externalIPAddress", "subnetMask", "defaultGateway", "DNSServers"]);
+		var ppps = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["name", "transportType", "username", "password"]);
+		
+
+		if ($.qd.realMode == "ETH")
+		{
+			l3f = $.act(ACT_GET, L3_FORWARDING, null, null, ["__ifAliasName"]);
+			if ($.exe()) return;
+		}
+		else if ($.qd.realMode == "DSL" || $.qd.realMode == "USB_3G")
+		{
+			var lastMode = $.act(ACT_GET, SYS_MODE, null, null, ["ETHL3ForwardingName"]);
+			if ($.exe()) return;
+			l3f.__ifAliasName= lastMode.ETHL3ForwardingName;
+		}
+		
+		$.each(ips, function(){
+			if (l3f.__ifAliasName == this.name && $.arr2obj(wans, "__stack")[$.stkPop(this.__stack, 2)].WANAccessType == "Ethernet")
+			{
+				if (this.connectionType == "IP_Routed")
+				{
+					if (this.addressingType == "Static")
+					{
+						$.qd.type = "staip";
+						var dns = this.DNSServers.split(",");
+						$.qd.staip = {ip: this.externalIPAddress, mask: this.subnetMask, gw: this.defaultGateway, dns: dns[0], dns2: dns[1]};
+					}
+					if (this.addressingType == "DHCP")
+					{
+						$.qd.type = "dhcp";
+					}
+				}
+			}
+		});
+		$.each(ppps, function(){
+			if (l3f.__ifAliasName == this.name && $.arr2obj(wans, "__stack")[$.stkPop(this.__stack, 2)].WANAccessType == "Ethernet")
+			{
+				if (this.transportType == "PPPoE") {
+					$.qd.type = "ppp";
+					$.qd.ppp = {usr: this.username, pwd: this.password, cfm: this.password};							
+				}
+			}
+		});
+	}
+	$.qf.next($.qd.sysMode);
+}
+function goPrev() {
+	doCollect();
+	$.qf.prev();
+}
+</script>
+<p class="et"><span class="nd" id="title_sysMode"><span class="T" id="et1">Operation Mode</span></span><span class="nd" id="title_qs"><span class="T" id="et2">Quick Setup - Operation Mode</span></span></p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="T" id="t_mode">Choose Operation Mode:</p>
+<p>
+<input type="radio" name="sysMode" id="DSL" value="DSL" checked />
+<b class="T" id="sysmod1">ADSL Modem Router Mode</b>
+</p>
+<p>
+<input type="radio" name="sysMode" id="USB_3G" value="USB_3G" />
+<b class="T" id="sysmod4">3G Router Mode</b>
+</p>
+<p>
+<input type="radio" name="sysMode" id="ETH" value="ETH" />
+<b class="nd T" id="sysmod2">Wireless Router Mode</b>
+<b class="nd T" id="sysmod3">Router Mode</b>
+</p>
+</div>
+<p class="bl"></p>
+<p class="tail ctr" id="tail">
+<input type="button" class="button L nd T T_back" value="Back" id="b_prev" onclick="goPrev()" />
+<input type="button" class="button L nd T T_next" value="Next" id="b_next" onclick="goNext()" />
+<input type="button" class="button L nd T T_save" value="Save" id="b_save" onclick="doSave()" />
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+sysModeInit();
+</script>

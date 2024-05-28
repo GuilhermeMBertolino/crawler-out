@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+
+SERVICE_DAEMONIZE=1
+START=99
+
+debug() {
+    echo $1 >/dev/console 2>&1
+}
+
+start() {
+    mode=`uci get sysmode.sysmode.mode`
+    if [ ${mode} = "router" ];then
+        rmmod tp_dhcp_hook
+        debug "dhcp_hook_d not load"
+        return 0
+    fi
+
+    debug "dhcp_hook_d start"
+    
+    local lan_name=`uci get network.lan.ifname`
+    lan_name=`echo $lan_name | sed 's/[ ][ ]*/:/g'`
+    echo "$lan_name" > /proc/dhcp_hook/dhcp_hook_dev_name
+ 
+    service_start /usr/bin/dhcp_hook_d
+    debug "dhcp_hook_d end"
+    return 0
+}
+
+stop() {
+    service_stop /usr/bin/dhcp_hook_d
+    return 0
+}
+
+reload() {
+    return 0
+}

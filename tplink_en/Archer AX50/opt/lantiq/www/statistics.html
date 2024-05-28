@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>      
+            .blue_bg{background: #0071c5 !important;}
+            .statinfoblock{display:inline-block;width:100%;}
+            .statinfo-label{display:inline-block;width:54%;float:left;}
+            .statinfo{display:inline-block;width:23%;float:left;}
+            .statinfo-cpunas{display:inline-block;width:33%;float:left;}
+            .statinfo-label .button,.statinfo .button,.statinfo-cpunas .button{width: 25px;height: 25px;float:left;display:block;cursor: pointer;line-height: 25px;margin: 0 5px;border-radius: 50%;}
+            .statinfo-label .button.active,.statinfo .button.active,.statinfo-cpunas .button.active{background:#00ff00;}
+            .statinfo-label .button.inactive,.statinfo .button.inactive,.statinfo-cpunas .button.inactive{background:#b1babf;}
+            .statinfo-label .block,.statinfo .block,.statinfo-cpunas .block{display:inline-block;width:100%;height:28px; }
+            .statinfo-label .block i,.statinfo .block i,.statinfo-cpunas .block i{margin-right:8px}
+            .statinfo-label .block i.bluebg,.statinfo .block i.bluebg,.statinfo-cpunas .block i.bluebg{color:#338cce;  }
+            .statinfo-label .block i.orngbg,.statinfo .block i.orngbg,.statinfo-cpunas .block i.orngbg{color:#ff5003;  }
+            .statinfo-label .block span,.statinfo .block span,.statinfo-cpunas .block span{line-height: 26px; font-size: 14px;}
+            .label-text{color: #292828 !important;font-weight: normal !important;}
+            /*.infoblock{display:table;border:1px solid red; }
+            .infoblock .leftblock{display:table-cell;border:1px solid red; }
+            .infoblock .rightblock{display:table-cell;border:1px solid red; }*/
+            .labeltxt{display:block;font-size:15px;color:#292828;text-align:center;height: 25px;}
+            .textbox{display:block;border:1px solid #d3d3d3;padding:8px 16px;color:#020202;font-weight:bold;text-align:center;width:80%;margin:0 auto; height: 37px;}
+            .mbpstxt{display:block;font-size:20px;line-height:60px;color:#59646a;font-weight:bold;text-align:center;width:80%;margin:0 auto; }
+            .statistics{width:100%; }
+            .statistics .col-lg-2 .btn{width:100%;}
+            .statistics .btn-success{background:green !important;border: medium none;padding:10px 24px !important;}
+            .statistics .btn-info{background:#0071c5 !important;border: medium none;padding:10px 24px !important;}
+        </style>
+    </head>
+    <body>
+        <div id="translation" class="hide">statistics</div>
+        <div ng-controller="statisticsController" ng-cloak>
+            <!--Breadscrumbs starts here -->                                                                                                      
+            <div class="row ltq_breadcrumbs">                                                                                                     
+                <div  ng-repeat="breadcrumb in $root.breadcrumbs">                                                                                   
+                    <ng-switch on="$first">                                                                                                               
+                        <div class="btn-group btn-breadcrumb1" ng-switch-when="true">                                                                         
+                            <div class="ltq_brd_home" >                                                                                                           
+                                <a  class="btn" ng-click="homefun()" ng-href="#/{{breadcrumb.path}}">                                                                 
+                                    <i class="fa fa-home"></i>                                                                                                            
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </div>                                                                                                                                
+                        </div>                                                                                                                                
+
+                        <div class="btn-group btn-breadcrumb" ng-switch-when="false" >                                                                        
+
+                            <span class="btn btn-default not-active" ng-if="breadcrumb.path == 'nothing' || $last == true" >                                      
+                                {{breadcrumb.name}}                                                                                                               
+                            </span>                                                                                                                               
+                            <span ng-if ="breadcrumb.path != 'nothing' &&
+                                                            $last == false">                                                                                                                              
+                                <a  class="btn" ng-href="#/{{breadcrumb.path}}">                                                                                      
+                                    <i></i>                                                                                                                               
+                                    {{breadcrumb.name}}                                                                                                                   
+                                </a>                                                                                                                                  
+                            </span>                                                                                                                               
+                        </div>                                                                                                                                 
+
+                    </ng-switch>                                                                                                                            
+                </div>                                                                                                                                   
+            </div>                                                                                                                                  
+            <!--Breadscrumbs ends here --> 
+            <div class="subheader">
+                <div>
+                    <img src="images/configuration-1.png" alt="image" class="iconDetails">
+                </div>
+                <div><h4>AnyWAN&trade; Home Gateway Platform</h4></div>
+            </div>
+            <div class="row no-margin-hr" ng-show="statisticspopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('statisticspopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="statisticspopupval"></span>
+                </div>
+            </div>
+            <div class="row no-margin-hr" ng-show="coremarkpopup">
+                <div class="alert alert-danger">
+                    <a class="close" aria-label="close" ng-click="popupclose('coremarkpopup')">&times;</a>
+                    <strong ng-bind="'Warning!' | translate"></strong><span ng-bind="coremarkpopupval"></span>
+                </div>
+            </div>
+            <div class="">
+                <div class="row no-margin-hr infoblock">
+                    <div class="col-lg-6 col-md-6 no-padding-hr-l mbl-no-padding-hr leftblock">
+                        <div class="panel">
+                            <div class="panel-heading blue_bg"><span class="panel_heading_icon"><img src="images/icons/internet-panel-icon.png" alt="panel-icon"/></span><span>Interfaces</span></div>
+                            <div class="panel-body"> 
+                                <!-- OLD <div class="panel-body" style="height:226px; "> -->
+                                <!--Indicates the first row in a LAN Panel-->
+                                <!--If you want to add a row in a panel copy this div-->
+                              <!--  <div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface319216811.Status=='Up' ? 'active' : 'inactive'"></i><span class="label-text">PON (2.5 Gbps / 1 Gbps)</span></div>
+                                    </div>
+                                    <div ng-if="DeviceEthernetInterface319216811.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface3Stats19216811.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface3Stats19216811.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                                <div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface5.Status=='Up' ? 'active' : 'inactive'"></i><span class="label-text">Ethernet WAN (1 Gbps / 1 Gbps)</span></div>
+                                    </div>
+                                    <div ng-if="DeviceEthernetInterface5.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface5Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface5Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceDSLLine1.Status=='Up' ? 'active' : 'inactive'"></i><span class="label-text">DSL (200 Mbps / 100 Mbps)</span></div>
+                                    </div>
+                                    <div ng-if="DeviceDSLLine1.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceDSLLine1Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceDSLLine1Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface1.Status=='Up' ? 'active' : 'inactive'"></i><span>Ethernet LAN (eth0_1)</span></div>
+                                    </div> 
+                                    <div ng-if="DeviceEthernetInterface1.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface1Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface1Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+				<div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface2.Status=='Up' ? 'active' : 'inactive'"></i><span>Ethernet LAN (eth0_2)</span></div>
+                                    </div> 
+                                    <div ng-if="DeviceEthernetInterface2.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface2Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface2Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+				<div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface3.Status=='Up' ? 'active' : 'inactive'"></i><span>Ethernet LAN (eth0_3)</span></div>
+                                    </div> 
+                                    <div ng-if="DeviceEthernetInterface3.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface3Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface3Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+				<div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceEthernetInterface4.Status=='Up' ? 'active' : 'inactive'"></i><span>Ethernet LAN (eth0_4)</span></div>
+                                    </div> 
+                                    <div ng-if="DeviceEthernetInterface4.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceEthernetInterface4Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceEthernetInterface4Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 no-padding-hr-r mbl-no-padding-hr rightblock">
+                        <div class="panel">
+                            <div class="panel-heading grn_bg"><span class="panel_heading_icon"><img src="images/icons/lan-panel-icon.png" alt="panel-icon"/></span><span>WiFi</span></div>
+                            <div class="panel-body" style="height: 189px;">
+                                <div class="statinfoblock">
+				    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceWiFiRadio1.Status=='Up' ? 'active' : 'inactive'"></i><span class="label-text">2.4 GHz</span></div>
+                                    </div>  
+                                    <div ng-if="DeviceWiFiRadio1.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceWiFiRadio1Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceWiFiRadio1Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="statinfoblock">
+                                    <div class="statinfo-label">
+                                        <div class="block"><i class="button" ng-class="DeviceWiFiRadio2.Status=='Up' ? 'active' : 'inactive'"></i><span class="label-text">5 GHz</span></div>
+                                    </div>  
+                                    <div ng-if="DeviceWiFiRadio2.Status == 'Up'">
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-down bluebg"></i><span>{{DeviceWiFiRadio2Stats.BytesReceived}}</span></div>
+                                        </div>
+                                        <div class="statinfo">
+                                            <div class="block"><i class="fa fa-long-arrow-up orngbg"></i><span>{{DeviceWiFiRadio2Stats.BytesSent}}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                              </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row no-margin-hr infoblock">
+                    <div class="col-lg-6 col-md-6 no-padding-hr-l mbl-no-padding-hr leftblock">
+                        <div class="panel">
+                            <div class="panel-body">                            
+                                <div class="statinfoblock text-center">
+                                    <div class="statinfo-cpunas">
+                                        <img src="images/icons/cpu-icon.png" alt="cpu" height="80"/>
+                                    </div>
+                                    <!--<div class="statinfo-cpunas">
+                                        <div class="labeltxt">Coremark</div>
+                                        <div class="textbox">{{cpustatus}}</div>
+                                    </div> -->
+                                    <div class="statinfo-cpunas">
+                                        <div class="labeltxt">CPU Load</div>
+                                        <div class="textbox">{{cpuload}}</div>
+                                    </div>
+                                </div>                           
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="col-lg-6 col-md-6 no-padding-hr-r mbl-no-padding-hr rightblock">
+                        <div class="panel">
+                            <div class="panel-body" style="height: 114px;">                            
+                                <div class="statinfoblock text-center">
+                                    <div class="statinfo-cpunas">
+                                        <img src="images/icons/nas.png" alt="ppe" height="80"/>
+                                    </div>
+                                    <div class="statinfo-cpunas">
+                                        <div class="labeltxt">Write</div>
+                                        <div class="textbox">{{DeviceEthernetInterface1Stats.BytesReceived}}</div>
+                                    </div>
+                                    <div class="statinfo-cpunas">
+                                        <div class="labeltxt">Read</div>
+                                        <div class="textbox">{{DeviceEthernetInterface1Stats.BytesSent}}</div>
+                                    </div>
+                                </div>                           
+                            </div>
+                        </div>
+                    </div>-->
+                </div>
+                <div class="row statistics">
+                    <div class="col-lg-1">                        
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success waves-effect waves-light" title="wantolan" id="Modify" name="wantolan" value="wantolan" ng-show="wantolanactive" ng-click="wantolanactivefun(false)"><span class="">WAN to LAN</span></button>
+                        <button class="btn btn-info waves-effect waves-light" title="wantolan" id="Modify" name="wantolan" value="wantolan" ng-show="wantolaninactive" ng-click="wantolaninactivefun(false)"><span class="">WAN to LAN</span></button>
+                    </div>
+                 <!--   <div class="col-lg-2">
+                        <button class="btn btn-success waves-effect waves-light" title="wantolan" id="Modify" name="lantonas" value="lantonas" ng-show="lantonasactive" ng-click="lantonasactivefun(false)"><span class="">LAN to NAS</span></button>
+                        <button class="btn btn-info waves-effect waves-light" title="wantolan" id="Modify" name="lantonas" value="lantonas" ng-show="lantonasinactive" ng-click="lantonasinactivefun(false)"><span class="">LAN to NAS</span></button>
+                    </div> -->
+                    <div class="col-lg-2">
+                        <button class="btn btn-success waves-effect waves-light" title="coremark" id="Modify" name="coremark" value="coremark" ng-show="coremarkactive" ng-click="coremarkactivefun(false)"><span class="">CPU</span></button>
+                        <button class="btn btn-info waves-effect waves-light" title="coremark" id="Modify" name="coremark" value="coremark" ng-show="coremarkinactive" ng-click="coremarkinactivefun(false)"><span class="">CPU</span></button>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success waves-effect waves-light" title="lantowifi" id="Modify" name="lantowifi" value="lantowifi" ng-show="lantowifiactive" ng-click="lantowifiactivefun(false)"><span class="">LAN to WiFi</span></button>
+                        <button class="btn btn-info waves-effect waves-light" title="lantowifi" id="Modify" name="lantowifi" value="lantowifi" ng-show="lantowifiinactive" ng-click="lantowifiinactivefun(false)"><span class="">LAN to WiFi</span></button>
+                    </div>
+                    <!--<div class="col-lg-2">
+                        <button class="btn btn-success waves-effect waves-light" title="wifiscalability" id="Modify" name="wifiscalability" value="wifiscalability" ng-show="wifiscalabilityactive" ng-click="wifiscalabilityactivefun(false)"><span class="">WiFi Scalability</span></button>
+                        <button class="btn btn-info waves-effect waves-light" title="wifiscalability" id="Modify" name="wifiscalability" value="wifiscalability" ng-show="wifiscalabilityinactive" ng-click="wifiscalabilityinactivefun(false)"><span class="">WiFi Scalability</span></button>
+                    </div> -->                
+                    <div class="col-lg-1">                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,823 @@
+﻿<script language="javascript" type="text/javascript">
+var errorFlag;
+var initFlag;
+
+$("input[id$='dslRadio']").click(function() {
+    var xdslType = "ATM";
+    if ($("#xdsl_type_add").hasClass("nd")) return;
+    if (INCLUDE_VDSLWAN) {
+        if ($("#adslRadio").prop("checked")) {
+            $("#atm_elem").removeClass("nd");
+            $("#ptm_elem").addClass("nd");
+            curSetIsPtm = 0;
+        } else if ($("#vdslRadio").prop("checked")) {
+            $("#atm_elem").addClass("nd");
+            $("#ptm_elem").removeClass("nd");
+            curSetIsPtm = 1;
+        }
+
+        xdslType = (curSetIsPtm == 1) ? "PTM" : "ATM";
+        initConnTypeSelect(xdslType);
+        showXdslType(xdslType, "add");
+    } else {
+        initConnTypeSelect("ATM");
+        showXdslType("ATM", "add");
+    }
+});
+
+function showXdslType(xdslType, opt) {
+    if ("ATM" == xdslType) {
+        if ("add" == opt) {
+            $("#atm_elem_add").removeClass("nd");
+            $("#atm_elem_edit").addClass("nd");
+            if (INCLUDE_WAN_VLAN && $("#link_type").data("value") != "pppoa" && $("#link_type").data("value") != "ipoa") {
+                $("#dsl_vlan_add").removeClass("nd");
+                $("#vlanEn_edit").prop("checked", false);
+                $("#vlanid_edit").val(0);
+            }
+            if (INCLUDE_AUTO_PVC) {
+                $("#autoPVC").removeClass("nd");
+            } else {
+                $("#autoPVC").addClass("nd");
+            }
+            initFlag = 0;
+            showPvcParam();
+            initFlag = 1;
+        } else if ("edit" == opt) {
+            $("#atm_elem_edit").removeClass("nd");
+            $("#atm_elem_add").addClass("nd");
+            if ($.wd.conn[$.wd.editIndex].type == "bridge") {
+                $("#atmClick").addClass("cln");
+            }
+            if (INCLUDE_WAN_VLAN && $.wd.conn[$.wd.editIndex].type != "pppoa" && $.wd.conn[$.wd.editIndex].type != "ipoa") {
+                $("#dsl_vlan_edit").removeClass("nd");
+                $("#vlanEn_edit").prop("checked", $.wd.conn[$.wd.editIndex].obj.X_TP_8021QEnabled == 1 ? true : false);
+                $("#vlanEn_edit").prop("disabled", true);
+                $("#vlanid_edit").val($.wd.conn[$.wd.editIndex].obj.X_TP_VlanID);
+                if ($.wd.conn[$.wd.editIndex].obj.X_TP_8021QEnabled == 1) {
+                    $("#vlanidText").html($.wd.conn[$.wd.editIndex].obj.X_TP_VlanID);
+                    $('#vlan_div_view').removeClass('nd');
+                    /*if ($.wd.conn[$.wd.editIndex].type == "bridge")
+                    {
+                        $("#vlanidText").html($.wd.conn[$.wd.editIndex].obj.X_TP_VlanID);
+                        $('#vlan_div_view').removeClass('nd');
+                    }
+                    else
+                    {
+                        $('#vlan_div_edit').removeClass('nd');
+                    }*/
+                }
+
+                if ($.wd.conn[$.wd.editIndex].type == "bridge") {
+                    $("#t_enVid_edit").addClass("nd");
+                    $("#vlanEn_edit").addClass("nd");
+                }
+            }
+            initATM();
+        }
+    } else if (INCLUDE_VDSLWAN && "PTM" == xdslType) {
+        if ("add" == opt) {
+            $("#ptm_elem_add").removeClass("nd");
+            $("#ptm_elem_edit").addClass("nd");
+        } else if ("edit" == opt) {
+            $("#ptm_elem_add").addClass("nd");
+            $("#ptm_elem_edit").removeClass("nd");
+            initPTM();
+        }
+    }
+}
+
+function initDsl() {
+    curSupIsPtm = ($.wd.curSupXtmType == "PTM" ? 1 : 0);
+
+    if ($.wd.conn[$.wd.editIndex].type == null) {
+        if (INCLUDE_VDSLWAN) {
+            $("#xdsl_type_add").removeClass("nd");
+            $("#xdsl_type_edit").addClass("nd");
+            if (curSupIsPtm == 1) {
+                $("#vdslRadio").prop("checked", true);
+                $("#adslRadio").tpRadio({
+                    "refresh": 1
+                });
+                $("#vdslRadio").tpRadio({
+                    "refresh": 1
+                });
+            } else {
+                $("#adslRadio").prop("checked", true);
+                $("#adslRadio").tpRadio({
+                    "refresh": 1
+                });
+                $("#vdslRadio").tpRadio({
+                    "refresh": 1
+                });
+            }
+
+        } else {
+            $("#atm_elem_add").removeClass("nd");
+            $("#xdsl_type_add").addClass("nd");
+            $("#atm_elem").removeClass("nd");
+            $("#ptm_elem").addClass("nd");
+        }
+    } else {
+        if (INCLUDE_VDSLWAN) {
+            $("#xdsl_type_edit").removeClass("nd");
+            $("#xdsl_type_add").addClass("nd");
+        } else {
+            $("#xdsl_type_add").addClass("nd");
+        }
+
+        if (INCLUDE_VDSLWAN && 1 == $.wd.conn[$.wd.editIndex].ptm.X_TP_Used) {
+            curSetIsPtm = 1;
+            $("#xdslTypeText").html("VDSL");
+            $("#ptm_elem").removeClass("nd");
+            $("#atm_elem").addClass("nd");
+
+            showXdslType("PTM", "edit");
+        } else {
+            curSetIsPtm = 0;
+            $("#xdslTypeText").html("ADSL");
+            $("#atm_elem").removeClass("nd");
+            $("#ptm_elem").addClass("nd");
+
+            showXdslType("ATM", "edit");
+        }
+    }
+}
+
+function onVlanClick(val) {
+    if (val == 0) {
+        if ($("#vlanEn_add").prop("data-checked")) {
+            $('#vlan_div_add').removeClass('nd');
+        } else {
+            $('#vlan_div_add').addClass('nd');
+        }
+    } else if (val == 1) {
+        if ($("#vlanEn_edit").prop("data-checked")) {
+            $('#vlan_div_edit').removeClass('nd');
+        } else {
+            $('#vlan_div_edit').addClass('nd');
+        }
+    }
+}
+
+function onVidClick() {
+    if ($("#vidEn").prop("data-checked"))
+        $('#vid_div').removeClass('nd');
+    else
+        $('#vid_div').addClass('nd');
+}
+
+function checkVidValid() {
+    var tmpVid = $("#vidEn").prop("data-checked") ? $("#vid").val() : 0;
+
+    if ($("#vidEn").prop("data-checked")) {
+        if ($.num(tmpVid, [1, 4094], true)) {
+            $.alert(ERR_WAN_VLAN_ID_INVALID);
+            $("#vid").focus().select();
+            return false;
+        }
+    }
+
+    for (var i = 0; i < $.wd.conn.length; i++) {
+        if ((1 == $.wd.conn[i].ptm.X_TP_Used) && ($.wd.conn[i].ptm.X_TP_VID == tmpVid)) {
+            $.alert(ERR_WAN_VLAN_ID_CONFLICT);
+            if ($("#vidEn").prop("data-checked")) {
+                $("#vid").focus().select();
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function checkVlanIdValid(val) {
+    if (val == 0) {
+        var tmpVid = $("#vlanEn_add").prop("data-checked") == true ? $("#vlanid_add").val() : 0;
+
+        if ($("#vlanEn_add").prop("data-checked")) {
+            if ($.num(tmpVid, [0, 4094], true)) {
+                $.alert(ERR_WAN_VLAN_ID_INVALID);
+                $("#vlanid_add").focus().select();
+                return false;
+            }
+        }
+    } else if (val == 1) {
+        var tmpVid = $("#vlanEn_edit").prop("data-checked") == true ? $("#vlanid_edit").val() : 0;
+
+        if ($("#vlanEn_edit").prop("data-checked")) {
+            if ($.num(tmpVid, [0, 4094], true)) {
+                $.alert(ERR_WAN_VLAN_ID_INVALID);
+                $("#vlanid_edit").focus().select();
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function showPvcParam() {
+    var tmpWanCon;
+    var tmpPvc = "PVC:" + $("#vpi").val() + "/" + $("#vci").val();
+
+    for (var i = 0; i < $.wd.conn.length; i++) {
+        if ($.wd.conn[i].dsl.destinationAddress == tmpPvc) {
+            $("#atm_encapsulation option[value=" + $.wd.conn[i].dsl.ATMEncapsulation + "]").prop("selected", "selected");
+            if ($.wd.conn[i].dsl.ATMQoS == "UBR") {
+                $("#atm_qos option[value='ubr']").prop("selected", "selected");
+                $("#pcr").val($.wd.conn[i].dsl.ATMPeakCellRate);
+                $("#scr").val("");
+                $("#mbs").val("");
+                $("#scr").prop("disabled", true);
+                $("#mbs").prop("disabled", true);
+            } else {
+                $("#atm_qos option[value=" + $.wd.conn[i].dsl.ATMQoS.toLowerCase() + "]").prop("selected", "selected");
+                $("#pcr").val($.wd.conn[i].dsl.ATMPeakCellRate);
+                $("#scr").prop("disabled", false);
+                $("#mbs").prop("disabled", false);
+                $("#scr").val($.wd.conn[i].dsl.ATMSustainableCellRate);
+                $("#mbs").val($.wd.conn[i].dsl.ATMMaximumBurstSize);
+            }
+
+            tmpWanCon = $.act(ACT_GET, WAN_CONN_DEVICE, $.wd.conn[i].dsl.__stack, null);
+            if (!$.exe()) {
+                if ((tmpWanCon.WANIPConnectionNumberOfEntries > 0) || (tmpWanCon.WANPPPConnectionNumberOfEntries > 0)) {
+                    disablePvcParam($.wd.conn[i].dsl.linkType);
+                }
+            }
+            return;
+        } else {
+            $("#atm_encapsulation").prop("disabled", false);
+            $("#atm_qos").prop("disabled", false);
+
+            $("#atm_qos").tpSelect({
+                refresh: 1
+            });
+
+            $("#pcr").prop("disabled", false);
+
+            if ($("#link_type").data("value") == "pppoa") {
+                $("#atm_encapsulation option[value='VCMUX']").prop("selected", "selected");
+            } else {
+                $("#atm_encapsulation option[value='LLC']").prop("selected", "selected");
+            }
+
+            $("#atm_encapsulation").tpSelect({
+                refresh: 1
+            });
+
+            $("#atm_qos option[value='ubr']").prop("selected", "selected");
+            $("#pcr").val(0);
+            $("#scr").val("");
+            $("#mbs").val("");
+            $("#scr").prop("disabled", true);
+            $("#mbs").prop("disabled", true);
+            $("#p_note").addClass("nd");
+            errorFlag = 0;
+        }
+    }
+}
+
+function initATM() {
+    var wan_dsl = $.wd.conn[$.wd.editIndex].dsl;
+    $("#vpiText").html((wan_dsl.destinationAddress).split(":")[1].split("/")[0]);
+    $("#vciText").html((wan_dsl.destinationAddress).split(":")[1].split("/")[1]);
+    $("#atm_encapsulationText").html((wan_dsl.ATMEncapsulation == "VCMUX") ? "VC-Mux" : wan_dsl.ATMEncapsulation);
+    $("#atm_qosText").html(wan_dsl.ATMQoS);
+
+    if (wan_dsl.ATMQoS == "ubr") {
+        $("#pcrText").html(wan_dsl.ATMPeakCellRate);
+        $("#atm_qos_div").addClass("nd");
+    } else {
+        $("#atm_qos_div").removeClass("nd");
+        $("#pcrText").html(wan_dsl.ATMPeakCellRate);
+        $("#scrText").html(wan_dsl.ATMSustainableCellRate);
+        $("#mbsText").html(wan_dsl.ATMMaximumBurstSize);
+    }
+}
+
+function initPTM() {
+    var wan_ptm = $.wd.conn[$.wd.editIndex].ptm;
+    $("#vidText").html(wan_ptm.X_TP_VID);
+}
+
+function ATMClick(obj) {
+    if (obj.id.indexOf("Text") < 0) {
+        if ($(obj).hasClass("cln")) {
+            $("#atmDiv").addClass("nd");
+            $(obj).removeClass("cln");
+        } else {
+            $("#atmDiv").removeClass("nd");
+            $(obj).addClass("cln");
+        }
+    } else {
+        if ($(obj).hasClass("cln")) {
+            $("#atmDivText").addClass("nd");
+            $(obj).removeClass("cln");
+        } else {
+            $("#atmDivText").removeClass("nd");
+            $(obj).addClass("cln");
+        }
+    }
+
+}
+
+function disablePvcParam(tmpType) {
+    $("#atm_encapsulation").prop("disabled", true);
+    $("#atm_qos").prop("disabled", true);
+    $("#pcr").prop("disabled", true);
+    $("#scr").prop("disabled", true);
+    $("#mbs").prop("disabled", true);
+    $("#p_note").removeClass("nd");
+
+    $("#atm_encapsulation").tpSelect({
+        refresh: 1
+    });
+    $("#atm_qos").tpSelect({
+        refresh: 1
+    });
+
+    errorFlag = 0;
+
+    if (initFlag == 1) {
+        if ($("#link_type").data("value") == "ipoa") {
+            errorFlag = 1;
+            $.alert(ERR_IPOA_PVC_INVAD);
+            $("#vpi").focus().select();
+            return;
+        }
+        if ($("#link_type").data("value") == "pppoa") {
+            errorFlag = 1;
+            $.alert(ERR_PPPOA_PVC_INVAD);
+            $("#vpi").focus().select();
+            return;
+        }
+        if (tmpType == "IPoA") {
+            errorFlag = 1;
+            $.alert(ERR_IPOA_PVC_INVAD);
+            $("#vpi").focus().select();
+            return;
+        }
+
+        if (tmpType == "PPPoA") {
+            errorFlag = 1;
+            $.alert(ERR_PPPOA_PVC_INVAD);
+            $("#vpi").focus().select();
+            return;
+        }
+    }
+}
+
+
+
+
+function doAutoPVC() {
+    if ($("#autoPVC_en").prop("data-checked")) {
+        $("#vpi").val("");
+        $("#vci").val("");
+        $("#vpi").prop("disabled", true);
+        $("#vci").prop("disabled", true);
+        $("#atm_encapsulation option[value='LLC']").prop("selected", "selected");
+        $("#atm_encapsulation").prop("disabled", false);
+        $("#atm_qos option[value='ubr']").prop("selected", "selected");
+        $("#atm_qos").prop("disabled", false);
+        $("#pcr").val("0");
+        $("#scr").val("");
+        $("#mbs").val("");
+        $("#pcr").prop("disabled", false);
+        $("#scr").prop("disabled", true);
+        $("#mbs").prop("disabled", true);
+        $("#p_note").addClass("nd");
+    } else {
+        $("#vpi").val("0");
+        $("#vci").val("32");
+        $("#vpi").prop("disabled", false);
+        $("#vci").prop("disabled", false);
+        $("#p_note").removeClass("nd");
+        showPvcParam();
+    }
+}
+
+
+function saveAttr() {
+    var connectionType;
+    var linkType;
+    var addressingType;
+    var wan_connectiontype = $("#link_type").data("value");
+    var vpi_vci, pcr, mcr, scr, mbs;
+
+    if (INCLUDE_VDSLWAN && curSetIsPtm == 1) {
+        if (false == checkVidValid())
+            return false;
+        errorFlag = 0;
+    } else {
+        detectPvcConflict();
+        if (errorFlag == 1) {
+            return false;
+        }
+
+        var element;
+        if ((!$.num($("#vpi").val(), [0, 255], true)) && (!$.num($("#vci").val(), [1, 65535], true))) {
+            vpi_vci = "PVC:" + parseInt($("#vpi").val(), 10) + "/" + parseInt($("#vci").val(), 10);
+        } else {
+            $.alert(ERR_WAN_VPI_VCI_INVAD);
+            $("#vpi").focus().select();
+            return false;
+        }
+        if (($("#link_type").data("value") == "ipoa") && (!$("#p_note").hasClass("nd"))) {
+            $.alert(ERR_IPOA_PVC_INVAD);
+            $("#vpi").focus().select();
+            return false;
+        }
+
+        var atm_encapsulation = $("#atm_encapsulation").data("value");
+        var atm_qos = $("#atm_qos").data("text");
+
+        if ($("#pcr").val() == "") {
+            $.alert(ERR_WAN_PCR_EMPTY);
+            $("#pcr").focus().select();
+            return false;
+        }
+
+        pcr = $("#pcr").val();
+        if (($.isnum(pcr)) && (pcr >= 0) && (pcr <= 5500)) {
+            pcr = parseInt(pcr, 10);
+        } else {
+            $.alert(ERR_WAN_PCR_INVAD);
+            $("#pcr").focus().select();
+            return false;
+        }
+        if ($("#scr").prop("disabled") == false) {
+            if ($("#scr").val() == "") {
+                $.alert(ERR_WAN_SCR_EMPTY);
+                $("#scr").focus().select();
+                return false;
+            }
+            scr = $("#scr").val();
+            if ($.isnum(scr) && (scr >= 0) && (scr <= 5500)) {
+                scr = parseInt(scr, 10);
+            } else {
+                $.alert(ERR_WAN_SCR_INVAD);
+                $("#scr").focus().select();
+                return false;
+            }
+
+            if (scr > pcr) {
+                $.alert(ERR_WAN_SCR_LARGER_THAN_PCR);
+                $("#scr").focus().select();
+                return false;
+            }
+        } else {
+            scr = 0;
+        }
+        if ($("#mbs").prop("disabled") == false) {
+            mbs = $("#mbs").val();
+            if (mbs == "") {
+                $.alert(ERR_WAN_MBS_EMPTY);
+                $("#mbs").focus().select();
+                return false;
+            }
+
+            if (($.isnum(mbs) == true) && (mbs >= 0) && (mbs <= 65535))
+                mbs = parseInt(mbs, 10);
+            else {
+                $.alert(ERR_WAN_MBS_INVAD);
+                $("#mbs").focus().select();
+                return false;
+            }
+        } else {
+            mbs = 0;
+        }
+    }
+
+    if (wan_connectiontype == "staticIp") {
+        connectionType = "IP_Routed";
+        linkType = "EoA";
+        addressingType = "Static";
+    } else if (wan_connectiontype == "dynamicIp") {
+        connectionType = "IP_Routed";
+        linkType = "EoA";
+        addressingType = "DHCP";
+    } else if (wan_connectiontype == "ipoa") {
+        connectionType = "IP_Routed";
+        linkType = "IPoA";
+        addressingType = "Static";
+    } else if (wan_connectiontype == "bridge") {
+        connectionType = "IP_Bridged";
+        linkType = "EoA";
+        addressingType = "Static";
+    } else if (wan_connectiontype == "pppoe") {
+        connectionType = "IP_Routed";
+        linkType = "EoA";
+        transportType = "PPPoE";
+    } else if (wan_connectiontype == "pppoa") {
+        connectionType = "IP_Routed";
+        linkType = "PPPoA";
+        transportType = "PPPoA";
+    } else {
+        $.alert(ERR_WAN_CONNECTIONTYPE_INVAD);
+        $("#link_type").focus().select();
+        return false;
+    }
+
+    if (INCLUDE_VDSLWAN && (curSetIsPtm == 1)) {
+        wanPtm.enable = 1;
+        wanPtm.X_TP_Used = 1;
+        wanPtm.X_TP_VlanEnabled = ($("#vidEn").prop("data-checked") == 1 ? 1 : 0);
+        wanPtm.X_TP_VID = wanPtm.X_TP_VlanEnabled ? $("#vid").val() : 0;
+    } else {
+        wanDsl.linkType = linkType;
+        wanDsl.destinationAddress = vpi_vci;
+        wanDsl.aTMPeakCellRate = pcr;
+        wanDsl.aTMMaximumBurstSize = mbs;
+        wanDsl.aTMSustainableCellRate = scr;
+        wanDsl.ATMEncapsulation = atm_encapsulation;
+        wanDsl.ATMQoS = atm_qos;
+        wanDsl.enable = 1;
+        if (INCLUDE_WAN_VLAN) {
+            if ($.wd.conn[$.wd.editIndex].type == null && wan_connectiontype != "pppoa" && wan_connectiontype != "ipoa") {
+                wanArg.X_TP_8021QEnabled = ($("#vlanEn_add").prop("data-checked") == true ? 1 : 0);
+                wanArg.X_TP_VlanID = wanArg.X_TP_8021QEnabled ? $("#vlanid_add").val() : 0;
+            }
+        }
+    }
+
+    return true;
+}
+
+function addDslVlanAttrs() {
+    if (INCLUDE_WAN_VLAN) {
+        if ($.wd.conn[$.wd.editIndex].type != null && $.wd.conn[$.wd.editIndex].type != "pppoa" && $.wd.conn[$.wd.editIndex].type != "ipoa") {
+            wanArg.X_TP_8021QEnabled = ($("#vlanEn_edit").prop("data-checked") == true ? 1 : 0);
+            wanArg.X_TP_VlanID = wanArg.X_TP_8021QEnabled ? $("#vlanid_edit").val() : 0;
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function addDslCfgAttrs() {
+    var ret = true;
+
+    if (INCLUDE_AUTO_PVC) {
+        var pvcflag = 1;
+        if (!$("#autoPVC_en").prop("data-checked")) {
+            saveAttr();
+        } else {
+            pvcflag = 0;
+            var arg = {};
+            arg.type = $("#atm_encapsulation").data("value");
+            var tmpLinktype = $("#link_type").val();
+            if (tmpLinktype == "staticIp") {
+                arg.linkType = "Static";
+                if ($.ifip($("#ip_address").val(), true)) {
+                    $.alert(ERR_IP_FORMAT);
+                    $("#ip_address").focus().select();
+                    return;
+                }
+                if ($.ifip($("#ip_gateway").val(), true)) {
+                    $.alert(ERR_AUTOPVC_IP_FORMAT);
+                    $("#ip_gateway").focus().select();
+                    return;
+                }
+                arg.ipAddr = $.ip2ip($("#ip_address").val());
+                arg.gwAddr = $.ip2ip($("#ip_gateway").val());
+            } else if (tmpLinktype == "bridge")
+                arg.linkType = "Bridge";
+            else if (tmpLinktype == "dynamicIp")
+                arg.linkType = "DHCP";
+            else if (tmpLinktype == "pppoe")
+                arg.linkType = "PPPoE";
+            else if (tmpLinktype == "pppoa")
+                arg.linkType = "PPPoA";
+            $.act(ACT_CGI, "/cgi/pvc", null, null, arg);
+            if (!$.exe()) {
+                $.auto(function() {
+                    var autores = $.act(ACT_GET, WAN_DSL_AUTOPVC, pStk, null, ["searchState"]);
+                    if (!$.exe()) {
+                        if (autores.searchState <= 1)
+                            return;
+                        if (autores.searchState == 2) {
+                            var pvcCfg = $.act(ACT_GET, WAN_DSL_AUTOPVC, pStk, null, ["detectedVpi", "detectedVci"]);
+                            if (!$.exe()) {
+                                $("#vpi").val(pvcCfg.detectedVpi);
+                                $("#vci").val(pvcCfg.detectedVci);
+                                pvcflag = 1;
+                            }
+                        } else if (autores.searchState == 3) {
+                            $.alert(ERR_AUTOPVC_INVAD);
+                        }
+
+                        if (pvcflag == 1) {
+                            saveAttr();
+                        }
+                        return false;
+                    }
+                }, 500, true);
+            }
+        }
+    } else {
+        ret = saveAttr();
+    }
+    return ret;
+}
+
+function showQoS() {
+    if ($("#atm_qos").data("text") == "UBR") {
+        $("#scr").prop("disabled", true);
+        $("#mbs").prop("disabled", true);
+        $("#scr").val("");
+        $("#mbs").val("");
+    } else {
+        $("#scr").prop("disabled", false);
+        $("#mbs").prop("disabled", false);
+        $("#scr").val("0");
+        $("#mbs").val("0");
+    }
+}
+$("#atm_qos").click(function() {
+    if ($("#atm_qos").data("text") == "UBR") {
+        $("#scr").prop("disabled", true);
+        $("#mbs").prop("disabled", true);
+        $("#scr").val("");
+        $("#mbs").val("");
+    } else {
+        $("#scr").prop("disabled", false);
+        $("#mbs").prop("disabled", false);
+        $("#scr").val("0");
+        $("#mbs").val("0");
+    }
+})
+</script>
+<h3 id="et1">ISP Configuration</h3>
+<div id="xdsl_type" class="nd">
+    <div id="xdsl_type_add">
+        <b class="T_dslmode">DSL Modulation Type:</b>
+        <input type="radio" name="radio_name_dslMode" id="vdslRadio" checked="checked" />
+        <label>VDSL</label>
+        <input type="radio" name="radio_name_dslMode" id="adslRadio" />
+        <label>ADSL</label>
+    </div>
+
+    <div id="xdsl_type_edit" class="pure-control-group cfg-line nd">
+        <label class="label-title T_dslmode">DSL Modulation Type:</label>
+        <span class="text" id="xdslTypeText"></span>
+    </div>
+</div>
+
+<div id="atm_elem" class="nd">
+    <div id="atm_elem_add" class="bdr nd">
+        <div><b>VPI (0-255):</b>
+            <input type="text" id="vpi" value="8" onchange="showPvcParam();" maxlength="3" />
+        </div>
+        <div><b>VCI (1-65535):</b>
+            <input type="text" id="vci" value="35" onchange="showPvcParam();" maxlength="5" />
+        </div>
+        <div id="dsl_vlan_add" class="nd">
+            <div><b class="T_vlan">VLAN ID:</b>
+                <input type="checkbox" id="vlanEn_add" onclick="onVlanClick(0);" />
+                <label class="T_enable">Enable</label>
+            </div>
+            <div id="vlan_div_add" class="nd">
+                <div><b class="T_vlanrange">VLAN ID (1-4094):</b>
+                    <input type="text" id="vlanid_add" value="7" onchange="checkVlanIdValid(0);" maxlength="4" />
+                </div>
+            </div>
+        </div>
+        <div id="autoPVC" class="nd"><b id="t_autoPvc">Enable PVC Auto-detection</b>
+            <input type="checkbox" id="autoPVC_en" onclick="doAutoPVC();" />
+        </div>
+        <div class="nd" id="p_note">
+            <span id="t_note1">Notice: The current PVC has a plurality of connection,the following parameters prohibiting to modify!</span>
+        </div>
+        <div class="advanced-block">
+            <span class="advanced-icon advanced-hide-icon" id="atmClick" onclick="ATMClick(this)"></span>
+            <span class="T_adv">Advanced</span>
+        </div>
+
+
+        <div id="atmDiv" class="nd">
+            <p id="t_note2">Notice: Do not change the parameters below unless necessary!</p>
+
+            <b class="T_encapmod">Encapsulation Mode:</b>
+            <select id="atm_encapsulation" class="l">
+                <option id="llc" value="LLC" selected="selected">LLC</option>
+                <option id="vcmux" value="VCMUX">VC-Mux</option>
+            </select>
+
+            <b class="T_atmqos">ATM QoS Type:</b>
+            <select id="atm_qos" class="l" onchange="showQoS()">
+                <option id="ubr" value="ubr" selected="selected">UBR</option>
+                <option id="cbr" value="cbr">CBR</option>
+                <option id="vbr_nrt" value="vbr_nrt">VBR-nrt</option>
+                <option id="vbr_rt" value="vbr_rt">VBR-rt</option>
+            </select>
+
+            <div><b>PCR:</b>
+                <input type="text" id="pcr" value="0" maxlength="4" />
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div><b>SCR:</b>
+                <input type="text" id="scr" value="" disabled="disabled" maxlength="4" />
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div><b>MBS:</b>
+                <input type="text" id="mbs" value="" disabled="disabled" maxlength="5" />
+                <span class="T_fps">frames/s</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="atm_elem_edit" class="bdr nd">
+        <div class="pure-control-group cfg-line">
+            <label class="label-title">VPI(0-255):</label>
+            <span class="text" id="vpiText"></span>
+        </div>
+        <div class="pure-control-group cfg-line">
+            <label class="label-title">VCI(32-65535):</label>
+            <span class="text" id="vciText"></span>
+        </div>
+        <div id="dsl_vlan_edit" class="nd">
+            <div><b id="t_enVid_edit" class="T_vlan">VLAN ID:</b>
+                <input type="checkbox" id="vlanEn_edit" onclick="onVlanClick(1);" />
+                <label class="T_enable"></label>
+            </div>
+            <div id="vlan_div_edit" class="nd">
+                <div><b class="T_vlanrange">VLAN ID (1-4094):</b>
+                    <input type="text" id="vlanid_edit" value="7" onchange="checkVlanIdValid(1);" maxlength="4" />
+                </div>
+            </div>
+            <div id="vlan_div_view" class="nd">
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title T_vlan">VLAN ID:</label>
+                    <span class="text" id="vlanidText"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="advanced-block" type="button" id="atmClickText" onclick="ATMClick(this)">
+            <span class="advanced-icon advanced-hide-icon"></span>
+            <span class="T_adv">Advanced</span>
+        </div>
+
+        <div id="atmDivText" class="nd">
+            <div class="pure-control-group cfg-line">
+                <label class="label-title T_encapmod">Encapsulation Mode:</label>
+                <span class="text" id="atm_encapsulationText"></span>
+            </div>
+            <div class="pure-control-group cfg-line">
+                <label class="label-title T_atmqos">ATM QoS Type:</label>
+                <span class="text" id="atm_qosText"></span>
+            </div>
+            <div class="pure-control-group cfg-line">
+                <label class="label-title">PCR:</label>
+                <span class="text" id="pcrText"></span>
+                <span class="T_fps">frames/s</span>
+            </div>
+            <div id="atm_qos_div">
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title">SCR:</label>
+                    <span class="text" id="scrText"></span>
+                    <span class="T_fps">frames/s</span>
+                </div>
+                <div class="pure-control-group cfg-line">
+                    <label class="label-title">MBS:</label>
+                    <span class="text" id="mbsText"></span>
+                    <span class="T_fps">frames/s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ptm_elem" class="nd">
+    <div id="ptm_elem_add">
+        <div><b class="T_vlan">VLAN ID:</b>
+            <input type="checkbox" id="vidEn" onclick="onVidClick();" />
+            <label class="T_enable">Eable</label>
+        </div>
+        <div id="vid_div" class="nd">
+            <b class="T_vlanrange">VLAN ID (1-4094):</b>
+            <input type="text" id="vid" value="1" onchange="checkVidValid();" maxlength="4" />
+        </div>
+    </div>
+    <div id="ptm_elem_edit" class="pure-control-group cfg-line nd">
+        <label class="label-title T_vlan">VLAN ID:</label>
+        <span class="text" id="vidText"></span>
+    </div>
+</div>
+
+<script language="javascript" type="text/javascript">
+if (INCLUDE_VDSLWAN) {
+    $("#xdsl_type").removeClass("nd");
+    $("#ptm_elem").removeClass("nd");
+}
+if (INCLUDE_GERMANY_SPEC) {
+    $("#vpi").prop("value", "1");
+    $("#vci").prop("value", "32");
+}
+$.tpInit(initDsl);
+</script>

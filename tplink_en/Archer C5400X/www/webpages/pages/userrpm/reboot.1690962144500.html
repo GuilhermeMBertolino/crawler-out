@@ -1,0 +1,295 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Schedual Reboot</title>
+</head>
+
+<body>
+<div class="func-container">
+	<div id="auto_reboot">
+		<p class="note" id="time_settings_note_wrapper">
+			<span class="title note-title"></span>
+			<span class="text" id="time_settings_note"></span>
+		</p>
+
+		<div id="reboot_wrapper">
+			<p class="note">
+				<span class="title note-title"></span>
+				<span class="text" id="reboot_tip"></span>
+			</p>
+
+			<input type="text"  id="time_current_time" name="current_time" value="" />
+
+			<form id="reboot_schedule_form">
+				<input type="text"  id="enable_auto_reboot" name="enable" value="" />
+		    	<input id="time" name="time" />
+		    	<input id="time_interval_cycle" name="cycle" />
+		    	<input id="time_interval_day" name="day" />
+		    </form>
+		</div>
+	</div>
+
+	<div id="help_reboot"></div>
+</div>
+
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	var URL_AUTO_REBOOT_FORM = $.su.url("/admin/reboot?form=set");
+	var TIME_SET_URL_NEW = $.su.url("/admin/time?form=settings");
+
+	var hour12 = false;
+	$.ajax({
+		type: "POST",
+		url: $.su.url("/admin/time?form=hour24"),
+		data: {operation:"read"},
+		dataType: "json",
+		success: function(data){
+			hour12 = data.data.hour24_enable=="on"?false:true;
+		},
+		async: false
+	});
+
+	function parseFormat(value, width)
+	{
+		var value = value.toString();
+		while (value.length < width) value = "0" + value;
+		return value;
+	}
+
+	function time_24to12(time){
+		var time_arr = time.split(":");
+		var hour = parseInt(time_arr[0], 10);
+		var min = parseInt(time_arr[1], 10);
+		var sec = parseInt(time_arr[2], 10);
+		var value = "";
+
+		if(hour == 0)
+		{
+			value = "12:" + parseFormat(min, 2) + ":" + parseFormat(sec, 2) + " AM";
+		}
+		else if(hour < 12)
+		{
+			value = hour.toString() + ":" + parseFormat(min, 2) + ":" + parseFormat(sec, 2) + " AM";
+		}
+		else if(hour == 12)
+		{
+			value = "12:" + parseFormat(min, 2) + ":" + parseFormat(sec, 2) + " PM";
+		}
+		else
+		{
+			value = (hour - 12).toString() + ":" + parseFormat(min, 2) + ":" + parseFormat(sec, 2) + " PM";
+		}
+
+		return value;
+	}
+	
+	$("div.func-container").page({
+		title: $.su.CHAR.REBOOT.TITLE,
+		help: ""
+	});
+
+	$("div#auto_reboot").panel({
+		title: $.su.CHAR.REBOOT.TITLE,
+		collapsible: false
+	});
+
+	$("span.note-title").html($.su.CHAR.OPERATION.NOTE);
+	$("span#reboot_tip").html($.su.CHAR.REBOOT.REBOOT_NOTE);
+	$("span#time_settings_note").html($.su.CHAR.REBOOT.TIME_SETTINGS_NOTE);
+	$("#reboot_tip").on("click","a#go-to-time",function(){
+		$.su.menu.advanced.goTo("time-settings");
+	});
+	$("#time_settings_note").on("click","a#go-to-time-settings",function(){
+		$.su.menu.advanced.goTo("time-settings");
+	});
+
+	$("#time_current_time").textbox({
+		fieldLabel: $.su.CHAR.REBOOT.CURRENT_TIME,
+		inputCls: 'xl',
+		readOnly:true
+	});
+
+	var currentTimeProxy = new $.su.Proxy({
+		url: TIME_SET_URL_NEW
+	});
+
+	var updateCurrentTime = function(){
+	currentTimeProxy.read({}, function(data){
+		var hour24_enable = data.hour24_enable;
+		var str = "";
+		if(hour24_enable == "off")
+		{
+			str = time_24to12(data.time) + ", " +  data.date;
+		}
+		else
+		{
+			str = data.date + " " + data.time;
+		}
+		$("#time_current_time").textbox("setValue", str);
+
+		if(data.type === "auto"){
+			$("#time_settings_note_wrapper").addClass("hidden");
+			$("#reboot_wrapper").removeClass("hidden");
+		}
+		else{
+			$("#time_settings_note_wrapper").removeClass("hidden");
+			$("#reboot_wrapper").addClass("hidden");
+		}
+	});
+	};
+	
+	updateCurrentTime();
+	var updateId = setInterval(function(){
+		updateCurrentTime();
+	}, 1000);
+	
+
+	$("input#enable_auto_reboot").checkbox({
+		fieldLabel: $.su.CHAR.REBOOT.TITLE,
+		labelCls: "m",
+		items: [
+			{boxlabel: $.su.CHAR.REBOOT.ENABLE, inputValue: "on", uncheckedValue: "off"}
+		]
+	}).on("ev_change", function(e, oldValue, newValue){
+		var val = (newValue[0]=="enable"||newValue[0]=="on") ? "on" : "off";
+		switch(val)
+		{
+			case "on":
+				$("input#time").timeset("enable");
+				$("input#time_interval_cycle").combobox("enable");
+				$("input#time_interval_day").combobox("enable");
+				break;
+			case "off":
+				$("input#time").timeset("disable");
+				$("input#time_interval_cycle").combobox("disable");
+				$("input#time_interval_day").combobox("disable");
+				break;
+		}
+	});
+	$("input#enable_auto_reboot").checkbox("setValue", "on");
+	
+	$("input#time").timeset({
+		fieldLabel: $.su.CHAR.REBOOT.REBOOT_TIME,
+		labelCls: "m",
+		hour12: hour12
+	});
+	
+	var itemsWeek = [
+		{"value": "Mon", "name": $.su.CHAR.DATE.MONDAY, "selected": "selected"},
+		{"value": "Tues", "name": $.su.CHAR.DATE.TUESDAY},
+		{"value": "Wed", "name": $.su.CHAR.DATE.WEDNESDAY},
+		{"value": "Thur", "name": $.su.CHAR.DATE.THURSDAY},
+		{"value": "Fri", "name": $.su.CHAR.DATE.FRIDAY},
+		{"value": "Sat", "name": $.su.CHAR.DATE.SATURDAY},
+		{"value": "Sun", "name": $.su.CHAR.DATE.SUNDAY}
+	];
+
+	var itemsMonth = [
+		{"value": "1", "name": $.su.CHAR.DAY["1ST"], "selected": "selected"},
+		{"value": "2", "name": $.su.CHAR.DAY["2ND"]},
+		{"value": "3", "name": $.su.CHAR.DAY["3RD"]},
+		{"value": "4", "name": $.su.CHAR.DAY["4TH"]},
+		{"value": "5", "name": $.su.CHAR.DAY["5TH"]},
+		{"value": "6", "name": $.su.CHAR.DAY["6TH"]},
+		{"value": "7", "name": $.su.CHAR.DAY["7TH"]},
+		{"value": "8", "name": $.su.CHAR.DAY["8TH"]},
+		{"value": "9", "name": $.su.CHAR.DAY["9TH"]},
+		{"value": "10", "name": $.su.CHAR.DAY["10TH"]},
+		{"value": "11", "name": $.su.CHAR.DAY["11TH"]},
+		{"value": "12", "name": $.su.CHAR.DAY["12TH"]},
+		{"value": "13", "name": $.su.CHAR.DAY["13TH"]},
+		{"value": "14", "name": $.su.CHAR.DAY["14TH"]},
+		{"value": "15", "name": $.su.CHAR.DAY["15TH"]},
+		{"value": "16", "name": $.su.CHAR.DAY["16TH"]},
+		{"value": "17", "name": $.su.CHAR.DAY["17TH"]},
+		{"value": "18", "name": $.su.CHAR.DAY["18TH"]},
+		{"value": "19", "name": $.su.CHAR.DAY["19TH"]},
+		{"value": "20", "name": $.su.CHAR.DAY["20TH"]},
+		{"value": "21", "name": $.su.CHAR.DAY["21TH"]},
+		{"value": "22", "name": $.su.CHAR.DAY["22TH"]},
+		{"value": "23", "name": $.su.CHAR.DAY["23TH"]},
+		{"value": "24", "name": $.su.CHAR.DAY["24TH"]},
+		{"value": "25", "name": $.su.CHAR.DAY["25TH"]},
+		{"value": "26", "name": $.su.CHAR.DAY["26TH"]},
+		{"value": "27", "name": $.su.CHAR.DAY["27TH"]},
+		{"value": "28", "name": $.su.CHAR.DAY["28TH"]}
+	];
+
+	$("input#time_interval_cycle").combobox({
+		fieldLabel: $.su.CHAR.REBOOT.TIME_REPEAT,
+		labelCls: "m",
+		inputCls:'reboot',
+		cls:"inline",
+		items: [
+			{"value": "day", "name": $.su.CHAR.REBOOT.EVERY_DAY},
+			{"value": "week", "name": $.su.CHAR.REBOOT.EVERY_WEEK},
+			{"value": "month", "name": $.su.CHAR.REBOOT.EVERY_MONTH}
+		]
+	}).on("ev_change", function(e, oldValue, newValue){
+		if(newValue[0]=="day"){
+			$("input#time_interval_day").combobox("disable");
+			$("input#time_interval_day").combobox("hide");
+		}
+		else if(newValue[0]=="week"){
+			if($("input#enable_auto_reboot").checkbox("getValue")[0]=="enable"){
+				$("input#time_interval_day").combobox("enable");
+			}else{
+				$("input#time_interval_day").combobox("disable");
+			}
+			$("input#time_interval_day").combobox("show");
+			$("input#time_interval_day").combobox("loadData", itemsWeek);
+		}
+		else if(newValue[0]=="month"){
+			if($("input#enable_auto_reboot").checkbox("getValue")[0]=="enable"){
+				$("input#time_interval_day").combobox("enable");
+			}else{
+				$("input#time_interval_day").combobox("disable");
+			}
+			$("input#time_interval_day").combobox("show");
+			$("input#time_interval_day").combobox("loadData", itemsMonth);
+		}
+	});
+
+	$("input#time_interval_day").combobox({
+		fieldLabel: null,
+		labelCls: "m",
+		inputCls:'reboot',
+		cls:"inline"
+	});
+
+	var autoRebootScheculeProxy = new $.su.Proxy({
+		url: URL_AUTO_REBOOT_FORM
+	});
+	$("form#reboot_schedule_form").form({
+		proxy: autoRebootScheculeProxy,
+		fields: [
+			{name: "enable", mapping: "enable"},
+			{name: "time", mapping: "time"},
+			{name: "cycle", mapping: "cycle"},
+			{name: "day", mapping: "day"}
+		],
+		submitBtn: "default",
+		autoLoad:true
+	}).on("ev_loadData", function(){
+		//
+	});
+
+	var help = new $.su.Help({
+		container:"#help_reboot",
+		content: ["REBOOT"]
+	});
+
+	$.su.app.runningModule.addUnloadHandler(function(){
+		clearInterval(updateId);
+	});
+});
+</script>
+</body>
+</html>

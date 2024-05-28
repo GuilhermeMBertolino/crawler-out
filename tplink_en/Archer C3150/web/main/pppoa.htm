@@ -1,0 +1,351 @@
+﻿<script language="javascript" type="text/javascript">
+function initEditPPPoA() {
+    var wan_ppplist = $.wd.conn[$.wd.editIndex].obj;
+    $("#pppoa_name").val(wan_ppplist.username);
+    $("#pppoa_pwd").val(wan_ppplist.password);
+    $("#pppoa_pwd2").val(wan_ppplist.password);
+    $("#pppoa_idleTime").val(wan_ppplist.idleDisconnectTime);
+
+    if (wan_ppplist.connectionTrigger == "OnDemand") {
+        $("#pppoa_connOnDemand").prop("checked", true);
+    } else if (wan_ppplist.connectionTrigger == "AlwaysOn") {
+        $("#pppoa_connAlwaysOn").prop("checked", true);
+        if (INCLUDE_PPP_RECONN) {
+            $("#pppoa_reconTimeStr").removeClass("nd");
+            $("#pppoa_reconTime").val(wan_ppplist.X_TP_ReconTime);
+            $("#pppoa_reconEnable").prop("checked", (wan_ppplist.X_TP_ReconEnable == 1) ? true : false);
+            $("#pppoa_reconEnable").tpCheckbox();
+            PPPoA_AutoConnEnableCheck();
+        }
+    } else if (wan_ppplist.connectionTrigger == "Manual") {
+        $("#pppoa_connManual").prop("checked", true);
+    }
+
+    $("#pppoa_authpro option[value='" + wan_ppplist.PPPAuthenticationProtocol + "']").prop("selected", "selected");
+
+    $("#pppoamtu").val(wan_ppplist.maxMRUSize);
+    $("#pppoa_spi_en").prop("checked", (wan_ppplist.X_TP_FirewallEnabled == 1) ? true : false);
+    $("#pppoa_igmp_en").prop("checked", (wan_ppplist.X_TP_IGMPProxyEnabled == 1) ? true : false);
+
+    if (wan_ppplist.X_TP_UseStaticIP == 1) {
+        $("#pppoa_exIp_en").prop("checked", true);
+        $("#pppoa_exIp_tbl").removeClass("nd");
+        $("#pppoa_externIpAddr").val(wan_ppplist.externalIPAddress);
+    } else {
+        $("#pppoa_exIp_en").prop("checked", false);
+        $("#pppoa_exIp_tbl").addClass("nd");
+    }
+
+    $("#pppoa_echotime").val(wan_ppplist.PPPLCPEcho ? wan_ppplist.PPPLCPEcho : 0);
+    if (wan_ppplist.DNSOverrideAllowed == 1) {
+        $("#pppoa_dns_en").prop("checked", true);
+        $("#pppoa_dns_tbl").removeClass("nd");
+        $("#pppoa_dns1").val((wan_ppplist.DNSServers.split(",")[0]) ? wan_ppplist.DNSServers.split(",")[0] : "0.0.0.0");
+        $("#pppoa_dns2").val((wan_ppplist.DNSServers.split(",")[1]) ? wan_ppplist.DNSServers.split(",")[1] : "0.0.0.0");
+    } else {
+        $("#pppoa_dns_en").prop("checked", false);
+        $("#pppoa_dns_tbl").addClass("nd");
+    }
+
+}
+
+function initPPPoA() {
+    showPPPoA();
+
+    if ($.wd.conn[$.wd.editIndex].type == "pppoa") {
+        initEditPPPoA();
+    }
+
+    dftGtw = $("#defaut_gateway_pppoa");
+    initDefaultGwDNS();
+    $("#divMacClone").removeClass("nd");
+}
+
+function showPPPoA() {
+
+    $("#pppoa_elem_basic").removeClass("nd");
+    $("#pppoaClick").removeClass("nd");
+    $("#pppoaClick").removeClass("cln");
+    $("#pppoa_elem_adv").addClass("nd");
+}
+
+function PPPoAClick(obj) {
+    if ($(obj).hasClass("cln")) {
+        $("#pppoa_elem_adv").addClass("nd");
+        $(obj).removeClass("cln");
+    } else {
+        $("#pppoa_elem_adv").removeClass("nd");
+        $(obj).addClass("cln");
+    }
+}
+
+function showDiv(val) {
+    switch (val) {
+        case "pppoa_exIp_en":
+            if ($("#pppoa_exIp_en").prop("data-checked"))
+                $("#pppoa_exIp_tbl").removeClass("nd");
+            else
+                $("#pppoa_exIp_tbl").addClass("nd");
+            break;
+        case "pppoa_dns_en":
+            if ($("#pppoa_dns_en").prop("data-checked"))
+                $("#pppoa_dns_tbl").removeClass("nd");
+            else
+                $("#pppoa_dns_tbl").addClass("nd");
+            break;
+        default:
+            ;
+    }
+}
+
+function addPPPoAAttrs() {
+    var element;
+    wanArg.username = $("#pppoa_name").val();
+    if (wanArg.username == "") {
+        $.alert(ERR_USERNAME_INVAD);
+        $("#pppoa_name").focus().select();
+        return false;
+    }
+    if ($("#pppoa_pwd").val() != $("#pppoa_pwd2").val()) {
+        $("#pppoa_pwd").val("");
+        $("#pppoa_pwd2").val("");
+        $.alert(ERR_PWD_INVAD);
+        $("#pppoa_pwd").focus().select();
+        return false;
+    }
+    wanArg.password = $("#pppoa_pwd").val();
+
+    if ($("#pppoa_connAlwaysOn").prop("checked")) {
+        wanArg.connectionTrigger = "AlwaysOn";
+        if (INCLUDE_PPP_RECONN) {
+            if($("#pppoa_reconEnable").prop("data-checked")) {
+                wanArg.X_TP_ReconTime = $("#pppoa_reconTime").val();
+                wanArg.X_TP_ReconEnable = 1;
+            }
+            else {
+                wanArg.X_TP_ReconTime = "00:00";
+                wanArg.X_TP_ReconEnable = 0;
+            }
+            if(wanArg.X_TP_ReconEnable == 1 && wanArg.X_TP_ReconTime == "") {
+                $.alert(ERR_WAN_RECONTIME_EMPTY);
+                return false;
+            }
+            if(wanArg.X_TP_ReconEnable == 1 && !$.isTimeVaild(wanArg.X_TP_ReconTime)) {
+                $.alert(ERR_WAN_RECONTIME_INVALID);
+                return false;
+            }
+        }
+    } else {
+        if (($("#pppoa_idleTime").val()) && ($.isnum($("#pppoa_idleTime").val()))) {
+            wanArg.idleDisconnectTime = parseInt($("#pppoa_idleTime").val(), 10);
+        } else {
+            $.alert(ERR_IDLETIME_INVAD);
+            $("#pppoa_idleTime").focus().select();
+            return false;
+        }
+
+        if ($("#pppoa_connOnDemand").prop("checked")) {
+            wanArg.connectionTrigger = "OnDemand";
+        } else if ($("#pppoa_connManual").prop("checked")) {
+            wanArg.connectionTrigger = "Manual";
+        }
+    }
+
+    wanArg.PPPAuthenticationProtocol = $("#pppoa_authpro").data("value");
+    wanArg.maxMRUSize = $("#pppoamtu").val();
+    if ((wanArg.maxMRUSize >= 576) && (wanArg.maxMRUSize <= 1500)) {
+        wanArg.maxMRUSize = parseInt(wanArg.maxMRUSize, 10);
+    } else {
+        $.alert(ERR_WAN_MTU_INVAD);
+        $("#pppoamtu").focus().select();
+        return false;
+    }
+    wanArg.enable = 1;
+    wanArg.NATEnabled = 1;
+    wanArg.connectionType = "IP_Routed";
+    wanArg.transportType = "PPPoA";
+    wanArg.X_TP_FirewallEnabled = ($("#pppoa_spi_en").prop("data-checked")) ? 1 : 0;
+    wanArg.X_TP_IGMPProxyEnabled = ($("#pppoa_igmp_en").prop("data-checked")) ? 1 : 0;
+    if ($("#pppoa_exIp_en").prop("data-checked")) {
+        if (($("#pppoa_externIpAddr").val() != "") && ($("#pppoa_externIpAddr").val() != "0.0.0.0") && ($.ifip($("#pppoa_externIpAddr").val(), true))) {
+            $.alert(ERR_IP_FORMAT);
+            $("#pppoa_externIpAddr").focus().select();
+            return false;
+        }
+        wanArg.externalIPAddress = ($("#pppoa_externIpAddr").val()) ? $.ip2ip($("#pppoa_externIpAddr").val()) : "0.0.0.0";
+        wanArg.X_TP_UseStaticIP = 1;
+
+    } else if (!$("#pppoa_exIp_en").prop("data-checked")) {
+        if ($.wd.conn[$.wd.editIndex].type == null) {
+            wanArg.externalIPAddress = "0.0.0.0";
+        }
+        wanArg.X_TP_UseStaticIP = 0;
+    }
+    if ((parseInt($("#pppoa_echotime").val(), 10) >= 0) && (parseInt($("#pppoa_echotime").val(), 10) <= 120)) {
+        wanArg.PPPLCPEcho = parseInt($("#pppoa_echotime").val(), 10);
+    } else {
+        $.alert(ERR_WAN_ECHOTIME_INVAD);
+        $("#pppoa_echotime").focus().select();
+        return false;
+    }
+    if ($("#pppoa_dns_en").prop("data-checked")) {
+        if (($("#pppoa_dns1").val() != "") && ($("#pppoa_dns1").val() != "0.0.0.0") && ($.ifip($("#pppoa_dns1").val(), true))) {
+            $.alert(ERR_WAN_DNSADDR_INVAD);
+            $("#pppoa_dns1").focus().select();
+            return false;
+        }
+        if (($("#pppoa_dns2").val() != "") && ($("#pppoa_dns2").val() != "0.0.0.0") && ($.ifip($("#pppoa_dns2").val(), true))) {
+            $.alert(ERR_WAN_SECDNS_INVAD);
+            $("#pppoa_dns2").focus().select();
+            return false;
+        }
+        var tmpDns1 = ($("#pppoa_dns1").val()) ? $.ip2ip($("#pppoa_dns1").val()) : "0.0.0.0";
+        var tmpDns2 = ($("#pppoa_dns2").val()) ? $.ip2ip($("#pppoa_dns2").val()) : "0.0.0.0";
+        wanArg.DNSOverrideAllowed = 1;
+        wanArg.DNSServers = tmpDns1 + "," + tmpDns2;
+    } else {
+        wanArg.DNSOverrideAllowed = 0;
+        if ($.wd.conn[$.wd.editIndex].type == null) {
+            wanArg.DNSServers = "0.0.0.0,0.0.0.0";
+        }
+    }
+
+    if (INCLUDE_IPV6) {
+        wanArg.X_TP_IPv4Enabled = 1;
+        wanArg.X_TP_IPv6Enabled = 0;
+    }
+
+    if ($.wd.conn[$.wd.editIndex].type == "pppoa") {
+        $.wd.l3ForwardingObj.__ifAliasName = dftGtw.data("text");
+    }
+    return true;
+}
+
+function checkPwd(val) {
+    if (val == "pppoa") {
+        if ($("#pppoa_pwd2").val() != $("#pppoa_pwd").val()) {
+            $("#pppoa_pwd").val("");
+            $("#pppoa_pwd2").val("");
+            $.alert(ERR_PWD_INVAD);
+            $("#pppoa_pwd").focus().select();
+            return;
+        }
+    }
+}
+
+function PPPoA_AutoConnEnableCheck() {
+    if ($("#pppoa_reconEnable").prop("data-checked")) {
+        $("#pppoa_reconTime").prop("disabled", false);
+    } else {
+        $("#pppoa_reconTime").prop("disabled", true);
+    }
+}
+
+function WANChkIdleTimeT_PPPoA() {
+    if (INCLUDE_PPP_RECONN) {
+        if($("#pppoa_connAlwaysOn").prop("checked")) {
+            $("#pppoa_reconTimeStr").removeClass("nd");
+        }
+        else {
+            $("#pppoa_reconTimeStr").addClass("nd");
+        }
+    }
+}
+
+</script>
+
+<div id="pppoa_elem_basic" class="nd">
+    <div><b class="T_pppusr">PPP Username:</b>
+        <input type="text" id="pppoa_name" maxlength="255" />
+    </div>
+    <div><b class="T_ppppwd">PPP Password:</b>
+        <input type="password" id="pppoa_pwd" maxlength="255" />
+    </div>
+    <div><b class="T_cfmpwd">Confirm Password:</b>
+        <input type="password" id="pppoa_pwd2" maxlength="255" onchange="checkPwd('pppoa');" />
+    </div>
+    <div><b class="T_connmode">Connection Mode:</b>
+        <input type="radio" name="pppoa_linkMode" id="pppoa_connAlwaysOn" checked="checked" onclick="WANChkIdleTimeT_PPPoA()" />
+        <label class="T_typeauto">Always on</label>
+    </div>
+    <div id="pppoa_reconTimeStr" class="nd">
+        <b>&nbsp;</b>
+        <input type="checkbox" id="pppoa_reconEnable" onclick="PPPoA_AutoConnEnableCheck()" />
+        <label class="T_reconset">Auto disconnect and reconnect at(HH:MM)</label>
+        <input type="text" id="pppoa_reconTime" size="5" maxlength="5" disabled="disabled" value="00:00" />
+    </div>
+
+    <div><b>&nbsp;</b>
+        <input type="radio" name="pppoa_linkMode" id="pppoa_connOnDemand" onClick="WANChkIdleTimeT_PPPoA()" />
+        <label class="T_typedemand">Connect on demand</label>
+    </div>
+    <div><b>&nbsp;</b>
+        <input type="radio" name="pppoa_linkMode" id="pppoa_connManual" onClick="WANChkIdleTimeT_PPPoA()" />
+        <label class="T_typemanual">Connect manually</label>
+    </div>
+    <div><b>&nbsp;</b>
+        <span class="T_midle">Max Idle Time:</span>
+        <input type="text" id="pppoa_idleTime" size="5" value="15" />
+        <span class="T_minutes">minutes</span>
+    </div>
+    <div class="pure-control-group">
+        <label class="label-title"></label>
+        <span class="text T_zmean">(0 means remain active at all time)</span>
+    </div>
+    <b class="T_authtype">Authentication Method:</b>
+    <select id="pppoa_authpro" class="l">
+        <option id="pppoa_auto_auth" value="AUTO_AUTH" selected="selected">AUTO_AUTH</option>
+        <option id="pppoa_pap" value="PAP">PAP</option>
+        <option id="pppoa_chap" value="CHAP">CHAP</option>
+        <option id="pppoa_ms-chap" value="MS-CHAP">MS-CHAP</option>
+    </select>
+</div>
+<b class="T_defgw">Default Gateway:</b>
+<select id="defaut_gateway_pppoa" class="l"></select>
+</div>
+
+<div class="advanced-block">
+    <span class="advanced-icon advanced-hide-icon" id="pppoaClick" onclick="PPPoAClick(this)"></span>
+    <span class="T_adv">Advanced</span>
+</div>
+
+<div id="pppoa_elem_adv" class="nd">
+    <div><b class="T_mtuSize">bytes</b>
+        <input type="text" id="pppoamtu" size="5" maxlength="4" value="1480" />(<span class="T_mtu1480">The default is 1480</span>,
+        <span class="T_nochg">do not change unless necessary.</span>)</div>
+    <div><b class="T_enspi">Enable SPI Firewall</b>
+        <input type="checkbox" id="pppoa_spi_en" checked="true" />
+        <label class="T_enable">&nbsp;</label>
+    </div>
+    <div><b class="T_enigmp" id="t_igmp_en_pppoa">Enable IGMP Proxy</b>
+        <input type="checkbox" id="pppoa_igmp_en" checked="true" />
+        <label class="T_enable">&nbsp;</label>
+    </div>
+    <div><b class="T_useispaddr">Use IP address specified by ISP</b>
+        <input type="checkbox" id="pppoa_exIp_en" onclick="showDiv('pppoa_exIp_en');" />
+        <label class="T_enable">&nbsp;</label>
+    </div>
+    <div id="pppoa_exIp_tbl" class="nd"><b class="T_ispaddr">ISP specified IP Address:</b>
+        <input type="text" value="0.0.0.0" id="pppoa_externIpAddr" />
+    </div>
+    <div><b class="T_echo">Echo request interval:</b>
+        <input type="text" size="5" id="pppoa_echotime" maxlength="3" value="30" />
+        <span class="T_echoinfo">(0~120 seconds, 0 means no request)</span>
+    </div>
+    <div><b class="T_dnsmanual">Set DNS server manually</b>
+        <input type="checkbox" id="pppoa_dns_en" onclick="showDiv('pppoa_dns_en');" />
+        <label class="T_enable">&nbsp;</label>
+    </div>
+    <div id="pppoa_dns_tbl" class="nd">
+        <div><b class="T_dns">DNS server:</b>
+            <input type="text" value="0.0.0.0" id="pppoa_dns1" />
+        </div>
+        <div><b class="T_secdns">Secondary DNS Server:</b>
+            <input type="text" value="0.0.0.0" id="pppoa_dns2" />
+        </div>
+    </div>
+</div>
+
+<script language="JavaScript" type="text/javascript">
+$.tpInit(initPPPoA);
+</script>

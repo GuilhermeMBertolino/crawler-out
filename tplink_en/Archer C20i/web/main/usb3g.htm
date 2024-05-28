@@ -1,0 +1,1168 @@
+﻿<script language="javascript" type="text/javascript">
+var usb3gLinkCfgStk;
+var PPP3GStk;
+var pStk;
+var wanPPP3G;
+var wanUsb3g;
+var wanPPP3GArg = {};
+var wanUsb3gArg = {};
+var flagDisconneting = false;
+var tag;
+var pinStatusStr = {};
+var SIM_PIN_UNKNOW_STATUS = 5;
+var CONN_SCRIPT_FAIL = 9;
+var SIM_UNLOCKED = 16;
+var SIM_PIN2 = 17;
+var SIM_PUK2 = 18;
+var SIM_PIN = 19;
+var SIM_PUK = 20;
+var NETWORK_SUBSET_PIN = 21;
+var NETWORK_SUBSET_PUK = 22;
+var NETWORK_PIN = 23;
+var NETWORK_PUK =24;
+var SERVICE_PIN = 25;
+var SERVICE_PUK = 26;
+var CORP_PIN = 27;
+var CORP_PUK = 28;
+var PH_SIM_PIN = 29;
+var PH_FSIM_PIN = 30;
+var PH_FSIM_PUK = 31;
+var PHONE_FAILURE = 32;
+
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+
+function showLocation()
+{
+	var i = 0;
+	var selLocObj = $.id("location_sel");
+	
+	if(selLocObj.options.length > 0)
+	{
+		selLocObj.options.remove(0);
+	}
+	
+	for (tag in w3gisp_js)
+	{
+		i = parseInt(tag.substring(8,16));
+		var locOption = $.c("option");
+		
+		locOption.value = i;
+		locOption.text = w3gisp_js[tag]["location_name"];
+		try{
+			selLocObj.add(locOption,null);
+		}catch(e)
+		{
+			selLocObj.add(locOption);
+		}
+	}
+}
+
+function showISP()
+{
+	var location = "location" + $.id("location_sel").value;
+	var selIspObj = $.id("isp_sel");
+     
+	while((i = selIspObj.options.length) > 0)
+	{
+		selIspObj.remove(0);
+	}
+	
+	i = 0;
+	for (tag in w3gisp_js[location])
+	{
+		if (w3gisp_js[location][tag]["isp_name"] == undefined)
+		{
+			continue;
+		}
+		var ispOption = $.c("option");
+		ispOption.value = i;
+		ispOption.text = w3gisp_js[location][tag]["isp_name"];
+		try{
+			selIspObj.add(ispOption,null);
+		}catch(e)
+		{
+			selIspObj.add(ispOption);
+		}
+		i++;
+	}
+}
+
+function showParam(initFlag)
+{
+	var location = "location" + $.id("location_sel").value;
+	var isp = "isp" + $.id("isp_sel").value;
+	
+	if ($.id("manual_apn").checked == 0)
+	{
+		$.id("username").value = w3gisp_js[location][isp]["username"];
+		$.id("password").value = w3gisp_js[location][isp]["password"];
+		$.id("apn").value = w3gisp_js[location][isp]["apn"];
+		$.id("dial_num").value = w3gisp_js[location][isp]["dial_num"];
+	}
+	else if (initFlag == 1)
+	{
+		$.id("username").value = wanPPP3G.username;
+		$.id("password").value = wanPPP3G.password;
+		$.id("apn").value = wanUsb3g.APN;
+		$.id("dial_num").value = wanUsb3g.dialNumber;
+	}
+}
+
+function changeISP()
+{
+	showParam(0);
+}
+
+function changeLocation()
+{
+	showISP();
+	changeISP();
+}
+
+function doBackupEnClk()
+{
+	var bacupEnOnPage = ($.id("usb3g_backup_en").checked == 1) ? 1 : 0;
+	var manualAPN = ($.id("manual_apn").checked == 1) ? 1 : 0;
+	
+	if (bacupEnOnPage == 1)
+	{
+		$.addClass($.id("backupNotice"), "nd");
+		$.removeClass($.id("sysModeNotice"), "nd");
+		if (INCLUDE_TFC_PERU)
+		{
+			$.removeClass($.id("backup_time"), "nd");
+		}
+	}
+	else
+	{
+		$.removeClass($.id("backupNotice"), "nd");
+		$.addClass($.id("sysModeNotice"), "nd");
+		if (INCLUDE_TFC_PERU)
+		{
+			$.addClass($.id("backup_time"), "nd");
+		}
+	}
+	
+	/* ignore USB_3G sysmode, because the checkbox is available only when the sysmode is DSL or ETH. */
+	disableWidgetForBackup("NONE", bacupEnOnPage, manualAPN);
+}
+
+function doManuallyAPN()
+{
+	if ($.id("manual_apn").checked == 1)
+	{
+		$.id("dial_num").disabled = false;
+		$.id("apn").disabled = false;
+		$.id("username").disabled = false;
+		$.id("password").disabled = false;
+		$.id("location_sel").disabled = true;
+		$.id("isp_sel").disabled = true;
+		$.removeClass($.id("manual_apn_notice"), "nd");
+	}
+	else
+	{
+		$.id("dial_num").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["dial_num"];;
+		$.id("apn").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["apn"];
+		$.id("username").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["username"];
+		$.id("password").value = w3gisp_js["location" + $.id("location_sel").value]["isp" + $.id("isp_sel").value]["password"];
+		$.id("dial_num").disabled = true;
+		$.id("apn").disabled = true;
+		$.id("username").disabled = true;
+		$.id("password").disabled = true;
+		$.id("location_sel").disabled = false;
+		$.id("isp_sel").disabled = false;
+		$.addClass($.id("manual_apn_notice"), "nd");
+	}
+}
+
+function doManuallyIdleTime(val)
+{
+	if (val == 1)
+	{
+		$.id("idle_time").disabled = 0;
+	}
+	else
+	{
+		$.id("idle_time").disabled = 1;
+	}
+}
+
+function doManuallyPinCode()
+{
+	if ($.id("manual_pinCode").checked == 1)
+	{
+		$.removeClass($.id("p_old_pin"), "nd");
+		$.removeClass($.id("p_new_pin1"), "nd");
+		$.removeClass($.id("p_new_pin2"), "nd");
+		$.removeClass($.id("p_pinChangeBtn"), "nd");
+	}
+	else
+	{
+		$.addClass($.id("p_old_pin"), "nd");
+		$.addClass($.id("p_new_pin1"), "nd");
+		$.addClass($.id("p_new_pin2"), "nd");
+		$.addClass($.id("p_pinChangeBtn"), "nd");
+	}
+}
+
+function doManuallyIpAddr()
+{
+	if ($.id("manual_ipAddr").checked == 1)
+	{
+		$.id("static_ip").disabled = false;
+	}
+	else
+	{
+		$.id("static_ip").disabled = true;
+	}
+}
+
+function doManuallyDNS()
+{
+	if ($.id("manual_dns").checked == 1)
+	{
+		$.id("dns1").disabled = false;
+		$.id("dns2").disabled = false;
+	}
+	else
+	{
+		$.id("dns1").disabled = true;
+		$.id("dns2").disabled = true;
+	}
+}
+
+/* Called at the end of init() function and update3GState() function to disable some control 
+elements on this page if sysmode is not USB_3G, and disable all the control elements if the 
+backupEnable is not true. It also called when backup checkbox is clicked. */
+function disableWidgetForBackup(systemMode, backupEnable, manulAPN)
+{
+	if (systemMode != "USB_3G")
+	{
+		/* When sysmode is changed from USB_3G to others, cmm will set connectionTrigger to 
+		AlwaysOn and record the current connectionTrigger so that do the reverse when sysmode
+		is changed from others to USB_3G. */
+		$.id("connAlwaysOn").disabled = true;
+		$.id("connOnDemand").disabled = true;
+		$.id("connManual").disabled = true;
+		$.id("idle_time").disabled = true;
+		$.id("connectBtn").disabled = true;
+		$.id("disconnectBtn").disabled = true;
+		if (backupEnable == 1)
+		{
+			if (manulAPN != 1)
+			{
+				$.id("location_sel").disabled = false;
+				$.id("isp_sel").disabled = false;
+			}
+			$.id("ppp_authpro").disabled = false;
+			$.id("pin_code").disabled = false;
+			$.id("pinUnlockBtn").disabled = false;
+			$.removeClass($.id("pppClick"), "nd");
+			$.id("modem_set_Btn").disabled = false;
+		}
+		else
+		{
+			$.id("location_sel").disabled = true;
+			$.id("isp_sel").disabled = true;
+			$.id("ppp_authpro").disabled = true;
+			$.id("pin_code").disabled = true;
+			$.id("pinUnlockBtn").disabled = true;
+			$.addClass($.id("pppClick"), "nd");
+			$.removeClass($.id("pppClick"), "cln");
+			$.addClass($.id("ppp_elem_adv"), "nd");
+			$.id("modem_set_Btn").disabled = true;
+		}
+	}
+}
+
+function update3GState(usb3gStack, wanPpp3gStack)
+{
+	$.auto(function(){
+		var usb3GObj;
+		usb3GObj = $.act(ACT_GET, WAN_USB_3G_LINK_CFG, usb3gStack, null, null, ["cardName", "pinStatus"]);
+		var wanPpp3gObj = $.act(ACT_GET, WAN_PPP_CONN, wanPpp3gStack, null, null, ["enable", "connectionStatus", "connectionTrigger"]);
+		if (INCLUDE_WAN_MODE)
+		{
+			var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode"]);
+		}
+
+		if (!$.exe())
+		{
+			$.addClass($.id("card_name_unplugged"), "nd");
+			$.addClass($.id("card_name_unknown"), "nd");
+			$.addClass($.id("card_name_ing"), "nd");
+			$.addClass($.id("card_name_ok"), "nd");
+			if (usb3GObj.cardName == "Unplugged")
+			{
+				$.removeClass($.id("card_name_unplugged"), "nd");
+			}
+			else if (usb3GObj.cardName == "Unknown")
+			{
+				$.removeClass($.id("card_name_unknown"), "nd");
+			}
+			else if (usb3GObj.cardName == "Identifying...")
+			{
+				$.removeClass($.id("card_name_ing"), "nd");
+			}
+			else
+			{
+				$.removeClass($.id("card_name_ok"), "nd");
+			}
+			
+			/* update the pin_status of the 3G card. */
+			$.addClass($.id("pin_status_unknown"), "nd");
+			$.addClass($.id("pin_status_fail"), "nd");
+			$.addClass($.id("pin_status_ready"), "nd");
+			$.addClass($.id("pin_status_pin"), "nd");
+			$.addClass($.id("pin_status_puk"), "nd");
+			$.addClass($.id("pin_status_errror"), "nd");
+			$.addClass($.id("pin_unlock"), "nd");
+			if (usb3GObj.pinStatus == SIM_PIN_UNKNOW_STATUS)
+			{
+				$.removeClass($.id("pin_status_unknown"), "nd");
+			}
+			else if (usb3GObj.pinStatus == CONN_SCRIPT_FAIL)
+			{
+				$.removeClass($.id("pin_status_fail"), "nd");
+			}
+			else if (usb3GObj.pinStatus == SIM_PIN)
+			{
+				$.removeClass($.id("pin_status_pin"), "nd");
+				$.removeClass($.id("pin_unlock"), "nd");
+			}
+			else if (usb3GObj.pinStatus == SIM_PUK)
+			{
+				$.removeClass($.id("pin_status_puk"), "nd");
+			}
+			else if (usb3GObj.pinStatus == PHONE_FAILURE)
+			{
+				$.removeClass($.id("pin_status_errror"), "nd");
+			}
+			else
+			{
+				$.removeClass($.id("pin_status_ready"), "nd");
+			}
+			
+			if (usb3GObj.userSaved == 0 && usb3GObj.ispCfgReaded == 1)
+			{
+				showLocation();
+				$.id("location_sel").value = usb3GObj.locationIdx;
+				showISP();
+				$.id("isp_sel").value = usb3GObj.ispIdx;
+				if ($.id("manual_apn").checked == 0)
+				{
+					showParam(1);
+				}
+			}
+			
+			if ((wanPpp3gObj.enable == true) && ((wanPpp3gObj.connectionTrigger == "OnDemand") || (wanPpp3gObj.connectionTrigger == "Manual")))
+			{
+				if (wanPpp3gObj.connectionStatus == "Connected")
+				{
+					$.id("connectBtn").disabled = true;
+					if (flagDisconneting == false)
+					{
+						$.id("disconnectBtn").disabled = false;
+					}
+				}
+				else if ((wanPpp3gObj.connectionStatus == "Disconnected") || (wanPpp3gObj.connectionStatus == "Unconfigured"))
+				{
+					if (flagDisconneting == false)
+					{
+						$.id("connectBtn").disabled = false;
+					}
+					$.id("disconnectBtn").disabled = true;
+				}
+				else
+				{
+					$.id("connectBtn").disabled = true;
+					$.id("disconnectBtn").disabled = true;
+				}
+			}
+			else
+			{
+				$.id("connectBtn").disabled = true;
+				$.id("disconnectBtn").disabled = true;
+			}
+			
+			if (flagDisconneting == false)
+			{
+				if (wanPpp3gObj.connectionStatus == "Connected")
+				{
+					$.id("network_status").innerHTML = "<span class='T T_connected'>" + m_str.connected + "</span>";
+				}
+				else if ((wanPpp3gObj.connectionStatus == "Disconnected") || (wanPpp3gObj.connectionStatus == "Unconfigured"))
+				{
+					$.id("network_status").innerHTML = "<span class='T T_disconnected'>" + m_str.disconnected + "</span>";
+				}
+				else
+				{
+					$.id("network_status").innerHTML = "<span class='T T_connecting'>" + m_str.connecting + "</span>";
+				}
+			}
+			
+			var bacupEnOnPage = ($.id("usb3g_backup_en").checked == 1) ? 1 : 0;
+			var manualAPN = ($.id("manual_apn").checked == 1) ? 1 : 0;
+			if (INCLUDE_WAN_MODE)
+			{
+				disableWidgetForBackup(sysMode.mode, bacupEnOnPage, manualAPN);
+			}
+			else
+			{
+				disableWidgetForBackup("NONE", bacupEnOnPage, manualAPN);
+			}
+		}
+	}, 5000, true);
+}
+
+function init()
+{
+	var usb3gList = $.act(ACT_GL, WAN_USB_3G_LINK_CFG, null, null, ["backupEnable"]);
+	var wanPPPList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["enable", "transportType"]);
+	var wanTypes = $.act(ACT_GL, WAN_COMMON_INTF_CFG, null, null, ["WANAccessType"]);
+	
+	if (!$.exe())
+	{
+		$.each(wanTypes, function()
+		{
+			if (this.WANAccessType == "USB_3G")
+				pStk = this.__stack;
+		});
+		
+		$.each(wanPPPList, function()
+		{
+			var tmpStk= $.stkPop(this.__stack, 2);
+			if (pStk == tmpStk) 
+			{
+				if (this.transportType == "PPP3G")
+				{
+					PPP3GStk = this.__stack;
+					wanPPP3G = $.act(ACT_GET, WAN_PPP_CONN, this.__stack, null, null);
+				}	
+			}
+		});
+		
+		$.each(usb3gList, function()
+		{
+			var tmpStk= $.stkPop(this.__stack, 1);
+			if (pStk == tmpStk) 
+			{
+				usb3gLinkCfgStk = this.__stack;
+				wanUsb3g = $.act(ACT_GET, WAN_USB_3G_LINK_CFG, this.__stack, null, null);
+			}
+		});
+		
+		if (INCLUDE_WAN_MODE)
+		{
+			var sysMode = $.act(ACT_GET, SYS_MODE, null, null, ["mode"]);
+		}
+		
+		if (!$.exe())
+		{
+			if (INCLUDE_WAN_MODE)
+			{
+				if (sysMode.mode == "USB_3G")
+				{
+					$.addClass($.id("usb3gBackupEnable"), "nd");
+					$.addClass($.id("backupNotice"), "nd");
+					$.addClass($.id("sysModeNotice"), "nd");
+				}
+				else if (sysMode.mode == "DSL")
+				{
+					$.removeClass($.id("sysmode_dsl"), "nd");
+					if (wanUsb3g.backupEnable == 1)
+					{
+						$.addClass($.id("backupNotice"), "nd");
+						if (INCLUDE_TFC_PERU)
+						{
+							$.removeClass($.id("backup_time"), "nd");
+						}
+					}
+					else
+					{
+						$.addClass($.id("sysModeNotice"), "nd");
+					}
+				}
+				else if (sysMode.mode == "ETH")
+				{
+					$.removeClass($.id("sysmod_eth"), "nd");
+					if (wanUsb3g.backupEnable == 1)
+					{
+						$.addClass($.id("backupNotice"), "nd");
+						if (INCLUDE_TFC_PERU)
+						{
+							$.removeClass($.id("backup_time"), "nd");
+						}
+					}
+					else
+					{
+						$.addClass($.id("sysModeNotice"), "nd");
+					}
+				}
+			}
+			$.removeClass($.id("pppClick"), "nd");
+			$.removeClass($.id("pppClick"), "cln");
+			$.addClass($.id("ppp_elem_adv"), "nd");
+			$.id("usb3g_backup_en").checked = (wanUsb3g.backupEnable == 1) ? 1 : 0;
+			if (INCLUDE_TFC_PERU)
+			{
+				$.id("backup_min_sel").value = Math.floor(wanUsb3g.backupDelay / 60);
+				$.id("backup_sec_sel").value = parseInt(wanUsb3g.backupDelay, 10) - Math.floor(wanUsb3g.backupDelay / 60) * 60;
+				$.id("revert_min_sel").value = Math.floor(wanUsb3g.revertDelay / 60);
+				$.id("revert_sec_sel").value = parseInt(wanUsb3g.revertDelay, 10) - Math.floor(wanUsb3g.revertDelay / 60) * 60;
+				if ($.id("backup_min_sel").value == 10)
+				{
+					$.id("backup_sec_sel").disabled = 1;
+				}
+				if ($.id("revert_min_sel").value == 10)
+				{
+					$.id("revert_sec_sel").disabled = 1;
+				}
+			}
+			
+			/* some widget for change pin code, not use by now, just init here. */
+			$.id("manual_pinCode").checked = 0;
+			$.addClass($.id("p_chg_pin_en"), "nd");
+			$.addClass($.id("p_old_pin"), "nd");
+			$.addClass($.id("p_new_pin1"), "nd");
+			$.addClass($.id("p_new_pin2"), "nd");
+			$.addClass($.id("p_pinChangeBtn"), "nd");
+			
+			showLocation();
+			$.id("location_sel").value = wanUsb3g.locationIdx;
+			showISP();
+			$.id("isp_sel").value = wanUsb3g.ispIdx;
+			
+			$.id("manual_apn").checked = (wanUsb3g.manualAPN == 1) ? 1 : 0;
+			showParam(1);
+			if (wanUsb3g.manualAPN == 1)
+			{
+				$.id("dial_num").disabled = false;
+				$.id("apn").disabled = false;
+				$.id("username").disabled = false;
+				$.id("password").disabled = false;
+				$.id("location_sel").disabled = true;
+				$.id("isp_sel").disabled = true;
+				$.removeClass($.id("manual_apn_notice"), "nd");
+			}
+			else
+			{
+				$.id("dial_num").disabled = true;
+				$.id("apn").disabled = true;
+				$.id("username").disabled = true;
+				$.id("password").disabled = true;
+				$.id("location_sel").disabled = false;
+				$.id("isp_sel").disabled = false;
+				$.addClass($.id("manual_apn_notice"), "nd");
+			}
+			
+			if (wanPPP3G.connectionTrigger == "OnDemand")
+			{
+				$.id("connOnDemand").checked = 1;
+				$.id("idle_time").value = wanPPP3G.idleDisconnectTime;
+			}
+			else if (wanPPP3G.connectionTrigger == "AlwaysOn")
+			{
+				$.id("connAlwaysOn").checked = 1;
+				$.id("idle_time").disabled = 1;
+			}
+			else if (wanPPP3G.connectionTrigger == "Manual")
+			{
+				$.id("connManual").checked = 1;
+				$.id("idle_time").value = wanPPP3G.idleDisconnectTime;
+			}
+			
+			if (wanPPP3G.PPPAuthenticationProtocol == "AUTO_AUTH")
+			{
+				$.id("ppp_authpro").value = "AUTO_AUTH";
+			}
+			else if (wanPPP3G.PPPAuthenticationProtocol == "PAP")
+			{
+				$.id("ppp_authpro").value = "PAP";
+			}
+			else if (wanPPP3G.PPPAuthenticationProtocol == "CHAP")
+			{
+				$.id("ppp_authpro").value = "CHAP";
+			}
+			
+			$.id("mtu_size").value = wanPPP3G.maxMRUSize;
+			$.id("ppp_echotime").value = wanPPP3G.PPPLCPEcho ? wanPPP3G.PPPLCPEcho : 0;
+			
+			$.id("static_ip").value = wanPPP3G.externalIPAddress ? wanPPP3G.externalIPAddress : "0.0.0.0";
+			$.id("manual_ipAddr").checked = (wanPPP3G.X_TP_UseStaticIP == 1) ? 1 : 0;
+			if (wanPPP3G.X_TP_UseStaticIP == 1)
+			{
+				$.id("static_ip").disabled = false;
+			}
+			else
+			{
+				$.id("static_ip").disabled = true;
+			}
+			
+			$.id("dns1").value = (wanPPP3G.DNSServers.split(",")[0]) ? wanPPP3G.DNSServers.split(",")[0] : "0.0.0.0";
+			$.id("dns2").value = (wanPPP3G.DNSServers.split(",")[1]) ? wanPPP3G.DNSServers.split(",")[1] : "0.0.0.0";
+			$.id("manual_dns").checked = (wanPPP3G.DNSOverrideAllowed == 1) ? 1 : 0;
+			if (wanPPP3G.DNSOverrideAllowed == 1)
+			{
+				$.id("dns1").disabled = false;
+				$.id("dns2").disabled = false;
+			}
+			else
+			{
+				$.id("dns1").disabled = true;
+				$.id("dns2").disabled = true;
+			}
+			
+			/* for those widgets need to be updated dynamically, use this function. */
+			update3GState(usb3gLinkCfgStk, PPP3GStk);
+		}
+	}
+}
+
+function addUsb3gAttrs()
+{
+	wanUsb3gArg.backupEnable = ($.id("usb3g_backup_en").checked == 1) ? 1 : 0;
+        if (INCLUDE_TFC_PERU)
+	{
+		wanUsb3gArg.backupDelay = parseInt($.id("backup_min_sel").value, 10) * 60 + parseInt($.id("backup_sec_sel").value, 10);
+		wanUsb3gArg.revertDelay =  parseInt($.id("revert_min_sel").value, 10) * 60 + parseInt($.id("revert_sec_sel").value, 10);
+	}
+	wanUsb3gArg.locationIdx = $.id("location_sel").value;
+	wanUsb3gArg.ispIdx = $.id("isp_sel").value;
+	wanUsb3gArg.manualAPN = ($.id("manual_apn").checked == 1) ? 1 : 0;
+	wanUsb3gArg.dialNumber = $.id("dial_num").value;
+	wanUsb3gArg.APN = $.id("apn").value;
+	if (wanUsb3g.userSaved == 0)
+	{
+		/* once the user click save button on the webpage, we do not try to get the ISP info 
+		automatically until user re-plugged in the 3g-card. */
+		wanUsb3gArg.userSaved = 1;
+	}
+
+	var pattern = /[^0-9\*#]/ig;
+
+	if (wanUsb3gArg.dialNumber.match(pattern) != null)
+	{
+		$.alert(ERR_3G_INVLIAD_DIALNUM);
+		$.id("dial_num").focus();
+		$.id("dial_num").select();
+		return false;
+	}
+	
+	return true;
+}
+
+function addPPP3GAttrs()
+{
+	wanPPP3GArg.username = $.id("username").value;
+	wanPPP3GArg.password = $.id("password").value;
+	if ($.id("connOnDemand").checked == 1)
+	{
+		wanPPP3GArg.connectionTrigger = "OnDemand";
+		if (($.id("idle_time").value) && ($.isnum($.id("idle_time").value)))
+		{
+			wanPPP3GArg.idleDisconnectTime = parseInt($.id("idle_time").value, 10);
+		}
+		else
+		{
+			$.alert(ERR_IDLETIME_INVAD);
+			var element = $.id("idle_time");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}	
+	}
+	else if ($.id("connAlwaysOn").checked == 1)
+	{
+		wanPPP3GArg.connectionTrigger = "AlwaysOn";
+	}
+	else if ($.id("connManual").checked == 1)
+	{
+		wanPPP3GArg.connectionTrigger = "Manual";
+		if (($.id("idle_time").value) && ($.isnum($.id("idle_time").value)))
+		{
+			wanPPP3GArg.idleDisconnectTime = parseInt($.id("idle_time").value, 10);
+		}
+		else
+		{
+			$.alert(ERR_IDLETIME_INVAD);
+			var element = $.id("idle_time");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}	
+	}
+	wanPPP3GArg.PPPAuthenticationProtocol = $.id("ppp_authpro").value;
+
+	if (($.id("mtu_size").value >= 576) && ($.id("mtu_size").value <= 1492))
+	{
+		wanPPP3GArg.maxMRUSize = parseInt($.id("mtu_size").value, 10);
+	}
+	else
+	{
+		$.alert(ERR_WAN_PPPOE_MTU_INVAD);
+		var element = $.id("mtu_size");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	wanPPP3GArg.NATEnabled = 1;
+	
+	if ((parseInt($.id("ppp_echotime").value, 10) >= 0) && (parseInt($.id("ppp_echotime").value, 10) <= 120))
+	{
+		wanPPP3GArg.PPPLCPEcho = parseInt($.id("ppp_echotime").value, 10);
+	}
+	else
+	{
+		$.alert(ERR_WAN_ECHOTIME_INVAD);
+		var element = $.id("ppp_echotime");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	
+	if ($.id("manual_ipAddr").checked == 1) 
+	{
+		if (($.id("static_ip").value != "") 
+				&& ($.id("static_ip").value != "0.0.0.0") 
+				&& ($.ifip($.id("static_ip").value, true)))
+		{
+			$.alert(ERR_IP_FORMAT);
+			var element = $.id("static_ip");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		wanPPP3GArg.X_TP_UseStaticIP = 1;
+		wanPPP3GArg.externalIPAddress = ($.id("static_ip").value) ? $.ip2ip($.id("static_ip").value) : "0.0.0.0";
+	}
+	else
+	{
+		wanPPP3GArg.X_TP_UseStaticIP = 0;
+	}
+	
+	if ($.id("manual_dns").checked == 1)
+	{
+		if (($.id("dns1").value != "") 
+				&& ($.id("dns1").value != "0.0.0.0") 
+				&& ($.ifip($.id("dns1").value, true)))
+		{
+			$.alert(ERR_WAN_DNSADDR_INVAD);
+			var element = $.id("dns1");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		if (($.id("dns2").value != "") 
+				&& ($.id("dns2").value != "0.0.0.0") 
+				&& ($.ifip($.id("dns2").value, true)))
+		{
+			$.alert(ERR_WAN_SECDNS_INVAD);
+			var element = $.id("dns2");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return false;
+		}
+		var tmpDns1 = ($.id("dns1").value) ? $.ip2ip($.id("dns1").value) : "0.0.0.0";
+		var tmpDns2 = ($.id("dns2").value) ? $.ip2ip($.id("dns2").value) : "0.0.0.0";
+		wanPPP3GArg.DNSOverrideAllowed = 1;
+		wanPPP3GArg.DNSServers = tmpDns1 + "," + tmpDns2;
+	}
+	else
+	{
+		wanPPP3GArg.DNSOverrideAllowed = 0;
+	}
+	return true;
+}
+
+function doSave(val)
+{
+	if (!addUsb3gAttrs())
+	{
+		return;
+	}
+	if (!addPPP3GAttrs())
+	{
+		return;
+	}
+	
+	$.act(ACT_SET, WAN_USB_3G_LINK_CFG, usb3gLinkCfgStk, null, wanUsb3gArg);
+	$.act(ACT_SET, WAN_PPP_CONN, PPP3GStk, null, wanPPP3GArg);
+	$.addLoading($.id("saveBtn"));
+	var retVal = $.exe();
+	
+	if (val == 0)
+	{
+		doReload(retVal);
+	}
+}
+
+function doConnect()
+{
+	doSave(1);
+	$.id("connectBtn").disabled = 1;
+	$.act(ACT_OP, ACT_OP_PPP_CONN, PPP3GStk);
+	$.id("network_status").innerHTML = "<span class='T T_connecting'>" + m_str.connecting + "</span>";
+	$.addLoading($.id("connectBtn"));
+	if (!$.exe())
+	{
+		$.timeout(doReload, 1500);
+	}
+}
+
+function doDisconnect()
+{
+	$.id("disconnectBtn").disabled = 1;
+	$.act(ACT_OP, ACT_OP_PPP_DISCONN, PPP3GStk);
+	$.id("network_status").innerHTML = "<span class='T T_disconnecting'>" + s_str.disconnecting + "</span>";
+	flagDisconneting = true;
+	$.addLoading($.id("disconnectBtn"));
+	if (!$.exe())
+	{
+		doSave(1);
+		$.addLoading($.id("disconnectBtn"));
+		$.timeout(doReload, 5000);
+	}
+}
+
+function doPinUnlock()
+{
+	var unlockPinCode;
+	unlockPinCode = $.id("pin_code").value;
+	if (unlockPinCode === "")
+		return $.alert(ERR_PIN_CODE_EMPTY);
+	if ($.asc(unlockPinCode, true))
+		return $.alert(ERR_PIN_ASCII);
+		
+	$.act(ACT_SET, WAN_USB_3G_LINK_CFG, usb3gLinkCfgStk, null, {pinCode: $.id("pin_code").value, pinAction: "3"});
+	$.addLoading($.id("pinUnlockBtn"));
+	$.exe(doReload);
+}
+
+function doPinChange()
+{
+	var oldPin;
+	var newPin1;
+	
+	oldPin = $.id("old_pin").value;
+	if (oldPin === "")
+		return $.alert(ERR_PIN_CODE_EMPTY);
+	if ($.asc(oldPin, true))
+		return $.alert(ERR_PIN_ASCII);
+	
+	newPin1 = $.id("new_pin1").value;
+	if (newPin1 === "")
+		return $.alert(ERR_PIN_CODE_EMPTY);
+	if ($.asc(newPin1, true))
+		return $.alert(ERR_PIN_ASCII);
+	if (newPin1 !== $.id("new_pin2").value)
+		return $.alert(ERR_PIN_CODE_CONFLICT);
+		
+	$.act(ACT_SET, WAN_USB_3G_LINK_CFG, usb3gLinkCfgStk, null, {pinCode: oldPin + "," + newPin1, pinAction: "4"});
+	$.addLoading($.id("pinChangeBtn"));
+	$.exe(doReload);
+}
+
+function PPPClick(obj)
+{
+	if ($.hasClass(obj, "cln")) {
+		$.addClass($.id("ppp_elem_adv"), "nd");
+		$.removeClass(obj, "cln");
+	}
+	else {
+		$.removeClass($.id("ppp_elem_adv"), "nd");
+		$.addClass(obj, "cln");
+	}
+}
+function changeBackupMin()
+{
+	if ($.id("backup_min_sel").value == "10")
+	{
+		$.id("backup_sec_sel").value = 0;
+		$.id("backup_sec_sel").disabled = 1;
+	}
+	else
+	{
+		$.id("backup_sec_sel").disabled = 0;
+	}
+}
+function changeRevertMin()
+{
+	if ($.id("revert_min_sel").value == "10")
+	{
+		$.id("revert_sec_sel").value = 0;
+		$.id("revert_sec_sel").disabled = 1;
+	}
+	else
+	{
+		$.id("revert_sec_sel").disabled = 0;
+	}
+}
+function doModemSet()
+{
+	$.loadMain("usb3gModemList.htm");
+}
+</script>
+<p class="et T" id="et">3G Settings</p>
+<div class="con1 L">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="L1" id="backupNotice">
+	<span class="T" id="t_info_start">3G settings is unavailable because the operation mode is not 3G Router Mode and the backup is not enabled. Please</span>
+	<b class="T" id="t_info_en">Enable 3G backup</b>
+	<span class="T" id="t_info_chg">or change settings on</span>
+	<b class="T T_opmod">Operation Mode</b>
+	<span class="T" id="t_info_end">if you want to use 3G.</span>
+</p>
+<p id="usb3gBackupEnable" class="L1">
+	<input type="checkbox" id="usb3g_backup_en" onclick="doBackupEnClk()"/>
+	<span class="T T_en3gbackup">Enable 3G as a backup solution for Internet access</span>
+</p>
+<div id="backup_time" class="nd">
+<p class="L1">
+	<b class="item T" id="t_backup_delay_time">Backup Delay:</b>
+	<select id="backup_min_sel" class="XS" onchange="changeBackupMin()">
+		<option id="bk_m_0" value="0">0</option>
+		<option id="bk_m_1" value="1">1</option>
+		<option id="bk_m_2" value="2">2</option>
+		<option id="bk_m_3" value="3">3</option>
+		<option id="bk_m_4" value="4">4</option>
+		<option id="bk_m_5" value="5">5</option>
+		<option id="bk_m_6" value="6">6</option>
+		<option id="bk_m_7" value="7">7</option>
+		<option id="bk_m_8" value="8">8</option>
+		<option id="bk_m_9" value="9">9</option>
+		<option id="bk_m_10" value="10">10</option>
+	</select>
+	<span class="T T_minutes">minutes</span>
+	<select id="backup_sec_sel" class="XS">
+		<option id="bk_s_0" value="0">0</option>
+		<option id="bk_s_15" value="15">15</option>
+		<option id="bk_s_30" value="30">30</option>
+		<option id="bk_s_45" value="45">45</option>
+	</select>
+	<span class="T T_seconds">seconds</span>
+</p>
+<p class="L1">
+	<b class="item T" id="t_revert_delay_time">Revert Delay:</b>
+	<select id="revert_min_sel" class="XS" onchange="changeRevertMin()">
+		<option id="rv_m_0" value="0">0</option>
+		<option id="rv_m_1" value="1">1</option>
+		<option id="rv_m_2" value="2">2</option>
+		<option id="rv_m_3" value="3">3</option>
+		<option id="rv_m_4" value="4">4</option>
+		<option id="rv_m_5" value="5">5</option>
+		<option id="rv_m_6" value="6">6</option>
+		<option id="rv_m_7" value="7">7</option>
+		<option id="rv_m_8" value="8">8</option>
+		<option id="rv_m_9" value="9">9</option>
+		<option id="rv_m_10" value="10">10</option>
+	</select>
+	<span class="T T_minutes">minutes</span>
+	<select id="revert_sec_sel" class="XS">
+		<option id="rv_s_0" value="0">0</option>
+		<option id="rv_s_15" value="15">15</option>
+		<option id="rv_s_30" value="30">30</option>
+		<option id="rv_s_45" value="45">45</option>
+	</select>
+	<span class="T T_seconds">seconds</span>
+</p>
+</div>
+<p class="L1">
+	<b class="item T" id="t_3g_modem">USB 3G modem:</b>
+	<span style="padding-left:12px" class="nd T" id="card_name_unplugged">Unplugged</span>
+	<span style="padding-left:12px" class="nd T T_unknown" id="card_name_unknown">Unknown</span>
+	<span style="padding-left:12px" class="nd T" id="card_name_ing">Identifying...</span>
+	<span style="padding-left:12px" class="nd T" id="card_name_ok">Identify successfully</span>
+</p>
+<p class="L1">
+	<b class="item T" id="t_pin_status">PIN Status:</b>
+	<span style="padding-left:12px" class="nd T T_unknown" id="pin_status_unknown">Unknown</span>
+	<span style="padding-left:12px" class="nd T" id="pin_status_fail">Failed to connect script</span>
+	<span style="padding-left:12px" class="nd T" id="pin_status_ready">Ready</span>
+	<span style="padding-left:12px" class="nd T" id="pin_status_pin">PIN Locked</span>
+	<span style="padding-left:12px" class="nd T" id="pin_status_puk">PUK Locked</span>
+	<span style="padding-left:12px" class="nd T" id="pin_status_errror">Error Unknown</span>
+</p>
+<p class="nd L1" id="pin_unlock">
+	<b class="item L T" id="t_pin_code">PIN Code:</b>
+	<input id="pin_code" type="text" class="text"  size="15" maxlength="15"/>
+	<input type="button" id="pinUnlockBtn" class="button L T" value="Unlock" onclick="doPinUnlock()" />
+</p>
+<p class="br"></p>
+<p class="L1">
+	<b class="item T T_loc3g">Location:</b>
+	<select id="location_sel" onchange="changeLocation()"></select>
+</p>
+<p class="L1">
+	<b class="item T T_isp3g">Mobile ISP:</b>
+	<select id="isp_sel" onchange="changeISP()"></select>
+</p>
+<p class="L1" id="manual_apn_notice"><b class="item">&nbsp;</b>
+	<i class="item T" id="t_notice_t">Notice:</i>
+	<span class="T" id="t_notice">You have set the Dial Number and APN manually, if you want to modify, please click the advance button.</span>
+</p>
+<p class="br"></p>
+<p id="sysModeNotice">
+	<span class="L1 T" id="t_sysmode_start">The current</span>
+	<b class="T T_opmod">Operation Mode</b>
+	<span class="T" id="t_sysmod_is">is</span>
+	<b class="nd T" id="sysmode_dsl">ADSL Modem Router Mode</b>
+	<b class="nd T" id="sysmod_eth">Wireless Router Mode</b>
+	<span class="T" id="t_sysmod_end">. The Connection Mode and Max Idle Time could not be set manually.</span>
+</p>
+<p class="L1">
+	<b class="item T T_connmode">Connection Mode:</b>
+	<input name="linkMode" id="connAlwaysOn" type="radio" onclick="doManuallyIdleTime(0)"/>
+	<span class="T T_typeauto">Always on</span>
+</p>
+<p class="L1">
+	<b class="item">&nbsp;</b>
+	<input name="linkMode" id="connOnDemand" type="radio" checked onclick="doManuallyIdleTime(1)"/>
+	<span class="T T_typedemand">Connect on demand</span>
+</p>
+<p class="L1">
+	<b class="item">&nbsp;</b>
+	<input name="linkMode" id="connManual" type="radio" onclick="doManuallyIdleTime(1)"/>
+	<span class="T T_typemanual">Connect manually</span>
+</p>
+<p class="L1">
+	<b class="item">&nbsp;</b>
+	<span class="T T_midle">Max Idle Time:</span>
+	<input id="idle_time" type="text" class="text" value="15" size="3" maxlength="2"/>
+	<span class="T T_minutes">minutes</span>
+	<span class="T T_zmean">(0 means remain active at all time)</span>
+</p>
+<p class="br"></p>
+<p class="L1">
+	<b class="item L T T_authtype">Authentication Type:</b>
+	<select id="ppp_authpro" class="L">
+		<option value="AUTO_AUTH" selected>AUTO_AUTH</option>
+		<option value="PAP">PAP</option>
+		<option value="CHAP">CHAP</option>
+	</select>
+</p>
+<p class="br"></p>
+<p class="L1">
+	<b class="item">&nbsp;</b>
+	<input type="button" id="connectBtn" class="button L T T_conn" value="Connect" onclick="doConnect()" />
+	<input type="button" id="disconnectBtn" class="button L T T_disconn" value="Disconnect" onclick="doDisconnect()" />
+	<span class="L1" id="network_status"></span>
+</p>
+<p class="br"></p>
+
+<div class="cl nd" id="pppClick" onclick="PPPClick(this)"><p class="cl"></p></div>
+<div id="ppp_elem_adv" class="nd">
+	<p class="L1">
+		<b class="item">&nbsp;</b>
+		<input type="checkbox" class="T" id="manual_apn" onclick="doManuallyAPN()"/>
+		<span class="T T_muanl_3g_apn">Set the Dial Number, APN, Username and Password manually</span>
+	</p>
+	<p class="L1">
+		<b class="item T T_dialnum3g">Dial Number:</b>
+		<input id="dial_num" type="text" class="text" size="15" maxlength="31"/>
+	</p>
+	<p class="L1">
+		<b class="item">APN:</b>
+		<input id="apn" type="text" class="text" size="15" maxlength="31"/>
+	</p>
+	<p class="L1">
+		<b class="item T T_username">Username:</b>
+		<input id="username" type="text" class="text" size="15" maxlength="31"/>
+		<span class="T T_optional">(optional)</span>
+	</p>
+	<p class="L1">
+		<b class="item T T_passwd">Password:</b>
+		<input id="password" type="text" class="text" size="15" maxlength="31"/>
+		<span class="T T_optional">(optional)</span>
+	</p>
+	<p class="br"></p>
+	<p class="L1" id="p_chg_pin_en">
+		<b class="item L T" id="t_pin_chg_en">Enable PIN code change:</b>
+		<input type="checkbox" class="T" id="manual_pinCode" onclick="doManuallyPinCode()"/>
+	</p>
+	<p class="L1" id="p_old_pin">
+		<b class="item L T" id="t_old_pin">Old PIN Code:</b>
+		<input id="old_pin" type="text" class="text" size="15" maxlength="15"/>
+	</p>
+	<p class="L1" id="p_new_pin1">
+		<b class="item L T" id="t_new_pin1">New PIN Code:</b>
+		<input id="new_pin1" type="text" class="text" size="15" maxlength="15"/>
+	</p>
+	<p class="L1" id="p_new_pin2">
+		<b class="item L T" id="t_new_pin2">Confirm New PIN Code:</b>
+		<input id="new_pin2" type="text" class="text" size="15" maxlength="15"/>
+	</p>
+	<p class="L1" id="p_pinChangeBtn">
+		<b class="item">&nbsp;</b>
+		<input type="button" id="pinChangeBtn" class="button L T T_set" value="Set" onclick="doPinChange()"/>
+	</p>
+	<p class="br"></p>
+	<p class="L1">
+		<b class="item L T" id="t_mtu">MTU size (in bytes):</b>
+		<input id="mtu_size" type="text" class="text" value="1480" size="5" maxlength="5"/>
+		<span class="T" id="t_mtu1480">(The default is 1480, do not change unless necessary)</span>
+	</p>
+	<p class="L1">
+		<b class="item L T T_echo">Echo request interval:</b>
+		<input type="text" class="text" size="5" id="ppp_echotime" maxlength="3" value="30"/>
+		<span class="T T_echoinfo">(0~120 seconds, 0 means no request)</span>
+	</p>
+	<p class="br"></p>
+	<p class="L1">
+		<b class="item">&nbsp;</b>
+		<input type="checkbox" class="T" id="manual_ipAddr" onclick="doManuallyIpAddr()"/>
+		<span class="T" id="t_follow_ip">Use the following IP address</span>
+	</p>
+	<p class="L1">
+		<b class="item L T" id="t_static_ip">Static IP Address:</b>
+		<input id="static_ip" type="text" class="text" value="0.0.0.0" size="15" maxlength="15"/>
+	</p>
+	<p class="br"></p>
+	<p class="L1">
+		<b class="item">&nbsp;</b>
+		<input type="checkbox" class="T" id="manual_dns" onclick="doManuallyDNS()"/>
+		<span class="T" id="t_follow_dns">Use the following DNS Servers</span>
+	</p>
+	<p class="L1">
+		<b class="item L T" id="t_pri_dns">Primary DNS:</b>
+		<input id="dns1" type="text" class="text" value="0.0.0.0" size="15" maxlength="15"/>
+	</p>
+	<p class="L1">
+		<b class="item L T" id="t_sec_dns">Secondary DNS:</b>
+		<input id="dns2" type="text" class="text" value="0.0.0.0" size="15" maxlength="15"/>
+		<span class="T T_optional">(optional)</span>
+	</p>
+	<p class="br"></p>
+</div>
+</div>
+<p class="bl"></p>
+<p class="tail" id="tail">
+<input type="button" class="button L T T_save" id="saveBtn" value="Save" onclick="doSave(0);"/>
+<input type="button" class="button L T" id="modem_set_Btn" value="Modem Settings" onclick="doModemSet();"/>
+</p>
+</div>
+<script language="javascript" type="text/javascript">
+init();
+</script>

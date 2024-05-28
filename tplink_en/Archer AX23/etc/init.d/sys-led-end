@@ -1,0 +1,70 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+wireless_schedule_disable_wifi() {
+    local band=$1
+
+    [ "$band" = "5g_2" ] && band="52g"
+
+    local disable=$(uci_get_state wireless_schedule ${band}_disable)
+    return $((! ${disable:-0}))
+}
+cycle()
+{
+	# sleep 1
+	ledcli STATUS_ON
+	
+	[ "$(/sbin/is_cal)" != "true" ] && return
+
+	local led_state=""
+	local led_flag="0"
+	local state_2g="ON"
+	local state_5g="ON"
+	
+	config_load wireless
+	for dev in wifi0 wifi1; do
+		echo "dev = $dev" > /dev/console
+		config_get disabled $dev disabled
+		config_get disabled_all $dev disabled_all
+		config_get band $dev band
+		if [ "$disabled" = "off" -a "$disabled_all" = "off" ]; then
+			led_state="ON"
+		else
+			led_state="OFF"
+		fi
+
+		# for wifi schedule
+		if $(wireless_schedule_disable_wifi "$band") ; then
+			led_state="OFF"
+		fi
+	
+		if [ "$band" == "2g" ] ; then
+			state_2g=$led_state
+		elif [ "$band" == "5g" ] ; then
+			state_5g=$led_state
+		fi
+
+	done
+
+	echo "wifi_led_set 2g = $state_2g, 5g = $state_5g" > /dev/console	
+	if [ "$state_2g" == "ON" -a "$state_5g" == "ON" ];then
+		ledcli WIFI2G_ON
+		ledcli WIFI5G_ON
+	elif [ "$state_2g" == "ON" -a "$state_5g" == "OFF" ];then
+		ledcli WIFI2G_ON
+		ledcli WIFI5G_OFF
+	elif [ "$state_2g" == "OFF" -a "$state_5g" == "ON" ];then
+		ledcli WIFI2G_OFF
+		ledcli WIFI5G_ON
+	else
+		ledcli WIFI2G_OFF
+		ledcli WIFI5G_OFF
+	fi
+
+}
+
+start()
+{
+	cycle &
+}

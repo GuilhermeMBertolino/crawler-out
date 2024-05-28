@@ -1,0 +1,66 @@
+#!/bin/sh /etc/rc.common
+
+START=49
+
+start()
+{
+	local bt_enable=$(uci get bluetooth.B1.enable)
+	if [[ "$bt_enable" == "on" ]]
+	then
+		#echo "30 * * * * /etc/init.d/bluetooth stop" >> /etc/crontabs/root
+	    echo "Starting bluetooth..." >/dev/console
+	    cd /tmp/
+	    local nvram_flag=$(nvram get bt_rftestflag)
+	    local flag=0
+	    ##judge bt 
+	    nvrammanager -r /tmp/bt_radiobk -p bt_radiobk
+	    local btradiofile=$(cat /tmp/bt_radiobk)
+
+	    if [ -z "$nvram_flag" ] && [ -z "$btradiofile" ]
+	    then
+	    	flag=1
+		fi
+		#judge wifi
+		nvrammanager -r /tmp/par_tbl -p radio_bk
+	    /usr/sbin/cal_cbr /tmp/par_tbl "$pro_id" radio_bk
+		if [ "$?" = "0" ]; then
+	        flag=1
+		fi
+
+		if [ "$flag" == "1" ]
+		then
+			/bin/rf_test &
+			/usr/sbin/test_ble &
+		else
+			nvram set bt_rftestflag=pass
+			nvram commit
+			echo 1 > /tmp/bt_radiobk
+			nvrammanager -w /tmp/bt_radiobk -p bt_radiobk
+			/usr/sbin/bluetooth
+		fi
+	fi
+}
+
+stop()
+{
+	echo "Stopping bluetooth..." > /dev/console
+	cd /tmp/
+	/bin/app_manager_tp 0
+	killall app_ble
+	killall bsa_server
+	echo 1 > /proc/driver/hs_uart/reset_bt
+	#set config as off and only factory can use bluetooth
+	#delete time function
+	#sed -i '/bluetooth/d' /etc/crontabs/root
+	uci set bluetooth.B1.enable=off
+	uci commit
+	#changed by zhangshengbo
+	#save bt conf to user-config only when quicksetup is configurated
+	#so each time restart with no config in quicksetup,bt is on after 30mins
+	local quicksetup_is_conf=$(uci get quicksetup.quicksetup.to_show)
+	if [ "$quicksetup_is_conf" == "false" ]
+	then
+		echo "Saving conf to user-config..." > /dev/console
+	lua /usr/lib/lua/bluetooth.lua save
+	fi
+}

@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Copyright (C) 2009 OpenWrt.org
+
+# echo ACTION=$ACTION, DEVPATH=$DEVPATH, SUBSYSTEM=$SUBSYSTEM, BUSNUM=$BUSNUM >/dev/console
+
+# echo "--------------" >>/dev/console
+#echo "busnum=$BUSNUM" >> /dev/console
+#echo "action=$ACTION" >> /dev/console
+#echo "intf=$INTERFACE" >> /dev/console
+#echo "devnum=$DEVNUM" >> /dev/console
+#echo "dev=$DEVICE" >> /dev/console
+#echo "pdt=$PRODUCT" >> /dev/console
+#echo "type=$TYPE" >> /dev/console
+#echo "--------------" >>/dev/console
+
+# for ax4200v2
+# /sys/devices/platform/ehci-platform.0/usb1/
+# /sys/devices/platform/ehci-platform.1/usb2/
+# /sys/devices/platform/ohci-platform.0/usb3/
+# /sys/devices/platform/ohci-platform.1/usb4/
+# /sys/devices/platform/xhci-hcd.0/usb5|usb6/
+
+#ignore usb hub event
+HUBFLAG=`echo $DEVPATH | cut -d "-" -f 3 | cut -d ":" -f 1`
+if [ $HUBFLAG = "0" ]; then 
+	return
+fi
+PORTNUM=`echo $DEVPATH | cut -d "-" -f 2 | cut -d "/" -f 3`
+echo $DEVPATH >> /dev/console
+# plug in USB2.0 Device generates port3 event, plug in USB3.0 Device generates port4 event
+echo "USB port event happened -- port=$PORTNUM" >> /dev/console
+case "$PORTNUM" in
+    5|6)
+		USB="USB3"
+		;;
+	1|2|3|4)
+		USB="USB3"
+		;;	
+    *)
+        exit 0
+        ;;
+esac
+
+case "$ACTION" in
+	add)
+		# update LEDs
+        ledcli ${USB}_twinkle
+		;;
+	remove)
+		# update LEDs
+        uci set ledctrl.$USB.ledon='0'
+        ledcli $USB
+		;;
+esac	
+		
+
+
+		

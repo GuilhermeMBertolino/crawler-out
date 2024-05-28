@@ -1,0 +1,139 @@
+#!/usr/bin/lua
+
+local bit       = require "bit"
+local nixio     = require "nixio"
+local socket    = require "socket"
+local json      = require "luci.json"
+local uci       = require "luci.model.uci"
+local ctypes    = require "luci.model.checktypes"
+local appnet    = require "luci.model.network"
+local ctl       = require "luci.model.controller"
+local dbg       = require "luci.tools.debug"
+local network   = require "luci.controller.admin.network"
+local dhcps     = require "luci.controller.admin.dhcps"
+local wireless  = require "luci.controller.admin.wireless"
+local security  = require "luci.controller.admin.security_settings"
+local nat       = require "luci.controller.admin.nat"
+local iptv      = require "luci.controller.admin.iptv"
+local _ubus     = require("ubus").connect()
+
+local TEMP_UCI_PATH = "/tmp/tr069/"
+local uci_r     = uci.cursor()
+local uci_t     = uci.cursor(TEMP_UCI_PATH)
+
+debug_on = true
+config = "check"
+
+uci_t:foreach(config, "params",
+    function(section)               
+        uci_t:delete(config, section[".name"])                
+    end
+)
+
+local tmp = {}
+uci_t:section(config, "params", "result", tmp)
+uci_t:set(config, "result", "set_result", "0")
+
+local function form_dump(form)
+    if debug_on == true then
+        dbg.print("================form================")
+        dbg.dumptable(form)
+        dbg.print("====================================")
+    end
+end
+
+local function ipv6_lanip(tr_form, type)
+    local info = {}
+    local form_r = {}
+    local form_w = {}
+    
+    form_r.form = "lan_ipv6"
+    form_r.operation = "read"
+    info = network.dispatch(form_r)
+    if info == nil or info.success ~= true then 
+        dbg.print("prep get info fail!!")
+        return
+    end
+    local lan_info = info.data
+    
+    form_w.form = "lan_ipv6"
+    form_w.operation = "write"
+    form_w.assign_type = lan_info.assign_type
+    if type == "assign_type" then
+        form_w.assign_type = tr_form.param1
+    end
+    if form_w.assign_type == "dhcpv6" then
+        form_w.dhcp_prefix = lan_info.dhcp_prefix
+        form_w.release_time = lan_info.release_time
+        if type == "prefix" then
+            form_w.dhcp_prefix = tr_form.param1
+        end
+    elseif form_w.assign_type == "slaac" then
+        form_w.slaac_prefix = lan_info.slaac_prefix
+        if type == "prefix" then
+            form_w.slaac_prefix = tr_form.param1
+        end
+    elseif form_w.assign_type == "rdnss" then
+        form_w.rdnss_prefix = lan_info.rdnss_prefix
+        if type == "prefix" then
+            form_w.rdnss_prefix = tr_form.param1
+        end
+    else
+        dbg.print("assign_type ERROR")
+    end
+    if type == "release_time" then
+        if form_w.assign_type ~= "dhcpv6" then
+            form_w.assign_type = "dhcpv6"
+        end
+        form_w.dhcp_prefix = lan_info.dhcp_prefix
+        form_w.release_time = tr_form.param1
+    end
+    
+    local result = network.dispatch(form_w)
+    if result.success == true then
+        uci_t:set(config, "result", "set_result", "1")
+    end
+    dbg.print("lanip set result: " .. tostring(result.success))
+end
+
+local function ipv6_lanip_assigntype(tr_form, type)
+    ipv6_lanip(tr_form, "assign_type")
+end
+
+local function ipv6_lanip_prefix(tr_form, type)
+    ipv6_lanip(tr_form, "prefix")
+end
+
+local function ipv6_lanip_dhcpreleasetime(tr_form, type)
+    ipv6_lanip(tr_form, "release_time")
+end
+
+local dispatch_tbl = {
+    ipv6_lanip_assigntype = {
+        ["write"] = {cb = ipv6_lanip_assigntype}
+    },
+    ipv6_lanip_prefix = {
+        ["write"] = {cb = ipv6_lanip_prefix}
+    },
+    ipv6_lanip_dhcpreleasetime = {
+        ["write"] = {cb = ipv6_lanip_dhcpreleasetime}
+    }
+}
+
+local function dispatch(tr_form)
+    return ctl.dispatch(dispatch_tbl, tr_form)
+end
+
+local tr_form = {}
+tr_form.form = arg[1]
+tr_form.operation = "write"
+for i = 2, 100, 1 do
+    if arg[i] ~= nil then
+        tr_form["param" .. tostring(i - 1)] = arg[i]
+    else
+        break
+    end
+end
+
+dispatch(tr_form)
+uci_t:commit_without_write_flash(config)

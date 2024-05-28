@@ -1,0 +1,332 @@
+﻿<script language="javascript" type="text/javascript">
+var smbService;
+var accessFolderList;
+var userList;
+var userAccessList;
+var idx,i;
+var anySel = 0;
+function escapeStr(str) 
+{
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/ /g, '&nbsp;');
+}
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+function doEdit(idx)
+{
+	var param = [];
+	param[0] = "SMB";
+	param[1] = "EDIT";
+	param[2] = accessFolderList[idx].name;
+	$.loadMain("usbFolderBrowse.htm",param);
+}
+function doAdd()
+{
+	var param = [];
+	param[0] = "SMB";
+	param[1] = "ADD";
+	param[2] = "/";
+	$.loadMain("usbFolderBrowse.htm",param);
+}
+function doChkSel()
+{
+	anySel = 0;
+	for (i = 0; i < accessFolderList.length; i++)
+	{
+		if ($.id("entryId" + i).checked)
+		{
+			anySel = 1;
+			return true;
+		}
+	}
+	return false;
+}
+function doEnable(obj)
+{
+	doChkSel();
+	if (0 == anySel)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	for (i = 0; i < accessFolderList.length; i++)
+	{
+		if ((0 == accessFolderList[i].enable) && ($.id("entryId" + i).checked))
+		{
+			$.act(ACT_SET, SMB_SERVICE_FOLDER, accessFolderList[i].__stack, null, ["enable=1"]);
+		}
+	}
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doDisable(obj)
+{
+	doChkSel();
+	if (0 == anySel)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	for (i = 0; i < accessFolderList.length; i++)
+	{
+		if ((1 == accessFolderList[i].enable) && ($.id("entryId" + i).checked))
+		{
+			$.act(ACT_SET, SMB_SERVICE_FOLDER, accessFolderList[i].__stack, null, ["enable=0"]);
+		}
+	}
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doDel(obj)
+{
+	doChkSel();
+	if (0 == anySel)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	for (i = 0; i < accessFolderList.length; i++)
+	{
+		if ($.id("entryId" + i).checked)
+		{
+			$.act(ACT_DEL, SMB_SERVICE_FOLDER, accessFolderList[i].__stack, null, null);
+		}
+	}
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doSelAll()
+{
+	for (i = 0; i < accessFolderList.length; i++)
+	{
+		if ($.id("selAll").checked)
+		{
+			$.id("entryId" + i).checked = true;
+		}
+		else
+		{
+			$.id("entryId" + i).checked = false;
+		}
+	}
+}
+function init()
+{	
+	smbService = $.act(ACT_GET, SMB_SERVICE, null, null, null);
+	accessFolderList = $.act(ACT_GL, SMB_SERVICE_FOLDER, null, null, null);
+	userAccessList = $.act(ACT_GL, SMB_USER_ACCESS, null, null, null);
+	userList = $.act(ACT_GL, USER_ACCOUNT, null, null, null);
+	if (!$.exe())
+	{
+		if (smbService.enable == 1)
+		{
+			$.removeClass($.id("smb_en"), "nd");
+			$.removeClass($.id("btn_dis"), "nd");
+		}
+		else
+		{
+			$.removeClass($.id("smb_dis"), "nd");
+			$.removeClass($.id("btn_en"), "nd");
+		}
+		
+		$.id("smb_anonymous").checked = (smbService.anonymous == 1) ? 1 : 0;
+		if (smbService.anonymous == 1)
+		{
+			$.addClass($.id("user_tbl_btn"), "nd");
+			$.addClass($.id("apply_line_btn"), "nd");
+		}
+		
+		for (i = 0; i < accessFolderList.length; i++)
+		{
+			var folder_table = $.id("folder_table");
+			var newrow = folder_table.insertRow(-1);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<input type='checkbox' id='entryId" + i + "'/>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = escapeStr(accessFolderList[i].alias);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = escapeStr(accessFolderList[i].name);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user1" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user2" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user3" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user4" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user5" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			if (1 == accessFolderList[i].enable)
+			{
+				cell.innerHTML = "<span class='T T_enabled'>"+m_str.enabled+"</span>";
+			}
+			else
+			{
+				cell.innerHTML = "<span class='T T_disabled'>"+m_str.disabled+"</span>";
+			}
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span class='a T T_edit' onClick='doEdit(" + i + ");'>"+m_str.edit+"</span>";
+			
+			for (j = 0; j < userAccessList.length; j++)
+			{
+				if (parseInt(accessFolderList[i].__stack, 10) != parseInt(userAccessList[j].__stack, 10))
+				{
+					continue;
+				}
+				var id;
+				id = "user" + userAccessList[j].userId + i;
+
+				if (7 == userAccessList[j].permissions)
+				{
+					$.id(id).innerHTML = "F";
+				}
+				else if (3 == userAccessList[j].permissions)
+				{
+					$.id(id).innerHTML = "R";
+				}
+				else
+				{
+					$.id(id).innerHTML = "N";
+				}
+			}
+			for (j = 0; j < userList.length; j++)
+			{
+				var id;
+				var userId;
+				userId = (j + 1);
+				id = "user" + parseInt(userList[j].__stack, 10) + i;
+
+				if (0 == userList[j].enable)
+				{
+					$.id("user" + userId).style["color"] = "#999";
+				}
+				if (1 == userList[j].X_TP_SupperUser)
+				{
+					$.id(id).innerHTML = "F";
+					$.id("user" + userId).innerHTML = userId + "*"
+					if (0 == userList[j].enable)
+					{
+						$.id("user" + userId).innerHTML = userId + "*";
+						$.id("user" + userId).style["color"] = "#999";
+					}
+				}
+				
+				if ("" == userList[j].username)
+				{
+					$.id(id).innerHTML = "-";
+				}
+			}
+		}
+	}
+}
+
+function doTrunOn()
+{
+	if (smbService.enable == 1)
+	{
+		$.act(ACT_SET,SMB_SERVICE,null,null,["enable=0"]);
+	}
+	else
+	{
+		$.act(ACT_SET,SMB_SERVICE,null,null,["enable=1"]);
+	}
+	$.addLoading($.id("btn_en"));
+	$.exe(doReload);
+}
+
+function doAnonymous()
+{
+	if (smbService.anonymous == 1)
+	{
+		$.act(ACT_SET,SMB_SERVICE,null,null,["anonymous=0"]);
+		$.id("smb_anonymous").checked = 0;
+	}
+	else if (smbService.anonymous == 0)
+	{
+		$.act(ACT_SET,SMB_SERVICE,null,null,["anonymous=1"]);
+		$.id("smb_anonymous").checked = 1;
+	}
+	
+	$.addLoading($.id("btn_en"));
+	$.exe(doReload);	
+}
+
+function doApply()
+{
+	$.act(ACT_SET,SMB_SERVICE,null,null,["modified=0"]);
+
+	$.addLoading($.id("ApplyB"));
+	$.exe(doReload);
+}
+
+</script>
+
+<p class="et T" id="et">Storage Sharing Settings</p>
+<div class="con1 XL">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="L1 T" id="t_info">Storage Sharing allows you to share the files on the USB storage device with other computers locally.</p>
+<p class="br"></p>
+<p>
+<b class="item T" id="t_stat">Server Status:</b>
+<span class="nd T T_enabled" id="smb_en">Enabled</span>
+<span class="nd T T_disabled" id="smb_dis">Disabled</span>
+<input type="button" class="nd button L T T_en" id="btn_en" value="Enable" onclick="doTrunOn();"/>
+<input type="button" class="nd button L T T_dis" id="btn_dis" value="Disable" onclick="doTrunOn();"/>
+</p>
+	
+<p><b class="item">&nbsp;</b><input type="checkbox" id="smb_anonymous" onclick="doAnonymous()"/><span class="T" id="t_anony">Anonymous access to all the volumes</span></p>
+<p class="bl"></p>
+<div id="user_tbl_btn">
+<p><b class="L T" id="t_fldtbl">Folder Table:</b>&nbsp;<span class="T" id="t_apply">(Any changes of this table will not take effect until you Apply it.)</span></p>
+<table class="XL bdr tc" id="folder_table">
+	<tr>
+		<th width="5%" rowspan="2"><input type="checkbox" id="selAll" onclick="doSelAll();"/></th>
+		<th width="15%" rowspan="2" class="T" id="t_shname">Share Name</th>
+		<th width="30%" rowspan="2" class="T" id="t_dir">Directory</th>
+		<td width="30%" colspan="5"><b class="T" id="t_access">User Access</b><br />(F:<span class="T T_faccess">Full-Access</span>, R:<span class="T T_ronly">Read-Only</span>, N:<span class="T T_naccess">No-Access</span>)</td>
+		<th width="10%" rowspan="2" class="T T_status">Status</th>
+		<th width="10%"rowspan="2" class="T T_edit">Edit</th>
+	</tr>
+	<tr>
+		<th width="6%" class="T" id="user1">1</th>
+		<th width="6%" class="T" id="user2">2</th>
+		<th width="6%" class="T" id="user3">3</th>
+		<th width="6%" class="T" id="user4">4</th>
+		<th width="6%" class="T" id="user5">5</th>
+	</tr>
+</table>
+<p>* : <span class="T" id="t_note1">"Super User". It has full-access permission (Read & Write) to all share folder(s).</span></p>
+<p class="br"></p>
+<p class="L1">
+<input type="button" class="button XL T T_newfld" value="Add New Folder" onclick="doAdd();"/>
+<input type="button" class="button XL T T_ensel" value="Enable Selected" onclick="doEnable(this);"/>
+<input type="button" class="button XL T T_dissel" value="Disable Selected" onclick="doDisable(this);"/>
+<input type="button" class="button XL T T_delsel" value="Delete Selected" onclick="doDel(this);"/></p>
+</div>
+</div>
+<div id="apply_line_btn">
+<p class="bl"></p>
+<p class="tail">
+<input type="button" class="button L T T_apply" value="Apply" id="ApplyB" onClick="doApply()"/>
+</p>
+</div>
+<!-- <p class="br"></p>
+<p><span class="T T_note">Note</span>:</p>
+<p>1. <span class="T" id="t_note2">Storage Sharing function is based on NetBIOS/SMB protocol which is supported by most Windows operating system and some other operating systems.</span></p>
+<p>2. <span class="T" id="t_note3">Anonymous: All active volume(s) will be shared and authentication is not required.</span></p>
+<p>3. <span class="T" id="t_note4">You will be able to access the folders with the following methods:</span></p>
+<p><span class="fl">&nbsp;&nbsp;&nbsp;&nbsp;</span><b class="fl T" style="width:150px" id="t_forwin">For Windows OS:</b><span class="fl XL"><span class="T" id="t_forwin2">Open "Run" window in the Start menu and enter \\(IP Address) or \\(IP Address)\(Share Name)</span> <br />e.g. \\192.168.0.1 or \\192.168.0.1\photo;</span></p>
+<p><span class="fl">&nbsp;&nbsp;&nbsp;&nbsp;</span><b class="fl T" style="width:150px" id="t_formac">For Mac OS:</b><span class="fl XL"><span class="T" id="t_formac2">Open "Connect to Server" window in the Go menu and enter smb://(IP Address) or smb://(IP Address)/(Share Name)</span> <br />e.g. smb://192.168.0.1 or smb://192.168.0.1/photo.</span></p>
+<p class="br"></p> -->
+<p class="L1 T" ></p>
+</div>
+<script language="javascript" type="text/javascript">
+$.loadHelpFrame("UsbSharingHelp.htm");
+init();
+</script>

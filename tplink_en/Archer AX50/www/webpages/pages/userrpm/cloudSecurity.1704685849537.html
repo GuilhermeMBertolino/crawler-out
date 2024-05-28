@@ -1,0 +1,471 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Cloud Security</title>
+</head>
+
+<body>
+<div class="func-container">
+	<div id="internet-shield">
+		<div class="shield-wrapper">
+			<div class="shield-icon"></div>
+			<div class="shield-detail">
+				<div class="history">
+					<span class="icon"></span>
+					<span class="text"></span>
+				</div>
+				<div class="protect-days">
+					<span class="digit"></span>
+					<span class="days"></span>
+				</div>
+				<span class="caption"></span>
+				<button id="start-security"></button>
+			</div>
+		</div>
+		<a class="trendmicro-logo" href="http://www.trendmicro.com/" target="_blank"></a>
+	</div>
+
+	<div id="alert-notification">
+		<div class="notification-type site-block">
+			<span class="icon"></span>
+			<div class="function">
+				<span class="title"></span>
+				<span class="text"></span>
+			</div>
+			<input id="site-block" name="malicious_sites_blocking" value="" />
+		</div>
+		<div class="notification-type intrusion-prevent">
+			<span class="icon"></span>
+			<div class="function">
+				<span class="title"></span>
+				<span class="text"></span>
+			</div>
+			<input id="intrusion-prevent" name="intrusion_prevention_system" value=""  />
+		</div>
+		<div class="notification-type device-block">
+			<span class="icon"></span>
+			<div class="function">
+				<span class="title"></span>
+				<span class="text"></span>
+			</div>
+			<input id="device-block" name="infected_device_prevention_blocking" value=""  />
+		</div>
+	</div>
+
+	<div class="database">
+		<span class="icon"></span>
+		<span class="text"></span>
+	</div>
+
+	<div id="alert-notification-msg"></div>
+
+	<div id="clear-history-msg" class="warning">
+		<h4 class="title">
+			<span class="icon"></span>
+			<span class="text" id="clear-history-msg-text"></span>
+		</h4>
+	</div>
+
+	<div id="help-cloud-security"></div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(e){
+	var URL_ALERT_INFO = $.su.url("/admin/security?form=history");
+	var URL_ENABLE = $.su.url("/admin/security?form=info");
+	var URL_CATEGORY = $.su.url("/admin/security?form=category");
+	var URL_RULE = $.su.url("/admin/security?form=rule");
+
+	var protectedDays = 0;
+
+	var alertInfoProxy = new $.su.Proxy({
+		url: URL_ALERT_INFO
+	});
+
+	var enableProxy = new $.su.Proxy({
+		url: URL_ENABLE
+	});
+
+	var categoryProxy = new $.su.Proxy({
+		url: URL_CATEGORY
+	});
+
+	var ruleProxy = new $.su.Proxy({
+		url: URL_RULE
+	});
+
+	$("#internet-shield").panel({
+		title: $.su.CHAR.ANTI_VIRUS.INTERNET_SHIELD
+	});
+
+	enableProxy.read({}, function(data){
+		protectedDays = data.protected_days;
+		$("div.protect-days span.digit").html(data.protected_days);
+		if(data.protected_days==0 || data.protected_days==1){
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAY);
+		}
+		else{
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAYS);
+		}
+		if(data.is_updating){
+			$("div.database").addClass("updating");
+			$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UPDATING);
+		}else{
+			$("div.database").removeClass("updating");
+			$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UP_TO_DATE+" "+transformTime(data.checked_time));
+		}
+	}, function(errorcode, others, data){
+		$("div.protect-days span.digit").html(data.protected_days);
+		if(data.protected_days==0 || data.protected_days==1){
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAY);
+		}
+		else{
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAYS);
+		}
+		$("div.database").removeClass("updating");
+		$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UP_TO_DATE+" "+transformTime(data.checked_time));
+	}, function(){
+	});
+
+	var updateId = setInterval(function(){
+		enableProxy.read({}, function(data){
+			protectedDays = data.protected_days;
+			$("div.protect-days span.digit").html(data.protected_days);
+			if(data.protected_days==0 || data.protected_days==1){
+				$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAY);
+			}
+			else{
+				$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAYS);
+			}
+			if(data.is_updating){
+				$("div.database").addClass("updating");
+				$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UPDATING);
+			}else{
+				clearInterval(updateId);
+				$("div.database").removeClass("updating");
+				$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UP_TO_DATE+" "+transformTime(data.checked_time));
+			}
+		}, function(errorcode, others, data){
+			clearInterval(updateId);
+			$("div.database").removeClass("updating");
+			$("div.database span.text").html($.su.CHAR.ANTI_VIRUS.DATABASE_UP_TO_DATE+" "+transformTime(data.checked_time));
+		}, function(){
+			clearInterval(updateId);
+	});
+	}, 5000);
+
+	var categoryList = [];
+	var ruleList = [];
+	categoryProxy.read({}, function(data){
+		categoryList = data.category_list;
+	});
+
+	ruleProxy.read({}, function(data){
+		ruleList = data.rule_list;
+	});
+
+	$("div.history span.text").html($.su.CHAR.ANTI_VIRUS.HISTORY);
+
+	var getShieldStatus = function(data){
+		if(data.malicious_sites_blocking=="disable" || data.intrusion_prevention_system=="disable" || data.infected_device_prevention_blocking=="disable"){
+			return 0;
+		}else{
+			return 1;
+		}
+	}
+
+	var changeShieldStatus = function(status){
+		if(status==1){
+			$("div.shield-wrapper").removeClass("dangerous");
+			if(protectedDays == 0 || protectedDays == 1){
+				$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAY);
+			}
+			else{
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DAYS);
+			}
+			$("div.shield-detail span.caption").html($.su.CHAR.ANTI_VIRUS.CAPTION);
+		}
+		else if(status==0){
+			$("div.shield-wrapper").addClass("dangerous");
+			$("div.protect-days span.days").html($.su.CHAR.ANTI_VIRUS.DANGEROUS);
+			$("div.shield-detail span.caption").html($.su.CHAR.ANTI_VIRUS.DANGEROUS_CAPTION);
+		}
+	}
+	changeShieldStatus(0);
+
+	$("#start-security").button({
+		fieldLabel: null,
+		text: $.su.CHAR.ANTI_VIRUS.START,
+		cls: "start-security",
+		handler: function(){
+			if($("input#site-block").switchbutton("getValue") == "disable"){
+				$("input#site-block").switchbutton("setValue", "enable");
+			}
+
+			if($("input#intrusion-prevent").switchbutton("getValue") == "disable"){
+				$("input#intrusion-prevent").switchbutton("setValue", "enable");
+			}
+
+			if($("input#device-block").switchbutton("getValue") == "disable"){
+				$("input#device-block").switchbutton("setValue", "enable");
+			}
+
+			enableProxy.write({
+				malicious_sites_blocking: "enable",
+				intrusion_prevention_system: "enable",
+				infected_device_prevention_blocking: "enable"
+			});
+		}
+	});
+
+	$("div#alert-notification-msg").msg({
+		autoshow: false,
+		cls: "cloud-security",
+		title: $.su.CHAR.ANTI_VIRUS.ALERT_HISTORY,
+		type: "window",
+		closeHandler: function(e){
+			$.su.mask.hide("notification-msg");
+		}
+	});
+
+	var getCategory = function(id){
+		for(var i=0; i<categoryList.length; i++){
+			if(categoryList[i].id == id){
+				return categoryList[i].name;
+			}
+		}
+		return undefined;
+	};
+
+	var getRule = function(id){
+		for(var i=0; i<ruleList.length; i++){
+			if(ruleList[i].id == id){
+				return ruleList[i].name;
+			}
+		}
+		return undefined;
+	};
+
+	var parseFormat = function (value, width)
+	{
+		var value = value.toString();
+		while (value.length < width) value = "0" + value;
+		return value;
+	}
+
+	var transformTime = function(time){
+		var d = new Date(time * 1000);
+		var currentDate = new Date();
+
+		if(d.getMonth()==currentDate.getMonth()&&d.getDay()==currentDate.getDay()){
+			if(d.getHours()<=12){
+				var date = $.su.CHAR.DATE.TODAY + ", " + parseFormat(d.getHours(), 2) + ":" + parseFormat(d.getMinutes(), 2) + $.su.CHAR.HOUR.AM;
+			}else{
+				var date = $.su.CHAR.DATE.TODAY + ", " + parseFormat((d.getHours()-12), 2) + ":" + parseFormat(d.getMinutes(), 2) + $.su.CHAR.HOUR.PM;
+			}
+		}
+		else if(d.getMonth()==currentDate.getMonth()&&d.getDay()==currentDate.getDay()-1){
+			if(d.getHours()<=12){
+				var date = $.su.CHAR.DATE.YESTERDAY + ", " + parseFormat(d.getHours(), 2) + ":" + parseFormat(d.getMinutes(),2) + $.su.CHAR.HOUR.AM;
+			}else{
+				var date = $.su.CHAR.DATE.YESTERDAY + ", " + parseFormat((d.getHours()-12), 2) + ":" + parseFormat(d.getMinutes(), 2) + $.su.CHAR.HOUR.PM;
+			}
+		}
+		else{
+			if(d.getHours()<=12){
+				var date = parseFormat((d.getMonth()+1), 2) + "." + parseFormat(d.getDate(), 2) + ", " + parseFormat(d.getHours(), 2) + ":" + parseFormat(d.getMinutes(), 2) + $.su.CHAR.HOUR.AM;
+			}else{
+				var date = parseFormat((d.getMonth()+1), 2) + "." + parseFormat(d.getDate(), 2) + ", " + parseFormat((d.getHours()-12), 2) + ":" + parseFormat(d.getMinutes(), 2) + $.su.CHAR.HOUR.PM;
+			}
+		}
+		
+		return date;
+	};
+
+	var setAlertInfo = function(data){
+		var noRecord = "";
+		if(data.length==0||!$.isArray(data)){
+            noRecord = "no-record";
+            $("div#alert-notification-msg a.delete-btn").addClass("disabled");
+        }
+        else{
+        	$("div#alert-notification-msg a.delete-btn").removeClass("disabled");
+        }
+		var inHTML = 	"<div class=\"alert-info-item-wrapper "+noRecord+"\">";
+			inHTML +=        "<div class=\"no-record-wrapper\">";
+            inHTML +=            "<span class=\"icon\"></span>";
+            inHTML +=            "<span class=\"no-record-text\">"+$.su.CHAR.ANTI_VIRUS.NO_ALERTS+"</span>";
+            inHTML +=        "</div>";
+
+		for(var i=0; i<data.length; i++){
+			switch(data[i].type){
+				case "block":
+					inHTML +=	"<div class=\"alert-info-item alert-site-block\">";
+					inHTML +=		"<span class=\"icon\"></span>";
+					inHTML +=		"<div class=\"info-detail\">";
+					inHTML +=			"<span class=\"device-name\">"+data[i].client+"</span>";
+					inHTML +=			"<span class=\"time\">"+transformTime(data[i].timestamp)+"</span>";
+					inHTML +=			"<span class=\"device-owner\">"+$.su.CHAR.ANTI_VIRUS.DEVICE_OWNER+": "+data[i].owner+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.INTERCEPT_WEB_SITE+": "+data[i].blocked_website+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.INTERCEPT_REASONS+": "+getCategory(data[i].category_id)+"</span>";
+					inHTML +=		"</div>";
+					inHTML +=	"</div>";
+					break;
+				case "prevent":
+					inHTML +=	"<div class=\"alert-info-item alert-intrusion-prevent\">";
+					inHTML +=		"<span class=\"icon\"></span>";
+					inHTML +=		"<div class=\"info-detail\">";
+					inHTML +=			"<span class=\"device-name\">"+data[i].client+"</span>";
+					inHTML +=			"<span class=\"time\">"+transformTime(data[i].timestamp)+"</span>";
+					inHTML +=			"<span class=\"device-owner\">"+$.su.CHAR.ANTI_VIRUS.DEVICE_OWNER+": "+data[i].owner+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.ATTACK_SOURCE_IP+": "+data[i].attacker+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.ATTACK_CATEGORIES+": "+getRule(data[i].rule_id)+"</span>";
+					inHTML +=		"</div>";
+					inHTML +=	"</div>";
+					break;
+				case "infected_block":
+					inHTML +=	"<div class=\"alert-info-item alert-device-block\">";
+					inHTML +=		"<span class=\"icon\"></span>";
+					inHTML +=		"<div class=\"info-detail\">";
+					inHTML +=			"<span class=\"device-name\">"+data[i].client+"</span>";
+					inHTML +=			"<span class=\"time\">"+transformTime(data[i].timestamp)+"</span>";
+					inHTML +=			"<span class=\"device-owner\">"+$.su.CHAR.ANTI_VIRUS.DEVICE_OWNER+": "+data[i].owner+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.INTERCEPTING_IP_ADDRESS+": "+data[i].blocked_ip+"</span>";
+					inHTML +=			"<span>"+$.su.CHAR.ANTI_VIRUS.INTERCEP_REASONS+": "+(getCategory(data[i].category_id)||getRule(data[i].category_id))+"</span>";
+					inHTML +=		"</div>";
+					inHTML +=	"</div>";
+					break;
+				default:
+					break;
+			}
+		}
+		inHTML +=	"</div>";
+		$("div#alert-notification-msg").msg("setContent", inHTML);
+	}
+
+
+	var inHTML = 	"<span class=\"msg-title\"></span>";
+		inHTML +=	"<a href=\"javascript:void(0);\" class=\"delete-btn\">";
+		inHTML +=		"<span class=\"icon\"></span>";
+		inHTML +=		"<span class=\"text\"></span>";
+		inHTML +=	"</a>";
+	$("div#alert-notification-msg").msg("setTitle", inHTML);
+
+	$("span.msg-title-container span.msg-title").html($.su.CHAR.ANTI_VIRUS.ALERT_HISTORY);
+	$("span.msg-title-container a.delete-btn span.text").html($.su.CHAR.ANTI_VIRUS.CLEAR_ALL);
+
+	$("div.history").on("click", function(e){
+		$("div#alert-notification-msg").msg("show");
+		$.su.mask.show("notification-msg");
+		alertInfoProxy.read({}, function(data){
+			setAlertInfo(data);
+		});
+	});
+
+	$("span#clear-history-msg-text").html($.su.CHAR.ANTI_VIRUS.ALERT_NOTIFICATION_CAPTION);
+	var clearHistoryMsg = $("div#clear-history-msg").msg({
+		type: "confirm",
+		// closeBtn: false,
+		cls: "clear-history-size",
+		yesText: $.su.CHAR.ANTI_VIRUS.CLEAR_ALL,
+		noText: $.su.CHAR.ANTI_VIRUS.CANCEL,
+		okHandler: function(e){
+			alertInfoProxy.write({
+				operation: "clear"
+			}, function(data){
+				setAlertInfo(data);
+			});
+			$("div#alert-notification-msg").css("z-index", "999");
+			$.su.mask.hide("clear-history-msg");
+		},
+		noHandler: function(){
+			clearHistoryMsg.msg('hide');
+			$("div#alert-notification-msg").css("z-index", "999");
+			$.su.mask.hide("clear-history-msg");
+		},
+		closeHandler: function(){
+			$("div#alert-notification-msg").css("z-index", "999");
+			$.su.mask.hide("clear-history-msg");
+		}
+	});
+	$("a.delete-btn").on("click", function(e){
+		if(!$("div#alert-notification-msg a.delete-btn").hasClass("disabled")){
+		clearHistoryMsg.msg("show");
+		$("div#alert-notification-msg").css("z-index", "997");
+		$.su.mask.show("clear-history-msg");
+		}
+	});
+
+	$("#alert-notification").panel({
+		title: $.su.CHAR.ANTI_VIRUS.ALERT_NOTIFICATION
+	});
+
+	$("div.site-block div.function span.title").html($.su.CHAR.ANTI_VIRUS.MALICIOUS_SITES_BLOCKING);
+	$("div.site-block div.function span.text").html($.su.CHAR.ANTI_VIRUS.MALICIOUS_SITE_BLOCKING_CAPTION);
+	$("div.intrusion-prevent div.function span.title").html($.su.CHAR.ANTI_VIRUS.INTRUSION_PREVENTION_SYSTEM);
+	$("div.intrusion-prevent div.function span.text").html($.su.CHAR.ANTI_VIRUS.INTRUSION_PREVENTION_SYSTEM_CAPTION);
+	$("div.device-block div.function span.title").html($.su.CHAR.ANTI_VIRUS.INFECTED_DEVICE_QUARANTINE);
+	$("div.device-block div.function span.text").html($.su.CHAR.ANTI_VIRUS.INFECTED_DEVICE_QUARANTINE_CAPTION);
+
+	
+	$("input#site-block").switchbutton({
+		cls:"cloud-security-switch",
+		proxy: enableProxy,
+		onValue: "enable",
+		offValue: "disable",
+		field: {
+			"name": "malicious_sites_blocking"
+		}
+	}).on("ev_loadData", function(e, data){
+		if(getShieldStatus(data)==0){
+			changeShieldStatus(0);
+		}else{
+			changeShieldStatus(1);
+		}
+	});
+
+	$("input#intrusion-prevent").switchbutton({
+		cls:"cloud-security-switch",
+		proxy: enableProxy,
+		onValue: "enable",
+		offValue: "disable",
+		field: {
+			"name": "intrusion_prevention_system"
+		}
+	}).on("ev_loadData", function(e, data){
+		if(getShieldStatus(data)==0){
+			changeShieldStatus(0);
+		}else{
+			changeShieldStatus(1);
+		}
+	});
+
+	$("input#device-block").switchbutton({
+		cls:"cloud-security-switch",
+		proxy: enableProxy,
+		onValue: "enable",
+		offValue: "disable",
+		field: {
+			"name": "infected_device_prevention_blocking"
+		}
+	}).on("ev_loadData", function(e, data){
+		if(getShieldStatus(data)==0){
+			changeShieldStatus(0);
+		}else{
+			changeShieldStatus(1);
+		}
+	});
+
+	var helpCloudSecurity = new $.su.Help({
+		container: "div#help-cloud-security",
+		content: ["ANTI_VIRUS"]
+	});
+
+	$.su.app.runningModule.addUnloadHandler(function(){
+		clearInterval(updateId);
+	});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+#!/bin/sh /etc/rc.common
+
+START=96
+STOP=30
+
+SERVICE_USE_PID=1
+
+NAME=p2pd
+PROG=/usr/bin/p2pd
+PIDCOUNT=0
+
+keygen()
+{
+	for keytype in rsa ecdsa; do
+		# check for keys
+		key=${NAME}/dropbear_${keytype}_host_key
+		[ -f /tmp/$key -o -s /etc/$key ] || {
+			# generate missing keys
+			mkdir -p /tmp/${NAME}
+			[ -x /usr/bin/udtdbkey ] && {
+				local opt=""
+				[ "$keytype" = rsa ] && opt="-s 1024"
+				/usr/bin/udtdbkey -t $keytype $opt -f /tmp/$key 2>&- >&- && exec /etc/rc.common "$initscript" start
+			} &
+		exit 0
+		}
+	done
+
+	lock /tmp/.switch2jffs
+	mkdir -p /etc/${NAME}
+	mv /tmp/${NAME}/dropbear_* /etc/${NAME}/
+	lock -u /tmp/.switch2jffs
+	chown root /etc/${NAME}
+	chmod 0700 /etc/${NAME}
+}
+
+start()
+{
+	# check tpfile support 
+	#`uci get profile.@tpfile[0].tpfile_support -c /etc/profile.d`
+	local tpfile_support
+	config_load "profile"    
+	config_get tpfile_support tpfile_diff tpfile_support "no"
+	
+	if [ "$tpfile_support" = "yes" ]; then	
+ 		[ -s /etc/${NAME}/dropbear_rsa_host_key -a -s /etc/${NAME}/dropbear_ecdsa_host_key ] || keygen
+		
+		service_start /usr/bin/p2pd &
+	fi
+}
+
+stop()
+{
+	local pid_file pid_files
+	
+	pid_files=`ls /var/run/${NAME}.pid 2>/dev/null`
+	
+	[ -z "$pid_files" ] && return 1
+	
+	for pid_file in $pid_files; do
+		SERVICE_PID_FILE="$pid_file" service_stop ${PROG} && {
+			rm -f ${pid_file}
+		}
+	done
+}
+
+restart()
+{
+	stop
+	start
+}

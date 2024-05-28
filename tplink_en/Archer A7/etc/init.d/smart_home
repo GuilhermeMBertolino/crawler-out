@@ -1,0 +1,90 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+STOP=90
+
+#USE_PROCD=1
+
+#set -x
+
+local smart_home_schedule_cron_cmd="0-59\/1 \* \* \* \* \/usr\/sbin\/smart_home_schedule"
+start() {
+        reload
+}
+
+reload() {
+        echo "smart_home_schedule reload_service" > /dev/console
+        config_load smart_home
+        maclist_smart_home=""
+        config_foreach getmaclist_sec client
+        echo "maclist_smart_home:$maclist_smart_home" > /dev/console
+
+        # add by DengZhong AP mode(ebtables) Router Mode(iptables)
+        local apmode="$(uci get sysmode.sysmode.mode)"
+        if [ "$apmode" == "ap" ]; then
+                echo "### smart_home_schedule is NOT ready for AP mode yet###" > /dev/console
+                return
+        fi
+
+        setpauselistiptables
+    	updateneighlist
+}
+
+getmaclist_sec() {
+        local section="$1"
+        config_get mac "$section" mac
+        mac=${mac//-/:}
+
+        config_get cause "$section" cause
+        if [ -n "$cause" ]; then
+                append maclist_smart_home "$mac "
+        fi
+}
+
+setpauselistiptables() {
+        iptables -N pauselist
+
+        iptables -D forwarding_rule -j pauselist
+        iptables -I forwarding_rule 2 -j pauselist
+
+        iptables -D input_rule -j pauselist
+        iptables -I input_rule 1 -j pauselist
+
+        iptables -F pauselist
+
+        if [ ! -n "$maclist_smart_home" ]; then
+                echo "#### no schedule client found in blacklist config ####" > /dev/console
+        fi
+
+        echo "Call smart_home_schedule and add it to crontabs" > /dev/console
+
+        local CRON_FILE="/etc/crontabs/root"
+
+        if [ ! -f "$CRON_FILE" ]; then
+                touch $CRON_FILE
+                chmod 777 $CRON_FILE
+        fi
+
+        echo "start crond..." > /dev/console
+        sed -i "/^${smart_home_schedule_cron_cmd}/d" /etc/crontabs/root
+        echo "0-59/1 * * * * /usr/sbin/smart_home_schedule">>/etc/crontabs/root
+        /etc/init.d/cron restart
+        /usr/sbin/smart_home_schedule first
+}
+
+updateneighlist() {
+        [ -n "$maclist_smart_home" ] && {
+
+        for mac in $maclist_smart_home; do
+        ips=$(cat /proc/net/arp | grep -i "$mac" | awk '{print $1}')
+        [ -n "$ips" ] && {
+            for ip in $ips; do
+                conntrack -D -s "$ip"
+                conntrack -D -d "$ip"
+                ip neigh del $ip dev br-lan
+#               ip neigh del $ip dev br-guest
+            done
+        }
+        done;
+        }
+}

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+lock /var/run/ac_macfilter_wrap.lock
+
+wifi macfilter
+for args in $@
+do
+	wifi macfilter add $args
+done
+wifi macfilter deny
+
+lock -u /var/run/ac_macfilter_wrap.lock

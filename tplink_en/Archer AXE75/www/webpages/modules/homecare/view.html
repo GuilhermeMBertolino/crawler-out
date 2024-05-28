@@ -1,0 +1,576 @@
+<div view="{antivirusView}">
+	<div widget="panel" class="antivirus-panel" title-label="{ANTIVIRUS.ANTIVIRUS}" collapsible="{false}">
+		<div widget="button" id="antivirus-history" class="icon-button history-icon-btn inline-block" label-field="{false}" text="{ANTIVIRUS.HISTORY}"></div>
+		<div widget="simpleDom" data-bind="{antivirusInfoWrapper}" class="antivirus-info">
+			<div widget="transition" data-bind="{antivirusUpdateInfo}" class="icon-wrapper">
+				<span class="icon"></span>
+				<span class="up-to-date">{up_to_date}</span>
+			</div>
+			<div widget="transition" data-bind="{antivirusProtectedInfo}" class="detail-wrapper protected-detail">
+				<div class="status-wrapper">
+					<span class="text">{ANTIVIRUS.SECURITY_STATUS}:</span>
+					<span class="status">{ANTIVIRUS.PROTECTED}</span>
+				</div>
+				<div class="protected-days-wrapper">
+					<span class="text">{ANTIVIRUS.PROTECTED_FOR}</span>
+					<div class="protected-days-unit">
+						<span class="protected-days">{protectedDays}</span>
+						<span class="unit">&nbsp{protected_unit}</span>
+					</div>
+				</div>
+			</div>
+			<div class="detail-wrapper vulnerable-detail">
+				<div widget="transition" class="status-wrapper">
+					<span class="text">{ANTIVIRUS.SECURITY_STATUS}:</span>
+					<span class="status">{ANTIVIRUS.VULNERABLE}</span>
+				</div>
+				<div class="vulnerable-info-wrapper">
+					<span widget="transition" class="vulnerable-notice">{ANTIVIRUS.VULNERABLE_NOTICE}</span>
+					<div widget="button" id="vulnerable-repair-btn" class="label-empty full-line" text="{ANTIVIRUS.REPAIR}"></div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="antivirus-func">
+			<div class="mobile-line-case"></div>
+			<div class="items malicious-content-filter">
+				<span class="icon"></span>
+				<div widget="transition" class="text">
+					<span class="title">{ANTIVIRUS.MAlICIOUS_CONTENT_FILTER}</span>
+					<span class="instruction">{ANTIVIRUS.MAlICIOUS_CONTENT_FILTER_INSTRUCTION}</span>
+				</div>
+				<div widget="switch" id="malicious-switch" class="switch label-empty" data-bind="{antivirusInfo.maliciousSitesBlocking}" true-value="enable" false-value="disable"></div>
+			</div>
+			<div class="items instrusion-prevention-system">
+				<span class="icon"></span>
+				<div widget="transition" class="text">
+					<span class="title">{ANTIVIRUS.INSTRUSION_PREVENTION_SYSTEM}</span>
+					<span class="instruction">{ANTIVIRUS.INSTRUSION_PREVENTION_SYSTEM_INSTRUCTION}</span>
+				</div>
+				<div widget="switch" id="instrusion-switch" class="switch label-empty" data-bind="{antivirusInfo.intrusionPreventionSystem}" true-value="enable" false-value="disable"></div>
+			</div>
+			<div class="items infected-device-quarantine">
+				<span class="icon"></span>
+				<div widget="transition" class="text">
+					<span class="title">{ANTIVIRUS.INFECTED_DEVICE_QURANTINE}</span>
+					<span class="instruction">{ANTIVIRUS.INFECTED_DEVICE_QURANTINE_INSTRUCTION}</span>
+				</div>
+				<div widget="switch" id="infected-switch" class="switch label-empty" data-bind="{antivirusInfo.infectedDevicePreventionBlocking}" true-value="enable" false-value="disable"></div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" type="window" id="antivirus-history-msg" data-bind="{antivirusHistoryMsg}" class="no-button-msg" msg-title="{ANTIVIRUS.HISTORY}">
+		<div widget="fieldset">
+			<div widget="button" id="antivirus-history-clear" data-bind="{antivirusHistoryClear}" class="icon-button clear-icon-btn" label-field="{false}" text="{ANTIVIRUS.CLEAR_ALL}"></div>
+			<div widget="transition" data-bind="{noHistory}" class="antivirus-no-history">{ANTIVIRUS.NO_HISTORY}</div>
+			<div widget="antivirusHistory" id="antivirus-history-list" data-bind="{antivirusHistoryList}" data-options="{antivirusHistoryListStore}"></div>
+		</div>
+	</div>
+
+	<div widget="msg" id="antivirus-history-clear-cfm" class="z-index-1000-msg" type="confirm" data-bind="{antivirusHistoryClearCfm}" title-bar="{false}" close-btn="{true}" msg="{ANTIVIRUS.CLEAR_NOTICE}" yes-text="{ANTIVIRUS.CLEAR_ALL_UPPERCASE}" no-text="{ANTIVIRUS.CANCEL_UPPERCASE}"></div>
+</div>
+<div view="{parentalControlsView}">
+	<div widget="panel" title-label="{PARENTAL_CONTROLS.PARENTAL_CONTROLS}" collpasible="{false}" instruction="{PARENTAL_CONTROLS.INSTRUCTION}">
+		<div widget="grid" id="parental-controls-grid" class="m-card-grid" data-bind="{parentalControlsStore}" plugins="tBar|popEditor|paging" operation="add">
+			<div widget="form" id="parental-controls-grid-editor" data-bind="{parentalCtrlsEditorModel}">
+				<div widget="steps" id="parental-ctrls-edit-steps" data-bind="{parentalCtrlsAddSteps}"></div>
+				<div widget="switchField" id="parental-ctrls-edit-switch" data-bind="{parentalCtrlsEditSwitch}"></div>
+				<div widget="fieldset" class="parental-ctrls-edit-fields">
+					<div widget="fieldset" class="basic-info">
+						<div widget="textbox" class="label-above" label-field="{PARENTAL_CONTROLS.NAME}" data-bind="{parentalCtrlsEditorModel.name}"></div>
+						<div id="device-list">
+							<span class="device-list-title"></span>
+							<div widget="deviceSelect" id="parental-ctrls-device-list" data-bind="{parentalCtrlsEditorModel.clientList}"></div>
+						</div>
+					</div>
+					<div widget="fieldset" class="filter-level">
+						<div class="filter-level-items-wrapper">
+							<span class="title"></span>
+							<div widget="filterLevel" id="filter-level" data-bind="{parentalCtrlsEditorModel.filterLevel}"></div>
+						</div>
+						<div widget="fieldset" id="filter-level-select-note" data-bind="{filterLevelSelectNote}"></div>
+						<div widget="fieldset" data-bind="{filterLevelContent}" class="filter-level-content">
+							<span class="title"></span>
+							<div widget="panel" class="case" title-label="{PARENTAL_CONTROLS.CATEGORY_FILTER}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.CATEGORY_FILTER_INSTRUCTION}">
+								<div widget="checkboxGroup" class="label-empty  filter-level-2-columns-checkbox-group label-empty-checkbox" columns="2" data-bind="{parentalCtrlsEditorModel.categoriesList}" data-options="{categoryFilterS}"></div>
+							</div>
+							<!-- <div widget="panel" class="case" title-label="{PARENTAL_CONTROLS.APP_FILTER}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.APP_FILTER_INSTRUCTION}">
+								<div widget="filterContent" type="app" data-bind="{parentalCtrlsEditorModel.appFilter}" data-options="{appFilterS}"></div>
+						</div> -->
+							<div widget="panel" class="case" title-label="{PARENTAL_CONTROLS.KEYWORD_FILTER}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.KEYWORD_FILTER_INSTRUCTION}">
+								<div widget="filterContent" id="parental-ctrls-keyword-filter" type="keyword" data-bind="{parentalCtrlsEditorModel.keywordFilter}" data-options="{keywordFilterS}" placeholder="{PARENTAL_CONTROLS.KEYWORD_FILTER_PLACEHOLDER}"></div>
+							</div>
+						</div>
+					</div>
+					<div widget="fieldset" class="time-controls">
+						<div widget="panel" title-label="{PARENTAL_CONTROLS.TIME_LIMITS}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.TIME_LIMITS_INSTRUCTION}">
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.MON_TO_FRI}" data-bind="{parentalCtrlsEditorModel.enableWorkdayTimeLimit}" true-value="{true}" false-value="{false}"></div>
+							<div widget="combobox" label-field="{PARENTAL_CONTROLS.DAILY_TIME_LIMIT}" data-bind="parentalCtrlsEditorModel.workdayDailyTime" data-options="{dailyTimeLimitS}"></div>
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.SAT_AND_SUN}" data-bind="{parentalCtrlsEditorModel.enableWeekendTimeLimit}" true-value="{true}" false-value="{false}"></div>
+							<div widget="combobox" label-field="{PARENTAL_CONTROLS.DAILY_TIME_LIMIT}" data-bind="parentalCtrlsEditorModel.weekendDailyTime" data-options="{dailyTimeLimitS}"></div>
+						</div>
+						<div widget="panel" title-label="{PARENTAL_CONTROLS.BED_TIME}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.BED_TIME_INSTRUCTION}">
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.SCHOOL_NIGHTS}" data-bind="{parentalCtrlsEditorModel.enableWorkdayBedTime}" true-value="{true}" false-value="{false}"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_NIGHT}" data-bind="{parentalCtrlsEditorModel.workdayBedTimeBegin}" hour-system="12" format="h:i"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_MORNING}" data-bind="{parentalCtrlsEditorModel.workdayBedTimeEnd}" hour-system="12" format="h:i"></div>
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.WEEKEND}" data-bind="{parentalCtrlsEditorModel.enableWeekendBedTime}" true-value="{true}" false-value="{false}"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_NIGHT}" data-bind="{parentalCtrlsEditorModel.weekendBedTimeBegin}" hour-system="12" format="h:i"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_MORNING}" data-bind="{parentalCtrlsEditorModel.weekendBedTimeEnd}" hour-system="12" format="h:i"></div>
+						</div>
+					</div>
+				</div>
+				<div widget="fieldset" id="parental-ctrls-add-btns" class="inline-container btn-container" data-bind="{parentalCtrlsAddBtns}">
+					<div widget="button" id="parental-ctrls-add-btns-left" data-bind="{parentalCtrlsAddBtnsLeft}" text="{PARENTAL_CONTROLS.CANCEL}" class="label-empty btn-cancel"></div>
+					<div widget="button" id="parental-ctrls-add-btns-right" data-bind="{parentalCtrlsAddBtnsRight}" text="{PARENTAL_CONTROLS.NEXT}" class="label-empty btn-submit"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-insight-msg" class="no-button-msg" type="window" data-bind="{parentalCtrlsInsightMsg}" msg-title="{PARENTAL_CONTROLS.INSIGHTS}">
+		<div widget="fieldset">
+			<div widget="switchField" id="parental-ctrls-insight-switch" data-bind="{parentalCtrlsInsightSwitch}"></div>
+			<div widget="fieldset" class="top-10-visit top-10-visit-content">
+				<div class="day-select">
+					<div widget="combobox" data-bind="{parentalCtrlDaySlt}" data-options="{parentalCtrHistoryDay}" class="label-empty" span-text="{true}" option-width="160" ></div>
+				</div>
+				<div widget="transition" class="top-10-visit-no-history" data-bind="{topTenVisitNoHistory}"><span>{PARENTAL_CONTROLS.NO_HISTORY}</span></div>
+				<div class="top-10-visit-wrapper">
+					<div class="total-spent-online">
+						<div widget="transition" class="title"><span>{PARENTAL_CONTROLS.TOTAL_SPENT_ONLINE}</span></div>
+						<div class="content">
+							<span widget="transition" class="hours-total">{PARENTAL_CONTROLS.HOURS_24}</span>
+							<div class="total-time-circle-wrapper">
+								<div id="total-spent-time"></div>
+								<div id="total-left-time"></div>
+							</div>
+							<span class="hours-spent"></span>
+						</div>
+					</div>
+					<div class="top-10-visit-info-remain">
+						<table id="top-10-visit-info-remain-grid">
+							<thead>
+								<tr>
+									<th widget="transition" class="url">{PARENTAL_CONTROLS.TOP_10_VISITS}</th>
+									<th widget="transition" class="time">{PARENTAL_CONTROLS.SPENT_ONLINE}</th>
+									<th widget="transition" class="block">{PARENTAL_CONTROLS.BLOCK_MODIFY}</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div widget="fieldset" class="parental-ctrls-history parental-ctrls-history-content"></div>
+			<!--<div widget="simpleDom" id="parental-ctrls-insight-block" class="hidden" data-bind="{websiteBlockMsg}"><span></span></div>-->
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-add-devices-msg" class="editor-container z-index-1000-msg" type="confirm" data-bind="{parentalCtrlsAddDevicesMsg}" msg-title="{PARENTAL_CONTROLS.ADD_DEVICES}" yes-text="{OPERATION.ADD_UPPERCASE}" no-text="{OPERATION.CANCEL_UPPERCASE}" content-scroll="{true}">
+		<div widget="fieldset">
+			<div widget="paragraph" id="parental-ctrls-add-devices-notice" text="{PARENTAL_CONTROLS.ADD_DEVICES_NOTICE}"></div>
+			<div widget="grid" id="parental-ctrls-devices-list-grid" class="block-separate-30" data-bind="{parentalCtrlsDevicesListGrid}" plugins="paging" multi-select="{true}" select-type="checkbox"></div>
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-del-cfm-msg" class="global-confirm" type="confirm" data-bind="{parentalCtrlsDelCfmMsg}" msg="{PARENTAL_CONTROLS.DELETE_NOTICE}" yes-text="{PARENTAL_CONTROLS.DELETE}" no-text="{PARENTAL_CONTROLS.CANCEL}" title-bar="{false}" close-btn="{true}"></div>
+</div>
+<div view="{parentalControlsV2View}">
+	<div widget="panel" title-label="{PARENTAL_CONTROLS.PARENTAL_CONTROLS}" collpasible="{false}" instruction="{PARENTAL_CONTROLS.INSTRUCTION}">
+		<div widget="grid" id="parental-controls-grid" class="m-card-grid" data-bind="{parentalControlsStoreV2}" plugins="tBar|popEditor|paging" operation="add">
+			<div widget="form" id="parental-controls-grid-editor" data-bind="{parentalCtrlsEditorModelV2}">
+				<div widget="steps" id="parental-ctrls-edit-steps" data-bind="{parentalCtrlsAddSteps}"></div>
+				<div widget="switchField" id="parental-ctrls-edit-switch" data-bind="{parentalCtrlsEditSwitch}"></div>
+				<div widget="fieldset" class="parental-ctrls-edit-fields">
+					<div widget="fieldset" class="basic-info">
+						<div widget="textbox" class="label-above" label-field="{PARENTAL_CONTROLS.NAME}" data-bind="{parentalCtrlsEditorModelV2.name}"></div>
+						<div id="device-list">
+							<span class="device-list-title"></span>
+							<div widget="deviceSelect" id="parental-ctrls-device-list" data-bind="{parentalCtrlsEditorModelV2.clientList}"></div>
+						</div>
+					</div>
+					<div widget="fieldset" class="filter-level">
+						<div widget="panel" class="case" title-label="{PARENTAL_CONTROLS.KEYWORD_FILTER}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.KEYWORD_FILTER_INSTRUCTION2}">
+							<div class="filter-content-wrapper">
+								<div widget="filterContentV2" id="parental-ctrls-keyword-filter" type="keyword" data-bind="{parentalCtrlsEditorModelV2.keywordFilter}" data-options="{keywordFilterSV2}" placeholder="{PARENTAL_CONTROLS.KEYWORD_FILTER_PLACEHOLDER}"></div>
+							</div>
+						</div>
+					</div>
+					<div widget="fieldset" class="time-controls">
+						<div widget="panel" title-label="{PARENTAL_CONTROLS.TIME_LIMITS}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.TIME_LIMITS_INSTRUCTION}">
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.MON_TO_FRI}" data-bind="{parentalCtrlsEditorModelV2.enableWorkdayTimeLimit}" true-value="{true}" false-value="{false}"></div>
+							<div widget="combobox" label-field="{PARENTAL_CONTROLS.DAILY_TIME_LIMIT}" data-bind="parentalCtrlsEditorModelV2.workdayDailyTime" data-options="{dailyTimeLimitSV2}"></div>
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.SAT_AND_SUN}" data-bind="{parentalCtrlsEditorModelV2.enableWeekendTimeLimit}" true-value="{true}" false-value="{false}"></div>
+							<div widget="combobox" label-field="{PARENTAL_CONTROLS.DAILY_TIME_LIMIT}" data-bind="parentalCtrlsEditorModelV2.weekendDailyTime" data-options="{dailyTimeLimitSV2}"></div>
+						</div>
+						<div widget="panel" title-label="{PARENTAL_CONTROLS.BED_TIME}"  collpasible="{false}" instruction="{PARENTAL_CONTROLS.BED_TIME_INSTRUCTION}">
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.SCHOOL_NIGHTS}" data-bind="{parentalCtrlsEditorModelV2.enableWorkdayBedTime}" true-value="{true}" false-value="{false}"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_NIGHT}" data-bind="{parentalCtrlsEditorModelV2.workdayBedTimeBegin}" hour-system="12" format="h:i"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_MORNING}" data-bind="{parentalCtrlsEditorModelV2.workdayBedTimeEnd}" hour-system="12" format="h:i"></div>
+							<div widget="switch" label-field="{PARENTAL_CONTROLS.WEEKEND}" data-bind="{parentalCtrlsEditorModelV2.enableWeekendBedTime}" true-value="{true}" false-value="{false}"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_NIGHT}" data-bind="{parentalCtrlsEditorModelV2.weekendBedTimeBegin}" hour-system="12" format="h:i"></div>
+							<div widget="time" label-field="{PARENTAL_CONTROLS.GOOD_MORNING}" data-bind="{parentalCtrlsEditorModelV2.weekendBedTimeEnd}" hour-system="12" format="h:i"></div>
+						</div>
+					</div>
+				</div>
+				<div widget="fieldset" id="parental-ctrls-add-btns" class="inline-container btn-container" data-bind="{parentalCtrlsAddBtns}">
+					<div widget="button" id="parental-ctrls-add-btns-left" data-bind="{parentalCtrlsAddBtnsLeft}" text="{PARENTAL_CONTROLS.CANCEL}" class="label-empty btn-cancel"></div>
+					<div widget="button" id="parental-ctrls-add-btns-right" data-bind="{parentalCtrlsAddBtnsRight}" text="{PARENTAL_CONTROLS.NEXT}" class="label-empty btn-submit"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-insight-msg" class="no-button-msg" type="window" data-bind="{parentalCtrlsInsightMsg}" msg-title="{PARENTAL_CONTROLS.INSIGHTS}">
+		<div widget="fieldset">
+			<div widget="switchField" id="parental-ctrls-insight-switch" data-bind="{parentalCtrlsInsightSwitch}"></div>
+			<div widget="fieldset" class="top-10-visit top-10-visit-content">
+				<div class="day-select">
+					<div widget="combobox" data-bind="{parentalCtrlDaySlt}" data-options="{parentalCtrHistoryDayV2}" class="label-empty" span-text="{true}" option-width="160" ></div>
+				</div>
+				<div widget="transition" class="top-10-visit-no-history" data-bind="{topTenVisitNoHistory}"><span>{PARENTAL_CONTROLS.NO_HISTORY}</span></div>
+				<div class="top-10-visit-wrapper">
+					<div class="total-spent-online">
+						<div widget="transition" class="title"><span>{PARENTAL_CONTROLS.TOTAL_SPENT_ONLINE}</span></div>
+						<div class="content">
+							<span widget="transition" class="hours-total">{PARENTAL_CONTROLS.HOURS_24}</span>
+							<div class="total-time-circle-wrapper">
+								<div id="total-spent-time"></div>
+								<div id="total-left-time"></div>
+							</div>
+							<span class="hours-spent"></span>
+						</div>
+					</div>
+					<div class="top-10-visit-info-remain">
+						<table id="top-10-visit-info-remain-grid">
+							<thead>
+								<tr>
+									<th widget="transition" class="url">{PARENTAL_CONTROLS.TOP_10_VISITS}</th>
+									<th widget="transition" class="time">{PARENTAL_CONTROLS.SPENT_ONLINE}</th>
+									<th widget="transition" class="block">{PARENTAL_CONTROLS.BLOCK_MODIFY}</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div widget="fieldset" class="parental-ctrls-history parental-ctrls-history-content"></div>
+			<!--<div widget="simpleDom" id="parental-ctrls-insight-block" class="hidden" data-bind="{websiteBlockMsg}"><span></span></div>-->
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-add-devices-msg" class="editor-container z-index-1000-msg" type="confirm" data-bind="{parentalCtrlsAddDevicesMsg}" msg-title="{PARENTAL_CONTROLS.ADD_DEVICES}" yes-text="{OPERATION.ADD_UPPERCASE}" no-text="{OPERATION.CANCEL_UPPERCASE}" content-scroll="{true}">
+		<div widget="fieldset">
+			<div widget="paragraph" id="parental-ctrls-add-devices-notice" text="{PARENTAL_CONTROLS.ADD_DEVICES_NOTICE}"></div>
+			<div widget="grid" id="parental-ctrls-devices-list-grid" class="block-separate-30" data-bind="{parentalCtrlsDevicesListGridV2}" plugins="paging" multi-select="{true}" select-type="checkbox"></div>
+		</div>
+	</div>
+
+	<div widget="msg" id="parental-ctrls-del-cfm-msg" class="global-confirm" type="confirm" data-bind="{parentalCtrlsDelCfmMsg}" msg="{PARENTAL_CONTROLS.DELETE_NOTICE}" yes-text="{PARENTAL_CONTROLS.DELETE}" no-text="{PARENTAL_CONTROLS.CANCEL}" title-bar="{false}" close-btn="{true}"></div>
+</div>
+<div view="{parentalControlsV2OptimizeView}" class="ptcr-v3">
+	<div widget="panel" title-label="{PARENTAL_CONTROLS.PARENTAL_CONTROLS}" collpasible="{false}"
+		instruction="{PTCR_V2.TITLE_TIP}">
+		<div widget="switch" label-field="{PARENTAL_CONTROLS.PARENTAL_CONTROLS}" data-bind="ptcrEnableV3.enable"
+			true-value="on" false-value="off" id="parental-enable"></div>
+		<div widget="displaylabel" class="l-inline-block" data-bind="{currentTime}" label-field="{TIMESETTING.CURRENT_TIME}"></div>
+		<div widget="button" data-bind="{timeSettings}" id="system-time-settings" class="l-inline-block after-input link-button" text="{SYSTEM_LOG.TIME_SETTINGS}"></div>
+	</div>
+	<div widget="panel" class="hidden" data-bind="ptcrContent" title-label="{PTCR_V2.CHILD_LIST}" collpasible="{false}"
+		instruction="{PTCR_V2.GRID_TIP}">
+		<div widget="grid" id="ptcr-grid" class="m-card-grid" data-bind="{parentalControlsStoreV3}"
+			plugins="tBar|popEditor|paging" operation="add">
+			<div widget="form" id="ptcr-grid-editor-v2" data-bind="{ptcrEditorModel}">
+				<div widget="switchField" id="ptcr-edit-tabs" class="ptcr-edit-tabs" data-bind="{parentalCtrlsEditSwitch}">
+				</div>
+				<div widget="fieldset">
+					<div widget="fieldset" class="basic-info">
+						<div widget="panel" title-label="{PTCR_V2.BASIC_INFO}" collpasible="{false}"
+							instruction="{PTCR_V2.BASIC_INFO_INTRO}">
+							<div widget="textbox" class="label-above" label-field="{PTCR_V2.PROFILE_NAME}" separator=""
+								data-bind="{ptcrEditorModel.name}"></div>
+							<div widget="editList" class="label-above" label-field="{PTCR_V2.NEW_DEVICES_LIST}" separator=""
+								item-cls="device-item" id="ptcr-dev-list" data-bind="{ptcrEditorModel.clientList}"
+								add-btn="{true}" add-text="{PTCR_V2.ADD_HIS_HER_DEV}" id-key="deviceId"></div>
+						</div>
+					</div>
+					<div widget="fieldset" class="filter-level">
+						<div widget="panel" title-label="{PTCR_V2.FILTER_CONTENT}" instruction="{PTCR_V2.FILTER_CONTENT_INTRO}"
+							collpasible="{false}">
+							<div widget="transition" class="webtype-title">
+								<p class="field-main">{PTCR_V2.FILTER_RULE}</p>
+								<p class="field-tip">{PTCR_V2.FILTER_RULE_TIP}</p>
+							</div>
+							<div widget="radio" id="ptcr-website-type" class="radio-button radio-inline ptcr-radio" data-bind="{ptcrEditorModel.websiteType}"
+								label-field="{false}" data-options="{ptcrModeOpts}" toggle-text="{true}" checked-text="{PTCR_V2.ON}"
+								unchecked-text="{PTCR_V2.OFF}"></div>
+							<div widget="transition" class="weblist-title" data-bind="{webListNote}">
+								<p class="field-main">{TITLE}</p>
+								<p class="field-tip">{TIP}</p>
+							</div>
+							<div class="url-input-wrap">
+								<div widget="textbox" id="url-input" data-bind="{ptcrViewModel.url}" label-field="{false}" hint="{PTCR_V2.KEYWORD_URL}" emit-enter="{true}"></div>
+								<div widget="button" text="{OPERATION.ADD_UPPERCASE}" id="url-input-btn"></div>
+							</div>
+							<div widget="editList" class="hidden" label-field="{false}" id="black-url-list"
+								data-bind="{ptcrEditorModel.blackList}" item-cls="url-item"></div>
+							<div widget="editList" class="hidden" label-field="{false}" id="white-url-list"
+								data-bind="{ptcrEditorModel.whiteList}" item-cls="url-item"></div>
+						</div>
+					</div>
+					<div widget="fieldset" class="time-controls">
+						<div widget="panel" title-label="{PTCR_V2.TIME_CONTROL}" collpasible="{false}"
+							instruction="{PTCR_V2.TIME_CONTROL_INTRO}">
+							<div widget="transition" class="timetable-title">
+								<p class="field-main">{PTCR_V2.ACCESS_TIME}</p>
+								<p class="field-tip">{PTCR_V2.ACCESS_TIME_TIP}</p>
+							</div>
+							<div widget="editList" label-field="{false}" item-cls="time-item" id="ptcr-time-list"
+								class="ptcr-time-list" data-bind="{ptcrEditorModel.timeTable}" add-btn="{true}"
+								add-text="{PTCR_V2.EDIT_TIME}"></div>
+							<div widget="transition" class="timelimit-title">
+								<p class="field-main">{PTCR_V2.TIME_LIMITS}</p>
+								<p class="field-tip">{PTCR_V2.TIME_LIMITS_TIPS}</p>
+							</div>
+							<div class="inline-container ptcr-time-limit">
+								<div widget="switch" label-field="{PTCR_V2.MON_TO_FRI}"
+									data-bind="{ptcrEditorModel.enableWorkdayTimeLimit}" true-value="{true}" separator=""
+									false-value="{false}">
+								</div>
+								<div widget="slider" width="320" min-value="0" max-value="480" increment="30" pole-value="{true}"
+									data-bind="ptcrEditorModel.workdayDailyTime" label-field="{false}" id="weekday-slider"
+									value-marker="{true}" value-marker-pos="bottom" disable-pole="min"></div>
+								<div widget="transition" data-bind="disableWeekdayNote" class="no-time hidden">{PTCR_V2.NO_TIME_LIMITS}
+								</div>
+							</div>
+							<div class="inline-container ptcr-time-limit">
+								<div widget="switch" class="hidden" label-field="{PTCR_V2.SAT_AND_SUN}" separator=""
+									data-bind="{ptcrEditorModel.enableWeekendTimeLimit}" true-value="{true}" false-value="{false}">
+								</div>
+								<div widget="slider" class="hidden" label-field="{false}" width="320" min-value="0" pole-value="{true}"
+									increment="30" max-value="480" data-bind="ptcrEditorModel.weekendDailyTime" id="weekend-slider"
+									value-marker="{true}" value-marker-pos="bottom" disable-pole="min"></div>
+								<div widget="transition" data-bind="disableWeekendNote" class="no-time hidden">{PTCR_V2.NO_TIME_LIMITS}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div widget="fieldset" id="parental-ctrls-add-btns" class="inline-container btn-container"
+					data-bind="{parentalCtrlsAddBtns}">
+					<div widget="button" id="parental-ctrls-add-btns-left" data-bind="{parentalCtrlsAddBtnsLeft}"
+						text="{PARENTAL_CONTROLS.CANCEL}" class="label-empty btn-cancel"></div>
+					<div widget="button" id="parental-ctrls-add-btns-right" data-bind="{parentalCtrlsAddBtnsRight}"
+						text="{PARENTAL_CONTROLS.NEXT}" class="label-empty btn-submit"></div>
+				</div>
+			</div>
+		</div>
+		<div widget="transition" data-bind="emptyGrid" class="empty-grid-note hidden">
+			<p>{PTCR_V2.NO_PROFILE}</p>
+			<p>{PTCR_V2.START_PROFILE}</p>
+		</div>
+	</div>
+
+
+
+	<div widget="msg" id="ptcr-insight-msg" class="no-button-msg" type="window"
+		data-bind="{parentalCtrlsInsightMsg}" msg-title="{PTCR_V2.REPORT_TITLE}">
+		<div widget="fieldset">
+			<div widget="paragraph" class="msg-tip" text="{PTCR_V2.VIEW_REPORT}"></div>
+			<div class="insight-fun-bar">
+				<div widget="switchField" id="parental-ctrls-insight-tabs" data-bind="{parentalCtrlsInsightSwitch}"></div>
+				<div widget="combobox" data-bind="{ptcrDayOrWeek}" data-options="{ptcrDayWeeks}"
+					class="label-empty ptcr-day-week" span-text="{true}" option-width="160"></div>
+				<div widget="lrselect" data-bind="{parentalCtrlDaySlt}" data-options="{ptcrDayOptionsV3}"
+					class="label-empty ptcr-day-sel" span-text="{true}"></div>
+			</div>
+
+			<div widget="fieldset" class="time-chart">
+				<div widget="transition" data-bind="dayTotal" class="total intro">
+					<span class="intro-l">{PTCR_V2.TIME_ONLINE}</span>
+					<span class="intro-v">{TIME_ONLINE}</span>
+				</div>
+				<div widget="transition" data-bind="dayLimit" class="limit intro">
+					<span class="intro-l">{PTCR_V2.TIME_LIMIT}</span>
+					<span class="intro-v">{TIME_LIMIT}</span>
+				</div>
+				<!-- <div widget="displaylabel" data-bind="{ptcrTimeOnline}" label-field="{PTCR_V2.TIME_ONLINE}"></div>
+				<div widget="displaylabel" data-bind="{ptcrTimeLimit}" label-field="{PTCR_V2.TIME_LIMIT}"></div> -->
+				<div class="ptcr-chart-container">
+					<div id="ptcr-bar-chart">
+					</div>
+					<div widget="transition" class="chart-xlabels" data-bind="dayReportXLabel">
+						<span>{FIRST}</span>
+						<span>{SECOND}</span>
+						<span>{THIRD}</span>
+						<span>{FOURTH}</span>
+					</div>
+				</div>
+
+			</div>
+			<div widget="fieldset" class="website-list">
+				<div class="website-list-wrap su-scroll">
+					<div widget="repeat" id="insight-website-list" class="insight-websites" data-bind="{websiteStore}"></div>
+					<div widget="paragraph" data-bind="{noWebsiteNote}" class="hidden" text="{PTCR_V2.NO_WEBSITE}"></div>
+				</div>
+				<div widget="button" id="show-more" data-bind="{showMoreBtn}" text="{PTCR_V2.SHOW_MORE}" label-field="{null}"
+					class="link-button"></div>
+			</div>
+			<!--<div widget="simpleDom" id="parental-ctrls-insight-block" class="hidden" data-bind="{websiteBlockMsg}"><span></span></div>-->
+		</div>
+	</div>
+
+	<div widget="msg" id="ptcr-add-dev-msg" class="editor-container z-index-1000-msg ptcr-add-dev-msg" type="confirm"
+		data-bind="{parentalCtrlsAddDevicesMsg}" msg-title="{PTCR_V2.ADD_DEV}" yes-text="{OPERATION.ADD}"
+		no-text="{OPERATION.CANCEL}" content-scroll="{false}">
+		<div widget="fieldset">
+			<div widget="paragraph" text="{PTCR_V2.ADD_DEV_INFO}"></div>
+			<div class="layout-wrap">
+				<div class="left su-scroll">
+					<div widget="paragraph" text="{PTCR_V2.ONLINE_DEVS}"></div>
+					<div widget="devicesList" id="ptcr-online-devices" class="ptcr-sel-devs" data-bind="ptcrOnlineDevs"
+						multiselect="{true}" pagination="{false}"></div>
+					<div widget="paragraph" text="{PTCR_V2.OFFLINE_DEVS}"></div>
+					<div widget="devicesList" id="ptcr-offline-devices" data-bind="ptcrOfflineDevs" class="ptcr-sel-devs"
+						multiselect="{true}" pagination="{false}"></div>
+				</div>
+				<div class="right su-scroll">
+					<div widget="paragraph" text="{PTCR_V2.SEL_DEVS}"></div>
+					<div widget="repeat" class="ptcr-sel-devs" id="ptcr-selected-devices" data-bind="ptcrSelectedDevs"></div>
+					<div widget="paragraph" data-bind="noSelDevNote" class="no-sel-tip hidden" text="{PTCR_V2.SEL_TIPS}"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div widget="msg" id="ptcr-time-table-msg" class="editor-container ptcr-time-table-msg z-index-1000-msg"
+		type="confirm" data-bind="{ptcrTimeTableMsg}" msg-title="{PTCR_V2.PICKER_MSG_TITLE}" yes-text="{OPERATION.SAVE}"
+		no-text="{OPERATION.CANCEL}" content-scroll="{false}">
+		<div widget="paragraph" text="{PTCR_V2.PICKER_MSG_TIP}"></div>
+		<div widget="timepicker" data-bind="{ptcrViewModel.timeTable}" selected-legend="{PTCR_V2.ACCESS_ALLOW}"
+			deselected-legend="{PTCR_V2.ACCESS_DENY}" is-24="{false}"></div>
+	</div>
+</div>
+<div view="{qosView}" id="qos-view-container">
+	<div widget="panel" title-label="{QOS.QOS}" collpasible="{false}" instruction="{QOS.INSTRUCTION}">
+		<div widget="displaylabel" label-field="{QOS_V2.CURRENT_TIME}" data-bind="{currentTime}" class="qos-current-time hidden"></div>
+		<div widget="switchField" id="qos-priority-tabs" class="qos-priority-tabs hidden" data-bind="{qosPriorityTab}"></div>
+
+		<div widget="htmlLoader" data-bind="{qosBandwidthLoader}"></div>
+		
+		<div widget="fieldset" data-bind="{applicationPriorityFieldset}" class="application-priority-fieldset">
+			<div widget="switch" id="application-priority-enable" class="hidden"
+					label-field="{QOS.APPLICATION_PRIORITY}" data-bind="{priorityEnable.enable}" 
+					true-value="on" false-value="off">
+			</div>
+			<div widget="fieldset" class="qos-btn-fieldset">
+				<div widget="qosBtn" data-bind="{qosInfo.qosMode}"></div>
+			</div>
+		</div>
+
+		<div widget="fieldset" data-bind="{devicePriorityFieldset}" class="device-priority-fieldset hidden">
+			<div widget="grid" id="qos-device-priority-grid" class="qos-device-priority-grid" plugins="popEditor" data-bind="{qosDevicePriorityStore}" auto-min-height="{true}">
+				<div widget="fieldset" id="qos-schedule-editor" class="width-label-s qos-schedule-editor">
+					<div widget="paragraph" label-field="{QOS_V2.CURRENT_TIME}" data-bind="{editorCurrentTime}" class="label-auto note"></div>
+					<div widget="paragraph" label-field="{QOS_V2.NOTE}" class="label-auto note" text="{QOS_V2.NOTE_CONTENT}"></div>
+					<div widget="time" class="schedule-time-from" data-bind="{timeFrom}" name="timeFrom" hour-system="12" format="h:i" sub-label-field="{QOS_V2.FROM}"></div>
+					<div widget="time" data-bind="{timeTo}" name="timeTo" hour-system="12" format="h:i" sub-label-field="{QOS_V2.TO}" short-tips=""></div>
+					<div widget="weekdaySelect" id="qos-schedule-repeat" class="schedule-repeat" name="repeat" label-field="{QOS_V2.REPEAT}"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" type="prompt" id="qos-custom-msg" class="editor-container" data-bind="{customCfgMsg}" msg-title="{QOS.QOS_CUSTOM}" ok-text="{QOS.SAVE}" no-text="{QOS.CANCEL}" content-scroll="{true}">
+		<div widget="fieldset">
+			<div widget="customSlider" data-bind="{qosCustomSlider}"></div>
+		</div>
+	</div>
+	<div widget="transition" data-bind="{gfnNotes}" class="foot-notes hidden">
+		<p class="bold">Notes:</p>
+		<p>{QOS.FOOT_NOTES}</p>
+	</div>
+</div>
+<div view="{qosV2View}" id="qosv2-view-container">
+	<div widget="panel" title-label="{QOS_V2.GLOBAL_SETTINGS}" collapsible="{false}" instruction="{QOS_V2.INSTRUCTION}">
+		<div widget="checkbox" class="block-title" label-field="{QOS_V2.QOS}" box-label="{QOS_V2.ENABLE}" data-bind="{qosV2.enable}" true-value="on" false-value="off"></div>
+		<div widget="fieldset" class="bandwidth-set-wrap" data-bind="{bandwidthSetWrap}">
+			<div widget="combination" label-field="{QOS_V2.UPLOAD_BANDWIDTH}" class="bandwidth-set-item time-container">
+				<div widget="textbox" data-bind="{qosV2.upBand}" label-field="{false}"></div>
+				<div widget="combobox" data-bind="{qosV2.upUnit}" label-field="{false}" data-options="{bandwidthUnitStore}"></div>
+			</div>
+			<div widget="combination" label-field="{QOS_V2.DOWNLOAD_BANDWIDTH}" class="bandwidth-set-item time-container">
+				<div widget="textbox" data-bind="{qosV2.downBand}" label-field="{false}"></div>
+				<div widget="combobox" data-bind="{qosV2.downUnit}" label-field="{false}" data-options="{bandwidthUnitStore}"></div>
+			</div>
+		</div>		
+		<!-- <div widget="displaylabel" label-field="{QOS_V2.CURRENT_TIME}" data-bind="{currentTime}" class="qos-current-time"></div> -->
+		<div widget="fieldset" data-bind="{scheduleWrap}">
+			<div widget="displaylabel" label-field="{QOS_V2.CURRENT_TIME}" data-bind="{currentTime}" class="l-inline-block"></div>		
+			<div widget="button" data-bind="{autoUpdateSettings}" id="system-time-settings" class="l-inline-block after-input link-button" text="{SYSTEM_LOG.TIME_SETTINGS}"></div>
+		</div>
+	</div>
+	<div widget="panel" title-label="{QOS_V2.DEVICE_PRIORITY}" data-bind="{devicePriorityPanel}" collapsible="{false}">
+		<div widget="grid" id="qos-device-priority-grid" class="qos-device-priority-grid" plugins="popEditor" data-bind="{qosDevicePriorityStore}" max-lines="100" auto-min-height="{true}"></div>
+			<div widget="fieldset" id="qos-schedule-editor" class="width-label-s qos-schedule-editor">
+				<!-- <div widget="paragraph" label-field="{QOS_V2.CURRENT_TIME}" data-bind="{editorCurrentTime}" class="label-auto note"></div>
+				<div widget="paragraph" label-field="{QOS_V2.NOTE}" class="label-auto note" text="{QOS_V2.NOTE_CONTENT}"></div> -->
+				<div widget="time" id="schedule-time-from" class="schedule-time-from" data-bind="{timeFrom}" name="timeFrom" hour-system="12" format="h:i" label-field="{QOS_V2.FROM}"></div>
+				<div widget="time" id="schedule-time-to" data-bind="{timeTo}" name="timeTo" hour-system="12" format="h:i" label-field="{QOS_V2.TO}" short-tips=""></div>
+				<div widget="weekdaySelect" id="qos-schedule-repeat" class="schedule-repeat" name="repeat" label-field="{QOS_V2.REPEAT}"></div>
+			</div>
+		</div>
+	</div>
+</div>
+<div view="{bandwidthView}">
+	
+	<div widget="fieldset" class="">
+		<div class="container widget-container displaylabel-container total-bandwidth">
+			<div widget="transition" class="widget-fieldlabel-wrap ">
+				<div class="widget-fieldlabel-inner">
+					<label class="widget-fieldlabel text-fieldlabel">{BANDWIDTH.TOTAL_BANDWIDTH}</label>
+					<span class="widget-separator">:</span>
+				</div>
+			</div>
+			<div class="widget-wrap-outer">
+				<div widget="displaylabel" label-field="{false}" class="uploadspeed" data-bind="{totalBandwidth.upstreamBandwidthTrans}"></div>
+				<div widget="displaylabel" label-field="{false}" class="downloadspeed" data-bind="{totalBandwidth.downstreamBandwidthTrans}"></div>
+				<div class="icon edit-icon inline-block"></div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" id="set-bandwidth-msg" class="editor-container" type="prompt" data-bind="{setBandwidthMsg}" msg-title="{BANDWIDTH.TOTAL_BANDWIDTH}" ok-text="{OPERATION.SAVE_UPPERCASE}">
+		<div widget="fieldset">
+			<div widget="paragraph" text="{BANDWIDTH.SET_NOTE}"></div>
+			<div widget="radio" label-field="{false}" data-bind="{totalBandwidth.bandwidthMode}" data-items="{bandwidthSetTypeStore}" toggle-content="{true}"></div>
+			<div widget="fieldset" class="bandwidth-set-manual" data-bind="{bandwidthSetManual}">
+				<div widget="combination" label-field="{BANDWIDTH.UPLOAD_BANDWIDTH}" class="bandwidth-set-manual-item time-container">
+					<div widget="textbox" data-bind="{totalBandwidth.upstreamSpeedTrans}" label-field="{false}"></div>
+					<div widget="combobox" data-bind="{totalBandwidth.upstreamUnitTrans}" label-field="{false}" data-options="{bandwidthUnitStore}"></div>
+				</div>
+				<div widget="combination" label-field="{BANDWIDTH.DOWNLOAD_BANDWIDTH}" class="bandwidth-set-manual-item time-container">
+					<div widget="textbox" data-bind="{totalBandwidth.downstreamSpeedTrans}" label-field="{false}"></div>
+					<div widget="combobox" data-bind="{totalBandwidth.downstreamUnitTrans}" label-field="{false}" data-options="{bandwidthUnitStore}"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div widget="msg" id="speedtest-privacy-msg" type="prompt" data-bind="{speedtestPrivacyMsg}" msg="{BANDWIDTH.SPEEDTEST_PRIVACY_NOTE}" ok-text="{OPERATION.AGREE_UPPERCASE}"></div>
+
+	<div widget="msg" id="speedtest-msg" class="editor-container" type="window" data-bind="{speedtestMsg}" msg-title="{BANDWIDTH.INTERNET_SPEED_TEST}">
+		<div widget="fieldset">
+			<div widget="paragraph" data-bind="{bandwidthSpeedTestControl.speedTestInfo}"></div>
+			<div widget="fieldset" class="speed-test-chart-container" data-bind="{bandwidthSpeedTestControl.speedTestChartContainer}">
+				<div widget="speedTestGauge" id="speed-test-download" class="speed-test-gauge" data-bind="{bandwidthSpeedTestControl.speedTestDownload}" width="200" height="200"></div>
+				<div widget="speedTestGauge" id="speed-test-upload" class="speed-test-gauge" data-bind="{bandwidthSpeedTestControl.speedTestUpload}" width="200" height="200"></div>
+			</div>
+			<div widget="button" class="bandwidth-speedtest-btn" data-bind="{bandwidthSpeedTestControl.speedTestBtn}" label-field="{false}" text="{BANDWIDTH.TRY_AGAIN}"></div>
+		</div>
+		<div widget="fieldset" class="btn-container inline-container l-hide m-hide">
+			<div widget="button" id="speedtest-msg-cancel-btn"  class="btn-cancel" text="{OPERATION.CANCEL_UPPERCASE}" label-field="{false}"></div>
+		</div>
+	</div>
+</div>

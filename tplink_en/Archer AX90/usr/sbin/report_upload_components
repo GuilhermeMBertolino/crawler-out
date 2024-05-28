@@ -1,0 +1,246 @@
+#!/usr/bin/lua
+--[[
+Copyright(c) 2013 Shenzhen TP-LINK Technologies Co.Ltd.
+File    :  report_tether_components
+Details :  script for uploading components to cloud.
+Author  :  Feng Jiashuang <fengjiashuang@tp-link.com.cn>
+Version :  1.0.0
+Date    :  1 Nov, 2019
+]]--
+
+local error = require "cloud_report.report_error"
+local cloud_https	= require "cloud_req.cloud_https"
+local dbg			= require "luci.tools.debug"
+local io			= require "io"
+local json			= require "luci.json"
+local nixio			= require "nixio"
+local sys			= require "luci.sys"
+local uci			= require "luci.model.uci"
+local uci_r			= uci.cursor()
+local tmcli			= require "luci.model.tm_clientmgmt"
+local avira			= require "luci.model.avira"
+
+local CLOUD_HOMECARE_TOKEN_FILE = "/tmp/cloud/cloud_token_homecare"
+local CLOUD_DOMAIN = "api-homecare-cloud-rddev.i.tplinknbu.com"
+local RESULT_FILE = "/var/log/cloud_report_component"
+local URL = "/v1/devices/components"
+local METHOD = "POST"
+local HTTP_CONTENT_TYPE = "Content-type: application/json"
+
+local AVIRA_COMPLIST_RT = {
+	{id = "ASTMobileSDK",	version = 16385},
+	{id = "monthlyReport",	version = 16385},
+	{id = "insights",		version = 16385},
+	{id = "antivirus",		version = 16385},
+	{id = "messaging",		version = 16385},
+}
+
+local AVIRA_COMPLIST_AP = {}
+
+local AVIRA_COMPLIST_FREE = {
+	{id = "ASTMobileSDK",	version = 1},
+	{id = "monthlyReport",	version = 1},
+	{id = "insights",		version = 1},
+	{id = "messaging",		version = 1},
+}
+
+local componentRT = AVIRA_COMPLIST_FREE
+
+function TrimStr(str)
+	local tmpstr = str
+
+	if not str then
+		return ""
+	end
+
+	tmpstr = string.gsub(tmpstr, "-", "")
+	str = string.match(tmpstr, "%w+")
+	str = str:upper()
+	return str
+end
+
+local MAX_RETRY_NUM = 1
+local retry_count = 0
+local mode = "router"
+
+local data = {}
+local retry = false
+local ret
+
+if arg[1] ~= nil then
+	if arg[1] == "full" then
+		componentRT = AVIRA_COMPLIST_RT
+	elseif arg[1] == "lite" then
+		componentRT = AVIRA_COMPLIST_FREE
+	else
+		dbg.print("invalid arg!")
+		return false, "invalid arg!"
+	end
+end
+
+while (retry_count <= MAX_RETRY_NUM) do
+	retry_count = retry_count + 1
+	retry = false
+
+	if not nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+		sys.call("cloud_getDevToken homecare")
+	end
+
+	if not nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+		return false, "Device Offline"
+	end
+
+	local fp, token, url
+	fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+	token = fp:read("*line")
+	url = fp:read("*line") .. URL
+	fp:close()
+
+	data.deviceId = TrimStr(sys.exec("getfirm DEV_ID"))
+	mode = uci_r:get("sysmode","sysmode", "mode") or "router"
+	if mode == "router" then
+		data.componentList = componentRT
+	elseif mode == "ap" then
+		data.componentList = AVIRA_COMPLIST_AP
+	end
+	
+	sys.call("echo `date` >'%s.result'; echo '%s' >>'%s.result'" % {RESULT_FILE, json.encode(data), RESULT_FILE})
+	dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload request]:" .. json.encode(data))
+	
+	fp = io.popen("curl -S -l -H \"%s\" -H \"Authorization: %s\" -X POST -k -d \'%s\' --connect-timeout 8 %s 2>>%s.result" % {HTTP_CONTENT_TYPE, token, json.encode(data), url, RESULT_FILE})
+
+	if fp then
+		ret = fp:read("*all")
+		fp:close()
+	end
+
+	dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload response]:" .. ret)
+	ret = json.decode(ret)
+
+	if ret ~= nil then
+		if tonumber(ret.code) == error.ERROR_MSG.ERROR_INVALID_DEVICE_TOKEN[1] then
+			--refresh token and upload again
+			sys.call("rm -rf" .. CLOUD_HOMECARE_TOKEN_FILE)
+			retry = true
+		end
+	end
+
+	if retry == false then
+		break
+	end
+end
+
+if arg[2] ~= nil then
+	if arg[2] == "n" then
+		return true, "payment not changed"
+	end
+end
+
+-- free to paid
+if arg[1] == "full" then
+	-- NOTE: set to available
+	uci_r:foreach("parental_control_v2", "owner",
+        function(section)
+			if section.available and section.available == "false" then
+				uci_r:set("parental_control_v2", section.owner_id, "available", "true")
+			end
+		end
+	)
+
+	local sec_state = uci_r:get("parental_control_v2", "settings", "sec_state")
+	if sec_state == "false" then
+		uci_r:set("parental_control_v2", "settings", "sec_enable", "false")
+	else
+		uci_r:set("parental_control_v2", "settings", "sec_enable", "true")
+	end
+
+	uci_r:commit("parental_control_v2")
+	sys.fork_exec("/etc/init.d/parental_control reload")
+-- paid to free
+elseif arg[1] == "lite" then
+	-- NOTE: set to ash
+	uci_r:foreach("parental_control_v2", "owner",
+		function(section)
+				local is_disabled = 0
+
+				local offTime_enable = section.offTime_enable or "0"
+				if offTime_enable ~= "0" and is_disabled == 0 then
+					uci_r:set("parental_control_v2", section.owner_id, "available", "false")
+					is_disabled = 1
+				end
+
+				local timeLimits_enable = section.timeLimits_enable or "0"
+				if timeLimits_enable ~= "0" and is_disabled == 0 then
+					uci_r:set("parental_control_v2", section.owner_id, "available", "false")
+					is_disabled = 1
+				end
+
+				local bedtime_mode = section.bedtime_mode or "everyday"
+				if bedtime_mode ~= "everyday" and is_disabled == 0 then
+					uci_r:set("parental_control_v2", section.owner_id, "available", "false")
+					is_disabled = 1
+				end
+
+				if is_disabled == 0 then
+					uci_r:set("parental_control_v2", section.owner_id, "available", "true")
+				end
+		end
+	)
+
+	local sec_state = uci_r:get("parental_control_v2", "settings", "sec_enable")
+	if sec_state == "true" then
+		uci_r:set("parental_control_v2", "settings", "sec_state", "true")
+	else
+		uci_r:set("parental_control_v2", "settings", "sec_state", "false")
+	end
+	--	disable malicious-websites blocking
+	uci_r:set("parental_control_v2", "settings", "sec_enable", "false")
+
+	-- STEP1: Remove all devices.
+	local familyMacList = {}
+	local family_list = {}
+	familyMacList = tmcli.get_devices_family()
+	if familyMacList then
+		for k, v in ipairs(familyMacList) do
+			local client = {}
+			client.mac = v
+			client.family = "off"
+			family_list[#family_list + 1] = client
+		end
+	end
+	local res = avira.batch_set_client_info(family_list)
+	if not res then
+		dbg.print("Remove all devices failed")
+	end
+
+	-- STEP2: disable familytime
+	uci_r:set("parental_control_v2", "familytime", "enable", "false")
+	uci_r:set("parental_control_v2", "familytime", "time", 0)
+	uci_r:commit("parental_control_v2")
+	sys.fork_exec("/etc/init.d/family_time reload")
+	sys.fork_exec("/etc/init.d/parental_control reload")
+end
+
+--say bye to tmp client
+if ret == nil then
+	local socket = require "socket"
+	local host = "127.0.0.1"
+	local port = 20002
+
+	sock = socket.connect(host, port)
+	if not sock then
+		return false, "socket  connect error"
+	end
+	pack_assoc = {1,0,1,0}
+	pack_request = {1,0,2,0,1,0,255,0,0,0,0,0,0,0,0,0,141,234,48,245}
+
+	-- associate stage
+	sendbuf = string.char(unpack(pack_assoc))
+	sock:send(sendbuf)
+
+	-- trigger a request to kick off app
+	sendbuf = string.char(unpack(pack_request))
+	sock:send(sendbuf)
+
+	sock:close()
+end

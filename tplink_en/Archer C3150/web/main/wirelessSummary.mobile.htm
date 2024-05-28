@@ -1,0 +1,134 @@
+<div class="titleBar">
+    <a url="networkMap.mobile.htm"><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>Wireless</h1>
+    <a id="edit" url="wireless.mobile.htm" data-status="edit">Edit</a>
+</div>
+<h2 class="section-title mt15"><script type="text/html" class="trans"><%=$.tpLang.s_str.wl2g%></script></h2>
+<div class="info-list">
+<div class="section-container">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.wlradio%></script></span>
+        <span class="text-readonly" id="wlEn_2g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wlGuestDulBandBasic_nstr.t_ssid%></script></span>
+        <span class="text-readonly" id="ssid_2g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wirelessSettings_nstr.t_mode%></script></span>
+        <span class="text-readonly" id="mode_2g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.channel%></script></span>
+        <span class="text-readonly" id="channel_2g">123</span>
+    </div>
+</div>
+</div>
+<h2 class="section-title mt15"><script type="text/html" class="trans" ><%=$.tpLang.s_str.wl5g%></script></h2>
+<div class="info-list">
+<div class="section-container">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.wlradio%></script></span>
+        <span class="text-readonly" id="wlEn_5g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wlGuestDulBandBasic_nstr.t_ssid%></script></span>
+        <span class="text-readonly" id="ssid_5g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.wirelessSettings_nstr.t_mode%></script></span>
+        <span class="text-readonly" id="mode_5g">123</span>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <span><script type="text/html" class="trans" ><%=$.tpLang.s_str.channel%></script></span>
+        <span class="text-readonly" id="channel_5g">123</span>
+    </div>
+</div>
+</div>
+<div class="pb26"></div>
+<script type="text/javascript">
+   (function() {
+        $.tpLocal('trans', $.tpLang);
+        $('.titleBar').titleBar({
+            title: $.tpLang.s_str.wireless
+        });
+        $('#edit').titleButton('status','edit', $.tpLang.m_str.edit);
+        //    logical
+        var wlanObj_2g,
+             wlanObj_5g;
+        init();
+        function init() {
+            var basicList = $.act(ACT_GL, LAN_WLAN, null, null, ["Name",
+                "Standard",
+                "SSID",
+                "X_TP_Band",
+                "AutoChannelEnable",
+                "Channel",
+                "Enable",
+
+            ]);
+            if (!$.exe()) {
+                $.each(basicList, function() {
+                    if ("2.4GHz" == this.X_TP_Band) {
+                        wlanObj_2g = this;
+                    } else if (INCLUDE_LAN_WLAN_DUALBAND && "5GHz" == this.X_TP_Band) {
+                        wlanObj_5g = this;
+                    }
+                });
+            }
+
+            initParamShow(wlanObj_2g, '_2g')
+            initParamShow(wlanObj_5g, '_5g');
+
+        }
+
+        function initParamShow(wlanObj, band) {
+//            enable
+            if (wlanObj.enable == 1) {
+                $('#wlEn' + band).html($.tpLang.m_str.en);
+            } else {
+                $('#wlEn' + band).html($.tpLang.m_str.dis);
+            }
+//            ssid
+            $('#ssid' + band).html(wlanObj.SSID);
+//            mode
+            var strMode;
+            if (band == '_5g') {
+                if (INCLUDE_LAN_WLAN_AC) {
+                    strMode = strMode_AC;
+                } else {
+                    strMode = strMode_AN;
+                }
+            } else {
+                strMode = strMode_N;
+            }
+            for (var i = 0; i < strMode.length; i++) {
+                if (wlanObj.standard == strMode[i][1]) {
+                    break;
+                }
+            }
+//channel
+            $('#mode' + band).html(strMode[i][0]);
+
+            if (wlanObj.autoChannelEnable == 1) {
+                $('#channel' + band).html($.tpLang.m_str.auto);
+            } else {
+                $('#channel' + band).html(wlanObj.channel);
+
+            }
+
+        }
+    })();
+</script>

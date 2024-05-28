@@ -1,0 +1,33 @@
+#!/usr/bin/env lua
+--[[
+	wifivapmac, a tool calculate wifi vap mac,
+	the high bit of the mac increases the vapid
+]]--
+-- param  mac       MAC (xx:xx:xx:xx:xx:xx)
+-- return new_mac   MAC + vapid
+
+local mac = arg[1]
+local vapid = arg[2]
+local tmp
+
+if not mac then
+	return false
+end		
+
+local eth = {}
+eth[6], eth[5], eth[4], eth[3], eth[2], eth[1] = mac:match("(%x%x):(%x%x):(%x%x):(%x%x):(%x%x):(%x%x)")
+
+for i, v in pairs(eth) do
+	eth[i] = tonumber(v, 16)
+end
+
+eth[6] = eth[6] + vapid * 16
+
+eth[6] = eth[6] % 2 + (math.floor(eth[6] / 2) + 1) * 2
+
+if eth[6] > 255 then
+	eth[6] = eth[6] % 256
+end
+
+print(string.format("%02X:%02X:%02X:%02X:%02X:%02X", eth[6], eth[5], eth[4], eth[3], eth[2], eth[1]))
+

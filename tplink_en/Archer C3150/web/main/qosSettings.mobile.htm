@@ -1,0 +1,107 @@
+<script type="text/javascript">
+    $.changeBodyColor('gray');
+</script>
+<div class="titleBar">
+    <a url=""><span class="icon-back sprite c-arrow-blue-left"></span></a>
+    <h1>QoS Settings</h1>
+    <a id="save" data-status="save">Save</a>
+</div>
+<div class="section-container mt14">
+    <div>
+        <span id="t_allowsee">Enable QoS: </span>
+    </div>
+    <input type="checkbox" id="allowsee" />
+</div>
+<div class="section-container mtNo">
+    <div class="section-box">
+        <label class="section-labelTitle">Upload bandwidth</label>
+        <div class="section-flex">
+            <input type="text" class="section-flex-input">
+            <select class="section-flex-select">
+                <option value="1">Mbps</option>
+                <option value="1">3</option>
+                <option value="1">4</option>
+                <option value="1">5</option>
+            </select>
+        </div>
+    </div>
+    <div class="section-box">
+        <label class="section-labelTitle">Upload bandwidth</label>
+        <div class="section-flex">
+            <input type="text" class="section-flex-input">
+            <select class="section-flex-select">
+                <option value="1">Mbps</option>
+                <option value="1">Mbps</option>
+                <option value="1">Mbps</option>
+                <option value="1">Mbps</option>
+            </select>
+        </div>
+    </div>
+</div>
+<div class="section-container mtNo">
+    <p id="advanced" class="advanced-block">
+        <span class="icon-advanced"></span>
+        <span>Advanced</span>
+    </p>
+    <div class="pb26">
+        <div class="section-box">
+            <div class="rangeslider-labelValue">
+                <label>High priority gurantee</label>
+                <span class="rangeslider-value">50%</span>
+            </div>
+            <input id="hpg" type="range" min="0" max="100" value="50">
+        </div>
+
+        <div class="section-box rangeslider-box">
+            <div class="rangeslider-labelValue">
+                <label>Middle priority gurantee</label>
+                <span class="rangeslider-value">50%</span>
+            </div>
+            <input id="mpg" type="range" min="0" max="100" value="50">
+        </div>
+
+        <div class="section-box rangeslider-box">
+            <div class="rangeslider-labelValue">
+                <label>Low priority gurantee</label>
+                <span class="rangeslider-value">50%</span>
+            </div>
+            <input id="lpg" type="range" min="0" max="100" value="50">
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.titleBar').titleBar();
+    $('.section-box input[type="range"]').rangeslider({
+
+        // Deactivate the feature detection
+        polyfill: false,
+
+        // Callback function
+        onInit: function() {
+            console.log('hello world');
+        },
+
+        // Callback function
+        onSlide: function(position, value) {
+            this.$element.parent().find('.rangeslider-value').html(value + '%');
+//            $('.rangeslider-value', this.$element.parent()).html(value + '%');
+        },
+
+        // Callback function
+        onSlideEnd: function(position, value) {
+            console.log('onSlideEnd');
+            console.log('position: ' + position, 'value: ' + value);
+        }
+    });
+
+    $('input[type="checkbox"]').checkboxMobile({
+        'hasTitle': true
+    });
+
+    $('select').selectMobile();
+
+    $('#advanced').click(function() {
+        $(this).next('div').toggle();
+    })
+</script>

@@ -1,0 +1,187 @@
+#!/bin/sh
+#
+# Copyright (c) 2017 Qualcomm Technologies, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Qualcomm Technologies, Inc.
+#
+
+#
+# Copyright (c) 2014, The Linux Foundation. All rights reserved.
+#
+. /lib/functions.sh
+
+local IFNAME=$1
+local CMD=$2
+
+if [ $CMD = "CONNECTED" ]; then
+	ker_ver=`uname -r |cut -d. -f1`
+	if [ $ker_ver == 5 ]; then
+		. /sbin/wifi config
+	else
+		. /sbin/wifi detect
+	fi
+fi
+
+is_section_ifname() {
+	local config=$1
+	local ifname
+	config_get ifname "$config" ifname
+	[ "${ifname}" = "$2" ] && eval "$3=$config"
+}
+
+# Obtain the named configuration value in the supplicant config file,
+# stripping off any double quotes.
+#
+# Return the value in the config_val global variable.
+get_config_val() {
+	local conf=$1
+	local key=$2
+
+	# This finds the last key in the supplicant config and strips off leading
+	# and trailing quotes (if it has them).
+	#
+	# Note that it uses a leading space to ensure that only an exact match
+	# on the key is used.
+	config_val=$(awk "BEGIN{FS=\"=\"} /[[:space:]]${key}=/ {print \$0}" $conf |grep "${key}=" |tail -n 1 | cut -f 2 -d= | sed -e 's/^"\(.*\)"/\1/')
+}
+
+get_ssid() {
+	local conf=$1
+
+	get_config_val $conf 'ssid'
+	ssid=${config_val}
+}
+
+get_wpa_version() {
+	local conf=$1
+
+	local proto_key_str
+	get_config_val $conf 'proto'
+	proto_key_str="${config_val}"
+
+	get_config_val $conf 'key_mgmt'
+	proto_key_str="${proto_key_str} ${config_val}"
+
+	case "${proto_key_str}" in
+		"RSN WPA-PSK")
+			wpa_version="WPA2-PSK"
+			;;
+
+		"WPA WPA-PSK")
+			wpa_version="WPA-PSK"
+			;;
+
+		"RSN WPA-PSK SAE")
+			wpa_version="WPA3-PSK"
+			;;
+
+		"RSN SAE")
+			wpa_version="WPA3-SAE"
+			;;
+
+		# Since the proto key does not appear when no encryption
+		# is being used, we need to match against all possible
+		# combinations since the proto might have been extracted
+		# from a previous network section.
+		" NONE"|"RSN NONE"|"WPA NONE")
+			wpa_version="NONE"
+			;;
+	esac
+}
+
+get_psk() {
+	local conf=$1
+
+	get_config_val $conf 'psk'
+	psk=${config_val}
+}
+
+wps_dbg()
+{
+	echo $* > /dev/console
+}
+
+psk=
+ssid=
+wpa_version=
+
+case "$CMD" in
+	WPS-SUCCESS)
+		wpa_cli -i$IFNAME save_config
+
+		# Read the configuration from the file to avoid a potential
+		# race where the supplicant is not in the associated state when
+		# its status command is executed.
+		get_ssid /var/run/wpa_supplicant-$IFNAME.conf
+		get_wpa_version /var/run/wpa_supplicant-$IFNAME.conf
+		get_psk /var/run/wpa_supplicant-$IFNAME.conf
+
+		local CONFIG_SECTIONS=$(uci get profile.@wireless[0].wireless_mesh_sta_2g -c /etc/profile.d)" "$(uci get profile.@wireless[0].wireless_mesh_sta_5g -c /etc/profile.d)
+		local vif ifname
+
+		for vif in ${CONFIG_SECTIONS}; do
+			ifname=$(uci show wireless.$vif.ifname | awk -F "=" '{print $2}')
+
+			if [ "$ifname" = "$IFNAME" ] ;then
+				wps_dbg "WPS-SUCCESS $IFNAME"
+				case $wpa_version in
+					WPA2-PSK)
+						uci set wireless.$vif.encryption='psk2'
+						uci set wireless.$vif.psk_key=$psk
+						;;
+					WPA-PSK)
+						uci set wireless.$vif.encryption='psk'
+						uci set wireless.$vif.psk_key=$psk
+						;;
+					WPA2-PSK-SHA256)
+						uci set wireless.$vif.encryption='psk2'
+						uci set wireless.$vif.psk_key=$psk
+						;;
+					WPA3-PSK)
+						uci set wireless.$vif.encryption='psk2+ccmp'
+						uci set wireless.$vif.psk_key=$psk
+						uci set wireless.$vif.sae='1'
+						;;
+					WPA3-SAE)
+						uci set wireless.$vif.encryption='ccmp'
+						uci set wireless.$vif.sae_password=$psk
+						uci set wireless.$vif.sae='1'
+						uci set wireless.$vif.psk_key=''
+						;;
+
+					NONE)
+						uci set wireless.$vif.encryption='none'
+						uci set wireless.$vif.psk_key=''
+						;;
+				esac
+				uci set wireless.$vif.ssid="$ssid"
+			else
+				#清除非连接频段信息
+				uci set wireless.$vif.ssid="$ssid"
+				uci set wireless.$vif.psk_key="12345670"
+			fi
+		done
+
+		uci commit
+		uci_commit_flash
+
+		for vif in ${CONFIG_SECTIONS}; do
+			wps_dbg "WPS - reload $vif"
+			wifi vap $vif
+		done
+
+		#post hotplug event to whom take care of
+		env -i ACTION="wps-connected" INTERFACE=$IFNAME /sbin/hotplug-call iface
+		;;
+	WPS-TIMEOUT)
+		wps_dbg "WPS TIMEOUT $IFNAME"
+		env -i ACTION="wps-timeout" INTERFACE=$IFNAME /sbin/hotplug-call iface
+		;;
+	WPS-FAIL)
+		wps_dbg "WPS-FAIL $IFNAME"
+		;;
+	WPS-OVERLAP-DETECTED)
+		wps_dbg "WPS-OVERLAP-DETECTED $IFNAME"
+		;;
+esac
+

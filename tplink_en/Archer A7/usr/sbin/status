@@ -1,0 +1,128 @@
+#!/bin/sh
+
+local LAN_PORTS=`seq 2 5`
+local WAN_PORT=1
+
+append_status()
+{
+	eval $1=\"\$$1' '$2\"
+}
+
+get_lan_status()
+{
+	local status=""
+	for i in $LAN_PORTS
+	do
+		status=$(ssdk_sh port linkstatus get $i | grep Status | cut -d : -f 2)
+		if [ $status == "ENABLE" ];then
+			append_status "lan_status" "connected"
+		else
+			append_status "lan_status" "unconnected"
+		fi
+	done
+}
+
+get_wan_status()
+{
+	local status=$(ssdk_sh port linkstatus get 1 | grep Status | cut -d : -f 2)
+	if [ $status == "ENABLE" ];then
+		append_status "wan_status" "connected"
+	else
+		append_status "wan_status" "unconnected"
+	fi
+}
+
+get_lan_speed()
+{
+	local speed
+	for i in $LAN_PORTS
+	do
+		speed=$(ssdk_sh port speed get $i | grep speed | cut -d : -f 2)
+		if [ -n "$speed" ]
+		then
+			append_status "lan_speed" "$speed"
+		else
+			append_status "lan_speed" "0"
+		fi
+	done
+}
+
+get_wan_speed()
+{
+	local speed
+	speed=$(ssdk_sh port speed get 1 | grep speed | cut -d : -f 2)
+	if [ -n "$speed" ]
+	then
+		append_status "wan_speed" "$speed"
+	else
+		append_status "wan_speed" "0"
+	fi
+}
+
+get_lan_duplex()
+{
+	local duplex
+	for i in $LAN_PORTS
+	do
+		duplex=$(ssdk_sh port duplex get $i | grep duplex | cut -d : -f 2)
+		if [ -n "$duplex" ]
+		then
+			append_status "lan_duplex" "$duplex"
+		else
+			append_status "lan_duplex" "NONE"
+		fi
+	done
+}
+
+get_wan_duplex()
+{
+	local duplex
+	duplex=$(ssdk_sh port duplex get 1 | grep duplex | cut -d : -f 2)
+	if [ -n "$duplex" ]
+	then
+		append_status "wan_duplex" "$duplex"
+	else
+		append_status "wan_duplex" "NONE"
+	fi
+}
+
+
+case $1 in
+	"lan_status")
+		get_lan_status
+		echo -n $lan_status
+		;;
+	"wan_status")
+		get_wan_status 
+		echo -n $wan_status
+		;;
+	"lan_speed")
+		get_lan_speed
+		echo -n $lan_speed
+		;;
+	"wan_speed")
+		get_wan_speed
+		echo -n $wan_speed
+		;;
+	"lan_duplex")
+		get_lan_duplex
+		echo -n $lan_duplex
+		;;
+	"wan_duplex")
+		get_wan_duplex
+		echo -n $wan_duplex
+		;;
+	"speed")
+		get_wan_speed
+		get_lan_speed
+		echo -n $wan_speed $lan_speed
+		;;
+	"duplex")
+		get_wan_duplex
+		get_lan_duplex
+		echo -n $wan_duplex $lan_duplex
+		;;
+	*)
+		echo "bad choice"
+		;;
+esac

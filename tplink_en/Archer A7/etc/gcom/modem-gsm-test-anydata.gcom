@@ -1,0 +1,21 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.05
+ waitquiet 1 0.2
+
+:start
+send "ATZ"
+print "Start...\n"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+send "AT+GMI"
+waitfor 5 "OK","BUSY","NO ANSWER","ERROR"
+if % != 0 goto fail
+
+:continue
+exit 0
+
+:fail
+print "ERROR\n"
+exit 1

@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2010 OpenWrt.org
+
+START=48
+
+start() {
+    #if [ ! -e usr/bin/openssl ]; then
+    local rsa2048_enable=$(uci get system.system.rsa2048_enable)
+    if [ "$rsa2048_enable" == "true" ]; then
+        luarsa_keys_gen 2048
+    fi
+    #fi
+}
+
+restart() {
+    #if [ ! -e usr/bin/openssl ]; then
+    local rsa2048_enable=$(uci get system.system.rsa2048_enable)
+    if [ "$rsa2048_enable" == "true" ]; then
+        luarsa_keys_gen 2048
+    fi
+    #fi
+}
+
+reload() {
+    #if [ ! -e usr/bin/openssl ]; then  
+    local rsa2048_enable=$(uci get system.system.rsa2048_enable)
+    if [ "$rsa2048_enable" == "true" ]; then
+        luarsa_keys_gen 2048
+    fi
+    #fi
+}

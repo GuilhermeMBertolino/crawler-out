@@ -1,0 +1,18 @@
+#!/bin/sh
+
+local LAN1=$(uci get switchport_map.switchport_map.lan1)
+local LAN2=$(uci get switchport_map.switchport_map.lan2)
+local LAN3=$(uci get switchport_map.switchport_map.lan3)
+local LAN4=$(uci get switchport_map.switchport_map.lan4)
+
+for lan_port in $LAN1 $LAN2 $LAN3 $LAN4
+do
+ssdk_sh port linkstatus get $lan_port | grep "ENABLE" 1>/dev/null 2>&1
+
+  if [ $? -eq 0 ]; then
+     return 0
+  fi
+done
+
+return 1
+

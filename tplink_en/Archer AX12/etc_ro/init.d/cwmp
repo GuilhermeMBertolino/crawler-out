@@ -1,0 +1,190 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+PROG=/usr/bin/cwmp
+#PROG=/tmp/cwmp
+DEBUG_OUTOUT=1
+SERVICE_DAEMONIZE=1
+
+cwmp_echo() {
+    if [ "$DEBUG_OUTOUT" -gt 0 ]; then
+        echo "${1}: ""$2"> /dev/console
+    fi
+}
+
+start() {
+    stop
+
+    #cp /usr/bin/cwmp /tmp/
+    #cp /usr/lib/libtr098.so /tmp/
+    #cp /usr/bin/tr143d /tmp/
+    
+    if [ ! -d "/tmp/tr069" ]; then
+        mkdir /tmp/tr069
+        touch /tmp/tr069/check
+        # init for TR143
+        touch /tmp/tr069/diagnostics_config
+        #echo -e "\nconfig download 'download'\n\toption state \"None\"\n\nconfig upload 'upload'\n\toption state \"None\"\n" > /tmp/tr069/diagnostics_config
+    fi
+    
+    if [ ! -d "/tmp/diag" ]; then
+        mkdir /tmp/diag
+    fi
+
+    config_load cwmp
+    config_get cwmp_enable info enable
+    config_get conn_reqport info conn_reqport
+    config_clear
+
+    if [ ! -f "/tmp/tr098_DM.xml"  ]; then
+        cp /etc/tr098.xml /tmp/tr098_DM.xml
+    fi
+
+    if [ "$cwmp_enable" = "on" ]; then
+        generate_config
+        
+        cwmp_echo cwmp "router mode : start cwmp, client ip: $client_ip"
+
+        fw add 4 f cwmp_input
+        fw add 4 f cwmp_input ACCEPT { "-p tcp -m multiport --dport $conn_reqport" }
+        fw add 4 f cwmp_input ACCEPT { "-p udp -m multiport --dport $conn_reqport" }
+        fw add 4 f input_wan cwmp_input 1
+		
+		# nat table
+        fw add 4 n prerouting_wan_cwmp
+        fw add 4 n prerouting_wan_cwmp ACCEPT { "-p tcp -m multiport --dport $conn_reqport" }
+        fw add 4 n prerouting_wan prerouting_wan_cwmp 1
+
+
+        service_start $PROG -C /tmp/cwmp.config -f
+    fi
+}
+
+stop(){
+    cwmp_echo cwmp "stop cwmp"
+
+    fw del 4 f input_wan cwmp_input
+    fw del 4 f cwmp_input
+	
+	# nat table
+    fw del 4 n prerouting_wan prerouting_wan_cwmp
+    fw del 4 n prerouting_wan_cwmp
+
+    service_stop $PROG
+}
+
+reload() {
+    if [ "$1" = "generate_conf" ];then
+        generate_config
+    else
+        start
+    fi
+}
+
+restart() {
+    start
+}
+
+generate_config()
+{
+    CONFIG_FILE="/tmp/cwmp.config"
+    [ -f "$CONFIG_FILE" ] && rm $CONFIG_FILE
+
+    local client_type=$(uci get cwmp.info.interface)
+    local wan_type=$(uci get network.wan.wan_type)
+    if [ -z "$client_type" -o "$client_type" = "anywan" ]; then
+#       local serial_number=$(uci get cloud_config.device_status.serial_number)
+#		if [ -z "$serial_number" ]; then
+#			cwmp_echo cwmp "no serial_number, start up later ... "
+#			exit
+#		fi
+        if [ "$wan_type" = "static" -o "$wan_type" = "dhcp" ]; then
+            ifname=$(ubus call network.interface.wan status | grep "l3_device" | awk -F '\"' '{print $4}')
+        elif [ "$wan_type" = "pppoe" -o "$wan_type" = "pppoeshare" -o "$wan_type" = "l2tp" -o "$wan_type" = "pptp" ]; then
+            ifname=$(ubus call network.interface.internet status | grep "l3_device" | awk -F '\"' '{print $4}')
+        else
+            cwmp_echo cwmp "support in future ... "
+            exit
+        fi
+    elif [ "$client_type" = "lan" ]; then
+        ifname=$(ubus call network.interface.lan status | grep "l3_device" | awk -F '\"' '{print $4}')
+    fi
+
+    if [ -z $ifname ]; then
+        cwmp_echo cwmp "ifname is null"
+        exit
+    fi
+    
+    local client_ip=$(ifconfig $ifname | grep "inet addr" | sed 's/:/ /' | awk '{print $3}')
+    if [ -z $client_ip ]; then
+        cwmp_echo cwmp "client ip is null"
+        exit
+    fi
+
+    config_load cwmp
+    config_get enable info enable "off"
+    if [ "$enable" = "on" ]; then enable=1; else enable=0; fi
+    config_get url info url
+    config_get username info username
+    config_get password info password
+    config_get inform_enable info inform_enable 
+    if [ "$inform_enable" = "on" ]; then inform_enable=1; else inform_enable=0; fi
+    config_get inform_interval info inform_interval 
+    config_get conn_reqport info conn_reqport
+    config_get conn_reqpath info conn_reqpath
+    config_get conn_username info conn_username
+    config_get conn_password info conn_password
+    config_get conn_requrl info conn_requrl
+    config_get flag info flag
+
+    echo "ENABLE=$enable" > $CONFIG_FILE
+    ## 判断url是否为合法域名或者合法IP
+    local vendor_spc=$(cat /tmp/vendor_spc 2>/dev/null | grep -E '^((http|https):\/\/)((([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6})|(([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])))')
+
+    ## 合法url，继续下一步检查
+    if [ -n "$vendor_spc" ];then
+        ## 判断url是否包含端口号，没有端口号时需补充“:7547”
+        local port=$(echo $vendor_spc | grep -oE ':([1-9][0-9]*)')
+        port=${port:1}
+        if [ -n "$port" ];then
+            ## 包含端口号格式字符串
+            if [ $port -ge 65536 ];then
+                ## 端口号非法，使用uci配置
+                echo "URL=$url" >> $CONFIG_FILE
+            else
+                echo "URL=$vendor_spc" >> $CONFIG_FILE
+                uci set cwmp.info.url="$vendor_spc"
+            fi
+        else
+            ## url是否含有子字符串,如http://acsserver.org/acs
+            local noextend=$(echo $vendor_spc | grep -E '^((http|https):\/\/)((([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6})|(([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])))$')
+            if [ -z "$noextend" ];then
+                ## 有子字符串，在第三个'/'前加‘:7547’
+                vendor_spc=$(echo $vendor_spc | sed 's/\//:7547\//3')
+            else
+                ## 没有子串，直接在末尾加入':7547'
+                vendor_spc="$vendor_spc:7547"
+            fi
+            echo "URL=$vendor_spc" >> $CONFIG_FILE
+            uci set cwmp.info.url="$vendor_spc"
+        fi
+    else
+        ##非法url，使用uci配置
+        echo "URL=$url" >> $CONFIG_FILE
+    fi
+
+    echo "USERNAME=$username" >> $CONFIG_FILE
+    echo "PASSWORD=$password" >> $CONFIG_FILE
+    echo "INFORM_ENABLE=$inform_enable" >> $CONFIG_FILE
+    echo "INFORM_INTERVAL=$inform_interval" >> $CONFIG_FILE
+#    echo "CONN_REQPORT=$conn_reqport" >> $CONFIG_FILE
+#    echo "CONN_REQPATH=$conn_reqpath" >> $CONFIG_FILE
+    echo "CONN_USERNAME=$conn_username" >> $CONFIG_FILE
+    echo "CONN_PASSWORD=$conn_password" >> $CONFIG_FILE
+    local conn_url="http://$client_ip:$conn_reqport$conn_reqpath"
+    uci set cwmp.info.conn_url="$conn_url"
+    uci_commit_flash
+    echo "CONN_URL=$conn_url" >> $CONFIG_FILE
+    echo "FLAG=$flag" >> $CONFIG_FILE
+    config_clear
+}

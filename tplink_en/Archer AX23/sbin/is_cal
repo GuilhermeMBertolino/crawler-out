@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. /lib/wifi/mtk_wlan_var.sh
+
+get_wlan_ini FLASH_TYPE
+get_wlan_ini FEATURE_DBDC
+is_cal=false
+
+if [ "${FLASH_TYPE}" = "nor" ]; then
+	get_wlan_ini NOR_CAL_OFFSET_2G
+	get_wlan_ini NOR_CAL_BYTES_2G
+	get_wlan_ini NOR_CAL_OFFSET_5G
+	get_wlan_ini NOR_CAL_BYTES_5G
+
+	is_cal=`lua /sbin/is_cal.lua ${FLASH_TYPE} ${FEATURE_DBDC} ${NOR_CAL_OFFSET_2G} ${NOR_CAL_BYTES_2G} ${NOR_CAL_OFFSET_5G} ${NOR_CAL_BYTES_5G}`
+fi
+
+if [ "${FLASH_TYPE}" = "nand" ]; then
+	get_wlan_ini NAND_E2P_BIN_2G
+	get_wlan_ini NAND_E2P_BIN_5G
+	is_cal=`[ -e $NAND_E2P_BIN_2G -a -e $NAND_E2P_BIN_5G ] && echo true || echo false`
+fi
+
+echo $is_cal

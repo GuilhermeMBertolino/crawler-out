@@ -1,0 +1,35 @@
+#!/bin/sh
+
+apsd_mesh_help() {
+    echo "Apsd handler for mesh on/off"
+    echo "Usage: apsd_mesh_switch <command> [arguments...]"
+    echo "   on: start aps"
+    echo "  off:  stop aps"
+}
+
+apsd_mesh_on() {
+    /etc/init.d/apsd boot
+
+    /etc/init.d/hyfi-bridging start
+}
+
+apsd_mesh_off() {
+    killall -SIGINT apsd
+
+    grep hyfi_bridging /proc/modules && {
+        echo "========>>>>>>>>>>> rmmod hyfi_bridging" > /dev/console
+        rmmod hyfi_bridging
+    }
+}
+
+case "$1" in
+    on)
+        apsd_mesh_on
+        ;;
+    off)
+        apsd_mesh_off
+        ;;
+    *)
+        apsd_mesh_help
+        ;;
+esac

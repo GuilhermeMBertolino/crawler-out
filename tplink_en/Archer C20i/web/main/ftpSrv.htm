@@ -1,0 +1,581 @@
+﻿<script language="javascript" type="text/javascript">
+var ftpServer;
+var accessFolderList;
+var userList;
+var userAccessList;
+var selAll;
+var stackIndex;
+var algEntry;
+function escapeStr(str) 
+{
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function doReload(err)
+{
+	if (!err)
+	{
+		$.reload();
+	}
+}
+function clickSel()
+{
+	if (selAll == 1)
+	{
+		$.id("selAll").checked = 0;
+		selAll = 0;
+	}
+}
+function doAdd()
+{
+	var param = [];
+	param[0] = "FTP";
+	param[1] = "ADD";
+	param[2] = "/";
+	$.loadMain("usbFolderBrowse.htm",param);
+}
+function doEdit(idx)
+{
+	var param = [];
+	param[0] = "FTP";
+	param[1] = "EDIT";
+	param[2] = accessFolderList[idx].name;
+	$.loadMain("usbFolderBrowse.htm",param);
+}
+function doSelAll()
+{
+	if (selAll == 0)
+	{	
+		for (var i = 0; i < accessFolderList.length; i++)
+		{
+			var tmpId = "entryId" + i;
+			$.id(tmpId).checked = 1;
+		}
+
+		selAll = 1;
+	}
+	else if (selAll == 1)
+	{
+		for(var i = 0; i < accessFolderList.length; i++)
+		{
+			var tmpId = "entryId" + i;
+			$.id(tmpId).checked = 0;
+		}
+
+		selAll = 0;
+	}
+}
+function init()
+{
+	selAll = 0;
+	
+	ftpServer = $.act(ACT_GET, FTP_SERVER, null, null, null);
+	accessFolderList = $.act(ACT_GL, FTP_SERVER_FOLDER, null, null, null);
+	userAccessList = $.act(ACT_GL, FTP_USER_ACCESS, null, null, null);
+	userList = $.act(ACT_GL, USER_ACCOUNT, null, null, null);
+	algEntry = $.act(ACT_GET, ALG_CFG, null, null);
+	
+	if (!$.exe())
+	{
+		if (ftpServer.enable == 1)
+		{
+			$.removeClass($.id("ftp_en"), "nd");
+			$.removeClass($.id("btn_dis"), "nd");
+		}
+		else
+		{
+			$.removeClass($.id("ftp_dis"), "nd");
+			$.removeClass($.id("btn_en"), "nd");
+		}
+		
+		if (ftpServer.accessFromInternet == 1)
+		{
+			var foundValidIp = false;
+			$.id("inetAccess_en").checked = 1;
+			var wanIp = (ftpServer.wanIP).split('|');
+			$.id("inetAddr").innerHTML = "";
+			for (i = 0; i < wanIp.length; i++)
+			{
+				if ((wanIp[i] != "") && (wanIp[i].substring(0,4) != "169."))
+				{
+					foundValidIp = true;
+				$.id("inetAddr").innerHTML += (wanIp[i] + "&nbsp;&nbsp;&nbsp;");
+			}
+			}
+
+			if (!foundValidIp)
+			{
+				$.id("inetAddr").innerHTML = "0.0.0.0";	
+			}
+			
+			if (algEntry.ftpAlg != 1)
+			{
+				$.removeClass($.id("alg_notice"), "nd");
+			}
+		}
+		else
+		{
+			$.id("inetAccess_dis").checked = 1;
+			$.id("inetAddr").innerHTML = "0.0.0.0";
+		}
+		
+		$.id("port").value = ftpServer.portNumber;
+	
+		for (i = 0; i < accessFolderList.length; i++)
+		{
+			var folder_table = $.id("folder_table");
+			var newrow = folder_table.insertRow(-1);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<input type='checkbox' id='entryId" + i + "' onclick='clickSel();'/>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = escapeStr(accessFolderList[i].alias);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = $.resizeStr(escapeStr(accessFolderList[i].name), 31);
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user1" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user2" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user3" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user4" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span id='user5" + i + "' >N</span>";
+			var cell = newrow.insertCell(-1);
+			if (1 == accessFolderList[i].enable)
+			{
+				cell.innerHTML = "<span class='T T_enabled'>"+m_str.enabled+"</span>";
+			}
+			else
+			{
+				cell.innerHTML = "<span class='T T_disabled'>"+m_str.disabled+"</span>";
+			}
+			var cell = newrow.insertCell(-1);
+			cell.innerHTML = "<span class='a T T_edit' onClick='doEdit(" + i + ");'>"+m_str.edit+"</span>";
+			
+			for (j = 0; j < userAccessList.length; j++)
+			{
+				if (parseInt(accessFolderList[i].__stack, 10) != parseInt(userAccessList[j].__stack, 10))
+				{
+					continue;
+				}
+				var id;
+				id = "user" + userAccessList[j].userId + i;
+				if (7 == userAccessList[j].permissions)
+				{
+					$.id(id).innerHTML = "F";
+				}
+				else if (3 == userAccessList[j].permissions)
+				{
+					$.id(id).innerHTML = "R";
+				}
+				else
+				{
+					$.id(id).innerHTML = "N";
+				}
+			}
+			for (j = 0; j < userList.length; j++)
+			{
+				var id;
+				var userId;
+				userId = (j + 1);
+				id = "user" + parseInt(userList[j].__stack, 10) + i;
+
+				if (0 == userList[j].enable)
+				{
+					$.id("user" + userId).style["color"] = "#999";
+				}
+				if (1 == userList[j].X_TP_SupperUser)
+				{
+					$.id(id).innerHTML = "F";
+					$.id("user" + userId).innerHTML = userId + "*";
+					if (0 == userList[j].enable)
+					{
+						$.id("user" + userId).innerHTML = userId + "*";
+						$.id("user" + userId).style["color"] = "#999";
+					}
+				}
+				
+				if ("" == userList[j].username)
+				{
+					$.id(id).innerHTML = "-";
+				}
+			}
+		}
+	}
+}
+function checkConflictPort(port)
+{
+	var vtlServList_IP = $.act(ACT_GL, WAN_IP_CONN_PORTMAPPING, null, null);
+	var vtlServList_PPP = $.act(ACT_GL, WAN_PPP_CONN_PORTMAPPING, null, null);
+	var portTrigList_IP = $.act(ACT_GL, IP_CONN_PORTTRIGGERING, null, null);
+	var portTrigList_PPP = $.act(ACT_GL, PPP_CONN_PORTTRIGGERING, null, null);
+	var dmzCfg = $.act(ACT_GET, DMZ_HOST_CFG, null, null);
+	var upnpCfgObj = $.act(ACT_GET, UPNP_CFG);
+	var ret = true;
+	
+	if (!$.exe())
+	{
+		$.each(vtlServList_IP, function()
+		{
+			if ((this.portMappingEnabled == 1) && 
+				(((port == this.externalPort) || (port == this.X_TP_ExternalPortEnd)) ||
+				 ((this.externalPort > 0) && (this.externalPort < port) && (port < this.X_TP_ExternalPortEnd))))
+			{
+				if (confirm(c_str.ftp_vs_conflict))
+				{
+					$.act(ACT_SET, WAN_IP_CONN_PORTMAPPING, this.__stack, null, ["portMappingEnabled=0"]);
+				}
+				else
+				{
+					ret = false;
+					return;
+				}
+			}
+		});
+		if (false == ret)
+		{
+			return 0;
+		}
+		
+		$.each(vtlServList_PPP, function()
+		{
+			if ((this.portMappingEnabled == 1) && 
+				(((port == this.externalPort) || (port == this.X_TP_ExternalPortEnd)) ||
+				 ((this.externalPort < port) && (port < this.X_TP_ExternalPortEnd))))
+			{
+				if (confirm(c_str.ftp_vs_conflict))
+				{
+					$.act(ACT_SET, WAN_PPP_CONN_PORTMAPPING, this.__stack, null, ["portMappingEnabled=0"]);
+				}
+				else
+				{
+					ret = false;
+					return;
+				}
+			}
+		});
+		if (false == ret)
+		{
+			return 0;
+		}
+		
+		$.each(portTrigList_IP, function()
+		{
+			if ((this.enable == 1) && ((port == this.triggerPort) || (port == this.openPort)))
+			{
+				if (confirm(c_str.ftp_pt_conflict))
+				{
+					$.act(ACT_SET, IP_CONN_PORTTRIGGERING, this.__stack, null, ["enable=0"]);
+				}
+				else
+				{
+					ret = false;
+					return;
+				}
+			}
+		});
+		if (false == ret)
+		{
+			return 0;
+		}
+		
+		$.each(portTrigList_PPP, function()
+		{
+			if ((this.enable == 1) && ((port == this.triggerPort) || (port == this.openPort)))
+			{
+				if (confirm(c_str.ftp_pt_conflict))
+				{
+					$.act(ACT_SET, PPP_CONN_PORTTRIGGERING, this.__stack, null, ["enable=0"]);
+				}
+				else
+				{
+					ret = false;
+					return;
+				}
+			}
+		});
+		if (false == ret)
+		{
+			return 0;
+		}
+		
+		if (dmzCfg.enable == 1)
+		{
+			if (confirm(c_str.ftp_dmz_conflict))
+			{
+				$.act(ACT_SET, DMZ_HOST_CFG, null, null, ["enable=0", "IPAddress=" + dmzCfg.IPAddress]);
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		if (upnpCfgObj.enable == 1)
+		{
+			var portMappingList = $.act(ACT_GL, UPNP_PORTMAPPING, null, null);
+			if ($.exe())
+			{
+				return 0;
+			}
+			$.each(portMappingList, function()
+			{
+				if ((this.portMappingEnabled == 1) && ((port == this.externalPort) || (port == this.internalPort)))
+				{
+					if (confirm(c_str.ftp_upnp_conflict))
+					{
+						$.act(ACT_DEL, UPNP_PORTMAPPING, this.__stack, null, null);
+					}
+					else
+					{
+						ret = false;
+						return;
+					}
+				}
+			});
+			if (false == ret)
+			{
+				return 0;
+			}
+		}
+		
+		$.exe();
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+function doEnable(obj)
+{
+    stackIndex = 0;
+	
+	for (var i=0; i < accessFolderList.length; i++)
+	{
+		var tmpEntryId = "entryId" + i;
+		if ($.id(tmpEntryId).checked == 1)
+		{
+			$.act(ACT_SET, FTP_SERVER_FOLDER, accessFolderList[i].__stack, null, ["enable=1"]);
+			stackIndex++;
+		}
+	}
+	
+	if (stackIndex == 0)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doDisable(obj)
+{
+    stackIndex = 0;
+	
+	for (var i=0; i < accessFolderList.length; i++)
+	{
+		var tmpEntryId = "entryId" + i;
+		if ($.id(tmpEntryId).checked == 1)
+		{
+			$.act(ACT_SET, FTP_SERVER_FOLDER, accessFolderList[i].__stack, null, ["enable=0"]);
+			stackIndex++;
+		}
+	}
+	
+	if (stackIndex == 0)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doDel(obj)
+{
+	stackIndex = 0;
+	
+	for (var i=0; i < accessFolderList.length; i++)
+	{
+		var tmpEntryId = "entryId" + i;
+		if ($.id(tmpEntryId).checked == 1)
+		{
+			$.act(ACT_DEL, FTP_SERVER_FOLDER, accessFolderList[i].__stack, null, null);
+			stackIndex++;
+		}
+	}
+	
+	if (stackIndex == 0)
+	{
+		$.alert(ERR_SEL_INVAD);
+		return;
+	}
+	$.addLoading(obj);
+	$.exe(function(ret){if (!ret) $.reload();});
+}
+function doApply()
+{
+	if ($.id("port").value == "")
+	{
+		$.alert(ERR_USB_FTP_PORT_EMPTY);
+		return;
+	}
+	
+	if (!$.isnum($.id("port").value))
+	{
+		$.alert(ERR_USB_FTP_PORT_NOT_NUM);
+		var element = $.id("port");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return;
+	}
+	
+	if (($.id("port").value < 1) || ($.id("port").value > 65535))
+	{
+		$.alert(ERR_USB_FTP_PORT_RANGE);
+		var element = $.id("port");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return;
+	}
+	
+	if (($.id("port").value == 53) || ($.id("port").value == 70) || ($.id("port").value == 80) ||
+		($.id("port").value == 119) || ($.id("port").value == 110) || ($.id("port").value == 1723) ||
+		($.id("port").value == 25) || ($.id("port").value == 1080) || ($.id("port").value == 23) ||
+		($.id("port").value == 33344) || ($.id("port").value == 20005) || ($.id("port").value == 1900)||
+		($.id("port").value == 7547) || ($.id("port").value == 139) || ($.id("port").value == 445))
+	{
+		$.alert(ERR_USB_FTP_PORT_CONFLICT);
+		var element = $.id("port");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return;
+	}
+
+	var port = parseInt($.id("port").value, 10);
+    $.id("port").value = port;
+
+	if ($.id("inetAccess_en").checked)
+	{
+		if(0 == checkConflictPort(port))
+		{
+			var element = $.id("port");
+			if(element){
+				element.focus();
+				element.select();
+			}
+			return;
+		}
+		$.act(ACT_SET,FTP_SERVER,null,null,["accessFromInternet=1"]);
+	}
+	else
+	{
+		$.act(ACT_SET,FTP_SERVER,null,null,["accessFromInternet=0"]);
+	}
+	
+	$.act(ACT_SET,FTP_SERVER,null,null,["portNumber=" + $.id("port").value]);
+	$.act(ACT_SET,FTP_SERVER,null,null,["modified=0"]);
+	$.addLoading($.id("ApplyB"));
+	$.exe(doReload);
+}
+function doTrunOn()
+{
+	if (ftpServer.enable == 1)
+	{
+		$.act(ACT_SET,FTP_SERVER,null,null,["enable=0"]);
+	}
+	else
+	{
+		if (ftpServer.accessFromInternet == 1)
+		{
+			var port = parseInt($.id("port").value, 10);
+			if(0 == checkConflictPort(port))
+			{
+				var element = $.id("port");
+				if(element){
+					element.focus();
+					element.select();
+				}
+				return;
+			}
+		}
+		
+		$.act(ACT_SET,FTP_SERVER,null,null,["enable=1"]);
+	}
+	$.addLoading($.id("btn_en"));
+	$.exe(doReload);
+}
+</script>
+<p class="et T" id="et">FTP Server Setting</p>
+<div class="con1 XL">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<!-- <p class="L1 T" id="t_info">FTP (File Transfer Protocol) server allows you to share the files on the USB storage device to the local or public network. You will need to define the shared folders and assign the user's authorization for the different folders.</p> -->
+<p class="br"></p>
+<p>
+	<b class="item T" id="t_stat">Server Status:</b>
+	<b class="nd T T_enabled" id="ftp_en">Enabled</b>
+	<b class="nd T T_disabled" id="ftp_dis">Disabled</b>
+	<input type=button class="nd button L T T_en" value="Enable" id="btn_en" onclick="doTrunOn();"/>
+	<input type=button class="nd button L T T_dis" value="Disable" id="btn_dis" onclick="doTrunOn();"/>
+</p>
+<p>
+	<b class="item T" id="t_acc">Internet Access:</b>
+	<input type="radio" name="inetAccess" id="inetAccess_en" /><span class="T T_en">Enable</span>
+	<input type="radio" name="inetAccess" id="inetAccess_dis" /><span class="T T_dis">Disable</span>
+	<i class="nd T" id="alg_notice">(The FTP ALG must be enabled before this take effect.)</i>
+</p>
+<p> 
+<b class="item T" id="t_iaddr">Internet Address:</b> <span id="inetAddr">0.0.0.0</span>
+</p>
+<p>
+<b class="item T" id="t_port">Service Port:</b> 
+<input type="text" class="text" size="5"  maxlength="5" id="port"/> <span class="T" id="t_defport">(The default is 21. Do not change unless necessary.)</span>
+</p>
+<p class="br"></p>
+<p class="bl"></p>
+<!-- <p><b class="L T" id="t_ftbl">Folder Table:</b>&nbsp;<span class="T" id="t_apply">(Any changes of this table will not take effect until you Apply it.)</span></p> -->
+<table class="XL bdr tc" id="folder_table">
+<tr>
+<th rowspan="2" width="5%"><input type="checkbox" id="selAll" onclick="doSelAll();"/></th>
+<th rowspan="2" width="15%" class="T" id="t_shname">Share name</th>
+<th rowspan="2" width="30%" class="T" id="t_dir">Directory</th>
+<td colspan="5" width="30%"><b class="T" id="t_usridx">User Index</b><br />(F:<span class="T T_faccess">Full-Access</span>, R:<span class="T T_ronly">Read-Only</span>, N:<span class="T T_naccess">No-Access</span>)</td>
+<th rowspan="2" width="10%" class="T T_status">Status</th>
+<th rowspan="2" width="10%" class="T T_edit">Edit</th>
+</tr>
+<tr>
+<th width="6%" class="T" id="user1">1</th>
+<th width="6%" class="T" id="user2">2</th>
+<th width="6%" class="T" id="user3">3</th>
+<th width="6%" class="T" id="user4">4</th>
+<th width="6%" class="T" id="user5">5</th>
+</tr>
+</table>
+<p>* : <span class="T" id="t_note1">"Super User". It has full-access permission (Read & Write) to all active volume(s) and share folder(s).</span></p>
+<p class="br"></p>
+<p class="L1"><input type="button" class="button XL T T_newfld" value="Add New Folder" onclick="doAdd();"/>
+<input type="button" class="button XL T T_ensel" value="Enable Selected" onclick="doEnable(this);"/>
+<input type="button" class="button XL T T_dissel" value="Disable Selected" onclick="doDisable(this);"/>
+<input type="button" class="button XL T T_delsel" value="Delete Selected" onclick="doDel(this);"/></p>
+</div>
+<p class="bl"></p>
+<p class="tail"><input type="button" class="button L T T_apply" value="Apply" id="ApplyB" onclick="doApply();" /></p>
+<!-- <p class="br"></p>
+<p><span class="T T_note">Note</span>:</p>
+<p class="L1">1. <span class="T" id="t_note2">You could be able to access the folders by entering the following URL on Windows Explorer or other FTP software:</span></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<span style="padding-right:50px">ftp://(<span class="T T_ipaddr">IP Address</span>)</span></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;eg.  ftp://192.168.0.1</p>
+<p>2. <span class="T" id="t_note3">FTP Server will get restarted and all your current FTP connections will be terminated after you click Apply button.</span></p> -->
+</div>
+<script language="javascript" type="text/javascript">
+$.loadHelpFrame("UsbFtpHelp.htm");
+init();
+</script>

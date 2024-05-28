@@ -1,0 +1,283 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WOL</title>
+
+</head>
+
+<body>
+<div class="func-container">
+	 <div id="wol">
+ 		<div id="wolGrid">   		
+		</div>
+	 </div>
+
+ 	<div id="own_editor">
+		<input id="device_name" name="name">
+		<button id="device_view"></button>
+		<input id="mac_addr" name="mac">
+	<!--	<input id="wakeup" name="enable" >-->
+	<!--	<input id="entry_enable" name="enable">-->
+	<!--	<button id="mac_clone"type="button"></button>-->
+	</div>
+
+	<div id="device_survey">
+ 		<div id="device_result"></div>
+		<button id="ok"></button>
+		<button id="cancle"></button>
+ 	</div>	 
+	<div id="help_wol_control"></div> 
+</div>
+
+<script type="text/javascript">
+try{
+    $
+}catch(e){
+    location.href = "/";
+};
+
+$(document).ready(function(e){
+	var URL_wol_GRID = $.su.url("/admin/wol?form=device");//"./data/wol.grid.json"; 
+	var URL_ONLINE_BLACK=$.su.url("/admin/access_control?form=black_devices");
+	var host_mac = "";
+
+	$("div.func-container").page({
+		title: $.su.CHAR.WakeOnLanRpm.TITLE,
+		help: ""	//可能是个调用的id 也可能是个url
+	});
+
+	$("div#wol").panel({
+		title: $.su.CHAR.WakeOnLanRpm.TITLE,
+		collapsible: false
+	});
+	
+	$("input#device_name").textbox({
+		fieldLabel: $.su.CHAR.WakeOnLanRpm.DEVICE,
+		vtype:"string_visible_allow_blank",
+		minLength:0,
+		maxLength:32,
+		tipsCls:"after-button xl",
+		allowBlank:false,
+		cls: 'inline-block '
+	});
+
+	$("input#mac_addr").textbox({
+		fieldLabel: $.su.CHAR.WakeOnLanRpm.MAC_ADDRESS,
+		//cls: 'inline',
+        vtype:"mac",
+        maxLength:17,
+		allowBlank:false,
+		vtype:"mac"
+	});
+
+	$("#device_view").button({
+		text: $.su.CHAR.WakeOnLanRpm.BTN_VIEW,
+		// cls: 'button-pop ml5',
+		cls: 'inline-block ml5',
+		handler:function(){
+			//$("div#device_result").grid("getStore").load();
+			$("div#device_survey").msg("show");
+			//result_store.loadData(virtualServer);
+			result_store.load();
+		}
+	});
+
+	var existingService = $("div#device_survey").msg({
+		autoshow:false,
+		title:$.su.CHAR.WakeOnLanRpm.ACCESS_DEVICES_LIST,
+		type: "window"
+	});
+
+	var blackOnlineProxy = new $.su.Proxy({
+		url: URL_ONLINE_BLACK
+	});
+
+	var result_store = new $.su.Store({
+		proxy: blackOnlineProxy,//ACCESS_CTR的json文件；
+		fields: [
+			{name: "name"},
+		 	{name: "mac"}
+		],
+		autoLoad: false
+	});
+
+
+	var result_grid = $("div#device_result").grid({
+		store: result_store,
+		maxLines:5,
+		paging: {},
+		columns: [
+					{
+						text: $.su.CHAR.ACCESS_CTR.ID, 
+						xtype: "rownumberer",
+						width:40
+					},
+					{
+						text: $.su.CHAR.ACCESS_CTR.NAME, 
+						width:150,
+						dataIndex: "name"
+					},
+					{
+						text: $.su.CHAR.ACCESS_CTR.MAC_ADDRESS, 
+						width:170,
+						dataIndex: "mac"
+					},{
+						text: $.su.CHAR.GRID.OPERATION, 
+						// width:100,
+						renderer:function(data, index){
+							//console.log(arguments);
+							return "<a href=\"javascript:void(0);\" data-index=\""+index+"\" class=\"choose-existing-service choose\" >"+$.su.CHAR.OPERATION.CHOOSE+"</a>"
+						}
+					}
+					
+				]
+	});
+
+	$(result_grid).delegate("a.choose-existing-service", "click", function(e){
+		e.preventDefault();
+		var store = result_grid.grid("getStore"),
+			index = $(this).attr("data-index"),
+			data = store.data[index] || undefined;
+
+		if (data){
+			$("input#device_name").textbox("setValue", data["name"]);
+			$("input#mac_addr").textbox("setValue", data["mac"]);
+
+		};
+	
+		existingService.msg("close");
+    });
+	
+
+	$("div#under_wol").panel({
+		title: $.su.CHAR.WakeOnLanRpm.DEVICE_CTR,
+		collapsible: false
+	});
+
+
+	var wolGridProxy = new $.su.Proxy({
+		url: URL_wol_GRID
+	});
+
+	var storeTest = new $.su.Store({
+		proxy: wolGridProxy,
+		fields: [
+			{name: "name"},
+			{name: "mac"}
+		],
+		autoLoad: true,
+		insertMode:"reload",
+		updateMode : "reload",
+		removeMode : "reload"
+	});
+
+
+	var wolGrid =  $("div#wolGrid").grid({
+		store:storeTest,
+		minLines:0,
+		paging: {},
+		editor: {
+			content: "#own_editor",
+			validator:function(){
+				var store = wolGrid.grid("getStore");
+					keyProperty = store.keyProperty;
+					grid_array = store.data;
+				var editor = $(wolGrid.grid("getEditor"));
+				var edit_mac = editor.find("input[name=mac]").val();
+				var validFlag = true;
+				$.each(grid_array,function(i,o){
+					if(o.mac==edit_mac){
+						$(wolGrid.grid("getEditor")).form("setError",$.su.CHAR.ERROR["00000051"]);
+						validFlag = false;
+					}
+				});
+				return validFlag;
+			},
+			fields: [
+				{name: "name"},
+				{name: "mac"}
+			]
+		},
+		columns: [
+			{
+				xtype: "checkcolumn",
+				width: 32
+			},
+			{
+				text: $.su.CHAR.WakeOnLanRpm.ID, 
+				xtype: "rownumberer",
+				width:40
+			},
+			{
+				text: $.su.CHAR.WakeOnLanRpm.DEVICE, 
+				width:200,
+				dataIndex: "name"
+			},{
+				text: $.su.CHAR.WakeOnLanRpm.MAC_ADDRESS, 
+				width:200,
+				dataIndex: "mac"
+			},{
+				text: $.su.CHAR.WakeOnLanRpm.WAKEUP,
+				renderer: function(data, index){
+					//var store = $("div#wolGrid").grid("getStore");
+					var inHTML = 	"<div class=\"button-container\">";
+						inHTML += 		"<a href=\"javascript:void(0);\" class=\"grid-content-btn btn-wakeup btn-bind\" data-index=\""+index+"\">";
+						inHTML +=			"<span class=\"icon\"></span>";
+						inHTML += 			"<span class=\"text\">"+ $.su.CHAR.WakeOnLanRpm.WAKEUP + "</span>";
+						inHTML += 		"</a>";
+						inHTML += 	"</div>";
+					 return inHTML;
+				}
+				//xtype:"statuscolumn"
+			},{
+				xtype:"settings"
+			}
+		],
+		operation: "prompt|add|delete"
+	});
+	wolGrid.delegate("a.btn-wakeup", "click", function(){
+		var store = wolGrid.grid("getStore");			//获取store	
+	   		store.load();		
+	   	var index = $(this).attr("data-index"),			//获得数据对应的index	
+	   		keyProperty = store.keyProperty;			//key的属性名
+	   	var d = store.data[index],				//当前操作的数据
+	   		key = d[keyProperty];				//当前操作的key值
+	   		d = $.su.json.toJSONString(d);		//数据格式化
+
+	    			
+	   		wolGrid.grid("runProgress");	
+		   	wolGridProxy.read({
+		   		"operation": "wakeup",
+		   		"data": d					//添加post过去时的data值，su中tostring方法
+		   	},function(){
+		   		wolGrid.grid("prompt", true);
+		   		// var wolStore = wolGrid.grid("getStore");
+		   		// wolStore.load();
+		   	});	
+		  
+	});
+
+	// $("div#parentalGrid").delegate("a.wakeup-service", "click", function(e, key, index, data){
+	// 	e.preventDefault();
+	// 	var store = parentalGrid.grid("getStore"),
+	// 		index = $(this).attr("data-index"),
+	// 		data = store.data[index] ;
+	// 		dOld = store.getData(key);
+	// 	if (data==index){
+	// 		store.update(key, {
+	// 			"old": $.su.json.toJSONString(dOld)
+	// 		});
+	// 	};
+ //    });
+
+	var helpwolControl = new $.su.Help({
+			container: "div#help_wol_control",
+			content: ["WakeOnLanRpm"] 
+	});
+});
+
+</script>
+</body>
+
+</html>

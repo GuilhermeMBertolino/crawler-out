@@ -1,0 +1,160 @@
+﻿<h3 id="et">Operation Mode</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div id="router-mode-div">
+            <div>
+                <input type="radio" name="sysMode" id="ROUTER" value="Router" checked/>
+                <label id="t_router">router</label>
+                <p id="t_routerDetail" class="cfg-line mode-details">provides Internet access for multiple wired and wireless devices simultaneously.</p>
+                <div class="sm-icon-row">
+                    <div class="sm-icon-container"><div class="map-icon-internet"></div></div>
+                    <div class="sm-icon-connector"></div>
+                    <div class="sm-icon-container"><div class="map-icon-router map-icon-router-conn"></div></div>
+                    <div class="sm-icon-connector short"></div>
+                    <div class="sm-icon-container wireless"><div class="sm-icon-wireless"></div></div>
+                    <div class="sm-icon-connector short"></div>
+                    <div class="sm-icon-container"><div class="map-icon-wireless"></div></div>
+                </div>
+            </div>
+            <div class="part-separate-m">
+                <input type="radio" name="sysMode" id="AP" value="AP" />
+                <label id="t_ap">access Point</label>
+                <p id="t_apDetail" class="cfg-line mode-details">transforms your existing wired network to a wireless network.</p>
+                <div class="sm-icon-row">
+                    <div class="sm-icon-container"><div class="map-icon-internet"></div></div>
+                    <div class="sm-icon-connector"></div>
+                    <div class="sm-icon-container"><div class="map-icon-router"></div></div>
+                    <div class="sm-icon-connector solid"></div>
+                    <div class="sm-icon-container"><div class="map-icon-router map-icon-router-conn"></div></div>
+                    <div class="sm-icon-connector short"></div>
+                    <div class="sm-icon-container wireless"><div class="sm-icon-wireless"></div></div>
+                    <div class="sm-icon-connector short"></div>
+                    <div class="sm-icon-container"><div class="map-icon-wireless"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="green T_save" value="Save" id="b_save">Save</button>
+    </form>
+</div>
+<script language="javascript" type="text/javascript">
+    (function() {
+        var realMode;
+        var dhcpCfg;
+        var lanIPv4Cfg;
+        function sysModeInit() {
+            var sysMode = $.act(ACT_GET, ROUTER_MODE, null, null, null);
+            $.exe();
+            if (sysMode.mode == 'Router') {
+                $('#ROUTER').prop('checked', true);
+                var span = $('label[for="ROUTER"]').find('span.text');
+                span.text(span.text() + $.tpLang.sysMode_nstr.c_current);
+            } else {
+                $('#AP').prop('checked', true);
+                var span = $('label[for="AP"]').find('span.text');
+                span.text(span.text() + $.tpLang.sysMode_nstr.c_current);
+            }
+
+            realMode = sysMode.mode
+        }
+		
+        function doSave() {
+            var arg = {};
+            if ($('#ROUTER').prop('checked')) {
+                arg.mode = "Router";
+            } else {
+                arg.mode = "AP";
+            }
+
+            if (arg.mode == realMode) {
+                $.reload();
+                return;
+            }
+
+            $.confirm(c_str.swmod,
+                    function() {
+                        $.addLoading($("#b_save"));
+						$.act(ACT_SET, ROUTER_MODE, null, null, arg);
+                        $.exe(function(ret) {
+                            $.removeLoading();
+                            if (!ret) {
+                                $.guage(["<span class='T_rebooting'>" + s_str.rebooting + "</span>", "<span class='T T_wait_reboot'>" + s_str.wait_reboot + "</span>"], 100, $.guageInterval, function() {
+                                    if (arg.mode == "Router") {
+                                        //reload 192.168.0.1
+                                        var ret = location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+										location.href = ret[1] + "://" + "tplinkwifi.net" + (ret[3] ? ret[3] : "") + "/";
+                                    } else {
+										//reload 192.168.0.254
+                                        var ret = location.href.match(/(https?):\/\/([^:\/]+)(:\d+)?\/?([^?]*)/);
+                                        location.href = ret[1] + "://" + "192.168.0.254" + (ret[3] ? ret[3] : "") + "/";
+                                        //$.refresh();
+                                    }
+                                },null, null, null, s_str.chmodRebootNote);
+                            }
+                        });
+                    },
+                    function() {
+                        $.reload();
+                    }
+            );
+        }
+        $('#b_save').on('click', doSave);
+
+        function initDHCP() {
+            var brLanList = $.act(ACT_GL, L2_BRIDGING_ENTRY, null, null, ["bridgeName"]);
+            $.exe();
+            //not has group
+            lanIPv4Cfg = $.act(ACT_GS, LAN_IP_INTF, null, brLanList[0].__stack, ["IPInterfaceIPAddress", "IPInterfaceSubnetMask", "X_TP_MACAddress"]);
+            dhcpCfg = $.act(ACT_GET, LAN_HOST_CFG, brLanList[0].__stack, null, null);
+            $.exe();
+        }
+        $.tpInit(function() {
+            sysModeInit();
+            if (INCLUDE_SMART_DHCP && $.routerMode == 'AP') {
+                initDHCP();
+            }
+        });
+    })();
+</script>
+<style>
+    p.mode-details {
+        padding-left: 20px;
+    }
+    .sm-icon-row {
+        margin: 22px 15px 15px;
+    }
+    .sm-icon-container {
+        display: inline-block;
+    }
+
+    .sm-icon-container.wireless {
+        position: relative;
+        top: -18px;
+    }
+
+    .sm-icon-connector {
+        display: inline-block;
+        width: 50px;
+        border-top: 2px dotted #ccc;
+        padding: 28px 0 0;
+    }
+
+    .sm-icon-connector.short {
+        width: 20px;
+    }
+
+    .sm-icon-connector.solid {
+        border-top: 1px solid #ccc;
+    }
+
+    .sm-icon-wireless {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background: url(../img/icons.png) no-repeat -413px -41px;
+    }
+
+    div.map-icon-router, div.map-icon-internet, div.map-icon-wireless {
+        position: static;
+    }
+</style>

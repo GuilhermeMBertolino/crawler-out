@@ -1,0 +1,115 @@
+#!/bin/sh /etc/rc.common
+
+SERVICE_DAEMONIZE=1
+
+START=98
+STOP=10
+
+clear_old_fw_cloud_account()
+{        
+	cloud_username=`uci get accountmgnt.@cloud_account[0].username`
+        if [ "A$cloud_username" != "A" ];then
+                echo "$cloud_username from old FW" >/dev/console &
+                uci delete accountmgnt.@cloud_account[0].username
+                uci delete accountmgnt.@cloud_account[0].password
+		cloud_accountid=`uci get accountmgnt.@cloud_account[0].accountid`
+                uci set cloud_config.device_status.accountid=$cloud_accountid
+                uci commit
+        fi
+}
+
+boot()
+{	
+	clear_old_fw_cloud_account
+	if [ ! -f /etc/config/cloud_config ];then
+		touch /etc/config/cloud_config
+		uci set cloud_config.login='router_post'
+		uci set cloud_config.new_firmware='cloud_push'
+		uci set cloud_config.upgrade_info='cloud_reply'
+
+		uci set cloud_config.device_status='cloud_reply'
+		uci set cloud_config.device_status.bind_status='0'
+		uci set cloud_config.device_status.need_unbind='0'
+		uci set cloud_config.device_status.need_checkupgrade='1'
+
+		uci set cloud_config.info='cloud_device'
+		uci set cloud_config.info.alias=$(getfirm HOSTNAME_UNDERLINE)
+		uci set cloud_config.info.alias_changed='false'
+	
+		uci commit
+	fi
+
+	if [ ! -f /etc/config/cloud_svr ];then
+		touch /etc/config/cloud_svr
+		uci set cloud_svr.cloud='svr'
+		uci set cloud_svr.cloud.domain='devs.tplinkcloud.com'
+		uci set cloud_svr.cloud.port='50443'
+
+		uci set cloud_svr.default='svr'
+		uci set cloud_svr.default.heartbeat_interval_ms='235000'
+		uci set cloud_svr.default.request_timeout_ms='5000'
+		uci set cloud_svr.default.max_message_number='1000'
+		uci set cloud_svr.default.max_client_number='20'
+		uci set cloud_svr.default.cer_file='/tmp/etc/2048_newroot.cer'
+
+		uci set cloud_svr.module='svr'
+		uci set cloud_svr.module.cloud_kit='/usr/lib/libcloud-kit.so'	
+		uci commit
+	fi
+
+	if [ ! -f /etc/config/cloud_status ];then
+		touch /etc/config/cloud_status
+		uci set cloud_status.client_info='cloud_client'
+		uci set cloud_status.client_info.reconnect_time='0'
+		uci set cloud_status.client_info.disconnect_reason='0'
+		uci set cloud_status.client_info.fw_download_progress='0'
+		uci set cloud_status.client_info.connect_status='0'
+
+		uci set cloud_status.ddns_register='router_request'
+		uci set cloud_status.ddns_register.owner='0'
+		uci set cloud_status.ddns_register.action_status='0'
+		uci set cloud_status.ddns_register.err_code='0'
+
+		uci set cloud_status.ddns_bind='router_request'
+		uci set cloud_status.ddns_bind.owner='0'
+		uci set cloud_status.ddns_bind.action_status='0'
+		uci set cloud_status.ddns_bind.err_code='0'
+
+		uci set cloud_status.ddns_unbind='router_request'
+		uci set cloud_status.ddns_unbind.owner='0'
+		uci set cloud_status.ddns_unbind.action_status='0'
+		uci set cloud_status.ddns_unbind.err_code='0'
+
+		uci set cloud_status.ddns_unbind_all='router_request'
+		uci set cloud_status.ddns_unbind_all.owner='0'
+		uci set cloud_status.ddns_unbind_all.action_status='0'
+		uci set cloud_status.ddns_unbind_all.err_code='0'
+
+		uci set cloud_status.ddns_get_domain_list='router_request'
+		uci set cloud_status.ddns_get_domain_list.owner='0'
+		uci set cloud_status.ddns_get_domain_list.action_status='0'
+		uci set cloud_status.ddns_get_domain_list.err_code='0'
+
+		uci set cloud_status.ddns_delete='router_request'
+		uci set cloud_status.ddns_delete.owner='0'
+		uci set cloud_status.ddns_delete.action_status='0'
+		uci set cloud_status.ddns_delete.err_code='0'
+
+		uci commit
+	fi
+
+	#generate the cloud service file
+	[ -f /usr/sbin/cloud_genSrvFile ] && /usr/sbin/cloud_genSrvFile
+
+	start
+}
+
+start()
+{
+	service_start /usr/bin/cloud-brd -c /etc/cloud_config.cfg
+}
+
+stop()
+{
+	SERVICE_SIG=kill service_stop /usr/bin/cloud-brd
+}

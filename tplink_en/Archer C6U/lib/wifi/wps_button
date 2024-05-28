@@ -1,0 +1,38 @@
+#!/bin/sh
+
+wps_status()
+{
+	. /lib/functions.sh
+	config_load wireless
+	config_get wps_2g_state ra0 wps "on"
+	config_get wps_5g_state rai0 wps "on"
+	config_get encryption_2g ra0 encryption none
+	config_get psk_version_2g ra0 psk_version auto
+	config_get encryption_5g rai0 encryption none
+	config_get psk_version_5g rai0 psk_version auto
+	
+	if [ "$wps_2g_state" == "on" -o "$wps_5g_state" == "on" ]; then
+		#Actually, "wpa3 Enterprise" should also return 1,but it's not supported.
+		if [ "$encryption_2g" == "psk_sae" -a "$psk_version_2g" == "sae_only" -a "$encryption_5g" == "psk_sae" -a "$psk_version_5g" == "sae_only" ];then 
+			return 1
+		fi
+		return 0
+	else
+		return 1
+	fi
+}
+
+
+# start wps pbc
+if [ $(/sbin/is_cal) = "true" -a "$(uci get factory.factorymode.enable)" != "yes" ]; then
+	wps_status || return
+	lua -e "require 'luci.controller.admin.wireless'.wireless_wps_connect({option = 'connect'})"
+else
+	echo "wps button will lose function now!" >/dev/console
+	if [ ! -e /tmp/btn_check ];then
+		echo 0 > /tmp/btn_check
+	fi
+	ret=$(cat /tmp/btn_check)
+	ret=$(($ret | 0x8))
+	echo $ret > /tmp/btn_check
+fi

@@ -1,0 +1,160 @@
+<script type="text/javascript">
+var severities = [
+    s_str.emerg,
+    s_str.alert,
+    s_str.crit,
+    m_str.err,
+    m_str.warn,
+    s_str.notice,
+    s_str.info,
+    s_str.debug
+];
+$("#t_back").click(function() {
+    $.loadMain("log.htm", $.mainParam);
+});
+$("#t_save").click(function() {
+    $.addLoading($(this));
+    var arg = {};
+    arg.logToLocal = $("#localLog").prop("data-checked") ? 1 : 0;
+    arg.logToRemote = $("#remoteLog").prop("data-checked") ? 1 : 0;
+    arg.localSeverity = $("#localSeverity").data('value');
+    arg.remoteSeverity = $("#remoteSeverity").data('value');
+    arg.serverIP = $("#serverip").prop('value');
+    if ($.ifip(arg.serverIP)) {
+        $.alert(ERR_IP_FORMAT);
+        var element = $("#serverip");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    arg.serverPort = $("#serverport").prop('value');
+    if ($.num(arg.serverPort, [1, 65535])) {
+        $.alert(CMM_FW_ILLEGAL_PORT);
+        var element = $("#serverport");
+        if (element) {
+            element.focus();
+            element.select();
+        }
+        return false;
+    }
+    arg.facility = $("#facility").data('value');
+    $.act(ACT_SET, SYSLOG_CFG, null, null, arg);
+    $.exe(function(ret) {
+        $.removeLoading();
+        if (!ret) $.loadMain("log.htm", $.mainParam);
+    })
+});
+
+function addSeverity() {
+    var opt = "";
+    var optText;
+    var optVal;
+    for (var i = 0, l = severities.length; i < l; i++) {
+        optText = severities[i];
+        optVal = i;
+        opt += "<option value='" + optVal + "' text='" + optText + "' >" + optText + "</option>"
+    }
+    $("#localSeverity").empty().append(opt);
+    $('#localSeverity option[value="' + optVal + '"]').prop('selected', 'selected');
+
+    opt = "";
+    for (var i = 0, l = severities.length; i < l; i++) {
+        optText = severities[i];
+        optVal = i;
+        opt += "<option value='" + optVal + "' text='" + optText + "' >" + optText + "</option>"
+    }
+    $("#remoteSeverity").empty().append(opt);
+    $('#remoteSeverity option[value="' + optVal + '"]').prop('selected', 'selected');
+}
+$("#localLog").click(function() {
+    if ($("#localLog").prop('data-checked')) {
+        $("#localCon").removeClass("nd");
+    } else {
+        $("#localCon").addClass("nd");
+    }
+});
+$("#remoteLog").click(function() {
+    if ($("#remoteLog").prop('data-checked')) {
+        $("#remoteCon").removeClass("nd");
+    } else {
+        $("#remoteCon").addClass("nd");
+    }
+});
+
+function init() {
+    addSeverity();
+    var syslogobj = $.act(ACT_GET, SYSLOG_CFG);
+    if ($.exe()) {
+        return;
+    }
+    $("#localLog").prop('checked', syslogobj.logToLocal == 1 ? true : false);
+    $("#remoteLog").prop('checked', syslogobj.logToRemote == 1 ? true : false);
+    $("#serverip").prop('value', syslogobj.serverIP);
+    $("#serverport").prop('value', syslogobj.serverPort);
+    $('#facility option[value="' + syslogobj.facility + '"]').prop('selected', 'selected');
+    $('#localSeverity option[value="' + syslogobj.localSeverity + '"]').prop('selected', 'selected');
+    $('#remoteSeverity option[value="' + syslogobj.remoteSeverity + '"]').prop('selected', 'selected');
+    if (syslogobj.logToRemote == 1) {
+        $("#remoteCon").removeClass("nd");
+    } else {
+        $("#remoteCon").addClass("nd");
+    }
+}
+</script>
+<h3 id="et">Log Settings</h3>
+<div class="content-container">
+    <form class="pure-form pure-form-aligned">
+        <div>
+            <input type="checkbox" id="localLog" />
+            <label class="T" id="t_local">Save Locally</label>
+        </div>
+        <div id="localCon">
+            <b class="T" id="t_minlvl1">Minimum Level</b>
+            <select id="localSeverity" class="xl">
+            </select>
+        </div>
+        <br />
+        <div>
+            <input type="checkbox" id="remoteLog" />
+            <label class="T" id="t_remote">Save Remotely</label>
+        </div>
+        <div id="remoteCon" class="nd">
+            <div>
+                <b class="item T" id="t_minlvl2">Minimum Level:</b>
+                <select id="remoteSeverity" class="xl"></select>
+            </div>
+            <div>
+                <b class="item T" id="t_ip">Server IP</b>
+                <input type="text" class="text xl" id="serverip" />
+            </div>
+            <div>
+                <b class="item T" id="t_port">Server Port</b>
+                <input type="text" class="text xl" id="serverport" />
+            </div>
+            <div>
+                <b class="item T" id="t_fcname">Local Facility Name</b>
+                <select id="facility" class="xl">
+                    <option value="1" selected>User</option>
+                    <option value="16">Local0</option>
+                    <option value="17">Local1</option>
+                    <option value="18">Local2</option>
+                    <option value="19">Local3</option>
+                    <option value="20">Local4</option>
+                    <option value="21">Local5</option>
+                    <option value="22">Local6</option>
+                    <option value="23">Local7</option>
+                </select>
+            </div>
+        </div>
+        <br />
+        <div class="btn-right">
+            <button type="submit" id="t_back" class="green inline T_back">Back</button>
+            <button type="submit" id="t_save" class="green inline T_save">Save</button>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+$.tpInit(init);
+</script>

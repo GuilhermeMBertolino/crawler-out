@@ -1,0 +1,58 @@
+#!/bin/sh
+# online test for agileconfig
+
+online_check() {
+	times=`seq 1 $1`
+	for i in times
+	do
+		online-test 
+		if [ $? -eq 1 ] ;
+		then
+			continue;
+		else
+			return 0
+		fi
+	done
+	return 1
+}
+
+. /etc/functions.sh
+
+config_load sysmode
+config_get mode sysmode mode ""
+[ $mode != "router" ] && return
+
+#agile_config login 1h calc
+local agileconfig_flag
+local agilefile="agileconfig_1h_counts"
+config_load factory
+config_get agileconfig_flag agileconfig enable
+
+crontab_cmd="\* \* \* \* \* \/bin\/sh \/sbin\/agileconfig-countdown-1h"
+
+if [ "$agileconfig_flag" = "no" ];then
+	if [ -f /tmp/$agilefile ];then
+		rm /tmp/$agilefile
+	fi
+	sed -i "/^${crontab_cmd}/d" /etc/crontabs/root
+	return 0
+fi
+
+IFC=wan
+ubus list | grep -wq "network.interface.internet" && IFC=internet
+ubus call network.interface.$IFC status | grep '"up"' | grep true
+
+if [ $? -ne 0 ] ;
+then
+		/sbin/agile_config_calc_1h.sh 0
+else
+	online_check 3
+	if [ $? -eq 1 ] ;
+	then
+			/sbin/agile_config_calc_1h.sh 0
+	else
+			/sbin/agile_config_calc_1h.sh 1
+	fi
+fi
+
+

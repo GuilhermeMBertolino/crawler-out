@@ -1,0 +1,22 @@
+#!/usr/bin/lua
+-- get total rx_bytes and total tx_bytes of all ipaddrs from tfstats
+
+local tfs = require "luci.model.tfstats"
+
+all_total_rx_byte = 0
+all_total_tx_byte = 0
+
+stats_tbl, total = tfs.TFS_INST():load_all_stats()
+
+for _, stats in ipairs(stats_tbl) do
+    for k,vt in pairs(stats) do
+        if k == "total_rx_byte" then
+            all_total_rx_byte = all_total_rx_byte + vt
+        end
+        if k == "total_tx_byte" then
+            all_total_tx_byte = all_total_tx_byte + vt
+        end
+    end
+end
+
+print("rx_total_bytes=" .. all_total_rx_byte .. ";tx_total_bytes=" .. all_total_tx_byte)

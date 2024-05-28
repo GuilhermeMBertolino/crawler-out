@@ -1,0 +1,234 @@
+﻿<script language="javascript" type="text/javascript">
+var tmpInformInterval;
+var tmpCwmpFlag;
+function CR_click(obj)
+{
+	if (obj.checked == 1)
+		$.removeClass($.id("CR"), "nd");
+	else
+		$.addClass($.id("CR"), "nd");
+}
+function init()
+{
+	var cwmpObj = $.act(ACT_GET, MANAGEMENT_SERVER, null, null);
+	var wanIPList = $.act(ACT_GL, WAN_IP_CONN, null, null, ["enable", "name", "X_TP_IfName", "connectionType"]);
+	var wanPPPList = $.act(ACT_GL, WAN_PPP_CONN, null, null, ["enable", "name", "X_TP_IfName"]);
+	var sel = $.id("wanInf");
+	var index = 1;
+	if (!$.exe())
+	{
+		if (cwmpObj.enableCWMP == 1)
+			$.id("cwmp_on").checked = 1;
+		else
+			$.id("cwmp_off").checked = 1;
+		if (cwmpObj.periodicInformEnable == 1)
+			$.id("inform_on").checked = 1;
+		else
+			$.id("inform_off").checked = 1;
+		$.id("inform_interval").value = cwmpObj.periodicInformInterval;
+		tmpInformInterval = cwmpObj.periodicInformInterval;
+		$.id("acs_url").value = cwmpObj.URL;
+		$.id("acs_user_name").value = cwmpObj.username;
+		$.id("acs_user_pwd").value = cwmpObj.password;
+
+		for (var i = 0; i < wanIPList.length; i++)
+		{	
+			if ((wanIPList[i].connectionType == "IP_Routed") && (wanIPList[i].enable == 1))
+			{
+				var option = $.c("option");
+				option.value = wanIPList[i].X_TP_IfName;
+				option.text = wanIPList[i].name;
+				try{sel.add(option, null);}catch(e){sel.add(option);}
+				index++;
+				if (wanIPList[i].X_TP_IfName == cwmpObj.X_TP_BoundIfName)
+				{
+					sel.selectedIndex = index;
+				}
+			}
+		}
+		for (var j = 0; j < wanPPPList.length; j++)
+		{
+			if (wanPPPList[j].enable == 1)
+			{
+				var option = $.c("option");
+				option.value = wanPPPList[j].X_TP_IfName;
+				option.text = wanPPPList[j].name;
+				try{sel.add(option, null);}catch(e){sel.add(option);}
+				index++;
+				if (wanPPPList[j].X_TP_IfName == cwmpObj.X_TP_BoundIfName)
+				{
+					sel.selectedIndex = index;
+				}
+			}
+		}
+		if (cwmpObj.X_TP_BoundIfName == "Any_WAN")
+			sel.selectedIndex = 0;
+		if (cwmpObj.X_TP_BoundIfName == "LAN")
+			sel.selectedIndex = 1;
+			
+		tmpCwmpFlag = cwmpObj.X_TP_Flag;
+		if ((cwmpObj.X_TP_Flag & 0x0010) != 0)
+			$.id("soap_on").checked =1;
+		else
+			$.id("soap_off").checked =1;
+		if ((cwmpObj.X_TP_Flag  & 0x0080) != 0)
+		{
+			$.id("CR_Auth_en").checked =0;
+			$.addClass($.id("CR"), "nd");
+		}
+		else
+		{
+			$.id("CR_Auth_en").checked =1;
+			$.removeClass($.id("CR"), "nd");
+		}
+		$.id("CR_name").value = cwmpObj.connectionRequestUsername;
+		$.id("CR_pwd").value = cwmpObj.connectionRequestPassword;
+		$.h($.id("CR_url"), cwmpObj.connectionRequestURL);
+		$.id("CR_path").value = cwmpObj.X_TP_connReqPath;
+		$.id("CR_port").value = cwmpObj.X_TP_ConnReqPort;
+	}
+}
+function doSave()
+{
+	var cwmpObj = {};
+	var cwmpFlag;
+	cwmpObj.enableCWMP = ($.id("cwmp_on").checked == 1) ? 1 : 0;
+	cwmpObj.periodicInformEnable = ($.id("inform_on").checked == 1) ? 1 : 0;
+	if ((!$.num($.id("inform_interval").value, true)) == true)
+	{
+		cwmpObj.periodicInformInterval = $.id("inform_interval").value;
+	}
+	else
+	{
+		$.id("inform_interval").value = tmpInformInterval;
+		cwmpObj.periodicInformInterval = parseInt(tmpInformInterval, 10);
+	}
+		
+	if (($.id("acs_url").value == ""))
+	{
+		$.alert(ERR_CWMP_URL_INVAD);
+		var element = $.id("acs_url");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return;
+	}
+	else
+	{
+		cwmpObj.URL = $.id("acs_url").value;
+	}
+	cwmpObj.username = $.id("acs_user_name").value;
+	cwmpObj.password = $.id("acs_user_pwd").value;
+	cwmpObj.X_TP_BoundIfName = $.id("wanInf").value;
+	
+	if ($.id("soap_on").checked == 1)
+		tmpCwmpFlag |= 0x0010 ;
+	else
+		tmpCwmpFlag &= (~0x0010);
+		
+	if ($.id("CR_Auth_en").checked == 1)
+		tmpCwmpFlag &= (~0x0080);
+	else
+		tmpCwmpFlag |= 0x0080;
+	cwmpObj.X_TP_Flag = tmpCwmpFlag;
+	cwmpObj.connectionRequestUsername = $.id("CR_name").value;
+	cwmpObj.connectionRequestPassword = $.id("CR_pwd").value;
+	if ($.id("CR_path").value.charAt(0) != "/")
+	{
+		$.alert(ERR_CWMP_PATH_INVAD);
+		var element = $.id("CR_path");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	else
+	{
+		cwmpObj.X_TP_connReqPath = $.id("CR_path").value;
+	}
+	if ((!$.num($.id("CR_port").value, true)) && ($.id("CR_port").value >= 1000))
+	{
+		cwmpObj.X_TP_ConnReqPort = parseInt($.id("CR_port").value, 10);
+	}
+	else
+	{
+		$.alert(ERR_CWMP_PORT_INVAD);
+		var element = $.id("CR_port");
+		if(element){
+			element.focus();
+			element.select();
+		}
+		return false;
+	}
+	
+	$.act(ACT_SET, MANAGEMENT_SERVER, null, null, cwmpObj);
+	$.addLoading($.id("save"));
+	$.exe(function(ret){ if (!ret) $.reload(); });
+}
+function getRPCMethods()
+{
+	var cwmpFlag = tmpCwmpFlag | 0x0004;
+	$.addLoading($.id("getRPCMethods"));
+	$.act(ACT_SET, MANAGEMENT_SERVER, null, null, ["X_TP_Flag=" + cwmpFlag]);
+	$.exe(function(ret){
+		if (!ret) $.reload();
+	});
+}
+</script>
+
+<p class="et T" id="et">CWMP Settings</p>
+<div class="con1 M">
+<p class="ct"></p>
+<p class="bl"></p>
+<div class="con2">
+<p class="T" id="t_info">WAN Management Protocol (also called TR-069) allows the Auto-Configuration Server (ACS) to perform auto-configuration, provision, collection, and diagnostics to this device. You may configure this function under your ISP's instructions.</p>
+<p class="br"></p>
+<p class="L1"><b class="item">CWMP:</b>
+	<input name="cwmp" id="cwmp_on" type="radio" /><span class="T T_en">Enable</span>
+	<input name="cwmp" id="cwmp_off" type="radio" /><span class="T T_dis">Disable</span></p>
+<p class="L1"><b class="item T" id="t_inform">Inform:</b>
+	<input name="inform" id="inform_on" type="radio"/><span class="T T_en">Enable</span>
+	<input name="inform" id="inform_off" type="radio" /><span class="T T_dis">Disable</span></p>
+<p class="br"></p>
+<p class="L1">
+<b class="item S T" id="t_interval">Inform Interval:</b>
+<input type="text" class="text" size="15"  maxlength="" id="inform_interval" />
+</p>
+<p class="L1"><b class="item S">ACS URL:</b><input type="text" class="text" size="15"  id="acs_url" /></p>
+<p class="L1"><b class="item S">ACS <span class="T T_username">Username</span>:</b><input type="text" class="text" size="15" id="acs_user_name" /></p>
+<p class="L1"><b class="item S">ACS <span class="T T_passwd">Password</span>:</b><input type="password" class="text" size="15" id="acs_user_pwd" /></p>
+<p class="L1"><b class="item S T" id="t_if">Interface used by TR-069 client:</b>
+<select class="L"id="wanInf">
+<option class="T" id="t_anywan" value="Any_WAN">Any WAN</option>
+<option id="lan" value="LAN">LAN</option>
+</select></p>
+<p class="L1"><b class="item T" id="t_display">Display SOAP messages on serial console:</b>
+	<input name="soap" id="soap_on" type="radio" /><span class="T T_en">Enable</span>
+	<input name="soap" id="soap_off" type="radio" /><span class="T T_dis">Disable</span></p>
+<p class="br"></p>
+<p class="L1"><input type="checkbox" id="CR_Auth_en" checked="checked" onclick="CR_click(this)"/><b class="T" id="t_auth">Connection Request Authentication</b></p>
+<div id="CR">
+<p class="L1"><b class="item S T" id="t_cr_name">Connection Request Username:</b><input type="text" class="text" size="15"  id="CR_name" /></p>
+<p class="L1"><b class="item S T" id="t_cr_pwd">Connection Request Password:</b><input type="password" class="text" size="15"  id="CR_pwd" /></p>
+<p class="L1"><b class="item S T" id="t_cr_path">Connection Request Path:</b><input type="text" class="text" size="15"  id="CR_path" /></p>
+<p class="L1"><b class="item S T" id="t_cr_port">Connection Request Port:</b><input type="text" class="text" size="15"  id="CR_port" /></p>
+<p class="L1"><b class="item S T" id="t_cr_url">Connection Request URL:</b><b id="CR_url"></b></p>
+
+</div>
+
+</div>
+<p class="bl"></p>
+<p class="tail" id="tail">
+	<input type="button" class="button L T T_save" value="Save" id="save" onclick="doSave()" />
+	<input type="button" class="button XL T" value="Get RPC Methods" id="getRPCMethods" onclick="getRPCMethods()" />
+</p>
+
+</div>
+
+<script language="javascript" type="text/javascript">	
+$.loadHelp('cwmp_h.htm');
+init();
+</script>
+

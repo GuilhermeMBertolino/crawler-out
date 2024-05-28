@@ -1,0 +1,20 @@
+#!/bin/sh
+
+RFTEST_DIR="/data/rftest"
+ret="true"
+
+if [ ! -d $RFTEST_DIR ]; then
+	mkdir "$RFTEST_DIR"
+	ret="false"
+fi
+
+if [ ! -e  $RFTEST_DIR/rftestflag ]; then
+	ret="false"
+else
+	local rftestflag=`cat $RFTEST_DIR/rftestflag`
+	if [ "$rftestflag" != "rftestflag=1" ]; then
+		ret="false"
+	fi
+fi
+
+echo "$ret"

@@ -1,0 +1,51 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2012-2019 TPLINK
+
+START=80
+STOP=25
+
+CRON_TASK_SCRIPT=/etc/monit/monit_proclist
+
+add_cron(){
+	local replace=$(sed -n '/^#local url_class/p' "$CRON_TASK_SCRIPT")
+	local line_num=$(awk '/^#local url_class/{print NR}' "$CRON_TASK_SCRIPT")
+	
+	if [ -n "$replace" ];then
+		sed -i "${line_num}c ${replace#*#}" "$CRON_TASK_SCRIPT"
+	fi
+}
+
+del_cron(){
+	local replace=$(sed -n '/^local url_class/p' "$CRON_TASK_SCRIPT")
+	local line_num=$(awk '/^local url_class/{print NR}' "$CRON_TASK_SCRIPT")
+	
+	if [ -n "$replace" ];then
+		sed -i "${line_num}c #$replace" "$CRON_TASK_SCRIPT"
+	fi
+}
+
+start() {
+	export LD_LIBRARY_PATH=/usr/lib/avira:$LD_LIBRARY_PATH
+	
+	local mode=$(uci get sysmode.sysmode.mode)
+	local bind_status=$(uci get cloud_config.device_status.bind_status)
+	if [ "x$mode" != "xrouter" -o "$bind_status" != "1" ]; then
+		return
+	fi
+	
+	add_cron
+	service_start /usr/sbin/url-class
+	
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+}
+
+stop() {
+	del_cron
+	service_stop /usr/sbin/url-class
+
+	[ -e /etc/init.d/avira_accel_support ] && {
+		/etc/init.d/avira_accel_support restart
+	}	
+}

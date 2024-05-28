@@ -1,0 +1,44 @@
+#!/usr/bin/lua
+
+local asycrypto = require("luci.model.asycrypto").Crypto("rsa")
+local accmgnt = require "luci.model.accountmgnt"
+local sys = require "luci.sys"
+local uci = require "luci.model.uci"
+local configtool = require "luci.sys.config"
+
+local uci_r = uci.cursor()
+
+local nvram_rsa_keys = {}
+nvram_rsa_keys.e = uci_r:get("accountmgnt", "keys", "e")
+nvram_rsa_keys.d = uci_r:get("accountmgnt", "keys", "d")
+nvram_rsa_keys.n = uci_r:get("accountmgnt", "keys", "n")
+
+local nvram_username = luci.sys.exec("nvram get username")
+local nvram_pwd_rsa = luci.sys.exec("nvram get pwd_rsa")
+local nvram_pwd_md5 = luci.sys.exec("nvram get pwd_md5")
+
+-- If nvram data has username, pwd_rsa and pwd_md5
+if nvram_username ~= "" and nvram_pwd_rsa ~= "" and nvram_pwd_md5 ~= "" then
+    -- local password_dersa = asycrypto.decrypt_reverse(nvram_pwd_rsa, nvram_rsa_keys)
+    local password_dersa = asycrypto.decrypt(nvram_pwd_rsa, nvram_rsa_keys)
+    local password_aes = accmgnt.aes_encrypt(password_dersa)
+
+    uci_r:delete_all("accountmgnt", "account")
+    local sname = uci_r:add("accountmgnt", "account")
+    uci_r:section("accountmgnt", "account", sname, {
+        username = nvram_username,
+        password = password_aes
+    })
+    uci_r:commit_without_write_flash("accountmgnt")
+
+    local enable = uci_r:get("usbshare", "account", "use_login_user")
+    if enable and enable == "on" then
+        uci_r:set("usbshare", "account", "username", nvram_username)
+        uci_r:set("usbshare", "account", "password", password_dersa)
+        uci_r:commit_without_write_flash("usbshare")
+    end
+
+    configtool.saveconfig()
+
+    luci.sys.exec("nvram unset username;nvram unset pwd_rsa;nvram unset pwd_md5;nvram commit")
+end

@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# FIXME: think twice
+#
+# for ax6000 bonding
+# netifd will down all interfaces
+# slaves of bond should up in ax6000, but not in 5400x
+# will reboot if parameters of bonding.ko change
+# so we just need to up lan agg intf here
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /lib/switch/core_phy.sh
+
+config_load switch
+config_load sysmode
+
+lan_bond_ifname="bond0"
+lan_bridge_ifname="br-lan"
+
+reload_lanlag_interface()
+{
+	echo "[LAG] Reloading bonding-lag-lan">/dev/console
+
+	config_get lan_agg_ports "lan_agg" "lacpports"
+	
+	local lan_agg_ifnames=""
+	for lanIndex in ${lan_agg_ports}; do
+		phy_port=$(get_lan_port_id "$lanIndex")
+		lan_agg_ifnames="${lan_agg_ifnames}""eth""${phy_port} "
+		echo "[LAG] LAG ifname is: ${lan_agg_ifnames}">/dev/console
+	done	
+
+	for phyIfName in ${lan_agg_ifnames}; do
+		ifconfig $phyIfName up
+	done	
+}
+
+reload_lanagg()
+{
+	config_get en "lan_agg" "enable_agg"
+	config_get sysmode "sysmode" "mode"
+
+	[ -z "$en" ] && return 0
+	[ "$sysmode" != "router" ] && return 0
+
+	if [ "$en" != "1" ] ;
+	then
+		# do nothing here
+		return 0
+	else
+		reload_lanlag_interface
+		return 0
+	fi
+}
+
+if [ "$ACTION" == "ifup" ]; then
+	echo " ============ LAG reload ========== " > /dev/console 2>&1
+	reload_lanagg
+fi

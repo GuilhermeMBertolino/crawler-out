@@ -1,0 +1,491 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>QoS</title>
+    <style type="text/css">
+    </style>
+</head>
+
+<body>
+    <form class="pure-form pure-form-aligned">
+        <h3 id="DEVICE_PRIORITY">Device Priority</h3>
+        <div id="device-priority">
+            <table id="device-priority-grid">
+                <thead></thead>
+                <tbody id="device-priority-body"></tbody>
+            </table>
+        </div>
+
+        <div id="help-qos-device-priority"></div>
+    </form>
+</body>
+<script type="text/javascript">
+$(document).ready(function(e) {
+    var devices = null;
+    var devicePriorityGrid = $("table#device-priority-grid");
+    var operationFlag = false;
+    $.devPriority = $.devPriority || {};
+    if ($.devPriority.refreshId) {
+        clearTimeout($.devPriority.refreshId);
+    }
+
+    function renderType(device) {
+        // if (val != 0 && val != "---") {
+        var type = device.devType,
+            enable = device.prioEnable == "1" ? "enable" : "",
+            inHTML = "<div class=\"device-type-container widget-container\">";
+
+        inHTML += "<span class=\"icon " + type + " " + enable + "\"></span>";
+        inHTML += "</div>";
+
+        return inHTML;
+        // } else {
+        //     return "---";
+        // }
+    }
+
+    function renderInformation(device) {
+        var modeArray = ["Wire", "2.4G", "2.4G", "5G", "5G"];
+        var deviceName = device.devName,
+            mode = modeArray[device.connType],
+            mac = device.mac,
+            inHTML = "<div class=\"device-info-container widget-container\">",
+            modeType = "";
+        switch (mode) {
+            case "2.4G":
+                modeType = "show_24G";
+                break;
+            case "5G":
+                modeType = "show_51G";
+                break;
+            case "5G_2":
+                modeType = "show_52G";
+                break;
+            case "Wire":
+                modeType = "show_LAN";
+                break;
+            case "offline":
+                modeType = "show_offline";
+                break;
+            default:
+                modeType = "show_offline";
+        }
+        inHTML += "<div class=\"name\" title=\"" + deviceName + "\">" + deviceName + "</div>";
+        inHTML += "<div>";
+        inHTML += "<span class=\"mode " + modeType + "\"></span>";
+        inHTML += "<span class=\"mac\">" + mac + "</span>";
+        inHTML += "</div>";
+        inHTML += "</div>";
+
+        return inHTML;
+    }
+
+    function renderTimeRate(device) {
+        var speed,
+            unit = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"],
+            inHTML = "<div class=\"speed-upload-container widget-container\">";
+        speed = device.realTimeRateUp;
+
+        inHTML += "<span class=\"icon\"></span>";
+
+        if (speed / 1024 < 1) {
+            if (speed == 0) {
+                inHTML += "<span class=\"text\">" + 0 + "</span>";
+            } else {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(2) + "</span>";
+            }
+            inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+        } else if (speed / 1024 / 1024 < 1) {
+            if (speed / 1024 < 1000) {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(1) + "</span>";
+                inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+            } else {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(0) + "</span>";
+                inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+            }
+        } else {
+            inHTML += "<span class=\"text\">" + (speed / 1024 / 1024).toFixed(1) + "</span>";
+            inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.MBPS + "</span>";
+        }
+        inHTML += "</div>";
+
+
+        speed = device.realTimeRateDown;
+
+        inHTML += "<div class=\"speed-download-container widget-container\">";
+        inHTML += "<span class=\"icon\"></span>";
+        if (speed / 1024 < 1) {
+            if (speed == 0) {
+                inHTML += "<span class=\"text\">" + 0 + "</span>";
+            } else {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(2) + "</span>";
+            }
+            inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+        } else if (speed / 1024 / 1024 < 1) {
+            if (speed / 1024 < 1000) {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(1) + "</span>";
+                inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+            } else {
+                inHTML += "<span class=\"text\">" + (speed / 1024).toFixed(0) + "</span>";
+                inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.KBPS + "</span>";
+            }
+        } else {
+            inHTML += "<span class=\"text\">" + (speed / 1024 / 1024).toFixed(1) + "</span>";
+            inHTML += "<span class=\"unit\">" + $.tpLang.devicePriority_nstr.MBPS + "</span>";
+        }
+        inHTML += "</div>";
+
+        return inHTML;
+    }
+
+    function renderTrafficUsage(device) {
+        var val = device.trafficUsage;
+        if (val != "---") {
+            var usage = val,
+                unit = ["KB", "MB", "GB", "TB"];
+
+            var inHTML = "";
+            usage = usage / 1024;
+            for (var i = 0; i < 4; i++) {
+                if (usage / 1024 > 1) {
+                    usage = usage / 1024;
+                } else
+                    break;
+            }
+            if (usage == 0) {
+                inHTML += "<span class=\"text usage\">" + Math.floor(usage * 10) / 10 + "</span>";
+            } else {
+                inHTML += "<span class=\"text usage\">" + Math.floor(usage * 10) / 10 + "</span>";
+            }
+            inHTML += "<span class=\"unit\">" + unit[i] + "</span>"
+
+            return inHTML;
+        } else {
+            return "---";
+        }
+    }
+
+    function renderPriority(device) {
+        var key = device.__stack;
+        var columns = {};
+        var column = {};
+        var cls = "",
+            val = "";
+
+        if (device.prioEnable == "1") {
+            cls = 'on';
+            val = true;
+        } else {
+            res = $.tpLang.m_str.disabled;
+            cls = "off";
+            val = false;
+        }
+
+        var inHTML = "<div class=\"container widget-container switch-button-container " + cls + "\">";
+        inHTML += "<div class=\"widget-wrap-outer switch-button-wrap-outer\">";
+        inHTML += "<a class=\"switch-button-btn " + cls + "\" href=\"javascript:void(0);\" data-index=\"" + device.__stack + "\" data-name=\"" + column.dataIndex + "\" data-value=\"" + val + "\" data-key=\"" + key + "\" data-on=\"on\" data-off=\"off\">";
+        inHTML += "<span class=\"switch-button-btn-wrap\">";
+        inHTML += "<span class=\"switch-button-btn-slider\"></span>";
+        inHTML += "</span>";
+        inHTML += "</a>";
+        inHTML += "</div>";
+        inHTML += "</div>";
+
+        return inHTML;
+    }
+
+    function renderTime(device) {
+        var key = device.__stack;
+        var columns = {};
+        var column = {};
+        var remaining = device.prioTimeLeft,
+            hours = parseInt(remaining / 3600),
+            minutes = parseInt((remaining % 3600) / 60),
+            period = "";
+
+        if (device.prioTimeLen != -1) {
+            period = device.prioTimeLen == 1 ? device.prioTimeLen + " hour" : device.prioTimeLen + " hours";
+        } else {
+            period = "Always";
+        }
+
+        var timePeriodShow = device.prioEnable == "1" ? "" : "hidden";
+        var timePeriodHide = device.prioEnable == "1" ? "hidden" : "";
+        var timeRemainingShow = (period == "Always" || remaining <= 60) ? "hidden" : "";
+
+        var selected_1 = "",
+            selected_2 = "",
+            selected_3 = "",
+            selected_4 = "";
+        switch (parseInt(device.prioTimeLen, 10)) {
+            case 1:
+                selected_1 = "selected";
+                break;
+            case 2:
+                selected_2 = "selected";
+                break;
+            case 4:
+                selected_3 = "selected";
+                break;
+            case -1:
+                selected_4 = "selected";
+                break;
+        }
+        var inHTML = "<div class=\"time-period-wrapper " + timePeriodShow + "\">";
+        inHTML += "<div class=\"container widget-container combobox-container\">";
+        inHTML += "<div class=\"widget-wrap-outer combobox-wrap-outer\">";
+        inHTML += "<div class=\"widget-wrap combobox-wrap\">";
+        inHTML += "<input class=\"combobox-text\" type=\"text\" readonly=\"true\" value=\"" + period + "\" data-index=\"" + device.__stack + "\" data-name=\"" + column.dataIndex + "\" data-value=\"" + period + "\" data-key=\"" + key + "\" />";
+        inHTML += "<a class=\"combobox-switch\" href=\"javascript:void(0);\">";
+        inHTML += "<span class=\"icon\"></span>";
+        inHTML += "</a>";
+
+        inHTML += "<div class=\"combobox-list-wrap\">";
+        inHTML += '<div class="position-top-left"></div><div class="position-top-center"></div>';
+        inHTML += '<div class="position-center-left"><div class="position-center-right">';
+        inHTML += "<div class=\"combobox-list-content-wrap\">";
+        inHTML += "<ul class=\"combobox-list\">";
+        inHTML += "<li class=\"combobox-list " + selected_1 + "\">";
+        inHTML += "<label class=\"combobox-label\">";
+        inHTML += "<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"1\" />";
+        inHTML += "<span class=\"text\">" + $.tpLang.devicePriority_nstr.ONE_HOUR + "</span>";
+        inHTML += "</label>";
+        inHTML += "</li>";
+        inHTML += "<li class=\"combobox-list " + selected_2 + "\">";
+        inHTML += "<label class=\"combobox-label\">";
+        inHTML += "<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"2\" />";
+        inHTML += "<span class=\"text\">" + $.tpLang.devicePriority_nstr.TWO_HOURS + "</span>";
+        inHTML += "</label>";
+        inHTML += "</li>";
+        inHTML += "<li class=\"combobox-list " + selected_3 + "\">";
+        inHTML += "<label class=\"combobox-label\">";
+        inHTML += "<input class=\"combobox-checkbox hidden\" type=\"checkbox\" value=\"4\" />";
+        inHTML += "<span class=\"text\">" + $.tpLang.devicePriority_nstr.FOUR_HOURS + "</span>";
+        inHTML += "</label>";
+        inHTML += "</li>";
+        inHTML += "<li class=\"combobox-list " + selected_4 + "\">";
+        inHTML += "<label class=\"combobox-label\">";
+        inHTML += "<input class=\"combobox-checkbox lst hidden\" type=\"checkbox\" value=\"Always\" />";
+        inHTML += "<span class=\"text\">" + $.tpLang.devicePriority_nstr.ALWAYS + "</span>";
+        inHTML += "</label>";
+        inHTML += "</li>";
+        inHTML += "</ul>";
+        inHTML += "</div>";
+        inHTML += '</div></div>';
+        inHTML += '<div class="position-bottom-left"></div><div class="position-bottom-center"></div>';
+        inHTML += "</div>";
+
+        inHTML += "</div>";
+        inHTML += "</div>";
+        inHTML += "</div>";
+        inHTML += "<div class=\"time-remaining " + timeRemainingShow + "\">" + hours + " " + $.tpLang.devicePriority_nstr.H + " " + minutes + " " + $.tpLang.devicePriority_nstr.MIN + "</br>" + $.tpLang.devicePriority_nstr.REMAINING + "</div>";
+        inHTML += "</div>";
+        inHTML += "<div class=\"time-period-line " + timePeriodHide + "\"><span></span></div>";
+
+        return inHTML;
+    }
+
+    function renderDevicesPriorityTable(devices) {
+        var flag = false;
+        $(".combobox-list-wrap").each(function() {
+            if ($(this).attr("toggleflag") == "shown") {
+                flag = true;
+            }
+        });
+        if (flag) {
+            return;
+        }
+        var array = [];
+        for (var i = 0; i < devices.length; i++) {
+            if (devices[i].active == "0" && devices[i].prioEnable == "0") {
+                continue;
+            }
+
+            var type = renderType(devices[i]);
+            var information = renderInformation(devices[i]);
+            var timeRate = renderTimeRate(devices[i]);
+            var trafficUsage = renderTrafficUsage(devices[i]);
+            var priority = renderPriority(devices[i]);
+            var time = renderTime(devices[i]);
+
+            array.push([{
+                text: type,
+                width: "10%"
+            }, {
+                text: information,
+                width: "25%"
+            }, {
+                text: timeRate,
+                width: "20%"
+            }, {
+                text: trafficUsage,
+                width: "15%"
+            }, {
+                text: priority,
+                width: "15%"
+            }, {
+                text: time,
+                width: "15%"
+            }]);
+        }
+        $.initTableBody($("#device-priority-grid"), array);
+    }
+
+    function initDevicesTable() {
+        /*
+        $.act(ACT_SET, HOMECARE_CLI_MGMT, null, null, {
+            updateCliInfoNow: "1"
+        });
+        $.exe(); */
+        $.act(ACT_OP, ACT_HOMECARE_UPDATE_CLIINFO_QOS);
+        $.exe();
+        // var index = 0;
+        // setTimeout(function() {
+        //     index++;
+        //     var status = $.act(ACT_GET, HOMECARE_CLI_MGMT, null, null, ["updateCliInfoResult"]);
+        //     $.exe();
+        //     if (status.updateCliInfoResult == "1" || status.updateCliInfoResult == "2" || index == 6) {
+        devices = $.act(ACT_GL, HOMECARE_CLI_INFO, null, null, null);
+        if (!$.exe()) {
+            renderDevicesPriorityTable(devices);
+        }
+        $.removeLoading();
+        //     } else {
+        //         setTimeout(arguments.callee, 500);
+        //     }
+        // }, 500);
+    }
+    var headArray = [{
+        text: $.tpLang.devicePriority_nstr.TYPE,
+        width: "10%"
+    }, {
+        text: $.tpLang.devicePriority_nstr.INFORMATION,
+        width: "25%"
+    }, {
+        text: $.tpLang.devicePriority_nstr.REALTIME_RATE,
+        width: "20%"
+    }, {
+        text: $.tpLang.devicePriority_nstr.TRAFFIC_USAGE,
+        width: "15%"
+    }, {
+        text: $.tpLang.devicePriority_nstr.PRIORITY,
+        width: "15%"
+    }, {
+        text: $.tpLang.devicePriority_nstr.TIME_PERIOD,
+        width: "15%"
+    }];
+    $.initTableHead($("#device-priority-grid"), headArray);
+    $("#device-priority-grid").tpTable(initDevicesTable);
+
+    devicePriorityGrid.delegate("a.switch-button-btn", "click", function(e) {
+        $.addLoading();
+        e.preventDefault();
+        e.stopPropagation();
+
+        var btn = $(this);
+        var me = devicePriorityGrid;
+
+        var tar = me.get(0);
+        var stack = btn.attr("data-key"), //当前操作的key值
+            value = btn.attr("data-value"),
+            vOn = btn.attr("data-on"),
+            vOff = btn.attr("data-off"),
+            name = btn.attr("data-name");
+
+        var opt = {};
+        opt['prioEnable'] = (value === "true") ? "0" : "1";
+
+        $.act(ACT_SET, HOMECARE_CLI_INFO, stack, null, opt);
+        $.exe(function(ret) {
+            if (ret) {
+                return;
+            } else {
+                initDevicesTable();
+                // $.removeLoading();
+            }
+        });
+    });
+
+    devicePriorityGrid.delegate("div.combobox-wrap", "click", function(e) {
+        e.stopPropagation();
+        var switchBtn = $(this).find("a.combobox-switch"),
+            wrap = switchBtn.next("div.combobox-list-wrap"),
+            container = switchBtn.closest("div.combobox-container"),
+            toggleFlag = wrap.attr("toggleflag") || "hidden";
+
+        if (toggleFlag === "hidden") {
+            container.addClass("focus");
+            wrap.slideDown(150);
+            wrap.attr("toggleflag", "shown");
+        } else {
+            container.removeClass("focus");
+            wrap.hide();
+            wrap.attr("toggleflag", "hidden");
+        };
+    });
+
+    devicePriorityGrid.delegate("label.combobox-label", "click", function(e) {
+        $.addLoading();
+
+        e.stopPropagation();
+        e.preventDefault();
+
+        var label = $(this),
+            li = label.closest("li.combobox-list"),
+            container = label.closest("div.combobox-container"),
+            input = label.find("input.combobox-checkbox"),
+            value = input.val(),
+            vOld = container.find(".combobox-text").val(),
+            vNew = "";
+
+        if (value != "Always") {
+            vNew = value;
+        } else {
+            vNew = -1;
+        }
+
+
+        var btn = container.find(".combobox-text");
+        btn.attr("data-value", input.val());
+
+        var tar = container.find(".combobox-text").get(0);
+        stack = btn.attr("data-key"), //当前操作的key值
+        value = btn.attr("data-value"),
+        name = btn.attr("data-name");
+
+        var opt = {};
+        opt['prioTimeLen'] = vNew;
+        $.act(ACT_SET, HOMECARE_CLI_INFO, stack, null, opt);
+        $.exe(function(ret) {
+            if (!ret) {
+                initDevicesTable();
+                // $.removeLoading();
+            }
+        });
+
+        var listWrap = label.parents("div.combobox-list-wrap");
+        listWrap.hide().attr("toggleflag", "hidden");
+    });
+
+
+    $.tpInit();
+
+    $.devPriority.refreshId = $.timeout(function() {
+        var flag = false;
+        $(".combobox-list-wrap").each(function() {
+            if ($(this).attr("toggleflag") == "shown") {
+                flag = true;
+            }
+        });
+        if (!flag) {
+            initDevicesTable();
+        }
+        $.devPriority.refreshId = $.timeout(arguments.callee, 3000);
+    }, 3000);
+});
+</script>
+
+
+</html>

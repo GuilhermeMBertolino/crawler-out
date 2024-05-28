@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+START=20
+
+. /lib/functions.sh
+
+
+need_to_gen(){
+	config_load onemesh
+
+	config_get role_val onemesh role
+	config_get group_id_val onemesh group_id
+
+	[ $role_val = "master" -a $group_id_val = "-1" ] && echo "true"  || echo "false"
+}
+
+
+start()
+{
+	if [ $(need_to_gen) = "true" ]; then
+		echo "generating onemesh group id now..." >/dev/console
+		lua -e 'require("luci.controller.admin.onemesh").master_generate_group_id()'
+		lua -e 'require("luci.controller.admin.onemesh").master_generate_backhaul_wcfg()'
+	else
+		echo "no need to generate onemesh group id" >/dev/console
+	fi
+}

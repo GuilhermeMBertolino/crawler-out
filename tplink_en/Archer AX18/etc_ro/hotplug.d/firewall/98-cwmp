@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+if [ "$ACTION" = "start" ]; then
+    config_clear
+    config_load cwmp
+    config_get cwmp_enable info enable
+    config_get conn_reqport info conn_reqport
+    if [ "$cwmp_enable" = "on" ]; then
+        # filter table
+        fw add 4 f cwmp_input
+        fw add 4 f cwmp_input ACCEPT { "-p tcp -m multiport --dport $conn_reqport" }
+        fw add 4 f cwmp_input ACCEPT { "-p udp -m multiport --dport $conn_reqport" }
+        fw add 4 f input_wan cwmp_input 1
+        # nat table
+        fw add 4 n prerouting_wan_cwmp
+        fw add 4 n prerouting_wan_cwmp ACCEPT { "-p tcp -m multiport --dport $conn_reqport" }
+        fw add 4 n prerouting_wan prerouting_wan_cwmp 1
+    fi
+fi

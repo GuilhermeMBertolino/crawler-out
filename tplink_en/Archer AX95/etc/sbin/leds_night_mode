@@ -1,0 +1,137 @@
+#!/bin/sh
+# Copyright (c) 2016 Shenzhen TP-LINK Technologies Co.Ltd.
+# Author		Zhang Shengbo<zhangshengbo_w8723@tp-link.com.cn>
+
+. /lib/functions.sh
+
+local enable=$(uci get ledpm.leds.enable)
+local time_begin=$(uci get ledpm.leds.time_start)
+local time_end=$(uci get ledpm.leds.time_end)
+local need_time_sync=1
+local hour=0
+local minute=0
+local begin=0
+local end_for_allday=0
+local end=0
+local hour_decade=0
+local hour_unit=0
+local minute_decade=0
+local minute_unit=0
+
+local hour_now=0
+local hour_now_decade=0
+local hour_now_unit=0
+local minute_now=0
+local minute_now_decade=0
+local minute_now_unit=0
+local time_now=0
+
+SYS_SET_TIME=$(uci_get_state systime core sync)
+
+if [ "$enable" = "on" ]; then
+	hour=`echo $time_begin | cut -d ':' -f 1`
+	hour_decade=${hour:0:1}
+	hour_unit=${hour:1:1}
+	if
+		[ $hour_decade -eq 0 ]; then
+		hour=$hour_unit
+	fi
+	minute=`echo $time_begin | cut -d ':' -f 2`
+	minute_decade=${minute:0:1}
+	minute_unit=${minute:1:1}
+	if
+		[ $minute_decade -eq 0 ]; then
+		minute=$minute_unit
+	fi
+	time_begin=$(($(($hour*60)) + $(($minute))))
+	begin="$hour":"$minute"
+	#for situation -- allday
+	end_for_allday="$(($hour+1))":"0"
+	
+	hour=`echo $time_end | cut -d ':' -f 1`
+	hour_decade=${hour:0:1}
+	hour_unit=${hour:1:1}
+	if
+		[ $hour_decade -eq 0 ]; then
+		hour=$hour_unit
+	fi
+	minute=`echo $time_end | cut -d ':' -f 2`
+	minute_decade=${minute:0:1}
+	minute_unit=${minute:1:1}
+	if
+		[ $minute_decade -eq 0 ]; then
+		minute=$minute_unit
+	fi
+	time_end=$(($(($hour*60)) + $((minute))))
+	end="$hour":"$minute"
+	#time_end 00:00 in our dut, midnight means 00:00(24h) or 12:00AM(12h)
+	if
+		[ $time_end -eq 0 ] && [ $time_begin -ne 0 ]; then
+		time_end=1440
+		end=24:00
+	fi
+	
+	#
+	hour_now=`date +%H`
+	hour_now_decade=${hour_now:0:1}
+	hour_now_unit=${hour_now:1:1}
+	if [ $hour_now_decade -eq 0 ]; then
+		hour_now=$hour_now_unit
+	fi
+	
+	minute_now=`date +%M`
+	minute_now_decade=${minute_now:0:1}
+	minute_now_unit=${minute_now:1:1}
+	if [ $minute_now_decade -eq 0 ]; then
+		minute_now=$minute_now_unit
+	fi
+	
+	time_now=$(($(($hour_now*60)) + $(($minute_now))))
+	
+	if [ "$time_begin" -lt "$time_end" ]; then
+		if [ $SYS_SET_TIME -eq 1 ]; then
+			if [ "$time_now" -ge "$time_begin" ] && [ "$time_now" -lt "$time_end" ]; then
+				echo "on" > /tmp/led_nightMode
+			fi
+		fi
+		tsched_conf -a leds_schedule nightMode "{\"sun\":[[\"$begin\",\"$end\"]],\"mon\":[[\"$begin\",\"$end\"]],\"tue\":[[\"$begin\",\"$end\"]],\"wed\":[[\"$begin\",\"$end\"]],\"thu\":[[\"$begin\",\"$end\"]],\"fri\":[[\"$begin\",\"$end\"]],\"sat\":[[\"$begin\",\"$end\"]]}" "$need_time_sync"
+		tsched_conf -u leds_schedule
+		#changed allday
+		tsched_conf -D leds_schedule_allday
+		tsched_conf -u leds_schedule_allday
+	elif [ "$time_begin" -gt "$time_end" ]; then
+		if [ $SYS_SET_TIME -eq 1 ]; then
+			if [ "$time_now" -ge "$time_begin" ]; then
+				echo "on" > /tmp/led_nightMode
+			fi
+		fi
+		tsched_conf -a leds_schedule nightMode "{\"sun\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"mon\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"tue\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"wed\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"thu\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"fri\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]],\"sat\":[[\"$begin\",\"24:00\"],[\"00:00\",\"$end\"]]}" "$need_time_sync"
+		tsched_conf -u leds_schedule
+		#changed allday
+		tsched_conf -D leds_schedule_allday
+		tsched_conf -u leds_schedule_allday
+	elif [ "$time_begin" -eq "$time_end" ]; then
+		if [ $SYS_SET_TIME -eq 1 ]; then
+				echo "on" > /tmp/led_nightMode
+				ubus send leds '{"action":"4","status":"1"}'
+		fi	
+		tsched_conf -a leds_schedule_allday nightMode "{\"sun\":[[\"$begin\",\"$end_for_allday\"]],\"mon\":[[\"$begin\",\"$end_for_allday\"]],\"tue\":[[\"$begin\",\"$end_for_allday\"]],\"wed\":[[\"$begin\",\"$end_for_allday\"]],\"thu\":[[\"$begin\",\"$end_for_allday\"]],\"fri\":[[\"$begin\",\"$end_for_allday\"]],\"sat\":[[\"$begin\",\"$end_for_allday\"]]}" "$need_time_sync"
+		tsched_conf -u leds_schedule_allday
+		tsched_conf -D leds_schedule
+		tsched_conf -u leds_schedule
+	else
+		echo "unsupported time section..." > /dev/console
+	fi
+elif [ "$enable" = "off" ]; then
+	tsched_conf -D leds_schedule
+	tsched_conf -u leds_schedule
+	#changed allday
+	tsched_conf -D leds_schedule_allday
+	tsched_conf -u leds_schedule_allday
+	if [ $SYS_SET_TIME -eq 1 ]; then
+		echo "off" > /tmp/led_nightMode
+		ubus send leds '{"action":"4","status":"0"}'
+	fi
+fi
+
+

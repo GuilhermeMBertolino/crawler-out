@@ -1,0 +1,138 @@
+#!/usr/bin/lua
+
+local AppsError = require "cloud.tp_apps.tp_app_error"
+local sys   = require "luci.sys"
+local nixio = require "nixio"
+local dbg   = require "luci.tools.debug"
+local json = require "luci.json"
+local io    = require "io"
+local uci_r = uci.cursor()
+
+local PROTOCAL_VER = 1
+local TRIGGER_CFG = "ifttt_trigger"
+local TRIGGER_CFG_NAME = "trigger"
+
+local content_type = "Content-type: application/json;charset=utf-8"
+local url_postfix = "/cloudDevice"
+local CLOUD_NBU_TOKEN_FILE = "/tmp/cloud/cloud_token_nbu"
+
+local retry_count = 0
+local token
+local origin_url
+local fp
+local flag = false
+
+while(retry_count <= 2)
+do
+	retry_count = retry_count + 1
+	flag = false
+
+	if not nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+		sys.call("cloud_getDevToken nbu")
+	end
+
+	if nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+		fp = io.open(CLOUD_NBU_TOKEN_FILE, "r")
+		token = fp:read("*line")
+		origin_url = fp:read("*line")..url_postfix
+		fp:close()
+	else
+		-- try again when not get the nbu token
+		sys.call("cloud_getDevToken nbu")
+		if nixio.fs.access(CLOUD_NBU_TOKEN_FILE) then
+			fp = io.open(CLOUD_NBU_TOKEN_FILE, "r")
+			token = fp:read("*line")
+			origin_url = fp:read("*line") .. url_postfix
+			fp:close()
+		else		
+			break
+		end
+	end
+		
+	local data = {
+		["method"] = "uploadTriggerEvents",
+		["params"] = {
+			["version"] = PROTOCAL_VER,
+			["deviceToken"] = token,
+			["deviceId"] = string.match(sys.exec("getfirm DEV_ID"), "%w+"),
+			["eventList"] = {}
+		}
+	}
+
+	local list
+	if nixio.fs.access("/tmp/cloud/ifttt_event_list") then
+		fp = io.open("/tmp/cloud/ifttt_event_list", "r")
+		list = fp:read("*all")
+		fp:close()
+	end
+
+	if list == nil then
+		break
+	end
+	
+	data.params.eventList = json.decode(list)
+
+	function time_format_to_iso8601(time)
+		local res
+		fp = io.popen("date -d \'@%d\' +%%FT%%X%%z" % {time})
+		if fp then                                    
+			res = fp:read("*line")                    
+			fp:close()                             
+		end
+		-- format timezone
+		res = res:gsub("([+|-])(%d)(%d)(%d)(%d)", "%1%2%3:%4%5")
+		return res
+	end
+
+	for _, client in ipairs(data.params.eventList) do
+		client.ingredients["0"] = time_format_to_iso8601(tonumber(client.ingredients["0"]))
+
+		if uci_r:get("cloud_config", "info", "alias_changed") == 'false' then
+			client.ingredients["2"] = string.gsub(sys.exec("getfirm HOSTNAME_UNDERLINE"), "%c", "")
+		else
+			client.ingredients["2"] = uci_r:get("cloud_config", "info", "alias") or ""
+		end
+
+		if PROTOCAL_VER == 1 then
+			client.ingredients["1"] = nixio.bin.b64encode(client.ingredients["1"])
+			client.ingredients["2"] = nixio.bin.b64encode(client.ingredients["2"])
+		end
+	end
+	
+	sys.call("echo `date` >/var/log/ifttt_upload.result; echo '%s' >>/var/log/ifttt_upload.result" % {json.encode(data)})
+	dbg.print("ifttt request:",json.encode(data))
+
+	local ret
+	fp = io.popen("curl -S -l -H \"%s\" -X POST -k -d \'%s\' --connect-timeout 8 %s --retry 3 --retry-delay 1 2>>/var/log/ifttt_upload.result" % {content_type, json.encode(data), origin_url})
+	if fp then                                    
+		ret = fp:read("*all")                    
+		fp:close()                             
+	end
+
+	dbg.print("ifttt response:",ret)
+	ret = json.decode(ret)
+
+	if ret ~= nil then
+		if tonumber(ret.error_code) == AppsError.ERROR_MSG.ERROR_INVAILD_TOKEN[1] then
+			--refresh token and upload again
+			sys.call("rm " .. CLOUD_NBU_TOKEN_FILE)
+			flag = true
+		elseif tonumber(ret.error_code) == AppsError.ERROR_MSG.ERROR_UNMATCHED_TRIGGER_ITEM[1] then
+			--delete the appointed trigger. 
+			for _, list in ipairs(ret.triggerIdList) do
+				uci_r:delete_all(TRIGGER_CFG, TRIGGER_CFG_NAME,
+					function(section)
+						old_trigger = uci_r:get_all(TRIGGER_CFG, section[".name"])
+						return tonumber(old_trigger.id) == tonumber(list)
+					end
+				)		
+			end
+			uci_r:commit(TRIGGER_CFG)
+		end
+	end
+	
+	if flag == false then
+		break
+	end
+	
+end

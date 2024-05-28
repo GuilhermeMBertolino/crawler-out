@@ -1,0 +1,36 @@
+#!/bin/sh
+# Start FAPI Wlan Daemon and keep it alive
+
+script_name="$0"
+
+[ ! "$LIB_COMMON_SOURCED" ] && . /tmp/fapi_wlan_wave_lib_common.sh
+
+local_db_source WIFI
+
+wlan0_index=`find_index_from_interface_name wlan0`
+
+# Check if FAPI daemon is enabled
+fapi_daemon_enabled=`db2fapi_convert boolean WaveFapiDaemonEnable 0`
+
+if [ "$fapi_daemon_enabled" = "0" ]
+then
+	print2log $wlan0_index FAPI_DAEMON "$script_name: FAPI daemon is disabled"
+	return 0
+fi
+print2log $wlan0_index FAPI_DAEMON "$script_name: Start FAPI daemon"
+
+daemon_running=`is_process_running fapi_wlan_daemon`
+if [ $daemon_running -eq 1 ]
+then
+	print2log $wlan0_index FAPI_DAEMON "*** $script_name: FAPI Wlan Daemon already up and running ==> exit ***"
+	return 0
+fi
+
+/usr/lib/fapi_wlan_daemon 0
+
+while [ 1 -eq 1 ]
+do
+	print2log $wlan0_index FAPI_DAEMON "$script_name: FAPI Wlan Daemon crashed, restarting it"
+	/usr/lib/fapi_wlan_daemon 1
+	sleep 1
+done

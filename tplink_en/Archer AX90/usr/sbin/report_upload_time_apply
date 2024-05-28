@@ -1,0 +1,235 @@
+#!/usr/bin/lua
+--created by wanghao
+
+local error = require "cloud_report.report_error"
+local sys   = require "luci.sys"
+local nixio = require "nixio"
+local dbg   = require "luci.tools.debug"
+local json = require "luci.json"
+local io    = require "io"
+local uci			= require "luci.model.uci"
+local uci_r			= uci.cursor()
+
+local content_type = "Content-type: application/json"
+local url_postfix = "/v1/messages/internet-time"
+local CLOUD_HOMECARE_TOKEN_FILE = "/tmp/cloud/cloud_token_homecare"
+local PARENT_NOLIMIT_TIME = 1440
+
+local retry_count = 0
+local token
+local origin_url
+local fp
+local retry = false
+
+local bit = {};
+bit.data = {};
+for i=1,7 do
+	bit.data[i] = 2 ^ (7 - i);
+end
+
+function bit:d2b(arg)
+	local temp = {};
+	for i=1,7 do
+		if (arg >= self.data[i]) then
+			temp[i] = 1;
+			arg = arg - self.data[i];
+		else
+			temp[i] = 0;
+		end
+	end
+	return temp;
+end
+
+function bit:b2d(arg)
+	local temp = 0;
+	for i=1,7 do
+		if (arg[i] == 1) then
+			temp = temp + 2 ^ (7 - i);
+		end
+	end
+	return temp;
+end
+
+function bit:_and(a,b)
+	local op1=self:d2b(a)
+    local op2=self:d2b(b)
+    local r={}
+    
+    for i=1,7 do
+        if op1[i]==1 and op2[i]==1 then
+            r[i]=1
+        else
+            r[i]=0
+        end
+    end
+    return self:b2d(r)
+end
+
+function daysMatch(today)
+	local days = {6, 5, 4, 3, 2, 1, 7, 0}
+	
+	for index, day in ipairs(days) do
+		if day == today then
+			return index
+		end
+	end
+	dbg.print("weekday error: "..today)
+	
+	return nil
+end
+
+function get_timeQuota(profileId)
+	local weekday = os.date("%w")
+	local timeQuota = nil
+	local timeLimits_enable = nil
+	local advancedMode = nil
+	local workdays = nil
+	local offset = nil
+	local workday = false
+	local advancedDays = {"sun_time", "mon_time", "tue_time", "wed_time", "thu_time", "fri_time", "sat_time"}
+	local quota = nil
+	local bonusTime = nil
+	local limit = nil
+	local advanceLimit = nil
+	
+	weekday = tonumber(weekday)
+	if weekday == 0 then
+		offset = daysMatch(7)
+	else
+		offset = daysMatch(weekday)
+	end
+
+	timeLimits_enable = uci_r:get("parental_control_v2", profileId, "timeLimits_enable") or "0"
+	advancedMode = uci_r:get("parental_control_v2", profileId, "timeLimits_mode") or "everyday"
+	if timeLimits_enable == "1" then
+		if advancedMode == "everyday" then
+			quota = uci_r:get("parental_control_v2", profileId, "timeLimits_eve_time")
+			limit = "1"
+		elseif advancedMode == "workingDay" then
+			--workingDay
+			workdays = uci_r:get("parental_control_v2", profileId, "workdays")
+			if workdays then
+				if bit:_and(2 ^ (offset - 1), tonumber(workdays)) > 0 then
+					workday = true
+				end
+			else
+				if bit:_and(2 ^ (offset - 1), 62) > 0 then
+					workday = true
+				end
+			end
+			
+			if workday == true then
+				quota = uci_r:get("parental_control_v2", profileId, "workday_time")
+				limit = uci_r:get("parental_control_v2", profileId, "workday_limit")
+			else
+				quota = uci_r:get("parental_control_v2", profileId, "weekend_time")
+				limit = uci_r:get("parental_control_v2", profileId, "weekend_limit")
+			end
+		elseif advancedMode == "customize" then
+			--customize
+			advanceLimit = uci_r:get("parental_control_v2", profileId, "timeLimits_cus_enable")
+			if advanceLimit then
+				if bit:_and(2 ^ (offset - 1), tonumber(advanceLimit)) > 0 then
+					limit = "1"
+				end
+			end
+			
+			for k, v in ipairs(advancedDays) do
+				if weekday + 1 == k then
+					quota = uci_r:get("parental_control_v2", profileId, advancedDays[k])
+					break
+				end
+			end
+		end
+	end
+
+	bonusTime = uci_r:get("parental_control_v2", profileId, "today_bonus_time")
+	if limit == "1" then
+		if quota then
+			timeQuota = tonumber(quota)
+		else
+			timeQuota = 0
+		end
+		
+		if bonusTime then
+			timeQuota = timeQuota + tonumber(bonusTime)
+		end
+		
+		if timeQuota > PARENT_NOLIMIT_TIME then
+			timeQuota = PARENT_NOLIMIT_TIME
+		end
+	else
+		timeQuota = PARENT_NOLIMIT_TIME
+	end
+	
+	return timeQuota
+end
+
+if arg[1] == nil then
+	dbg.print("must specify a profileid!")
+	return false, "must specify a profileid!"
+end
+
+while(retry_count <= 2)
+do
+	retry_count = retry_count + 1
+	retry = false
+
+	if not nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+		sys.call("cloud_getDevToken homecare")
+	end
+
+	if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+		fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+		token = fp:read("*line")
+		origin_url = fp:read("*line")..url_postfix
+		fp:close()
+	else
+		-- try again when not get the homecare token
+		sys.call("cloud_getDevToken homecare")
+		if nixio.fs.access(CLOUD_HOMECARE_TOKEN_FILE) then
+			fp = io.open(CLOUD_HOMECARE_TOKEN_FILE, "r")
+			token = fp:read("*line")
+			origin_url = fp:read("*line") .. url_postfix
+			fp:close()
+		else		
+			break
+		end
+	end
+	
+	local profileid = arg[1]
+	local profilename = uci_r:get("parental_control_v2", profileid, "name") or ""
+	local allowtime = get_timeQuota(profileid)
+	local data = {
+		["profileId"] = profileid,
+		["profileName"] = profilename,
+		["todayTotalAllowTime"] = allowtime,
+		["deviceId"] = string.match(sys.exec("getfirm DEV_ID"), "%w+")	
+	}
+	
+	sys.call("echo `date` >/var/log/cloud_report_time_apply.result; echo '%s' >>/var/log/cloud_report_time_apply.result" % {json.encode(data)})
+	dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload request]:" .. json.encode(data))
+	
+	local ret
+	fp = io.popen("curl -S -l -H \"%s\" -H \"Authorization: %s\" -X POST -k -d \'%s\' --connect-timeout 8 %s --retry 3 --retry-delay 1 2>>/var/log/cloud_report_time_apply.result" % {content_type, token, json.encode(data), origin_url})
+	if fp then
+		ret = fp:read("*all")
+		fp:close()
+	end
+
+	dbg.print("[cloud-report][" .. arg[0] .. "][cloud_upload response]:" .. ret)
+	ret = json.decode(ret)
+
+	if ret ~= nil then
+		if tonumber(ret.code) == error.ERROR_MSG.ERROR_INVALID_DEVICE_TOKEN[1] then
+			--refresh token and upload again
+			sys.call("rm " .. CLOUD_HOMECARE_TOKEN_FILE)
+			retry = true
+		end
+	end
+	
+	if retry == false then
+		break
+	end
+	
+end

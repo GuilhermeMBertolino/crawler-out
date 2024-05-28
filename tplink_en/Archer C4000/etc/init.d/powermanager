@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common
+# Copyright(c) 2011-2015 Shenzhen TP-LINK Technologies Co.Ltd.
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+START=46
+
+debug() {
+    echo $1 >/dev/console 2>&1
+}
+
+check_tempthresh() {
+	THRESH_2G=120
+	THRESH_5GL=120
+	THRESH_5GU=120
+	thresh2g=$(nvram get 2:tempthresh)
+	thresh5gl=$(nvram get 3:tempthresh)
+	thresh5gu=$(nvram get 1:tempthresh)
+
+	if [ "$thresh2g" != "$THRESH_2G" -o "$thresh5gl" != "$THRESH_5GL" -o "$thresh5gu" != "$THRESH_5GU" ] ;
+	then
+		nvram set 2:tempthresh=$THRESH_2G
+		nvram set 3:tempthresh=$THRESH_5GL
+		nvram set 1:tempthresh=$THRESH_5GU
+		#nvram commit
+		debug "powermanager init: tempthreshs are not valid for dutycycle."
+		#reboot
+	fi
+}
+
+start() {
+	#check_tempthresh
+	service_start /bin/nice -n -20 /usr/sbin/powermanager
+
+	return 0
+}
+
+stop() {
+    service_stop /usr/sbin/powermanager
+	return 0
+}
+
+reload() {
+    return 0
+}
+

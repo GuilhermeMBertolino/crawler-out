@@ -1,0 +1,30 @@
+#!/bin/sh
+
+WIRELESS_SCHEDULE_LIBDIR=/lib/wifi
+. ${WIRELESS_SCHEDULE_LIBDIR}/wireless_schedule_func.sh
+
+. /lib/functions.sh
+
+cmd=$1
+shift
+
+case $cmd in
+    *ACTIVE)
+        config_load wireless_schedule
+        config_get enable "$1" enable
+        if [ "$enable" = "off" ]; then
+            /etc/init.d/wireless_schedule restart
+        else
+            wireless_schedule_handle_active "$1"
+        fi
+    ;;
+
+    *DORM)
+        wireless_schedule_handle_dorm "$1"
+    ;;
+
+    *RESET)
+        wireless_schedule_handle_reset
+        ;;
+esac
+

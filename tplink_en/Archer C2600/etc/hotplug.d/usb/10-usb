@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# Copyright (C) 2009 OpenWrt.org
+
+# echo ACTION=$ACTION, DEVPATH=$DEVPATH, SUBSYSTEM=$SUBSYSTEM, BUSNUM=$BUSNUM >/dev/console
+
+# echo "--------------" >>/dev/console
+#echo "busnum=$BUSNUM" >> /dev/console
+#echo "action=$ACTION" >> /dev/console
+#echo "intf=$INTERFACE" >> /dev/console
+#echo "devnum=$DEVNUM" >> /dev/console
+#echo "dev=$DEVICE" >> /dev/console
+#echo "pdt=$PRODUCT" >> /dev/console
+#echo "type=$TYPE" >> /dev/console
+#echo "--------------" >>/dev/console
+
+case "$BUSNUM" in
+    001|002)
+        USB="USB1"
+        ;;
+    003|004)
+        USB="USB3"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+case "$ACTION" in
+	add)
+		#check if usb is connected
+		local bus=${BUSNUM//0/}
+		bus=$(cat /sys/bus/usb/drivers/usb/usb$bus/power/runtime_status)
+		if [ "$bus" = "suspended" ]
+		then
+			#echo "ADD: " $ACTION $BUSNUM >> /dev/console
+			exit 0
+		fi
+		# update LEDs
+        	ledcli ${USB}_twinkle
+		;;
+	remove)
+		# update LEDs
+        	uci set ledctrl.$USB.ledon='0'
+        	ledcli $USB
+		;;
+esac
+

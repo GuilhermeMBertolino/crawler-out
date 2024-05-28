@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view  layout="2column" >
+    <row>
+        <col>
+            <object  viewtype="form" Type="string" title="Configuration" icon="lan"  >
+                <object name="Device.IP.Interface.1.IPv4Address.1"  >
+                    <parameter  name="IPAddress"  type="ipv4" webname="Device IP Address" ></parameter>
+                    <parameter   name="SubnetMask"  type="ipv4" webname="Subnet Mask" ></parameter>
+                </object>
+                <object name="temp" > 
+                    <parameter  name="DHCPMode"  type="dropdown" validvalues="Server,Relay,Disable" webname="DHCP Mode" changefun="true" ></parameter>
+                </object>
+                <object name="Device.DHCPv4.Server.Pool.1" parent="'Server'" parentname="temp" depends="DHCPMode">
+                    <parameter   name="Enable"  type="checkbox" Display="No" Value="1" webname="Begin Address" ></parameter>
+                    <parameter   name="MinAddress"  type="ipv4" webname="Begin Address" ></parameter>
+                    <parameter   name="MaxAddress"  type="ipv4" webname="End Address" ></parameter>
+                    <parameter name="LeaseTime" type="dropdown" url="DHCPLeaseTime" webname="Lease Time"/>
+                </object>
+                <object name="Device.DHCPv4.Relay.Forwarding.1" parent="'Relay'" parentname="temp" depends="DHCPMode">
+                    <parameter   name="Enable"  type="checkbox" Value="1" Display="No"></parameter>
+                    <parameter   name="DHCPServerIPAddress"  type="ipv4" webname="Relay IP Address" ></parameter>
+                </object>
+                <parameter  name="Modify"  action="post" routeurl="Apply($event)" type="submitbutton" webname="Apply" maxlen="64"></parameter>
+                <parameter  name="Cancel"  routeurl="reset()" action="post" type="submitbutton" webname="Reset" maxlen="64"></parameter>
+            </object>
+        </col>
+        <col>
+            <object  viewtype="tablePlus"  title="IP Address Reservation" icon="lan" name="Device.DHCPv4.Server.Pool.1.StaticAddress.*" >
+                <parameter  name="Enable"  type="checkbox" Display="No" Value="1" webname="Enable" ></parameter>
+                <parameter  name="Chaddr"  type="macaddress" webname="MAC Address" ></parameter>
+                <parameter  name="Yiaddr"  type="ip4" webname="IP Address" ></parameter>
+                <parameter  name="edit"  action="post" type="button" webname="Edit" maxlen="64"></parameter>
+                <parameter  name="delete"  action="post"   routeurl="delete($event,user)" type="button" webname="delete" maxlen="64"></parameter>
+                <parameter  name="Add"  action="post" routeurl="Apply($event)"  type="button" webname="Add" maxlen="64"></parameter>
+            </object>
+        </col>
+    </row>
+    
+</view>
+

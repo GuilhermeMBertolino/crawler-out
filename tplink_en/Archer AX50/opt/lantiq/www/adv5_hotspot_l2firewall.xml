@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view viewid="hotspot_l2firewall">
+    <header>
+        <image>images/icons/hotspot.png</image>
+        <name>Hotspot  L2 Firewall</name>
+        <description>L2 firewall for Hotspot</description>
+    </header>
+    <object viewtype="form"> 
+        <object name="temp">
+            <parameter  name="SSID"  type="dropdown" ddfun="wizardDropdown" firstselect="true" url="cgi_get_filterbyfirstparamval?Object=Device.WiFi.SSID&amp;LowerLayers=Device.WiFi.Radio.2.&amp;SSID=&amp;X_LANTIQ_COM_Vendor_IsEndPoint=" webname="SSID" child="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20,Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.L2Firewall.*" ifparam="X_LANTIQ_COM_Vendor_IsEndPoint" ifcondition="equalsto" ifvalue="false"></parameter>
+        </object>
+    </object>
+    <object viewtype="form" title="HOTSPOT" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20">
+        <row>
+        <col><parameter access="readonly" Display="No" name="Enable" type="dropdown" url="hotspotenable" webname="Hotspot Mode" firstselect="true"></parameter></col>
+        <col><parameter  name="L2FwEnabled" required="false" type="toggle" webname="Enable L2F" ></parameter></col>
+        </row>
+    </object>
+    <object viewtype="accordion" formToOpen="hotspot_l2firewall_form" title="Hotspot L2 Firewall" onload="false" name="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20.L2Firewall.*" nolocaladdapply="true" dependsonparamvalue="'true'|| 'false'" dependsonobject="Device.WiFi.AccessPoint.*.X_LANTIQ_COM_Vendor.HS20" dependsonparam="Enable" childparentrelation="true">
+        <parameter  name="IngressInterface" required="false" type="stringA" webname="Ingress Interface" ></parameter>
+        <parameter  name="EgressInterface" required="false" type="stringA" webname="Egress Interface" ></parameter>
+<!--        <parameter  name="Action"  type="dropdown1" webname="Action" url="hotspotl2firewallaction"></parameter>
+        <parameter  name="Protocol"  type="dropdown1" webname="Protocol Filter" url="hotspotl2firewallprotocol"></parameter>-->
+        <parameter  name="edit" type="button"></parameter>
+        <parameter  name="delete" type="button"></parameter>
+        <parameter  name="Add" type="button"></parameter>
+    </object>
+    <parameter name="Modify" type="submitbutton" buttontype="true" routeurl="relationalFormsApply($event,'hotspot_conf')" webname="Apply" maxlen="64"/>
+</view>
